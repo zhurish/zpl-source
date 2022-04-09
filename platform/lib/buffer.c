@@ -20,43 +20,18 @@
  * Boston, MA 02111-1307, USA. 
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
 #include "buffer.h"
 #include "log.h"
 #include "network.h"
 
-/* Data container. */
-struct buffer_data
-{
-	struct buffer_data *next;
 
-	/* Location to add new data. */
-	zpl_size_t cp;
-
-	/* Pointer to data not yet flushed. */
-	zpl_size_t sp;
-
-	/* Actual data stream (variable length). */
-	zpl_uchar data[]; /* real dimension is buffer->size */
-};
-
-/* Buffer master. */
-struct buffer
-{
-	/* Data list. */
-	struct buffer_data *head;
-	struct buffer_data *tail;
-
-	/* Size of each buffer_data chunk. */
-	zpl_size_t size;
-};
 /* It should always be true that: 0 <= sp <= cp <= size */
 
 /* Default buffer size (used if none specified).  It is rounded up to the
  next page boundery. */
-#define BUFFER_SIZE_DEFAULT		4096
 
 #define BUFFER_DATA_FREE(D) XFREE(MTYPE_BUFFER_DATA, (D))
 
@@ -256,7 +231,7 @@ buffer_status_t buffer_flush_all(struct buffer *b, zpl_socket_t fd)
 buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint32 width,
 		zpl_uint32 height, zpl_uint32 erase_flag, zpl_uint32 no_more_flag)
 {
-	zpl_uint32 nbytes;
+	zpl_int32 nbytes;
 	zpl_uint32 iov_alloc;
 	zpl_uint32 iov_index;
 	struct ipstack_iovec *iov;
@@ -436,7 +411,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 #define MAX_FLUSH 131072
 
 	struct buffer_data *d = NULL;
-	zpl_size_t written = 0;
+	zpl_int32 written = 0;
 	struct ipstack_iovec iov[MAX_CHUNKS];
 	zpl_size_t iovcnt = 0;
 	zpl_size_t nbyte = 0;

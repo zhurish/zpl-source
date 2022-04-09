@@ -30,11 +30,11 @@ extern int ipforward (void);
 extern int ipforward_on (void);
 extern int ipforward_off (void);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 extern int ipforward_ipv6 (void);
 extern int ipforward_ipv6_on (void);
 extern int ipforward_ipv6_off (void);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
  
 #ifdef __cplusplus
 }

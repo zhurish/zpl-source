@@ -165,9 +165,8 @@ extern "C" {
 #define HAVE_INTTYPES_H 1
 
 /* IPv6 */
-#ifdef ZPL_BUILD_IPV6
-#define HAVE_IPV6 1
-#endif
+
+
 /* Have IP_PKTINFO */
 #define HAVE_IP_PKTINFO 1
 

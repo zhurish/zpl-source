@@ -9,6 +9,7 @@
 #include "dhcp_def.h"
 #include "dhcp_util.h"
 #include "dhcpd.h"
+#include "checksum.h"
 /*
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

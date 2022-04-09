@@ -6,10 +6,16 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "str.h"
+#include "prefix.h"
+#include "nsm_interface.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -21,7 +27,7 @@
 #include "modem_pppd.h"
 #include "modem_driver.h"
 #include "modem_serial.h"
-
+#include "modem_string.h"
 #include "modem_usb_driver.h"
 
 
@@ -336,6 +342,7 @@ const char *modem_serial_channel_name(modem_driver_t *input)
 	os_memset(format,0, sizeof(format));
 	//os_memset(tmp,0, sizeof(tmp));
 	os_strcpy(format, driver->module_name);
-	return strlwr(strchr_empty(format, ' '));
+	strchr_empty(format, ' ');
+	return strlwr(format);
 }
 

@@ -5,14 +5,24 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "zmemory.h"
+#include "nsm_interface.h"
+#include "vty.h"
+#include "if_name.h"
+#include "vrf.h"
+#include "template.h"
+#ifdef ZPL_DHCP_MODULE
+#include "nsm_dhcp.h"
+#endif
 
 static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 {
-#ifndef ZPL_KERNEL_STACK_MODULE
+#ifndef ZPL_KERNEL_MODULE
 	int node = INTERFACE_L3_NODE;
 #else
 	int node = INTERFACE_NODE;
@@ -850,6 +860,16 @@ DEFUN(nsm_interface_mac,
 	zpl_uint8 mac[6];
 	struct interface *ifp = (struct interface *)vty->index;
 	VTY_IMAC_GET(argv[0], mac);
+	if(NSM_MAC_IS_BROADCAST(mac))
+	{
+		vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(NSM_MAC_IS_MULTICAST(mac))
+	{
+		vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if (ifp)
 	{
 		ret = nsm_interface_mac_set_api(ifp, mac, 6);
@@ -960,7 +980,7 @@ DEFUN(no_nsm_interface_speed,
 	return CMD_WARNING;
 }
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 DEFUN(nsm_interface_ip_vrf,
 	  nsm_interface_ip_vrf_cmd,
 	  "ip forward vrf NAME",
@@ -1197,6 +1217,16 @@ DEFUN(nsm_interface_ip_address,
 			vty_out(vty, "%% Malformed address %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
+		if(IPV4_NET127(cp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(cp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		ret = nsm_interface_address_set_api(ifp, &cp, zpl_false);
 		if (ret == ERROR)
 			vty_out(vty, "%% Can't set interface IP address.%s", VTY_NEWLINE);
@@ -1236,6 +1266,16 @@ DEFUN(no_nsm_interface_ip_address,
 			vty_out(vty, "%% Malformed address %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
+		if(IPV4_NET127(cp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(cp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		ret = nsm_interface_address_unset_api(ifp, &cp, zpl_false);
 		if (ret == ERROR)
 			vty_out(vty, "%% Can't unset interface IP address.%s", VTY_NEWLINE);
@@ -1244,7 +1284,7 @@ DEFUN(no_nsm_interface_ip_address,
 	return CMD_WARNING;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 DEFUN(nsm_interface_ipv6_address,
 	  nsm_interface_ipv6_address_cmd,
 	  "ipv6 address X:X::X:X/M",
@@ -1321,9 +1361,9 @@ DEFUN(no_nsm_interface_ipv6_address,
 	}
 	return CMD_WARNING;
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 DEFUN_HIDDEN(nsm_interface_set_kernel,
 			 nsm_interface_set_kernel_cmd,
 			 "set-kernel IFNAME",
@@ -1608,7 +1648,7 @@ static int nsm_interface_l3vrfmtu_info_write(struct interface *ifp, struct vty *
 	{
 		vty_out(vty, " mac-address %s%s", if_mac_out_format(ifp->hw_addr), VTY_NEWLINE);
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 		if (ifp->vrf_id != VRF_DEFAULT)
 			vty_out(vty, " ip forward vrf %s%s", ip_vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
 #endif
@@ -1857,7 +1897,7 @@ static void cmd_show_interface_init(int node)
 #endif
 	//install_element(node, CMD_VIEW_LEVEL, &show_interface_all_debug_cmd);
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 	install_element(node, CMD_VIEW_LEVEL, &show_interface_kernel_cmd);
 #endif
 }
@@ -1886,11 +1926,11 @@ static void cmd_base_interface_init(int node)
 	{
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_ip_address_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_ip_address_cmd);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_ipv6_address_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_ipv6_address_cmd);
-#endif /* HAVE_IPV6 */
-#ifdef ZPL_IPCOM_STACK_MODULE
+#endif /* ZPL_BUILD_IPV6 */
+#ifdef ZPL_IPCOM_MODULE
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_ip_vrf_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_ip_vrf_cmd);
 #endif
@@ -1913,7 +1953,7 @@ static void cmd_base_interface_init(int node)
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_mac_cmd);
 	}
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_set_kernel_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_set_kernel_cmd);
 #endif

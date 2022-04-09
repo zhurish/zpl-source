@@ -83,13 +83,11 @@ ifeq ($(ZPL_MQTT_SRV),true)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	@${MAKE} -C  src install DEST_BIN_DIR=$(ZPL_INSTALL_SBIN_DIR)
 else
 install: $(LIBS)
 	@install -d $(LIB_DIR)
-	@install -m 755 $(LIBS) $(LIB_DIR)
-	$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)	
+	@install -m 755 $(LIBS) $(LIB_DIR)	
 endif
 
 

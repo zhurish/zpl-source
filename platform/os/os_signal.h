@@ -11,12 +11,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "zpl_type.h"
+
 
 #define OS_SIGNAL_FILE SYSLOGDIR"/signal.log"
 
 //#define OS_SIGNAL_PIPE
 
-typedef int (*os_signal_handler)(int signo, void *info);
+typedef void (*os_signal_handler)(int signo, void *info);
 
 #ifdef SA_SIGINFO
 typedef void (*os_signal_abort_cb)(zpl_int signo, const char *action,

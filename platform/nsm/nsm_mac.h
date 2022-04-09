@@ -16,8 +16,6 @@ extern "C" {
 
 
 
-#define NSM_MAC_IS_MULTICAST(mac)                ((mac) & 0x01)
-#define NSM_MAC_IS_BROADCAST(mac)                (((mac) & 0xFF)==0XFF)
 
 typedef enum mac_action_s
 {

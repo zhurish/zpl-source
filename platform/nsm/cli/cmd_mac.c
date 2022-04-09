@@ -6,11 +6,14 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "nsm_arp.h"
+#include "nsm_vlan.h"
+#include "vty.h"
 #ifdef ZPL_HAL_MODULE
 #include "hal_ipcmsg.h"
 #include "hal_mac.h"
@@ -77,7 +80,16 @@ DEFUN (mac_address_table,
 	l2mac_t mac;
 	memset(&mac, 0, sizeof(mac));
 	VTY_IMAC_GET(argv[0], mac.mac);
-
+	if(NSM_MAC_IS_BROADCAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(NSM_MAC_IS_MULTICAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	mac.ifindex = if_ifindex_make(argv[1], argv[2]);
 	if(argc == 4)
 		VTY_GET_INTEGER ("vlan ID", mac.vlan, argv[3]);
@@ -121,7 +133,16 @@ DEFUN (no_mac_address_table,
 	l2mac_t mac;
 	memset(&mac, 0, sizeof(mac));
 	VTY_IMAC_GET(argv[0], mac.mac);
-
+	if(NSM_MAC_IS_BROADCAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(NSM_MAC_IS_MULTICAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	mac.ifindex = if_ifindex_make(argv[1], argv[2]);
 	if(argc == 4)
 		VTY_GET_INTEGER ("vlan ID", mac.vlan, argv[3]);
@@ -161,6 +182,16 @@ DEFUN (mac_address_table_discard,
 	l2mac_t mac;
 	memset(&mac, 0, sizeof(mac));
 	VTY_IMAC_GET(argv[0], mac.mac);
+	if(NSM_MAC_IS_BROADCAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(NSM_MAC_IS_MULTICAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	mac.action = MAC_DISCARDED;
 	mac.type = MAC_STATIC;
 	if(nsm_mac_lookup_api(mac.mac, 0) == OK)
@@ -183,7 +214,16 @@ DEFUN (no_mac_address_table_discard,
 	l2mac_t mac;
 	memset(&mac, 0, sizeof(mac));
 	VTY_IMAC_GET(argv[0], mac.mac);
-
+	if(NSM_MAC_IS_BROADCAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(NSM_MAC_IS_MULTICAST(mac.mac))
+	{
+		vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	mac.action = MAC_DISCARDED;
 	mac.type = MAC_STATIC;
 	if(nsm_mac_lookup_api(mac.mac, 0) == OK)
@@ -219,6 +259,16 @@ DEFUN (clear_mac_address_table,
 		l2mac_t mac;
 		memset(&mac, 0, sizeof(mac));
 		VTY_IMAC_GET(argv[0], mac.mac);
+		if(NSM_MAC_IS_BROADCAST(mac.mac))
+		{
+			vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(NSM_MAC_IS_MULTICAST(mac.mac))
+		{
+			vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		if(nsm_mac_lookup_api(mac.mac, 0) == OK)
 		{
 			vty_out(vty, "Error: This mac address is already exist.%s",VTY_NEWLINE);
@@ -386,9 +436,9 @@ static int hal_macmsg_callback(zpl_uint8 *buf, zpl_uint32 len, void *pVoid)
 		macnode.vlan = mactbl->vlan;
 		memcpy(macnode.mac, mactbl->mac, NSM_MAC_MAX);
 		macnode.type = MAC_DYNAMIC;
-		if(NSM_MAC_IS_BROADCAST(macnode.mac[0]))
+		if(NSM_MAC_IS_BROADCAST(macnode.mac))
 			macnode.class = MAC_BROADCAST;
-		else if(NSM_MAC_IS_MULTICAST(macnode.mac[0]))
+		else if(NSM_MAC_IS_MULTICAST(macnode.mac))
 			macnode.class = MAC_MULTICAST;
 		else
 			macnode.class = MAC_UNICAST;

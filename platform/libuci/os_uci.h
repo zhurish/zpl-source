@@ -16,25 +16,9 @@
 //#define _UCI_DEBUG(fmt,...)	printf(fmt, ##__VA_ARGS__)
 #define _UCI_DEBUG(fmt,...)
 
-//#if 1//def ZPL_BUILD_OS_OPENWRT
-//#define ZPL_OPENWRT_UCI_LIB
-//#endif
-//#define ZPL_OPENWRT_UCI_SH
 
-#ifndef ZPL_OPENWRT_UCI_LIB
-enum
-{
-	UCI_OK = 0,
-	UCI_ERR_MEM,
-	UCI_ERR_INVAL,
-	UCI_ERR_NOTFOUND,
-	UCI_ERR_IO,
-	UCI_ERR_PARSE,
-	UCI_ERR_DUPLICATE,
-	UCI_ERR_UNKNOWN,
-	UCI_ERR_LAST
-};
-#endif
+
+
 
 extern int os_uci_get_errno(void);
 extern int os_uci_set_string(char *name, char *value);

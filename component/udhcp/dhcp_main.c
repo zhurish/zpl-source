@@ -1,13 +1,13 @@
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "host.h"
 #include "nsm_include.h"
-
 #include "dhcp_def.h"
 #include "dhcp_lease.h"
 #include "dhcp_pool.h"
 #include "dhcp_util.h"
 #include "dhcpd.h"
+#include "dhcpc.h"
 #include "dhcp_main.h"
 #include "dhcp_api.h"
 

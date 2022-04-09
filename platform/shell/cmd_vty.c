@@ -6,8 +6,8 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "vty.h"
 #include "command.h"
 #include "log.h"
@@ -111,7 +111,7 @@ DEFUN (no_vty_access_class,
 	return CMD_SUCCESS;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Set vty access class. */
 DEFUN (vty_ipv6_access_class,
 		vty_ipv6_access_class_cmd,
@@ -150,7 +150,7 @@ DEFUN (no_vty_ipv6_access_class,
 		return CMD_WARNING;
 	return CMD_SUCCESS;
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* vty login. */
 DEFUN (vty_login,
@@ -364,9 +364,9 @@ int cmd_vty_init(void)
 
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &vtysh_rl_stdio_cmd);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	install_element (VTY_NODE, CMD_CONFIG_LEVEL, &vty_ipv6_access_class_cmd);
 	install_element (VTY_NODE, CMD_CONFIG_LEVEL, &no_vty_ipv6_access_class_cmd);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 	return 0;
 }

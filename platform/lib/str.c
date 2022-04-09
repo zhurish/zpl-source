@@ -35,8 +35,8 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "str.h"
 #include "zassert.h"
 
@@ -131,41 +131,6 @@ strndup (const char *s, zpl_size_t maxlen)
 }
 #endif
 
-/*
-C库函数 int tolower(int c)转换给定的字母为小写。
-C库函数 int toupper(int c)转换给定的字母为大写。
- */
-const char *strupr(zpl_char* src)
-{
-	zpl_char *p = src;
-	/*
-	 * a -> A
-	 */
-	while (*p != '\0')
-	{
-		if (*p >= 'a' && *p <= 'z')
-			//在ASCII表里大写字符的值比对应小写字符的值小32.
-			//*p -= 0x20; // 0x20的十进制就是32
-			*p -= 32;
-		p++;
-	}
-	return src;
-}
-
-const char *strlwr(zpl_char* src)
-{
-	zpl_char *p = src;
-	/*
-	 * A -> a
-	 */
-	while (*p != '\0')
-	{
-		if (*p >= 'A' && *p <= 'Z')
-			*p += 32;
-		p++;
-	}
-	return src;
-}
 
 const char *string_have_space(zpl_char* src)
 {
@@ -206,7 +171,7 @@ int all_isdigit (const char *str)
 /*去除头尾空格*/
 const char *str_trim(zpl_char* src)
 {
-	zpl_char *start = NULL, *end = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
+	zpl_char *start = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
 	temp = src;
 	while (isspace(*temp))
 	{
@@ -220,7 +185,7 @@ const char *str_trim(zpl_char* src)
 		*temp = '\0';
 		--temp;
 	}
-	end = temp; //求得尾指针
+	//end = temp; //求得尾指针
 	//for (src = start; src <= end;)
 	//{
 	//	*strOut++ = *src++;
@@ -231,40 +196,9 @@ const char *str_trim(zpl_char* src)
 	return start;
 }
 
-const char *itoa(int value, int base)
-{
-	static zpl_char buf[32];
-	memset(buf, 0, sizeof(buf));
-	if(base == 0 || base == 10)
-		snprintf(buf, sizeof(buf), "%d", value);
-	else if(base == 16)
-		snprintf(buf, sizeof(buf), "%02x", value);
-	return buf;
-}
-
-const char *ftoa(zpl_float value, zpl_char *fmt)
-{
-	static zpl_char buf[16];
-	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), fmt, value);
-	return buf;
-}
-
-const char *dtoa(zpl_double value, zpl_char *fmt)
-{
-	static zpl_char buf[32];
-	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), fmt, value);
-	return buf;
-}
 
 
 /* Validate a hex character */
-zpl_bool is_hex (zpl_char c)
-{
-  return (((c >= '0') && (c <= '9')) ||
-	  ((c >= 'A') && (c <= 'F')) || ((c >= 'a') && (c <= 'f')));
-}
 
 zpl_uint32 str_to_hex(zpl_char * room)
 {
@@ -280,10 +214,6 @@ zpl_char * hex_to_str(zpl_uint32 hex)
 	return buf;
 }
 
-zpl_uint8 atoascii(int a)
-{
-	return ((a) - 0x30);
-}
 
 
 /*获取某个字符数量*/

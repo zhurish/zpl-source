@@ -7,11 +7,15 @@
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "nsm_interface.h"
+#include "host.h"
 
 #include "modem.h"
 #include "modem_client.h"
@@ -107,8 +111,9 @@ int modem_ansync_add(int (*cb)(void *), int fd, char *name)
 	if(modem_ansync_lst)
 	{
 		//OS_ANSYNC_DEBUG("%s(fd=%d)", name,fd);
-		return _os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, cb,
-			NULL, fd, name, __FILE__, __LINE__);
+		if(_os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, cb,
+			NULL, fd, name, __FILE__, __LINE__))
+			return OK;
 	}
 	return ERROR;
 	//os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, c, NULL, v)
@@ -132,8 +137,9 @@ int modem_ansync_timer_add(int (*cb)(void *), int fd, char *name)
 	if(modem_ansync_lst)
 	{
 		//OS_ANSYNC_DEBUG("%s", name);
-		return _os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_TIMER, cb,
-			NULL, fd, name, __FILE__, __LINE__);
+		if(_os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_TIMER, cb,
+			NULL, fd, name, __FILE__, __LINE__))
+			return OK;
 	}
 	return ERROR;
 	//os_ansync_register_api(modem_ansync_lst, OS_ANSYNC_INPUT, c, NULL, v)
@@ -202,15 +208,12 @@ int modem_task_exit (void)
 struct module_list module_list_modem = 
 { 
 	.module=MODULE_MODEM, 
-	.name="MODEM", 
+	.name="MODEM\0", 
 	.module_init=modem_module_init, 
 	.module_exit=modem_module_exit, 
 	.module_task_init=modem_task_init, 
 	.module_task_exit=modem_task_exit, 
 	.module_cmd_init=cmd_modem_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

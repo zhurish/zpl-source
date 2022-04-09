@@ -6,11 +6,14 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "nsm_dos.h"
+#include "vty.h"
 
 DEFUN (dos_icmp_long_ping_enable,
 		dos_icmp_long_ping_enable_cmd,

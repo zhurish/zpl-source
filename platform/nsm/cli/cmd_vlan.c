@@ -4,12 +4,18 @@
  *  Created on: Jan 11, 2018
  *      Author: zhurish
  */
-
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "route_types.h"
+#include "zebra_event.h"
+#include "zmemory.h"
+#include "if.h"
+#include "if_name.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "command.h"
+#include "nsm_vlan.h"
+#include "nsm_interface.h"
 
 struct vlan_user
 {
@@ -26,7 +32,6 @@ struct vlan_user
 	char cli_str[256];
 };
 
-// static int show_nsm_vlan_database(struct vty *vty, const char *type);
 static int show_nsm_vlan_database_one(l2vlan_t *node, struct vlan_user *pVoid);
 
 DEFUN(vlan_database,
@@ -61,7 +66,7 @@ DEFUN(vlan_add,
 		vlan_t vlanlist[VLAN_TABLE_MAX];
 		zpl_int32 num = 0;
 		memset(vlanlist, 0, sizeof(vlanlist));
-		num = nsm_vlan_list_split_api(argv[0], &vlanlist);
+		num = nsm_vlan_list_split_api(argv[0], vlanlist);
 		if (num == ERROR)
 		{
 			vty_out(vty, "Error:Can not split vlan list table.%s", VTY_NEWLINE);
@@ -117,7 +122,7 @@ DEFUN(no_vlan_add,
 		vlan_t vlanlist[VLAN_TABLE_MAX];
 		zpl_int32 num = 0;
 		memset(vlanlist, 0, sizeof(vlanlist));
-		num = nsm_vlan_list_split_api(argv[0], &vlanlist);
+		num = nsm_vlan_list_split_api(argv[0], vlanlist);
 		if (num == ERROR)
 		{
 			vty_out(vty, "Error:Can not split vlan list table.%s", VTY_NEWLINE);
@@ -248,7 +253,7 @@ DEFUN(switchport_access_vlan,
 	  "access port\n" CMD_VLAN_STR_HELP)
 {
 	int ret = 0;
-	int mode = 0;
+	if_mode_t mode = 0;
 	vlan_t vlan = 0, oldvlan = 0;
 	struct interface *ifp = vty->index;
 	VTY_GET_INTEGER("vlan ID", vlan, argv[0]);
@@ -313,7 +318,7 @@ DEFUN(no_switchport_access_vlan,
 	  "Vlan information\n")
 {
 	int ret = 0;
-	int mode = 0;
+	if_mode_t mode = 0;
 	vlan_t oldvlan = 0;
 	struct interface *ifp = vty->index;
 	if (ifp)
@@ -371,7 +376,7 @@ DEFUN(switchport_trunk_vlan,
 	  "Native Config\n" CMD_VLAN_STR_HELP)
 {
 	int ret = 0;
-	int mode = 0;
+	if_mode_t mode = 0;
 	vlan_t vlan = 0;
 	struct interface *ifp = vty->index;
 	VTY_GET_INTEGER("vlan ID", vlan, argv[0]);
@@ -419,7 +424,7 @@ DEFUN(no_switchport_trunk_vlan,
 	  "Native Config\n")
 {
 	int ret = 0;
-	int mode = 0;
+	if_mode_t mode = 0;
 	struct interface *ifp = vty->index;
 	if (ifp)
 	{
@@ -463,7 +468,7 @@ DEFUN(switchport_trunk_allow_vlan,
 	int ret = 0;
 	vlan_t vlan = 0;
 	struct interface *ifp = vty->index;
-	int mode = 0;
+	if_mode_t mode = 0;
 	if (ifp)
 	{
 		if (nsm_interface_mode_get_api(ifp, &mode) != OK || mode != IF_MODE_TRUNK_L2)
@@ -484,7 +489,7 @@ DEFUN(switchport_trunk_allow_vlan,
 			vlan_t vlanlist[VLAN_TABLE_MAX];
 			zpl_int32 num = 0;
 			memset(vlanlist, 0, sizeof(vlanlist));
-			num = nsm_vlan_list_split_api(argv[1], &vlanlist);
+			num = nsm_vlan_list_split_api(argv[1], vlanlist);
 			if (num == ERROR)
 			{
 				vty_out(vty, "Error:Can not split vlan list table.%s", VTY_NEWLINE);
@@ -562,7 +567,7 @@ DEFUN(switchport_trunk_allow_vlan,
 					vlan_t vlanlist[VLAN_TABLE_MAX];
 					zpl_int32 num = 0;
 					memset(vlanlist, 0, sizeof(vlanlist));
-					num = nsm_vlan_list_split_api(argv[1], &vlanlist);
+					num = nsm_vlan_list_split_api(argv[1], vlanlist);
 					if (num == ERROR)
 					{
 						vty_out(vty, "Error:Can not split vlan list table.%s", VTY_NEWLINE);

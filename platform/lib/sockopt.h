@@ -32,7 +32,7 @@ extern int setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size);
 extern int setsockopt_so_sendbuf (const zpl_socket_t sock, zpl_uint32 size);
 extern int getsockopt_so_sendbuf (const zpl_socket_t sock);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 extern int setsockopt_ipv6_pktinfo (zpl_socket_t, zpl_uint32);
 extern int setsockopt_ipv6_checksum (zpl_socket_t, zpl_uint32);
 extern int setsockopt_ipv6_multicast_hops (zpl_socket_t, zpl_uint32);
@@ -40,12 +40,12 @@ extern int setsockopt_ipv6_unicast_hops (zpl_socket_t, zpl_uint32);
 extern int setsockopt_ipv6_hoplimit (zpl_socket_t, zpl_uint32);
 extern int setsockopt_ipv6_multicast_loop (zpl_socket_t, zpl_uint32);
 extern int setsockopt_ipv6_tclass (zpl_socket_t, zpl_uint32);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /*
  * It is OK to reference ipstack_in6_pktinfo here without a protecting #if
- * because this macro will only be used #if HAVE_IPV6, and ipstack_in6_pktinfo
- * is not optional for HAVE_IPV6.
+ * because this macro will only be used #if ZPL_BUILD_IPV6, and ipstack_in6_pktinfo
+ * is not optional for ZPL_BUILD_IPV6.
  */
 #define SOPT_SIZE_CMSG_PKTINFO_IPV6() (sizeof (struct ipstack_in6_pktinfo));
 
@@ -106,7 +106,7 @@ extern void sockopt_iphdrincl_swab_htosys (struct ip *iph);
 extern void sockopt_iphdrincl_swab_systoh (struct ip *iph);
 
 extern int sockopt_tcp_rtt (zpl_socket_t);
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 extern int sockopt_tcp_signature(zpl_socket_t sock, union sockunion *su,
                                  const char *password);
 #endif

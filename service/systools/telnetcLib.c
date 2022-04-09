@@ -69,8 +69,10 @@ RFCs 854 (telnet), 855 (options), 857 (echo), 858 (suppress go ahead)
 
 /* includes */
 #include "systools.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "command.h"
 #include <telnetLib.h>
-
 /* defines */
 
 #define TELNET_ESC_CHAR     (char)29  /* escape character */

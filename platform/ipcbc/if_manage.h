@@ -32,7 +32,7 @@ extern int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool e
 extern int bsp_usp_module_init(void);
 
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 extern int if_ktest_init(void);
 #endif
 

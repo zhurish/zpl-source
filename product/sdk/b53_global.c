@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include <zpl_include.h>
+#include <zplos_include.h>
 
 #include "hal_driver.h"
 #include "sdk_driver.h"

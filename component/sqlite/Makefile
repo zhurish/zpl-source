@@ -81,8 +81,7 @@ endif
 install: $(LIBS) $(LIBDS) 
 	@install -d $(LIBD_DIR)
 	@install -m 755 $(LIBDS) $(LIBD_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIBD_DIR)/$(LIBDS)
-	#$(STRIP) $(LIBD_DIR)/$(LIBDS)
+
 	
 
 ifeq ($(strip $(ZPL_SQLITE_EXE_MODULE)),true)

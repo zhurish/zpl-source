@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "prefix.h"
 
 #include "libssh_autoconfig.h"

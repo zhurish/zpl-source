@@ -12,10 +12,13 @@
 extern "C" {
 #endif
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "vty.h"
+#include "nsm_dhcp.h"
 
 
 #include "sys/poll.h"

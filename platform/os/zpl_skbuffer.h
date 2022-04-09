@@ -11,7 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "zpl_type.h"
+#include "os_list.h"
 #define ZPL_SKB_START_OFFSET    64
 #define ZPL_SKBUF_ALIGN(n)      (((((n)+3)/4)*4))
 #define ZPL_SKSIZE_ALIGN(n)     (((((n)+3)/4)*4) + ZPL_SKB_START_OFFSET)
@@ -37,7 +38,7 @@ typedef struct
     zpl_phyport_t   trunk;          /* Source trunk group ID used in header/tag, -1 if src_port set . */
     zpl_phyport_t   phyid;          /* Source port used in header/tag. */
 
-    zpl_uint32      reference;
+    volatile zpl_uint32      reference;
 
 }zpl_netpkt_hdr_t __attribute__ ((aligned (1)));
 
@@ -48,11 +49,11 @@ typedef struct
     zpl_uint8 	buffer_codec;       //编码类型
     zpl_uint8 	buffer_key;         //帧类型
     zpl_uint8 	buffer_rev;         //
-    zpl_uint16 	buffer_flags;        //ZPL_BUFFER_DATA_E
+    zpl_uint16 	buffer_flags;       //ZPL_BUFFER_DATA_E
     zpl_uint32 	buffer_timetick;    //时间戳毫秒
     zpl_uint32 	buffer_seq;         //序列号底层序列号
     zpl_uint32	buffer_len;         //帧长度
-}zpl_media_hdr_t;
+}zpl_media_hdr_t __attribute__ ((aligned (1)));
 
 
 typedef struct
@@ -63,18 +64,21 @@ typedef struct
         zpl_netpkt_hdr_t    net_header;
         zpl_media_hdr_t     media_header;
     }skb_header;
-    
+
+    zpl_void    *device;
+
     zpl_uint32 	skb_timetick;    //时间戳 毫秒
     zpl_uint32	skb_len;         //当前缓存帧的长度
     zpl_uint32	skb_maxsize;     //buffer 的长度
     zpl_char	*skb_data;       //buffer
     zpl_uint32	skb_start;
+    volatile zpl_uint8   reference;       //引用计数
 }zpl_skb_data_t __attribute__ ((aligned (1)));
 
 typedef struct 
 {
-	os_sem_t	*sem;
-	os_mutex_t	*mutex;
+	void	*sem;
+	void	*mutex;
     zpl_uint32	maxsize;
 	LIST	    list;			//add queue
 	LIST	    rlist;			//ready queue

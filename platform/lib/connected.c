@@ -20,13 +20,147 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "zebra_event.h"
-#include "route_types.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "if.h"
+#include "log.h"
 #include "prefix.h"
+#include "zmemory.h"
 #include "connected.h"
+#ifdef ZPL_NSM_MODULE
+#include "nsm_rib.h"
+#endif
+#ifdef ZPL_DHCP_MODULE
+#include "nsm_dhcp.h"
+#endif
+
+
+
+
+
+
+/* Allocate connected structure. */
+struct connected *
+connected_new(void)
+{
+	return XCALLOC(MTYPE_CONNECTED, sizeof(struct connected));
+}
+
+/* Free connected structure. */
+void connected_free(struct connected *connected)
+{
+	if (connected->address)
+		prefix_free(connected->address);
+
+	if (connected->destination)
+		prefix_free(connected->destination);
+
+	XFREE(MTYPE_CONNECTED, connected);
+}
+
+/* If two connected address has same prefix return 1. */
+static int connected_same_prefix(struct prefix *p1, struct prefix *p2)
+{
+	if (p1->family == p2->family)
+	{
+		if (p1->family == IPSTACK_AF_INET &&
+			IPV4_ADDR_SAME(&p1->u.prefix4, &p2->u.prefix4))
+			return 1;
+#ifdef ZPL_BUILD_IPV6
+		if (p1->family == IPSTACK_AF_INET6 &&
+			IPV6_ADDR_SAME(&p1->u.prefix6, &p2->u.prefix6))
+			return 1;
+#endif /* ZPL_BUILD_IPV6 */
+	}
+	return 0;
+}
+
+struct connected *
+connected_delete_by_prefix(struct interface *ifp, struct prefix *p)
+{
+	struct listnode *node = NULL;
+	struct listnode *next = NULL;
+	struct connected *ifc = NULL;
+
+	/* In case of same prefix come, replace it with new one. */
+	for (node = listhead(ifp->connected); node; node = next)
+	{
+		ifc = listgetdata(node);
+		next = node->next;
+
+		if (connected_same_prefix(ifc->address, p))
+		{
+			listnode_delete(ifp->connected, ifc);
+			return ifc;
+		}
+	}
+	return NULL;
+}
+
+/* Find the IPv4 address on our side that will be used when packets
+ are sent to dst. */
+struct connected *
+connected_lookup_address(struct interface *ifp, struct ipstack_in_addr dst)
+{
+	struct prefix addr;
+	struct listnode *cnode = NULL;
+	struct connected *c = NULL;
+	struct connected *match = NULL;
+
+	addr.family = IPSTACK_AF_INET;
+	addr.u.prefix4 = dst;
+	addr.prefixlen = IPV4_MAX_BITLEN;
+
+	match = NULL;
+
+	for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
+	{
+		if (c->address && (c->address->family == IPSTACK_AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (!match || (c->address->prefixlen > match->address->prefixlen)))
+			match = c;
+	}
+	return match;
+}
+
+struct connected *
+connected_add_by_prefix(struct interface *ifp, struct prefix *p,
+						struct prefix *destination)
+{
+	struct connected *ifc = NULL;
+
+	/* Allocate new connected address. */
+	ifc = connected_new();
+	ifc->ifp = ifp;
+
+	/* Fetch interface address */
+	ifc->address = prefix_new();
+	memcpy(ifc->address, p, sizeof(struct prefix));
+
+	/* Fetch dest address */
+	if (destination)
+	{
+		ifc->destination = prefix_new();
+		memcpy(ifc->destination, destination, sizeof(struct prefix));
+	}
+
+	/* Add connected address to the interface. */
+	listnode_add(ifp->connected, ifc);
+	return ifc;
+}
+
+/* If same interface address is already exist... */
+struct connected *
+connected_check(struct interface *ifp, struct prefix *p)
+{
+	struct connected *ifc = NULL;
+	struct listnode *node = NULL;
+
+	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, ifc))
+		if (prefix_same(ifc->address, p))
+			return ifc;
+
+	return NULL;
+}
 
 
 struct connected *
@@ -116,7 +250,7 @@ void connected_down_ipv4(struct interface *ifp, struct connected *ifc)
 #endif
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 void connected_up_ipv6(struct interface *ifp, struct connected *ifc)
 {
 	struct prefix_ipv6 p;
@@ -296,7 +430,7 @@ void connected_delete_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipsta
 	connected_down_ipv4(ifp, ifc);
 	//rib_update(ifp->vrf_id);
 }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Add connected IPv6 route to the interface. */
 void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_in6_addr *addr,
 						zpl_uchar prefixlen, struct ipstack_in6_addr *broad,
@@ -400,5 +534,5 @@ void connected_delete_ipv6(struct interface *ifp, struct ipstack_in6_addr *addre
 	connected_down_ipv6(ifp, ifc);
 	//rib_update(ifp->vrf_id);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 

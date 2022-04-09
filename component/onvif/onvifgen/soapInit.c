@@ -14,8 +14,8 @@ A commercial use license is available from Genivia Inc., contact@genivia.com
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "lib_include.h"
 #include "soapH.h"
 
@@ -69,15 +69,12 @@ int aaamain()
 struct module_list module_list_onvif = 
 { 
 	.module=MODULE_ONVIF, 
-	.name="ONVIF", 
+	.name="ONVIF\0", 
 	.module_init=onvif_module_init, 
 	.module_exit=NULL, 
 	.module_task_init=aaamain, 
 	.module_task_exit=NULL, 
 	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.taskid=0,
 };
 /* End of soapInit.c */

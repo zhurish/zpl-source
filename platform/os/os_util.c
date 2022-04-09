@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 
 #define PROC_BASE "/proc"
@@ -316,7 +316,7 @@ zpl_pid_t os_pid_get (const zpl_char *path)
 
 
 
-zpl_pthread_t os_thread_once(int (*entry)(void *), void *p)
+zpl_pthread_t os_thread_once(void (*entry)(void *), void *p)
 {
 	zpl_pthread_t td_thread = 0;
 	if (pthread_create(&td_thread, NULL,
@@ -384,3 +384,77 @@ int hostname_ipv6_address(zpl_char *hostname, struct in6_addr *addr)
 	return OK;
 }
 
+
+
+/*
+C库函数 int tolower(int c)转换给定的字母为小写。
+C库函数 int toupper(int c)转换给定的字母为大写。
+ */
+const char *strupr(zpl_char* src)
+{
+	zpl_char *p = src;
+	/*
+	 * a -> A
+	 */
+	while (*p != '\0')
+	{
+		if (*p >= 'a' && *p <= 'z')
+			//在ASCII表里大写字符的值比对应小写字符的值小32.
+			//*p -= 0x20; // 0x20的十进制就是32
+			*p -= 32;
+		p++;
+	}
+	return src;
+}
+
+const char *strlwr(zpl_char* src)
+{
+	zpl_char *p = src;
+	/*
+	 * A -> a
+	 */
+	while (*p != '\0')
+	{
+		if (*p >= 'A' && *p <= 'Z')
+			*p += 32;
+		p++;
+	}
+	return src;
+}
+
+zpl_uint8 atoascii(int a)
+{
+	return ((a) - 0x30);
+}
+zpl_bool is_hex (zpl_char c)
+{
+  return (((c >= '0') && (c <= '9')) ||
+	  ((c >= 'A') && (c <= 'F')) || ((c >= 'a') && (c <= 'f')));
+}
+
+const char *itoa(int value, int base)
+{
+	static zpl_char buf[32];
+	memset(buf, 0, sizeof(buf));
+	if(base == 0 || base == 10)
+		snprintf(buf, sizeof(buf), "%d", value);
+	else if(base == 16)
+		snprintf(buf, sizeof(buf), "%02x", value);
+	return buf;
+}
+
+const char *ftoa(zpl_float value, zpl_char *fmt)
+{
+	static zpl_char buf[16];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), fmt, value);
+	return buf;
+}
+
+const char *dtoa(zpl_double value, zpl_char *fmt)
+{
+	static zpl_char buf[32];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), fmt, value);
+	return buf;
+}

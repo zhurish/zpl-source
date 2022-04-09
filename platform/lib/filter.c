@@ -19,12 +19,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "command.h"
 #include "filter.h"
 #include "zmemory.h"
-
+#include "if_name.h"
+#include "if.h"
 /* Static structure for IPv4 access_list's master. */
 static struct access_master access_master_ipv4 =
     {
@@ -34,7 +35,7 @@ static struct access_master access_master_ipv4 =
         // NULL,
 };
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Static structure for IPv6 access_list's master. */
 static struct access_master access_master_ipv6 =
     {
@@ -43,7 +44,7 @@ static struct access_master access_master_ipv6 =
         // NULL,
         // NULL,
 };
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #ifdef ZPL_FILTER_MAC
 static struct access_master access_master_l2mac =
     {
@@ -58,10 +59,10 @@ access_master_get(afi_t afi)
 {
   if (afi == AFI_IP)
     return &access_master_ipv4;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
     return &access_master_ipv6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #ifdef ZPL_FILTER_MAC
   else if (afi == AFI_ETHER)
     return &access_master_l2mac;
@@ -457,9 +458,9 @@ void access_list_add_hook(zpl_uint32 module, void (*func)(struct access_list *ac
   if (INT_MAX_MIN_SPACE(module, MODULE_NONE, MODULE_MAX))
   {
     access_master_ipv4.add_hook[module] = func;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     access_master_ipv6.add_hook[module] = func;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   }
 }
 
@@ -469,9 +470,9 @@ void access_list_delete_hook(zpl_uint32 module, void (*func)(struct access_list 
   if (INT_MAX_MIN_SPACE(module, MODULE_NONE, MODULE_MAX))
   {
     access_master_ipv4.delete_hook[module] = func;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     access_master_ipv6.delete_hook[module] = func;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   }
 }
 static int access_list_hook_callback(zpl_uint32 type, struct access_list *access)
@@ -527,9 +528,9 @@ access_list_empty(struct access_list *access)
 static void
 access_list_filter_delete(struct access_list *access, struct filter_list *filter)
 {
-  struct access_master *master;
+  //struct access_master *master;
 
-  master = access->master;
+  //master = access->master;
 
   if (filter->next)
     filter->next->prev = filter->prev;
@@ -754,7 +755,16 @@ int filter_cisco_format(struct vty *vty, const char *addr_str, const char *addr_
             VTY_NEWLINE);
     return CMD_WARNING;
   }
-
+		if(IPV4_NET127(addr.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(addr.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
   if (extended)
   {
     ret = ipstack_inet_aton(mask_str, &mask);
@@ -855,7 +865,16 @@ filter_set_cisco(struct vty *vty, const char *name_str, const char *type_str,
             VTY_NEWLINE);
     return CMD_WARNING;
   }
-
+		if(IPV4_NET127(addr.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(addr.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
   ret = ipstack_inet_aton(addr_mask_str, &addr_mask);
   if (ret <= 0)
   {
@@ -1422,7 +1441,7 @@ int filter_zebra_format(struct vty *vty, afi_t afi, const char *prefix_str, int 
       return CMD_WARNING;
     }
   }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
   {
     ret = str2prefix_ipv6(prefix_str, (struct prefix_ipv6 *)&p);
@@ -1433,7 +1452,7 @@ int filter_zebra_format(struct vty *vty, afi_t afi, const char *prefix_str, int 
       return CMD_WARNING;
     }
   }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else
     return CMD_WARNING;
 
@@ -1477,8 +1496,18 @@ filter_set_zebra(struct vty *vty, const char *name_str, const char *type_str,
               VTY_NEWLINE);
       return CMD_WARNING;
     }
+		if(IPV4_NET127(p.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(p.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
   }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
   {
     ret = str2prefix_ipv6(prefix_str, (struct prefix_ipv6 *)&p);
@@ -1489,7 +1518,7 @@ filter_set_zebra(struct vty *vty, const char *name_str, const char *type_str,
       return CMD_WARNING;
     }
   }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else
     return CMD_WARNING;
 
@@ -1624,7 +1653,7 @@ DEFUN(no_access_list_all,
       "IP zebra access-list name\n")
 {
   struct access_list *access;
-  struct access_master *master;
+  //struct access_master *master;
 
   /* Looking up access_list. */
   access = access_list_lookup(AFI_IP, argv[0]);
@@ -1635,7 +1664,7 @@ DEFUN(no_access_list_all,
     return CMD_WARNING;
   }
 
-  master = access->master;
+  //master = access->master;
 
   /* Run hook function. */
   access_list_hook_callback(0, access);
@@ -1705,7 +1734,7 @@ ALIAS(no_access_list_remark,
       "Access list entry comment\n"
       "Comment up to 100 characters\n")
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 DEFUN(ipv6_access_list,
       ipv6_access_list_cmd,
       "ipv6 access-list WORD (deny|permit) X:X::X:X/M",
@@ -1798,7 +1827,7 @@ DEFUN(no_ipv6_access_list_all,
       "IPv6 zebra access-list\n")
 {
   struct access_list *access;
-  struct access_master *master;
+  //struct access_master *master;
 
   /* Looking up access_list. */
   access = access_list_lookup(AFI_IP6, argv[0]);
@@ -1809,7 +1838,7 @@ DEFUN(no_ipv6_access_list_all,
     return CMD_WARNING;
   }
 
-  master = access->master;
+  //master = access->master;
 
   /* Run hook function. */
   access_list_hook_callback(0, access);
@@ -1866,7 +1895,7 @@ ALIAS(no_ipv6_access_list_remark,
       "IPv6 zebra access-list\n"
       "Access list entry comment\n"
       "Comment up to 100 characters\n")
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 #ifdef ZPL_FILTER_ZEBRA_EXT
 int filter_zebos_ext_format(struct vty *vty, afi_t afi,
@@ -1895,6 +1924,16 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
         vty_out(vty, "IP address prefix/prefixlen is malformed%s", VTY_NEWLINE);
         return CMD_WARNING;
       }
+		if(IPV4_NET127(sp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(sp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
     }
 
     if (!strncmp(dprefix, "a", 1))
@@ -1911,9 +1950,19 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
         vty_out(vty, "IP address prefix/prefixlen is malformed%s", VTY_NEWLINE);
         return CMD_WARNING;
       }
+		if(IPV4_NET127(dp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(dp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
     }
   }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
   {
     if (!strncmp(sprefix, "a", 1))
@@ -1956,7 +2005,7 @@ int filter_zebos_ext_format(struct vty *vty, afi_t afi,
       }
     }
   }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else
     return CMD_WARNING;
 
@@ -2023,6 +2072,16 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
         vty_out(vty, "IP address prefix/prefixlen is malformed%s", VTY_NEWLINE);
         return CMD_WARNING;
       }
+		if(IPV4_NET127(sp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(sp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
     }
 
     if (!strncmp(dprefix, "a", 1))
@@ -2039,9 +2098,19 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
         vty_out(vty, "IP address prefix/prefixlen is malformed%s", VTY_NEWLINE);
         return CMD_WARNING;
       }
+		if(IPV4_NET127(dp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(dp.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
     }
   }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
   {
     if (!strncmp(sprefix, "a", 1))
@@ -2084,7 +2153,7 @@ static int filter_set_zebos_extended(struct vty *vty, const char *name_str,
       }
     }
   }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else
     return CMD_WARNING;
 
@@ -2825,7 +2894,7 @@ ALIAS(access_list_ip_tcpudp_srcport_ng_dstport,
       "le\n"
       "Specify Destination TCP/UDP Port Vlaue\n") 
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /////////////
 DEFUN(access_list_ipv6_protocol,
       access_list_ipv6_protocol_cmd,
@@ -3485,14 +3554,44 @@ int filter_l2mac_format(struct vty *vty,
   }
   else if(src && srcmask && strcmp(srcmask, "host") == 0)
   {
-    vty_mac_get(src, l2new->srcmac),
+    vty_mac_get(src, l2new->srcmac);
+    if (NSM_MAC_IS_BROADCAST(l2new->srcmac))
+    {
+      vty_out(vty, "Error: This host mac is Broadcast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_MULTICAST(l2new->srcmac))
+    {
+      vty_out(vty, "Error: This host mac Multicast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
     memset(l2new->srcmac_mask, 0xff, NSM_MAC_MAX);
     l2new->flag |= FILTER_L2MAC_SRC;
   }
   else if(src && srcmask)
   {
-    vty_mac_get(src, l2new->srcmac),
-    vty_mac_get(srcmask, l2new->srcmac_mask),
+    vty_mac_get(src, l2new->srcmac);
+    vty_mac_get(srcmask, l2new->srcmac_mask);
+    if (NSM_MAC_IS_BROADCAST(l2new->srcmac))
+    {
+      vty_out(vty, "Error: This src mac is Broadcast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_MULTICAST(l2new->srcmac))
+    {
+      vty_out(vty, "Error: This src mac is Multicast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_BROADCAST(l2new->srcmac_mask))
+    {
+      vty_out(vty, "Error: This src mask mac is Broadcast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_MULTICAST(l2new->srcmac_mask))
+    {
+      vty_out(vty, "Error: This src mask mac is Multicast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
     l2new->flag |= FILTER_L2MAC_SRC|FILTER_L2MAC_SRCMASK;
   }
 
@@ -3505,13 +3604,43 @@ int filter_l2mac_format(struct vty *vty,
   else if(dst && dstmask && strcmp(dstmask, "host") == 0)
   {
     memset(l2new->srcmac_mask, 0xff, NSM_MAC_MAX);
-    vty_mac_get(dst, l2new->dstmac),
+    vty_mac_get(dst, l2new->dstmac);
+    if (NSM_MAC_IS_BROADCAST(l2new->dstmac))
+    {
+      vty_out(vty, "Error: This dst mac is Broadcast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_MULTICAST(l2new->dstmac))
+    {
+      vty_out(vty, "Error: This dst mac is Multicast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
     l2new->flag |= FILTER_L2MAC_DST;
   }
   else if(dst && dstmask)
   {
-    vty_mac_get(dst, l2new->dstmac),
-    vty_mac_get(dstmask, l2new->dstmac_mask),
+    vty_mac_get(dst, l2new->dstmac);
+    vty_mac_get(dstmask, l2new->dstmac_mask);
+    if (NSM_MAC_IS_BROADCAST(l2new->dstmac))
+    {
+      vty_out(vty, "Error: This dst mac is Broadcast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_MULTICAST(l2new->dstmac))
+    {
+      vty_out(vty, "Error: This dst mac is Multicast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_BROADCAST(l2new->dstmac_mask))
+    {
+      vty_out(vty, "Error: This dst mask mac is Broadcast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
+    if (NSM_MAC_IS_MULTICAST(l2new->dstmac_mask))
+    {
+      vty_out(vty, "Error: This dst mask mac is Multicast mac address.%s", VTY_NEWLINE);
+      return ERROR;
+    }
     l2new->flag |= FILTER_L2MAC_DST|FILTER_L2MAC_DSTMASK;
   }
 
@@ -3680,13 +3809,15 @@ DEFUN(mac_access_list_src_mac_any,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
-  
-  filter_l2mac_format(vty, src, srcmask, 
+  int ret = 0;
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
                           &l2new);
+  if(ret != OK)
+    return CMD_WARNING;                        
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 /*
@@ -3751,6 +3882,7 @@ DEFUN(mac_access_list_src_mac_any_dstany,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 3)
   {
     if(strstr(argv[2], "any"))
@@ -3784,12 +3916,14 @@ DEFUN(mac_access_list_src_mac_any_dstany,
 
     proto = eth_protocol_type(argv[4]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
-                          &l2new);                      
+                          &l2new);    
+  if(ret != OK)
+    return CMD_WARNING;                     
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -3880,6 +4014,7 @@ DEFUN(mac_access_list_src_mac_any_dstmask,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 5)
   {
     if(strstr(argv[4], "any"))
@@ -3912,12 +4047,14 @@ DEFUN(mac_access_list_src_mac_any_dstmask,
       cos = atoi(argv[5]);
     proto = eth_protocol_type(argv[6]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
-                          &l2new);   
+                          &l2new);  
+  if(ret != OK)
+    return CMD_WARNING;      
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4013,6 +4150,7 @@ DEFUN(mac_access_list_src_mac_any_dsthost,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 4)
   {
     if(strstr(argv[3], "any"))
@@ -4045,12 +4183,14 @@ DEFUN(mac_access_list_src_mac_any_dsthost,
       cos = atoi(argv[4]);
     proto = eth_protocol_type(argv[5]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
-                          &l2new);   
+                          &l2new);  
+  if(ret != OK)
+    return CMD_WARNING;                
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4142,6 +4282,7 @@ DEFUN(mac_access_list_src_mac_mask,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 4)
   {
     if(strstr(argv[3], "any"))
@@ -4174,12 +4315,14 @@ DEFUN(mac_access_list_src_mac_mask,
       cos = atoi(argv[4]);
     proto = eth_protocol_type(argv[5]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
-                          &l2new);   
+                          &l2new);  
+  if(ret != OK)
+    return CMD_WARNING;                 
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4212,6 +4355,7 @@ DEFUN(mac_access_list_src_mac_mask_dstany,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 5)
   {
     if(strstr(argv[4], "any"))
@@ -4244,12 +4388,14 @@ DEFUN(mac_access_list_src_mac_mask_dstany,
       cos = atoi(argv[5]);
     proto = eth_protocol_type(argv[6]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
                           &l2new);   
+  if(ret != OK)
+    return CMD_WARNING; 
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4345,6 +4491,7 @@ DEFUN(mac_access_list_src_mac_mask_dstmask,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 7)
   {
     if(strstr(argv[6], "any"))
@@ -4377,12 +4524,14 @@ DEFUN(mac_access_list_src_mac_mask_dstmask,
       cos = atoi(argv[7]);
     proto = eth_protocol_type(argv[8]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
-                          &l2new);   
+                          &l2new);  
+  if(ret != OK)
+    return CMD_WARNING;          
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4486,6 +4635,7 @@ DEFUN(mac_access_list_src_mac_mask_dsthost,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 6)
   {
     if(strstr(argv[5], "any"))
@@ -4518,12 +4668,14 @@ DEFUN(mac_access_list_src_mac_mask_dsthost,
       cos = atoi(argv[6]);
     proto = eth_protocol_type(argv[7]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
-                          &l2new);   
+                          &l2new); 
+  if(ret != OK)
+    return CMD_WARNING;          
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4651,12 +4803,15 @@ DEFUN(mac_access_list_src_mac_host,
       cos = atoi(argv[6]);
     proto = eth_protocol_type(argv[7]);
   }*/
-  filter_l2mac_format(vty, src, srcmask, 
+  int ret = 0;
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
                           &l2new); 
+  if(ret != OK)
+    return CMD_WARNING;            
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4688,6 +4843,7 @@ DEFUN(mac_access_list_src_mac_host_dstany,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 4)
   {
     if(strstr(argv[3], "any"))
@@ -4720,12 +4876,15 @@ DEFUN(mac_access_list_src_mac_host_dstany,
       cos = atoi(argv[4]);
     proto = eth_protocol_type(argv[5]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
                           &l2new); 
+  if(ret != OK)
+    return CMD_WARNING;     
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4819,6 +4978,7 @@ DEFUN(mac_access_list_src_mac_host_dstmask,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 6)
   {
     if(strstr(argv[5], "any"))
@@ -4851,12 +5011,14 @@ DEFUN(mac_access_list_src_mac_host_dstmask,
       cos = atoi(argv[6]);
     proto = eth_protocol_type(argv[7]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
                           &l2new); 
+  if(ret != OK)
+    return CMD_WARNING; 
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -4956,6 +5118,7 @@ DEFUN(mac_access_list_src_mac_host_dsthost,
   int exp = -1;
   int innerlabel = -1;
   int innerexp = -1;
+  int ret = 0;
   if(argc == 5)
   {
     if(strstr(argv[4], "any"))
@@ -4988,12 +5151,15 @@ DEFUN(mac_access_list_src_mac_host_dsthost,
       cos = atoi(argv[5]);
     proto = eth_protocol_type(argv[6]);
   }
-  filter_l2mac_format(vty, src, srcmask, 
+    
+  ret = filter_l2mac_format(vty, src, srcmask, 
                           dst, dstmask,
                           proto,
                           vlan, cos, innervlan, innercos,
                           label, exp, innerlabel, innerexp,
                           &l2new); 
+  if(ret != OK)
+    return CMD_WARNING;   
   return filter_set_l2mac(vty, argv[0], argv[1], 0, &l2new, 1);
 }
 
@@ -5244,7 +5410,7 @@ DEFUN(show_ip_access_list_name,
   return filter_show(vty, argv[0], AFI_IP);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 DEFUN(show_ipv6_access_list,
       show_ipv6_access_list_cmd,
       "show ipv6 access-list",
@@ -5265,7 +5431,7 @@ DEFUN(show_ipv6_access_list_name,
 {
   return filter_show(vty, argv[0], AFI_IP6);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 #ifdef ZPL_FILTER_MAC
 DEFUN(show_mac_access_list,
@@ -5708,7 +5874,7 @@ access_list_init_ipv4(void)
 #endif
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 static struct cmd_node access_ipv6_node =
     {
         ACCESS_IPV6_NODE,
@@ -5793,7 +5959,7 @@ access_list_init_ipv6(void)
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &access_list_ipv6_tcpudp_srcport_ng_dstport_ng_cmd);
 #endif
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #endif
 
 #ifdef ZPL_FILTER_MAC
@@ -5896,9 +6062,9 @@ void access_list_init()
 {
 #ifdef ZPL_SHELL_MODULE
   access_list_init_ipv4();
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   access_list_init_ipv6();
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #ifdef ZPL_FILTER_MAC
   access_list_init_mac();
 #endif
@@ -5910,9 +6076,9 @@ void access_list_reset()
 {
 #ifdef ZPL_SHELL_MODULE
   access_list_reset_ipv4();
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   access_list_reset_ipv6();
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #ifdef ZPL_FILTER_MAC
   access_list_reset_mac();
 #endif

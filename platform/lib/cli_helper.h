@@ -43,7 +43,7 @@ extern "C" {
 #define SET_STR "Set values in destination routing protocol\n"
 #define OUT_STR "Filter outgoing routing updates\n"
 #define IN_STR  "Filter incoming routing updates\n"
-#define V4NOTATION_STR "specify by IPv4 address notation(e.g. 0.0.0.0)\n"
+#define V4NOTATION_STR "Specify by IPv4 address notation(e.g. 0.0.0.0)\n"
 #define OSPF6_NUMBER_STR "Specify by number\n"
 #define INTERFACE_STR "Interface information\n"
 #define IFNAME_STR "Interface name(e.g. eth0/1/1)\n"
@@ -73,27 +73,76 @@ extern "C" {
 #define CMD_INTERFACE_STR	"interface"
 #define CMD_INTERFACE_STR_HELP	INTERFACE_STR
 
+#ifdef ZPL_NSM_BRIDGE 
+#define CMD_BRIDGE_STR		"|brigde"
+#define CMD_BRIDGE_STR_HELP	"Brigde interface\n"
+#else
+#define CMD_BRIDGE_STR		""
+#define CMD_BRIDGE_STR_HELP	""
+#endif
+#ifdef ZPL_NSM_SERIAL
+#define CMD_SERIAL_STR		"|serial"
+#define CMD_SERIAL_STR_HELP	"Serial interface\n"
+#else
+#define CMD_SERIAL_STR		""
+#define CMD_SERIAL_STR_HELP	""
+#endif
+#ifdef ZPL_NSM_TRUNK
+#define CMD_TRUNK_STR		"|trunk"
+#define CMD_TRUNK_STR_HELP	"Trunk interface\n"
+#else
+#define CMD_TRUNK_STR		""
+#define CMD_TRUNK_STR_HELP	""
+#endif
+#ifdef ZPL_NSM_TUNNEL
+#define CMD_TUNNEL_STR		"|tunnel"
+#define CMD_TUNNEL_STR_HELP	"Tunnel interface\n"
+#else
+#define CMD_TUNNEL_STR		""
+#define CMD_TUNNEL_STR_HELP	""
+#endif
+#ifdef ZPL_NSM_VLANETH
+#define CMD_VLANETH_STR			"|vlaneth"
+#define CMD_VLANETH_STR_HELP	"Vlaneth interface\n"
+#else
+#define CMD_VLANETH_STR		""
+#define CMD_VLANETH_STR_HELP	""
+#endif
+#ifdef ZPL_WIFI_MODULE		
+#define CMD_WIRELESS_STR		"|wireless"
+#define CMD_WIRELESS_STR_HELP	"Wireless interface\n"
+#else
+#define CMD_WIRELESS_STR		""
+#define CMD_WIRELESS_STR_HELP	""
+#endif
+
+#define CMD_IF_USPV_STR		"(ethernet|gigabitethernet" CMD_BRIDGE_STR CMD_SERIAL_STR CMD_TUNNEL_STR CMD_WIRELESS_STR ")"
+#define CMD_IF_USPV_STR_HELP	"Ethernet interface\n" \
+								"GigabitEthernet interface\n" CMD_BRIDGE_STR_HELP CMD_SERIAL_STR_HELP CMD_TUNNEL_STR_HELP CMD_WIRELESS_STR_HELP
+
+/*
 #define CMD_IF_USPV_STR		"(serial|ethernet|gigabitethernet|wireless|tunnel|brigde)"
 #define CMD_IF_USPV_STR_HELP	"Serial interface\n Ethernet interface\n" \
 								"GigabitEthernet interface\n" \
 								"Wireless interface\n"\
 								"Tunnel interface\n Brigde interface\n"
+*/
 
 #define CMD_IF_SUB_USPV_STR		"(ethernet|gigabitethernet)"
 #define CMD_IF_SUB_USPV_STR_HELP	"Ethernet interface\n" \
 								"GigabitEthernet interface\n"
 
 #define CMD_USP_STR			"<unit/slot/port>"
-#define CMD_USP_STR_HELP	"specify interface name:<unit/slot/port> (e.g. 0/1/3)\n"
+#define CMD_USP_STR_HELP	"Specify interface name:<unit/slot/port> (e.g. 0/1/3)\n"
 
 #define CMD_USP_SUB_STR			"<unit/slot/port.id>"
-#define CMD_USP_SUB_STR_HELP	"specify interface name:<unit/slot/port.id> (e.g. 0/1/3.1)\n"
+#define CMD_USP_SUB_STR_HELP	"Specify interface name:<unit/slot/port.id> (e.g. 0/1/3.1)\n"
 
 #define CMD_USP_RANGE_STR			"<unit/slot/port-end>"
-#define CMD_USP_RANGE_STR_HELP	"specify interface name:<unit/slot/port> (e.g. 0/1/3-6)\n"
+#define CMD_USP_RANGE_STR_HELP	"Specify interface name:<unit/slot/port> (e.g. 0/1/3-6)\n"
 
 #define CMD_USP_SUB_RANGE_STR			"<unit/slot/port.id-id>"
-#define CMD_USP_SUB_RANGE_STR_HELP	"specify interface name:<unit/slot/port.id-id> (e.g. 0/1/3.1-4)\n"
+#define CMD_USP_SUB_RANGE_STR_HELP	"Specify interface name:<unit/slot/port.id-id> (e.g. 0/1/3.1-4)\n"
 
 
 #ifdef CUSTOM_INTERFACE
@@ -123,13 +172,13 @@ extern "C" {
 #define CMD_MAC_ADDRESS_LEARN_STR_HELP	"Mac Address\nMac Address Learning\n"
 
 #define CMD_MAC_STR			"HHHH-HHHH-HHHH"
-#define CMD_MAC_STR_HELP	"specify MAC address:HHHH-HHHH-HHHH (e.g. 0012-2234-5631)\n"
+#define CMD_MAC_STR_HELP	"Specify MAC address:HHHH-HHHH-HHHH (e.g. 0012-2234-5631)\n"
 
 #define CMD_FORWARD_STR			"forward"
-#define CMD_FORWARD_STR_HELP	"forward\n"
+#define CMD_FORWARD_STR_HELP	"Forward\n"
 
 #define CMD_DISCARD_STR			"discard"
-#define CMD_DISCARD_STR_HELP	"discard\n"
+#define CMD_DISCARD_STR_HELP	"Discard\n"
 
 #define CMD_VLAN_DATABASE_STR		"vlan-database"
 #define CMD_VLAN_STR_DATABASE_HELP	"Vlan database\n"
@@ -145,7 +194,7 @@ extern "C" {
 
 /* IPv4 only machine should not accept IPv6 address for peer's IP
    address.  So we replace VTY command string like below. */
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 #define NEIGHBOR_CMD       "neighbor (A.B.C.D|X:X::X:X) "
 #define NO_NEIGHBOR_CMD    "no neighbor (A.B.C.D|X:X::X:X) "
 #define NEIGHBOR_ADDR_STR  "Neighbor address\nIPv6 address\n"
@@ -159,7 +208,7 @@ extern "C" {
 #define NEIGHBOR_CMD2      "neighbor (A.B.C.D|WORD) "
 #define NO_NEIGHBOR_CMD2   "no neighbor (A.B.C.D|WORD) "
 #define NEIGHBOR_ADDR_STR2 "Neighbor address\nNeighbor tag\n"
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 
 #define IP_IPPROTO_CMD			"ip|icmp|igmp|ipip|egp|pup|idp|tp|dccp|ipv6|rsvp|gre|esp|ah|mtp|beetph|encap|pim|comp|sctp|udplite|mpls|raw|ospf|<0-5>|<7-16>|<18-255>"

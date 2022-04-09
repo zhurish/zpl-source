@@ -19,9 +19,9 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <os_include.h>
-#include <zpl_include.h>
-
+#include <auto_include.h>
+#include <zplos_include.h>
+#include "zebra_event.h"
 #include "prefix.h"
 #include "command.h"
 #include "if.h"
@@ -33,20 +33,21 @@
 #include "network.h"
 #include "sockunion.h"
 #include "log.h"
-#include "nsm_zclient.h"
 #include "network.h"
 #include "buffer.h"
 #ifdef ZPL_VRF_MODULE
 #include "vrf.h"
 #endif
 #include "nexthop.h"
-
-#include "nsm_zserv.h"
 #include "router-id.h"
+
+#include "nsm_zclient.h"
+#include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
-#include "nsm_ipforward.h"
+#include "nsm_fpm.h"
 #include "nsm_rnh.h"
+#include "nsm_ipforward.h"
 
 /* Event list of zebra. */
 enum event
@@ -97,7 +98,7 @@ zserv_flush_data(struct thread *thread)
   case BUFFER_ERROR:
     zlog_warn(MODULE_NSM, "%s: buffer_flush_available failed on zserv client fd %d, "
                           "closing",
-              __func__, client->sock);
+              __func__, client->sock._fd);
     zebra_client_close(client);
     break;
   case BUFFER_PENDING:
@@ -124,7 +125,7 @@ int zebra_server_send_message(struct zserv *client)
   {
   case BUFFER_ERROR:
     zlog_warn(MODULE_NSM, "%s: buffer_write failed to zserv client fd %d, closing",
-              __func__, client->sock);
+              __func__, client->sock._fd);
     /* Schedule a delayed close since many of the functions that call this
        one do not check the return code.  They do not allow for the
  possibility that an I/O error may have caused the client to be
@@ -483,7 +484,7 @@ int zsend_route_multipath(zpl_uint16 cmd, struct zserv *client, struct prefix *p
       case NEXTHOP_TYPE_IPV4_IFINDEX:
         stream_put_in_addr(s, &nexthop->gate.ipv4);
         break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       case NEXTHOP_TYPE_IPV6:
       case NEXTHOP_TYPE_IPV6_IFINDEX:
       case NEXTHOP_TYPE_IPV6_IFNAME:
@@ -543,7 +544,7 @@ int zsend_route_multipath(zpl_uint16 cmd, struct zserv *client, struct prefix *p
   return zebra_server_send_message(client);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 static int
 zsend_ipv6_nexthop_lookup(struct zserv *client, struct ipstack_in6_addr *addr,
                           vrf_id_t vrf_id)
@@ -611,7 +612,7 @@ zsend_ipv6_nexthop_lookup(struct zserv *client, struct ipstack_in6_addr *addr,
 
   return zebra_server_send_message(client);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /*
   In the case of ZEBRA_IPV4_NEXTHOP_LOOKUP_MRIB:
@@ -653,7 +654,7 @@ zsend_ipv4_nexthop_lookup(struct zserv *client, struct ipstack_in_addr addr,
   if (rib)
   {
     if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
-      zlog_debug("%s: Matching rib entry found.", __func__);
+      zlog_debug(MODULE_NSM, "%s: Matching rib entry found.", __func__);
     stream_putl(s, rib->metric);
     num = 0;
     nump = stream_get_endp(s); /* remember position for nexthop_num */
@@ -1132,7 +1133,7 @@ zread_ipv4_import_lookup(struct zserv *client, zpl_ushort length,
   return zsend_ipv4_import_lookup(client, &p, vrf_id);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Zebra server IPv6 prefix add function. */
 static int
 zread_ipv6_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
@@ -1345,7 +1346,7 @@ zread_ipv6_nexthop_lookup(struct zserv *client, zpl_ushort length,
 
   return zsend_ipv6_nexthop_lookup(client, &addr, vrf_id);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* Register zebra server router-id information.  Send current router-id */
 static int
@@ -1373,7 +1374,7 @@ zread_router_id_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 static void
 zread_hello(struct zserv *client)
 {
-  /* type of protocol (lib/os_include.h) */
+  /* type of protocol (lib/auto_include.h) */
   zpl_uchar proto;
   proto = stream_getc(client->ibuf);
 
@@ -1381,13 +1382,13 @@ zread_hello(struct zserv *client)
   if ((proto < ZEBRA_ROUTE_MAX) && (proto > ZEBRA_ROUTE_STATIC))
   {
     zlog_notice(MODULE_NSM, "client %d says hello and bids fair to announce only %s routes",
-                client->sock, zebra_route_string(proto));
+                client->sock._fd, zebra_route_string(proto));
 
     /* if route-type was binded by other client */
     if (route_type_oaths[proto])
       zlog_warn(MODULE_NSM, "sender of %s routes changed %c->%c",
                 zebra_route_string(proto), route_type_oaths[proto],
-                client->sock);
+                client->sock._fd);
 
     route_type_oaths[proto] = client->sock._fd;
     client->proto = proto;
@@ -1528,7 +1529,7 @@ zebra_client_read(struct thread *thread)
         (nbyte == -1))
     {
       if (IS_ZEBRA_DEBUG_EVENT)
-        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", sock);
+        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", sock._fd);
       zebra_client_close(client);
       return -1;
     }
@@ -1554,14 +1555,14 @@ zebra_client_read(struct thread *thread)
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
   {
     zlog_err(MODULE_NSM, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
-             __func__, sock, marker, version);
+             __func__, sock._fd, marker, version);
     zebra_client_close(client);
     return -1;
   }
   if (length < ZEBRA_HEADER_SIZE)
   {
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u is less than header size %d",
-              __func__, sock, length, ZEBRA_HEADER_SIZE);
+              __func__, sock._fd, length, ZEBRA_HEADER_SIZE);
     zebra_client_close(client);
     return -1;
   }
@@ -1582,7 +1583,7 @@ zebra_client_read(struct thread *thread)
         (nbyte == -1))
     {
       if (IS_ZEBRA_DEBUG_EVENT)
-        zlog_debug(MODULE_NSM, "connection closed [%d] when reading zebra data", sock);
+        zlog_debug(MODULE_NSM, "connection closed [%d] when reading zebra data", sock._fd);
       zebra_client_close(client);
       return -1;
     }
@@ -1598,7 +1599,7 @@ zebra_client_read(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug(MODULE_NSM, "zebra message comes from ipstack_socket [%d]", sock);
+    zlog_debug(MODULE_NSM, "zebra message comes from ipstack_socket [%d]", sock._fd);
 
   if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
     zlog_debug(MODULE_NSM, "zebra message received [%s] %d in VRF %u",
@@ -1627,14 +1628,14 @@ zebra_client_read(struct thread *thread)
   case ZEBRA_IPV4_ROUTE_DELETE:
     zread_ipv4_delete(client, length, vrf_id);
     break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   case ZEBRA_IPV6_ROUTE_ADD:
     zread_ipv6_add(client, length, vrf_id);
     break;
   case ZEBRA_IPV6_ROUTE_DELETE:
     zread_ipv6_delete(client, length, vrf_id);
     break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   case ZEBRA_REDISTRIBUTE_ADD:
     zebra_redistribute_add(command, client, length, vrf_id);
     break;
@@ -1651,11 +1652,11 @@ zebra_client_read(struct thread *thread)
   case ZEBRA_IPV4_NEXTHOP_LOOKUP_MRIB:
     zread_ipv4_nexthop_lookup(command, client, length, vrf_id);
     break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   case ZEBRA_IPV6_NEXTHOP_LOOKUP:
     zread_ipv6_nexthop_lookup(client, length, vrf_id);
     break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   case ZEBRA_IPV4_IMPORT_LOOKUP:
     zread_ipv4_import_lookup(client, length, vrf_id);
     break;
@@ -1664,6 +1665,7 @@ zebra_client_read(struct thread *thread)
     break;
   case ZEBRA_VRF_UNREGISTER:
     zread_vrf_unregister(client, length, vrf_id);
+    break;
   case ZEBRA_NEXTHOP_REGISTER:
     zserv_nexthop_register(client, sock, length, vrf_id);
     break;
@@ -1859,7 +1861,9 @@ zebra_event(enum event event, zpl_socket_t sock, struct zserv *client)
     break;
   }
 }
-#if 0
+
+
+#if 1
 #define ZEBRA_TIME_BUF 32
 static zpl_char *
 zserv_time_buf(zpl_time_t *time1, zpl_char *buf, int buflen)
@@ -1980,7 +1984,7 @@ zebra_show_client_brief (struct vty *vty, struct zserv *client)
 
 }
 #endif
-#if 0
+#if 1
 /* Display default rtm_table for all clients. */
 DEFUN (show_table,
        show_table_cmd,
@@ -2003,48 +2007,6 @@ DEFUN (config_table,
   return CMD_SUCCESS;
 }
 
-DEFUN (ip_forwarding,
-       ip_forwarding_cmd,
-       "ip forwarding",
-       IP_STR
-       "Turn on IP forwarding")
-{
-  int ret;
-
-  ret = ipforward ();
-  if (ret == 0)
-    ret = ipforward_on ();
-
-  if (ret == 0)
-    {
-      vty_out (vty, "Can't turn on IP forwarding%s", VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  return CMD_SUCCESS;
-}
-
-DEFUN (no_ip_forwarding,
-       no_ip_forwarding_cmd,
-       "no ip forwarding",
-       NO_STR
-       IP_STR
-       "Turn off IP forwarding")
-{
-  int ret;
-
-  ret = ipforward ();
-  if (ret != 0)
-    ret = ipforward_off ();
-
-  if (ret != 0)
-    {
-      vty_out (vty, "Can't turn off IP forwarding%s", VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  return CMD_SUCCESS;
-}
 
 /* This command is for debugging purpose. */
 DEFUN (show_zebra_client,
@@ -2104,101 +2066,6 @@ static struct cmd_node table_node =
   1
 };
 
-/* Only display ip forwarding is enabled or not. */
-DEFUN (show_ip_forwarding,
-       show_ip_forwarding_cmd,
-       "show ip forwarding",
-       SHOW_STR
-       IP_STR
-       "IP forwarding status\n")
-{
-  int ret;
-
-  ret = ipforward ();
-
-  if (ret == 0)
-    vty_out (vty, "IP forwarding is off%s", VTY_NEWLINE);
-  else
-    vty_out (vty, "IP forwarding is on%s", VTY_NEWLINE);
-  return CMD_SUCCESS;
-}
-
-#ifdef HAVE_IPV6
-/* Only display ipv6 forwarding is enabled or not. */
-DEFUN (show_ipv6_forwarding,
-       show_ipv6_forwarding_cmd,
-       "show ipv6 forwarding",
-       SHOW_STR
-       "IPv6 information\n"
-       "Forwarding status\n")
-{
-  int ret;
-
-  ret = ipforward_ipv6 ();
-
-  switch (ret)
-    {
-    case -1:
-      vty_out (vty, "ipv6 forwarding is unknown%s", VTY_NEWLINE);
-      break;
-    case 0:
-      vty_out (vty, "ipv6 forwarding is %s%s", "off", VTY_NEWLINE);
-      break;
-    case 1:
-      vty_out (vty, "ipv6 forwarding is %s%s", "on", VTY_NEWLINE);
-      break;
-    default:
-      vty_out (vty, "ipv6 forwarding is %s%s", "off", VTY_NEWLINE);
-      break;
-    }
-  return CMD_SUCCESS;
-}
-
-DEFUN (ipv6_forwarding,
-       ipv6_forwarding_cmd,
-       "ipv6 forwarding",
-       IPV6_STR
-       "Turn on IPv6 forwarding")
-{
-  int ret;
-
-  ret = ipforward_ipv6 ();
-  if (ret == 0)
-    ret = ipforward_ipv6_on ();
-
-  if (ret == 0)
-    {
-      vty_out (vty, "Can't turn on IPv6 forwarding%s", VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  return CMD_SUCCESS;
-}
-
-DEFUN (no_ipv6_forwarding,
-       no_ipv6_forwarding_cmd,
-       "no ipv6 forwarding",
-       NO_STR
-       IPV6_STR
-       "Turn off IPv6 forwarding")
-{
-  int ret;
-
-  ret = ipforward_ipv6 ();
-  if (ret != 0)
-    ret = ipforward_ipv6_off ();
-
-  if (ret != 0)
-    {
-      vty_out (vty, "Can't turn off IPv6 forwarding%s", VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  return CMD_SUCCESS;
-}
-
-#endif /* HAVE_IPV6 */
-
 /* IPForwarding configuration write function. */
 static int
 config_write_forwarding (struct vty *vty)
@@ -2206,12 +2073,7 @@ config_write_forwarding (struct vty *vty)
   /* FIXME: Find better place for that. */
   router_id_write (vty);
 
-  if (ipforward ())
-    vty_out (vty, "ip forwarding%s", VTY_NEWLINE);
-#ifdef HAVE_IPV6
-  if (ipforward_ipv6 ())
-    vty_out (vty, "ipv6 forwarding%s", VTY_NEWLINE);
-#endif /* HAVE_IPV6 */
+
   vty_out (vty, "!%s", VTY_NEWLINE);
   return 0;
 }
@@ -2224,13 +2086,11 @@ static struct cmd_node forwarding_node =
   1
 };
 
-#ifdef HAVE_FPM
+#if 1//def HAVE_FPM
 /* function to write the fpm config info */
-static int 
-config_write_fpm (struct vty *vty)
+static int  config_write_fpm (struct vty *vty)
 {
-  return 
-     fpm_remote_srv_write (vty);
+  return fpm_remote_srv_write (vty);
 }
 
 /* Zebra node  */
@@ -2249,17 +2109,15 @@ void zebra_init(void)
 {
   /* Client list init. */
   nsm_srv->client_list = list_new();
-#if 0
+#if 1
   /* Install configuration write function. */
   install_node (&table_node, config_write_table);
   install_node (&forwarding_node, config_write_forwarding);
-#ifdef HAVE_FPM
+#if 1//def HAVE_FPM
   install_node (&zebra_node, config_write_fpm);
 #endif
 
-  install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_forwarding_cmd);
-  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_forwarding_cmd);
-  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ip_forwarding_cmd);
+
   install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_zebra_client_cmd);
   install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_zebra_client_summary_cmd);
 
@@ -2268,11 +2126,7 @@ void zebra_init(void)
   install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &config_table_cmd);
 #endif /* HAVE_NETLINK */
 
-#ifdef HAVE_IPV6
-  install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_forwarding_cmd);
-  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_forwarding_cmd);
-  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ipv6_forwarding_cmd);
-#endif /* HAVE_IPV6 */
+
 #endif
   /* Route-map */
   // zebra_route_map_init ();

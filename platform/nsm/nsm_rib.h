@@ -27,8 +27,8 @@
 extern "C" {
 #endif
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "vrf.h"
 #include "linklist.h"
 #include "prefix.h"
@@ -48,6 +48,7 @@ struct nsm_rib_t
   struct work_queue *ribq;
   struct meta_queue *mq;
   int nsm_rib_id;
+  int rib_task_id;  
 };
 
 extern struct nsm_rib_t *nsm_ribd;
@@ -92,7 +93,7 @@ struct rib
   zpl_uchar distance;
 
   /* Flags of this route.
-   * This flag's definition is in lib/os_include.h ZEBRA_FLAG_* and is exposed
+   * This flag's definition is in lib/auto_include.h ZEBRA_FLAG_* and is exposed
    * to clients via Zserv
    */
   zpl_uchar flags;
@@ -345,7 +346,7 @@ struct nsm_ip_vrf
 
 #ifdef HAVE_NETLINK
   struct nlsock netlink_cmd; /* command channel */
-#ifdef ZPL_KERNEL_SORF_FORWARDING
+#ifdef ZPL_KERNEL_FORWARDING
   struct nlsock netlink;     /* kernel messages */
   struct thread *t_netlink;
 #endif  
@@ -634,7 +635,7 @@ extern int nsm_vrf_enable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf);
 /* Callback upon disabling a VRF. */
 extern int nsm_vrf_disable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf);
 
- int nsm_ip_route_config_write (struct vty *vty);
+
 
 #ifdef __cplusplus
 }

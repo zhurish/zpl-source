@@ -41,10 +41,10 @@ extern "C" {
 /*
 #define VRF_CMD_STR         "ip_vrf <0-65535>"
 #define VRF_CMD_HELP_STR    "Specify the VRF\nThe VRF ID\n"
-
+*/
 #define VRF_ALL_CMD_STR         "ip_vrf all"
 #define VRF_ALL_CMD_HELP_STR    "Specify the VRF\nAll VRFs\n"
-*/
+
 
 #define VRF_CMD_STR		"ip_vrf (NAME|<0-65535>)"
 #define VRF_CMD_HELP_STR	"Specify the VRF\nSpecify the VRF name\nThe VRF ID\n"
@@ -58,7 +58,7 @@ extern "C" {
 #define VRF_ENABLE_HOOK     2   /* a VRF is ready to use */
 #define VRF_DISABLE_HOOK    3   /* a VRF is to be unusable */
 
-
+#define VRF_NAME_MAX    32
 
 
 struct ip_vrf
@@ -67,7 +67,7 @@ struct ip_vrf
   /* Identifier, same as the vector index */
   vrf_id_t vrf_id;
   /* Name */
-  zpl_char *name;
+  char name[VRF_NAME_MAX];
   /* File descriptor */
   zpl_socket_t fd;
   /* User data */
@@ -90,7 +90,7 @@ struct ip_vrf_temp
 	  zpl_uchar proto;
     vrf_id_t vrf_id;
     zpl_socket_t fd;
-    zpl_char *name;
+    char name[VRF_NAME_MAX];
     zpl_uint32 value;
 		zpl_ulong cnt;
     void    *p;
@@ -161,7 +161,7 @@ extern void ip_vrf_init (void);
 /*
  * VRF utilities
  */
-void cmd_ip_vrf_init (void);
+extern void cmd_ip_vrf_init (void);
 /* Create a socket serving for the given VRF */
 
 

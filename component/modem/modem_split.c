@@ -5,16 +5,22 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "str.h"
+#include "nsm_interface.h"
 
 #include "modem.h"
 #include "modem_client.h"
 #include "modem_driver.h"
 
 #include "modem_split.h"
+#include "modem_string.h"
 
 
 

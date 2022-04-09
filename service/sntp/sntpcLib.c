@@ -46,10 +46,12 @@ SEE ALSO: clockLib, RFC 1769
 #include "sockLib.h"
 #include "errnoLib.h"
 */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "module.h"
 #include "sntpcLib.h"
 
 static struct sntp_client *sntp_client = NULL;
@@ -60,15 +62,12 @@ struct sntp_global_config sntp_global_config;
 struct module_list module_list_sntpc = 
 { 
 	.module=MODULE_SNTP, 
-	.name="SNTP", 
+	.name="SNTP\0", 
 	.module_init=NULL, 
 	.module_exit=NULL, 
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
 	.module_cmd_init=cmd_sntpc_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

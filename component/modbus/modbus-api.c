@@ -4,9 +4,9 @@
 #endif
 #include <stdlib.h>
 #include <errno.h>
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
 #include "host.h"
 #include <modbus.h>
 #include "modbus-api.h"
@@ -429,15 +429,12 @@ int modbus_module_task_exit(void)
 struct module_list module_list_modbus = 
 { 
 	.module=MODULE_MODBUS, 
-	.name="MODBUS", 
+	.name="MODBUS\0", 
 	.module_init=modbus_module_init, 
 	.module_exit=modbus_module_exit, 
 	.module_task_init=modbus_module_task_init, 
 	.module_task_exit=modbus_module_task_exit, 
 	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

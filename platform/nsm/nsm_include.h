@@ -19,8 +19,8 @@ extern "C" {
 #include "nsm_rib.h"
 #include "router-id.h"
 #include "routemap.h"
-//#include "routemap.h"
 #endif
+#include "nsm_redistribute.h"
 #include "nsm_ipforward.h"
 #include "nsm_interface.h"
 #include "nsm_halpal.h"
@@ -58,6 +58,8 @@ extern "C" {
 
 #ifdef ZPL_NSM_QOS
 #include "nsm_qos.h"
+#include "nsm_qos_acl.h"
+#include "nsm_qos_class.h"
 #endif
 #ifdef ZPL_NSM_TRUNK
 #include "nsm_trunk.h"
@@ -81,6 +83,7 @@ extern "C" {
 #include "nsm_vlaneth.h"
 #endif
 
+#include "nsm_halpal.h"
 //#include "nsm_main.h"
 
 #ifdef __cplusplus

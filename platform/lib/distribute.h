@@ -26,7 +26,12 @@
 extern "C" {
 #endif
 
-#include <os_include.h>
+
+#include "hash.h"
+#include "prefix.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #include "filter.h"
 
 /* Disctirubte list types. */

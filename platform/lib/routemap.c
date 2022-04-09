@@ -20,8 +20,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 
 
-#include <os_include.h>
-#include <zpl_include.h>
+#include <auto_include.h>
+#include <zplos_include.h>
 #include "linklist.h"
 #include "zmemory.h"
 #include "vector.h"
@@ -783,7 +783,7 @@ route_map_apply (struct route_map *map, struct prefix *prefix,
 
   if (recursion > RMAP_RECURSION_LIMIT)
     {
-      zlog (NULL, ZLOG_LEVEL_WARNING,
+      zlog (MODULE_LIB, ZLOG_LEVEL_WARNING,
             "route-map recursion limit (%d) reached, discarding route",
             RMAP_RECURSION_LIMIT);
       recursion = 0;
@@ -933,7 +933,7 @@ DEFUN (route_map,
 
   /* Preference check. */
   pref = strtoul (argv[2], &endptr, 10);
-  if (pref == ULONG_MAX || *endptr != '\0')
+  if (pref == UINT_MAX || *endptr != '\0')
     {
       vty_out (vty, "the fourth field must be positive integer%s",
 	       VTY_NEWLINE);
@@ -1005,7 +1005,7 @@ DEFUN (no_route_map,
 
   /* Preference. */
   pref = strtoul (argv[2], &endptr, 10);
-  if (pref == ULONG_MAX || *endptr != '\0')
+  if (pref == UINT_MAX || *endptr != '\0')
     {
       vty_out (vty, "the fourth field must be positive integer%s",
 	       VTY_NEWLINE);

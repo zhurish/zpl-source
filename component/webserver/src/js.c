@@ -1371,7 +1371,7 @@ PUBLIC void *jsGetGlobalFunction(int jid, cchar *name)
     Typical usage:
 
         if (jsArgs(argc, argv, "%s %d", &name, &age) < 2) {
-            error("Insufficient args");
+            webs_error("Insufficient args");
             return -1;
         }
  */

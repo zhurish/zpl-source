@@ -5,13 +5,16 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "zmemory.h"
+#include "nsm_interface.h"
+#include "nsm_dhcp.h"
 
 #ifdef ZPL_DHCP_MODULE
+#include "dhcp_api.h"
+
 
 nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp)
 {
@@ -273,15 +276,12 @@ int nsm_dhcp_module_exit (void)
 struct module_list module_list_nsmdhcp = 
 { 
 	.module=MODULE_DHCP, 
-	.name="DHCP", 
+	.name="DHCP\0", 
 	.module_init=nsm_dhcp_module_init, 
 	.module_exit=nsm_dhcp_module_exit, 
 	.module_task_init=nsm_dhcp_task_init, 
 	.module_task_exit=nsm_dhcp_task_exit, 
 	.module_cmd_init=cmd_dhcp_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

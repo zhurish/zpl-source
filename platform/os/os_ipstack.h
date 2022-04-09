@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 #include "zpl_type.h"
-
+#include "auto_include.h"
 
 /* Create a new socket of type TYPE in domain DOMAIN, using
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.

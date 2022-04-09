@@ -649,7 +649,7 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
     	hoste = ipstack_gethostbyname(pHostname);
     	if (hoste && hoste->h_addr_list[0])
     	{
-    		pTftpDesc->serverAddr.sin_addr.s_addr = hoste->h_addr_list[0];
+    		pTftpDesc->serverAddr.sin_addr.s_addr = inet_addr(hoste->h_addr_list[0]);
     	}
     	else
     	{
@@ -1242,7 +1242,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 				break;
 			}
 
-			if (ipstack_ioctl(pTftpDesc->sock, IPSTACK_FIONREAD, (int) &amount) == ERROR)
+			if (ipstack_ioctl(pTftpDesc->sock, IPSTACK_FIONREAD, &amount) == ERROR)
 				return (ERROR);
 
 			if (amount == 0) /* woke up but no data	*/
@@ -1301,7 +1301,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 			{
 				TFTP_MSG trash;
 
-				if (ipstack_ioctl(pTftpDesc->sock, IPSTACK_FIONREAD, (int) &amount) == ERROR)
+				if (ipstack_ioctl(pTftpDesc->sock, IPSTACK_FIONREAD, &amount) == ERROR)
 					return (ERROR);
 
 				if (amount == 0) /* done - ipstack_socket cleaned out */

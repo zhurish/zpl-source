@@ -4,9 +4,10 @@
  *  Created on: May 12, 2018
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
+#include "stream.h"
 #include "lib_pqueue.h"
 
 static int lib_pqueue_add_stream (struct lib_pqueue *queue, struct stream *s)
@@ -40,7 +41,7 @@ int lib_pqueue_stream (struct lib_pqueue *queue, struct stream *s)
 
 int lib_pqueue_fetch (struct lib_pqueue *queue)
 {
-	int ret = ERROR;
+	//int ret = ERROR;
 	NODE index;
 	struct lib_stream *pstNode = NULL;
 	if(queue->mutex)
@@ -55,7 +56,7 @@ int lib_pqueue_fetch (struct lib_pqueue *queue)
 			lstDelete(&queue->stream_list, (NODE *)pstNode);
 			if(queue->fetch)
 			{
-				ret = (queue->fetch)(pstNode->stream);
+				(queue->fetch)(pstNode->stream);
 			}
 			stream_free(pstNode->stream);
 			XFREE(MTYPE_STREAM, pstNode);
@@ -63,7 +64,7 @@ int lib_pqueue_fetch (struct lib_pqueue *queue)
 	}
 	if(queue->mutex)
 		os_mutex_unlock(queue->mutex);
-	return pstNode;
+	return OK;
 }
 
 struct lib_pqueue * lib_pqueue_create (zpl_uint32 num)

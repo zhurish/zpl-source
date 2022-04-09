@@ -7,6 +7,13 @@ extern "C" {
 #endif
 
 #include "zpl_type.h"
+#include "zmemory.h"
+#include "module.h"
+#include "memtypes.h"
+#include "zebra_event.h"
+#include "route_types.h"
+#include "prefix.h"
+#include "zassert.h"
 
 struct lib_global
 {

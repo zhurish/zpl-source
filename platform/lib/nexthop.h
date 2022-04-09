@@ -32,9 +32,9 @@ extern "C" {
 
 union g_addr {
   struct ipstack_in_addr ipv4;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   struct ipstack_in6_addr ipv6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 };
 
 enum nexthop_types_t

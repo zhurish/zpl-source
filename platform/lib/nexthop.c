@@ -18,8 +18,8 @@
  * Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "nexthop.h"
 #include "zmemory.h"
 
@@ -44,7 +44,7 @@ nexthop_same_no_recurse (struct nexthop *next1, struct nexthop *next2)
       if (next1->ifindex != next2->ifindex)
 	return 0;
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case NEXTHOP_TYPE_IPV6:
       if (! IPV6_ADDR_SAME (&next1->gate.ipv6, &next2->gate.ipv6))
 	return 0;
@@ -56,7 +56,7 @@ nexthop_same_no_recurse (struct nexthop *next1, struct nexthop *next2)
       if (next1->ifindex != next2->ifindex)
 	return 0;
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     default:
       /* do nothing */
       break;

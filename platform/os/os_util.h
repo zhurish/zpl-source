@@ -11,12 +11,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "zpl_type.h"
 
 #define OS_PIPE_BASE	SYSRUNDIR
 /*
  * thread
  */
-extern zpl_pthread_t os_thread_once(int (*entry)(void *), void *p);
+extern zpl_pthread_t os_thread_once(void (*entry)(void *), void *p);
 
 extern int os_pipe_create(zpl_char *name, zpl_uint32 mode);
 extern int os_pipe_close(int fd);
@@ -44,8 +45,14 @@ extern int hostname_ipv6_address(zpl_char *hostname, struct ipstack_in6_addr *ad
 
 extern int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len);
 
+extern const char *strupr(zpl_char* src);
+extern const char *strlwr(zpl_char* src);
+extern const char *itoa(int value, int base);
+extern const char *ftoa(zpl_float value, zpl_char *fmt);
+extern const char *dtoa(zpl_double value, zpl_char *fmt);
 
-
+extern zpl_uint8 atoascii(int a);
+extern zpl_bool is_hex (zpl_char c);
 //#define __OS_DEBUG_ENABLE  
 
 

@@ -20,17 +20,19 @@
  * MA 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+
 #include "nsm_include.h"
 
-
-#ifdef ZPL_PAL_MODULE
-#include "pal_driver.h"
-#endif
 #ifdef ZPL_HAL_MODULE
-#include "hal_port.h"
+#include "hal_include.h"
+#endif
+#ifdef ZPL_PAL_MODULE
+#include "pal_include.h"
 #endif
 
 
@@ -135,14 +137,14 @@ int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu)
 }
 
 
-int nsm_halpal_interface_vrf (struct interface *ifp, vrf_id_t vrf)
+int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_interface_set_vr(ifp, (vrf_id_t)vrf);
+	ret = pal_interface_set_vrf(ifp, vrf);
 	if(ret != OK)
 		return ret;
 #ifdef ZPL_HAL_MODULE
-	ret = hal_port_vrf_set(ifp->ifindex, vrf);
+	ret = hal_port_vrf_set(ifp->ifindex, vrf->vrf_id);
 #endif
 	return ret;
 }
@@ -199,12 +201,6 @@ int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected 
 	return ret;
 }
 
-int nsm_halpal_interface_change_dhcp(struct interface *ifp, zpl_bool enable)
-{
-	int ret = 0;
-	ret = pal_interface_change_dhcp(ifp, enable);
-	return ret;
-}
 
 
 int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len)
@@ -323,17 +319,17 @@ int nsm_halpal_interface_promisc_link(struct interface *ifp, zpl_bool enable)
 
 
 
-int nsm_halpal_create_vr(vrf_id_t vrf_id)
+int nsm_halpal_create_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_create_vr(vrf_id);
+	ret = pal_create_vrf(vrf);
 	return ret;
 }
 
-int nsm_halpal_delete_vr(vrf_id_t vrf_id)
+int nsm_halpal_delete_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_delete_vr(vrf_id);
+	ret = pal_delete_vrf(vrf);
 	return ret;
 }
 

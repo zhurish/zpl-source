@@ -6,10 +6,14 @@
  */
 
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "template.h"
 #include "nsm_include.h"
+#include "hal_include.h"
 
 
 static nsm_port_t * _nsm_port_get(struct interface *ifp)

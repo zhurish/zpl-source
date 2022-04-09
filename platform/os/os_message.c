@@ -4,8 +4,8 @@
  *  Created on: Jun 9, 2018
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "os_message.h"
 #include <assert.h>
 #define IPSTACK_ERRNO_RETRY(EN) \
@@ -951,7 +951,7 @@ zpl_osmsg_sendto(struct zpl_osmsg *s, zpl_socket_t fd, zpl_uint32 size, zpl_uint
 	ssize_t nbytes = 0;
 
 	nbytes = ipstack_sendto(fd, s->data + s->getp, size,
-							flags, to, tolen);
+							flags, to, *tolen);
 	return nbytes;
 }
 

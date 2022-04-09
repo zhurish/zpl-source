@@ -7,11 +7,12 @@
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-//#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
+#include "vty.h"
+#include "command.h"
+
 
 DEFUN (os_nvram_env_add_cli,
 		os_nvram_env_add_cli_cmd,

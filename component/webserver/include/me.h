@@ -7,12 +7,12 @@
 
 #ifdef ZPL_NSM_MODULE
 #define HAS_BOOL
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "vty.h"
 #include "if.h"
 #include "buffer.h"
 #include "log.h"
-#include "zmemory.hh"
+#include "zmemory.h"
 #include "cJSON.h"
 #undef ME_GOAHEAD_UPLOAD_DIR
 #ifndef ME_GOAHEAD_UPLOAD_DIR

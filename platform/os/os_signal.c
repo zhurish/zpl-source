@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 #if 1
 
@@ -50,7 +50,7 @@ struct sigmap_tbl
 
 struct os_signal_process_t os_sigproc_tbl;
 
-static int os_signal_handler_action(zpl_int sig, void *info);
+static void os_signal_handler_action(zpl_int sig, void *info);
 
 
 #ifdef SA_SIGINFO
@@ -139,16 +139,16 @@ void os_signal_init(struct os_signal_t *tbl, int num)
 #endif
 }
 
-static int os_signal_handler_action(zpl_int sig, void *info)
+static void os_signal_handler_action(zpl_int sig, void *info)
 {
   int i = 0;
   for (i = 0; i < __SIGRTMAX; i++)
   {
     if (os_sigproc_tbl.os_signal_tbl[i].signal == sig &&
         os_sigproc_tbl.os_signal_tbl[i].signal_handler)
-      return (os_sigproc_tbl.os_signal_tbl[sig].signal_handler)(sig, os_sigproc_tbl.os_signal_tbl[i].info ? os_sigproc_tbl.os_signal_tbl[i].info : info);
+      (os_sigproc_tbl.os_signal_tbl[sig].signal_handler)(sig, os_sigproc_tbl.os_signal_tbl[i].info ? os_sigproc_tbl.os_signal_tbl[i].info : info);
   }
-  return OK;
+  return;
 }
 
 #ifdef SA_SIGINFO

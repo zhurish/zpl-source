@@ -3,9 +3,9 @@
  *
  * SPDX-License-Identifier: LGPL-2.1+
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+
 #if defined(_WIN32)
 # define OS_WIN32
 /* ws2_32.dll has ipstack_getaddrinfo and ipstack_freeaddrinfo on Windows XP and later.
@@ -54,7 +54,7 @@
 #if defined(_AIX) && !defined(MSG_DONTWAIT)
 #define MSG_DONTWAIT MSG_NONBLOCK
 #endif
-
+#include "str.h"
 #include "modbus-private.h"
 
 #include "modbus-tcp.h"

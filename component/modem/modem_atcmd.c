@@ -5,10 +5,15 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "str.h"
+#include "nsm_interface.h"
 
 #include "modem.h"
 #include "modem_attty.h"
@@ -16,7 +21,9 @@
 #include "modem_client.h"
 #include "modem_driver.h"
 #include "modem_usb_driver.h"
-
+#include "modem_split.h"
+#include "modem_state.h"
+#include "modem_string.h"
 /*
  * AT
  */
@@ -634,8 +641,8 @@ int modem_cell_information_atcmd_get(modem_client_t *client)
 			//+CREG: 2,1,27A6,2CBCB17,7
 			os_sscanf(client->response->buf, "%*[^ ] %*d,%d,%[^,],%[^,],%d", &state, client->LAC,
 					client->CI, &num);
-			//strchr_empty(client->LAC, '"');
-			//strchr_empty(client->CI, '"');
+			strchr_empty(client->LAC, '"');
+			strchr_empty(client->CI, '"');
 			//os_snprintf(client->LAC, sizeof(client->LAC), "%x", lac);
 			//os_snprintf(client->CI, sizeof(client->CI), "%x", ci);
 

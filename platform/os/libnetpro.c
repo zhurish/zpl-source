@@ -1,10 +1,11 @@
-#include "os_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "libnetpro.h"
 
 struct proto_str_tbl
 {
-    int proto;
-    char *str;
+    int16_t proto;
+    const char *str;
 };
 
 static struct proto_str_tbl ip_proto_str[] =
@@ -169,7 +170,7 @@ static const char *port_op_str[] =
 */
 int16_t ip_protocol_type(const char *str)
 {
-    int i = 0;
+    zpl_uint32 i = 0;
     for (i = 0; i < sizeof(ip_proto_str) / sizeof(ip_proto_str[0]); i++)
     {
         if (!strcmp(ip_proto_str[i].str, str))
@@ -180,7 +181,7 @@ int16_t ip_protocol_type(const char *str)
 
 const char *ip_protocol_type_string(int16_t type)
 {
-    int i = 0;
+    zpl_uint32 i = 0;
     for (i = 0; i < sizeof(ip_proto_str) / sizeof(ip_proto_str[0]); i++)
     {
         if (ip_proto_str[i].proto == type)
@@ -191,7 +192,7 @@ const char *ip_protocol_type_string(int16_t type)
 
 int16_t eth_protocol_type(const char *str)
 {
-    int i = 0;
+    zpl_uint32 i = 0;
     for (i = 0; i < sizeof(eth_proto_str) / sizeof(eth_proto_str[0]); i++)
     {
         if (!strcmp(eth_proto_str[i].str, str))
@@ -202,7 +203,7 @@ int16_t eth_protocol_type(const char *str)
 
 const char *eth_protocol_type_string(int16_t type)
 {
-    int i = 0;
+    zpl_uint32 i = 0;
     for (i = 0; i < sizeof(eth_proto_str) / sizeof(eth_proto_str[0]); i++)
     {
         if (eth_proto_str[i].proto == type)

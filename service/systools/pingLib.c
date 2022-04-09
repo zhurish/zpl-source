@@ -73,8 +73,11 @@
  #include "kernelLib.h"
  */
 #include "systools.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "command.h"
 #include "pingLib.h"
-
+#include "checksum.h"
 /* defines */
 
 #define pingError(pPS)	{ pPS->flags |= PING_OPT_SILENT; goto release; }

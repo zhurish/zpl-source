@@ -7,7 +7,7 @@
  */
 #define HAS_BOOL 1
 
-#include <zpl_include.h>
+#include <zplos_include.h>
 #include "if.h"
 #include "vty.h"
 #include "sockunion.h"

@@ -7,8 +7,8 @@
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "route_types.h"
 #include "zebra_event.h"
 #include "zmemory.h"
@@ -18,6 +18,7 @@
 #include "command.h"
 #include "table.h"
 #include "nsm_rib.h"
+#include "router-id.h"
 
 
 

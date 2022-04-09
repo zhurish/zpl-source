@@ -206,14 +206,7 @@ config ZPL_NSM_ARP
 	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM ARP Module.
-	
-config ZPL_NSM_BRIDGE
-	bool "NSM Bridge Module"
-	default n
-	depends on ZPL_NSM_L3MODULE
-	help
-	Build NSM Bridge Module.
-	
+		
 config ZPL_NSM_DHCP
 	bool "NSM Dhcp Module"
 	default y
@@ -346,7 +339,21 @@ config ZPL_NSM_VLANETH
 	depends on ZPL_NSM_L3MODULE
 	help
 	Build NSM VLAN eth Module.
-	
+
+config ZPL_NSM_WIRELESS
+	bool "NSM Wireless Module"
+	default n
+	depends on ZPL_NSM_L3MODULE
+	help
+	Build NSM Wireless Module.
+
+config ZPL_NSM_BRIDGE
+	bool "NSM Bridge Module"
+	default n
+	depends on ZPL_NSM_L3MODULE
+	help
+	Build NSM Bridge Module.
+
 config ZPL_NSM_SECURITY
 	bool "NSM Security Module"
 	default n

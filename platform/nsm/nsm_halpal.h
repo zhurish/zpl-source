@@ -26,13 +26,13 @@
 extern "C" {
 #endif
 
-/* For struct zapi_ipv{4,6}. */
+
 #include "if.h"
 #include "prefix.h"
 #ifdef ZPL_VRF_MODULE
 #include "vrf.h"
 #endif
-
+#include "nsm_interface.h"
 
 extern int nsm_halpal_interface_add(struct interface *ifp);
 extern int nsm_halpal_interface_delete (struct interface *ifp);
@@ -47,14 +47,10 @@ extern int nsm_halpal_interface_set_address (struct interface *ifp, struct conne
 extern int nsm_halpal_interface_unset_address (struct interface *ifp, struct connected *cp, zpl_bool secondry);
 extern int nsm_halpal_interface_set_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry);
 extern int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry);
-extern int nsm_halpal_interface_change_dhcp(struct interface *ifp, zpl_bool enable);
-
-extern int nsm_halpal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
-
 
 extern int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len);
 extern int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu);
-extern int nsm_halpal_interface_vrf (struct interface *ifp, vrf_id_t vrf);
+extern int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf);
 extern int nsm_halpal_interface_multicast (struct interface *ifp, zpl_bool multicast);
 
 extern int nsm_halpal_interface_bandwidth (struct interface *ifp, zpl_uint32 bandwidth);
@@ -75,8 +71,10 @@ extern int nsm_halpal_interface_loop (struct interface *ifp, zpl_bool );
 extern int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en );
 
 
-extern int nsm_halpal_create_vr(vrf_id_t vrf_id);
-extern int nsm_halpal_delete_vr(vrf_id_t vrf_id);
+extern int nsm_halpal_create_vrf(struct ip_vrf *vrf);
+extern int nsm_halpal_delete_vrf(struct ip_vrf *vrf);
+extern int nsm_halpal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
+
 
 
 #ifdef ZPL_NSM_ARP

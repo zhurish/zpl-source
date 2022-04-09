@@ -102,7 +102,7 @@ extern "C" {
 
 
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 #include "ipnet_config.h"
 #include "ipcom_sock.h"
 #include "ipnet_eth.h"
@@ -114,7 +114,7 @@ extern "C" {
 #include "ipcom_stack.h"
 #else
 #include "os_stack.h"
-#endif /* ZPL_KERNEL_STACK_MODULE */
+#endif /* ZPL_KERNEL_MODULE */
 
 
 #ifdef __cplusplus

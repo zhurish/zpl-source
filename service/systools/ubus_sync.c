@@ -5,7 +5,9 @@
  *      Author: DELL
  */
 #include "systools.h"
-
+#include "vty.h"
+#include "zmemory.h"
+#include "command.h"
 #ifdef ZPL_SERVICE_UBUS_SYNC
 
 #include "ubus_sync.h"
@@ -162,7 +164,7 @@ static int ubus_sync_accept_eloop(struct eloop *thread)
 	ubus->t_accept = NULL;//eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, ubus, ipstack_accept);
 	if(ubus)
 	{
-		sock._fd = os_sock_unix_accept(ipstack_accept, NULL);
+		sock._fd = os_sock_unix_accept(accept._fd, NULL);
 		if(sock._fd > 0)
 		{
 			//zlog_debug(MODULE_DEFAULT, "--------%s:%d", __func__, sock);

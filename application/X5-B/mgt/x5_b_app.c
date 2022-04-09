@@ -4,8 +4,8 @@
  *  Created on: 2019年3月22日
  *      Author: DELL
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "lib_include.h"
 #include "nsm_include.h"
 
@@ -34,15 +34,12 @@ static int x5b_app_config_load(struct eloop *eloop);
 struct module_list module_list_app = 
 { 
 	.module=MODULE_APP, 
-	.name="APP", 
+	.name="APP\0", 
 	.module_init=NULL, 
 	.module_exit=x5b_app_module_exit, 
 	.module_task_init=x5b_app_module_task_init, 
 	.module_task_exit=x5b_app_module_task_exit, 
 	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.taskid=0,
 };
 

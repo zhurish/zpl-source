@@ -12,10 +12,23 @@
 extern "C" {
 #endif
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "module.h"
+#include "zmemory.h"
+#include "vty.h"
+#include "if_name.h"
+#include "vrf.h"
+#include "template.h"
+#include "host.h"
+#include "nsm_interface.h"
+#ifdef ZPL_DHCP_MODULE
+#include "nsm_dhcp.h"
+#endif
+
 /*
 #define IW_MAX_FREQUENCIES	32
 #define IW_MAX_BITRATES		32

@@ -11,7 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "zpl_type.h"
+#include "os_list.h"
 //#define OS_SIGNAL_SIGWAIT
 
 
@@ -133,8 +134,8 @@ extern const zpl_char * os_task_self_name_alisa(void);
 extern int os_task_name_get( zpl_uint32 task_id, char *task_name);
 extern zpl_char * os_task_2_name( zpl_uint32 task_id);
 extern zpl_uint32 os_task_lookup_by_name(char *task_name);
-extern int os_task_priority_set(zpl_uint32 TaskID, zpl_uint32 Priority);
-extern int os_task_priority_get(zpl_uint32 TaskID, zpl_uint32 *Priority);
+extern int os_task_priority_set(zpl_uint32 TaskID, zpl_int32 Priority);
+extern int os_task_priority_get(zpl_uint32 TaskID, zpl_int32 *Priority);
 extern int os_task_yield ( void );
 extern int os_task_delay(zpl_int32 ticks);
 

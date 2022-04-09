@@ -20,8 +20,8 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "route_types.h"
 #include "zebra_event.h"
 #include "zmemory.h"
@@ -35,7 +35,7 @@
 #include "nsm_zserv.h"
 #include "nsm_rnh.h"
 
-//#define RLSTATIC 
+
 #ifdef ZPL_NSM_L3MODULE
 
 char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX+1];	/* "any" == ZEBRA_ROUTE_MAX */
@@ -69,7 +69,16 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
       vty_out (vty, "%% Malformed address%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
+		if(IPV4_NET127(p.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(p.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
   /* Cisco like mask notation. */
   if (mask_str)
     {
@@ -418,32 +427,23 @@ ALIAS (show_ip_rpf_addr,
        "IP multicast source address (e.g. 10.0.0.0)\n"
        VRF_CMD_HELP_STR)
 
-#if 0
-DEFUN (show_ip_rpf_vrf_all,
-       show_ip_rpf_vrf_all_cmd,
-       "show ip rpf " VRF_ALL_CMD_STR,
-       SHOW_STR
-       IP_STR
-       "Display RPF information for multicast source\n"
-       VRF_ALL_CMD_HELP_STR)
+#ifdef ZPL_VRF_MODULE
+static int show_ip_rpf_vrf_all_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
 {
-  struct nsm_ip_vrf *zvrf;
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct nsm_ip_vrf *zvrf = ip_vrf->info;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
   int first = 1;
-
-  VTY_WARN_EXPERIMENTAL();
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+  struct vty *vty = temp->p;
+  if(zvrf)
+  {
+    table = zvrf->stable[AFI_IP][temp->value];   
+    if (table == NULL)  
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_MULTICAST]) == NULL)
-        continue;
-
       /* Show all IPv4 routes. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
           {
             if (first)
@@ -453,8 +453,26 @@ DEFUN (show_ip_rpf_vrf_all,
               }
             vty_show_ip_route (vty, rn, rib);
           }
+      }
     }
+  }
+  return OK;
+}
 
+DEFUN (show_ip_rpf_vrf_all,
+       show_ip_rpf_vrf_all_cmd,
+       "show ip rpf " VRF_ALL_CMD_STR,
+       SHOW_STR
+       IP_STR
+       "Display RPF information for multicast source\n"
+       VRF_ALL_CMD_HELP_STR)
+{
+  struct ip_vrf_temp temp;
+
+  VTY_WARN_EXPERIMENTAL();
+  temp.p = vty;
+  temp.value = SAFI_MULTICAST;
+  ip_vrf_foreach(show_ip_rpf_vrf_all_one, &temp);
   return CMD_SUCCESS;
 }
 
@@ -468,10 +486,10 @@ DEFUN (show_ip_rpf_addr_vrf_all,
        VRF_ALL_CMD_HELP_STR)
 {
   struct ipstack_in_addr addr;
-  struct route_node *rn;
-  vrf_iter_t iter;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int ret;
-
+  struct route_node *rn = NULL;
   VTY_WARN_EXPERIMENTAL();
 
   ret = ipstack_inet_aton (argv[0], &addr);
@@ -480,13 +498,20 @@ DEFUN (show_ip_rpf_addr_vrf_all,
       vty_out (vty, "%% Malformed address%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf)
     {
-      if (rib_match_ipv4_multicast (addr, &rn, vrf_iter2id (iter)))
+      if (rib_match_ipv4_multicast (addr, &rn, ip_vrf->vrf_id))
         vty_show_ip_route_detail (vty, rn, 1);
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 #endif
@@ -2086,7 +2111,7 @@ DEFUN (ip_protocol,
        "Protocol name\n"
        "Route map name\n")
 {
-  zpl_uint32 i = 0;
+  zpl_int32 i = 0;
 
   if (strcasecmp(argv[0], "any") == 0)
     i = ZEBRA_ROUTE_MAX;
@@ -2222,7 +2247,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
                 vty_out (vty, ", via %s",
                          ifindex2ifname_vrf (nexthop->ifindex, rib->vrf_id));
               break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
             case NEXTHOP_TYPE_IPV6:
             case NEXTHOP_TYPE_IPV6_IFINDEX:
             case NEXTHOP_TYPE_IPV6_IFNAME:
@@ -2268,7 +2293,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
                     vty_out (vty, ", src %s", buf);
                 }
               break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
             case NEXTHOP_TYPE_IPV6:
             case NEXTHOP_TYPE_IPV6_IFINDEX:
             case NEXTHOP_TYPE_IPV6_IFNAME:
@@ -2278,7 +2303,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
                     vty_out (vty, ", src %s", buf);
                 }
               break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
             default:
                break;
             }
@@ -2335,7 +2360,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
             vty_out (vty, ", %s",
                      ifindex2ifname_vrf (nexthop->ifindex, rib->vrf_id));
           break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
         case NEXTHOP_TYPE_IPV6:
         case NEXTHOP_TYPE_IPV6_IFINDEX:
         case NEXTHOP_TYPE_IPV6_IFNAME:
@@ -2381,7 +2406,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
                   vty_out (vty, ", src %s", buf);
               }
             break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
           case NEXTHOP_TYPE_IPV6:
           case NEXTHOP_TYPE_IPV6_IFINDEX:
           case NEXTHOP_TYPE_IPV6_IFNAME:
@@ -2391,7 +2416,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
                   vty_out (vty, ", src %s", buf);
               }
             break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
           default:
             break;
         }
@@ -2507,7 +2532,7 @@ DEFUN (show_ip_nht,
   return CMD_SUCCESS;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 DEFUN (show_ipv6_nht,
        show_ipv6_nht_cmd,
        "show ipv6 nht",
@@ -3190,7 +3215,7 @@ ALIAS (show_ip_route_summary_prefix,
        "Prefix routes\n"
        VRF_CMD_HELP_STR)
 
-#if 0
+#ifdef ZPL_VRF_MODULE
 DEFUN (show_ip_route_vrf_all,
        show_ip_route_vrf_all_cmd,
        "show ip route " VRF_ALL_CMD_STR,
@@ -3199,32 +3224,42 @@ DEFUN (show_ip_route_vrf_all,
        "IP routing table\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
   int first = 1;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
-        continue;
-
-      /* Show all IPv4 routes. */
-      for (rn = route_top (table); rn; rn = route_next (rn))
-        RNODE_FOREACH_RIB (rn, rib)
-          {
-            if (first)
-              {
-                vty_out (vty, SHOW_ROUTE_V4_HEADER);
-                first = 0;
-              }
-            vty_show_ip_route (vty, rn, rib);
-          }
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
+      {
+        /* Show all IPv4 routes. */
+        for (rn = route_top (table); rn; rn = route_next (rn))
+        {
+          RNODE_FOREACH_RIB (rn, rib)
+            {
+              if (first)
+                {
+                  vty_out (vty, SHOW_ROUTE_V4_HEADER);
+                  first = 0;
+                }
+              vty_show_ip_route (vty, rn, rib);
+            }
+        }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3238,12 +3273,13 @@ DEFUN (show_ip_route_prefix_longer_vrf_all,
        "Show route matching the specified Network/Mask pair only\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
   struct prefix p;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int ret;
   int first = 1;
 
@@ -3253,15 +3289,21 @@ DEFUN (show_ip_route_prefix_longer_vrf_all,
       vty_out (vty, "%% Malformed Prefix%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show matched type IPv4 routes. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
           if (prefix_match (&p, &rn->p))
             {
@@ -3272,8 +3314,11 @@ DEFUN (show_ip_route_prefix_longer_vrf_all,
                 }
               vty_show_ip_route (vty, rn, rib);
             }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3286,22 +3331,29 @@ DEFUN (show_ip_route_supernets_vrf_all,
        "Show supernet entries only\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   zpl_uint32 addr;
   int first = 1;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show matched type IPv4 routes. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
           {
             addr = ntohl (rn->p.u.prefix4.s_addr);
@@ -3318,8 +3370,11 @@ DEFUN (show_ip_route_supernets_vrf_all,
                 vty_show_ip_route (vty, rn, rib);
               }
           }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3333,11 +3388,12 @@ DEFUN (show_ip_route_protocol_vrf_all,
        VRF_ALL_CMD_HELP_STR)
 {
   zpl_uint32 type;
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int first = 1;
 
   type = proto_redistnum (AFI_IP, argv[0]);
@@ -3346,15 +3402,21 @@ DEFUN (show_ip_route_protocol_vrf_all,
       vty_out (vty, "Unknown route type%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show matched type IPv4 routes. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
           if (rib->type == type)
             {
@@ -3365,8 +3427,11 @@ DEFUN (show_ip_route_protocol_vrf_all,
                 }
               vty_show_ip_route (vty, rn, rib);
             }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3381,10 +3446,11 @@ DEFUN (show_ip_route_addr_vrf_all,
 {
   int ret;
   struct prefix_ipv4 p;
-  struct route_table *table;
-  struct route_node *rn;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
 
   ret = str2prefix_ipv4 (argv[0], &p);
   if (ret <= 0)
@@ -3392,11 +3458,16 @@ DEFUN (show_ip_route_addr_vrf_all,
       vty_out (vty, "%% Malformed IPv4 address%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
       rn = route_node_match (table, (struct prefix *) &p);
@@ -3407,7 +3478,9 @@ DEFUN (show_ip_route_addr_vrf_all,
 
       route_unlock_node (rn);
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3422,10 +3495,11 @@ DEFUN (show_ip_route_prefix_vrf_all,
 {
   int ret;
   struct prefix_ipv4 p;
-  struct route_table *table;
-  struct route_node *rn;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
 
   ret = str2prefix_ipv4 (argv[0], &p);
   if (ret <= 0)
@@ -3433,11 +3507,16 @@ DEFUN (show_ip_route_prefix_vrf_all,
       vty_out (vty, "%% Malformed IPv4 address%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP][SAFI_UNICAST]) == NULL)
         continue;
 
       rn = route_node_match (table, (struct prefix *) &p);
@@ -3453,7 +3532,9 @@ DEFUN (show_ip_route_prefix_vrf_all,
 
       route_unlock_node (rn);
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3466,13 +3547,23 @@ DEFUN (show_ip_route_summary_vrf_all,
        "Summary of all routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
-    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
+    {
+      zvrf = ip_vrf->info;
       vty_show_ip_route_summary (vty, zvrf->table[AFI_IP][SAFI_UNICAST]);
-
+    }
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -3486,19 +3577,29 @@ DEFUN (show_ip_route_summary_prefix_vrf_all,
        "Prefix routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
-    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
+    {
+      zvrf = ip_vrf->info;
       vty_show_ip_route_summary_prefix (vty, zvrf->table[AFI_IP][SAFI_UNICAST]);
-
+    }
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 #endif
 
 /* Write IPv4 static route configuration. */
-static int static_config_ipv4_one(struct vty *vty, struct route_table *stable, const char *cmd)
+static int nsm_ipv4_route_config_write_one_info(struct vty *vty, struct route_table *stable, const char *cmd)
 {
   int write;
   struct route_node *rn = NULL;
@@ -3557,7 +3658,7 @@ static int static_config_ipv4_one(struct vty *vty, struct route_table *stable, c
   }
   return write;
 }
-static int static_config_ipv4_vrf_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
+static int nsm_ipv4_route_config_write_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
 {
   struct route_table *stable = NULL;
   struct nsm_ip_vrf *zvrf = ip_vrf->info;
@@ -3565,19 +3666,19 @@ static int static_config_ipv4_vrf_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp 
   {
     stable = zvrf->stable[AFI_IP][temp->value];   
     if (stable == NULL)  
-      temp->cnt = static_config_ipv4_one(temp->p, stable, temp->name);
+      temp->cnt = nsm_ipv4_route_config_write_one_info(temp->p, stable, temp->name);
   }
   return OK;
 }
 
-static int static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
+static int nsm_ipv4_route_config_write (struct vty *vty, safi_t safi, const char *cmd)
 {
   int write = 0;
   struct ip_vrf_temp temp;
-  temp.name = cmd;
+  strcpy(temp.name, cmd);
   temp.p = vty;
   temp.value = safi;
-  ip_vrf_foreach(static_config_ipv4_vrf_one, &temp);
+  ip_vrf_foreach(nsm_ipv4_route_config_write_one, &temp);
   write = temp.cnt;
   return write;
 }
@@ -3611,7 +3712,7 @@ DEFUN (show_ip_protocol,
     return CMD_SUCCESS;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* General fucntion for IPv6 static route. */
 static int
 static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
@@ -5299,7 +5400,7 @@ ALIAS (show_ipv6_mroute,
 
 #endif
 
-#if 0
+#ifdef ZPL_VRF_MODULE
 DEFUN (show_ipv6_route_vrf_all,
        show_ipv6_route_vrf_all_cmd,
        "show ipv6 route " VRF_ALL_CMD_STR,
@@ -5308,21 +5409,31 @@ DEFUN (show_ipv6_route_vrf_all,
        "IPv6 routing table\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int first = 1;
 
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+
+      if ((table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show all IPv6 route. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
           {
             if (first)
@@ -5332,8 +5443,11 @@ DEFUN (show_ipv6_route_vrf_all,
               }
             vty_show_ip_route (vty, rn, rib);
           }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -5347,14 +5461,15 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
        "Show route matching the specified Network/Mask pair only\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct prefix p;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int ret;
   int first = 1;
+  struct prefix_ipv6 p;
 
   ret = str2prefix (argv[0], &p);
   if (! ret)
@@ -5362,16 +5477,23 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
       vty_out (vty, "%% Malformed Prefix%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show matched type IPv6 routes. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
+        {
           if (prefix_match (&p, &rn->p))
             {
               if (first)
@@ -5381,8 +5503,12 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
                 }
               vty_show_ip_route (vty, rn, rib);
             }
+        }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -5396,11 +5522,12 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
        VRF_ALL_CMD_HELP_STR)
 {
   zpl_uint32 type;
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int first = 1;
 
   type = proto_redistnum (AFI_IP6, argv[0]);
@@ -5410,15 +5537,23 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show matched type IPv6 routes. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
+        {
           if (rib->type == type)
             {
               if (first)
@@ -5428,8 +5563,12 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
                 }
               vty_show_ip_route (vty, rn, rib);
             }
+        }
+      }
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -5444,11 +5583,12 @@ DEFUN (show_ipv6_route_addr_vrf_all,
 {
   int ret;
   struct prefix_ipv6 p;
-  struct route_table *table;
-  struct route_node *rn;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
-
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   ret = str2prefix_ipv6 (argv[0], &p);
   if (ret <= 0)
     {
@@ -5456,10 +5596,16 @@ DEFUN (show_ipv6_route_addr_vrf_all,
       return CMD_WARNING;
     }
 
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
       rn = route_node_match (table, (struct prefix *) &p);
@@ -5470,7 +5616,9 @@ DEFUN (show_ipv6_route_addr_vrf_all,
 
       route_unlock_node (rn);
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -5485,10 +5633,12 @@ DEFUN (show_ipv6_route_prefix_vrf_all,
 {
   int ret;
   struct prefix_ipv6 p;
-  struct route_table *table;
-  struct route_node *rn;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
 
   ret = str2prefix_ipv6 (argv[0], &p);
   if (ret <= 0)
@@ -5496,11 +5646,16 @@ DEFUN (show_ipv6_route_prefix_vrf_all,
       vty_out (vty, "Malformed IPv6 prefix%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
       rn = route_node_match (table, (struct prefix *) &p);
@@ -5516,7 +5671,9 @@ DEFUN (show_ipv6_route_prefix_vrf_all,
 
       route_unlock_node (rn);
     }
-
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -5530,13 +5687,23 @@ DEFUN (show_ipv6_route_summary_vrf_all,
        "Summary of all IPv6 routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
-    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
+    {
+      zvrf = ip_vrf->info;
       vty_show_ip_route_summary (vty, zvrf->table[AFI_IP6][SAFI_UNICAST]);
-
+    }
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 
@@ -5548,21 +5715,29 @@ DEFUN (show_ipv6_mroute_vrf_all,
        "IPv6 Multicast routing table\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct route_table *table;
-  struct route_node *rn;
-  struct rib *rib;
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
+  struct route_table *table = NULL;
+  struct route_node *rn = NULL;
+  struct rib *rib = NULL;
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   int first = 1;
 
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
     {
-      if ((zvrf = ip_vrf_iter2info (iter)) == NULL ||
-          (table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
+      zvrf = ip_vrf->info;
+      if ((table = zvrf->table[AFI_IP6][SAFI_UNICAST]) == NULL)
         continue;
 
       /* Show all IPv6 route. */
       for (rn = route_top (table); rn; rn = route_next (rn))
+      {
         RNODE_FOREACH_RIB (rn, rib)
           {
            if (first)
@@ -5572,7 +5747,11 @@ DEFUN (show_ipv6_mroute_vrf_all,
              }
            vty_show_ip_route (vty, rn, rib);
           }
+      }
     }
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);    
   return CMD_SUCCESS;
 }
 
@@ -5586,20 +5765,30 @@ DEFUN (show_ipv6_route_summary_prefix_vrf_all,
        "Prefix routes\n"
        VRF_ALL_CMD_HELP_STR)
 {
-  struct nsm_ip_vrf *zvrf;
-  vrf_iter_t iter;
-
-  for (iter = ip_vrf_first (); iter != VRF_ITER_INVALID; iter = ip_vrf_next (iter))
-    if ((zvrf = ip_vrf_iter2info (iter)) != NULL)
+  struct nsm_ip_vrf *zvrf = NULL;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
+    {
+      zvrf = ip_vrf->info;
       vty_show_ip_route_summary_prefix (vty, zvrf->table[AFI_IP6][SAFI_UNICAST]);
-
+    }
+  }
+	if (_ip_vrf_master.vrf_mutex)
+      	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
 #endif
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Write IPv6 static route configuration. */
-static int static_config_ipv6_one (struct vty *vty, struct route_table *stable)
+static int nsm_ipv6_route_config_write_one_info(struct vty *vty, struct route_table *stable)
 {
   struct route_node *rn = NULL;
   struct static_route *si = NULL;
@@ -5618,10 +5807,10 @@ static int static_config_ipv6_one (struct vty *vty, struct route_table *stable)
       up.p = &rn->p;
       if (si->vrf_id != VRF_DEFAULT)
       {
-        // if(si->vrf_name)
+        //if(si->vrf_name)
         vty_out(vty, "ipv6 route ip_vrf %s %s", ip_vrf_vrfid2name(si->vrf_id), prefix2str(up, buf, sizeof buf));
-        /*        	   else
-                      vty_out (vty, "ipv6 route ip_vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
+        /*else
+            vty_out (vty, "ipv6 route ip_vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
       }
       else
         vty_out(vty, "ipv6 route %s", prefix2str(up, buf, sizeof buf));
@@ -5663,49 +5852,46 @@ static int static_config_ipv6_one (struct vty *vty, struct route_table *stable)
 }
 
 
-static int static_config_ipv6_vrf_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
+static int nsm_ipv6_route_config_write_one(struct ip_vrf *ip_vrf, struct ip_vrf_temp *temp)
 {
   struct route_table *stable = NULL;
   struct nsm_ip_vrf *zvrf = ip_vrf->info;
   if(zvrf)
   {
-    stable = zvrf->stable[AFI_IP6][temp->value];   
+    stable = zvrf->stable[AFI_IP6][temp->value];
     //stable = nsm_vrf_static_table(AFI_IP6,  SAFI_UNICAST, zvrf->vrf_id);
     if (stable == NULL)  
-      temp->cnt = static_config_ipv6_one(temp->p, stable);
+      temp->cnt = nsm_ipv6_route_config_write_one_info((struct vty *)temp->p, stable);
   }
   return OK;
 }
 
-
-
-static int static_config_ipv6 (struct vty *vty)
+static int nsm_ipv6_route_config_write (struct vty *vty)
 { 
   int write = 0;
   struct ip_vrf_temp temp;
-  temp.name = NULL;
+  //temp.name = NULL;
   temp.p = vty;
   temp.value = SAFI_UNICAST;
-  ip_vrf_foreach(static_config_ipv6_vrf_one, &temp);
+  ip_vrf_foreach(nsm_ipv6_route_config_write_one, &temp);
   write = temp.cnt;
   return write;
 }
 #endif
+
 /* Static ip route configuration write function. */
-int nsm_ip_route_config_write (struct vty *vty)
+static int nsm_ip_route_config_write (struct vty *vty)
 {
   int write = 0;
-
-  write += static_config_ipv4 (vty, SAFI_UNICAST, "ip route");
-  write += static_config_ipv4 (vty, SAFI_MULTICAST, "ip mroute");
-#ifdef HAVE_IPV6
-  write += static_config_ipv6 (vty);
-#endif /* HAVE_IPV6 */
-
+  write += nsm_ipv4_route_config_write (vty, SAFI_UNICAST, "ip route");
+  write += nsm_ipv4_route_config_write (vty, SAFI_MULTICAST, "ip mroute");
+#ifdef ZPL_BUILD_IPV6
+  write += nsm_ipv6_route_config_write (vty);
+#endif /* ZPL_BUILD_IPV6 */
   return write;
 }
 
-static int config_write_vty(struct vty *vty)
+static int nsm_ip_protocol_config_write(struct vty *vty)
 {
   zpl_uint32 i = 0;
   enum multicast_mode ipv4_multicast_mode = multicast_mode_ipv4_get ();
@@ -5742,7 +5928,7 @@ static struct cmd_node ip_node = { IP_NODE,  "",  1 };
 void cmd_route_init (void)
 {
   install_node (&ip_node, nsm_ip_route_config_write);
-  install_node (&protocol_node, config_write_vty);
+  install_node (&protocol_node, nsm_ip_protocol_config_write);
 
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_mroute_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_mroute_dist_cmd);
@@ -5827,9 +6013,9 @@ void cmd_route_init (void)
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_tag_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_tag_vrf_cmd);
-  #ifdef ZPL_NSM_RNH
+#ifdef ZPL_NSM_RNH
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_nht_cmd);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_nht_cmd);
 #endif
 #endif
@@ -5875,7 +6061,7 @@ void cmd_route_init (void)
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ip_route_mask_distance_vrf_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ip_route_mask_flags_distance_vrf_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ip_route_mask_flags_distance2_vrf_cmd);
-
+#ifdef ZPL_VRF_MODULE
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_vrf_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_addr_vrf_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_prefix_vrf_cmd);
@@ -5885,7 +6071,7 @@ void cmd_route_init (void)
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_summary_vrf_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_summary_prefix_vrf_cmd);
 
-/*  install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_vrf_all_cmd);
+  install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_addr_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_prefix_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_route_prefix_longer_vrf_all_cmd);
@@ -5897,8 +6083,9 @@ void cmd_route_init (void)
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_vrf_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_addr_vrf_cmd);
-  install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_addr_vrf_all_cmd);*/
-#ifdef HAVE_IPV6
+  install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_addr_vrf_all_cmd);
+#endif
+#ifdef ZPL_BUILD_IPV6
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_route_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_route_flags_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_route_ifname_cmd);

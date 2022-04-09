@@ -4,10 +4,8 @@
  *  Created on: Mar 23, 2019
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 
 #include "web_util.h"
 #include "web_jst.h"
@@ -18,15 +16,12 @@
 struct module_list module_list_webserver = 
 { 
 	.module=MODULE_WEB, 
-	.name="WEB", 
+	.name="WEB\0", 
 	.module_init=web_app_module_init, 
 	.module_exit=web_app_module_exit, 
 	.module_task_init=web_app_module_task_init, 
 	.module_task_exit=web_app_module_task_exit, 
 	.module_cmd_init=cmd_webserver_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

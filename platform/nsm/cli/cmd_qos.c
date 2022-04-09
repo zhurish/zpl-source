@@ -5,13 +5,14 @@
  *      Author: zhurish
  */
 
-
-
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "vty.h"
 #include "nsm_include.h"
-#include "vty_include.h"
+#include "hal_include.h"
 
 #define QOS_STR		"Quality of Service\n"
 

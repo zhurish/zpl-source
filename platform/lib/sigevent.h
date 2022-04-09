@@ -26,7 +26,7 @@
 
 #include <thread.h>
 
-typedef int (*os_signal_handler)(int signo, void *info);
+typedef void (*os_signal_handler)(int signo, void *info);
 struct quagga_signal_t
 {
   int signal;                     /* signal number    */

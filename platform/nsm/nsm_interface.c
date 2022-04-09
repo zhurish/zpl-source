@@ -20,9 +20,19 @@
  * 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vrf.h"
+#include "vty.h"
+#include "prefix.h"
+#include "lib_event.h"
+#include "command.h"
+#include "connected.h"
+#ifdef ZPL_DHCP_MODULE
+#include "nsm_dhcp.h"
+#endif
 #include "nsm_include.h"
 
 static zpl_bool _nsm_intf_init = 0;
@@ -117,7 +127,7 @@ static void if_addr_wakeup(struct interface *ifp)
 				 * from the kernel has been received.
 				 * It will also be added to the interface's subnet list then. */
 			}
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 			if (p->family == IPSTACK_AF_INET6)
 			{
 				if (!if_is_up(ifp))
@@ -142,12 +152,12 @@ static void if_addr_wakeup(struct interface *ifp)
 				/* The address will be advertised to zebra clients when the notification
 				 * from the kernel has been received. */
 			}
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 		}
 	}
 }
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 static int nsm_interface_kname_set(struct interface *ifp)
 {
 	switch (ifp->if_type)
@@ -674,10 +684,10 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct prefix_ipv4 *cp)
 {
 	// int ret;
-	struct nsm_interface *if_data;
+	//struct nsm_interface *if_data;
 	struct connected *ifc;
 	// struct prefix_ipv4 *p;
-	if_data = ifp->info[MODULE_NSM];
+	//if_data = ifp->info[MODULE_NSM];
 
 	/* Check current interface address. */
 	ifc = connected_check(ifp, (struct prefix *)cp);
@@ -745,7 +755,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 	return ERROR;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 static int
 nsm_interface_ipv6_address_install(struct interface *ifp,
 								   struct prefix_ipv6 *cp, zpl_bool secondary)
@@ -894,10 +904,10 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 								 zpl_bool secondary, zpl_uint32 value)
 {
 	// int ret;
-	struct nsm_interface *if_data;
+	//struct nsm_interface *if_data;
 	struct connected *ifc;
-	struct prefix_ipv4 *p1, *p2;
-	if_data = ifp->info[MODULE_NSM];
+	struct prefix *p1, *p2;
+	//if_data = ifp->info[MODULE_NSM];
 	ifc = connected_check(ifp, (struct prefix *)cp);
 	if (!ifc)
 	{
@@ -917,7 +927,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 				p2 = prefix_new();
 				p1->family = cp->family;
 				prefix_copy((struct prefix *)p2, (struct prefix *)cp);
-				p2->prefix.s_addr = ipv4_broadcast_addr(p2->prefix.s_addr, p2->prefixlen);
+				p2->u.prefix4.s_addr = ipv4_broadcast_addr(p2->u.prefix4.s_addr, p2->prefixlen);
 				ifc->destination = (struct prefix *)p2;
 			}
 		}
@@ -933,7 +943,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 
 		if (cp->family == IPSTACK_AF_INET)
 			connected_up_ipv4(ifp, ifc);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 		else
 			connected_up_ipv6(ifp, ifc);
 #endif
@@ -976,7 +986,7 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 
 	if (cp->family == IPSTACK_AF_INET)
 		connected_down_ipv4(ifp, ifc);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	else
 		connected_down_ipv6(ifp, ifc);
 #endif
@@ -1056,7 +1066,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16
 	IF_DATA_LOCK();
 	if (ifp->if_enca != enca || ifp->encavlan != value)
 	{
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 		if (if_is_ethernet(ifp) &&
 			IF_IS_SUBIF_GET(ifp->ifindex) &&
 			enca == IF_ENCA_DOT1Q)
@@ -1193,7 +1203,7 @@ int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_
 	{
 		if (cp->family == IPSTACK_AF_INET)
 			ret = nsm_interface_ip_address_install(ifp, (struct prefix_ipv4 *)cp);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 		else
 			ret = nsm_interface_ipv6_address_install(ifp, (struct prefix_ipv6 *)cp, secondry);
 #endif
@@ -1212,7 +1222,7 @@ int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zp
 	{
 		if (cp->family == IPSTACK_AF_INET)
 			ret = nsm_interface_ip_address_uninstall(ifp, (struct prefix_ipv4 *)cp);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 		else
 			ret = nsm_interface_ipv6_address_uninstall(ifp, (struct prefix_ipv6 *)cp, secondry);
 #endif
@@ -1258,16 +1268,16 @@ int nsm_interface_bandwidth_get_api(struct interface *ifp, zpl_uint32 *bandwidth
 int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id)
 {
 	int ret = ERROR;
+	struct ip_vrf *ip_vrf = NULL;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	if (ifp->vrf_id != vrf_id)
+	ip_vrf = ip_vrf_lookup(vrf_id);
+	if (ip_vrf && ifp->vrf_id != vrf_id)
 	{
-		ret = nsm_halpal_interface_vrf(ifp, (vrf_id_t)vrf_id);
+		ret = nsm_halpal_interface_vrf(ifp, ip_vrf);
 		if (ret == OK)
 			ifp->vrf_id = vrf_id;
-		// if(ret == OK)
-		//	nsm_client_notify_parameter_change(ifp);
 	}
 	else
 		ret = OK;
@@ -1509,8 +1519,8 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 {
 	struct connected *connected;
 	struct listnode *node;
-	struct nsm_interface *nsm_interface;
-	nsm_interface = ifp->info[MODULE_NSM];
+	//struct nsm_interface *nsm_interface;
+	//nsm_interface = ifp->info[MODULE_NSM];
 
 	vty_out(vty, "Interface %s is ", ifp->name);
 	if (if_is_up(ifp))
@@ -1540,7 +1550,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 
 	vty_out(vty, "  index 0x%08x metric %d mtu %d ", ifp->ifindex, ifp->metric,
 			ifp->mtu);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	if (ifp->mtu6 != ifp->mtu)
 		vty_out(vty, "mtu6 %d ", ifp->mtu6);
 #endif
@@ -1614,10 +1624,10 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 	struct connected *connected;
 	struct listnode *node;
 	struct prefix *p;
-	struct nsm_interface *nsm_interface;
+	//struct nsm_interface *nsm_interface;
 	zpl_char pstatus[32];
 	zpl_uint32 offset = 0;
-	nsm_interface = ifp->info[MODULE_NSM];
+	//nsm_interface = ifp->info[MODULE_NSM];
 	if (status)
 	{
 		if (head && *head)

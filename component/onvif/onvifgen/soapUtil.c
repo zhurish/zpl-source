@@ -14,7 +14,7 @@
 #endif
 #include "wsddapi.h"
 
-#include <zpl_include.h>
+#include <zplos_include.h>
 #include <lib_include.h>
 
 #include "onvif_util.h"

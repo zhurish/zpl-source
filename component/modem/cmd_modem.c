@@ -5,11 +5,14 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "nsm_interface.h"
 #include "modem.h"
 #include "modem_attty.h"
 #include "modem_client.h"
@@ -21,6 +24,10 @@
 #include "modem_serial.h"
 #include "modem_process.h"
 #include "modem_usb_driver.h"
+#include "modem_api.h"
+#include "modem_state.h"
+
+
 
 struct modem_vty_cb
 {

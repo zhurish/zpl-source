@@ -4,10 +4,15 @@
  *  Created on: Apr 21, 2019
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "nsm_interface.h"
+#include "nsm_dhcp.h"
 
 #include "dhcp_def.h"
 #include "dhcpd.h"
@@ -143,7 +148,7 @@ int dhcp_lease_clean(LIST *lst)
 	dyn_lease_t *pstNode = NULL;
 	NODE index;
 	if (!lstCount(lst))
-		return NULL;
+		return OK;
 	for (pstNode = (dyn_lease_t *) lstFirst(lst);
 			pstNode != NULL;
 			pstNode = (dyn_lease_t *) lstNext((NODE*) &index))

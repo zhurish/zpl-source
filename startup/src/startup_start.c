@@ -4,12 +4,28 @@
  *  Created on: Apr 30, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "host.h"
-#include "log.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "module.h"
+#include "if.h"
+#include "zmemory.h"
+#include "log.h"
+#include "host.h"
+#include "thread.h"
+#include "vector.h"
+#include "vty.h"
+#include "vty_user.h"
+#include "command.h"
+#include "workqueue.h"
+#include "bmgt.h"
+#include "if_manage.h"
+#include "daemon.h"
+#include "nsm_include.h"
+#include "nsm_main.h"
+#include "hal_include.h"
+#include "bsp_include.h"
 #include "startup_module.h"
+#include "startup_disk.h"
 #include "startup_start.h"
 
 

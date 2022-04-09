@@ -4,15 +4,14 @@
  *  Created on: May 1, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "nsm_include.h"
 #include "if_manage.h"
 #include "bmgt.h"
 
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 
 static int if_slot_kernel_read(void)
 {
@@ -72,7 +71,7 @@ static int if_slot_kernel_read(void)
 
 #endif
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 int if_ktest_init(void)
 {
 	if_slot_kernel_read();

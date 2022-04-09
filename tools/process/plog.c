@@ -5,9 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 #include <sys/stat.h>
 #include "process.h"
 

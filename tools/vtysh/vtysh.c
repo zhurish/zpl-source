@@ -19,8 +19,8 @@
  * 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "lib_include.h"
 #include "vty_include.h"
 
@@ -573,12 +573,12 @@ void vtysh_init(void)
   install_node (&bgp_encapv6_node, NULL);
   install_node (&bgp_ipv4_node, NULL);
   install_node (&bgp_ipv4m_node, NULL);
-/* #ifdef HAVE_IPV6 */
+/* #ifdef ZPL_BUILD_IPV6 */
   install_node (&bgp_ipv6_node, NULL);
   install_node (&bgp_ipv6m_node, NULL);
 /* #endif */
   install_node (&ospf_node, NULL);
-/* #ifdef HAVE_IPV6 */
+/* #ifdef ZPL_BUILD_IPV6 */
   install_node (&ripng_node, NULL);
   install_node (&ospf6_node, NULL);
 /* #endif */

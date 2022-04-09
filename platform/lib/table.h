@@ -168,10 +168,10 @@ extern struct route_node *route_node_match (const struct route_table *,
                                             const struct prefix *);
 extern struct route_node *route_node_match_ipv4 (const struct route_table *,
 						 const struct ipstack_in_addr *);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 extern struct route_node *route_node_match_ipv6 (const struct route_table *,
 						 const struct ipstack_in6_addr *);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 extern unsigned long route_table_count (const struct route_table *);
 

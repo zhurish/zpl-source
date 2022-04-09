@@ -78,9 +78,9 @@ struct prefix
   {
     zpl_uchar prefix;
     struct ipstack_in_addr prefix4;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     struct ipstack_in6_addr prefix6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     struct 
     {
       struct ipstack_in_addr id;
@@ -101,14 +101,14 @@ struct prefix_ipv4
 };
 
 /* IPv6 prefix structure. */
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 struct prefix_ipv6
 {
   zpl_family_t family;
   zpl_uchar prefixlen;
   struct ipstack_in6_addr prefix __attribute__ ((aligned (8)));
 };
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 struct prefix_ls
 {
@@ -192,6 +192,7 @@ union prefix46constptr
 #define IPV4_NET127(a)  ((((zpl_uint32) (a)) & 0xff000000) == 0x7f000000)
 #define IPV4_LINKLOCAL(a) ((((zpl_uint32) (a)) & 0xffff0000) == 0xa9fe0000)
 #define IPV4_CLASS_DE(a)  ((((zpl_uint32) (a)) & 0xe0000000) == 0xe0000000)
+#define IPV4_MULTICAST(a)  ((((zpl_uint32) (a)) & 0xe0000000) == 0xe0000000)
 
 /* Max bit/byte length of IPv6 address. */
 #define IPV6_MAX_BYTELEN    16
@@ -206,6 +207,12 @@ union prefix46constptr
 
 /* Prefix's family member. */
 #define PREFIX_FAMILY(p)  ((p)->family)
+
+#define NSM_MAC_IS_MULTICAST(mac)       (((mac[0]) == 0x01)&&((mac[1]) == 0x00)&&((mac[2]) == 0x5e))
+#define NSM_MAC_IS_BROADCAST(mac)       ((((mac[0]) & 0xFF)==0XFF)&&(((mac[1]) & 0xFF)==0XFF)&&(((mac[2]) & 0xFF)==0XFF)&&\
+												 (((mac[3]) & 0xFF)==0XFF)&&(((mac[4]) & 0xFF)==0XFF)&&(((mac[5]) & 0xFF)==0XFF) )
+
+
 
 /* glibc defines s6_addr32 to __in6_u.__u6_addr32 if __USE_{MISC || GNU} */
 #ifndef s6_addr32
@@ -274,7 +281,7 @@ extern in_addr_t ipv4_broadcast_addr (in_addr_t hostaddr, zpl_size_t masklen);
 
 extern int netmask_str2prefix_str (const char *, const char *, zpl_char *);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 extern struct prefix_ipv6 *prefix_ipv6_new (void);
 extern void prefix_ipv6_free (struct prefix_ipv6 *);
 extern int str2prefix_ipv6 (const char *, struct prefix_ipv6 *);
@@ -289,7 +296,7 @@ extern void masklen2ip6 (const int, struct ipstack_in6_addr *);
 extern void str2in6_addr (const char *, struct ipstack_in6_addr *);
 extern const char *inet6_ntoa (struct ipstack_in6_addr);
 
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 extern int all_digit (const char *);
 

@@ -20,7 +20,7 @@
  * MA 02111-1307, USA.
  */
 
-#include <zpl_include.h>
+#include <zplos_include.h>
 
 #include "prefix.h"
 #include "stream.h"
@@ -521,7 +521,7 @@ zapi_ipv4_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv4 *p,
   return zclient_send_message(zclient);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 int
 zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv6 *p,
 	       struct zapi_ipv6 *api)
@@ -574,7 +574,7 @@ zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv6 *p,
 
   return zclient_send_message(zclient);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* 
  * ipstack_send a ZEBRA_REDISTRIBUTE_ADD or ZEBRA_REDISTRIBUTE_DELETE

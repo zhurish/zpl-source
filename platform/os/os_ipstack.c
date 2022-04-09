@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include <log.h>
 #include <sys/un.h>
 
@@ -25,7 +25,7 @@ char * ipstack_sockstr(zpl_socket_t _sock)
 
 int ipstack_invalid(zpl_socket_t _sock)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	if(_sock.stack == OS_STACK)
 	{
 		if(_sock._fd >= 3)
@@ -63,7 +63,7 @@ int ipstack_get_blocking(zpl_socket_t fd)
 {
 	if(ipstack_invalid(fd))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	if(_sock.stack == OS_STACK)
 	{
 		return os_get_blocking(fd._fd);
@@ -88,7 +88,7 @@ int ipstack_set_nonblocking(zpl_socket_t fd)
 {
 	if(ipstack_invalid(fd))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	if(_sock.stack == OS_STACK)
 	{
 		return os_set_nonblocking(fd._fd);
@@ -112,7 +112,7 @@ int ipstack_set_blocking(zpl_socket_t fd)
 {
 	if(ipstack_invalid(fd))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	if(_sock.stack == OS_STACK)
 	{
 		return os_set_blocking(fd._fd);
@@ -169,7 +169,7 @@ zpl_socket_t ipstack_open (zpl_ipstack stack, const char *__path, int __oflag)
    Returns a file descriptor for the new socket, or -1 for errors.  */
 zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __protocol) 
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	zpl_socket_t socktmp;
 	socktmp.stack = stack;
 	if(stack == OS_STACK)
@@ -199,7 +199,7 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 	socktmp = ipstack_socket (stack, domain, type, protocol);
 	if(ipstack_invalid(socktmp))
 		return socktmp;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	if(stack == OS_STACK)
 	{
 		ret = setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_MARK, &vrf, sizeof (vrf));
@@ -219,6 +219,11 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 #else
 	ret = setsockopt (socktmp._fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_MARK, &vrf, sizeof (vrf));
 #endif
+	if(ret == 0)
+	{
+		return socktmp;
+	}
+	ipstack_close(socktmp);
 	return socktmp;
 }
 
@@ -229,7 +234,7 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __protocol,
 		       zpl_socket_t _socks[2]) 
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0, mfds[2];
 	_socks[0].stack = _socks[1].stack = stack;
 	if(stack == OS_STACK)
@@ -261,7 +266,7 @@ int ipstack_bind (zpl_socket_t _sock, void * __addr, socklen_t __len)
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -286,7 +291,7 @@ int ipstack_getsockname (zpl_socket_t _sock, void * __addr,
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -315,7 +320,7 @@ int ipstack_connect (zpl_socket_t _sock, void * __addr, socklen_t __len)
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -340,7 +345,7 @@ int ipstack_getpeername (zpl_socket_t _sock, void * __addr,
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -367,7 +372,7 @@ ssize_t ipstack_send (zpl_socket_t _sock, const void *__buf, size_t __n, int __f
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -394,7 +399,7 @@ ssize_t ipstack_recv (zpl_socket_t _sock, void *__buf, size_t __n, int __flags)
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -423,7 +428,7 @@ ssize_t ipstack_sendto (zpl_socket_t _sock, const void *__buf, size_t __n,
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -454,7 +459,7 @@ ssize_t ipstack_recvfrom (zpl_socket_t _sock, void * __buf, size_t __n,
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -483,7 +488,7 @@ ssize_t ipstack_sendmsg (zpl_socket_t _sock, const struct ipstack_msghdr *__mess
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -510,7 +515,7 @@ ssize_t ipstack_recvmsg (zpl_socket_t _sock, struct ipstack_msghdr *__message, i
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -539,7 +544,7 @@ int ipstack_getsockopt (zpl_socket_t _sock, int __level, int __optname,
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -565,7 +570,7 @@ int ipstack_setsockopt (zpl_socket_t _sock, int __level, int __optname,
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -591,7 +596,7 @@ int ipstack_listen (zpl_socket_t _sock, int __n)
 {
 	if(ipstack_invalid(_sock))
 		return ERROR;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -625,7 +630,7 @@ zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
 		zpl_socket_t retaa;
 		return retaa;
 	}
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	zpl_socket_t ret;
 	ipstack_bzero(ret);
 	ret.stack = _sock.stack;
@@ -665,7 +670,7 @@ int ipstack_shutdown (zpl_socket_t _sock, int __how)
 	{
 		return ERROR;
 	}
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -686,7 +691,7 @@ int ipstack_shutdown (zpl_socket_t _sock, int __how)
 
 int ipstack_close (zpl_socket_t _sock)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = -1;
 	if(_sock.stack == OS_STACK)
 	{
@@ -719,7 +724,7 @@ int ipstack_ioctl (zpl_socket_t _sock, unsigned long request, void *argp)
 	{
 		return ERROR;
 	}
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -752,7 +757,7 @@ int ipstack_write (zpl_socket_t _sock, void *buf, int nbytes)
 /*
 int ip_stack_writev (int fd, void *buf, int nbytes)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	return ipcom_socketwritev(fd, buf, nbytes);
 #else
 	return writev(fd, buf, nbytes);
@@ -761,7 +766,7 @@ int ip_stack_writev (int fd, void *buf, int nbytes)
 */
 int ipstack_writev (zpl_socket_t _sock, struct ipstack_iovec *iov, int iovlen)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(_sock.stack == OS_STACK)
 	{
@@ -794,7 +799,7 @@ int ipstack_read (zpl_socket_t _sock, void *buf, int nbytes)
 /*
 int ip_stack_read (int fd, void *buf, int nbytes)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	return ipcom_recv(fd, buf, nbytes, 0);
 #else
 	return read(fd, buf, nbytes);
@@ -804,7 +809,7 @@ int ip_stack_read (int fd, void *buf, int nbytes)
 
 int ipstack_socketselect (zpl_ipstack stack, int width, ipstack_fd_set *rfds, ipstack_fd_set *wfds, ipstack_fd_set *exfds, struct zpl_timeval *tmo)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	int ret = 0;
 	if(stack == OS_STACK)
 	{

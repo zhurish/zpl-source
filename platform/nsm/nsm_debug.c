@@ -20,10 +20,13 @@
  * Boston, MA 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "nsm_debug.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vty.h"
+#include "command.h"
 
 /* For debug statement. */
 zpl_ulong zebra_debug_event;

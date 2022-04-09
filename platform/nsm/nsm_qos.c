@@ -5,11 +5,17 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "template.h"
 #include "algorithm.h"
+#include "nsm_qos.h"
+#include "nsm_interface.h"
 #include "nsm_qos_acl.h"
 
 static Global_Qos_t mGlobalQos;

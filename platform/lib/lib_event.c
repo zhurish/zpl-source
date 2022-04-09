@@ -20,7 +20,7 @@
  * MA 02111-1307, USA.
  */
 
-#include "os_include.h"
+#include "auto_include.h"
 #include "zmemory.h"
 #include "module.h"
 #include "lib_event.h"

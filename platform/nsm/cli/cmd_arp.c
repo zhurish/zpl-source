@@ -6,11 +6,14 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "nsm_arp.h"
+#include "nsm_vlan.h"
+#include "vty.h"
 
 
 struct arp_user
@@ -149,11 +152,29 @@ DEFUN (ip_arp_add,
 		vty_out (vty, "%% Malformed address%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-
-
+	if(IPV4_NET127(address.u.prefix4.s_addr))
+	{
+		vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(IPV4_MULTICAST(address.u.prefix4.s_addr))
+	{
+		vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	
 	memset(mac, 0, sizeof(mac));
 	VTY_IMAC_GET(argv[1], mac);
-
+	if(NSM_MAC_IS_BROADCAST(mac))
+	{
+		vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(NSM_MAC_IS_MULTICAST(mac))
+	{
+		vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if (argc > 2)
 	{
 		ifp = if_lookup_by_index(if_ifindex_make(argv[2], argv[3]));
@@ -199,7 +220,16 @@ DEFUN (no_ip_arp_add,
 		vty_out (vty, "%% Malformed address%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-
+	if(IPV4_NET127(address.u.prefix4.s_addr))
+	{
+		vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(IPV4_MULTICAST(address.u.prefix4.s_addr))
+	{
+		vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if (argc > 1)
 	{
 		ifp = if_lookup_by_index(if_ifindex_make(argv[1], argv[2]));
@@ -229,7 +259,7 @@ ALIAS (no_ip_arp_add,
 
 DEFUN (clear_ip_arp_add,
 		clear_ip_arp_cmd,
-		"clear ip " CMD_ARP_STR,
+		"clear " CMD_ARP_STR,
 		CLEAR_STR
 		IP_STR
 		CMD_ARP_STR_HELP)
@@ -254,7 +284,7 @@ DEFUN (clear_ip_arp_add,
 
 ALIAS (clear_ip_arp_add,
 		clear_ip_arp_address_cmd,
-		"clear ip " CMD_ARP_STR " " CMD_KEY_IPV4,
+		"clear " CMD_ARP_STR " " CMD_KEY_IPV4,
 		CLEAR_STR
 		IP_STR
 		CMD_ARP_STR_HELP
@@ -262,7 +292,7 @@ ALIAS (clear_ip_arp_add,
 
 ALIAS (no_ip_arp_add,
 		clear_ip_arp_interface_cmd,
-		"clear ip " CMD_ARP_STR " " CMD_INTERFACE_STR " (ethernet|gigabitethernet) "CMD_USP_STR,
+		"clear " CMD_ARP_STR " " CMD_INTERFACE_STR " (ethernet|gigabitethernet) "CMD_USP_STR,
 		CLEAR_STR
 		IP_STR
 		CMD_ARP_STR_HELP
@@ -275,7 +305,7 @@ ALIAS (no_ip_arp_add,
 
 DEFUN (show_ip_arp,
 		show_ip_arp_cmd,
-		"show ip " CMD_ARP_STR,
+		"show " CMD_ARP_STR,
 		SHOW_STR
 		IP_STR
 		CMD_ARP_STR_HELP)
@@ -317,7 +347,7 @@ DEFUN (show_ip_arp,
 
 ALIAS (show_ip_arp,
 		show_ip_arp_detail_cmd,
-		"show ip " CMD_ARP_STR " (dynamic|static|summary)",
+		"show " CMD_ARP_STR " (dynamic|static|summary)",
 		SHOW_STR
 		IP_STR
 		CMD_ARP_STR_HELP
@@ -328,7 +358,7 @@ ALIAS (show_ip_arp,
 
 ALIAS (show_ip_arp,
 		show_ip_arp_interface_cmd,
-		"show ip " CMD_ARP_STR " "
+		"show " CMD_ARP_STR " "
 			CMD_INTERFACE_STR " (ethernet|gigabitethernet) "CMD_USP_STR,
 		SHOW_STR
 		IP_STR
@@ -383,7 +413,7 @@ static int show_nsm_ip_arp_table_one(ip_arp_t *node, struct arp_user *user)
 	if(node->class == ARP_DYNAMIC)
 	{
 		int age = 0;
-		nsm_ip_arp_ageing_time_get_api(age);
+		nsm_ip_arp_ageing_time_get_api(&age);
 		sprintf(timeout, "%d/%d",node->ttl, age);
 	}
 	else

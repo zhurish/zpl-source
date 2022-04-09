@@ -53,7 +53,7 @@ obj: $(MODULE_OBJS)
 install-lib:
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+
 	 
 install: install-lib 
 

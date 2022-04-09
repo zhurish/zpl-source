@@ -19,7 +19,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <zpl_include.h>
+#include <zplos_include.h>
 
 #include "prefix.h"
 #include "command.h"
@@ -480,7 +480,7 @@ int zsend_route_multipath(zpl_uint16 cmd, struct zserv *client, struct prefix *p
       case NEXTHOP_TYPE_IPV4_IFINDEX:
         stream_put_in_addr(s, &nexthop->gate.ipv4);
         break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       case NEXTHOP_TYPE_IPV6:
       case NEXTHOP_TYPE_IPV6_IFINDEX:
       case NEXTHOP_TYPE_IPV6_IFNAME:
@@ -540,7 +540,7 @@ int zsend_route_multipath(zpl_uint16 cmd, struct zserv *client, struct prefix *p
   return zebra_server_send_message(client);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 static int
 zsend_ipv6_nexthop_lookup(struct zserv *client, struct ipstack_in6_addr *addr,
                           vrf_id_t vrf_id)
@@ -608,7 +608,7 @@ zsend_ipv6_nexthop_lookup(struct zserv *client, struct ipstack_in6_addr *addr,
 
   return zebra_server_send_message(client);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /*
   In the case of ZEBRA_IPV4_NEXTHOP_LOOKUP_MRIB:
@@ -1129,7 +1129,7 @@ zread_ipv4_import_lookup(struct zserv *client, zpl_ushort length,
   return zsend_ipv4_import_lookup(client, &p, vrf_id);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Zebra server IPv6 prefix add function. */
 static int
 zread_ipv6_add(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
@@ -1342,7 +1342,7 @@ zread_ipv6_nexthop_lookup(struct zserv *client, zpl_ushort length,
 
   return zsend_ipv6_nexthop_lookup(client, &addr, vrf_id);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* Register zebra server router-id information.  Send current router-id */
 static int
@@ -1370,7 +1370,7 @@ zread_router_id_delete(struct zserv *client, zpl_ushort length, vrf_id_t vrf_id)
 static void
 zread_hello(struct zserv *client)
 {
-  /* type of protocol (lib/zpl_include.h) */
+  /* type of protocol (lib/zplos_include.h) */
   zpl_uchar proto;
   proto = stream_getc(client->ibuf);
 
@@ -1623,14 +1623,14 @@ zebra_client_read(struct thread *thread)
   case ZEBRA_IPV4_ROUTE_DELETE:
     zread_ipv4_delete(client, length, vrf_id);
     break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   case ZEBRA_IPV6_ROUTE_ADD:
     zread_ipv6_add(client, length, vrf_id);
     break;
   case ZEBRA_IPV6_ROUTE_DELETE:
     zread_ipv6_delete(client, length, vrf_id);
     break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   case ZEBRA_REDISTRIBUTE_ADD:
     zebra_redistribute_add(command, client, length, vrf_id);
     break;
@@ -1647,11 +1647,11 @@ zebra_client_read(struct thread *thread)
   case ZEBRA_IPV4_NEXTHOP_LOOKUP_MRIB:
     zread_ipv4_nexthop_lookup(command, client, length, vrf_id);
     break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   case ZEBRA_IPV6_NEXTHOP_LOOKUP:
     zread_ipv6_nexthop_lookup(client, length, vrf_id);
     break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   case ZEBRA_IPV4_IMPORT_LOOKUP:
     zread_ipv4_import_lookup(client, length, vrf_id);
     break;
@@ -2118,7 +2118,7 @@ DEFUN (show_ip_forwarding,
   return CMD_SUCCESS;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Only display ipv6 forwarding is enabled or not. */
 DEFUN (show_ipv6_forwarding,
        show_ipv6_forwarding_cmd,
@@ -2192,7 +2192,7 @@ DEFUN (no_ipv6_forwarding,
   return CMD_SUCCESS;
 }
 
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* IPForwarding configuration write function. */
 static int
@@ -2203,10 +2203,10 @@ config_write_forwarding (struct vty *vty)
 
   if (ipforward ())
     vty_out (vty, "ip forwarding%s", VTY_NEWLINE);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (ipforward_ipv6 ())
     vty_out (vty, "ipv6 forwarding%s", VTY_NEWLINE);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   vty_out (vty, "!%s", VTY_NEWLINE);
   return 0;
 }
@@ -2263,11 +2263,11 @@ void zebra_init(void)
   install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &config_table_cmd);
 #endif /* HAVE_NETLINK */
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_forwarding_cmd);
   install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_forwarding_cmd);
   install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ipv6_forwarding_cmd);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #endif
   /* Route-map */
   // zebra_route_map_init ();

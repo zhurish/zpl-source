@@ -5,11 +5,14 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
+#include "auto_include.h"
 #include "zmemory.h"
 #include "vty.h"
 #include "host.h"
 #include "prefix.h"
+#include "str.h"
+#include "sys/sysinfo.h"
+
 
 struct zpl_host _global_host;
 

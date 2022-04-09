@@ -1,0 +1,27 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "HAL/PAL Module Config"
+
+config ZPL_HALPAL_MODULE
+	bool "HAL/PAL Module"
+	default y
+	depends on ZPL_NSM_MODULE
+
+config ZPL_HAL_MODULE
+	bool "HAL Abstract Module"
+	default n
+	depends on ZPL_HALPAL_MODULE
+	help
+	Build HAL Abstract Module.
+
+config ZPL_PAL_MODULE
+	bool "PAL Abstract Module"
+	default y
+	depends on ZPL_HALPAL_MODULE
+	help
+	Build PAL Abstract Module.
+
+
+endmenu

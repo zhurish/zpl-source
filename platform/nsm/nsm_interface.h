@@ -26,10 +26,11 @@
 extern "C" {
 #endif
 
-#include <os_include.h>
-#include <zpl_include.h>
-#include <lib_include.h>
-//#include "nsm_client.h"
+#include <auto_include.h>
+#include <zplos_include.h>
+#include <module.h>
+#include "vty.h"
+#include "prefix.h"
 
 #define NSM_ENTER_FUNC() zlog_debug(MODULE_NSM, "Into %s line %d", __func__, __LINE__)
 #define NSM_LEAVE_FUNC() zlog_debug(MODULE_NSM, "Leave %s line %d", __func__, __LINE__)

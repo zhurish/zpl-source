@@ -146,7 +146,7 @@ extern void zebra_router_id_update_read (struct stream *s, struct prefix *rid);
 extern int zapi_ipv4_route (zpl_uint16, struct zclient *, struct prefix_ipv4 *, 
                             struct zapi_ipv4 *);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* IPv6 prefix add and delete function prototype. */
 
 struct zapi_ipv6
@@ -174,7 +174,7 @@ struct zapi_ipv6
 
 extern int zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, 
                      struct prefix_ipv6 *p, struct zapi_ipv6 *api);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
  
 #ifdef __cplusplus
 }

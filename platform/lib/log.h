@@ -27,15 +27,10 @@
 extern "C" {
 #endif
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include <syslog.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "moduletypes.h"
-#include "zassert.h"
+#include "str.h"
 
 #define ZLOG_TASK_ENABLE
 #define ZLOG_TESTING_ENABLE
@@ -413,6 +408,9 @@ extern const char *zserv_command_string (zpl_uint32 command);
        "Local use\n" \
        "Local use\n"
  
+
+#include "zassert.h"
+
 #ifdef __cplusplus
 }
 #endif

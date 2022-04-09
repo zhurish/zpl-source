@@ -49,7 +49,8 @@ obj: $(TARGET)
 install: 
 	@install -d ${ZPL_INSTALL_SBIN_DIR}
 	@install -m 755 ${TARGET} ${ZPL_INSTALL_SBIN_DIR} 
-	@$(STRIP) ${ZPL_INSTALL_SBIN_DIR}/${TARGET}
+#
+#	@$(STRIP) ${ZPL_INSTALL_SBIN_DIR}/${TARGET}
 
 clean: objclean
 	@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${TARGET}

@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "vty.h"
 #include "if.h"
 #include "buffer.h"
@@ -258,7 +258,7 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 			}
 
 			break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 			case NEXTHOP_TYPE_IPV6:
 			case NEXTHOP_TYPE_IPV6_IFINDEX:
 			case NEXTHOP_TYPE_IPV6_IFNAME:

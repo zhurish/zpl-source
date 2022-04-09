@@ -3,10 +3,9 @@
 /* ============================================================
  * Platform options
  * ============================================================ */
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+
 #include "vty_include.h"
 #ifdef __APPLE__
 #  define __DARWIN_C_SOURCE
@@ -133,7 +132,7 @@ typedef enum {
 } mqtt_savedata_type;
 
 #ifndef WITH_BROKER
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
 #include "vty.h"
 #include "buffer.h"

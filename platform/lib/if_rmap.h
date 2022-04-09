@@ -26,6 +26,9 @@
 extern "C" {
 #endif
 
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 enum if_rmap_type
 {
   IF_RMAP_IN,

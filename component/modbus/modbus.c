@@ -18,7 +18,7 @@
 #include <unistd.h>
 #endif
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 
 #include "modbus.h"
 #include "modbus-private.h"

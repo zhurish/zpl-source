@@ -116,9 +116,6 @@ struct nsm_srv_t
   /* default table */
   zpl_uint32 rtm_table_default;
 
-  /* rib work queue */
-  /*struct work_queue *ribq;
-  struct meta_queue *mq;*/
   int nsm_task_id;
 };
 

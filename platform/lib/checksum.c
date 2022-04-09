@@ -6,8 +6,8 @@
  * pp. 86-101, for additional details on computing this checksum.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zassert.h"
 #include "checksum.h"
 

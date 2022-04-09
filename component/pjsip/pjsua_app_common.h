@@ -25,7 +25,7 @@ extern "C" {
 
 #include <pjsua-lib/pjsua.h>
 #include "pjsua_app_cb.h"
-#include <zpl_include.h>
+#include <zplos_include.h>
 #include <log.h>
 
 #define __ZPL_PJSIP_DEBUG(fmt,...)		zlog_debug(MODULE_PJSIP, fmt, ##__VA_ARGS__)

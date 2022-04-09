@@ -27,6 +27,35 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "zpl_type.h"
+
+#define BUFFER_SIZE_DEFAULT		4096
+
+/* Data container. */
+struct buffer_data
+{
+	struct buffer_data *next;
+
+	/* Location to add new data. */
+	zpl_size_t cp;
+
+	/* Pointer to data not yet flushed. */
+	zpl_size_t sp;
+
+	/* Actual data stream (variable length). */
+	zpl_uchar data[]; /* real dimension is buffer->size */
+};
+
+/* Buffer master. */
+struct buffer
+{
+	/* Data list. */
+	struct buffer_data *head;
+	struct buffer_data *tail;
+
+	/* Size of each buffer_data chunk. */
+	zpl_size_t size;
+};
 
 /* Create a new buffer.  Memory will be allocated in chunks of the given
    size.  If the argument is 0, the library will supply a reasonable

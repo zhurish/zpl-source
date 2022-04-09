@@ -20,8 +20,8 @@
  * MA 02111-1307, USA.
  */
 
-#include <os_include.h>
-#include <zpl_include.h>
+#include <auto_include.h>
+#include <zplos_include.h>
 #include "zebra_event.h"
 #include "prefix.h"
 #include "stream.h"
@@ -521,7 +521,7 @@ zapi_ipv4_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv4 *p,
   return zclient_send_message(zclient);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 int
 zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv6 *p,
 	       struct zapi_ipv6 *api)
@@ -574,7 +574,7 @@ zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, struct prefix_ipv6 *p,
 
   return zclient_send_message(zclient);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* 
  * send a ZEBRA_REDISTRIBUTE_ADD or ZEBRA_REDISTRIBUTE_DELETE
@@ -654,7 +654,7 @@ zebra_interface_add_read (struct stream *s)
   stream_get (ifname_tmp, s, INTERFACE_NAMSIZ);
 
   /* Lookup/create interface by name. */
-  ifp = if_get_by_name_len (ifname_tmp, strnlen(ifname_tmp, INTERFACE_NAMSIZ));
+  ifp = if_lookup_by_name (ifname_tmp);
 
   zebra_interface_if_set_value (s, ifp);
 
@@ -1057,7 +1057,7 @@ zclient_event (enum event event, struct zclient *zclient)
 
 const char *const zclient_serv_path_get()
 {
-  return zclient_serv_path ? zclient_serv_path : ZEBRA_SERV_PATH;
+  return (const char*)zclient_serv_path ? zclient_serv_path : ZEBRA_SERV_PATH;
 }
 
 void

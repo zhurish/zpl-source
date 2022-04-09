@@ -5,10 +5,13 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "zmemory.h"
+#include "if.h"
+#include "prefix.h"
 #include "nsm_include.h"
+#include "hal_include.h"
 
 
 static Gl2mac_t gMac;
@@ -109,9 +112,9 @@ static int l2mac_add_node(l2mac_t *value)
 		os_memset(node, 0, sizeof(l2mac_t));
 		os_memcpy(node, value, sizeof(l2mac_t));
 
-		if(NSM_MAC_IS_BROADCAST(node->mac[0]))
+		if(NSM_MAC_IS_BROADCAST(node->mac))
 			node->class = MAC_BROADCAST;
-		else if(NSM_MAC_IS_MULTICAST(node->mac[0]))
+		else if(NSM_MAC_IS_MULTICAST(node->mac))
 			node->class = MAC_MULTICAST;
 		else
 			node->class = MAC_UNICAST;

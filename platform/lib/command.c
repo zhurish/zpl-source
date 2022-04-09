@@ -20,14 +20,15 @@ You should have received a copy of the GNU General Public License
 along with GNU Zebra; see the file COPYING.  If not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
 #include "log.h"
 #include "host.h"
 #include "thread.h"
 #include "vector.h"
 #include "vty.h"
+#include "str.h"
 #include "command.h"
 #include "workqueue.h"
 
@@ -577,7 +578,7 @@ static const zpl_uchar itoa64[] =
     "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 static void
-to64(zpl_char *s, long v, zpl_uint32 n)
+to64(zpl_char *s, long v, zpl_int32 n)
 {
   while (--n >= 0)
   {
@@ -776,7 +777,7 @@ cmd_ipv4_prefix_match(const char *str)
 #define STATE_SLASH 6
 #define STATE_MASK 7
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 
 static enum match_type
 cmd_ipv6_match(const char *str)
@@ -807,7 +808,7 @@ cmd_ipv6_prefix_match(const char *str)
 {
   zpl_uint32 state = STATE_START;
   zpl_uint32 colons = 0, nums = 0, double_colon = 0;
-  zpl_uint32 mask;
+  zpl_int32 mask;
   const char *sp = NULL;
   zpl_char *endptr = NULL;
 
@@ -929,7 +930,7 @@ cmd_ipv6_prefix_match(const char *str)
   return exact_match;
 }
 
-#endif /* HAVE_IPV6  */
+#endif /* ZPL_BUILD_IPV6  */
 
 #define DECIMAL_STRLEN_MAX 10
 
@@ -1147,7 +1148,7 @@ cmd_word_match(struct cmd_token *token,
     if (cmd_mac_match(keystr, word))
       return mac_match;
     break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   case TERMINAL_IPV6:
     match_type = cmd_ipv6_match(word);
     if ((filter == CMD_FILTER_RELAXED && match_type != no_match) || (filter == CMD_FILTER_STRICT && match_type == exact_match))
@@ -1862,7 +1863,7 @@ is_cmd_ambiguous(vector cmd_vector,
             }
             break;
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
           case ipv6_match:
             if (cmd_token->terminal == TERMINAL_IPV6)
               match++;
@@ -1876,7 +1877,7 @@ is_cmd_ambiguous(vector cmd_vector,
               match++;
             }
             break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
           case ipv4_match:
             if (cmd_token->terminal == TERMINAL_IPV4)
               match++;
@@ -1959,7 +1960,7 @@ cmd_entry_function_desc(const char *src, struct cmd_token *token)
       return dst;
     else
       return NULL;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   case TERMINAL_IPV6:
     if (cmd_ipv6_match(src))
       return dst;

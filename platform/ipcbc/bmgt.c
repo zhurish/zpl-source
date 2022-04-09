@@ -4,10 +4,15 @@
  *  Created on: May 1, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "if.h"
 #include "bmgt.h"
+#include "vty.h"
+#include "host.h"
+#include "linklist.h"
+
 
 static LIST *unit_board_mgt_list = NULL;
 static os_mutex_t *unit_board_mgt_mutex = NULL;

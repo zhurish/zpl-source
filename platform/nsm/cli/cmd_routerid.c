@@ -7,14 +7,17 @@
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "route_types.h"
+#include "zebra_event.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "command.h"
 #include "nsm_zserv.h"
-#include "nsm_redistribute.h"
+#include "router-id.h"
 
 
 
@@ -40,7 +43,16 @@ DEFUN (router_id,
   rid.u.prefix4.s_addr = ipstack_inet_addr (argv[0]);
   if (!rid.u.prefix4.s_addr)
     return CMD_WARNING;
-
+		if(IPV4_NET127(rid.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(rid.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
   rid.prefixlen = 32;
   rid.family = IPSTACK_AF_INET;
 

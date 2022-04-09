@@ -21,12 +21,17 @@
 
 /* #define DEBUG */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
+#include "log.h"
+#include "zmemory.h"
+#include "command.h"
+#include "pqueue.h"
 #include "eloop.h"
 
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_time.h>
@@ -2005,4 +2010,4 @@ int cmd_os_eloop_init(void)
 	return 0;
 }
 #endif
-#endif /* ZPL_IPCOM_STACK_MODULE */
+#endif /* ZPL_IPCOM_MODULE */

@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 #define HAS_BOOL 1
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "vty.h"
 #include "if.h"
 

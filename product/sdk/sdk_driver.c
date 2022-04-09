@@ -5,8 +5,13 @@
  *      Author: zhurish
  */
 
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vrf.h"
+#include "vty.h"
 #include "nsm_include.h"
 #include "hal_include.h"
 
@@ -104,8 +109,9 @@ static int sdk_driver_free(sdk_driver_t *sdkdriver)
 }
 
 
-int sdk_driver_init(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+int sdk_driver_init(struct bsp_driver *bsp, zpl_void *p)
 {
+	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	bsp->sdk_driver = sdk_driver_malloc();
 	if(bsp->sdk_driver)
 		return OK;
@@ -113,8 +119,9 @@ int sdk_driver_init(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
 		return ERROR;	
 }
 
-int sdk_driver_start(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+int sdk_driver_start(struct bsp_driver *bsp, zpl_void *p)
 {
+	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 #ifdef ZPL_SDK_BCM53125
 	sdkdriver->sdk_device = b53125_device_probe();
 	if(sdkdriver->sdk_device)
@@ -133,13 +140,15 @@ int sdk_driver_start(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
 	return OK;
 }
 
-int sdk_driver_stop(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+int sdk_driver_stop(struct bsp_driver *bsp, zpl_void *p)
 {
+	//sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	return OK;
 }
 
-int sdk_driver_exit(struct bsp_driver *bsp, sdk_driver_t *sdkdriver)
+int sdk_driver_exit(struct bsp_driver *bsp, zpl_void *p)
 {
+	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	if(sdkdriver)
 		sdk_driver_free(sdkdriver);
 	return OK;

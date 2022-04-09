@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "zpl_type.h"
 #include "pthread.h"
 #include "semaphore.h"
 
@@ -102,9 +102,9 @@ typedef struct os_spin_s
 	pthread_spinlock_t lock;
 }os_spin_t;
 
-//#define WAIT_FOREVER -1
-#define OS_WAIT_NO 0
-#define OS_WAIT_FOREVER -1//WAIT_FOREVER
+
+#define OS_WAIT_NO 			0
+#define OS_WAIT_FOREVER 	-1
 
 extern os_sem_t * os_sem_init(void);
 extern int os_sem_give(os_sem_t *);

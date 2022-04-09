@@ -12,6 +12,20 @@
 extern "C" {
 #endif
 
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zebra_event.h"
+#include "route_types.h"
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "sockopt.h"
+#include "nsm_interface.h"
+#include "nsm_dhcp.h"
+
 #include "dhcp_config.h"
 //PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 

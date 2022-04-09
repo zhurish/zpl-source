@@ -59,7 +59,8 @@ obj: perldepends vtysh_cmd.c $(MODULE_OBJS)
 install: $(VTYSH_TARGET) 
 	@install -d ${ZPL_INSTALL_SBIN_DIR}
 	@install -m 755 ${VTYSH_TARGET} ${ZPL_INSTALL_SBIN_DIR} 
-	@$(STRIP) ${ZPL_INSTALL_SBIN_DIR}/${VTYSH_TARGET}
+#
+#	@$(STRIP) ${ZPL_INSTALL_SBIN_DIR}/${VTYSH_TARGET}
 
 	
 clean: objclean

@@ -101,69 +101,25 @@ endif
 
 endif
 
-
 #
-# service
+# ABSTRACT HAL PAL
 #
-ifeq ($(strip $(ZPL_SERVICE_MODULE)),true)
-ZPLPRODS += $(SERVICE_ROOT)/systools
-ZPL_INCLUDE += -I$(SERVICE_ROOT)/systools
+ifeq ($(strip $(ZPL_HALPAL_MODULE)),true)
 
-ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
-ZPLPRODS += $(SERVICE_ROOT)/sntp
-ZPL_INCLUDE += -I$(SERVICE_ROOT)/sntp
-endif
+ifeq ($(strip $(ZPL_HAL_MODULE)),true)
+ZPLPRODS += $(HALPAL_ROOT)/hal
+ZPL_INCLUDE += -I$(HALPAL_ROOT)/hal
+ZPL_DEFINE += -DZPL_HAL_MODULE
+endif #($(strip $(ZPL_HAL_MODULE)),true)
 
-ifeq ($(strip $(ZPL_SERVICE_SNTPS)),true)
-ifeq ($(strip $(ZPL_SERVICE_SNTPC)),false)
-ZPLPRODS += $(SERVICE_ROOT)/sntp
-ZPL_INCLUDE += -I$(SERVICE_ROOT)/sntp
-endif
-endif
+ifeq ($(strip $(ZPL_PAL_MODULE)),true)
+ZPLPRODS += $(HALPAL_ROOT)/pal
+ZPL_INCLUDE += -I$(HALPAL_ROOT)/pal
+ZPL_DEFINE += -DZPL_PAL_MODULE
+endif #($(strip $(ZPL_HAL_MODULE)),true)
 
-ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
-ZPL_DEFINE += -DZPL_SERVICE_SNTPC
-endif
 
-ifeq ($(strip $(ZPL_SERVICE_SNTPS)),true)
-ZPL_DEFINE += -DZPL_SERVICE_SNTPS
-endif
-
-ifeq ($(strip $(ZPL_SERVICE_SYSLOG)),true)
-ZPLPRODS += $(SERVICE_ROOT)/syslog
-ZPL_INCLUDE += -I$(SERVICE_ROOT)/syslog
-ZPL_DEFINE += -DZPL_SERVICE_SYSLOG
-endif
-
-ifeq ($(strip $(ZPL_SERVICE_TFTPC)),true)
-ZPL_DEFINE += -DZPL_SERVICE_TFTPC
-endif
-ifeq ($(strip $(ZPL_SERVICE_TFTPD)),true)
-ZPL_DEFINE += -DZPL_SERVICE_TFTPD
-endif
-ifeq ($(strip $(ZPL_SERVICE_FTPC)),true)
-ZPL_DEFINE += -DZPL_SERVICE_FTPC
-endif
-ifeq ($(strip $(ZPL_SERVICE_FTPD)),true)
-ZPL_DEFINE += -DZPL_SERVICE_FTPD
-endif
-ifeq ($(strip $(ZPL_SERVICE_TELNET)),true)
-ZPL_DEFINE += -DZPL_SERVICE_TELNET
-endif
-ifeq ($(strip $(ZPL_SERVICE_TELNETD)),true)
-ZPL_DEFINE += -DZPL_SERVICE_TELNETD
-endif
-ifeq ($(strip $(ZPL_SERVICE_PING)),true)
-ZPL_DEFINE += -DZPL_SERVICE_PING
-endif
-ifeq ($(strip $(ZPL_SERVICE_TRACEROUTE)),true)
-ZPL_DEFINE += -DZPL_SERVICE_TRACEROUTE
-endif
-ifeq ($(strip $(ZPL_SERVICE_UBUS_SYNC)),true)
-ZPL_DEFINE += -DZPL_SERVICE_UBUS_SYNC
-endif
-
-endif #($(strip $(ZPL_SERVICE_MODULE)),true)
+endif #ifeq ($(strip $(ZPL_HALPAL_MODULE)),true)
 
 
 #
@@ -283,6 +239,73 @@ endif #($(strip $(ZPL_LIBSSH_MODULE)),true)
 
 endif#($(strip $(ZPL_COMPONENT_MODULE)),true)
 
+
+
+
+#
+# service
+#
+ifeq ($(strip $(ZPL_SERVICE_MODULE)),true)
+ZPLPRODS += $(SERVICE_ROOT)/systools
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/systools
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
+ZPLPRODS += $(SERVICE_ROOT)/sntp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPS)),true)
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),false)
+ZPLPRODS += $(SERVICE_ROOT)/sntp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/sntp
+endif
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_SNTPC
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SNTPS)),true)
+ZPL_DEFINE += -DZPL_SERVICE_SNTPS
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_SYSLOG)),true)
+ZPLPRODS += $(SERVICE_ROOT)/syslog
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/syslog
+ZPL_DEFINE += -DZPL_SERVICE_SYSLOG
+endif
+
+ifeq ($(strip $(ZPL_SERVICE_TFTPC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TFTPC
+endif
+ifeq ($(strip $(ZPL_SERVICE_TFTPD)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TFTPD
+endif
+ifeq ($(strip $(ZPL_SERVICE_FTPC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_FTPC
+endif
+ifeq ($(strip $(ZPL_SERVICE_FTPD)),true)
+ZPL_DEFINE += -DZPL_SERVICE_FTPD
+endif
+ifeq ($(strip $(ZPL_SERVICE_TELNET)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TELNET
+endif
+ifeq ($(strip $(ZPL_SERVICE_TELNETD)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TELNETD
+endif
+ifeq ($(strip $(ZPL_SERVICE_PING)),true)
+ZPL_DEFINE += -DZPL_SERVICE_PING
+endif
+ifeq ($(strip $(ZPL_SERVICE_TRACEROUTE)),true)
+ZPL_DEFINE += -DZPL_SERVICE_TRACEROUTE
+endif
+ifeq ($(strip $(ZPL_SERVICE_UBUS_SYNC)),true)
+ZPL_DEFINE += -DZPL_SERVICE_UBUS_SYNC
+endif
+
+endif #($(strip $(ZPL_SERVICE_MODULE)),true)
+
+
 #
 # Externsion openssl
 #
@@ -303,45 +326,32 @@ endif #($(ZPL_BUILD_ARCH),X86_64)
 ZPL_DEFINE += -DZPL_OPENSSL_MODULE
 endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
 
-#
-# ABSTRACT HAL PAL
-#
-ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
-
-ifeq ($(strip $(ZPL_HAL_MODULE)),true)
-ZPLPRODS += $(ABSTRACT_ROOT)/hal
-ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/hal
-ZPL_DEFINE += -DZPL_HAL_MODULE
-endif #($(strip $(ZPL_HAL_MODULE)),true)
-
-ZPL_DEFINE += -DZPL_PAL_MODULE
-
-ifeq ($(strip $(ZPL_KERNEL_STACK_MODULE)),true)
-ZPLPRODS += $(ABSTRACT_ROOT)/pal/kernel
-ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/kernel
-ifeq ($(strip $(ZPL_KERNEL_STACK_NETLINK)),true)
-ZPL_DEFINE += -DZPL_KERNEL_STACK_NETLINK
-endif
-ifeq ($(strip $(ZPL_KERNEL_SORF_FORWARDING)),true)
-ZPL_DEFINE += -DZPL_KERNEL_SORF_FORWARDING
-endif
-endif
-
-ifeq ($(strip $(ZPL_IPCOM_STACK_MODULE)),true)
-ZPLPRODS += $(ABSTRACT_ROOT)/pal/ipstack
-ZPL_INCLUDE += -I$(ABSTRACT_ROOT)/pal/ipstack
-endif
-
-endif #ifeq ($(strip $(ZPL_ABSTRACT_MODULE)),true)
 
 #
 # PRODUCT
 #
 ifeq ($(strip $(ZPL_BSP_MODULE)),true)
 
-ZPLPRODS += $(PRODUCT_ROOT)/bsp
-ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp
+ZPLPRODS += $(PRODUCT_ROOT)/bsp/hal
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/hal
 ZPL_DEFINE += -DZPL_BSP_MODULE
+
+ifeq ($(strip $(ZPL_KERNEL_MODULE)),true)
+ZPLPRODS += $(PRODUCT_ROOT)/bsp/pal/linux
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/pal/linux
+ifeq ($(strip $(ZPL_KERNEL_NETLINK)),true)
+ZPL_DEFINE += -DZPL_KERNEL_NETLINK
+endif
+ifeq ($(strip $(ZPL_KERNEL_FORWARDING)),true)
+ZPL_DEFINE += -DZPL_KERNEL_FORWARDING
+endif
+endif
+
+ifeq ($(strip $(ZPL_IPCOM_MODULE)),true)
+ZPLPRODS += $(PRODUCT_ROOT)/bsp/pal/ipnet
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/pal/ipnet
+endif
+
 
 ifeq ($(strip $(ZPL_SDK_MODULE)),true)
 ZPL_DEFINE += -DZPL_SDK_MODULE
@@ -352,6 +362,8 @@ ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)
 endif #($(strip $(ZPL_SDK_MODULE)),true)
+
+
 endif #($(strip $(ZPL_BSP_MODULE)),true)
 
 

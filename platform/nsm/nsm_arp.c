@@ -5,10 +5,14 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "zmemory.h"
+#include "if.h"
+#include "prefix.h"
+#include "vty.h"
 #include "nsm_include.h"
+#include "hal_include.h"
 
 static Gip_arp_t gIparp;
 
@@ -349,7 +353,7 @@ static int ip_arp_cleanup(arp_class_t type, zpl_bool all, ifindex_t ifindex, vrf
 	if(!lstCount(gIparp.arpList))
 		return OK;
 	if(ifindex)
-		ifp = if_lookup_by_index(ifp);
+		ifp = if_lookup_by_index(ifp->ifindex);
 	if(gIparp.mutex)
 		os_mutex_lock(gIparp.mutex, OS_WAIT_FOREVER);
 	for(pstNode = (ip_arp_t *)lstFirst(gIparp.arpList);

@@ -19,22 +19,33 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "route_types.h"
 #include "zebra_event.h"
 #include "if.h"
 #include "vrf.h"
+#include "host.h"
+#include "vty.h"
 #include "zmemory.h"
 #include "nexthop.h"
 #include "nsm_rib.h"
+#include "routemap.h"
+#include "router-id.h"
 #ifdef ZPL_NSM_MODULE
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
-#include "routemap.h"
+#include "nsm_fpm.h"
 #include "nsm_rnh.h"
 #endif
+#include "nsm_halpal.h"
 #include "nsm_debug.h"
+
+
+#ifdef ZPL_KERNEL_MODULE
+extern void _netlink_open(struct nsm_ip_vrf *zvrf);
+extern void _netlink_close(struct nsm_ip_vrf *zvrf);
+#endif
 
 static struct nsm_rib_t m_nsm_ribd =
 {
@@ -49,6 +60,22 @@ struct nsm_rib_t *nsm_ribd = NULL;
  * as global here for test-rig code.
  */
 int rib_process_hold_time = 10;
+static enum multicast_mode ipv4_multicast_mode = MCAST_NO_CONFIG;
+
+static int nsm_rib_task_init(void);
+static int nsm_rib_task_exit (void);
+
+struct module_list module_list_rib = {
+		.module = MODULE_RIB,
+		.name = "RIB\0",
+		.module_init = NULL,
+		.module_exit = NULL,
+		.module_task_init = nsm_rib_task_init,
+		.module_task_exit = nsm_rib_task_exit,
+		.module_cmd_init = NULL,
+		.taskid = 0,
+		.flags=0,
+};
 
 /* Each route type's string and default distance value. */
 static const struct
@@ -73,7 +100,35 @@ static const struct
 };
 
 /* RPF lookup behaviour */
-static enum multicast_mode ipv4_multicast_mode = MCAST_NO_CONFIG;
+
+static int nsm_rib_task(void *argv)
+{
+	module_setup_task(MODULE_RIB, os_task_id_self());
+	host_waitting_loadconfig();
+	thread_mainloop(m_nsm_ribd.master);
+	return 0;
+}
+
+static int nsm_rib_task_init(void)
+{
+	if(m_nsm_ribd.rib_task_id == 0)
+		m_nsm_ribd.rib_task_id = os_task_create("ribTask", OS_TASK_DEFAULT_PRIORITY,
+								 0, nsm_rib_task, NULL, OS_TASK_DEFAULT_STACK);
+	if (m_nsm_ribd.rib_task_id)
+	{
+		module_setup_task(MODULE_RIB, m_nsm_ribd.rib_task_id);
+		return OK;
+	}	
+	return ERROR;
+}
+
+static int nsm_rib_task_exit (void)
+{
+	if(m_nsm_ribd.rib_task_id)
+		os_task_destroy(m_nsm_ribd.rib_task_id);
+	m_nsm_ribd.rib_task_id = 0;
+	return OK;
+}
 
 static void __attribute__((format (printf, 4, 5)))
 _rnode_zlog(const char *_func, struct route_node *rn, int priority,
@@ -190,7 +245,7 @@ rib_nexthop_ipv4_ifindex_add(struct rib *rib, struct ipstack_in_addr *ipv4,
 	return nexthop;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 struct nexthop *
 rib_nexthop_ipv6_add (struct rib *rib, struct ipstack_in6_addr *ipv6)
 {
@@ -403,7 +458,7 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 	return 0;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* If force flag is not set, do not modify falgs at all for uninstall
  the route from FIB. */
 static int
@@ -806,7 +861,7 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 	return ZEBRA_RIB_NOTFOUND;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 struct rib *
 rib_match_ipv6 (struct ipstack_in6_addr *addr, vrf_id_t vrf_id)
 {
@@ -933,7 +988,7 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 		else
 			UNSET_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE);
 		break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	case NEXTHOP_TYPE_IPV6:
 		family = AFI_IP6;
 		if (nexthop_active_ipv6 (rib, nexthop, set, rn))
@@ -1082,7 +1137,7 @@ static int rib_update_kernel(struct route_node *rn, struct rib *old,
 	 * Make sure we update the FPM any time we ipstack_send new information to
 	 * the kernel.
 	 */
-	; //zfpm_trigger_update (rn, "updating in kernel");
+	zfpm_trigger_update (rn, "updating in kernel");
 
 	ret = nsm_halpal_iproute_rib_action(&rn->p, old, new);
 
@@ -1109,7 +1164,7 @@ static void rib_uninstall(struct route_node *rn, struct rib *rib)
 	if (CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 	{
 		if (info->safi == SAFI_UNICAST)
-			; //zfpm_trigger_update (rn, "rib_uninstall");
+			zfpm_trigger_update (rn, "rib_uninstall");
 #ifdef ZPL_NSM_MODULE
 		redistribute_delete(&rn->p, rib);
 #endif
@@ -1313,7 +1368,7 @@ static void rib_process(struct route_node *rn)
 		}
 
 		if (info->safi == SAFI_UNICAST)
-			; //zfpm_trigger_update (rn, "updating existing route");
+			zfpm_trigger_update (rn, "updating existing route");
 	}
 	else if (old_fib == new_fib && new_fib && !RIB_SYSTEM_ROUTE(new_fib))
 	{
@@ -1425,9 +1480,9 @@ static void meta_queue_process_complete(struct work_queue *dummy)
 	#ifdef ZPL_NSM_RNH
 	zebra_evaluate_rnh_table(0, IPSTACK_AF_INET);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	zebra_evaluate_rnh_table(0, IPSTACK_AF_INET6);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 	#endif
 }
 
@@ -2208,7 +2263,7 @@ static void static_install_route(afi_t afi, safi_t safi, struct prefix *p,
 		case STATIC_IPV4_BLACKHOLE:
 			rib_nexthop_blackhole_add(rib);
 			break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 			case STATIC_IPV6_GATEWAY:
 			rib_nexthop_ipv6_add (rib, &si->addr.ipv6);
 			break;
@@ -2246,7 +2301,7 @@ static void static_install_route(afi_t afi, safi_t safi, struct prefix *p,
 		case STATIC_IPV4_BLACKHOLE:
 			rib_nexthop_blackhole_add(rib);
 			break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 			case STATIC_IPV6_GATEWAY:
 			rib_nexthop_ipv6_add (rib, &si->addr.ipv6);
 			break;
@@ -2280,7 +2335,7 @@ static int static_nexthop_same(struct nexthop *nexthop, struct static_route *si)
 	if (nexthop->type
 			== NEXTHOP_TYPE_BLACKHOLE&& si->type == STATIC_IPV4_BLACKHOLE)
 		return 1;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	if (nexthop->type == NEXTHOP_TYPE_IPV6
 			&& si->type == STATIC_IPV6_GATEWAY
 			&& IPV6_ADDR_SAME (&nexthop->gate.ipv6, &si->addr.ipv6))
@@ -2543,7 +2598,7 @@ int static_delete_ipv4_safi(safi_t safi, struct prefix *p, struct ipstack_in_add
 		os_mutex_unlock(stable->mutex);
 	return 1;
 }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 int
 rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	      struct ipstack_in6_addr *gate, ifindex_t ifindex,
@@ -3263,7 +3318,7 @@ void rib_close_table(struct route_table *table)
 					continue;
 
 				if (info->safi == SAFI_UNICAST)
-					; //zfpm_trigger_update (rn, NULL);
+					zfpm_trigger_update (rn, NULL);
 
 				if (!RIB_SYSTEM_ROUTE(rib))
 					rib_update_kernel(rn, rib, NULL);
@@ -3306,12 +3361,18 @@ static inline int vrf_id_get_next(vrf_id_t vrf_id, vrf_id_t *next_id_p)
 	struct ip_vrf * ip_vrf = ip_vrf_lookup ( vrf_id);
 	if(ip_vrf)
 	{
+		if (_ip_vrf_master.vrf_mutex)
+      		os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
 		struct ip_vrf * ip_vrf_next = (struct ip_vrf *)lstNext((NODE*)ip_vrf);
 		if(ip_vrf_next)
 		{
 			*next_id_p = ip_vrf_next->vrf_id;
+			if (_ip_vrf_master.vrf_mutex)
+      			os_mutex_unlock(_ip_vrf_master.vrf_mutex);
 			return 1;
-		};
+		}
+		if (_ip_vrf_master.vrf_mutex)
+      		os_mutex_unlock(_ip_vrf_master.vrf_mutex);
 	}
 	return 0;
 }
@@ -3519,6 +3580,7 @@ int nsm_vrf_destroy(vrf_id_t vrf_id, struct ip_vrf *ip_vrf)
   	}
   	return 0;
 }
+
 /* Callback upon enabling a VRF. */
 int nsm_vrf_enable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf)
 {
@@ -3530,10 +3592,9 @@ int nsm_vrf_enable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf)
 #if defined(HAVE_RTADV)
   rtadv_init(zvrf);
 #endif
+#ifdef ZPL_KERNEL_MODULE
   _netlink_open(zvrf);
-  // interface_list (zvrf);
-  // route_read (zvrf);
-
+#endif
   return 0;
 }
 
@@ -3550,5 +3611,8 @@ int nsm_vrf_disable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf)
 
   	list_delete_all_node(zvrf->rid_all_sorted_list);
   	list_delete_all_node(zvrf->rid_lo_sorted_list);
+#ifdef ZPL_KERNEL_MODULE
+	_netlink_close(zvrf);
+#endif	  
   	return 0;
 }

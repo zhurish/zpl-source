@@ -5,12 +5,17 @@
  *      Author: zhurish
  */
 
-
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "route_types.h"
+#include "zebra_event.h"
+#include "zmemory.h"
+#include "if.h"
+#include "nsm_interface.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "command.h"
+#include "nsm_tunnel.h"
 
 
 DEFUN (nsm_tunnel_protocol,
@@ -230,6 +235,16 @@ DEFUN (nsm_tunnel_source,
 	if(nsm_tunnel_source_get_api(ifp, &oldsource) == OK)
 	{
 		str2prefix (argv[0], &source);
+		if(IPV4_NET127(source.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(source.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		if(!prefix_same(&source, &oldsource))
 		{
 			ret = nsm_tunnel_source_set_api(ifp, &source);
@@ -286,6 +301,16 @@ DEFUN (nsm_tunnel_destination,
 	if(nsm_tunnel_destination_get_api(ifp, &olddest) == OK)
 	{
 		str2prefix (argv[0], &dest);
+		if(IPV4_NET127(dest.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Lookback address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(IPV4_MULTICAST(dest.u.prefix4.s_addr))
+		{
+			vty_out (vty, "%% Multicast address%s", VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		if(!prefix_same(&dest, &olddest))
 		{
 			ret = nsm_tunnel_destination_set_api(ifp, &dest);
@@ -355,7 +380,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 			if (ifp->if_mode == IF_MODE_L3)
 			{
 /*
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 				if (ifp->vrf_id != VRF_DEFAULT)
 				vty_out(vty, " ip forward vrf %s%s", ip_vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
 #endif

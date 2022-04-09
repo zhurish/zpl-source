@@ -6,7 +6,12 @@
  */
 
 #include "systools.h"
-
+#ifdef ZPL_SERVICE_SNTPC
+#include "sntpcLib.h"
+#endif
+#ifdef ZPL_SERVICE_SNTPS
+#include "sntpsLib.h"
+#endif
 #ifdef ZPL_SERVICE_TFTPC
 #include "tftpLib.h"
 #endif
@@ -44,15 +49,12 @@ static void *master_eloop = NULL;
 struct module_list module_list_utils = 
 { 
 	.module=MODULE_UTILS, 
-	.name="UTILS", 
+	.name="UTILS\0", 
 	.module_init=systools_module_init, 
 	.module_exit=systools_module_exit, 
 	.module_task_init=systools_task_init, 
 	.module_task_exit=systools_task_exit, 
 	.module_cmd_init=systools_cmd_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.taskid=0,
 	.flags = ZPL_MODULE_NEED_INIT,
 };

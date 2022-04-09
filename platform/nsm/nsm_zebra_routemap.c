@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#include <os_include.h>
-#include <zpl_include.h>
+#include <auto_include.h>
+#include <zplos_include.h>
 #include <zebra_event.h>
 #include "zmemory.h"
 #include "prefix.h"
@@ -665,9 +665,9 @@ route_set_src_compile (const char *arg)
   union g_addr src, *psrc;
 
   if (ipstack_inet_pton(IPSTACK_AF_INET, arg, &src.ipv4) != 1
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       && ipstack_inet_pton(IPSTACK_AF_INET6, arg, &src.ipv6) != 1
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
      )
     return NULL;
 

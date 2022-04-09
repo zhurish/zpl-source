@@ -7,12 +7,11 @@
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-//#include "nsm_include.h"
-#include "vty_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
+#include "vty.h"
+#include "command.h"
 
 DEFUN (show_process,
 		show_process_cmd,
@@ -47,7 +46,7 @@ DEFUN (show_process_detail,
 	return CMD_SUCCESS;
 }
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 DEFUN (show_ipcom_process,
 		show_ipcom_process_cmd,
 		"show ipcom process",
@@ -65,7 +64,7 @@ int cmd_os_init(void)
 {
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_process_cmd);
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_process_detail_cmd);
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_ipcom_process_cmd);
 #endif
 	return 0;

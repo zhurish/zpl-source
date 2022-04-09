@@ -6,8 +6,8 @@
  */
 
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "lib_include.h"
 
 #include "libssh_autoconfig.h"
@@ -104,15 +104,12 @@ int ssh_module_task_exit ()
 struct module_list module_list_libssh = 
 { 
 	.module=MODULE_SSH, 
-	.name="SSH", 
+	.name="SSH\0", 
 	.module_init=ssh_module_init, 
 	.module_exit=ssh_module_exit, 
 	.module_task_init=ssh_module_task_init, 
 	.module_task_exit=ssh_module_task_exit, 
 	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.taskid=0,
 };
 /*

@@ -4,10 +4,18 @@
  *  Created on: Sep 13, 2018
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "template.h"
+#include "algorithm.h"
+#include "nsm_qos.h"
+#include "nsm_interface.h"
+#include "nsm_tunnel.h"
 
 // ip_tunnel.c
 extern int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel);

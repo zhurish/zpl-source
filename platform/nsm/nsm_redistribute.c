@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#include <os_include.h>
-
+#include <auto_include.h>
+#include "zebra_event.h"
 #include "vector.h"
 #include "vty.h"
 #include "command.h"
@@ -30,7 +30,8 @@
 #include "linklist.h"
 #include "log.h"
 #include "vrf.h"
-
+#include "if.h"
+#include "connected.h"
 #include "nsm_rib.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
@@ -57,7 +58,7 @@ zebra_check_addr (struct prefix *p)
           || IPV4_LINKLOCAL(addr))
 	return 0;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (p->family == IPSTACK_AF_INET6)
     {
       if (IPSTACK_IN6_IS_ADDR_LOOPBACK (&p->u.prefix6))
@@ -65,7 +66,7 @@ zebra_check_addr (struct prefix *p)
       if (IPSTACK_IN6_IS_ADDR_LINK_LOCAL(&p->u.prefix6))
     	  return 0;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return 1;
 }
 
@@ -75,14 +76,14 @@ is_default (struct prefix *p)
   if (p->family == IPSTACK_AF_INET)
     if (p->u.prefix4.s_addr == 0 && p->prefixlen == 0)
       return 1;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 #if 0  /* IPv6 default separation is now pending until protocol daemon
           can handle that. */
   if (p->family == IPSTACK_AF_INET6)
     if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED (&p->u.prefix6) && p->prefixlen == 0)
       return 1;
 #endif /* 0 */
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return 0;
 }
 
@@ -93,9 +94,9 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
   struct route_table *table;
   struct route_node *rn;
   struct rib *newrib;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   struct prefix_ipv6 p6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 
   /* Lookup default route. */
@@ -117,7 +118,7 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 	}
     }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   /* Lookup default route. */
   memset (&p6, 0, sizeof (struct prefix_ipv6));
   p6.family = IPSTACK_AF_INET6;
@@ -136,7 +137,7 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 	  route_unlock_node (rn);
 	}
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 }
 
 /* Redistribute routes. */
@@ -166,7 +167,7 @@ zebra_redistribute (struct zserv *client, zpl_uint32 type, vrf_id_t vrf_id)
             }
         }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   table = nsm_vrf_table (AFI_IP6, SAFI_UNICAST, vrf_id);
   if (table)
     for (rn = route_top (table); rn; rn = route_next (rn))
@@ -179,7 +180,7 @@ zebra_redistribute (struct zserv *client, zpl_uint32 type, vrf_id_t vrf_id)
 	    client->redist_v6_add_cnt++;
 	    zsend_route_multipath (ZEBRA_IPV6_ROUTE_ADD, client, &rn->p, newrib);
 	  }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 }
 
 void
@@ -241,10 +242,10 @@ redistribute_delete (struct prefix *p, struct rib *rib)
 	{
 	  if (p->family == IPSTACK_AF_INET)
 	    zsend_route_multipath (ZEBRA_IPV4_ROUTE_DELETE, client, p, rib);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	  if (p->family == IPSTACK_AF_INET6)
 	    zsend_route_multipath (ZEBRA_IPV6_ROUTE_DELETE, client, p, rib);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 	}
     }
 }

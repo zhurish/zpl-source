@@ -20,12 +20,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "vrf.h"
 #include "if.h"
 #include "zmemory.h"
 #include "nsm_rib.h"
+#include "nsm_halpal.h"
 #ifdef HAVE_NETNS
 #undef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -141,12 +142,26 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
     os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
 
   ip_vrf = XCALLOC(MTYPE_VRF, sizeof(struct ip_vrf));
+  if(!ip_vrf)
+    return NULL;
+  memset(ip_vrf, 0, sizeof(struct ip_vrf));  
   ip_vrf->vrf_id = vrf_id;
-  if (name)
-    ip_vrf->name = XSTRDUP(MTYPE_VRF_NAME, name);
-
+  //if (name)
+  //  ip_vrf->name = XSTRDUP(MTYPE_VRF_NAME, name);
+  //else
+  //  ip_vrf->name = NULL;
+  strcpy(ip_vrf->name, name);
   /* Initialize interfaces. */
-  zlog_info(MODULE_NSM, "VRF %u is created.", vrf_id);
+  zlog_info(MODULE_NSM, "VRF %s %u is created.", ip_vrf->name, vrf_id);
+
+  if(nsm_halpal_create_vrf(ip_vrf) != OK)
+  {
+    //if (ip_vrf->name)
+    //  XFREE(MTYPE_VRF_NAME, ip_vrf->name);
+    XFREE(MTYPE_VRF, ip_vrf);
+    return NULL;
+  }
+
 
   if (_ip_vrf_master.vrf_new_hook)
     ret = (*_ip_vrf_master.vrf_new_hook)(vrf_id, ip_vrf);
@@ -159,8 +174,8 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
   }
   else
   {
-    if (ip_vrf->name)
-      XFREE(MTYPE_VRF_NAME, ip_vrf->name);
+    //if (ip_vrf->name)
+    //  XFREE(MTYPE_VRF_NAME, ip_vrf->name);
     XFREE(MTYPE_VRF, ip_vrf);
     ip_vrf = NULL;
   }
@@ -182,10 +197,13 @@ static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
 
   if (_ip_vrf_master.vrf_delete_hook)
     ret = (*_ip_vrf_master.vrf_delete_hook)(ip_vrf->vrf_id, ip_vrf);
+
+  ret = nsm_halpal_delete_vrf(ip_vrf);
+
   if(ret == OK)
   {
-    if (ip_vrf->name)
-      XFREE(MTYPE_VRF_NAME, ip_vrf->name);
+    //if (ip_vrf->name)
+    //  XFREE(MTYPE_VRF_NAME, ip_vrf->name);
 
     lstDelete(_ip_vrf_master.ip_vrf_list, (NODE *)ip_vrf);
 
@@ -312,7 +330,8 @@ ip_vrf_info_lookup(vrf_id_t vrf_id)
 struct ip_vrf *ip_vrf_create(const char *name)
 {
   struct ip_vrf *ip_vrf = NULL;
-  ip_vrf = ip_vrf_new_one(VRF_DEFAULT, name);
+  static int local_vrf_id = 1;
+  ip_vrf = ip_vrf_new_one(local_vrf_id++, name);
   return ip_vrf;
 }
 
@@ -359,10 +378,11 @@ void ip_vrf_init(void)
   if(_ip_vrf_master.ip_vrf_list)
   {
     lstInit(_ip_vrf_master.ip_vrf_list);
+    _ip_vrf_master.vrf_mutex = os_mutex_init();
     ip_vrf_add_hook(VRF_NEW_HOOK, nsm_vrf_create);
     ip_vrf_add_hook(VRF_ENABLE_HOOK, nsm_vrf_enable);
     ip_vrf_add_hook(VRF_DISABLE_HOOK, nsm_vrf_disable);
-    ip_vrf_new_one(VRF_DEFAULT, "Default");
+    ip_vrf_new_one(VRF_DEFAULT, "Default-IP-Routing-Table");
   }
 }
 

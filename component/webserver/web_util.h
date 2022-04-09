@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "if.h"
-#include "nsm_ip_vrf.h"
+#include "vrf.h"
 #include "nexthop.h"
 #include "nsm_rib.h"
 

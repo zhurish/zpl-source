@@ -188,7 +188,7 @@ config ZPL_WEBAPP_MODULE
 config ZPL_WIFI_MODULE
 	bool "WIFI Module"
 	default n
-	depends on ZPL_COMPONENT_MODULE  && ZPL_NSM_MODULE
+	depends on ZPL_COMPONENT_MODULE  && ZPL_NSM_WIRELESS
 	help
 	Build WIFI Module.
 

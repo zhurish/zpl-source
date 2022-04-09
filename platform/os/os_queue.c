@@ -4,8 +4,8 @@
  *  Created on: Jun 9, 2018
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 #include <sys/ipc.h>
 #include <sys/msg.h>

@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "zpl_type.h"
 #ifdef ZPL_SHELL_MODULE
 
 #include "hash.h"
@@ -84,7 +84,7 @@ enum cmd_privilege {
 struct cmd_element 
 {
   const char *string;			/* Command specification by string. */
-  int (*func) (struct cmd_element *, struct vty *, zpl_uint32, const char *[]);
+  int (*func) (struct cmd_element *, struct vty *, int, const char *[]);
   const char *doc;			/* Documentation of this command. */
   zpl_uint32 daemon;                   /* Daemon to which this command belong. */
   vector tokens;		/* Vector of cmd_tokens */

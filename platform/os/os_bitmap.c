@@ -1,5 +1,5 @@
 
-#include "os_include.h"
+#include "auto_include.h"
 
 #include "os_bitmap.h"
 

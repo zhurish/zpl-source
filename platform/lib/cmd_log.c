@@ -6,8 +6,8 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "cli_node.h"
 #include "zmemory.h"
 #include "vector.h"
@@ -15,6 +15,9 @@
 #include "vty.h"
 #include "host.h"
 #include "log.h"
+#include "prefix.h"
+
+
 
 struct logfilter
 {
@@ -38,7 +41,7 @@ DEFUN (config_logmsg,
 	if ((level = zlog_priority_match(argv[0])) == ZLOG_DISABLED)
 		return CMD_ERR_NO_MATCH;
 
-	zlog(NULL, level, "%s",
+	zlog(MODULE_LIB, level, "%s",
 			((message = argv_concat(argv, argc, 1)) ? message : ""));
 	if (message)
 		XFREE(MTYPE_TMP, message);

@@ -10,7 +10,7 @@
 # 7 field line has format:
 # ZServ route type, canonical name, daemon, route char, ipv4, ipv6, short desc
 #
-# Zserv route type: 	Corresponding with zpl_include.h. Key field.
+# Zserv route type: 	Corresponding with zplos_include.h. Key field.
 # canonical name:	Typically derived from the route type definition.
 #			Used in 'redistribute' commands in daemons.
 #			Key field.
@@ -61,7 +61,6 @@ ZEBRA_ROUTE_HSLS,       hsls,      hslsd,  'H', 0, 0, "HSLS"
 ZEBRA_ROUTE_OLSR,       olsr,      olsrd,  'o', 1, 0, "OLSR"
 ZEBRA_ROUTE_BABEL,      babel,     babeld, 'A', 1, 1, "Babel"
 ZEBRA_ROUTE_NHRP,       nhrp,      nhrpd,  'N', 1, 1, "NHRP"
-#��չ·��Э��
 ZEBRA_ROUTE_VRRP,	 vrrp,		vrrpd,		'v', 0, 0, "VRRP" 
 ZEBRA_ROUTE_FRP,	 frp,		frpd,		'F', 1, 0, "FRP"  
 ZEBRA_ROUTE_LLDP,	 lldp,		lldpd,		'L', 0, 0, "LLDP" 
@@ -89,7 +88,6 @@ ZEBRA_ROUTE_HSLS,   "Hazy-Sighted Link State Protocol (HSLS)"
 ZEBRA_ROUTE_OLSR,   "Optimised Link State Routing (OLSR)"
 ZEBRA_ROUTE_BABEL,  "Babel routing protocol (Babel)"
 ZEBRA_ROUTE_NHRP,   "Next Hop Resolution Protocol (NHRP)"
-#��չ·��Э��
 ZEBRA_ROUTE_VRRP,	"Virtual Router Redundancy Protocol (VRRP)"
 ZEBRA_ROUTE_FRP,	"Fast and Reliable Routing Protocol (FRP)"
 ZEBRA_ROUTE_LLDP,	"Link Layer Discovery Protocol (LLDP)"

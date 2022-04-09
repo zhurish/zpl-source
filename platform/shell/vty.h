@@ -25,7 +25,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #endif
 
-#include "os_include.h"
+#include "auto_include.h"
 #include "log.h"
 #include "sockunion.h"
 #include "thread.h"
@@ -254,7 +254,7 @@ typedef struct cli_shell_s
   void *m_thread_master;
   void *m_eloop_master;
   zpl_uint32 console_taskid;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
   zpl_uint32 telnet_taskid;
 #endif
 	struct tty_com	ttycom;

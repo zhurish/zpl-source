@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "vty.h"
 #include "if.h"
 

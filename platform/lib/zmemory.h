@@ -64,8 +64,11 @@ struct mstat
 #endif
 
 
-
+#include "module.h"
 #include "memtypes.h"
+#include "zebra_event.h"
+#include "route_types.h"
+#include "zassert.h"
 
 extern struct mlist mlists[];
 extern struct mstat mstat[MTYPE_MAX];

@@ -1778,7 +1778,7 @@ PUBLIC void bufAdjustEnd(WebsBuf *bp, ssize size)
         Flush the queue if the endp pointer is corrupted via a bad size
      */
     if (bp->endp >= bp->endbuf) {
-        error("Bad end pointer");
+        //webs_error("Bad end pointer");
         bufFlush(bp);
     }
 }
@@ -1801,7 +1801,7 @@ PUBLIC void bufAdjustStart(WebsBuf *bp, ssize size)
         Flush the queue if the servp pointer is corrupted via a bad size
      */
     if (bp->servp >= bp->endbuf) {
-        error("Bad serv pointer");
+        //webs_error("Bad serv pointer");
         bufFlush(bp);
     }
 }
@@ -1871,7 +1871,7 @@ PUBLIC bool bufGrow(WebsBuf *bp, ssize room)
     if (room == 0) {
         if (bp->maxsize >= 0 && bp->buflen >= bp->maxsize) {
 #if BLD_DEBUG
-            error("Cannot grow buf. Needed %d, max %d", room, bp->maxsize);
+            webs_error("Cannot grow buf. Needed %d, max %d", room, bp->maxsize);
 #endif
             return 0;
         }

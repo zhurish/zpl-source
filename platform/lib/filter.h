@@ -27,6 +27,10 @@
 extern "C" {
 #endif
 
+#include "hash.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #include "prefix.h"
 #include "libnetpro.h"
 /*

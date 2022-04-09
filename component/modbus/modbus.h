@@ -18,7 +18,7 @@
 #include "stdint.h"
 #endif
 
-#include "os_include.h"
+#include "auto_include.h"
 #define HAVE_STRLCPY
 #include "modbus-version.h"
 

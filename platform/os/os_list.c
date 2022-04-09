@@ -8,8 +8,8 @@
 
 
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 /* lstLib.c - doubly linked list subroutine library */
 
 /* Copyright 1984-2001 Wind River Systems, Inc. */

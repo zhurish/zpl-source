@@ -7,16 +7,15 @@
 
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "vty.h"
+#include "vty_user.h"
 #include "iw_config.h"
 #include "iw_client.h"
 #include "iw_interface.h"
 #include "iwlib.h"
-
+#include "iwioctl.h"
 
 //static iw_client_t gIw_client_t;
 
@@ -1351,7 +1350,7 @@ int iw_client_scan_ap_show(iw_client_t *iw_client, struct vty *vty)
 			vty_out(vty, " wireless is not enable%s", VTY_NEWLINE);
 			return OK;
 		}
-		return iw_client_dev_scan_ap_show(ifp, vty);
+		return iw_client_dev_scan_ap_show(ifp, vty, 0);
 	}
 	return OK;
 }

@@ -4,8 +4,8 @@
  *  Created on: Jun 15, 2019
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "lib_include.h"
 #include "nsm_include.h"
 #include "vty_include.h"
@@ -315,15 +315,12 @@ int pl_pjsip_module_task_exit()
 struct module_list module_list_pjsip = 
 { 
 	.module=MODULE_PJSIP, 
-	.name="PJSIP", 
+	.name="PJSIP\0", 
 	.module_init=pl_pjsip_module_init, 
 	.module_exit=pl_pjsip_module_exit, 
 	.module_task_init=pl_pjsip_module_task_init, 
 	.module_task_exit=pl_pjsip_module_task_exit, 
 	.module_cmd_init=NULL, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.taskid=0,
 };
 /***************************************************************************************/

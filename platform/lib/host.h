@@ -13,6 +13,11 @@
 extern "C" {
 #endif
 
+#include "hash.h"
+#include "prefix.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 /* Host configuration variable */
 struct zpl_host
 {

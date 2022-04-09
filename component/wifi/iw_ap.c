@@ -5,16 +5,17 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_interface.h"
 #include "iwlib.h"
-
+#include "vty.h"
+#include "vty_user.h"
+#include "iwioctl.h"
+#include "checksum.h"
 
 static int iw_ap_start(iw_ap_t *iw_ap);
 static int iw_ap_stop(iw_ap_t *iw_ap);
@@ -859,7 +860,7 @@ iw_ap_mac_t * iw_ap_mac_lookup_api(iw_ap_t *iw_ap, zpl_uint8 *mac, zpl_bool acce
 	else
 		list = iw_ap->dmac_list;
 	if(!list)
-		return ERROR;
+		return NULL;
 	if(iw_ap->ap_mutex)
 		os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
 

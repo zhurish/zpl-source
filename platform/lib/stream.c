@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "stream.h"
 #include "zmemory.h"
 #include "log.h"
@@ -934,7 +934,7 @@ stream_sendto (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 fl
   ssize_t nbytes;
 
 	  nbytes = ipstack_sendto (fd, s->data + s->getp, size,
-	                            flags, to, tolen);
+	                            flags, to, *tolen);
       return nbytes;
 }
 

@@ -4,9 +4,8 @@
  *  Created on: 2019年12月15日
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>

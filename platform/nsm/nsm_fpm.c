@@ -22,8 +22,8 @@
  * 02111-1307, USA.
  */
 
-#include <os_include.h>
-
+#include <auto_include.h>
+#include "module.h"
 #include "log.h"
 #include "stream.h"
 #include "thread.h"
@@ -41,7 +41,7 @@
 /*
  * Interval at which we attempt to ipstack_connect to the FPM.
  */
-#define ZFPM_CONNECT_RETRY_IVL   5
+#define ZFPM_CONNECT_RETRY_IVL 5
 
 /*
  * Sizes of outgoing and incoming stream buffers for writing/reading
@@ -59,7 +59,7 @@
 /*
  * Interval over which we collect statistics.
  */
-#define ZFPM_STATS_IVL_SECS        10
+#define ZFPM_STATS_IVL_SECS 10
 
 /*
  * Structure that holds state for iterating over all route_node
@@ -74,7 +74,8 @@ typedef struct zfpm_rnodes_iter_t_
 /*
  * Statistics.
  */
-typedef struct zfpm_stats_t_ {
+typedef struct zfpm_stats_t_
+{
   zpl_ulong connect_calls;
   zpl_ulong connect_no_sock;
 
@@ -112,7 +113,8 @@ typedef struct zfpm_stats_t_ {
 /*
  * States for the FPM state machine.
  */
-typedef enum {
+typedef enum
+{
 
   /*
    * In this state we are not yet ready to ipstack_connect to the FPM. This
@@ -169,7 +171,7 @@ typedef struct zfpm_glob_t_
 
   zfpm_state_t state;
 
-  in_addr_t   fpm_server;
+  in_addr_t fpm_server;
   /*
    * Port on which the FPM is running.
    */
@@ -178,7 +180,8 @@ typedef struct zfpm_glob_t_
   /*
    * List of rib_dest_t structures to be processed
    */
-  TAILQ_HEAD (zfpm_dest_q, rib_dest_t_) dest_q;
+  TAILQ_HEAD(zfpm_dest_q, rib_dest_t_)
+  dest_q;
 
   /*
    * Stream ipstack_socket to the FPM.
@@ -204,7 +207,8 @@ typedef struct zfpm_glob_t_
    */
   struct thread *t_conn_down;
 
-  struct {
+  struct
+  {
     zfpm_rnodes_iter_t iter;
   } t_conn_down_state;
 
@@ -214,7 +218,8 @@ typedef struct zfpm_glob_t_
    */
   struct thread *t_conn_up;
 
-  struct {
+  struct
+  {
     zfpm_rnodes_iter_t iter;
   } t_conn_up_state;
 
@@ -253,61 +258,61 @@ typedef struct zfpm_glob_t_
 static zfpm_glob_t zfpm_glob_space;
 static zfpm_glob_t *zfpm_g = &zfpm_glob_space;
 
-static int zfpm_read_cb (struct thread *thread);
-static int zfpm_write_cb (struct thread *thread);
+static int zfpm_read_cb(struct thread *thread);
+static int zfpm_write_cb(struct thread *thread);
 
-static void zfpm_set_state (zfpm_state_t state, const char *reason);
-static void zfpm_start_connect_timer (const char *reason);
-static void zfpm_start_stats_timer (void);
+static void zfpm_set_state(zfpm_state_t state, const char *reason);
+static void zfpm_start_connect_timer(const char *reason);
+static void zfpm_start_stats_timer(void);
 
 /*
  * zfpm_thread_should_yield
  */
 static inline int
-zfpm_thread_should_yield (struct thread *t)
+zfpm_thread_should_yield(struct thread *t)
 {
-  return thread_should_yield (t);
+  return thread_should_yield(t);
 }
 
 /*
  * zfpm_state_to_str
  */
 static const char *
-zfpm_state_to_str (zfpm_state_t state)
+zfpm_state_to_str(zfpm_state_t state)
 {
   switch (state)
-    {
+  {
 
-    case ZFPM_STATE_IDLE:
-      return "idle";
+  case ZFPM_STATE_IDLE:
+    return "idle";
 
-    case ZFPM_STATE_ACTIVE:
-      return "active";
+  case ZFPM_STATE_ACTIVE:
+    return "active";
 
-    case ZFPM_STATE_CONNECTING:
-      return "connecting";
+  case ZFPM_STATE_CONNECTING:
+    return "connecting";
 
-    case ZFPM_STATE_ESTABLISHED:
-      return "established";
+  case ZFPM_STATE_ESTABLISHED:
+    return "established";
 
-    default:
-      return "unknown";
-    }
+  default:
+    return "unknown";
+  }
 }
 
 /*
  * zfpm_get_time
  */
 static zpl_time_t
-zfpm_get_time (void)
+zfpm_get_time(void)
 {
   struct timeval tv;
 #ifdef OS_THREAD
-  if (os_gettime (OS_CLK_MONOTONIC, &tv) < 0)
-    zlog_warn (MODULE_NSM, "FPM: quagga_gettime failed!!");
+  if (os_gettime(OS_CLK_MONOTONIC, &tv) < 0)
+    zlog_warn(MODULE_NSM, "FPM: quagga_gettime failed!!");
 #else
-  if (quagga_gettime (QUAGGA_CLK_MONOTONIC, &tv) < 0)
-    zlog_warn (MODULE_NSM, "FPM: quagga_gettime failed!!");
+  if (quagga_gettime(QUAGGA_CLK_MONOTONIC, &tv) < 0)
+    zlog_warn(MODULE_NSM, "FPM: quagga_gettime failed!!");
 #endif
   return tv.tv_sec;
 }
@@ -318,17 +323,17 @@ zfpm_get_time (void)
  * Returns the time elapsed (in seconds) since the given time.
  */
 static zpl_time_t
-zfpm_get_elapsed_time (zpl_time_t reference)
+zfpm_get_elapsed_time(zpl_time_t reference)
 {
   zpl_time_t now;
 
-  now = zfpm_get_time ();
+  now = zfpm_get_time();
 
   if (now < reference)
-    {
-      assert (0);
-      return 0;
-    }
+  {
+    zassert(0);
+    return 0;
+  }
 
   return now - reference;
 }
@@ -340,11 +345,11 @@ zfpm_get_elapsed_time (zpl_time_t reference)
  * FPM.
  */
 static inline int
-zfpm_is_table_for_fpm (struct route_table *table)
+zfpm_is_table_for_fpm(struct route_table *table)
 {
   rib_table_info_t *info;
 
-  info = rib_table_info (table);
+  info = rib_table_info(table);
 
   /*
    * We only ipstack_send the unicast tables in the main instance to the FPM
@@ -363,51 +368,51 @@ zfpm_is_table_for_fpm (struct route_table *table)
  * zfpm_rnodes_iter_init
  */
 static inline void
-zfpm_rnodes_iter_init (zfpm_rnodes_iter_t *iter)
+zfpm_rnodes_iter_init(zfpm_rnodes_iter_t *iter)
 {
-  memset (iter, 0, sizeof (*iter));
-  rib_tables_iter_init (&iter->tables_iter);
+  memset(iter, 0, sizeof(*iter));
+  rib_tables_iter_init(&iter->tables_iter);
 
   /*
    * This is a hack, but it makes implementing 'next' easier by
    * ensuring that route_table_iter_next() will return NULL the first
    * time we call it.
    */
-  route_table_iter_init (&iter->iter, NULL);
-  route_table_iter_cleanup (&iter->iter);
+  route_table_iter_init(&iter->iter, NULL);
+  route_table_iter_cleanup(&iter->iter);
 }
 
 /*
  * zfpm_rnodes_iter_next
  */
 static inline struct route_node *
-zfpm_rnodes_iter_next (zfpm_rnodes_iter_t *iter)
+zfpm_rnodes_iter_next(zfpm_rnodes_iter_t *iter)
 {
   struct route_node *rn;
   struct route_table *table;
 
   while (1)
+  {
+    rn = route_table_iter_next(&iter->iter);
+    if (rn)
+      return rn;
+
+    /*
+     * We've made our way through this table, go to the next one.
+     */
+    route_table_iter_cleanup(&iter->iter);
+
+    while ((table = rib_tables_iter_next(&iter->tables_iter)))
     {
-      rn = route_table_iter_next (&iter->iter);
-      if (rn)
-	return rn;
-
-      /*
-       * We've made our way through this table, go to the next one.
-       */
-      route_table_iter_cleanup (&iter->iter);
-
-      while ((table = rib_tables_iter_next (&iter->tables_iter)))
-	{
-	  if (zfpm_is_table_for_fpm (table))
-	    break;
-	}
-
-      if (!table)
-	return NULL;
-
-      route_table_iter_init (&iter->iter, table);
+      if (zfpm_is_table_for_fpm(table))
+        break;
     }
+
+    if (!table)
+      return NULL;
+
+    route_table_iter_init(&iter->iter, table);
+  }
 
   return NULL;
 }
@@ -416,19 +421,19 @@ zfpm_rnodes_iter_next (zfpm_rnodes_iter_t *iter)
  * zfpm_rnodes_iter_pause
  */
 static inline void
-zfpm_rnodes_iter_pause (zfpm_rnodes_iter_t *iter)
+zfpm_rnodes_iter_pause(zfpm_rnodes_iter_t *iter)
 {
-  route_table_iter_pause (&iter->iter);
+  route_table_iter_pause(&iter->iter);
 }
 
 /*
  * zfpm_rnodes_iter_cleanup
  */
 static inline void
-zfpm_rnodes_iter_cleanup (zfpm_rnodes_iter_t *iter)
+zfpm_rnodes_iter_cleanup(zfpm_rnodes_iter_t *iter)
 {
-  route_table_iter_cleanup (&iter->iter);
-  rib_tables_iter_cleanup (&iter->tables_iter);
+  route_table_iter_cleanup(&iter->iter);
+  rib_tables_iter_cleanup(&iter->tables_iter);
 }
 
 /*
@@ -437,27 +442,27 @@ zfpm_rnodes_iter_cleanup (zfpm_rnodes_iter_t *iter)
  * Initialize a statistics block.
  */
 static inline void
-zfpm_stats_init (zfpm_stats_t *stats)
+zfpm_stats_init(zfpm_stats_t *stats)
 {
-  memset (stats, 0, sizeof (*stats));
+  memset(stats, 0, sizeof(*stats));
 }
 
 /*
  * zfpm_stats_reset
  */
 static inline void
-zfpm_stats_reset (zfpm_stats_t *stats)
+zfpm_stats_reset(zfpm_stats_t *stats)
 {
-  zfpm_stats_init (stats);
+  zfpm_stats_init(stats);
 }
 
 /*
  * zfpm_stats_copy
  */
 static inline void
-zfpm_stats_copy (const zfpm_stats_t *src, zfpm_stats_t *dest)
+zfpm_stats_copy(const zfpm_stats_t *src, zfpm_stats_t *dest)
 {
-  memcpy (dest, src, sizeof (*dest));
+  memcpy(dest, src, sizeof(*dest));
 }
 
 /*
@@ -472,67 +477,67 @@ zfpm_stats_copy (const zfpm_stats_t *src, zfpm_stats_t *dest)
  * changed when necessary.
  */
 static void
-zfpm_stats_compose (const zfpm_stats_t *s1, const zfpm_stats_t *s2,
-		    zfpm_stats_t *result)
+zfpm_stats_compose(const zfpm_stats_t *s1, const zfpm_stats_t *s2,
+                   zfpm_stats_t *result)
 {
   const zpl_ulong *p1, *p2;
   zpl_ulong *result_p;
   zpl_uint32 i = 0, num_counters;
 
-  p1 = (const zpl_ulong *) s1;
-  p2 = (const zpl_ulong *) s2;
-  result_p = (zpl_ulong *) result;
+  p1 = (const zpl_ulong *)s1;
+  p2 = (const zpl_ulong *)s2;
+  result_p = (zpl_ulong *)result;
 
-  num_counters = (sizeof (zfpm_stats_t) / sizeof (zpl_ulong));
+  num_counters = (sizeof(zfpm_stats_t) / sizeof(zpl_ulong));
 
   for (i = 0; i < num_counters; i++)
-    {
-      result_p[i] = p1[i] + p2[i];
-    }
+  {
+    result_p[i] = p1[i] + p2[i];
+  }
 }
 
 /*
  * zfpm_read_on
  */
 static inline void
-zfpm_read_on (void)
+zfpm_read_on(void)
 {
-  assert (!zfpm_g->t_read);
-  //assert (zfpm_g->sock >= 0);
+  zassert(!zfpm_g->t_read);
+  zassert(zfpm_g->sock._fd >= 0);
 
-  THREAD_READ_ON (zfpm_g->master, zfpm_g->t_read, zfpm_read_cb, 0,
-		  zfpm_g->sock);
+  THREAD_READ_ON(zfpm_g->master, zfpm_g->t_read, zfpm_read_cb, 0,
+                 zfpm_g->sock);
 }
 
 /*
  * zfpm_write_on
  */
 static inline void
-zfpm_write_on (void)
+zfpm_write_on(void)
 {
-  assert (!zfpm_g->t_write);
-  //assert (zfpm_g->sock >= 0);
+  zassert(!zfpm_g->t_write);
+  zassert(zfpm_g->sock._fd >= 0);
 
-  THREAD_WRITE_ON (zfpm_g->master, zfpm_g->t_write, zfpm_write_cb, 0,
-		   zfpm_g->sock);
+  THREAD_WRITE_ON(zfpm_g->master, zfpm_g->t_write, zfpm_write_cb, 0,
+                  zfpm_g->sock);
 }
 
 /*
  * zfpm_read_off
  */
 static inline void
-zfpm_read_off (void)
+zfpm_read_off(void)
 {
-  THREAD_READ_OFF (zfpm_g->t_read);
+  THREAD_READ_OFF(zfpm_g->t_read);
 }
 
 /*
  * zfpm_write_off
  */
 static inline void
-zfpm_write_off (void)
+zfpm_write_off(void)
 {
-  THREAD_WRITE_OFF (zfpm_g->t_write);
+  THREAD_WRITE_OFF(zfpm_g->t_write);
 }
 
 /*
@@ -542,52 +547,52 @@ zfpm_write_off (void)
  * comes up.
  */
 static int
-zfpm_conn_up_thread_cb (struct thread *thread)
+zfpm_conn_up_thread_cb(struct thread *thread)
 {
   struct route_node *rnode;
   zfpm_rnodes_iter_t *iter;
   rib_dest_t *dest;
 
-  assert (zfpm_g->t_conn_up);
+  zassert(zfpm_g->t_conn_up);
   zfpm_g->t_conn_up = NULL;
 
   iter = &zfpm_g->t_conn_up_state.iter;
 
   if (zfpm_g->state != ZFPM_STATE_ESTABLISHED)
+  {
+    zfpm_debug("Connection not up anymore, conn_up thread aborting");
+    zfpm_g->stats.t_conn_up_aborts++;
+    goto done;
+  }
+
+  while ((rnode = zfpm_rnodes_iter_next(iter)))
+  {
+    dest = rib_dest_from_rnode(rnode);
+
+    if (dest)
     {
-      zfpm_debug ("Connection not up anymore, conn_up thread aborting");
-      zfpm_g->stats.t_conn_up_aborts++;
-      goto done;
+      zfpm_g->stats.t_conn_up_dests_processed++;
+      zfpm_trigger_update(rnode, NULL);
     }
 
-  while ((rnode = zfpm_rnodes_iter_next (iter)))
-    {
-      dest = rib_dest_from_rnode (rnode);
+    /*
+     * Yield if need be.
+     */
+    if (!zfpm_thread_should_yield(thread))
+      continue;
 
-      if (dest)
-	{
-	  zfpm_g->stats.t_conn_up_dests_processed++;
-	  zfpm_trigger_update (rnode, NULL);
-	}
-
-      /*
-       * Yield if need be.
-       */
-      if (!zfpm_thread_should_yield (thread))
-	continue;
-
-      zfpm_g->stats.t_conn_up_yields++;
-      zfpm_rnodes_iter_pause (iter);
-      zfpm_g->t_conn_up = thread_add_background (zfpm_g->master,
-						 zfpm_conn_up_thread_cb,
-						 0, 0);
-      return 0;
-    }
+    zfpm_g->stats.t_conn_up_yields++;
+    zfpm_rnodes_iter_pause(iter);
+    zfpm_g->t_conn_up = thread_add_background(zfpm_g->master,
+                                              zfpm_conn_up_thread_cb,
+                                              0, 0);
+    return 0;
+  }
 
   zfpm_g->stats.t_conn_up_finishes++;
 
- done:
-  zfpm_rnodes_iter_cleanup (iter);
+done:
+  zfpm_rnodes_iter_cleanup(iter);
   return 0;
 }
 
@@ -597,23 +602,23 @@ zfpm_conn_up_thread_cb (struct thread *thread)
  * Called when the connection to the FPM comes up.
  */
 static void
-zfpm_connection_up (const char *detail)
+zfpm_connection_up(const char *detail)
 {
-  //assert (zfpm_g->sock >= 0);
-  zfpm_read_on ();
-  zfpm_write_on ();
-  zfpm_set_state (ZFPM_STATE_ESTABLISHED, detail);
+  zassert(zfpm_g->sock._fd >= 0);
+  zfpm_read_on();
+  zfpm_write_on();
+  zfpm_set_state(ZFPM_STATE_ESTABLISHED, detail);
 
   /*
    * Start thread to push existing routes to the FPM.
    */
-  assert (!zfpm_g->t_conn_up);
+  zassert(!zfpm_g->t_conn_up);
 
-  zfpm_rnodes_iter_init (&zfpm_g->t_conn_up_state.iter);
+  zfpm_rnodes_iter_init(&zfpm_g->t_conn_up_state.iter);
 
-  zfpm_debug ("Starting conn_up thread");
-  zfpm_g->t_conn_up = thread_add_background (zfpm_g->master,
-					     zfpm_conn_up_thread_cb, 0, 0);
+  zfpm_debug("Starting conn_up thread");
+  zfpm_g->t_conn_up = thread_add_background(zfpm_g->master,
+                                            zfpm_conn_up_thread_cb, 0, 0);
   zfpm_g->stats.t_conn_up_starts++;
 }
 
@@ -623,32 +628,32 @@ zfpm_connection_up (const char *detail)
  * Check if an asynchronous ipstack_connect() to the FPM is complete.
  */
 static void
-zfpm_connect_check (void)
+zfpm_connect_check(void)
 {
   int status;
   socklen_t slen;
   int ret;
 
-  zfpm_read_off ();
-  zfpm_write_off ();
+  zfpm_read_off();
+  zfpm_write_off();
 
-  slen = sizeof (status);
-  ret = ipstack_getsockopt (zfpm_g->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (void *) &status,
-		    &slen);
+  slen = sizeof(status);
+  ret = ipstack_getsockopt(zfpm_g->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (void *)&status,
+                           &slen);
 
   if (ret >= 0 && status == 0)
-    {
-      zfpm_connection_up ("async ipstack_connect complete");
-      return;
-    }
+  {
+    zfpm_connection_up("async ipstack_connect complete");
+    return;
+  }
 
   /*
    * ipstack_getsockopt() failed or indicated an error on the ipstack_socket.
    */
-  ipstack_close (zfpm_g->sock);
-  //zfpm_g->sock = -1;
+  ipstack_close(zfpm_g->sock);
+  // zfpm_g->sock = -1;
 
-  zfpm_start_connect_timer ("ipstack_getsockopt() after async ipstack_connect failed");
+  zfpm_start_connect_timer("ipstack_getsockopt() after async ipstack_connect failed");
   return;
 }
 
@@ -659,62 +664,62 @@ zfpm_connect_check (void)
  * to the FPM goes down.
  */
 static int
-zfpm_conn_down_thread_cb (struct thread *thread)
+zfpm_conn_down_thread_cb(struct thread *thread)
 {
   struct route_node *rnode;
   zfpm_rnodes_iter_t *iter;
   rib_dest_t *dest;
 
-  assert (zfpm_g->state == ZFPM_STATE_IDLE);
+  zassert(zfpm_g->state == ZFPM_STATE_IDLE);
 
-  assert (zfpm_g->t_conn_down);
+  zassert(zfpm_g->t_conn_down);
   zfpm_g->t_conn_down = NULL;
 
   iter = &zfpm_g->t_conn_down_state.iter;
 
-  while ((rnode = zfpm_rnodes_iter_next (iter)))
+  while ((rnode = zfpm_rnodes_iter_next(iter)))
+  {
+    dest = rib_dest_from_rnode(rnode);
+
+    if (dest)
     {
-      dest = rib_dest_from_rnode (rnode);
+      if (CHECK_FLAG(dest->flags, RIB_DEST_UPDATE_FPM))
+      {
+        TAILQ_REMOVE(&zfpm_g->dest_q, dest, fpm_q_entries);
+      }
 
-      if (dest)
-	{
-	  if (CHECK_FLAG (dest->flags, RIB_DEST_UPDATE_FPM))
-	    {
-	      TAILQ_REMOVE (&zfpm_g->dest_q, dest, fpm_q_entries);
-	    }
+      UNSET_FLAG(dest->flags, RIB_DEST_UPDATE_FPM);
+      UNSET_FLAG(dest->flags, RIB_DEST_SENT_TO_FPM);
 
-	  UNSET_FLAG (dest->flags, RIB_DEST_UPDATE_FPM);
-	  UNSET_FLAG (dest->flags, RIB_DEST_SENT_TO_FPM);
-
-	  zfpm_g->stats.t_conn_down_dests_processed++;
-
-	  /*
-	   * Check if the dest should be deleted.
-	   */
-	  rib_gc_dest(rnode);
-	}
+      zfpm_g->stats.t_conn_down_dests_processed++;
 
       /*
-       * Yield if need be.
+       * Check if the dest should be deleted.
        */
-      if (!zfpm_thread_should_yield (thread))
-	continue;
-
-      zfpm_g->stats.t_conn_down_yields++;
-      zfpm_rnodes_iter_pause (iter);
-      zfpm_g->t_conn_down = thread_add_background (zfpm_g->master,
-						   zfpm_conn_down_thread_cb,
-						   0, 0);
-      return 0;
+      rib_gc_dest(rnode);
     }
 
+    /*
+     * Yield if need be.
+     */
+    if (!zfpm_thread_should_yield(thread))
+      continue;
+
+    zfpm_g->stats.t_conn_down_yields++;
+    zfpm_rnodes_iter_pause(iter);
+    zfpm_g->t_conn_down = thread_add_background(zfpm_g->master,
+                                                zfpm_conn_down_thread_cb,
+                                                0, 0);
+    return 0;
+  }
+
   zfpm_g->stats.t_conn_down_finishes++;
-  zfpm_rnodes_iter_cleanup (iter);
+  zfpm_rnodes_iter_cleanup(iter);
 
   /*
    * Start the process of connecting to the FPM again.
    */
-  zfpm_start_connect_timer ("cleanup complete");
+  zfpm_start_connect_timer("cleanup complete");
   return 0;
 }
 
@@ -724,44 +729,45 @@ zfpm_conn_down_thread_cb (struct thread *thread)
  * Called when the connection to the FPM has gone down.
  */
 static void
-zfpm_connection_down (const char *detail)
+zfpm_connection_down(const char *detail)
 {
   if (!detail)
     detail = "unknown";
 
-  assert (zfpm_g->state == ZFPM_STATE_ESTABLISHED);
+  zassert(zfpm_g->state == ZFPM_STATE_ESTABLISHED);
 
-  zlog_info (MODULE_NSM, "connection to the FPM has gone down: %s", detail);
+  zlog_info(MODULE_NSM, "connection to the FPM has gone down: %s", detail);
 
-  zfpm_read_off ();
-  zfpm_write_off ();
+  zfpm_read_off();
+  zfpm_write_off();
 
-  stream_reset (zfpm_g->ibuf);
-  stream_reset (zfpm_g->obuf);
+  stream_reset(zfpm_g->ibuf);
+  stream_reset(zfpm_g->obuf);
 
-  if (!ipstack_invalid (zfpm_g->sock)) {
-    ipstack_close (zfpm_g->sock);
-    //zfpm_g->sock = -1;
+  if (!ipstack_invalid(zfpm_g->sock))
+  {
+    ipstack_close(zfpm_g->sock);
+    // zfpm_g->sock = -1;
   }
 
   /*
    * Start thread to clean up state after the connection goes down.
    */
-  assert (!zfpm_g->t_conn_down);
-  zfpm_debug ("Starting conn_down thread");
-  zfpm_rnodes_iter_init (&zfpm_g->t_conn_down_state.iter);
-  zfpm_g->t_conn_down = thread_add_background (zfpm_g->master,
-					       zfpm_conn_down_thread_cb, 0, 0);
+  zassert(!zfpm_g->t_conn_down);
+  zfpm_debug("Starting conn_down thread");
+  zfpm_rnodes_iter_init(&zfpm_g->t_conn_down_state.iter);
+  zfpm_g->t_conn_down = thread_add_background(zfpm_g->master,
+                                              zfpm_conn_down_thread_cb, 0, 0);
   zfpm_g->stats.t_conn_down_starts++;
 
-  zfpm_set_state (ZFPM_STATE_IDLE, detail);
+  zfpm_set_state(ZFPM_STATE_IDLE, detail);
 }
 
 /*
  * zfpm_read_cb
  */
 static int
-zfpm_read_cb (struct thread *thread)
+zfpm_read_cb(struct thread *thread)
 {
   zpl_size_t already;
   struct stream *ibuf;
@@ -769,81 +775,81 @@ zfpm_read_cb (struct thread *thread)
   fpm_msg_hdr_t *hdr;
 
   zfpm_g->stats.read_cb_calls++;
-  assert (zfpm_g->t_read);
+  zassert(zfpm_g->t_read);
   zfpm_g->t_read = NULL;
 
   /*
    * Check if async ipstack_connect is now done.
    */
   if (zfpm_g->state == ZFPM_STATE_CONNECTING)
-    {
-      zfpm_connect_check();
-      return 0;
-    }
+  {
+    zfpm_connect_check();
+    return 0;
+  }
 
-  assert (zfpm_g->state == ZFPM_STATE_ESTABLISHED);
-  //assert (zfpm_g->sock >= 0);
+  zassert(zfpm_g->state == ZFPM_STATE_ESTABLISHED);
+  zassert(zfpm_g->sock._fd >= 0);
 
   ibuf = zfpm_g->ibuf;
 
-  already = stream_get_endp (ibuf);
+  already = stream_get_endp(ibuf);
   if (already < FPM_MSG_HDR_LEN)
+  {
+    ssize_t nbyte;
+
+    nbyte = stream_read_try(ibuf, zfpm_g->sock, FPM_MSG_HDR_LEN - already);
+    if (nbyte == 0 || nbyte == -1)
     {
-      ssize_t nbyte;
-
-      nbyte = stream_read_try (ibuf, zfpm_g->sock, FPM_MSG_HDR_LEN - already);
-      if (nbyte == 0 || nbyte == -1)
-	{
-	  zfpm_connection_down ("closed ipstack_socket in read");
-	  return 0;
-	}
-
-      if (nbyte != (ssize_t) (FPM_MSG_HDR_LEN - already))
-	goto done;
-
-      already = FPM_MSG_HDR_LEN;
-    }
-
-  stream_set_getp (ibuf, 0);
-
-  hdr = (fpm_msg_hdr_t *) stream_pnt (ibuf);
-
-  if (!fpm_msg_hdr_ok (hdr))
-    {
-      zfpm_connection_down ("invalid message header");
+      zfpm_connection_down("closed ipstack_socket in read");
       return 0;
     }
 
-  msg_len = fpm_msg_len (hdr);
+    if (nbyte != (ssize_t)(FPM_MSG_HDR_LEN - already))
+      goto done;
+
+    already = FPM_MSG_HDR_LEN;
+  }
+
+  stream_set_getp(ibuf, 0);
+
+  hdr = (fpm_msg_hdr_t *)stream_pnt(ibuf);
+
+  if (!fpm_msg_hdr_ok(hdr))
+  {
+    zfpm_connection_down("invalid message header");
+    return 0;
+  }
+
+  msg_len = fpm_msg_len(hdr);
 
   /*
    * Read out the rest of the packet.
    */
   if (already < msg_len)
+  {
+    ssize_t nbyte;
+
+    nbyte = stream_read_try(ibuf, zfpm_g->sock, msg_len - already);
+
+    if (nbyte == 0 || nbyte == -1)
     {
-      ssize_t nbyte;
-
-      nbyte = stream_read_try (ibuf, zfpm_g->sock, msg_len - already);
-
-      if (nbyte == 0 || nbyte == -1)
-	{
-	  zfpm_connection_down ("failed to read message");
-	  return 0;
-	}
-
-      if (nbyte != (ssize_t) (msg_len - already))
-	goto done;
+      zfpm_connection_down("failed to read message");
+      return 0;
     }
 
-  zfpm_debug ("Read out a full fpm message");
+    if (nbyte != (ssize_t)(msg_len - already))
+      goto done;
+  }
+
+  zfpm_debug("Read out a full fpm message");
 
   /*
    * Just throw it away for now.
    */
-  stream_reset (ibuf);
+  stream_reset(ibuf);
 
- done:
-  zfpm_read_on ();
+done:
+  zfpm_read_on();
   return 0;
 }
 
@@ -853,20 +859,20 @@ zfpm_read_cb (struct thread *thread)
  * Returns zpl_true if we may have something to write to the FPM.
  */
 static int
-zfpm_writes_pending (void)
+zfpm_writes_pending(void)
 {
 
   /*
    * Check if there is any data in the outbound buffer that has not
    * been written to the ipstack_socket yet.
    */
-  if (stream_get_endp (zfpm_g->obuf) - stream_get_getp (zfpm_g->obuf))
+  if (stream_get_endp(zfpm_g->obuf) - stream_get_getp(zfpm_g->obuf))
     return 1;
 
   /*
    * Check if there are any prefixes on the outbound queue.
    */
-  if (!TAILQ_EMPTY (&zfpm_g->dest_q))
+  if (!TAILQ_EMPTY(&zfpm_g->dest_q))
     return 1;
 
   return 0;
@@ -881,8 +887,8 @@ zfpm_writes_pending (void)
  * value indicates an error.
  */
 static inline int
-zfpm_encode_route (rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
-		   zpl_size_t in_buf_len, fpm_msg_type_e *msg_type)
+zfpm_encode_route(rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
+                  zpl_size_t in_buf_len, fpm_msg_type_e *msg_type)
 {
   zpl_size_t len;
   zpl_uint32 cmd;
@@ -890,12 +896,13 @@ zfpm_encode_route (rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
 
   *msg_type = FPM_MSG_TYPE_NONE;
 
-  switch (zfpm_g->message_format) {
+  switch (zfpm_g->message_format)
+  {
 
   case ZFPM_MSG_FORMAT_PROTOBUF:
 #ifdef HAVE_PROTOBUF
-    len = zfpm_protobuf_encode_route (dest, rib, (zpl_uint8 *) in_buf,
-				      in_buf_len);
+    len = zfpm_protobuf_encode_route(dest, rib, (zpl_uint8 *)in_buf,
+                                     in_buf_len);
     *msg_type = FPM_MSG_TYPE_PROTOBUF;
 #endif
     break;
@@ -904,8 +911,8 @@ zfpm_encode_route (rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
 #ifdef HAVE_NETLINK
     *msg_type = FPM_MSG_TYPE_NETLINK;
     cmd = rib ? IPSTACK_RTM_NEWROUTE : IPSTACK_RTM_DELROUTE;
-    //len = zfpm_netlink_encode_route (cmd, dest, rib, in_buf, in_buf_len);
-    assert(fpm_msg_align(len) == len);
+    // len = zfpm_netlink_encode_route (cmd, dest, rib, in_buf, in_buf_len);
+    zassert(fpm_msg_align(len) == len);
     *msg_type = FPM_MSG_TYPE_NETLINK;
 #endif /* HAVE_NETLINK */
     break;
@@ -915,7 +922,6 @@ zfpm_encode_route (rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
   }
 
   return len;
-
 }
 
 /*
@@ -924,17 +930,17 @@ zfpm_encode_route (rib_dest_t *dest, struct rib *rib, zpl_char *in_buf,
  * Returns the rib that is to be sent to the FPM for a given dest.
  */
 struct rib *
-zfpm_route_for_update (rib_dest_t *dest)
+zfpm_route_for_update(rib_dest_t *dest)
 {
   struct rib *rib;
 
-  RIB_DEST_FOREACH_ROUTE (dest, rib)
-    {
-      if (!CHECK_FLAG (rib->status, RIB_ENTRY_SELECTED_FIB))
-	continue;
+  RIB_DEST_FOREACH_ROUTE(dest, rib)
+  {
+    if (!CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
+      continue;
 
-      return rib;
-    }
+    return rib;
+  }
 
   /*
    * We have no route for this destination.
@@ -949,7 +955,7 @@ zfpm_route_for_update (rib_dest_t *dest)
  * buffer.
  */
 static void
-zfpm_build_updates (void)
+zfpm_build_updates(void)
 {
   struct stream *s;
   rib_dest_t *dest;
@@ -963,31 +969,32 @@ zfpm_build_updates (void)
 
   s = zfpm_g->obuf;
 
-  assert (stream_empty (s));
+  zassert(stream_empty(s));
 
-  do {
+  do
+  {
 
     /*
      * Make sure there is enough space to write another message.
      */
-    if (STREAM_WRITEABLE (s) < FPM_MAX_MSG_LEN)
+    if (STREAM_WRITEABLE(s) < FPM_MAX_MSG_LEN)
       break;
 
-    buf = STREAM_DATA (s) + stream_get_endp (s);
-    buf_end = buf + STREAM_WRITEABLE (s);
+    buf = STREAM_DATA(s) + stream_get_endp(s);
+    buf_end = buf + STREAM_WRITEABLE(s);
 
-    dest = TAILQ_FIRST (&zfpm_g->dest_q);
+    dest = TAILQ_FIRST(&zfpm_g->dest_q);
     if (!dest)
       break;
 
-    assert (CHECK_FLAG (dest->flags, RIB_DEST_UPDATE_FPM));
+    zassert(CHECK_FLAG(dest->flags, RIB_DEST_UPDATE_FPM));
 
-    hdr = (fpm_msg_hdr_t *) buf;
+    hdr = (fpm_msg_hdr_t *)buf;
     hdr->version = FPM_PROTO_VERSION;
 
-    data = fpm_msg_data (hdr);
+    data = fpm_msg_data(hdr);
 
-    rib = zfpm_route_for_update (dest);
+    rib = zfpm_route_for_update(dest);
     is_add = rib ? 1 : 0;
 
     write_msg = 1;
@@ -996,145 +1003,145 @@ zfpm_build_updates (void)
      * If this is a route deletion, and we have not sent the route to
      * the FPM previously, skip it.
      */
-    if (!is_add && !CHECK_FLAG (dest->flags, RIB_DEST_SENT_TO_FPM))
-      {
-	write_msg = 0;
-	zfpm_g->stats.nop_deletes_skipped++;
-      }
+    if (!is_add && !CHECK_FLAG(dest->flags, RIB_DEST_SENT_TO_FPM))
+    {
+      write_msg = 0;
+      zfpm_g->stats.nop_deletes_skipped++;
+    }
 
-    if (write_msg) {
-      data_len = zfpm_encode_route (dest, rib, (zpl_char *) data, buf_end - data,
-				    &msg_type);
+    if (write_msg)
+    {
+      data_len = zfpm_encode_route(dest, rib, (zpl_char *)data, buf_end - data,
+                                   &msg_type);
 
-      assert (data_len);
+      zassert(data_len);
       if (data_len)
-	{
-	  hdr->msg_type = msg_type;
-	  msg_len = fpm_data_len_to_msg_len (data_len);
-	  hdr->msg_len = htons (msg_len);
-	  stream_forward_endp (s, msg_len);
+      {
+        hdr->msg_type = msg_type;
+        msg_len = fpm_data_len_to_msg_len(data_len);
+        hdr->msg_len = htons(msg_len);
+        stream_forward_endp(s, msg_len);
 
-	  if (is_add)
-	    zfpm_g->stats.route_adds++;
-	  else
-	    zfpm_g->stats.route_dels++;
-	}
+        if (is_add)
+          zfpm_g->stats.route_adds++;
+        else
+          zfpm_g->stats.route_dels++;
+      }
     }
 
     /*
      * Remove the dest from the queue, and reset the flag.
      */
-    UNSET_FLAG (dest->flags, RIB_DEST_UPDATE_FPM);
-    TAILQ_REMOVE (&zfpm_g->dest_q, dest, fpm_q_entries);
+    UNSET_FLAG(dest->flags, RIB_DEST_UPDATE_FPM);
+    TAILQ_REMOVE(&zfpm_g->dest_q, dest, fpm_q_entries);
 
     if (is_add)
-      {
-	SET_FLAG (dest->flags, RIB_DEST_SENT_TO_FPM);
-      }
+    {
+      SET_FLAG(dest->flags, RIB_DEST_SENT_TO_FPM);
+    }
     else
-      {
-	UNSET_FLAG (dest->flags, RIB_DEST_SENT_TO_FPM);
-      }
+    {
+      UNSET_FLAG(dest->flags, RIB_DEST_SENT_TO_FPM);
+    }
 
     /*
      * Delete the destination if necessary.
      */
-    if (rib_gc_dest (dest->rnode))
+    if (rib_gc_dest(dest->rnode))
       zfpm_g->stats.dests_del_after_update++;
 
   } while (1);
-
 }
 
 /*
  * zfpm_write_cb
  */
 static int
-zfpm_write_cb (struct thread *thread)
+zfpm_write_cb(struct thread *thread)
 {
   struct stream *s;
   int num_writes;
 
   zfpm_g->stats.write_cb_calls++;
-  assert (zfpm_g->t_write);
+  zassert(zfpm_g->t_write);
   zfpm_g->t_write = NULL;
 
   /*
    * Check if async ipstack_connect is now done.
    */
   if (zfpm_g->state == ZFPM_STATE_CONNECTING)
-    {
-      zfpm_connect_check ();
-      return 0;
-    }
+  {
+    zfpm_connect_check();
+    return 0;
+  }
 
-  assert (zfpm_g->state == ZFPM_STATE_ESTABLISHED);
-  //assert (zfpm_g->sock >= 0);
+  zassert(zfpm_g->state == ZFPM_STATE_ESTABLISHED);
+  zassert(zfpm_g->sock._fd >= 0);
 
   num_writes = 0;
 
   do
+  {
+    int bytes_to_write, bytes_written;
+
+    s = zfpm_g->obuf;
+
+    /*
+     * If the stream is empty, try fill it up with data.
+     */
+    if (stream_empty(s))
     {
-      int bytes_to_write, bytes_written;
+      zfpm_build_updates();
+    }
 
-      s = zfpm_g->obuf;
+    bytes_to_write = stream_get_endp(s) - stream_get_getp(s);
+    if (!bytes_to_write)
+      break;
 
-      /*
-       * If the stream is empty, try fill it up with data.
-       */
-      if (stream_empty (s))
-	{
-	  zfpm_build_updates ();
-	}
+    bytes_written = ipstack_write(zfpm_g->sock, STREAM_PNT(s), bytes_to_write);
+    zfpm_g->stats.write_calls++;
+    num_writes++;
 
-      bytes_to_write = stream_get_endp (s) - stream_get_getp (s);
-      if (!bytes_to_write)
-	break;
+    if (bytes_written < 0)
+    {
+      if (IPSTACK_ERRNO_RETRY(ipstack_errno))
+        break;
 
-      bytes_written = ipstack_write (zfpm_g->sock, STREAM_PNT (s), bytes_to_write);
-      zfpm_g->stats.write_calls++;
-      num_writes++;
+      zfpm_connection_down("failed to write to ipstack_socket");
+      return 0;
+    }
 
-      if (bytes_written < 0)
-	{
-	  if (IPSTACK_ERRNO_RETRY (ipstack_errno))
-	    break;
-
-	  zfpm_connection_down ("failed to write to ipstack_socket");
-	  return 0;
-	}
-
-      if (bytes_written != bytes_to_write)
-	{
-
-	  /*
-	   * Partial write.
-	   */
-	  stream_forward_getp (s, bytes_written);
-	  zfpm_g->stats.partial_writes++;
-	  break;
-	}
+    if (bytes_written != bytes_to_write)
+    {
 
       /*
-       * We've written out the entire contents of the stream.
+       * Partial write.
        */
-      stream_reset (s);
+      stream_forward_getp(s, bytes_written);
+      zfpm_g->stats.partial_writes++;
+      break;
+    }
 
-      if (num_writes >= ZFPM_MAX_WRITES_PER_RUN)
-	{
-	  zfpm_g->stats.max_writes_hit++;
-	  break;
-	}
+    /*
+     * We've written out the entire contents of the stream.
+     */
+    stream_reset(s);
 
-      if (zfpm_thread_should_yield (thread))
-	{
-	  zfpm_g->stats.t_write_yields++;
-	  break;
-	}
-    } while (1);
+    if (num_writes >= ZFPM_MAX_WRITES_PER_RUN)
+    {
+      zfpm_g->stats.max_writes_hit++;
+      break;
+    }
 
-  if (zfpm_writes_pending ())
-      zfpm_write_on ();
+    if (zfpm_thread_should_yield(thread))
+    {
+      zfpm_g->stats.t_write_yields++;
+      break;
+    }
+  } while (1);
+
+  if (zfpm_writes_pending())
+    zfpm_write_on();
 
   return 0;
 }
@@ -1143,36 +1150,36 @@ zfpm_write_cb (struct thread *thread)
  * zfpm_connect_cb
  */
 static int
-zfpm_connect_cb (struct thread *t)
+zfpm_connect_cb(struct thread *t)
 {
   zpl_socket_t sock;
   int ret = 0;
   struct ipstack_sockaddr_in serv;
 
-  assert (zfpm_g->t_connect);
+  zassert(zfpm_g->t_connect);
   zfpm_g->t_connect = NULL;
-  assert (zfpm_g->state == ZFPM_STATE_ACTIVE);
+  zassert(zfpm_g->state == ZFPM_STATE_ACTIVE);
 
-  sock = ipstack_socket (OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
-    {
-      zfpm_debug ("Failed to create ipstack_socket for ipstack_connect(): %s", strerror(ipstack_errno));
-      zfpm_g->stats.connect_no_sock++;
-      return 0;
-    }
+  {
+    zfpm_debug("Failed to create ipstack_socket for ipstack_connect(): %s", strerror(ipstack_errno));
+    zfpm_g->stats.connect_no_sock++;
+    return 0;
+  }
 
   ipstack_set_nonblocking(sock);
 
   /* Make server ipstack_socket. */
-  memset (&serv, 0, sizeof (serv));
+  memset(&serv, 0, sizeof(serv));
   serv.sin_family = IPSTACK_AF_INET;
-  serv.sin_port = htons (zfpm_g->fpm_port);
+  serv.sin_port = htons(zfpm_g->fpm_port);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-  serv.sin_len = sizeof (struct ipstack_sockaddr_in);
+  serv.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
   if (!zfpm_g->fpm_server)
-    serv.sin_addr.s_addr = htonl (IPSTACK_INADDR_LOOPBACK);
-  else 
+    serv.sin_addr.s_addr = htonl(IPSTACK_INADDR_LOOPBACK);
+  else
     serv.sin_addr.s_addr = (zfpm_g->fpm_server);
 
   /*
@@ -1180,32 +1187,32 @@ zfpm_connect_cb (struct thread *t)
    */
   zfpm_g->connect_calls++;
   zfpm_g->stats.connect_calls++;
-  zfpm_g->last_connect_call_time = zfpm_get_time ();
+  zfpm_g->last_connect_call_time = zfpm_get_time();
 
-  ret = ipstack_connect (sock, (struct ipstack_sockaddr *) &serv, sizeof (serv));
+  ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
   if (ret >= 0)
-    {
-      zfpm_g->sock = sock;
-      zfpm_connection_up ("ipstack_connect succeeded");
-      return 1;
-    }
+  {
+    zfpm_g->sock = sock;
+    zfpm_connection_up("ipstack_connect succeeded");
+    return 1;
+  }
 
   if (ipstack_errno == IPSTACK_ERRNO_EINPROGRESS)
-    {
-      zfpm_g->sock = sock;
-      zfpm_read_on ();
-      zfpm_write_on ();
-      zfpm_set_state (ZFPM_STATE_CONNECTING, "async ipstack_connect in progress");
-      return 0;
-    }
+  {
+    zfpm_g->sock = sock;
+    zfpm_read_on();
+    zfpm_write_on();
+    zfpm_set_state(ZFPM_STATE_CONNECTING, "async ipstack_connect in progress");
+    return 0;
+  }
 
-  zlog_info (MODULE_NSM, "can't ipstack_connect to FPM %d: %s", sock, ipstack_strerror (ipstack_errno));
-  ipstack_close (sock);
+  zlog_info(MODULE_NSM, "can't ipstack_connect to FPM %d: %s", sock, ipstack_strerror(ipstack_errno));
+  ipstack_close(sock);
 
   /*
    * Restart timer for retrying connection.
    */
-  zfpm_start_connect_timer ("ipstack_connect() failed");
+  zfpm_start_connect_timer("ipstack_connect() failed");
   return 0;
 }
 
@@ -1215,7 +1222,7 @@ zfpm_connect_cb (struct thread *t)
  * Move state machine into the given state.
  */
 static void
-zfpm_set_state (zfpm_state_t state, const char *reason)
+zfpm_set_state(zfpm_state_t state, const char *reason)
 {
   zfpm_state_t cur_state = zfpm_g->state;
 
@@ -1226,34 +1233,35 @@ zfpm_set_state (zfpm_state_t state, const char *reason)
     return;
 
   zfpm_debug("beginning state transition %s -> %s. Reason: %s",
-	     zfpm_state_to_str (cur_state), zfpm_state_to_str (state),
-	     reason);
+             zfpm_state_to_str(cur_state), zfpm_state_to_str(state),
+             reason);
 
-  switch (state) {
+  switch (state)
+  {
 
   case ZFPM_STATE_IDLE:
-    assert (cur_state == ZFPM_STATE_ESTABLISHED);
+    zassert(cur_state == ZFPM_STATE_ESTABLISHED);
     break;
 
   case ZFPM_STATE_ACTIVE:
-     assert (cur_state == ZFPM_STATE_IDLE ||
-	     cur_state == ZFPM_STATE_CONNECTING);
-    assert (zfpm_g->t_connect);
+    zassert(cur_state == ZFPM_STATE_IDLE ||
+            cur_state == ZFPM_STATE_CONNECTING);
+    zassert(zfpm_g->t_connect);
     break;
 
   case ZFPM_STATE_CONNECTING:
-    //assert (zfpm_g->sock);
-    assert (cur_state == ZFPM_STATE_ACTIVE);
-    assert (zfpm_g->t_read);
-    assert (zfpm_g->t_write);
+    zassert(zfpm_g->sock._fd);
+    zassert(cur_state == ZFPM_STATE_ACTIVE);
+    zassert(zfpm_g->t_read);
+    zassert(zfpm_g->t_write);
     break;
 
   case ZFPM_STATE_ESTABLISHED:
-    assert (cur_state == ZFPM_STATE_ACTIVE ||
-	    cur_state == ZFPM_STATE_CONNECTING);
-    //assert (zfpm_g->sock);
-    assert (zfpm_g->t_read);
-    assert (zfpm_g->t_write);
+    zassert(cur_state == ZFPM_STATE_ACTIVE ||
+            cur_state == ZFPM_STATE_CONNECTING);
+    zassert(zfpm_g->sock._fd);
+    zassert(zfpm_g->t_read);
+    zassert(zfpm_g->t_write);
     break;
   }
 
@@ -1267,7 +1275,7 @@ zfpm_set_state (zfpm_state_t state, const char *reason)
  * reconnect to the FPM.
  */
 static long
-zfpm_calc_connect_delay (void)
+zfpm_calc_connect_delay(void)
 {
   zpl_time_t elapsed;
 
@@ -1275,13 +1283,14 @@ zfpm_calc_connect_delay (void)
    * Return 0 if this is our first attempt to ipstack_connect.
    */
   if (zfpm_g->connect_calls == 0)
-    {
-      return 0;
-    }
+  {
+    return 0;
+  }
 
-  elapsed = zfpm_get_elapsed_time (zfpm_g->last_connect_call_time);
+  elapsed = zfpm_get_elapsed_time(zfpm_g->last_connect_call_time);
 
-  if (elapsed > ZFPM_CONNECT_RETRY_IVL) {
+  if (elapsed > ZFPM_CONNECT_RETRY_IVL)
+  {
     return 0;
   }
 
@@ -1292,23 +1301,23 @@ zfpm_calc_connect_delay (void)
  * zfpm_start_connect_timer
  */
 static void
-zfpm_start_connect_timer (const char *reason)
+zfpm_start_connect_timer(const char *reason)
 {
   long delay_secs;
 
-  assert (!zfpm_g->t_connect);
-  //assert (zfpm_g->sock < 0);
+  zassert(!zfpm_g->t_connect);
+  zassert(zfpm_g->sock._fd < 0);
 
-  assert(zfpm_g->state == ZFPM_STATE_IDLE ||
-	 zfpm_g->state == ZFPM_STATE_ACTIVE ||
-	 zfpm_g->state == ZFPM_STATE_CONNECTING);
+  zassert(zfpm_g->state == ZFPM_STATE_IDLE ||
+          zfpm_g->state == ZFPM_STATE_ACTIVE ||
+          zfpm_g->state == ZFPM_STATE_CONNECTING);
 
   delay_secs = zfpm_calc_connect_delay();
-  zfpm_debug ("scheduling ipstack_connect in %ld seconds", delay_secs);
+  zfpm_debug("scheduling ipstack_connect in %ld seconds", delay_secs);
 
-  THREAD_TIMER_ON (zfpm_g->master, zfpm_g->t_connect, zfpm_connect_cb, 0,
-		   delay_secs);
-  zfpm_set_state (ZFPM_STATE_ACTIVE, reason);
+  THREAD_TIMER_ON(zfpm_g->master, zfpm_g->t_connect, zfpm_connect_cb, 0,
+                  delay_secs);
+  zfpm_set_state(ZFPM_STATE_ACTIVE, reason);
 }
 
 /*
@@ -1317,7 +1326,7 @@ zfpm_start_connect_timer (const char *reason)
  * Returns zpl_true if the zebra FPM module has been enabled.
  */
 static inline int
-zfpm_is_enabled (void)
+zfpm_is_enabled(void)
 {
   return zfpm_g->enabled;
 }
@@ -1328,12 +1337,12 @@ zfpm_is_enabled (void)
  * Returns zpl_true if the connection to the FPM is up.
  */
 static inline int
-zfpm_conn_is_up (void)
+zfpm_conn_is_up(void)
 {
   if (zfpm_g->state != ZFPM_STATE_ESTABLISHED)
     return 0;
 
-  //assert (zfpm_g->sock >= 0);
+  zassert(zfpm_g->sock._fd >= 0);
 
   return 1;
 }
@@ -1344,8 +1353,7 @@ zfpm_conn_is_up (void)
  * The zebra code invokes this function to indicate that we should
  * ipstack_send an update to the FPM about the given route_node.
  */
-void
-zfpm_trigger_update (struct route_node *rn, const char *reason)
+void zfpm_trigger_update(struct route_node *rn, const char *reason)
 {
   rib_dest_t *dest;
   zpl_char buf[PREFIX_STRLEN];
@@ -1354,36 +1362,37 @@ zfpm_trigger_update (struct route_node *rn, const char *reason)
    * Ignore if the connection is down. We will update the FPM about
    * all destinations once the connection comes up.
    */
-/*
-  if (!zfpm_conn_is_up ())
-    return;
-*/
+  /*
+    if (!zfpm_conn_is_up ())
+      return;
+  */
 
-  dest = rib_dest_from_rnode (rn);
+  dest = rib_dest_from_rnode(rn);
 
   /*
    * Ignore the trigger if the dest is not in a table that we would
    * ipstack_send to the FPM.
    */
-  if (!zfpm_is_table_for_fpm (rib_dest_table (dest)))
-    {
-      zfpm_g->stats.non_fpm_table_triggers++;
-      return;
-    }
+  if (!zfpm_is_table_for_fpm(rib_dest_table(dest)))
+  {
+    zfpm_g->stats.non_fpm_table_triggers++;
+    return;
+  }
 
-  if (CHECK_FLAG (dest->flags, RIB_DEST_UPDATE_FPM)) {
+  if (CHECK_FLAG(dest->flags, RIB_DEST_UPDATE_FPM))
+  {
     zfpm_g->stats.redundant_triggers++;
     return;
   }
 
   if (reason)
-    {
-      zfpm_debug ("%s triggering update to FPM - Reason: %s",
-		  prefix2str (&rn->p, buf, sizeof(buf)), reason);
-    }
+  {
+    zfpm_debug("%s triggering update to FPM - Reason: %s",
+               prefix2str(&rn->p, buf, sizeof(buf)), reason);
+  }
 
-  SET_FLAG (dest->flags, RIB_DEST_UPDATE_FPM);
-  TAILQ_INSERT_TAIL (&zfpm_g->dest_q, dest, fpm_q_entries);
+  SET_FLAG(dest->flags, RIB_DEST_UPDATE_FPM);
+  TAILQ_INSERT_TAIL(&zfpm_g->dest_q, dest, fpm_q_entries);
   zfpm_g->stats.updates_triggered++;
 
   /*
@@ -1392,36 +1401,36 @@ zfpm_trigger_update (struct route_node *rn, const char *reason)
   if (zfpm_g->t_write)
     return;
 
-  zfpm_write_on ();
+  zfpm_write_on();
 }
 
 /*
  * zfpm_stats_timer_cb
  */
 static int
-zfpm_stats_timer_cb (struct thread *t)
+zfpm_stats_timer_cb(struct thread *t)
 {
-  assert (zfpm_g->t_stats);
+  zassert(zfpm_g->t_stats);
   zfpm_g->t_stats = NULL;
 
   /*
    * Remember the stats collected in the last interval for display
    * purposes.
    */
-  zfpm_stats_copy (&zfpm_g->stats, &zfpm_g->last_ivl_stats);
+  zfpm_stats_copy(&zfpm_g->stats, &zfpm_g->last_ivl_stats);
 
   /*
    * Add the current set of stats into the cumulative statistics.
    */
-  zfpm_stats_compose (&zfpm_g->cumulative_stats, &zfpm_g->stats,
-		      &zfpm_g->cumulative_stats);
+  zfpm_stats_compose(&zfpm_g->cumulative_stats, &zfpm_g->stats,
+                     &zfpm_g->cumulative_stats);
 
   /*
    * Start collecting stats afresh over the next interval.
    */
-  zfpm_stats_reset (&zfpm_g->stats);
+  zfpm_stats_reset(&zfpm_g->stats);
 
-  zfpm_start_stats_timer ();
+  zfpm_start_stats_timer();
 
   return 0;
 }
@@ -1430,195 +1439,193 @@ zfpm_stats_timer_cb (struct thread *t)
  * zfpm_stop_stats_timer
  */
 static void
-zfpm_stop_stats_timer (void)
+zfpm_stop_stats_timer(void)
 {
   if (!zfpm_g->t_stats)
     return;
 
-  zfpm_debug ("Stopping existing stats timer");
-  THREAD_TIMER_OFF (zfpm_g->t_stats);
+  zfpm_debug("Stopping existing stats timer");
+  THREAD_TIMER_OFF(zfpm_g->t_stats);
 }
 
 /*
  * zfpm_start_stats_timer
  */
-void
-zfpm_start_stats_timer (void)
+void zfpm_start_stats_timer(void)
 {
-  assert (!zfpm_g->t_stats);
+  zassert(!zfpm_g->t_stats);
 
-  THREAD_TIMER_ON (zfpm_g->master, zfpm_g->t_stats, zfpm_stats_timer_cb, 0,
-		   ZFPM_STATS_IVL_SECS);
+  THREAD_TIMER_ON(zfpm_g->master, zfpm_g->t_stats, zfpm_stats_timer_cb, 0,
+                  ZFPM_STATS_IVL_SECS);
 }
 
 /*
  * Helper macro for zfpm_show_stats() below.
  */
-#define ZFPM_SHOW_STAT(counter)						\
-  do {									\
-    vty_out (vty, "%-40s %10lu %16lu%s", #counter, total_stats.counter,	\
-	     zfpm_g->last_ivl_stats.counter, VTY_NEWLINE);		\
+#define ZFPM_SHOW_STAT(counter)                                        \
+  do                                                                   \
+  {                                                                    \
+    vty_out(vty, "%-40s %10lu %16lu%s", #counter, total_stats.counter, \
+            zfpm_g->last_ivl_stats.counter, VTY_NEWLINE);              \
   } while (0)
 
 /*
  * zfpm_show_stats
  */
 static void
-zfpm_show_stats (struct vty *vty)
+zfpm_show_stats(struct vty *vty)
 {
   zfpm_stats_t total_stats;
   zpl_time_t elapsed;
 
-  vty_out (vty, "%s%-40s %10s     Last %2d secs%s%s", VTY_NEWLINE, "Counter",
-	   "Total", ZFPM_STATS_IVL_SECS, VTY_NEWLINE, VTY_NEWLINE);
+  vty_out(vty, "%s%-40s %10s     Last %2d secs%s%s", VTY_NEWLINE, "Counter",
+          "Total", ZFPM_STATS_IVL_SECS, VTY_NEWLINE, VTY_NEWLINE);
 
   /*
    * Compute the total stats up to this instant.
    */
-  zfpm_stats_compose (&zfpm_g->cumulative_stats, &zfpm_g->stats,
-		      &total_stats);
+  zfpm_stats_compose(&zfpm_g->cumulative_stats, &zfpm_g->stats,
+                     &total_stats);
 
-  ZFPM_SHOW_STAT (connect_calls);
-  ZFPM_SHOW_STAT (connect_no_sock);
-  ZFPM_SHOW_STAT (read_cb_calls);
-  ZFPM_SHOW_STAT (write_cb_calls);
-  ZFPM_SHOW_STAT (write_calls);
-  ZFPM_SHOW_STAT (partial_writes);
-  ZFPM_SHOW_STAT (max_writes_hit);
-  ZFPM_SHOW_STAT (t_write_yields);
-  ZFPM_SHOW_STAT (nop_deletes_skipped);
-  ZFPM_SHOW_STAT (route_adds);
-  ZFPM_SHOW_STAT (route_dels);
-  ZFPM_SHOW_STAT (updates_triggered);
-  ZFPM_SHOW_STAT (non_fpm_table_triggers);
-  ZFPM_SHOW_STAT (redundant_triggers);
-  ZFPM_SHOW_STAT (dests_del_after_update);
-  ZFPM_SHOW_STAT (t_conn_down_starts);
-  ZFPM_SHOW_STAT (t_conn_down_dests_processed);
-  ZFPM_SHOW_STAT (t_conn_down_yields);
-  ZFPM_SHOW_STAT (t_conn_down_finishes);
-  ZFPM_SHOW_STAT (t_conn_up_starts);
-  ZFPM_SHOW_STAT (t_conn_up_dests_processed);
-  ZFPM_SHOW_STAT (t_conn_up_yields);
-  ZFPM_SHOW_STAT (t_conn_up_aborts);
-  ZFPM_SHOW_STAT (t_conn_up_finishes);
+  ZFPM_SHOW_STAT(connect_calls);
+  ZFPM_SHOW_STAT(connect_no_sock);
+  ZFPM_SHOW_STAT(read_cb_calls);
+  ZFPM_SHOW_STAT(write_cb_calls);
+  ZFPM_SHOW_STAT(write_calls);
+  ZFPM_SHOW_STAT(partial_writes);
+  ZFPM_SHOW_STAT(max_writes_hit);
+  ZFPM_SHOW_STAT(t_write_yields);
+  ZFPM_SHOW_STAT(nop_deletes_skipped);
+  ZFPM_SHOW_STAT(route_adds);
+  ZFPM_SHOW_STAT(route_dels);
+  ZFPM_SHOW_STAT(updates_triggered);
+  ZFPM_SHOW_STAT(non_fpm_table_triggers);
+  ZFPM_SHOW_STAT(redundant_triggers);
+  ZFPM_SHOW_STAT(dests_del_after_update);
+  ZFPM_SHOW_STAT(t_conn_down_starts);
+  ZFPM_SHOW_STAT(t_conn_down_dests_processed);
+  ZFPM_SHOW_STAT(t_conn_down_yields);
+  ZFPM_SHOW_STAT(t_conn_down_finishes);
+  ZFPM_SHOW_STAT(t_conn_up_starts);
+  ZFPM_SHOW_STAT(t_conn_up_dests_processed);
+  ZFPM_SHOW_STAT(t_conn_up_yields);
+  ZFPM_SHOW_STAT(t_conn_up_aborts);
+  ZFPM_SHOW_STAT(t_conn_up_finishes);
 
   if (!zfpm_g->last_stats_clear_time)
     return;
 
-  elapsed = zfpm_get_elapsed_time (zfpm_g->last_stats_clear_time);
+  elapsed = zfpm_get_elapsed_time(zfpm_g->last_stats_clear_time);
 
-  vty_out (vty, "%sStats were cleared %lu seconds ago%s", VTY_NEWLINE,
-	   (zpl_ulong) elapsed, VTY_NEWLINE);
+  vty_out(vty, "%sStats were cleared %lu seconds ago%s", VTY_NEWLINE,
+          (zpl_ulong)elapsed, VTY_NEWLINE);
 }
 
 /*
  * zfpm_clear_stats
  */
 static void
-zfpm_clear_stats (struct vty *vty)
+zfpm_clear_stats(struct vty *vty)
 {
-  if (!zfpm_is_enabled ())
-    {
-      vty_out (vty, "The FPM module is not enabled...%s", VTY_NEWLINE);
-      return;
-    }
+  if (!zfpm_is_enabled())
+  {
+    vty_out(vty, "The FPM module is not enabled...%s", VTY_NEWLINE);
+    return;
+  }
 
-  zfpm_stats_reset (&zfpm_g->stats);
-  zfpm_stats_reset (&zfpm_g->last_ivl_stats);
-  zfpm_stats_reset (&zfpm_g->cumulative_stats);
+  zfpm_stats_reset(&zfpm_g->stats);
+  zfpm_stats_reset(&zfpm_g->last_ivl_stats);
+  zfpm_stats_reset(&zfpm_g->cumulative_stats);
 
-  zfpm_stop_stats_timer ();
-  zfpm_start_stats_timer ();
+  zfpm_stop_stats_timer();
+  zfpm_start_stats_timer();
 
   zfpm_g->last_stats_clear_time = zfpm_get_time();
 
-  vty_out (vty, "Cleared FPM stats%s", VTY_NEWLINE);
+  vty_out(vty, "Cleared FPM stats%s", VTY_NEWLINE);
 }
 
 /*
  * show_zebra_fpm_stats
  */
-DEFUN (show_zebra_fpm_stats,
-       show_zebra_fpm_stats_cmd,
-       "show zebra fpm stats",
-       SHOW_STR
-       "Zebra information\n"
-       "Forwarding Path Manager information\n"
-       "Statistics\n")
+DEFUN(show_zebra_fpm_stats,
+      show_zebra_fpm_stats_cmd,
+      "show zebra fpm stats",
+      SHOW_STR
+      "Zebra information\n"
+      "Forwarding Path Manager information\n"
+      "Statistics\n")
 {
-  zfpm_show_stats (vty);
+  zfpm_show_stats(vty);
   return CMD_SUCCESS;
 }
 
 /*
  * clear_zebra_fpm_stats
  */
-DEFUN (clear_zebra_fpm_stats,
-       clear_zebra_fpm_stats_cmd,
-       "clear zebra fpm stats",
-       CLEAR_STR
-       "Zebra information\n"
-       "Clear Forwarding Path Manager information\n"
-       "Statistics\n")
+DEFUN(clear_zebra_fpm_stats,
+      clear_zebra_fpm_stats_cmd,
+      "clear zebra fpm stats",
+      CLEAR_STR
+      "Zebra information\n"
+      "Clear Forwarding Path Manager information\n"
+      "Statistics\n")
 {
-  zfpm_clear_stats (vty);
+  zfpm_clear_stats(vty);
   return CMD_SUCCESS;
 }
 
 /*
- * update fpm connection information 
+ * update fpm connection information
  */
-DEFUN ( fpm_remote_ip, 
-        fpm_remote_ip_cmd,
-        "fpm connection ip A.B.C.D port <1-65535>",
-        "fpm connection remote ip and port\n"
-        "Remote fpm server ip A.B.C.D\n"
-        "Enter ip ")
+DEFUN(fpm_remote_ip,
+      fpm_remote_ip_cmd,
+      "fpm connection ip A.B.C.D port <1-65535>",
+      "fpm connection remote ip and port\n"
+      "Remote fpm server ip A.B.C.D\n"
+      "Enter ip ")
 {
 
-   in_addr_t fpm_server;
-   zpl_uint32  port_no;
+  in_addr_t fpm_server;
+  zpl_uint32 port_no;
 
-   fpm_server = ipstack_inet_addr (argv[0]);
-   if (fpm_server == IPSTACK_INADDR_NONE)
-     return CMD_ERR_INCOMPLETE;
+  fpm_server = ipstack_inet_addr(argv[0]);
+  if (fpm_server == IPSTACK_INADDR_NONE)
+    return CMD_ERR_INCOMPLETE;
 
-   port_no = atoi (argv[1]);
-   if (port_no < TCP_MIN_PORT || port_no > TCP_MAX_PORT)
-     return CMD_ERR_INCOMPLETE;
+  port_no = atoi(argv[1]);
+  if (port_no < TCP_MIN_PORT || port_no > TCP_MAX_PORT)
+    return CMD_ERR_INCOMPLETE;
 
-   zfpm_g->fpm_server = fpm_server;
-   zfpm_g->fpm_port = port_no;
+  zfpm_g->fpm_server = fpm_server;
+  zfpm_g->fpm_port = port_no;
 
-
-   return CMD_SUCCESS;
+  return CMD_SUCCESS;
 }
 
-DEFUN ( no_fpm_remote_ip, 
-        no_fpm_remote_ip_cmd,
-        "no fpm connection ip A.B.C.D port <1-65535>",
-        "fpm connection remote ip and port\n"
-        "Connection\n"
-        "Remote fpm server ip A.B.C.D\n"
-        "Enter ip ")
+DEFUN(no_fpm_remote_ip,
+      no_fpm_remote_ip_cmd,
+      "no fpm connection ip A.B.C.D port <1-65535>",
+      "fpm connection remote ip and port\n"
+      "Connection\n"
+      "Remote fpm server ip A.B.C.D\n"
+      "Enter ip ")
 {
-   if (zfpm_g->fpm_server != ipstack_inet_addr (argv[0]) || 
-              zfpm_g->fpm_port !=  atoi (argv[1]))
-       return CMD_ERR_NO_MATCH;
+  if (zfpm_g->fpm_server != ipstack_inet_addr(argv[0]) ||
+      zfpm_g->fpm_port != atoi(argv[1]))
+    return CMD_ERR_NO_MATCH;
 
-   zfpm_g->fpm_server = FPM_DEFAULT_IP;
-   zfpm_g->fpm_port = FPM_DEFAULT_PORT;
+  zfpm_g->fpm_server = FPM_DEFAULT_IP;
+  zfpm_g->fpm_port = FPM_DEFAULT_PORT;
 
-   return CMD_SUCCESS;
+  return CMD_SUCCESS;
 }
-
 
 /*
  * zfpm_init_message_format
  */
 static inline void
-zfpm_init_message_format (const char *format)
+zfpm_init_message_format(const char *format)
 {
   int have_netlink, have_protobuf;
 
@@ -1635,64 +1642,63 @@ zfpm_init_message_format (const char *format)
   zfpm_g->message_format = ZFPM_MSG_FORMAT_NONE;
 
   if (!format)
+  {
+    if (have_netlink)
     {
-      if (have_netlink)
-	{
-	  zfpm_g->message_format = ZFPM_MSG_FORMAT_NETLINK;
-	}
-      else if (have_protobuf)
-	{
-	  zfpm_g->message_format = ZFPM_MSG_FORMAT_PROTOBUF;
-	}
-      return;
-    }
-
-  if (!strcmp ("netlink", format))
-    {
-      if (!have_netlink)
-	{
-	  zlog_err (MODULE_NSM, "FPM netlink message format is not available");
-	  return;
-	}
       zfpm_g->message_format = ZFPM_MSG_FORMAT_NETLINK;
-      return;
     }
-
-  if (!strcmp ("protobuf", format))
+    else if (have_protobuf)
     {
-      if (!have_protobuf)
-	{
-	  zlog_err (MODULE_NSM, "FPM protobuf message format is not available");
-	  return;
-	}
       zfpm_g->message_format = ZFPM_MSG_FORMAT_PROTOBUF;
+    }
+    return;
+  }
+
+  if (!strcmp("netlink", format))
+  {
+    if (!have_netlink)
+    {
+      zlog_err(MODULE_NSM, "FPM netlink message format is not available");
       return;
     }
+    zfpm_g->message_format = ZFPM_MSG_FORMAT_NETLINK;
+    return;
+  }
 
-  zlog_warn (MODULE_NSM, "Unknown fpm format '%s'", format);
+  if (!strcmp("protobuf", format))
+  {
+    if (!have_protobuf)
+    {
+      zlog_err(MODULE_NSM, "FPM protobuf message format is not available");
+      return;
+    }
+    zfpm_g->message_format = ZFPM_MSG_FORMAT_PROTOBUF;
+    return;
+  }
+
+  zlog_warn(MODULE_NSM, "Unknown fpm format '%s'", format);
 }
 
 /**
- * fpm_remote_srv_write 
+ * fpm_remote_srv_write
  *
- * Module to write remote fpm connection 
+ * Module to write remote fpm connection
  *
  * Returns ZERO on success.
  */
 
-int fpm_remote_srv_write (struct vty *vty )
+int fpm_remote_srv_write(struct vty *vty)
 {
-   struct ipstack_in_addr in;
+  struct ipstack_in_addr in;
 
-   in.s_addr = zfpm_g->fpm_server;
+  in.s_addr = zfpm_g->fpm_server;
 
-   if (zfpm_g->fpm_server != FPM_DEFAULT_IP || 
-          zfpm_g->fpm_port != FPM_DEFAULT_PORT)
-      vty_out (vty,"fpm connection ip %s port %d%s", ipstack_inet_ntoa (in),zfpm_g->fpm_port,VTY_NEWLINE);
+  if (zfpm_g->fpm_server != FPM_DEFAULT_IP ||
+      zfpm_g->fpm_port != FPM_DEFAULT_PORT)
+    vty_out(vty, "fpm connection ip %s port %d%s", ipstack_inet_ntoa(in), zfpm_g->fpm_port, VTY_NEWLINE);
 
-   return 0;
+  return 0;
 }
-
 
 /**
  * zfpm_init
@@ -1705,32 +1711,32 @@ int fpm_remote_srv_write (struct vty *vty )
  *
  * Returns zpl_true on success.
  */
-int
-zfpm_init (struct thread_master *master, int enable, zpl_uint16 port,
-	   const char *format)
+int zfpm_init(struct thread_master *master, int enable, zpl_uint16 port,
+              const char *format)
 {
   static int initialized = 0;
 
-  if (initialized) {
+  if (initialized)
+  {
     return 1;
   }
 
   initialized = 1;
 
-  memset (zfpm_g, 0, sizeof (*zfpm_g));
+  memset(zfpm_g, 0, sizeof(*zfpm_g));
   zfpm_g->master = master;
   TAILQ_INIT(&zfpm_g->dest_q);
-  //zfpm_g->sock = -1;
+  // zfpm_g->sock = -1;
   zfpm_g->state = ZFPM_STATE_IDLE;
 
-  zfpm_stats_init (&zfpm_g->stats);
-  zfpm_stats_init (&zfpm_g->last_ivl_stats);
-  zfpm_stats_init (&zfpm_g->cumulative_stats);
+  zfpm_stats_init(&zfpm_g->stats);
+  zfpm_stats_init(&zfpm_g->last_ivl_stats);
+  zfpm_stats_init(&zfpm_g->cumulative_stats);
 
-  install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_zebra_fpm_stats_cmd);
-  install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &clear_zebra_fpm_stats_cmd);
-  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &fpm_remote_ip_cmd);
-  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_fpm_remote_ip_cmd);
+  install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_zebra_fpm_stats_cmd);
+  install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &clear_zebra_fpm_stats_cmd);
+  install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &fpm_remote_ip_cmd);
+  install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_fpm_remote_ip_cmd);
 
   zfpm_init_message_format(format);
 
@@ -1738,27 +1744,28 @@ zfpm_init (struct thread_master *master, int enable, zpl_uint16 port,
    * Disable FPM interface if no suitable format is available.
    */
   if (zfpm_g->message_format == ZFPM_MSG_FORMAT_NONE)
-      enable = 0;
+    enable = 0;
 
   zfpm_g->enabled = enable;
 
-  if (!enable) {
+  if (!enable)
+  {
     return 1;
   }
 
   if (!zfpm_g->fpm_server)
-     zfpm_g->fpm_server = FPM_DEFAULT_IP;
+    zfpm_g->fpm_server = FPM_DEFAULT_IP;
 
   if (!port)
     port = FPM_DEFAULT_PORT;
 
   zfpm_g->fpm_port = port;
 
-  zfpm_g->obuf = stream_new (ZFPM_OBUF_SIZE);
-  zfpm_g->ibuf = stream_new (ZFPM_IBUF_SIZE);
+  zfpm_g->obuf = stream_new(ZFPM_OBUF_SIZE);
+  zfpm_g->ibuf = stream_new(ZFPM_IBUF_SIZE);
 
-  zfpm_start_stats_timer ();
-  zfpm_start_connect_timer ("initialized");
+  zfpm_start_stats_timer();
+  zfpm_start_connect_timer("initialized");
 
   return 1;
 }

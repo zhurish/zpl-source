@@ -103,8 +103,8 @@ if test "header" == "$1" ;then
     echo " " >> $module_def_file
     echo "typedef enum {" >> $module_def_file
     echo "	MODULE_NONE = 0," >> $module_def_file
-    echo "#include \"os_include.h\"" > $module_node_file
-    echo "#include \"zpl_include.h\"" > $module_node_file
+    echo "#include \"auto_include.h\"" > $module_node_file
+    echo "#include \"zplos_include.h\"" > $module_node_file
     echo "#include \"module.h\"" >> $module_node_file
     echo "#include \"moduletypes.h\"" >> $module_node_file
     echo " " >> $module_node_file

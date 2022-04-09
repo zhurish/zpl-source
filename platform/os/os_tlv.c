@@ -4,8 +4,8 @@
  *  Created on: 2018��12��19��
  *      Author: DELL
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include <string.h>
 #include <malloc.h>
 

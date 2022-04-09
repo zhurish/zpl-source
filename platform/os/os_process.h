@@ -11,9 +11,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "zpl_type.h"
 
 
-//#define ZPL_TOOLS_PROCESS
+#define ZPL_TOOLS_PROCESS
 
 #ifdef ZPL_TOOLS_PROCESS
 

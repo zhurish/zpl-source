@@ -22,12 +22,14 @@
 
 #define QUAGGA_DEFINE_DESC_TABLE
 
-#include "zpl_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "zmemory.h"
 #include "log.h"
 #include "host.h"
 #include "route_types.h"
 #include "zebra_event.h"
+#include "vty.h"
 #ifndef SUNOS_5
 #include <sys/un.h>
 #endif
@@ -1469,7 +1471,7 @@ int zlog_set_file(const char *filename, zlog_level_t log_level)
 	}*/
 	/* Open file. */
 	memset(filetmp, 0, sizeof(filetmp));
-	sprintf(filetmp, "%s%s", ZLOG_VIRTUAL_PATH, filename);
+	sprintf(filetmp, "%s%s", ZLOG_VIRTUAL_PATH, file_name);
 	oldumask = umask(0777 & ~LOGFILE_MASK);
 	fp = fopen (filetmp, "a");
 	umask(oldumask);
@@ -1482,12 +1484,12 @@ int zlog_set_file(const char *filename, zlog_level_t log_level)
 	/* Set flags. */
 	if (zlog_default->filename)
 		free(zlog_default->filename);
-	zlog_default->filename = strdup(filename);
+	zlog_default->filename = strdup(file_name);
 	zlog_default->maxlvl[ZLOG_DEST_FILE] = log_level;
 	zlog_default->fp = fp;
 	logfile_fd = fileno(fp);
 
-	if (host_config_set_api(API_SET_LOGFILE_CMD, filename) != OK) {
+	if (host_config_set_api(API_SET_LOGFILE_CMD, file_name) != OK) {
 		if (zlog_default->mutex)
 			os_mutex_unlock(zlog_default->mutex);
 		return ERROR;

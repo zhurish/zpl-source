@@ -97,17 +97,27 @@ function awk_scandir() {
 }
 
 if test "header" == "$1" ;then
-    rm $module_types_def_file  $module_table_node_tmp
+    if test -f $module_types_def_file ;then
+        rm $module_types_def_file
+    fi 
+    if test -f $module_table_node_tmp ;then
+        rm $module_table_node_tmp
+    fi   
+
 
     echo "#ifndef _MODULE_TYPES_H" > $module_types_def_file
     echo "#define _MODULE_TYPES_H" >> $module_types_def_file
     echo " " >> $module_types_def_file
+    echo "#include \"route_types.h\"" >> $module_types_def_file
+    echo "#include \"zebra_event.h\"" >> $module_types_def_file
+    echo " " >> $module_types_def_file
     echo "typedef enum {" >> $module_types_def_file
     echo "	MODULE_NONE = 0," >> $module_types_def_file
 
-    echo "#include \"os_include.h\"" > $module_table_src_file
-    echo "#include \"zpl_include.h\"" > $module_table_src_file
-    echo "#include \"lib_include.h\"" >> $module_table_src_file
+    echo "#include \"auto_include.h\"" > $module_table_src_file
+    echo "#include \"zplos_include.h\"" > $module_table_src_file
+    echo "#include \"module.h\"" >> $module_table_src_file
+    echo "#include \"log.h\"" >> $module_table_src_file
     echo " " >> $module_table_src_file
 
 fi

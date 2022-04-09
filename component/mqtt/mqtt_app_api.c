@@ -5,10 +5,10 @@
  *      Author: DELL
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
+#include "host.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>
@@ -18,7 +18,7 @@
 #include "mqtt_app_publish.h"
 #include "mqtt_app_subscribed.h"
 #include "mqtt_app_api.h"
-
+#include "util_mosq.h"
 
 /*
 //Set the connect callback.  This is called when the broker sends a CONNACK message in response to a connection.
@@ -1137,15 +1137,12 @@ int mqtt_module_task_exit(void)
 struct module_list module_list_mqtt = 
 { 
 	.module=MODULE_MQTT, 
-	.name="MQTT", 
+	.name="MQTT\0", 
 	.module_init=mqtt_module_init, 
 	.module_exit=mqtt_module_exit, 
 	.module_task_init=mqtt_module_task_init, 
 	.module_task_exit=mqtt_module_task_exit, 
 	.module_cmd_init=cmd_mqtt_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

@@ -12,6 +12,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "zpl_type.h"
 
 #if defined(container_of)
   #undef container_of
@@ -30,13 +31,14 @@ extern "C" {
 #else
   #define offsetof(TYPE, MEMBER) ((zpl_size_t) &((TYPE *)0)->MEMBER)
 #endif
-
+/*
 #undef NULL
 #if defined(__cplusplus)
   #define NULL 0
 #else
   #define NULL ((void *)0)
 #endif
+*/
 
 #define	RB_RED		0
 #define	RB_BLACK	1

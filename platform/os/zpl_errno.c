@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 
 struct zpl_errno_msg
@@ -66,7 +66,7 @@ const char *zpl_strerror(int errnum)
 	s = strerror(errnum);
 	if (s != NULL) 
 		return s;
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	s = ipcom_strerror(errnum);
 	if (s != NULL) 
 		return s;

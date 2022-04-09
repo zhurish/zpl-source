@@ -5,10 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 
 #include "dhcp_def.h"
 #include "dhcpd.h"
@@ -347,7 +345,7 @@ int dhcp_pool_show(struct vty *vty, zpl_bool detail)
 	NODE index;
 	dhcp_pool_t *pstNode = NULL;
 	if (!lstCount(&dhcp_global_config.pool_list))
-		return NULL;
+		return OK;
 	for (pstNode = (dhcp_pool_t *)lstFirst(&dhcp_global_config.pool_list);
 		pstNode != NULL;  pstNode = (dhcp_pool_t *)lstNext((NODE*)&index))
 	{

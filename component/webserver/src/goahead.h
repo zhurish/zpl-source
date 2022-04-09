@@ -14,9 +14,10 @@
 #define ME_MAX_IP 64                /**< Maximum IP address size */
 
 /************************************ Includes ********************************/
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
+#include "str.h"
 #include    "me.h"
 #include    "osdep.h"
 

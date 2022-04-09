@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-03-27 10:49:35 CST"
+#define AUTOCONF_TIMESTAMP "2022-04-09 16:23:47 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -90,28 +90,29 @@
 #define ZPL_NSM_L3MODULE 1
 #define ZPL_NSM_NEXTHOP 1
 #define ZPL_NSM_ROUTEMAP 1
-#undef ZPL_NSM_8021X
-#undef ZPL_NSM_ARP
-#undef ZPL_NSM_BRIDGE
+#define ZPL_NSM_8021X 1
+#define ZPL_NSM_ARP 1
 #undef ZPL_NSM_DHCP
 #undef ZPL_DHCPS_MODULE
 #undef ZPL_DHCPC_MODULE
 #undef ZPL_DHCPR_MODULE
-#undef ZPL_NSM_DNS
-#undef ZPL_NSM_DOS
-#undef ZPL_NSM_FIREWALLD
-#undef ZPL_NSM_MAC
-#undef ZPL_NSM_MIRROR
-#undef ZPL_NSM_PPP
-#undef ZPL_NSM_QOS
-#undef ZPL_NSM_SERIAL
-#undef ZPL_NSM_TRUNK
-#undef ZPL_NSM_TUNNEL
+#define ZPL_NSM_DNS 1
+#define ZPL_NSM_DOS 1
+#define ZPL_NSM_FIREWALLD 1
+#define ZPL_NSM_MAC 1
+#define ZPL_NSM_MIRROR 1
+#define ZPL_NSM_PPP 1
+#define ZPL_NSM_QOS 1
+#define ZPL_NSM_SERIAL 1
+#define ZPL_NSM_TRUNK 1
+#define ZPL_NSM_TUNNEL 1
 #define ZPL_NSM_VLAN 1
-#undef ZPL_NSM_IGMP
-#undef ZPL_NSM_MSTP
+#define ZPL_NSM_IGMP 1
+#define ZPL_NSM_MSTP 1
 #define ZPL_NSM_PORT 1
 #undef ZPL_NSM_VLANETH
+#undef ZPL_NSM_WIRELESS
+#undef ZPL_NSM_BRIDGE
 #undef ZPL_NSM_SECURITY
 #define ZPL_IPCBC_MODULE 1
 #undef ZPL_IPCBUS_MODULE
@@ -155,16 +156,11 @@
 #undef ZPL_ONVIF_SSL
 
 /*
- * HAL/PAL Abstract Module Config
+ * HAL/PAL Module Config
  */
-#define ZPL_ABSTRACT_MODULE 1
+#define ZPL_HALPAL_MODULE 1
 #define ZPL_HAL_MODULE 1
 #define ZPL_PAL_MODULE 1
-#undef ZPL_IPCOM_STACK_MODULE
-#define ZPL_KERNEL_STACK_MODULE 1
-#define ZPL_KERNEL_STACK_NETLINK 1
-#undef ZPL_KERNEL_SORF_FORWARDING
-#define ZPL_IPCOM_ROOT_PATH ""
 
 /*
  * Service Module Config
@@ -233,7 +229,12 @@
 /*
  * BSP Module Config
  */
-#undef ZPL_BSP_MODULE
+#define ZPL_BSP_MODULE 1
+#undef ZPL_IPCOM_MODULE
+#define ZPL_KERNEL_MODULE 1
+#define ZPL_KERNEL_NETLINK 1
+#undef ZPL_KERNEL_FORWARDING
+#define ZPL_IPCOM_ROOT_PATH ""
 #undef ZPL_SDK_MODULE
 #undef ZPL_SDK_BCMX
 #undef ZPL_SDK_BCM53125

@@ -22,6 +22,8 @@ extern "C" {
 #include <string.h>
 #include <stdbool.h>
 #include <endian.h>
+#include <math.h>
+#include <signal.h>
 //#ifdef ZPL_BUILD_LINUX
 #include <pthread.h>
 #include <semaphore.h>
@@ -243,6 +245,8 @@ typedef zpl_uint16 zebra_command_t;
 #define ZPL_SUB_MODULE_ID(m,n)  ((m)*(ZPL_SUB_MODULE_MAX) + (n))
 
 #include "zpl_errno.h"
+#include "zpl_def.h"
+
 
 #ifdef __cplusplus
 }

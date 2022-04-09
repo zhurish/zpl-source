@@ -26,9 +26,11 @@
  #include "hostLib.h"
  #include "sockLib.h"
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "log.h"
+#include "host.h"
 #include "syslogcLib.h"
 
 #ifdef ZPL_SERVICE_SYSLOG

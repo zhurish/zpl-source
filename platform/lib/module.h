@@ -15,6 +15,7 @@ extern "C" {
 
 #include "moduletypes.h"
 
+
 #define ZPL_MODULE_NEED_INIT  0x00000001
 #define ZPL_MODULE_IS_INIT    0x00000100
 #define ZPL_MODULE_INIT_TASK  0x00000200
@@ -24,32 +25,22 @@ extern "C" {
 struct module_list
 {
   	zpl_uint32 module;  //模块ID
-	const char 	*name;  //模块名称  
-
+	const char 	*name;  //模块名称    
   	int	(*module_init)(void);
 	int	(*module_exit)(void);
 	int	(*module_task_init)(void);
 	int	(*module_task_exit)(void);
 	int	(*module_cmd_init)(void);
-#ifdef ZPL_SHELL_MODULE
-  	int	(*module_write_config)(struct vty *, void *);
-	int	(*module_show_config)(struct vty *, void *, zpl_bool);
-	int	(*module_show_debug)(struct vty *, void *, zpl_bool);
-#else
-  	int	(*module_write_config)(void *, void *);
-	int	(*module_show_config)(void *, void *, zpl_bool);
-	int	(*module_show_debug)(void *, void *, zpl_bool);
-#endif
 
-  zpl_uint32		flags;//模块是否初始化标志
-  zpl_void		  *master;    
-  zpl_uint32		taskid;       //模块任务ID
-  struct submodule
-  {
-    zpl_uint32 module;
-	  char 	*name;
-    zpl_uint32		taskid;
-  }submodule[ZPL_SUB_MODULE_MAX];
+	zpl_uint32		flags;//模块是否初始化标志
+	zpl_void		  *master;    
+	zpl_uint32		taskid;       //模块任务ID
+	struct submodule
+	{
+		zpl_uint32 module;
+		char 	*name;
+		zpl_uint32		taskid;
+	}submodule[ZPL_SUB_MODULE_MAX];
 };
 
 struct module_alllist
@@ -73,15 +64,12 @@ extern int zplib_module_task_startall(void);
 extern int zplib_module_task_stopall(void);
 extern int zplib_module_cmd_all(void);
 
-extern int zplib_module_name_init(const char * name);
 extern int zplib_module_init(zpl_uint32 module);
 extern int zplib_module_exit(zpl_uint32 module);
-extern int zplib_module_task_name_init(const char * name);
 extern int zplib_module_task_init(zpl_uint32 module);
-extern int zplib_module_task_exit(zpl_uint32 module);
-extern int zplib_module_cmd_name_init(const char * name);
+extern int zplib_module_task_exit(zpl_uint32 module);  
 extern int zplib_module_cmd_init(zpl_uint32 module);
-extern struct module_list * zplib_module_info(zpl_uint32 module);
+
 
 extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid);
 

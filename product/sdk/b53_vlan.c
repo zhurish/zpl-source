@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 
-#include <zpl_include.h>
+#include <zplos_include.h>
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
@@ -240,7 +240,7 @@ int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 entry = 0;
-	ret |= b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, 2*(port), &entry);
+	ret |= b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, 2*(port), entry);
 	if(enable)
 		entry |= BIT(port);
 	else

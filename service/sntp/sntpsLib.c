@@ -86,9 +86,12 @@ SEE ALSO: sntpcLib, RFC 1769
 #include "usrLib.h"
 #include "errnoLib.h"
 */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "module.h"
 #include "sntpsLib.h"
 
 
@@ -105,15 +108,12 @@ static STATUS sntpsClockSet (struct sntp_server *, zpl_bool (*)(zpl_uint32, void
 struct module_list module_list_sntps = 
 { 
 	.module=MODULE_SNTPS, 
-	.name="SNTPS", 
+	.name="SNTPS\0", 
 	.module_init=NULL, 
 	.module_exit=NULL, 
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
 	.module_cmd_init=cmd_sntps_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
 	.flags = ZPL_MODULE_NEED_INIT,
 	.taskid=0,
 };

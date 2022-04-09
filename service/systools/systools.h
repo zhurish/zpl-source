@@ -8,9 +8,17 @@
 #ifndef __SYSTOOLS_H__
 #define __SYSTOOLS_H__
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
+#include "thread.h"
+#include "eloop.h"
+#include "log.h"
+#include "network.h"
+#include "prefix.h"
+#include "vty.h"
+#include "vty_user.h"
+#include "host.h"
 
 #ifndef BUFSIZE
 #define BUFSIZE 512

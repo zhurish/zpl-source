@@ -68,7 +68,7 @@ ZPLLDSOLIBS = $(ZPLLDLIBS)
 #ZPLINCLUDE += $(IPSTACK_INCLUDE)
 #IPSTACK_LIBDIR
 #
-ifeq ($(ZPL_IPCOM_STACK_MODULE),true)
+ifeq ($(ZPL_IPCOM_MODULE),true)
 IPLIBS1 = $(shell $(CD) $(IPSTACK_LIBDIR)/ && ls *.a)
 IPLIBS2 = $(subst .a,,$(IPLIBS1))
 IPLIBC += $(subst lib,-l,$(IPLIBS2))
@@ -283,7 +283,8 @@ install: config_install
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 	$(INSTALL) -d ${ZPL_BIN_DIR}
 	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
-	#$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
+#
+#	$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
 	
 	#install -d ${ZPL_INSTALL_ULIB_DIR}
 	#$(CP) $(ULIBSOFILE) ${ZPL_INSTALL_ULIB_DIR}

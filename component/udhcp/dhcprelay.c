@@ -29,8 +29,8 @@
 /* select timeout in sec. */
 #define DHCP_RELAY_SELECT_TIMEOUT (DHCP_RELAY_MAX_LIFETIME / 8)
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "lib_include.h"
 #include "nsm_include.h"
 

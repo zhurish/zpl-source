@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 #include "zpl_vidhal.h"

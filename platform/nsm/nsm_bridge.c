@@ -5,11 +5,17 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "zmemory.h"
+#include "if.h"
+#include "prefix.h"
 #include "nsm_include.h"
+#include "hal_include.h"
 
+#ifdef ZPL_WIFI_MODULE
+#include "iw_ap.h"
+#endif
 
 nsm_bridge_t * nsm_bridge_get(struct interface *ifp)
 {

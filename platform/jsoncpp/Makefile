@@ -24,14 +24,9 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)
 
 
-#@$(CXX) -fPIC $(ZPLCPPFLAGS) $(JSONPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -c  $< -o $@ $(ZPLINCLUDE)
-
 #
-	#@$(ECHO) CXX '$(ZPLCPPFLAGS) $(JSONPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
-	#
 
 $(LIBS) : $(MODULE_OBJS)
-	#$(CXX) -shared -o  $(LIBS) $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 
@@ -49,7 +44,7 @@ obj: $(BUILT_SOURCES) $(MODULE_OBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	#@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

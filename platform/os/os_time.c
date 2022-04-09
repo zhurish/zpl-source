@@ -7,8 +7,8 @@
 
 
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "log.h"
 
 
@@ -38,7 +38,7 @@ static void os_time_interrupt(zpl_uint32 signo
 );
 #endif
 #endif
-static int os_time_task(void);
+static int os_time_task(void *p);
 
 
 int os_system_time_base(zpl_char *dt)
@@ -713,7 +713,7 @@ int os_time_clean(zpl_bool all)
 	}
 	if(time_mutex)
 		os_mutex_unlock(time_mutex);
-	return t;
+	return OK;
 }
 
 static os_time_t * os_time_get_node(void)
@@ -1083,7 +1083,7 @@ int os_time_show(int (*show)(void *, zpl_char *fmt,...), void *pVoid)
 	return OK;
 }
 
-static int os_time_task(void)
+static int os_time_task(void *p)
 {
 	NODE node;
 	os_time_t *t;

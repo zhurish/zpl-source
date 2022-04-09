@@ -108,6 +108,5 @@ ifeq ($(strip $(ZPL_SQLITE_MODULE)),true)
 endif
 endif
 #
-ZPLOS_DEFINE += -DZPL_BUILD_LINUX -D__linux__
 #
 

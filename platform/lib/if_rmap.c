@@ -19,7 +19,7 @@
  * 02111-1307, USA.  
  */
 
-#include <os_include.h>
+#include <auto_include.h>
 #include "hash.h"
 #include "command.h"
 #include "zmemory.h"

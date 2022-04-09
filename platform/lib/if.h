@@ -26,9 +26,11 @@ extern "C" {
 #endif
 
 
-#include "log.h"
-#include "linklist.h"
 
+#include "linklist.h"
+#include "prefix.h"
+#include "moduletypes.h"
+//#include "module.h"
 /* Interface link-layer type, if known. Derived from:
  *
  * net/if_arp.h on various platforms - Linux especially.
@@ -254,7 +256,7 @@ struct interface
    struct list *connected;
    zpl_bool dhcp;
    /* Daemon specific interface data pointer. */
-   //void *info[ZLOG_MAX];
+
    void *info[MODULE_MAX];
 
    /* Statistics fileds. */
@@ -270,50 +272,6 @@ struct interface
    zpl_uint32 raw_status;
 };
 
-/* Connected address structure. */
-struct connected
-{
-   /* Attached interface. */
-   struct interface *ifp;
-
-   /* Flags for configuration. */
-   zpl_uchar conf;
-#define ZEBRA_IFC_CONFIGURED (1 << 1)
-#define ZEBRA_IFC_DHCPC (1 << 2)
-   /*
-     The ZEBRA_IFC_REAL flag should be set if and only if this address
-     exists in the kernel and is actually usable. (A case where it exists but
-     is not yet usable would be IPv6 with DAD)
-     The ZEBRA_IFC_CONFIGURED flag should be set if and only if this address
-     was configured by the user from inside quagga.
-     The ZEBRA_IFC_QUEUED flag should be set if and only if the address exists
-     in the kernel. It may and should be set although the address might not be
-     usable yet. (compare with ZEBRA_IFC_REAL)
-   */
-
-   /* Flags for connected address. */
-   zpl_uchar flags;
-#define ZEBRA_IFA_SECONDARY (1 << 0)
-#define ZEBRA_IFA_PEER (1 << 1)
-#define ZEBRA_IFA_UNNUMBERED (1 << 2)
-#define ZEBRA_IFA_DHCPC (1 << 3)
-   /* N.B. the ZEBRA_IFA_PEER flag should be set if and only if
-     a peer address has been configured.  If this flag is set,
-     the destination field must contain the peer address.  
-     Otherwise, if this flag is not set, the destination address
-     will either contain a broadcast address or be NULL.
-   */
-
-   /* Address of connected network. */
-   struct prefix *address;
-
-   /* Peer or Broadcast address, depending on whether ZEBRA_IFA_PEER is set.
-     Note: destination may be NULL if ZEBRA_IFA_PEER is not set. */
-   struct prefix *destination;
-
-   zpl_uint32 count;
-   zpl_uint32 raw_status;
-};
 
 
 #define IF_UNIT_ALL (0xEFFFFFFF)
@@ -387,17 +345,6 @@ struct connected
 
 
 
-/* Does the destination field contain a peer address? */
-#define CONNECTED_PEER(C) CHECK_FLAG((C)->flags, ZEBRA_IFA_PEER)
-
-/* Prefix to insert into the RIB */
-#define CONNECTED_PREFIX(C) \
-   (CONNECTED_PEER(C) ? (C)->destination : (C)->address)
-
-/* Identifying address.  We guess that if there's a peer address, but the
-   local address is in the same prefix, then the local address may be unique. */
-#define CONNECTED_ID(C) \
-   ((CONNECTED_PEER(C) && !prefix_match((C)->destination, (C)->address)) ? (C)->destination : (C)->address)
 
 /* There are some interface flags which are only supported by some
    operating system. */
@@ -435,6 +382,9 @@ struct connected
 #ifndef IPSTACK_IFF_VIRTUAL
 #define IPSTACK_IFF_VIRTUAL 0x0
 #endif /* IFF_VIRTUAL */
+
+
+
 
 /* Prototypes. */
 extern struct list *if_list_get(void);
@@ -564,24 +514,15 @@ extern zpl_bool if_have_kernel(struct interface *ifp);
 
 extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);
 
-/* Connected address functions. */
-extern struct connected *connected_new(void);
-extern void connected_free(struct connected *);
-extern void connected_add(struct interface *, struct connected *);
-extern struct connected *connected_add_by_prefix(struct interface *,
-                                                 struct prefix *,
-                                                 struct prefix *);
-extern struct connected *connected_delete_by_prefix(struct interface *,
-                                                    struct prefix *);
-extern struct connected *connected_lookup_address(struct interface *,
-                                                  struct ipstack_in_addr);
-extern struct connected *connected_check(struct interface *ifp, struct prefix *p);
 
 extern int if_data_lock(void);
 extern int if_data_unlock(void);
 
 extern enum if_link_type netlink_to_if_link_type(zpl_uint32  hwt);
  
+#include "if_name.h"
+#include "connected.h"
+
 #ifdef __cplusplus
 }
 #endif

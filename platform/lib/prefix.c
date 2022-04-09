@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "prefix.h"
 #include "zmemory.h"
 #include "log.h"
@@ -202,10 +202,10 @@ afi2family (afi_t afi)
 {
   if (afi == AFI_IP)
     return IPSTACK_AF_INET;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
     return IPSTACK_AF_INET6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else if (afi == AFI_ETHER)
     return IPSTACK_AF_ETHERNET;
   return 0;
@@ -216,10 +216,10 @@ family2afi (zpl_family_t family)
 {
   if (family == IPSTACK_AF_INET)
     return AFI_IP;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (family == IPSTACK_AF_INET6)
     return AFI_IP6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else if (family == IPSTACK_AF_ETHERNET)
     return AFI_ETHER;
   return 0;
@@ -293,10 +293,10 @@ prefix_copy (struct prefix *dest, const struct prefix *src)
 
   if (src->family == IPSTACK_AF_INET)
     dest->u.prefix4 = src->u.prefix4;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (src->family == IPSTACK_AF_INET6)
     dest->u.prefix6 = src->u.prefix6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   else if (src->family == IPSTACK_AF_UNSPEC)
     {
       dest->u.lp.id = src->u.lp.id;
@@ -330,11 +330,11 @@ prefix_same (const struct prefix *p1, const struct prefix *p2)
       if (p1->family == IPSTACK_AF_INET)
 	if (IPV4_ADDR_SAME (&p1->u.prefix4.s_addr, &p2->u.prefix4.s_addr))
 	  return 1;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       if (p1->family == IPSTACK_AF_INET6 )
 	if (IPV6_ADDR_SAME (&p1->u.prefix6.s6_addr, &p2->u.prefix6.s6_addr))
 	  return 1;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
       if (p1->family == IPSTACK_AF_ETHERNET) {
 	if (!memcmp(p1->u.prefix_eth.octet, p2->u.prefix_eth.octet, ETHER_ADDR_LEN))
 	    return 1;
@@ -399,7 +399,7 @@ prefix_common_bits (const struct prefix *p1, const struct prefix *p2)
 
   if (p1->family == IPSTACK_AF_INET)
     length = IPV4_MAX_BYTELEN;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (p1->family == IPSTACK_AF_INET6)
     length = IPV6_MAX_BYTELEN;
 #endif
@@ -426,10 +426,10 @@ prefix_family_str (const struct prefix *p)
 {
   if (p->family == IPSTACK_AF_INET)
     return "inet";
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (p->family == IPSTACK_AF_INET6)
     return "inet6";
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   if (p->family == IPSTACK_AF_ETHERNET)
     return "ether";
   return "unspec";
@@ -617,7 +617,7 @@ prefix_ipv4_any (const struct prefix_ipv4 *p)
   return (p->prefix.s_addr == 0 && p->prefixlen == 0);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 
 /* Allocate a new ip version 6 route */
 struct prefix_ipv6 *
@@ -749,7 +749,7 @@ str2in6_addr (const char *str, struct ipstack_in6_addr *addr)
       addr->s6_addr[i] = x & 0xff;
     }
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 void
 apply_mask (struct prefix *p)
@@ -759,11 +759,11 @@ apply_mask (struct prefix *p)
       case IPSTACK_AF_INET:
         apply_mask_ipv4 ((struct prefix_ipv4 *)p);
         break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       case IPSTACK_AF_INET6:
         apply_mask_ipv6 ((struct prefix_ipv6 *)p);
         break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
       default:
         break;
     }
@@ -786,7 +786,7 @@ sockunion2prefix (const union sockunion *dest,
       p->prefixlen = ip_masklen (mask->sin.sin_addr);
       return (struct prefix *) p;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (dest->sa.sa_family == IPSTACK_AF_INET6)
     {
       struct prefix_ipv6 *p;
@@ -797,7 +797,7 @@ sockunion2prefix (const union sockunion *dest,
       memcpy (&p->prefix, &dest->sin6.sin6_addr, sizeof (struct ipstack_in6_addr));
       return (struct prefix *) p;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return NULL;
 }
 
@@ -815,7 +815,7 @@ sockunion2hostprefix (const union sockunion *su, struct prefix *prefix)
       p->prefixlen = IPV4_MAX_BITLEN;
       return (struct prefix *) p;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (su->sa.sa_family == IPSTACK_AF_INET6)
     {
       struct prefix_ipv6 *p;
@@ -826,7 +826,7 @@ sockunion2hostprefix (const union sockunion *su, struct prefix *prefix)
       memcpy (&p->prefix, &su->sin6.sin6_addr, sizeof (struct ipstack_in6_addr));
       return (struct prefix *) p;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return NULL;
 }
 
@@ -838,10 +838,10 @@ prefix2sockunion (const struct prefix *p, union sockunion *su)
   su->sa.sa_family = p->family;
   if (p->family == IPSTACK_AF_INET)
     su->sin.sin_addr = p->u.prefix4;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (p->family == IPSTACK_AF_INET6)
     memcpy (&su->sin6.sin6_addr, &p->u.prefix6, sizeof (struct ipstack_in6_addr));
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 }
 
 int
@@ -852,11 +852,11 @@ prefix_blen (const struct prefix *p)
     case IPSTACK_AF_INET:
       return IPV4_MAX_BYTELEN;
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return IPV6_MAX_BYTELEN;
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     case IPSTACK_AF_ETHERNET:
       return ETHER_ADDR_LEN;
     }
@@ -874,12 +874,12 @@ str2prefix (const char *str, struct prefix *p)
   if (ret)
     return ret;
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   /* Next we try to convert string to struct prefix_ipv6. */
   ret = str2prefix_ipv6 (str, (struct prefix_ipv6 *) p);
   if (ret)
     return ret;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
   /* Next we try to convert string to struct prefix_eth. */
   ret = str2prefix_eth (str, (struct prefix_eth *) p);
@@ -1078,7 +1078,7 @@ netmask_str2prefix_str (const char *net_str, const char *mask_str,
   return 1;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Utility function for making IPv6 address string. */
 const char *
 inet6_ntoa (struct ipstack_in6_addr addr)
@@ -1088,7 +1088,7 @@ inet6_ntoa (struct ipstack_in6_addr addr)
   ipstack_inet_ntop (IPSTACK_AF_INET6, &addr, buf, INET6_ADDRSTRLEN);
   return buf;
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 int
 prefix_check_addr (struct prefix *p)
@@ -1105,7 +1105,7 @@ prefix_check_addr (struct prefix *p)
           || IPSTACK_IPV4_LINKLOCAL(addr))
 	return 0;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (p->family == IPSTACK_AF_INET6)
     {
       if (IPSTACK_IN6_IS_ADDR_LOOPBACK (&p->u.prefix6))
@@ -1113,7 +1113,7 @@ prefix_check_addr (struct prefix *p)
       if (IPSTACK_IN6_IS_ADDR_LINK_LOCAL(&p->u.prefix6))//IPSTACK_IN6_IS_ADDR_LINK_LOCAL IPSTACK_IN6_IS_ADDR_LINK_LOCAL
 	return 0;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return 1;
 }
 

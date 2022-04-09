@@ -35,11 +35,8 @@
 //usage:	IF_FEATURE_UDHCP_PORT(
 //usage:     "\n	-P N	Use port N (default 67)"
 //usage:	)
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
 
 #include "dhcp_def.h"
 #include "dhcp_lease.h"
@@ -158,7 +155,7 @@ int dhcpd_interface_clean(dhcp_pool_t*config)
 	dhcpd_interface_t *pstNode = NULL;
 	NODE index;
 	if (!lstCount(&config->interf))
-		return NULL;
+		return OK;
 	for (pstNode = (dhcpd_interface_t *) lstFirst(&config->interf);
 			pstNode != NULL;
 			pstNode = (dhcpd_interface_t *) lstNext((NODE*) &index))

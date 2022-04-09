@@ -6,16 +6,22 @@
  */
 
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "nsm_dhcp.h"
 
 #ifdef ZPL_DHCPD_MODULE
 
 #ifdef ZPL_DHCP_MODULE
 #include "dhcp_config.h"
 #include "dhcpd.h"
+#include "dhcp_api.h"
+#include "dhcp_lease.h"
 #endif
 
 Gnsm_dhcps_t dhcps_list;

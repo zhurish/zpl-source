@@ -7,8 +7,8 @@
 #define ONVIF_MULTICAST_GROUP   "239.255.255.250" /* use a group IP such as "225.0.0.37" */
 #define ONVIF_BIND_PORT         3702
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "lib_include.h"
 
 #define MAX_4_LEN 			4

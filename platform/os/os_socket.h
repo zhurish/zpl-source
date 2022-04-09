@@ -11,8 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "os_include.h"
+#include "zpl_type.h"
+#include "auto_include.h"
 
 #define OS_SOCKET_BASE	DAEMON_VTY_DIR
 

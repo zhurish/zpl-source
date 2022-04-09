@@ -54,12 +54,10 @@ obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	@install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.a $(LIB_DIR)
 #	install -d $(BASE_ROOT)/$(ZPL_ULIB_DIR)
 #	install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.so $(BASE_ROOT)/$(ZPL_ULIB_DIR)
 
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

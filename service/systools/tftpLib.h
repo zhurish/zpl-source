@@ -37,7 +37,7 @@ modification history
 extern "C" {
 #endif
 
-#include <os_include.h>
+#include <auto_include.h>
 #include <log.h>
 
 /* defines */

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-
+#include "zpl_type.h"
 
 
 extern int os_mkdir(const zpl_char *dirpath, zpl_uint32 mode, zpl_uint32 pathflag);

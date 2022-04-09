@@ -259,7 +259,7 @@ webclean:
 install: $(LIBS) webinstall sslinstall
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+
 
 clean: objclean webclean sslclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

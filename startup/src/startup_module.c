@@ -4,19 +4,36 @@
  *  Created on: Jun 10, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "module.h"
-#include "host.h"
+#include "if.h"
+#include "zmemory.h"
 #include "log.h"
+#include "host.h"
+#include "thread.h"
+#include "vector.h"
+#include "vty.h"
+#include "vty_user.h"
+#include "command.h"
+#include "workqueue.h"
+#include "bmgt.h"
+#include "if_manage.h"
+#include "daemon.h"
+#include "nsm_include.h"
+#include "nsm_main.h"
+#include "hal_include.h"
+#include "bsp_include.h"
 #include "startup_module.h"
+#include "startup_disk.h"
+
 
 
 extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
 static int ipcom_stack_init(int localport)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	extern int ipcom_demo_init(int localport);
 	extern void sys_signal_init(void);
 
@@ -66,7 +83,7 @@ int zpl_stack_start(const char* progname, int localport)
 	cmd_os_init();
 	cmd_nvram_env_init();
 	cmd_os_thread_init();
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	cmd_os_eloop_init();
 #endif
 
@@ -156,7 +173,7 @@ int startup_module_waitting(void)
 	bsp_usp_module_init();
 #endif
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 	//_netlink_load_all();
 #endif
 	//eth_drv_init(0);

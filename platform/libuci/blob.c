@@ -14,10 +14,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-//#include <libubox/blobmsg.h>
 #include "uci.h"
 #include "uci_blob.h"
+
+#ifdef LIBUBOX_ENABLE
+#include <libubox/blobmsg.h>
+
 
 static bool
 uci_attr_to_blob(struct blob_buf *b, const char *str,
@@ -136,6 +138,7 @@ __uci_element_to_blob(struct blob_buf *b, struct uci_element *e,
 	return ret;
 }
 
+
 static int
 __uci_to_blob(struct blob_buf *b, struct uci_section *s,
 	      const struct uci_blob_param_list *p)
@@ -236,3 +239,6 @@ uci_blob_check_equal(struct blob_attr *c1, struct blob_attr *c2,
 
 	return true;
 }
+
+
+#endif

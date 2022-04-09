@@ -28,10 +28,11 @@
 extern "C" {
 #endif
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "nsm_rib.h"
+#include "vty.h"
+#include "connected.h"
 
 extern void router_id_add_address(struct connected *);
 extern void router_id_del_address(struct connected *);

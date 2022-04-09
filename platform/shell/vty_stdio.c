@@ -20,10 +20,9 @@
  * 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "vty.h"
 #include <arpa/telnet.h>
 #include <termios.h>
 

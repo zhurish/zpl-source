@@ -19,8 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "prefix.h"
 #include "command.h"
 #include "zmemory.h"
@@ -72,7 +72,7 @@ static struct prefix_master prefix_master_ipv4 =
   NULL,
 };
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Static structure of IPv6 prefix-list's master. */
 static struct prefix_master prefix_master_ipv6 = 
 { 
@@ -82,7 +82,7 @@ static struct prefix_master prefix_master_ipv6 =
   NULL,
   NULL,
 };
-#endif /* HAVE_IPV6*/
+#endif /* ZPL_BUILD_IPV6*/
 
 /* Static structure of BGP ORF prefix_list's master. */
 static struct prefix_master prefix_master_orf_v4 =
@@ -94,7 +94,7 @@ static struct prefix_master prefix_master_orf_v4 =
   NULL,
 };
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Static structure of BGP ORF prefix_list's master. */
 static struct prefix_master prefix_master_orf_v6 =
 {
@@ -111,7 +111,7 @@ prefix_master_get (afi_t afi, int orf)
 {
   if (afi == AFI_IP)
     return orf ? &prefix_master_orf_v4 : &prefix_master_ipv4;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (afi == AFI_IP6)
     return orf ? &prefix_master_orf_v6 : &prefix_master_ipv6;
 #endif
@@ -369,9 +369,9 @@ void
 prefix_list_add_hook (void (*func) (struct prefix_list *plist))
 {
   prefix_master_ipv4.add_hook = func;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   prefix_master_ipv6.add_hook = func;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 }
 
 /* Delete hook function. */
@@ -379,7 +379,7 @@ void
 prefix_list_delete_hook (void (*func) (struct prefix_list *plist))
 {
   prefix_master_ipv4.delete_hook = func;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   prefix_master_ipv6.delete_hook = func;
 #endif /* HAVE_IPVt6 */
 }
@@ -731,7 +731,7 @@ vty_prefix_list_install (struct vty *vty, afi_t afi, const char *name,
 	  return CMD_WARNING;
 	}
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case AFI_IP6:
       if (strncmp ("any", prefix, strlen (prefix)) == 0)
 	{
@@ -875,7 +875,7 @@ vty_prefix_list_uninstall (struct vty *vty, afi_t afi, const char *name,
 	  return CMD_WARNING;
 	}
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (afi == AFI_IP6)
     {
       if (strncmp ("any", prefix, strlen (prefix)) == 0)
@@ -893,7 +893,7 @@ vty_prefix_list_uninstall (struct vty *vty, afi_t afi, const char *name,
 	  return CMD_WARNING;
 	}
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
   /* Lookup prefix entry. */
   pentry = prefix_list_entry_lookup(plist, &p, type, seqnum, lenum, genum);
@@ -1785,7 +1785,7 @@ DEFUN (clear_ip_prefix_list_name_prefix,
   return vty_clear_prefix_list (vty, AFI_IP, argv[0], argv[1]);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 DEFUN (ipv6_prefix_list,
        ipv6_prefix_list_cmd,
        "ipv6 prefix-list WORD (deny|permit) (X:X::X:X/M|any)",
@@ -2379,7 +2379,7 @@ DEFUN (clear_ipv6_prefix_list_name_prefix,
 {
   return vty_clear_prefix_list (vty, AFI_IP6, argv[0], argv[1]);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* Configuration write function. */
 static int
@@ -2712,7 +2712,7 @@ prefix_list_init_ipv4 (void)
   install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &clear_ip_prefix_list_name_prefix_cmd);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Prefix-list node. */
 static struct cmd_node prefix_ipv6_node =
 {
@@ -2784,9 +2784,9 @@ prefix_list_init ()
 {
   #ifdef ZPL_SHELL_MODULE
   prefix_list_init_ipv4 ();
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   prefix_list_init_ipv6 ();
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 #endif
 }
 

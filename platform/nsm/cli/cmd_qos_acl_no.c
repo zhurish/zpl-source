@@ -1,8 +1,10 @@
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "nsm_interface.h"
+#include "vty.h"
 #include "nsm_qos_acl.h"
 
 #define QOS_CLASS_MAP_STR "Class Map List\n"
@@ -614,7 +616,7 @@ ALIAS(noseq_qos_access_list_ip_tcpudp_srcport_ng_dstport,
       "le\n"
       "Specify Destination TCP/UDP Port Vlaue\n")
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /////////////
 DEFUN(noseq_qos_access_list_ipv6_srcany,
       noseq_qos_access_list_ipv6_srcany_cmd,
@@ -1261,8 +1263,8 @@ ALIAS(noseq_qos_access_list_ipv6_tcpudp_srcport_ng_dstport,
 (deny|permit) src-mac any dest-mac any vlan xxx cos xx inner-vlan xxx inner-cos xx
 (deny|permit) src-mac any dest-mac any vlan xxx cos xx inner-vlan xxx inner-cos xx protocol xxxx
 */
-DEFUN(noseq_noseq_qos_mac_access_list_src_mac_any,
-      noseq_noseq_qos_mac_access_list_src_mac_any_cmd,
+DEFUN(noseq_qos_mac_access_list_src_mac_any,
+      noseq_qos_mac_access_list_src_mac_any_cmd,
       "(deny|permit) src-mac any",
       "Specify packets to reject\n"
       "Specify packets to forward\n"
@@ -1284,12 +1286,13 @@ DEFUN(noseq_noseq_qos_mac_access_list_src_mac_any,
     int innerlabel = -1;
     int innerexp = -1;
 
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 /*
@@ -1380,12 +1383,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_any_dstany,
 
         proto = eth_protocol_type(argv[3]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -1496,12 +1500,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_any_dstmask,
             cos = atoi(argv[4]);
         proto = eth_protocol_type(argv[5]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -1617,12 +1622,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_any_dsthost,
             cos = atoi(argv[3]);
         proto = eth_protocol_type(argv[4]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -1734,12 +1740,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_mask,
             cos = atoi(argv[3]);
         proto = eth_protocol_type(argv[4]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -1801,12 +1808,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_mask_dstany,
             cos = atoi(argv[4]);
         proto = eth_protocol_type(argv[5]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -1922,12 +1930,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_mask_dstmask,
             cos = atoi(argv[6]);
         proto = eth_protocol_type(argv[7]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -2051,12 +2060,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_mask_dsthost,
             cos = atoi(argv[5]);
         proto = eth_protocol_type(argv[6]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -2172,12 +2182,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_host,
         cos = atoi(argv[5]);
       proto = eth_protocol_type(argv[6]);
     }*/
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -2238,12 +2249,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_host_dstany,
             cos = atoi(argv[3]);
         proto = eth_protocol_type(argv[4]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -2357,12 +2369,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_host_dstmask,
             cos = atoi(argv[5]);
         proto = eth_protocol_type(argv[6]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -2482,12 +2495,13 @@ DEFUN(noseq_qos_mac_access_list_src_mac_host_dsthost,
             cos = atoi(argv[4]);
         proto = eth_protocol_type(argv[5]);
     }
-    filter_l2mac_format(vty, src, srcmask,
+    if(filter_l2mac_format(vty, src, srcmask,
                         dst, dstmask,
                         proto,
                         vlan, cos, innervlan, innercos,
                         label, exp, innerlabel, innerexp,
-                        &l2new);
+                        &l2new) != OK)
+        return CMD_WARNING;
     return qos_access_filter_l2mac_adddel(vty->index, vty, NULL, argv[0], 0, &l2new, 1);
 }
 
@@ -2578,7 +2592,7 @@ static void noseq_qos_access_list_ipv4(void)
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ip_tcpudp_srcport_ng_dstport_ng_cmd);
 #endif
 }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 static void noseq_qos_access_list_ipv6(void)
 {
 #ifdef ZPL_FILTER_ZEBRA_EXT
@@ -2608,7 +2622,7 @@ static void noseq_qos_access_list_ipv6(void)
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ipv6_tcpudp_srcport_ng_dstport_ng_cmd);
 #endif
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 #ifdef ZPL_FILTER_MAC
 /* Install vty related command. */
@@ -2665,7 +2679,7 @@ void cmd_qos_acl_init(void)
 #endif
 
     noseq_qos_access_list_ipv4();
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     noseq_qos_access_list_ipv6();
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 }

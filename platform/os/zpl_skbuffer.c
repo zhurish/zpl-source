@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 
 
@@ -114,6 +114,8 @@ zpl_skb_data_t *zpl_skb_queue_dequeue(zpl_skb_queue_t *queue)
 		if (bufdata)
 			lstDelete(&queue->list, (NODE *)bufdata);
 	}
+	//if(bufdata)
+	//__sync_fetch_and_add(bufdata->atomic, 1);
 	if (queue->mutex)
 		os_mutex_unlock(queue->mutex);
 	return bufdata;

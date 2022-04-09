@@ -69,7 +69,8 @@ tftpLib, RFC 783 "TFTP Protocol"
 #include "systools.h"
 #include "tftpLib.h"
 #include "tftpdLib.h"
-
+#include "thread.h"
+#include "eloop.h"
 
 /* GLOBALS */
 
@@ -172,7 +173,7 @@ static zpl_socket_t tftpd_socket_init(TFTPD_CONFIG *config)
 	}
     while(1)
 	{
-		if (ipstack_ioctl (serverSocket, IPSTACK_FIONREAD, (int) &value) == ERROR)
+		if (ipstack_ioctl (serverSocket, IPSTACK_FIONREAD, &value) == ERROR)
 		{
 			ipstack_close(serverSocket);
 			return (serverSocket);

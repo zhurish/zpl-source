@@ -5,11 +5,14 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "nsm_mirror.h"
+#include "nsm_vlan.h"
+#include "vty.h"
 
 
 /*
@@ -198,6 +201,16 @@ DEFUN (monitor_session_source_filter,
 					filter = MIRROR_FILTER_DA;
 			}
 			vty_mac_get (argv[5], mac);
+			if(NSM_MAC_IS_BROADCAST(mac))
+			{
+				vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+				return CMD_WARNING;
+			}
+			if(NSM_MAC_IS_MULTICAST(mac))
+			{
+				vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+				return CMD_WARNING;
+			}
 			index = atoi(argv[0]);
 			if(dir)
 				ret = nsm_mirror_source_mac_filter_set_api(index, ifindex, zpl_true, dir, filter, mac);

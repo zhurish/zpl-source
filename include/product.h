@@ -22,7 +22,7 @@ extern "C" {
 #define PRODUCT_PORT_MAX	16
 
 
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 /*
  * kernel 接口映射配置文件
  */
@@ -33,8 +33,8 @@ extern "C" {
 #ifndef RT_TABLE_MAIN
 //#define RT_TABLE_MAIN 0
 #endif
-//#define ZPL_KERNEL_STACK_MODULE
-#ifndef ZPL_KERNEL_STACK_MODULE
+//#define ZPL_KERNEL_MODULE
+#ifndef ZPL_KERNEL_MODULE
 #define IPNET
 #endif
 

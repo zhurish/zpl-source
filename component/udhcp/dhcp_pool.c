@@ -4,15 +4,12 @@
  *  Created on: Apr 21, 2019
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "dhcp_def.h"
 #include "dhcpd.h"
 #include "dhcp_pool.h"
-
+#include "dhcp_lease.h"
 
 dhcp_pool_t * dhcpd_pool_lookup(char *name)
 {
@@ -92,7 +89,7 @@ int dhcpd_pool_clean(void)
 	dhcp_pool_t *pstNode = NULL;
 	NODE index;
 	if (!lstCount(&dhcp_global_config.pool_list))
-		return NULL;
+		return OK;
 	for (pstNode = (dhcp_pool_t *) lstFirst(&dhcp_global_config.pool_list);
 			pstNode != NULL;
 			pstNode = (dhcp_pool_t *) lstNext((NODE*) &index))

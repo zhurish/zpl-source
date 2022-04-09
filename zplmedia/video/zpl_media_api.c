@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "lib_include.h"
 #include "zpl_media.h"
 #include "zpl_media_api.h"
@@ -17,15 +17,12 @@
 
 struct module_list module_list_zplmedia = {
 		.module = MODULE_ZPLMEDIA,
-		.name = "ZPLMEDIA",
+		.name = "ZPLMEDIA\0",
 		.module_init = zpl_media_module_init,
 		.module_exit = zpl_media_module_exit,
 		.module_task_init = zpl_media_task_init,
 		.module_task_exit = zpl_media_task_exit,
 		.module_cmd_init = zpl_media_cmd_init,
-		.module_write_config = NULL,
-		.module_show_config = NULL,
-		.module_show_debug = NULL,
 		.taskid = 0,
 };
 

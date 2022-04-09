@@ -4,8 +4,8 @@
  *  Created on: Jun 2, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #ifdef ZPL_SHELL_MODULE
 #include "vty.h"
 #endif
@@ -26,7 +26,7 @@ static LIST *job_unused_list = NULL;
 static os_sem_t *job_sem = NULL;
 static os_mutex_t *job_mutex = NULL;
 static zpl_uint32 job_task_id = 0;
-static int os_job_task(void);
+static int os_job_task(void*p);
 
 int os_job_init(void)
 {
@@ -51,7 +51,7 @@ int os_job_init(void)
 		job_mutex = os_mutex_init();
 	}
 	job_task_id = os_task_create("jobTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, os_job_task, NULL, OS_TASK_DEFAULT_STACK);
+	               0, (task_entry)os_job_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(job_task_id)
 		return OK;
 
@@ -100,7 +100,7 @@ static os_job_t * os_job_entry_create(int (*job_entry)(void *), void *pVoid, zpl
 {
 	os_job_t *t = NULL;
 	if(job_unused_list)
-		t = lstFirst(job_unused_list);
+		t = (os_job_t *)lstFirst(job_unused_list);
 	if(t == NULL)
 		t = os_malloc(sizeof(os_job_t));
 	if(t)
@@ -173,7 +173,7 @@ int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const zpl_char *entr
 
 
 
-static int os_job_task(void)
+static int os_job_task(void *p)
 {
 	NODE node;
 	os_job_t *t;
@@ -184,7 +184,7 @@ static int os_job_task(void)
 
 		if(job_mutex)
 			os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
-		for(t = lstFirst(job_list); t != NULL; t = lstNext(&node))
+		for(t = (os_job_t *)lstFirst(job_list); t != NULL; t = (os_job_t *)lstNext(&node))
 		{
 			if(t)
 			{

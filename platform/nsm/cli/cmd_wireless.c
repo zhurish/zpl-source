@@ -6,11 +6,12 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-#include "vty_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "if.h"
+#include "command.h"
+#include "prefix.h"
+#include "vty.h"
 
 #ifdef ZPL_WIFI_MODULE
 #include "iw_config.h"
@@ -495,6 +496,16 @@ DEFUN (ap_mac_acl,
 	{
 		memset(mac, 0, sizeof(mac));
 		VTY_IMAC_GET(argv[1], mac);
+		if(NSM_MAC_IS_BROADCAST(mac))
+		{
+			vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(NSM_MAC_IS_MULTICAST(mac))
+		{
+			vty_out(vty, "Error: This is Multicast mac address.%s",VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		if(strstr(argv[0], "permit"))
 			accept = zpl_true;
 		else
@@ -525,6 +536,16 @@ DEFUN (no_ap_mac_acl,
 	{
 		memset(mac, 0, sizeof(mac));
 		VTY_IMAC_GET(argv[1], mac);
+		if(NSM_MAC_IS_BROADCAST(mac))
+		{
+			vty_out(vty, "Error: This is Broadcast mac address.%s",VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		if(NSM_MAC_IS_MULTICAST(mac))
+		{
+			vty_out(vty, "Error: This Multicast mac address.%s",VTY_NEWLINE);
+			return CMD_WARNING;
+		}
 		if(strstr(argv[0], "permit"))
 			accept = zpl_true;
 		else
@@ -1039,7 +1060,7 @@ static int iw_dev_show_cmd(struct vty *vty, int ifindex, char *cmd)
 	return OK;
 }
 
-static int iw_client_show_cmd(struct vty *vty, int ifindex, zpl_uint32 cmd)
+static int iw_client_show_cmd(struct vty *vty, int ifindex, char * cmd)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;

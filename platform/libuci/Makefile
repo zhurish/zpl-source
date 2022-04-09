@@ -43,7 +43,7 @@ obj: $(BUILT_SOURCES) $(MODULE_OBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

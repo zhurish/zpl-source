@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zassert.h"
 #include "prefix.h"
 #include "table.h"
@@ -250,7 +250,7 @@ route_node_match_ipv4 (const struct route_table *table,
   return route_node_match (table, (struct prefix *) &p);
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 struct route_node *
 route_node_match_ipv6 (const struct route_table *table,
 		       const struct ipstack_in6_addr *addr)
@@ -264,7 +264,7 @@ route_node_match_ipv6 (const struct route_table *table,
 
   return route_node_match (table, (struct prefix *) &p);
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /* Lookup same prefix node.  Return NULL when we can't find route. */
 struct route_node *

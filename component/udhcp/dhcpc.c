@@ -22,10 +22,8 @@
 //kbuild:lib-$(CONFIG_UDHCPC) += dhcpc.o
 //kbuild:lib-$(CONFIG_FEATURE_UDHCPC_ARPING) += arpping.o
 //kbuild:lib-$(CONFIG_FEATURE_UDHCP_RFC3397) += domain_codec.o
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 
 /* Override ENABLE_FEATURE_PIDFILE - ifupdown needs our pidfile to always exist */
 #define WANT_PIDFILE 1
@@ -34,7 +32,8 @@
 #include "dhcp_util.h"
 #include "dhcp_main.h"
 #include "dhcpc.h"
-
+#include "checksum.h"
+#include "host.h"
 #include <netinet/if_ether.h>
 #include <linux/filter.h>
 #include <linux/if_packet.h>
@@ -1147,7 +1146,7 @@ static int udhcp_recv_raw_packet(struct dhcp_packet *dhcp_pkt, zpl_socket_t fd,
 	int bytes;
 	struct ip_udp_dhcp_packet packet;
 	zpl_uint16 check;
-	zpl_uint8 cmsgbuf[CMSG_SPACE(SOPT_SIZE_CMSG_IFINDEX_IPV4())];
+	zpl_uint8 cmsgbuf[IPSTACK_CMSG_SPACE(SOPT_SIZE_CMSG_IFINDEX_IPV4())];
 	struct ipstack_iovec iov;
 	struct ipstack_msghdr msg;
 
@@ -1489,7 +1488,7 @@ int dhcp_client_interface_clean(void)
 	client_interface_t *pstNode = NULL;
 	NODE index;
 	if (!lstCount(&dhcp_global_config.client_list))
-		return NULL;
+		return OK;
 	for (pstNode = (client_interface_t *) lstFirst(
 			&dhcp_global_config.client_list); pstNode != NULL; pstNode =
 			(client_interface_t *) lstNext((NODE*) &index))

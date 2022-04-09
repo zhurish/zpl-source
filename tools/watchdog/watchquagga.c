@@ -17,8 +17,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include <zpl_include.h>
-#include <lib_include.h>
+#include <zplos_include.h>
+
 #include <log.h>
 #include <network.h>
 //#include <sigevent.h>
@@ -26,7 +26,7 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <zmemory.h>
-
+#include <vty.h>
 #ifndef MIN
 #define MIN(X, Y) (((X) <= (Y)) ? (X) : (Y))
 #endif

@@ -73,8 +73,11 @@
  #include "kernelLib.h"
  */
 #include "systools.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "command.h"
 #include "tracerouteLib.h"
-
+#include "checksum.h"
 /* defines */
 
 #define tracerouteError(pPS)	{ pPS->flags |= TRACEROUTE_OPT_SILENT; goto release; }

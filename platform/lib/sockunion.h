@@ -47,9 +47,9 @@ union sockunion
 {
   struct ipstack_sockaddr sa;
   struct ipstack_sockaddr_in sin;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   struct ipstack_sockaddr_in6 sin6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 };
 
 enum connect_result
@@ -60,7 +60,7 @@ enum connect_result
 };
 
 /* Default address family. */
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 #define AF_INET_UNION IPSTACK_AF_INET6
 #else
 #define AF_INET_UNION IPSTACK_AF_INET

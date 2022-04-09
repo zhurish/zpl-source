@@ -33,19 +33,13 @@ extern zpl_size_t strnlen(const char *s, zpl_size_t maxlen);
 extern zpl_char * strndup (const char *, zpl_size_t);
 #endif
 
-extern const char *strupr(zpl_char* src);
-extern const char *strlwr(zpl_char* src);
+
 extern const char *string_have_space(zpl_char* src);
 extern int all_space (const char *str);
 extern int all_isdigit (const char *str);
 extern const char *str_trim(zpl_char* src);
 
-extern const char *itoa(int value, int base);
-extern const char *ftoa(zpl_float value, zpl_char *fmt);
-extern const char *dtoa(zpl_double value, zpl_char *fmt);
 
-extern zpl_uint8 atoascii(int a);
-extern zpl_bool is_hex (zpl_char c);
 extern zpl_uint32 str_to_hex(zpl_char * room);
 extern zpl_char * hex_to_str(zpl_uint32 hex);
 

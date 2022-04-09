@@ -5,7 +5,7 @@
  *      Author: DELL
  */
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
 #include "vty.h"
 #include "buffer.h"
@@ -15,7 +15,7 @@
 #include "template.h"
 
 #ifdef ZPL_MQTT_MODULE
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
@@ -167,10 +167,11 @@ DEFUN (cli_mqtt_port,
 		"Server port\n"
 		"port number\n")
 {
-	int ret = ERROR, value = 0;
+	int ret = ERROR;
+	zpl_uint16 value = 0;
 	value = atoi(argv[0]);
 	if(vty->index)
-		ret = mqtt_bind_address_api(vty->index, value);
+		ret = mqtt_connect_port_api(vty->index, value);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -182,9 +183,11 @@ DEFUN (no_cli_mqtt_port,
 		"Client Configure\n"
 		"Server port\n")
 {
-	int ret = ERROR, value = 0;
+	int ret = ERROR;
+	zpl_uint16 value = 0;
+	value = atoi(argv[0]);
 	if(vty->index)
-		ret = mqtt_bind_address_api(vty->index, value);
+		ret = mqtt_connect_port_api(vty->index, value);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 

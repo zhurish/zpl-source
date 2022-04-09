@@ -17,8 +17,8 @@
  * any bugs present are surely my fault.  -DaveM
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "jhash.h"
 
 /* The golden ration: an arbitrary value */

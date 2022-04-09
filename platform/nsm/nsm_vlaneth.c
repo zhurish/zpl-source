@@ -4,10 +4,14 @@
  *  Created on: Sep 13, 2018
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "template.h"
 #include "nsm_include.h"
+#include "hal_include.h"
 
 
 /*

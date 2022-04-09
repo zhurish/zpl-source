@@ -6,9 +6,13 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
 #include "nsm_include.h"
 
 #include "modem_enum.h"
@@ -24,7 +28,7 @@
 #include "modem_process.h"
 #include "modem_usb_driver.h"
 #include "modem_product.h"
-
+#include "modem_mgtlayer.h"
 
 zpl_uint32 modem_debug_conf = 0;
 

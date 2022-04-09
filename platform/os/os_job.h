@@ -12,6 +12,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "zpl_type.h"
+
 
 extern int os_job_init(void);
 extern int os_job_exit(void);

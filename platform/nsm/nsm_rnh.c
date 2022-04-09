@@ -19,8 +19,8 @@
  * 02111-1307, USA.
  */
 
-#include <os_include.h>
-#include <zpl_include.h>
+#include <auto_include.h>
+#include <zplos_include.h>
 #include "route_types.h"
 #include "zebra_event.h"
 #include "prefix.h"
@@ -530,7 +530,7 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 		stream_put_in_addr (s, &nexthop->gate.ipv4);
 		stream_putl (s, nexthop->ifindex);
 		break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	      case ZEBRA_NEXTHOP_IPV6:
 		stream_put (s, &nexthop->gate.ipv6, 16);
 		break;
@@ -539,7 +539,7 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 		stream_put (s, &nexthop->gate.ipv6, 16);
 		stream_putl (s, nexthop->ifindex);
 		break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 	      default:
                 /* do nothing */
 		break;
@@ -574,7 +574,7 @@ print_nh (struct nexthop *nexthop, struct vty *vty)
       if (nexthop->ifindex)
 	vty_out (vty, ", %s", ifindex2ifname (nexthop->ifindex));
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case NEXTHOP_TYPE_IPV6:
     case NEXTHOP_TYPE_IPV6_IFINDEX:
     case NEXTHOP_TYPE_IPV6_IFNAME:

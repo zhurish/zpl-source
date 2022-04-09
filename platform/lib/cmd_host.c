@@ -6,13 +6,14 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "cli_node.h"
 #include "zmemory.h"
 #include "vector.h"
 #include "command.h"
 #include "vty.h"
+#include "vty_user.h"
 #include "host.h"
 #include "workqueue.h"
 

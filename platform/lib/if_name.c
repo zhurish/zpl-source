@@ -4,10 +4,14 @@
  *  Created on: May 1, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "if.h"
 #include "if_name.h"
+#include "hash.h"
+#include "str.h"
+#include "log.h"
+#include "prefix.h"
 
 
 struct if_name_mgt

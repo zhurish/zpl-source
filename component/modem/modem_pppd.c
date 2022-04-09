@@ -5,9 +5,14 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "zmemory.h"
+#include "vty.h"
+#include "command.h"
+#include "if.h"
+#include "vrf.h"
+#include "checksum.h"
 #include "nsm_include.h"
 
 #include "modem.h"
@@ -15,8 +20,8 @@
 #include "modem_machine.h"
 #include "modem_event.h"
 #include "modem_pppd.h"
-
-
+#include "modem_split.h"
+#include "modem_state.h"
 
 
 

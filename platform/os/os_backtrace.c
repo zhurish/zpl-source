@@ -4,8 +4,8 @@
  *  Created on: 2019年8月18日
  *      Author: zhurish
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "os_backtrace.h"
 
 static struct zpl_backtrace_symb  m_backtrace_symb;

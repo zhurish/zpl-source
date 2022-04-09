@@ -6,8 +6,8 @@
  * The script is sensitive to the format (though not whitespace), see
  * the top of memtypes.awk for more details.
  */
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "zmemory.h"
 
 
@@ -97,7 +97,7 @@ struct memory_list memory_list_lib[] =
   { MTYPE_VRF_BITMAP,		"VRF bit-map"			},
   { MTYPE_IF_LINK_PARAMS,       "Informational Link Parameters" },
   { MTYPE_CJSON,       "cJSON" },
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct memory_list memory_list_zebra[] = 
@@ -114,7 +114,7 @@ struct memory_list memory_list_zebra[] =
   { MTYPE_RNH,		        "Nexthop tracking object"	},
   { MTYPE_IP_DNS,			"IP DNS"				},
   { MTYPE_IP_HOST,			"IP HOST"				},
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct memory_list memory_list_bgp[] =
@@ -184,7 +184,7 @@ struct memory_list memory_list_bgp[] =
   { MTYPE_LCOMMUNITY,           "Large Community",              },
   { MTYPE_LCOMMUNITY_STR,       "Large Community str",          },
   { MTYPE_LCOMMUNITY_VAL,       "Large Community val",          },
-  { -1, NULL }
+  { -1, "" }
 };
 
 struct memory_list memory_list_rip[] =
@@ -195,7 +195,7 @@ struct memory_list memory_list_rip[] =
   { MTYPE_RIP_PEER,           "RIP peer"			},
   { MTYPE_RIP_OFFSET_LIST,    "RIP offset list"			},
   { MTYPE_RIP_DISTANCE,       "RIP distance"			},
-  { -1, NULL }
+  { -1, "" }
 };
 
 struct memory_list memory_list_ripng[] =
@@ -206,14 +206,14 @@ struct memory_list memory_list_ripng[] =
   { MTYPE_RIPNG_PEER,         "RIPng peer"			},
   { MTYPE_RIPNG_OFFSET_LIST,  "RIPng offset lst"		},
   { MTYPE_RIPNG_RTE_DATA,     "RIPng rte data"			},
-  { -1, NULL }
+  { -1, "" }
 };
 
 struct memory_list memory_list_babel[] =
 {
   { MTYPE_BABEL,              "Babel structure"			},
   { MTYPE_BABEL_IF,           "Babel interface"			},
-  { -1, NULL }
+  { -1, "" }
 };
 
 struct memory_list memory_list_ospf[] =
@@ -245,7 +245,7 @@ struct memory_list memory_list_ospf[] =
   { MTYPE_OSPF_MESSAGE,		"OSPF message"			},
   { MTYPE_OSPF_MPLS_TE,       "OSPF MPLS parameters"            },
   { MTYPE_OSPF_PCE_PARAMS,    "OSPF PCE parameters"             },
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct memory_list memory_list_ospf6[] =
@@ -266,7 +266,7 @@ struct memory_list memory_list_ospf6[] =
   { MTYPE_OSPF6_EXTERNAL_INFO,"OSPF6 ext. info"			},
   { MTYPE_OSPF6_OTHER,        "OSPF6 other"			},
   { MTYPE_OSPF6_DISTANCE,     "OSPF6 distance"			},
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct memory_list memory_list_isis[] =
@@ -288,7 +288,7 @@ struct memory_list memory_list_isis[] =
   { MTYPE_ISIS_DICT,          "ISIS dictionary"			},
   { MTYPE_ISIS_DICT_NODE,     "ISIS dictionary node"		},
   { MTYPE_ISIS_MPLS_TE,       "ISIS MPLS_TE parameters"         },
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct memory_list memory_list_pim[] =
@@ -304,7 +304,7 @@ struct memory_list memory_list_pim[] =
   { MTYPE_PIM_UPSTREAM,          "PIM upstream (S,G) state"       },
   { MTYPE_PIM_SSMPINGD,          "PIM sspimgd socket"             },
   { MTYPE_PIM_STATIC_ROUTE,      "PIM Static Route"               },
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct memory_list memory_list_nhrp[] =
@@ -317,14 +317,14 @@ struct memory_list memory_list_nhrp[] =
   { MTYPE_NHRP_REGISTRATION,	"NHRP registration entries"	},
   { MTYPE_NHRP_SHORTCUT,	"NHRP zpl_int16cut"			},
   { MTYPE_NHRP_ROUTE,		"NHRP routing entry"		},
-  { -1, NULL }
+  { -1, "" }
 };
 
 struct memory_list memory_list_vtysh[] =
 {
   { MTYPE_VTYSH_CONFIG,		"Vtysh configuration",		},
   { MTYPE_VTYSH_CONFIG_LINE,	"Vtysh configuration line"	},
-  { -1, NULL },
+  { -1, "" },
 };
 
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
@@ -348,7 +348,7 @@ struct memory_list memory_list_olsr[] =
   { MTYPE_OLSR_1N,		"OLSR mpr 1-hop",	},
   { MTYPE_OLSR_2N,		"OLSR mpr 2-hop ",	},
   { MTYPE_OLSR_ROUTE,  		"OLSR route",		},
-  { -1, NULL },
+  { -1, "" },
 }; 
 #endif
 #ifdef ZEBRA_ROUTE_LDP
@@ -372,7 +372,7 @@ struct memory_list memory_list_ldp[] =
   { MTYPE_LDP_ADDR,			"LDP addr"		},
   { MTYPE_LDP_FEC_RT,			"LDP fec rt"		},
   { MTYPE_LDP_PEER_LABEL_DB,		"LDP peer label db"	},
-  { -1, NULL },
+  { -1, "" },
 };
 #endif
 #ifdef ZEBRA_ROUTE_LLDP
@@ -387,7 +387,7 @@ struct memory_list memory_list_lldp[] =
   { MTYPE_LLDP_ORG,			"LLDP IEEE ORG tlv information"	},
   { MTYPE_LLDP_PACKET,			"LLDP packet"		},
   { MTYPE_LLDP_TLV,		"LLDP TLV information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 #endif
 
@@ -399,7 +399,7 @@ struct memory_list memory_list_modem[] =
   { MTYPE_MODEM_SERIAL,      "MODEM serial"			},
   { MTYPE_MODEM_DRIVER,      "MODEM driver"			},
   { MTYPE_MODEM_DATA,    	 "MODEM data"			},
-  { -1, NULL }
+  { -1, "" }
 };
 #endif
 #ifdef ZPL_DHCP_MODULE
@@ -416,7 +416,7 @@ struct memory_list memory_list_dhcp[] =
   { MTYPE_DHCPR,                "DHCP Relay structure"		},
   { MTYPE_DHCPR_INFO,           "DHCP Relay info"			},
   { MTYPE_DHCPR_ADDR,           "DHCP Relay address"		},
-  { -1, NULL }
+  { -1, "" }
 };
 #endif
 
@@ -427,7 +427,7 @@ struct memory_list memory_list_wifi[] =
   { MTYPE_WIFI_DB,           "WIFI DB structure"			},
   { MTYPE_WIFI_AP,           "WIFI AP info"			},
   { MTYPE_WIFI_CLIENT,       "WIFI AP Client info"			},
-  { -1, NULL }
+  { -1, "" }
 };
 #endif
 
@@ -439,7 +439,7 @@ struct memory_list memory_list_firewall[] =
   { MTYPE_FIREWALL_ZONE,        "Firewall Zone structure"			},
   { MTYPE_FIREWALL_RULE,        "Firewall Rule info"			},
   { MTYPE_FIREWALL_TABLE,       "Firewall Table info"			},
-  { -1, NULL }
+  { -1, "" }
 };
 //#endif
 
@@ -470,7 +470,7 @@ struct memory_list memory_list_port[] =
 	{ MTYPE_IPCBUS,			"IPCBUS information"			},
 	{ MTYPE_IPCBUSCLIENT,			"IPCBUS Client information"		},
   { MTYPE_IPCBUSMSG,			"IPCBUS IPC Msg information"			},
-	{ -1, NULL },
+	{ -1, "" },
 };
 
 struct memory_list memory_list_ssh[] =
@@ -484,7 +484,7 @@ struct memory_list memory_list_ssh[] =
   { MTYPE_SSH_DATA,		"SSH Data information"	},
   { MTYPE_SSH_KEY,		"SSH Key information"	},
   { MTYPE_SSH_MSG,		"SSH Msg information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 
 #ifdef ZPL_PJSIP_MODULE
@@ -505,7 +505,7 @@ struct memory_list memory_list_voip[] =
   { MTYPE_VOIP_SIP_CALL,	"VOIP SIP Call information"	},
   { MTYPE_VOIP_DATA,		"VOIP Data information"	},
   { MTYPE_VOIP_TMP,			"VOIP Tmp information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 #endif
 
@@ -518,7 +518,7 @@ struct memory_list memory_list_web[] =
   { MTYPE_WEB_DOC,		"WEB Documents information"	},
   { MTYPE_WEB_DATA,		"WEB Data information"	},
   { MTYPE_WEB_TMP,		"WEB Tmp information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 #endif
 
@@ -536,7 +536,7 @@ struct memory_list memory_list_video[] =
   { MTYPE_VIDEO_PIC,			"Video PIC information"	},
   { MTYPE_VIDEO_KEY,			"Video KEY information"	},
   { MTYPE_VIDEO_TMP,			"Video Tmp information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 
 #endif
@@ -557,7 +557,7 @@ struct memory_list memory_list_mqtt[] =
   { MTYPE_MQTT_PUB,			"Mqtt PUB information"	},
   { MTYPE_MQTT_KEY,			"Mqtt KEY information"	},
   { MTYPE_MQTT_TMP,			"Mqtt Tmp information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 #endif
 
@@ -570,7 +570,7 @@ struct memory_list memory_list_qosacl[] =
   { MTYPE_QOS_CLASS_MAP,		"Qos Class Node information"	},
   { MTYPE_QOS_POLICY,		    "Qos Policy information"	},
   { MTYPE_QOS_POLICY_MAP,		"Qos Policy Node information"	},
-  { -1, NULL },
+  { -1, "" },
 };
 
 struct mlist mlists[] __attribute__ ((unused)) = {

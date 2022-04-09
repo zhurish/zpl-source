@@ -18,6 +18,8 @@
 #define __packed __attribute__((packed))
 #endif
 
+#ifdef LIBUBOX_ENABLE
+
 #define bool int
 
 struct blob_attr {
@@ -38,7 +40,7 @@ struct blob_buf {
 	int buflen;
 	void *buf;
 };
-//#include <libubox/blobmsg.h>
+#include <libubox/blobmsg.h>
 #define BLOBMSG_ALIGN	2
 #define BLOBMSG_PADDING(len) (((len) + (1 << BLOBMSG_ALIGN) - 1) & ~((1 << BLOBMSG_ALIGN) - 1))
 
@@ -90,4 +92,5 @@ bool uci_blob_diff(struct blob_attr **tb1, struct blob_attr **tb2,
 		   const struct uci_blob_param_list *config,
 		   unsigned long *diff_bits);
 
+#endif
 #endif

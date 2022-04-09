@@ -19,13 +19,38 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
+#include "zmemory.h"
+#include "if.h"
+#include "vrf.h"
+#include "host.h"
+#include "prefix.h"
+#include "vty.h"
+#include "plist.h"
+#include "filter.h"
+#include "keychain.h"
+#include "template.h"
+#include "lib_event.h"
+
 #include "nsm_main.h"
 #include "nsm_zserv.h"
+#include "nsm_include.h"
+#include "nsm_fpm.h"
 
+
+struct module_list module_list_nsm = {
+		.module = MODULE_NSM,
+		.name = "NSM\0",
+		.module_init = nsm_module_init,
+		.module_exit = nsm_module_exit,
+		.module_task_init = nsm_task_init,
+		.module_task_exit = nsm_task_exit,
+		.module_cmd_init = nsm_module_cmd_init,
+		.taskid = 0,
+		.flags=0,
+};
 static struct nsm_srv_t m_nsm_srv =
 {
 	.rtm_table_default = 0,
@@ -119,6 +144,11 @@ int nsm_module_init(void)
 #endif
 	zserv_init();
 
+#if 1//def HAVE_FPM
+  zfpm_init (nsm_srv->master, 1, 0, "protobuf");
+#else
+  zfpm_init (nsm_srv->master, 0, 0, "protobuf");//'netlink' or 'protobuf'
+#endif
 	return 0;
 }
 
@@ -284,17 +314,3 @@ int nsm_task_exit (void)
 }
 
 
-struct module_list module_list_nsm = {
-		.module = MODULE_NSM,
-		.name = "NSM",
-		.module_init = nsm_module_init,
-		.module_exit = nsm_module_exit,
-		.module_task_init = nsm_task_init,
-		.module_task_exit = nsm_task_exit,
-		.module_cmd_init = nsm_module_cmd_init,
-		.module_write_config = NULL,
-		.module_show_config = NULL,
-		.module_show_debug = NULL,
-		.taskid = 0,
-		.flags=0,
-};

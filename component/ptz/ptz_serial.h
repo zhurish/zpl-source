@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 
 
 #define PTZ_CMD_DEBUG_SEND      0X01

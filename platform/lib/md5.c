@@ -39,8 +39,8 @@
  * SUCH DAMAGE.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "md5.h"
 
 #define SHIFT(X, s) (((X) << (s)) | ((X) >> (32 - (s))))
@@ -388,7 +388,7 @@ zpl_uint8 *       digest;			/* caller digest to be filled in */
     OS_MD5Final(digest, &context);	/* finish up 2nd pass */
 }
 
-#if 0//def ZPL_KERNEL_STACK_MODULE
+#if 0//def ZPL_KERNEL_MODULE
 zpl_uchar cleanse_ctr = 0;
 
 void OPENSSL_cleanse(void *ptr, zpl_size_t len)

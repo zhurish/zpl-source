@@ -5,13 +5,12 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 
 #include "dhcp_def.h"
 #include "dhcp_option.h"
+#include "dhcp_util.h"
 
 
 

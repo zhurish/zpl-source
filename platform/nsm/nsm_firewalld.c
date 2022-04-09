@@ -5,10 +5,18 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "template.h"
+#include "str.h"
 #include "nsm_include.h"
+#include "hal_include.h"
+
 
 struct firewall_service_s
 {
@@ -292,7 +300,7 @@ firewall_t * nsm_firewall_rule_lookup_api(firewall_zone_t *zone, firewall_t *val
 	node = nsm_firewall_rule_lookup_node(zone, value);
 	if(!node)
 	{
-		ret = NULL;
+		ret = 0;
 	}
 	if(zone->mutex)
 		os_mutex_unlock(zone->mutex);

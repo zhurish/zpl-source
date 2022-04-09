@@ -5,11 +5,9 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "str.h"
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_interface.h"

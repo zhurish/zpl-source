@@ -5,7 +5,7 @@
  *      Author: DELL
  */
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 #include "vty.h"
 #include "if.h"
 
@@ -16,6 +16,7 @@
 #include "log.h"
 #include "zmemory.h"
 #include "prefix.h"
+#include "host.h"
 
 #include "web_util.h"
 #include "web_jst.h"

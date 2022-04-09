@@ -12,6 +12,9 @@
 extern "C" {
 #endif
 
+#include "zpl_type.h"
+#include "os_list.h"
+
 #define OS_QUEUE_NAME_MAX	32
 
 

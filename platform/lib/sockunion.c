@@ -19,11 +19,14 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "sockunion.h"
 #include "log.h"
 #include "zmemory.h"
+#include "jhash.h"
+
+
 #ifndef HAVE_INET_ATON
 int
 ipstack_inet_aton (const char *cp, struct ipstack_in_addr *inaddr)
@@ -119,11 +122,11 @@ inet_sutop (const union sockunion *su, zpl_char *str)
     case IPSTACK_AF_INET:
       ipstack_inet_ntop (IPSTACK_AF_INET, &su->sin.sin_addr, str, IPSTACK_INET_ADDRSTRLEN);
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       ipstack_inet_ntop (IPSTACK_AF_INET6, &su->sin6.sin6_addr, str, INET6_ADDRSTRLEN);
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   return str;
 }
@@ -144,7 +147,7 @@ str2sockunion (const char *str, union sockunion *su)
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
       return 0;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   ret = ipstack_inet_pton (IPSTACK_AF_INET6, str, &su->sin6.sin6_addr);
   if (ret > 0)			/* Valid IPv6 address format. */
     {
@@ -154,7 +157,7 @@ str2sockunion (const char *str, union sockunion *su)
 #endif /* SIN6_LEN */
       return 0;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return -1;
 }
 
@@ -168,10 +171,10 @@ sockunion2str (const union sockunion *su, zpl_char *buf, zpl_size_t len)
       return buf;
     case IPSTACK_AF_INET:
       return ipstack_inet_ntop (IPSTACK_AF_INET, &su->sin.sin_addr, buf, len);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return ipstack_inet_ntop (IPSTACK_AF_INET6, &su->sin6.sin6_addr, buf, len);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   snprintf (buf, len, "(af %d)", sockunion_family(su));
   return buf;
@@ -195,7 +198,7 @@ sockunion_normalise_mapped (union sockunion *su)
 {
   struct ipstack_sockaddr_in sin;
   
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (su->sa.sa_family == IPSTACK_AF_INET6 
       && IPSTACK_IN6_IS_ADDR_V4MAPPED (&su->sin6.sin6_addr))
     {
@@ -205,7 +208,7 @@ sockunion_normalise_mapped (union sockunion *su)
       memcpy (&sin.sin_addr, ((zpl_char *)&su->sin6.sin6_addr) + 12, 4);
       memcpy (su, &sin, sizeof (struct ipstack_sockaddr_in));
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 }
 
 /* Return socket of sockunion. */
@@ -250,7 +253,7 @@ sockunion_sizeof (const union sockunion *su)
     case IPSTACK_AF_INET:
       ret = sizeof (struct ipstack_sockaddr_in);
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       ret = sizeof (struct ipstack_sockaddr_in6);
       break;
@@ -268,11 +271,11 @@ sockunion_log (const union sockunion *su, zpl_char *buf, zpl_size_t len)
     case IPSTACK_AF_INET:
       return ipstack_inet_ntop(IPSTACK_AF_INET, &su->sin.sin_addr, buf, len);
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return ipstack_inet_ntop(IPSTACK_AF_INET6, &(su->sin6.sin6_addr), buf, len);
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
     default:
       snprintf (buf, len, "af_unknown %d ", su->sa.sa_family);
@@ -299,7 +302,7 @@ sockunion_connect (zpl_socket_t fd, const union sockunion *peersu, zpl_ushort po
     case IPSTACK_AF_INET:
       su.sin.sin_port = port;
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       su.sin6.sin6_port  = port;
 #ifdef KAME
@@ -312,7 +315,7 @@ sockunion_connect (zpl_socket_t fd, const union sockunion *peersu, zpl_ushort po
 	}
 #endif /* KAME */
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }      
 
   /* Make socket non-block. */
@@ -382,7 +385,7 @@ sockunion_bind (zpl_socket_t sock, union sockunion *su, zpl_ushort port,
       if (su_addr == NULL)
 	sockunion2ip (su) = htonl (IPSTACK_INADDR_ANY);
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   else if (su->sa.sa_family == IPSTACK_AF_INET6)
     {
       size = sizeof (struct ipstack_sockaddr_in6);
@@ -399,7 +402,7 @@ sockunion_bind (zpl_socket_t sock, union sockunion *su, zpl_ushort port,
 #endif /* LINUX_IPV6 */
 	}
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   
 
   ret = ipstack_bind (sock, (struct ipstack_sockaddr *)su, size);
@@ -518,7 +521,7 @@ sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl)
       return 0;
     }
 #endif /* IP_TTL */
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (family == IPSTACK_AF_INET6)
     {
       ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_UNICAST_HOPS,
@@ -531,7 +534,7 @@ sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl)
 	}
       return 0;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return 0;
 }
 
@@ -580,7 +583,7 @@ sockopt_v6only (zpl_family_t family, zpl_socket_t sock)
 {
   int ret, on = 1;
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 #ifdef IPV6_V6ONLY
   if (family == IPSTACK_AF_INET6)
     {
@@ -595,7 +598,7 @@ sockopt_v6only (zpl_family_t family, zpl_socket_t sock)
       return 0;
     }
 #endif /* IPV6_V6ONLY */
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return 0;
 }
 
@@ -614,12 +617,12 @@ sockunion_same (const union sockunion *su1, const union sockunion *su2)
       ret = memcmp (&su1->sin.sin_addr, &su2->sin.sin_addr,
 		    sizeof (struct ipstack_in_addr));
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       ret = memcmp (&su1->sin6.sin6_addr, &su2->sin6.sin6_addr,
 		    sizeof (struct ipstack_in6_addr));
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   if (ret == 0)
     return 1;
@@ -634,10 +637,10 @@ sockunion_hash (const union sockunion *su)
     {
     case IPSTACK_AF_INET:
       return jhash_1word(su->sin.sin_addr.s_addr, 0);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return jhash2(su->sin6.sin6_addr.s6_addr32, ZEBRA_NUM_OF(su->sin6.sin6_addr.s6_addr32), 0);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   return 0;
 }
@@ -649,10 +652,10 @@ family2addrsize(zpl_family_t family)
     {
     case IPSTACK_AF_INET:
       return sizeof(struct ipstack_in_addr);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return sizeof(struct ipstack_in6_addr);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   return 0;
 }
@@ -670,10 +673,10 @@ sockunion_get_addr(const union sockunion *su)
     {
     case IPSTACK_AF_INET:
       return (const zpl_uchar *) &su->sin.sin_addr.s_addr;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return (const zpl_uchar *) &su->sin6.sin6_addr;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   return NULL;
 }
@@ -685,10 +688,10 @@ sockunion_get_port (const union sockunion *su)
     {
     case IPSTACK_AF_INET:
       return ntohs(su->sin.sin_port);
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       return ntohs(su->sin6.sin6_port);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
   return 0;
 }
@@ -705,11 +708,11 @@ sockunion_set(union sockunion *su, zpl_family_t family, const zpl_uchar *addr, z
     case IPSTACK_AF_INET:
       memcpy(&su->sin.sin_addr.s_addr, addr, bytes);
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       memcpy(&su->sin6.sin6_addr, addr, bytes);
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     }
 }
 
@@ -723,9 +726,9 @@ sockunion_getsockname (zpl_socket_t fd)
   {
     struct ipstack_sockaddr sa;
     struct ipstack_sockaddr_in sin;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     struct ipstack_sockaddr_in6 sin6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     zpl_char tmp_buffer[128];
   } name;
   union sockunion *su;
@@ -747,7 +750,7 @@ sockunion_getsockname (zpl_socket_t fd)
       memcpy (su, &name, sizeof (struct ipstack_sockaddr_in));
       return su;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (name.sa.sa_family == IPSTACK_AF_INET6)
     {
       su = XCALLOC (MTYPE_SOCKUNION, sizeof (union sockunion));
@@ -755,7 +758,7 @@ sockunion_getsockname (zpl_socket_t fd)
       sockunion_normalise_mapped (su);
       return su;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return NULL;
 }
 
@@ -769,9 +772,9 @@ sockunion_getpeername (zpl_socket_t fd)
   {
     struct ipstack_sockaddr sa;
     struct ipstack_sockaddr_in sin;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     struct ipstack_sockaddr_in6 sin6;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
     zpl_char tmp_buffer[128];
   } name;
   union sockunion *su;
@@ -792,7 +795,7 @@ sockunion_getpeername (zpl_socket_t fd)
       memcpy (su, &name, sizeof (struct ipstack_sockaddr_in));
       return su;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (name.sa.sa_family == IPSTACK_AF_INET6)
     {
       su = XCALLOC (MTYPE_SOCKUNION, sizeof (union sockunion));
@@ -800,7 +803,7 @@ sockunion_getpeername (zpl_socket_t fd)
       sockunion_normalise_mapped (su);
       return su;
     }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return NULL;
 }
 
@@ -816,7 +819,7 @@ sockunion_print (const union sockunion *su)
     case IPSTACK_AF_INET:
       printf ("%s\n", ipstack_inet_ntoa (su->sin.sin_addr));
       break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
       {
 	zpl_char buf [SU_ADDRSTRLEN];
@@ -825,7 +828,7 @@ sockunion_print (const union sockunion *su)
 				 buf, sizeof (buf)));
       }
       break;
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 #ifdef AF_LINK
     case IPSTACK_AF_LINK:
@@ -843,7 +846,7 @@ sockunion_print (const union sockunion *su)
     }
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 static int
 in6addr_cmp (const struct ipstack_in6_addr *addr1, const struct ipstack_in6_addr *addr2)
 {
@@ -862,7 +865,7 @@ in6addr_cmp (const struct ipstack_in6_addr *addr1, const struct ipstack_in6_addr
     }
   return 0;
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 int
 sockunion_cmp (const union sockunion *su1, const union sockunion *su2)
@@ -881,10 +884,10 @@ sockunion_cmp (const union sockunion *su1, const union sockunion *su2)
       else
 	return -1;
     }
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
   if (su1->sa.sa_family == IPSTACK_AF_INET6)
     return in6addr_cmp (&su1->sin6.sin6_addr, &su2->sin6.sin6_addr);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
   return 0;
 }
 

@@ -44,8 +44,7 @@ obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
-#	$(STRIP) $(LIB_DIR)/$(LIBS)
+
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)

@@ -99,7 +99,7 @@ void os_hmac_md5(zpl_uchar* text, zpl_uint32 text_len, zpl_uchar* key,
               zpl_uint32 key_len, zpl_uint8 *digest);
 
 
-#ifndef ZPL_KERNEL_STACK_MODULE
+#ifndef ZPL_KERNEL_MODULE
 zpl_uchar *OS_MD5(const zpl_uchar *d, zpl_size_t n, zpl_uchar *md);
 #endif
 

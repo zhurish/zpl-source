@@ -11,8 +11,8 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "nsm_include.h"
 #include "hal_include.h"
 #include "bsp_include.h"
@@ -42,7 +42,7 @@ extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, z
 #define _sdk_notice(format, ...) zlog_notice(MODULE_SDK,format, ##__VA_ARGS__)
 #endif
 
-#define ZPL_SDK_BCM53125
+
 
 #define ETH_ALEN	6
 
@@ -64,10 +64,10 @@ extern void sdk_u64_ether_addr(zpl_uint64 u, zpl_uint8 *addr);
 extern bool sdk_is_multicast_ether_addr(const u8 *addr);
 
 
-extern int sdk_driver_init(struct bsp_driver *, sdk_driver_t *);
-extern int sdk_driver_start(struct bsp_driver *, sdk_driver_t *);
-extern int sdk_driver_stop(struct bsp_driver *, sdk_driver_t *);
-extern int sdk_driver_exit(struct bsp_driver *, sdk_driver_t *);
+extern int sdk_driver_init(struct bsp_driver *, zpl_void *);
+extern int sdk_driver_start(struct bsp_driver *, zpl_void *);
+extern int sdk_driver_stop(struct bsp_driver *, zpl_void *);
+extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
 
 
  

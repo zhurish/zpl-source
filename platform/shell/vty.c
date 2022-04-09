@@ -20,8 +20,8 @@
  * 02111-1307, USA.
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 
 #include "module.h"
 #include "zmemory.h"
@@ -52,13 +52,13 @@
 
 #include <arpa/telnet.h>
 #include <termios.h>
-
+#include "sys/wait.h"
 
 
 
 static void vty_event(enum vtyevent, zpl_socket_t, struct vty *);
 static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock);
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 static int cli_telnet_task_init(void);
 static int cli_telnet_task_exit(void);
 #endif
@@ -80,15 +80,12 @@ static struct tty_com cli_tty_com =
 struct module_list module_list_console =
 {
 		.module = MODULE_CONSOLE,
-		.name = "CONSOLE",
+		.name = "CONSOLE\0",
 		.module_init = vty_init,
 		.module_exit = NULL,
 		.module_task_init = cli_console_task_init,
 		.module_task_exit = cli_console_task_exit,
 		.module_cmd_init = NULL,
-		.module_write_config = NULL,
-		.module_show_config = NULL,
-		.module_show_debug = NULL,
 		.taskid = 0,
 		.flags = 0,
 };
@@ -96,10 +93,10 @@ struct module_list module_list_console =
 struct module_list module_list_telnet =
 	{
 		.module = MODULE_TELNET,
-		.name = "TELNET",
+		.name = "TELNET\0",
 		.module_init = vty_init,
 		.module_exit = NULL,
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 		.module_task_init = cli_telnet_task_init,
 		.module_task_exit = cli_telnet_task_exit,
 #else
@@ -107,9 +104,6 @@ struct module_list module_list_telnet =
 		.module_task_exit = NULL,
 #endif	
 		.module_cmd_init = NULL,
-		.module_write_config = NULL,
-		.module_show_config = NULL,
-		.module_show_debug = NULL,
 		.taskid = 0,
 		.flags = 0,
 };
@@ -1354,7 +1348,7 @@ static void vty_stop_input(struct vty *vty)
 	{
 		vty_config_unlock(vty);
 	}
-	vty->node = cmd_stop_node(vty->node);
+	vty->node = cmd_stop_node(vty);
 
 	vty_prompt(vty);
 
@@ -2188,7 +2182,7 @@ vty_read(struct thread *thread)
 static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock)
 {
 	int erase;
-	zpl_uint32 type = 0;
+	//zpl_uint32 type = 0;
 	buffer_status_t flushrc;
 	// int vty_sock = THREAD_FD (thread);
 	// struct vty *vty = THREAD_ARG (thread);
@@ -2203,7 +2197,7 @@ static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock)
 			thread_cancel(vty->t_read);
 			vty->t_read = NULL;
 		}
-		type = OS_STACK;
+		//type = OS_STACK;
 	}
 	else
 	{
@@ -2212,7 +2206,7 @@ static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock)
 			eloop_cancel(vty->t_read);
 			vty->t_read = NULL;
 		}
-		type = IPCOM_STACK;
+		//type = IPCOM_STACK;
 	}
 	/* Function execution continue. */
 	erase = ((vty->status == VTY_MORE || vty->status == VTY_MORELINE));
@@ -2855,7 +2849,7 @@ static int vty_accept(struct eloop *thread)
 		}
 	}
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 	/* VTY's ipv6 accesslist apply. */
 	if (p.family == IPSTACK_AF_INET6 && _global_host.vty_ipv6_accesslist_name)
 	{
@@ -2873,7 +2867,7 @@ static int vty_accept(struct eloop *thread)
 			return 0;
 		}
 	}
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 	#endif
 	if (cli_shell.mutex)
 		os_mutex_unlock(cli_shell.mutex);
@@ -2909,7 +2903,7 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 		case IPSTACK_AF_INET:
 			naddr = &su.sin.sin_addr;
 			break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 		case IPSTACK_AF_INET6:
 			naddr = &su.sin6.sin6_addr;
 			break;
@@ -3365,11 +3359,11 @@ void vty_serv_init(const char *addr, zpl_ushort port, const char *path, const ch
 	if (port)
 	{
 
-#if 0  // def HAVE_IPV6
+#if 0  // def ZPL_BUILD_IPV6
 		vty_serv_sock_addrinfo (addr, port);
-#else  /* ! HAVE_IPV6 */
+#else  /* ! ZPL_BUILD_IPV6 */
 		vty_serv_sock_family(addr, port, IPSTACK_AF_INET);
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 	}
 
 #ifdef VTYSH
@@ -3385,7 +3379,7 @@ void vty_serv_init(const char *addr, zpl_ushort port, const char *path, const ch
 void vty_close(struct vty *vty)
 {
 	zpl_uint32 i;
-	zpl_uint32 type = 0;
+	//zpl_uint32 type = 0;
 
 	/* Check configure. */
 	vty_config_unlock(vty);
@@ -3414,7 +3408,7 @@ void vty_close(struct vty *vty)
 		vty->t_read = NULL;
 		vty->t_write = NULL;
 		vty->t_timeout = NULL;
-		type = OS_STACK;
+		//type = OS_STACK;
 	}
 	else
 	{
@@ -3428,7 +3422,7 @@ void vty_close(struct vty *vty)
 		vty->t_read = NULL;
 		vty->t_write = NULL;
 		vty->t_timeout = NULL;
-		type = IPCOM_STACK;
+		//type = IPCOM_STACK;
 	}
 
 	/* Flush buffer. */
@@ -4086,7 +4080,7 @@ void vty_init(void)
 		memset(&cli_shell, 0, sizeof(cli_shell_t));
 		cli_shell.init = 1;
 		cli_shell.mutex = os_mutex_init();
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 		if (cli_shell.m_eloop_master == NULL)
 			cli_shell.m_eloop_master = eloop_master_module_create(MODULE_TELNET);
 
@@ -4162,18 +4156,18 @@ int cli_shell_result (const char *format, ...)
 	if(cli_shell.cli_shell_vty)
 	{
 		va_list args;
-		zpl_uint32 len = 0;
+		//zpl_uint32 len = 0;
 		zpl_char buf[VTY_BUFSIZ];
 		os_bzero(buf, sizeof(buf));
 		va_start(args, format);
-		len = snprintf(buf,sizeof(buf), format, args);
+		snprintf(buf,sizeof(buf), format, args);
 		va_end(args);
 		vty_out(cli_shell.cli_shell_vty, "%s\r\n", buf);
 	}
 	return OK;	
 }
 
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 static int cli_telnet_task(void *argv)
 {
 	module_setup_task(MODULE_TELNET, os_task_id_self());
@@ -4222,7 +4216,7 @@ static int cli_console_task_init(void)
 {
 	if (cli_shell.m_thread_master == NULL)
 		cli_shell.m_thread_master = thread_master_module_create(MODULE_CONSOLE);
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	if (cli_shell.console_taskid == 0)
 		cli_shell.console_taskid = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
 												  0, cli_console_task, cli_shell.m_thread_master, OS_TASK_DEFAULT_STACK);
@@ -4252,7 +4246,7 @@ static int cli_console_task_exit(void)
 
 void vty_task_init(void)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	cli_console_task_init();
 	cli_telnet_task_init();
 #else
@@ -4263,7 +4257,7 @@ void vty_task_init(void)
 
 void vty_task_exit(void)
 {
-#ifdef ZPL_IPCOM_STACK_MODULE
+#ifdef ZPL_IPCOM_MODULE
 	cli_console_task_exit();
 	cli_telnet_task_exit();
 #else

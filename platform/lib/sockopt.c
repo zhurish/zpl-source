@@ -19,10 +19,13 @@
  * 02111-1307, USA.  
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include "sockopt.h"
 #include "log.h"
+#include "if.h"
+
+
 int
 setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)
 {
@@ -80,7 +83,7 @@ getsockopt_cmsg_data (struct ipstack_msghdr *msgh, zpl_uint32 level, zpl_uint32 
   return NULL;
 }
 
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
 /* Set IPv6 packet info to the socket. */
 int
 setsockopt_ipv6_pktinfo (zpl_socket_t sock, zpl_uint32 val)
@@ -192,7 +195,7 @@ setsockopt_ipv6_tclass(zpl_socket_t sock, zpl_uint32 tclass)
 #endif
   return ret;
 }
-#endif /* HAVE_IPV6 */
+#endif /* ZPL_BUILD_IPV6 */
 
 /*
  * Process multicast socket options for IPv4 in an OS-dependent manner.
@@ -418,7 +421,7 @@ setsockopt_ifindex (zpl_family_t family, zpl_socket_t sock, ifindex_t val)
       case IPSTACK_AF_INET:
         ret = setsockopt_ipv4_ifindex (sock, val);
         break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       case IPSTACK_AF_INET6:
         ret = setsockopt_ipv6_pktinfo (sock, val);
         break;
@@ -511,7 +514,7 @@ getsockopt_ifindex (zpl_family_t family, struct ipstack_msghdr *msgh)
       case IPSTACK_AF_INET:
         return (getsockopt_ipv4_ifindex (msgh));
         break;
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       case IPSTACK_AF_INET6:
         return (getsockopt_ipv6_ifindex (msgh));
         break;
@@ -575,7 +578,7 @@ sockopt_tcp_rtt (zpl_socket_t sock)
   return 0;
 #endif
 }
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 int
 sockopt_tcp_signature (zpl_socket_t sock, union sockunion *su, const char *password)
 {
@@ -634,7 +637,7 @@ sockopt_tcp_signature (zpl_socket_t sock, union sockunion *su, const char *passw
           return 0;
         }
       
-#ifdef HAVE_IPV6
+#ifdef ZPL_BUILD_IPV6
       /* If this does not work, then all users of this sockopt will need to
        * differentiate between IPv4 and IPv6, and keep seperate sockets for
        * each. 

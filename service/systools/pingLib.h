@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 /* includes */
-#include <os_include.h>
+#include <auto_include.h>
 #include <vty.h>
 #include <netinet/ip_icmp.h>
 

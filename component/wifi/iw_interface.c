@@ -6,17 +6,15 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
-
-
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_client.h"
 #include "iw_interface.h"
-
+#include "iwioctl.h"
+#include "pal_include.h"
 
 
 #ifdef IW_ONCE_TASK
@@ -25,6 +23,18 @@ static void *master_thread = NULL;
 #endif
 
 
+struct module_list module_list_wifi = 
+{ 
+	.module=MODULE_WIFI, 
+	.name="WIFI\0", 
+	.module_init=nsm_iw_client_init, 
+	.module_exit=nsm_iw_client_exit, 
+	.module_task_init=NULL, 
+	.module_task_exit=NULL, 
+	.module_cmd_init=cmd_wireless_init, 
+	.flags = ZPL_MODULE_NEED_INIT,
+	.taskid=0,
+};
 
 iw_t * nsm_iw_get(struct interface *ifp)
 {
@@ -659,19 +669,3 @@ int nsm_iw_client_exit(void)
 	iw_task_exit();
 	return OK;
 }
-
-struct module_list module_list_wifi = 
-{ 
-	.module=MODULE_WIFI, 
-	.name="WIFI", 
-	.module_init=nsm_iw_client_init, 
-	.module_exit=nsm_iw_client_exit, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=cmd_wireless_init, 
-	.module_write_config=NULL, 
-	.module_show_config=NULL,
-	.module_show_debug=NULL, 
-	.flags = ZPL_MODULE_NEED_INIT,
-	.taskid=0,
-};

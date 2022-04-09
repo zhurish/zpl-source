@@ -27,9 +27,9 @@ extern "C" {
 #endif
 
 
-#include "os_include.h"
+#include "auto_include.h"
 
-#ifndef ZPL_IPCOM_STACK_MODULE
+#ifndef ZPL_IPCOM_MODULE
 #include "thread.h"
 #define eloop_list thread_list
 #define eloop_master thread_master
@@ -297,10 +297,7 @@ extern zpl_ulong eloop_consumed_time(struct timeval *after, struct timeval *befo
 #ifndef ELOOP_MASTER_LIST
 extern struct eloop_master * master_eloop[];
 #endif
-//extern struct timeval eloop_recent_relative_time (void);
-#ifdef ZPL_SHELL_MODULE
-//extern int cpu_eloop_show(struct eloop_master *m, struct vty *vty);
-#endif
+
 #ifdef ZPL_SHELL_MODULE
 extern int cmd_os_eloop_init(void);
 #endif

@@ -6,8 +6,8 @@
  */
 
 
-#include "os_include.h"
-#include <zpl_include.h>
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "vty.h"
 #include "vty_user.h"
 #include "command.h"

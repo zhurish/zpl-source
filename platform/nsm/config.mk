@@ -90,7 +90,11 @@ OBJS	+= cmd_port.o
 ifeq ($(strip $(ZPL_NSM_L3MODULE)),true)
 OBJS	+= cmd_route.o
 endif
+
+ifeq ($(strip $(ZPL_NSM_WIRELESS)),true)
 OBJS	+= cmd_wireless.o
+endif
+
 OBJS	+= cmd_global.o
 
 ifeq ($(strip $(ZPL_NSM_8021X)),true)

@@ -20,7 +20,7 @@ typedef int ssize_t;
 
 #include "modbus.h"
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 
 MODBUS_BEGIN_DECLS
 

@@ -6,11 +6,18 @@
  */
 
 
-#include "os_include.h"
-#include "zpl_include.h"
-#include "lib_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "vty.h"
+#include "zmemory.h"
+#include "template.h"
+#include "algorithm.h"
 #include "nsm_include.h"
-
+#include "hal_include.h"
+#include "pal_include.h"
 
 zpl_uint32 serial_index_make(const char *sname)
 {

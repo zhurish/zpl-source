@@ -12,7 +12,7 @@
  */
 
 #include "iwlib.h"		/* Header */
-
+#include "iwioctl.h"
 /**************************** CONSTANTS ****************************/
 
 /*
@@ -161,13 +161,14 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	int tokens = 3; /* For name */
 
 	/* Display device name and wireless name (name of the protocol used) */
+
 	if(cb && cb->iw_show && cb->vty)
 		cb->iw_show(cb->vty, "%-8.16s  %s  ", kname2ifname(ifname), info->b.name);
 	else
 		iw_printf("%-8.16s  %s  ", kname2ifname(ifname), info->b.name);
 
 	/* Display ESSID (extended network), if any */
-	if (info->b.has_essid)
+	if (info && info->b.has_essid)
 	{
 		if (info->b.essid_on)
 		{
@@ -200,7 +201,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 
 #ifndef WE_ESSENTIAL
 	/* Display NickName (station name), if any */
-	if (info->has_nickname)
+	if (info && info->has_nickname)
 	{
 		if(cb && cb->iw_show && cb->vty)
 			cb->iw_show(cb->vty, "Nickname:\"%s\"", info->nickname);
@@ -221,7 +222,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 
 #ifndef WE_ESSENTIAL
 	/* Display Network ID */
-	if (info->b.has_nwid)
+	if (info && info->b.has_nwid)
 	{
 		/* Note : should display proper number of digits according to info
 		 * in range structure */
@@ -244,7 +245,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 #endif	/* WE_ESSENTIAL */
 
 	/* Display the current mode of operation */
-	if (info->b.has_mode)
+	if (info && info->b.has_mode)
 	{
 		if(cb && cb->iw_show && cb->vty)
 			cb->iw_show(cb->vty, "Mode:%s  ", iw_operation_mode[info->b.mode]);
@@ -254,7 +255,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	}
 
 	/* Display frequency / channel */
-	if (info->b.has_freq)
+	if (info && info->b.has_freq)
 	{
 		double freq = info->b.freq; /* Frequency/channel */
 		int channel = -1; /* Converted to channel */
@@ -273,7 +274,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	}
 
 	/* Display the address of the current Access Point */
-	if (info->has_ap_addr)
+	if (info && info->has_ap_addr)
 	{
 		/* A bit of clever formatting */
 		if (tokens > 8)
@@ -313,7 +314,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	}
 
 	/* Display the currently used/set bit-rate */
-	if (info->has_bitrate)
+	if (info && info->has_bitrate)
 	{
 		/* A bit of clever formatting */
 		if (tokens > 11)
@@ -335,7 +336,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	}
 
 	/* Display the Transmit Power */
-	if (info->has_txpower)
+	if (info && info->has_txpower)
 	{
 		/* A bit of clever formatting */
 		if (tokens > 11)
@@ -358,7 +359,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 
 #ifndef WE_ESSENTIAL
 	/* Display sensitivity */
-	if (info->has_sens)
+	if (info && info->has_sens)
 	{
 		/* A bit of clever formatting */
 		if (tokens > 10)
@@ -410,7 +411,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 
 #ifndef WE_ESSENTIAL
 	/* Display retry limit/lifetime information */
-	if (info->has_retry)
+	if (info && info->has_retry)
 	{
 		if(cb && cb->iw_show && cb->vty)
 			cb->iw_show(cb->vty, "Retry");
@@ -455,7 +456,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 #endif	/* WE_ESSENTIAL */
 
 	/* Display the RTS threshold */
-	if (info->has_rts)
+	if (info && info->has_rts)
 	{
 		/* Disabled ? */
 		if (info->rts.disabled)
@@ -479,7 +480,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	}
 
 	/* Display the fragmentation threshold */
-	if (info->has_frag)
+	if (info && info->has_frag)
 	{
 		/* A bit of clever formatting */
 		if (tokens > 10)
@@ -523,7 +524,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 
 	/* Display encryption information */
 	/* Note : we display only the "current" key, use iwlist to list all keys */
-	if (info->b.has_key)
+	if (info && info->b.has_key)
 	{
 		if(cb && cb->iw_show && cb->vty)
 			cb->iw_show(cb->vty, "Encryption key:");
@@ -578,7 +579,7 @@ static void display_info(struct wireless_info * info, char * ifname, iw_user_cb_
 	/* Display Power Management information */
 	/* Note : we display only one parameter, period or timeout. If a device
 	 * (such as HiperLan) has both, the user need to use iwlist... */
-	if (info->has_power) /* I hope the device has power ;-) */
+	if (info && info->has_power) /* I hope the device has power ;-) */
 	{
 		if(cb && cb->iw_show && cb->vty)
 			cb->iw_show(cb->vty, "Power Management");

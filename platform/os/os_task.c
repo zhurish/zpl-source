@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "os_include.h"
-#include "zpl_include.h"
+#include "auto_include.h"
+#include "zplos_include.h"
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <dirent.h>
@@ -520,7 +520,7 @@ zpl_char * os_task_2_name(zpl_uint32 task_id)
 	return "Unknow";
 }
 
-int os_task_priority_set(zpl_uint32 TaskID, zpl_uint32 Priority)
+int os_task_priority_set(zpl_uint32 TaskID, zpl_int32 Priority)
 {
 	int policy; //,pri;
 	struct sched_param sp;
@@ -562,7 +562,7 @@ int os_task_priority_set(zpl_uint32 TaskID, zpl_uint32 Priority)
 	return ERROR;
 }
 
-int os_task_priority_get(zpl_uint32 TaskID, zpl_uint32 *Priority)
+int os_task_priority_get(zpl_uint32 TaskID, zpl_int32 *Priority)
 {
 	os_task_t *osapiTask = (os_task_t *) TaskID;
 	if (osapiTask)
@@ -735,7 +735,6 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 	char path[128];
 	char buf[1024];
 	FILE *fp = NULL;
-	int ret = 0;
 	os_memset(path, 0, sizeof(path));
 	os_memset(buf, 0, sizeof(buf));
 	sprintf(path, "/proc/stat");
@@ -747,8 +746,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 	if (fp)
 	{
 		int user, nice, system, idle, iowait, irq, softirq, stealstolen, guest;
-		ret = fgets(buf, sizeof(buf), fp);
-		if (ret)
+		if (fgets(buf, sizeof(buf), fp))
 		{
 			sscanf(buf, "%*s %d %d %d %d %d %d %d %d %d", &user, &nice, &system,
 					&idle, &iowait, &irq, &softirq, &stealstolen, &guest);
@@ -834,7 +832,7 @@ static int os_task_refresh_time(void *argv)
 		os_task_refresh_total_cpu(&total_cpu);
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		task = lstFirst(os_task_list);
+		task = (os_task_t *)lstFirst(os_task_list);
 
 		for(task = (os_task_t *)lstFirst(os_task_list);
 				task != NULL;
@@ -1101,7 +1099,7 @@ static int os_task_tcb_create(os_task_t *task, zpl_bool active)
 }
 
 
-static int os_task_entry_start(os_task_t *task)
+static void os_task_entry_start(os_task_t *task)
 {
 	usleep(100000);
 #ifdef OS_TASK_DEBUG_LOG
@@ -1133,7 +1131,7 @@ static int os_task_entry_start(os_task_t *task)
 		os_mutex_unlock(task_mutex);
 
 	//pthread_exit(0);
-	return 0;
+	return ;
 }
 
 static int os_task_tcb_active(os_task_t *task)
@@ -1248,8 +1246,7 @@ zpl_uint32 os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op, t
 		ret = pthread_setname_np(task->td_thread, task->td_name);
 
 		if (ret != OK)
-			OS_DEBUG("%s: could not lower privs, %s", __func__,
-					os_strerror(ipstack_errno));
+			OS_DEBUG("%s: could not lower privs, %s", __func__, os_strerror(ipstack_errno));
 #endif
 
 		OS_DEBUG("\r\ncreate task:%s(%u %u->%u:ret=%d) pid=%d\r\n",task->td_name,
@@ -1400,7 +1397,7 @@ int os_task_foreach(os_task_hook cb, void *p)
 	NODE node;
 	os_task_t *task = NULL;
 	if (os_task_list == NULL)
-		return NULL;
+		return ERROR;
 	if (task_mutex)
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
 

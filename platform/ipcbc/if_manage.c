@@ -4,9 +4,8 @@
  *  Created on: May 1, 2017
  *      Author: zhurish
  */
-#include "os_include.h"
-#include <zpl_include.h>
-#include "lib_include.h"
+#include "auto_include.h"
+#include <zplos_include.h>
 #include "nsm_include.h"
 #include "if_manage.h"
 #include "bmgt.h"
@@ -120,7 +119,7 @@ int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable)
 int bsp_usp_module_init(void)
 {
 	zpl_bool online = zpl_true;
-#ifdef ZPL_KERNEL_STACK_MODULE
+#ifdef ZPL_KERNEL_MODULE
 	if_ktest_init();
 #endif
 	unit_board_foreach(unit_board_installfunc, &online);

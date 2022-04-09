@@ -150,9 +150,8 @@ obj: $(MODULE_OBJS) $(MODULE_PJSUA2_OBJS) $(PJSUA2TEST_OBJS)
 install-lib:
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 	@install -m 755 $(PJSUA2LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(PJSUA2LIBS)
+
 	 
 install: install-lib 
 #	@install -m 755 ${PJSUA2TEST_BIN} ${ZPL_INSTALL_SBIN_DIR}
@@ -170,7 +169,7 @@ obj: $(MODULE_OBJS)
 install-lib:
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+
 	 
 install: install-lib
 

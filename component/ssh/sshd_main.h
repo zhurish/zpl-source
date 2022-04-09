@@ -41,7 +41,7 @@ extern "C" {
 #include <stdio.h>
 
 
-#include "zpl_include.h"
+#include "zplos_include.h"
 
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
