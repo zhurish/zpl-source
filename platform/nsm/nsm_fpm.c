@@ -1390,7 +1390,9 @@ void zfpm_trigger_update(struct route_node *rn, const char *reason)
     zfpm_debug("%s triggering update to FPM - Reason: %s",
                prefix2str(&rn->p, buf, sizeof(buf)), reason);
   }
-
+  if(zfpm_g->state != ZFPM_STATE_ESTABLISHED)
+    return;
+    
   SET_FLAG(dest->flags, RIB_DEST_UPDATE_FPM);
   TAILQ_INSERT_TAIL(&zfpm_g->dest_q, dest, fpm_q_entries);
   zfpm_g->stats.updates_triggered++;

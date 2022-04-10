@@ -21,25 +21,34 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "route_types.h"
-#include "zebra_event.h"
+#include "module.h"
+#include "linklist.h"
 #include "if.h"
 #include "vrf.h"
 #include "host.h"
 #include "vty.h"
 #include "zmemory.h"
+#include "thread.h"
+#include "eloop.h"
+#include "command.h"
+#include "queue.h"
+#include "workqueue.h"
 #include "nexthop.h"
-#include "nsm_rib.h"
 #include "routemap.h"
+#include "table.h"
 #include "router-id.h"
 #ifdef ZPL_NSM_MODULE
+#include "nsm_rib.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_fpm.h"
 #include "nsm_rnh.h"
-#endif
 #include "nsm_halpal.h"
 #include "nsm_debug.h"
+#include "nsm_fpm.h"
+#include "nsm_fpm_private.h"
+#endif
+
 
 
 #ifdef ZPL_KERNEL_MODULE
@@ -47,13 +56,13 @@ extern void _netlink_open(struct nsm_ip_vrf *zvrf);
 extern void _netlink_close(struct nsm_ip_vrf *zvrf);
 #endif
 
-static struct nsm_rib_t m_nsm_ribd =
+struct nsm_rib_t nsm_ribd =
 {
 	.rtm_table_default = 0,
 	.nsm_rib_id = 0,
+	.initialise = 0,
 };
 
-struct nsm_rib_t *nsm_ribd = NULL;
 /* Default rtm_table for all clients */
 /* Hold time for RIB process, should be very minimal.
  * it is useful to able to set it otherwise for testing, hence exported
@@ -62,19 +71,22 @@ struct nsm_rib_t *nsm_ribd = NULL;
 int rib_process_hold_time = 10;
 static enum multicast_mode ipv4_multicast_mode = MCAST_NO_CONFIG;
 
+static int nsm_rib_init(void);
 static int nsm_rib_task_init(void);
 static int nsm_rib_task_exit (void);
+static void rib_queue_init(struct nsm_rib_t *nsmribd);
 
-struct module_list module_list_rib = {
-		.module = MODULE_RIB,
-		.name = "RIB\0",
-		.module_init = NULL,
-		.module_exit = NULL,
-		.module_task_init = nsm_rib_task_init,
-		.module_task_exit = nsm_rib_task_exit,
-		.module_cmd_init = NULL,
-		.taskid = 0,
-		.flags=0,
+struct module_list module_list_rib = 
+{
+	.module = MODULE_RIB,
+	.name = "RIB\0",
+	.module_init = nsm_rib_init,
+	.module_exit = NULL,
+	.module_task_init = nsm_rib_task_init,
+	.module_task_exit = nsm_rib_task_exit,
+	.module_cmd_init = NULL,
+	.taskid = 0,
+	.flags = ZPL_MODULE_NEED_INIT,
 };
 
 /* Each route type's string and default distance value. */
@@ -105,28 +117,55 @@ static int nsm_rib_task(void *argv)
 {
 	module_setup_task(MODULE_RIB, os_task_id_self());
 	host_waitting_loadconfig();
-	thread_mainloop(m_nsm_ribd.master);
+	thread_mainloop(nsm_ribd.master);
 	return 0;
 }
 
+static int nsm_rib_init(void)
+{
+	if(nsm_ribd.initialise == 0)
+	{
+		memset(&nsm_ribd, 0, sizeof(nsm_ribd));
+		if(nsm_ribd.master == NULL)
+			nsm_ribd.master = thread_master_module_create(MODULE_RIB);
+		if(nsm_ribd.master)	
+		{
+			nsm_ribd.initialise = 1;
+			rib_queue_init(&nsm_ribd);
+#if 1//def HAVE_FPM
+  			zfpm_init (nsm_ribd.master, 1, 0, "protobuf");
+#else
+  			zfpm_init (nsm_ribd.master, 0, 0, "protobuf");//'netlink' or 'protobuf'
+#endif
+		}
+	}
+	return OK;
+}
 static int nsm_rib_task_init(void)
 {
-	if(m_nsm_ribd.rib_task_id == 0)
-		m_nsm_ribd.rib_task_id = os_task_create("ribTask", OS_TASK_DEFAULT_PRIORITY,
-								 0, nsm_rib_task, NULL, OS_TASK_DEFAULT_STACK);
-	if (m_nsm_ribd.rib_task_id)
+	if(nsm_ribd.initialise == 1)
 	{
-		module_setup_task(MODULE_RIB, m_nsm_ribd.rib_task_id);
-		return OK;
-	}	
+		if(nsm_ribd.master == NULL)
+			nsm_ribd.master = thread_master_module_create(MODULE_RIB);
+
+		if(nsm_ribd.rib_task_id == 0)
+			nsm_ribd.rib_task_id = os_task_create("ribTask", OS_TASK_DEFAULT_PRIORITY,
+									0, nsm_rib_task, NULL, OS_TASK_DEFAULT_STACK);
+		if (nsm_ribd.rib_task_id)
+		{
+			module_setup_task(MODULE_RIB, nsm_ribd.rib_task_id);
+			return OK;
+		}	
+	}
 	return ERROR;
 }
 
 static int nsm_rib_task_exit (void)
 {
-	if(m_nsm_ribd.rib_task_id)
-		os_task_destroy(m_nsm_ribd.rib_task_id);
-	m_nsm_ribd.rib_task_id = 0;
+	if(nsm_ribd.rib_task_id)
+		os_task_destroy(nsm_ribd.rib_task_id);
+	nsm_ribd.rib_task_id = 0;
+	nsm_ribd.initialise = 0;
 	return OK;
 }
 
@@ -1556,9 +1595,9 @@ static void rib_meta_queue_add(struct meta_queue *mq, struct route_node *rn)
 }
 
 /* Add route_node to work queue and schedule processing */
-static void rib_queue_add(struct nsm_rib_t *zebra, struct route_node *rn)
+static void rib_queue_add(struct nsm_rib_t *nsmribd, struct route_node *rn)
 {
-	assert(zebra && rn);
+	assert(nsmribd && rn);
 
 	/* Pointless to queue a route_node with no RIB entries to add or remove */
 	if (!rnode_to_ribs(rn))
@@ -1572,9 +1611,9 @@ static void rib_queue_add(struct nsm_rib_t *zebra, struct route_node *rn)
 	if (IS_ZEBRA_DEBUG_RIB_Q)
 		rnode_info(rn, "work queue added");
 
-	assert(zebra);
+	assert(nsmribd);
 
-	if (zebra->ribq == NULL)
+	if (nsmribd->ribq == NULL)
 	{
 		zlog_err(MODULE_NSM, "%s: work_queue does not exist!", __func__);
 		return;
@@ -1588,10 +1627,10 @@ static void rib_queue_add(struct nsm_rib_t *zebra, struct route_node *rn)
 	 * holder, if necessary, then push the work into it in any case.
 	 * This semantics was introduced after 0.99.9 release.
 	 */
-	if (!zebra->ribq->items->count)
-		work_queue_add(zebra->ribq, zebra->mq);
+	if (!nsmribd->ribq->items->count)
+		work_queue_add(nsmribd->ribq, nsmribd->mq);
 
-	rib_meta_queue_add(zebra->mq, rn);
+	rib_meta_queue_add(nsmribd->mq, rn);
 
 	if (IS_ZEBRA_DEBUG_RIB_Q)
 		rnode_debug(rn, "rn %p queued", (void * )rn);
@@ -1620,26 +1659,30 @@ meta_queue_new(void)
 	return new;
 }
 
-/* initialise zebra rib work queue */
-static void rib_queue_init(struct nsm_rib_t *zebra)
+/* initialise nsmribd rib work queue */
+static void rib_queue_init(struct nsm_rib_t *nsmribd)
 {
-	assert(zebra);
+	assert(nsmribd);
 
-	if (!(zebra->ribq = work_queue_new(zebra->master, "route_node processing")))
+	if (!(nsmribd->ribq = work_queue_new(nsmribd->master, "route_node processing")))
 	{
 		zlog_err(MODULE_NSM, "%s: could not initialise work queue!", __func__);
 		return;
 	}
 
 	/* fill in the work queue spec */
-	zebra->ribq->spec.workfunc = &meta_queue_process;
-	zebra->ribq->spec.errorfunc = NULL;
-	zebra->ribq->spec.completion_func = &meta_queue_process_complete;
+	nsmribd->ribq->spec.workfunc = &meta_queue_process;
+	nsmribd->ribq->spec.errorfunc = NULL;
+	nsmribd->ribq->spec.completion_func = &meta_queue_process_complete;
 	/* XXX: TODO: These should be runtime configurable via vty */
-	zebra->ribq->spec.max_retries = 3;
-	zebra->ribq->spec.hold = rib_process_hold_time;
-
-	if (!(zebra->mq = meta_queue_new()))
+	nsmribd->ribq->spec.max_retries = 3;
+	nsmribd->ribq->spec.hold = rib_process_hold_time;
+	if(nsmribd->ribq->master == NULL)
+	{
+		zlog_err(MODULE_NSM, "%s: nsmribd->ribq->master NULL, master=%p ", __func__, nsmribd->master);
+		nsmribd->ribq->master = nsmribd->master;
+	}
+	if (!(nsmribd->mq = meta_queue_new()))
 	{
 		zlog_err(MODULE_NSM, "%s: could not initialise meta queue!", __func__);
 		return;
@@ -1714,7 +1757,7 @@ static void rib_link(struct route_node *rn, struct rib *rib)
 	}
 	rib->next = head;
 	dest->routes = rib;
-	rib_queue_add(nsm_ribd, rn);
+	rib_queue_add(&nsm_ribd, rn);
 }
 
 static void rib_addnode(struct route_node *rn, struct rib *rib)
@@ -1775,7 +1818,7 @@ static void rib_delnode(struct route_node *rn, struct rib *rib)
 	if (IS_ZEBRA_DEBUG_RIB)
 		rnode_debug(rn, "rn %p, rib %p, removing", (void * )rn, (void * )rib);
 	SET_FLAG(rib->status, RIB_ENTRY_REMOVED);
-	rib_queue_add(nsm_ribd, rn);
+	rib_queue_add(&nsm_ribd, rn);
 }
 
 int rib_add_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
@@ -2275,7 +2318,7 @@ static void static_install_route(afi_t afi, safi_t safi, struct prefix *p,
 			break;
 #endif
 		}
-		rib_queue_add(nsm_ribd, rn);
+		rib_queue_add(&nsm_ribd, rn);
 	}
 	else
 	{
@@ -2286,7 +2329,7 @@ static void static_install_route(afi_t afi, safi_t safi, struct prefix *p,
 		rib->distance = si->distance;
 		rib->metric = 0;
 		rib->vrf_id = si->vrf_id;
-		rib->table = nsm_ribd->rtm_table_default;
+		rib->table = nsm_ribd.rtm_table_default;
 		rib->nexthop_num = 0;
 		rib->tag = si->tag;
 
@@ -2417,7 +2460,7 @@ static void static_uninstall_route(afi_t afi, safi_t safi, struct prefix *p,
 			rib_uninstall(rn, rib);
 		rib_nexthop_delete(rib, nexthop);
 		nexthop_free(nexthop);
-		rib_queue_add(nsm_ribd, rn);
+		rib_queue_add(&nsm_ribd, rn);
 	}
 	/* Unlock node. */
 	route_unlock_node(rn);
@@ -3138,7 +3181,7 @@ void rib_update(vrf_id_t vrf_id)
 		for (rn = route_top(table); rn; rn = route_next(rn))
 		{
 			if (rnode_to_ribs(rn))
-				rib_queue_add(nsm_ribd, rn);
+				rib_queue_add(&nsm_ribd, rn);
 		}
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
@@ -3152,7 +3195,7 @@ void rib_update(vrf_id_t vrf_id)
 		for (rn = route_top(table); rn; rn = route_next(rn))
 		{
 			if (rnode_to_ribs(rn))
-				rib_queue_add(nsm_ribd, rn);
+				rib_queue_add(&nsm_ribd, rn);
 		}
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
@@ -3177,7 +3220,7 @@ static void rib_weed_table(struct route_table *table)
 				if (CHECK_FLAG(rib->status, RIB_ENTRY_REMOVED))
 					continue;
 
-				if (rib->table != nsm_ribd->rtm_table_default
+				if (rib->table != nsm_ribd.rtm_table_default
 						&& rib->table != IPSTACK_RT_TABLE_MAIN)
 					rib_delnode(rn, rib);
 			}
@@ -3202,7 +3245,7 @@ void rib_weed_tables(void)
 }
 
 #if 0
-/* Delete self installed routes after zebra is relaunched.  */
+/* Delete self installed routes after nsmribd is relaunched.  */
 static void
 rib_sweep_table (struct route_table *table)
 {
@@ -3345,8 +3388,22 @@ void rib_close(void)
 /* Routing information base initialize. */
 void rib_init(void)
 {
-	nsm_ribd = &m_nsm_ribd;
-	rib_queue_init(nsm_ribd);
+	if(nsm_ribd.initialise == 0)
+	{
+		memset(&nsm_ribd, 0, sizeof(nsm_ribd));
+		if(nsm_ribd.master == NULL)
+			nsm_ribd.master = thread_master_module_create(MODULE_RIB);
+		if(nsm_ribd.master)	
+		{
+			nsm_ribd.initialise = 1;
+			rib_queue_init(&nsm_ribd);
+#if 1//def HAVE_FPM
+  			zfpm_init (nsm_ribd.master, 1, 0, "protobuf");
+#else
+  			zfpm_init (nsm_ribd.master, 0, 0, "protobuf");//'netlink' or 'protobuf'
+#endif
+		}
+	}
 }
 
 /*
@@ -3485,7 +3542,7 @@ static void nsm_vrf_table_create(struct nsm_ip_vrf *zvrf, afi_t afi, safi_t safi
 	table->info = info;
 }
 
-/* Allocate new zebra VRF. */
+/* Allocate new nsmribd VRF. */
 struct nsm_ip_vrf * nsm_vrf_alloc(vrf_id_t vrf_id)
 {
 	struct nsm_ip_vrf *zvrf = NULL;

@@ -51,7 +51,7 @@ int os_job_init(void)
 		job_mutex = os_mutex_init();
 	}
 	job_task_id = os_task_create("jobTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, (task_entry)os_job_task, NULL, OS_TASK_DEFAULT_STACK);
+	               0, os_job_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(job_task_id)
 		return OK;
 

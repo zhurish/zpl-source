@@ -35,8 +35,26 @@ extern "C" {
 #include "table.h"
 #include "queue.h"
 #include "nexthop.h"
+#include "thread.h"
+#include "eloop.h"
+#include "workqueue.h"
 
 #define DISTANCE_INFINITY  255
+
+/* meta-queue structure:
+ * sub-queue 0: connected, kernel
+ * sub-queue 1: static
+ * sub-queue 2: RIP, RIPng, OSPF, OSPF6, IS-IS
+ * sub-queue 3: iBGP, eBGP
+ * sub-queue 4: any other origin (if any)
+ */
+#define MQ_SIZE 16
+struct meta_queue
+{
+  struct list *subq[MQ_SIZE];
+  zpl_uint32 size; /* sum of lengths of all subqueues */
+};
+
 
 struct nsm_rib_t
 {
@@ -49,9 +67,10 @@ struct nsm_rib_t
   struct meta_queue *mq;
   int nsm_rib_id;
   int rib_task_id;  
+  int initialise;
 };
 
-extern struct nsm_rib_t *nsm_ribd;
+
 
 struct rib
 {
@@ -110,19 +129,6 @@ struct rib
   zpl_uchar nexthop_fib_num;
 };
 
-/* meta-queue structure:
- * sub-queue 0: connected, kernel
- * sub-queue 1: static
- * sub-queue 2: RIP, RIPng, OSPF, OSPF6, IS-IS
- * sub-queue 3: iBGP, eBGP
- * sub-queue 4: any other origin (if any)
- */
-#define MQ_SIZE 16
-struct meta_queue
-{
-  struct list *subq[MQ_SIZE];
-  zpl_uint32 size; /* sum of lengths of all subqueues */
-};
 
 /*
  * Structure that represents a single destination (prefix).
@@ -404,6 +410,10 @@ enum multicast_mode
 			/* on equal value, MRIB wins for last 2 */
 };
 
+
+extern struct nsm_rib_t nsm_ribd;
+//extern struct route_table *rib_table_ipv6;
+
 extern void multicast_mode_ipv4_set (enum multicast_mode mode);
 extern enum multicast_mode multicast_mode_ipv4_get (void);
 
@@ -497,7 +507,6 @@ extern struct rib *rib_lookup_ipv6 (struct ipstack_in6_addr *, vrf_id_t);
 
 extern struct rib *rib_match_ipv6 (struct ipstack_in6_addr *, vrf_id_t);
 
-extern struct route_table *rib_table_ipv6;
 
 extern int
 static_add_ipv6 (struct prefix *p, zpl_uchar type, struct ipstack_in6_addr *gate,

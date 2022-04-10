@@ -24,10 +24,13 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "linklist.h"
-#include "workqueue.h"
 #include "zmemory.h"
 #include "log.h"
 #include "command.h"
+#include "thread.h"
+#include "eloop.h"
+#include "workqueue.h"
+
 /* master list of work_queues */
 static struct list _work_queues;
 /* pointer primarily to avoid an otherwise harmless warning on

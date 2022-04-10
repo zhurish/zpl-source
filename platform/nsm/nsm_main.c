@@ -143,12 +143,6 @@ int nsm_module_init(void)
 	ip_vrf_init();
 #endif
 	zserv_init();
-
-#if 1//def HAVE_FPM
-  zfpm_init (nsm_srv->master, 1, 0, "protobuf");
-#else
-  zfpm_init (nsm_srv->master, 0, 0, "protobuf");//'netlink' or 'protobuf'
-#endif
 	return 0;
 }
 

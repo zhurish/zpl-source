@@ -108,8 +108,6 @@ if test "header" == "$1" ;then
     echo "#ifndef _MODULE_TYPES_H" > $module_types_def_file
     echo "#define _MODULE_TYPES_H" >> $module_types_def_file
     echo " " >> $module_types_def_file
-    echo "#include \"route_types.h\"" >> $module_types_def_file
-    echo "#include \"zebra_event.h\"" >> $module_types_def_file
     echo " " >> $module_types_def_file
     echo "typedef enum {" >> $module_types_def_file
     echo "	MODULE_NONE = 0," >> $module_types_def_file

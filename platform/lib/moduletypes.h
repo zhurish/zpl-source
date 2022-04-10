@@ -1,8 +1,6 @@
 #ifndef _MODULE_TYPES_H
 #define _MODULE_TYPES_H
  
-#include "route_types.h"
-#include "zebra_event.h"
  
 typedef enum {
 	MODULE_NONE = 0,
