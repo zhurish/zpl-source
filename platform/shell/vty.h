@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "log.h"
 #include "sockunion.h"
 #include "thread.h"

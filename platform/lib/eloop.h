@@ -28,6 +28,8 @@ extern "C" {
 
 
 #include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 
 #ifndef ZPL_IPCOM_MODULE
 #include "thread.h"

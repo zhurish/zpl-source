@@ -22,10 +22,10 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-
 #include "module.h"
+#include "linklist.h"
 #include "zmemory.h"
-#include "memtypes.h"
+
 
 #ifdef ZPL_SHELL_MODULE
 #include "cli_node.h"
@@ -34,7 +34,6 @@
 #include "command.h"
 #endif
 #include "log.h"
-#include "zassert.h"
 #include "str.h"
 #include "prefix.h"
 #include "host.h"

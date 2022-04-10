@@ -25,6 +25,7 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "router-id.h"
 #include "if.h"
 #include "connected.h"

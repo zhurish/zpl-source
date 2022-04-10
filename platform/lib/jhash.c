@@ -19,6 +19,8 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
 #include "jhash.h"
 
 /* The golden ration: an arbitrary value */

@@ -21,8 +21,9 @@
  */
 
 #include "auto_include.h"
-#include "zmemory.h"
+#include "zplos_include.h"
 #include "module.h"
+#include "zmemory.h"
 #include "lib_event.h"
 #include "linklist.h"
 #include "thread.h"

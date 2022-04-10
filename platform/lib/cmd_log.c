@@ -7,7 +7,8 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zplos_include.h"
+#include "module.h"
 #include "cli_node.h"
 #include "zmemory.h"
 #include "vector.h"
@@ -741,6 +742,11 @@ DEFUN (show_config_log_testing_file,
 	FILE *fp = NULL;
 	char filetmp[256];
 	char buf[4096];
+	if(!zlog_testing_enabled())
+	{
+		vty_out(vty, "%% Logging testing is not enable %s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if (zlog_default == NULL || !zlog_default->testlog.filename)
 		return CMD_WARNING;
 	if (zlog_default->mutex)
@@ -905,6 +911,17 @@ DEFUN (show_config_log_buffer,
 		"buffer information\n")
 {
 	struct logfilter pUser;
+	zlog_level_t log_level;
+	if (zlog_default == NULL)
+	{
+		return CMD_WARNING;
+	}
+	zlog_get_level(ZLOG_DEST_BUFFER, &log_level);
+	if(log_level <= ZLOG_DISABLED)
+	{
+		vty_out(vty, "%% Logging buffer is not enable %s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	os_memset(&pUser, 0, sizeof(pUser));
 	pUser.vty = vty;
 	if(argc == 1)
@@ -986,8 +1003,17 @@ DEFUN (show_config_log_file,
 	FILE *fp = NULL;
 	char filetmp[256];
 	char buf[4096];
-	if (zlog_default == NULL || !zlog_default->filename)
+	zlog_level_t log_level;
+	if (zlog_default == NULL)
+	{
 		return CMD_WARNING;
+	}
+	zlog_get_level(ZLOG_DEST_FILE, &log_level);
+	if(log_level <= ZLOG_DISABLED)
+	{
+		vty_out(vty, "%% Logging file is not enable %s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 

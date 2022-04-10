@@ -20,8 +20,20 @@
  */
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "nexthop.h"
+#include "module.h"
+#include "prefix.h"
+#include "table.h"
 #include "zmemory.h"
+#include "str.h"
+#include "command.h"
+#include "if.h"
+#include "log.h"
+#include "sockunion.h"
+#include "linklist.h"
+#include "thread.h"
+#include "prefix.h"
+#include "nexthop.h"
+
 
 /* check if nexthops are same, non-recursive */
 int

@@ -37,8 +37,9 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "str.h"
-#include "zassert.h"
+#include "log.h"
 
 #ifndef HAVE_SNPRINTF
 /*

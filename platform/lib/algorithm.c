@@ -1,4 +1,5 @@
 #include "auto_include.h"
+#include "module.h"
 #include "algorithm.h"
 
 

@@ -23,10 +23,16 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "module.h"
-#include "if.h"
-#include "log.h"
+
+
 #include "prefix.h"
+#include "linklist.h"
+#include "if.h"
+#include "table.h"
+#include "table.h"
+#include "log.h"
 #include "zmemory.h"
+
 #include "connected.h"
 #ifdef ZPL_NSM_MODULE
 #include "nsm_rib.h"

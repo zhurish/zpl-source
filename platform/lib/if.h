@@ -26,11 +26,13 @@ extern "C" {
 #endif
 
 
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 
 #include "linklist.h"
 #include "prefix.h"
-#include "moduletypes.h"
-//#include "module.h"
+
 /* Interface link-layer type, if known. Derived from:
  *
  * net/if_arp.h on various platforms - Linux especially.

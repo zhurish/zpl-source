@@ -6,6 +6,7 @@
  */
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "if.h"
 #include "if_name.h"
 #include "hash.h"

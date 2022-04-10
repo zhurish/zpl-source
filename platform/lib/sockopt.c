@@ -21,10 +21,11 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "sockopt.h"
+#include "module.h"
 #include "log.h"
+#include "sockopt.h"
+#include "sockunion.h"
 #include "if.h"
-
 
 int
 setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)

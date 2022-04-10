@@ -22,6 +22,7 @@
 
 #define QUAGGA_DEFINE_DESC_TABLE
 
+#include "auto_include.h"
 #include "zplos_include.h"
 #include "module.h"
 #include "zmemory.h"
@@ -1878,8 +1879,12 @@ int zlog_buffer_reset(void)
 	if(zlog_default->log_buffer.buffer)
 		XFREE(MTYPE_ZLOG, zlog_default->log_buffer.buffer);
 	zlog_default->log_buffer.start = 0;
-	zlog_default->log_buffer.buffer = XMALLOC(MTYPE_ZLOG, size);
-	memset(zlog_default->log_buffer.buffer, 0 , size);
+	if(size)
+	{
+		zlog_default->log_buffer.buffer = XMALLOC(MTYPE_ZLOG, size);
+		if(zlog_default->log_buffer.buffer)
+			memset(zlog_default->log_buffer.buffer, 0 , size);
+	}
 	if (zlog_default->mutex)
 		os_mutex_unlock(zlog_default->mutex);
 	return OK;
@@ -1924,7 +1929,7 @@ int zlog_buffer_save(void)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER])
+	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER] > ZLOG_DISABLED)
 	{
 #ifdef ZLOG_TESTING_ENABLE
 		if(zlog_default->testing == zpl_false)
@@ -1943,17 +1948,17 @@ int zlog_buffer_save(void)
 					os_mutex_unlock(zlog_default->mutex);
 			return ERROR;
 		}
-		if(fp)
+		if(fp && zlog_default->log_buffer.buffer)
 		{
 			for(i = zlog_default->log_buffer.start; i < zlog_default->log_buffer.max_size; i++)
 			{
-				if(zlog_default->log_buffer.buffer[i].size)
+				if(zlog_default->log_buffer.buffer[i].size > 0)
 					fprintf (fp, "%s: ", zlog_default->log_buffer.buffer[i].log);
 				fflush (fp);
 			}
 			for(i = 0; i < zlog_default->log_buffer.start; i++)
 			{
-				if(zlog_default->log_buffer.buffer[i].size)
+				if(zlog_default->log_buffer.buffer[i].size > 0)
 					fprintf (fp, "%s: ", zlog_default->log_buffer.buffer[i].log);
 				fflush (fp);
 			}
@@ -1972,6 +1977,7 @@ int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
+	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER] > ZLOG_DISABLED && zlog_default->log_buffer.buffer)	
 	{
 		for(i = zlog_default->log_buffer.start; i >= 0; i--)
 		{

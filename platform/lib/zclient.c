@@ -20,9 +20,9 @@
  * MA 02111-1307, USA.
  */
 
-#include <auto_include.h>
-#include <zplos_include.h>
-#include "zebra_event.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "prefix.h"
 #include "stream.h"
 #include "buffer.h"

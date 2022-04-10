@@ -41,6 +41,8 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
 #include "md5.h"
 
 #define SHIFT(X, s) (((X) << (s)) | ((X) >> (32 - (s))))

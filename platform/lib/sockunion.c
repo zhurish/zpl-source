@@ -21,9 +21,14 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
+#include "prefix.h"
+#include "vty.h"
 #include "sockunion.h"
-#include "log.h"
 #include "zmemory.h"
+#include "str.h"
+#include "log.h"
 #include "jhash.h"
 
 

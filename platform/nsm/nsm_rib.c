@@ -23,6 +23,13 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "linklist.h"
+#include "prefix.h"
+
+#include "str.h"
+#include "command.h"
+#include "if.h"
+#include "log.h"
+#include "sockunion.h"
 #include "if.h"
 #include "vrf.h"
 #include "host.h"

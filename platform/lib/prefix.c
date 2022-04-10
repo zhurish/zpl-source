@@ -22,7 +22,11 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
 #include "prefix.h"
+#include "vty.h"
+#include "sockunion.h"
 #include "zmemory.h"
 #include "log.h"
 /* Maskbit. */

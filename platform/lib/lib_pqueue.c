@@ -6,6 +6,7 @@
  */
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "zmemory.h"
 #include "stream.h"
 #include "lib_pqueue.h"

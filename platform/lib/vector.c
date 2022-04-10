@@ -21,6 +21,8 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
 #include "vector.h"
 #include "zmemory.h"
 #include "log.h"
