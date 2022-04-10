@@ -52,10 +52,11 @@ route_types.h: $(SRC_DIR)/route_types.txt $(SRC_DIR)/route_types.pl
 	
 
 files = $(patsubst %.o,%.c,$(OBJS))
-make_prepare: route_types.h
+make_prepare: route_types.h 
 	@for i in $(files); do	\
 		sh $(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); 	\
 	done
+
 
 lib: $(LIBS)
 

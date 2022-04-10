@@ -20,8 +20,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_COMMAND_H
-#define _ZEBRA_COMMAND_H
+#ifndef __CLI_COMMAND_H__
+#define __CLI_COMMAND_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +101,7 @@ enum cmd_token_type
   TOKEN_TERMINAL = 0,
   TOKEN_MULTIPLE,
   TOKEN_KEYWORD,
+  TOKEN_PIPE,
 };
 
 enum cmd_terminal_type
@@ -120,6 +121,7 @@ enum cmd_terminal_type
   TERMINAL_IPV4_PREFIX,
   TERMINAL_IPV6,
   TERMINAL_IPV6_PREFIX,
+  TERMINAL_PIPE,
 };
 
 /* argument to be recorded on argv[] if it's not a literal */
@@ -496,4 +498,4 @@ extern zpl_char *command_cr;
 }
 #endif
 
-#endif /* _ZEBRA_COMMAND_H */
+#endif /* __CLI_COMMAND_H__ */

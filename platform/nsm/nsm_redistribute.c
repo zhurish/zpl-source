@@ -37,7 +37,7 @@
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
 #include "router-id.h"
-#include "nsm_zclient.h"
+#include "zclient.h"
 
 
 /* master zebra server structure */

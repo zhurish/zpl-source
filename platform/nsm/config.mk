@@ -12,7 +12,6 @@ OBJS	+= nsm_rib.o
 OBJS	+= nsm_zebra_routemap.o
 OBJS	+= nsm_rnh.o
 OBJS	+= nsm_fpm.o
-OBJS	+= nsm_zclient.o
 OBJS	+= nsm_zserv.o
 
 OBJS	+= nsm_interface.o

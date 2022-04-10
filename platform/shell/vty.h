@@ -62,8 +62,8 @@ enum vtyevent
   VTY_STDIO_ACCEPT,
 };
 
-  enum vtylogin_type
-  {
+enum vtylogin_type
+{
     VTY_LOGIN_NONE,
 	  VTY_LOGIN_STDIO,
 	  VTY_LOGIN_CONSOLE,
@@ -73,7 +73,25 @@ enum vtyevent
     VTY_LOGIN_VTYSH_STDIO,
     VTY_LOGIN_WATCHDOG,
     VTY_LOGIN_MAX
-  } ;
+} ;
+
+enum vty_filter_type
+{
+    VTY_FILTER_NONE,
+	  VTY_FILTER_BEGIN,
+	  VTY_FILTER_INCLUDE,
+	  VTY_FILTER_EXCLUDE,
+    VTY_FILTER_REDIRECT,
+    VTY_FILTER_MAX
+} ;
+
+struct vty_filter
+{
+    enum vty_filter_type filter_type; 
+    char  *filter_key; 
+    zpl_uint32  key_flags;
+    int redirect_fd;
+} ;
 
 /* VTY struct. */
 struct vty 
@@ -191,8 +209,9 @@ struct vty
   zpl_bool	cancel;
   zpl_bool	ansync;
 
+  struct vty_filter vty_filter;
+
   int	(*vty_output)(void *, const char *, int);
-  int	(*vty_outputf)(void *, const char *,...);
   void *p_output;
 
   int	(*shell_ctrl_cmd)(struct vty *, int , void *);
@@ -398,6 +417,7 @@ extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);
 
+extern int vty_filter_set(struct vty *vty, const char *key, enum vty_filter_type filter_type);
 extern int cli_shell_result (const char *, ...) PRINTF_ATTRIBUTE(1, 2);
 
 extern int vty_config_lock (struct vty *);

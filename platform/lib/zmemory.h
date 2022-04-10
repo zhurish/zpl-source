@@ -18,8 +18,8 @@ along with GNU Zebra; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-#ifndef _ZEBRA_MEMORY_H
-#define _ZEBRA_MEMORY_H
+#ifndef __ZMEMORY_H__
+#define __ZMEMORY_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,4 +134,4 @@ extern void cmd_memory_init (void);
 }
 #endif
 
-#endif /* _ZEBRA_MEMORY_H */
+#endif /* __ZMEMORY_H__ */

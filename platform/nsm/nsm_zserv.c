@@ -41,7 +41,7 @@
 #include "nexthop.h"
 #include "router-id.h"
 
-#include "nsm_zclient.h"
+#include "zclient.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"

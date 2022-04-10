@@ -122,6 +122,92 @@ static void vty_buf_assert(struct vty *vty)
 	assert(vty->buf[vty->length] == '\0');
 }
 
+/*******************************************************************************/
+/*******************************************************************************/
+/*******************************************************************************/
+static int vty_output_filter_key(struct vty_filter *vty_filter, const char *fmt, int len)
+{
+	if(vty_filter->filter_type == VTY_FILTER_NONE)
+		return 1;
+	else if(vty_filter->filter_type == VTY_FILTER_BEGIN)
+	{
+		if(vty_filter->key_flags == VTY_FILTER_BEGIN)
+		{
+			return 1;
+		}
+		else
+		{
+			if(vty_filter->filter_key && fmt && strstr(fmt, vty_filter->filter_key))
+			{
+				vty_filter->key_flags = VTY_FILTER_BEGIN;
+				return 1;
+			}
+			else
+				return 0;
+		}	
+	}
+	else if(vty_filter->filter_type == VTY_FILTER_INCLUDE)
+	{
+		if(vty_filter->filter_key && fmt && strstr(fmt, vty_filter->filter_key))
+			return 1;
+		else
+			return 0;	
+	}
+	else if(vty_filter->filter_type == VTY_FILTER_EXCLUDE)
+	{
+		if(vty_filter->filter_key && fmt && !strstr(fmt, vty_filter->filter_key))
+			return 1;
+		else
+			return 0;
+	}
+	else if(vty_filter->filter_type == VTY_FILTER_REDIRECT)
+	{
+		if(vty_filter->redirect_fd)
+		{
+			write(vty_filter->redirect_fd, fmt, len);
+		}
+		return 0;
+	}
+	return 1;	
+}
+
+static int vty_output_filter(struct vty *vty, const char *fmt, int len)
+{
+	//enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV} type;
+	if(vty->type == VTY_FILE)  
+		return 1;
+	return vty_output_filter_key(&vty->vty_filter, fmt,  len);
+}
+
+int vty_filter_set(struct vty *vty, const char *key, enum vty_filter_type filter_type)
+{
+	if(vty->vty_filter.redirect_fd)
+	{
+		close(vty->vty_filter.redirect_fd);
+		sync();
+		vty->vty_filter.redirect_fd = 0;
+	}
+	if(vty->vty_filter.filter_key)
+	{
+		free(vty->vty_filter.filter_key);
+		if(key)
+			vty->vty_filter.filter_key = strdup(key);
+	}
+	vty->vty_filter.filter_type = filter_type;
+	vty->vty_filter.key_flags = 0;
+	vty->vty_filter.redirect_fd = 0;
+	if(VTY_FILTER_REDIRECT == filter_type)
+	{
+		if(os_file_access(vty->vty_filter.filter_key) == OK)
+		{
+			remove(vty->vty_filter.filter_key);
+			sync();
+		}
+		vty->vty_filter.redirect_fd = open(vty->vty_filter.filter_key, O_CREAT|O_RDWR);
+	}
+	return 0;
+}
+/*******************************************************************************/
 /* Sanity/safety wrappers around access to vty->buf */
 static void vty_buf_put(struct vty *vty, zpl_char c)
 {
@@ -131,12 +217,89 @@ static void vty_buf_put(struct vty *vty, zpl_char c)
 }
 
 /* VTY standard output function. */
+#if 1
 int vty_out(struct vty *vty, const char *format, ...)
 {
 	va_list args;
 	zpl_uint32 len = 0;
-	zpl_size_t size = 1024;
-	zpl_char buf[1024];
+	zpl_size_t size = 4096;
+	zpl_char buf[4096];
+	zpl_char *p = NULL;
+	os_bzero(buf, sizeof(buf));
+
+	va_start(args, format);
+	len = vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+	/* Initial buffer is not enough.  */
+	if (len < 0 || len >= size)
+	{
+		while (1)
+		{
+			if (len > -1)
+				size = len + 1;
+			else
+				size = size * 2;
+
+			p = XREALLOC(MTYPE_VTY_OUT_BUF, p, size);
+			if (!p)
+				return -1;
+
+			va_start(args, format);
+			len = vsnprintf(p, size, format, args);
+			va_end(args);
+
+			if (len > -1 && len < size)
+				break;
+		}
+	}
+	if (!p)
+		p = buf;
+
+	if (vty_shell(vty))
+	{
+		if(vty_output_filter(vty, p, len))
+		{
+			fwrite(p, len, 1, stdout);
+			fflush(stdout);
+		}
+	}
+	else
+	{
+		if (vty->vty_output)
+		{
+			if(vty_output_filter(vty, p, len))
+				len = vty->vty_output(vty->p_output, p, len);
+		}
+		else
+		{
+			if(vty_output_filter(vty, p, len))
+			{
+				if (vty->ansync)
+				{
+					ipstack_write(vty->wfd, p, len);
+				}
+				else
+				{
+					/* Pointer p must point out buffer. */
+					if (vty->obuf)
+						buffer_put(vty->obuf, (zpl_uchar *)p, len);
+				}
+			}
+		}
+	}
+	/* If p is not different with buf, it is allocated buffer.  */
+	if (p != buf)
+		XFREE(MTYPE_VTY_OUT_BUF, p);
+
+	return len;
+}
+#else
+int vty_out(struct vty *vty, const char *format, ...)
+{
+	va_list args;
+	zpl_uint32 len = 0;
+	zpl_size_t size = 4096;
+	zpl_char buf[4096];
 	zpl_char *p = NULL;
 	os_bzero(buf, sizeof(buf));
 	if (vty->vty_outputf)
@@ -209,7 +372,84 @@ int vty_out(struct vty *vty, const char *format, ...)
 	}
 	return len;
 }
+#endif
+#if 1
+int vty_sync_out(struct vty *vty, const char *format, ...)
+{
+	va_list args;
+	zpl_uint32 len = 0;
+	zpl_size_t size = 4096;
+	zpl_char buf[4096];
+	zpl_char *p = NULL;
+	os_bzero(buf, sizeof(buf));
+	va_start(args, format);
+	len = vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+	/* Initial buffer is not enough.  */
+	if (len < 0 || len >= size)
+	{
+		while (1)
+		{
+			if (len > -1)
+				size = len + 1;
+			else
+				size = size * 2;
+			p = XREALLOC(MTYPE_VTY_OUT_BUF, p, size);
+			if (!p)
+				return -1;
+			va_start(args, format);
+			len = vsnprintf(p, size, format, args);
+			va_end(args);
+			if (len > -1 && len < size)
+				break;
+		}
+	}
+	/* When initial buffer is enough to store all output.  */
+	if (!p)
+		p = buf;
+	if (vty_shell(vty))
+	{
+		if(vty_output_filter(vty, p, len))
+		{
+			fwrite(p, len, 1, stdout);
+			fflush(stdout);
+		}
+	}
+	else
+	{
+		/* Try to write to initial buffer.  */
 
+		if (vty->vty_output)
+		{
+			if(vty_output_filter(vty, p, len))
+				len = vty->vty_output(vty->p_output, p, len);
+		}
+		else
+		{
+			if(vty_output_filter(vty, p, len))
+			{
+				if (vty_login_type(vty) >= VTY_LOGIN_TELNET)
+					ipstack_write(vty->wfd, p, len);
+				else
+				{
+					if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
+					{
+						// tcflush(vty->wfd._fd, TCIOFLUSH);
+					}
+					ipstack_write(vty->wfd, p, len);
+					if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
+					{
+						// tcdrain(vty->wfd._fd);
+					}
+				}
+			}
+		}
+	}
+	if (p != buf)
+		XFREE(MTYPE_VTY_OUT_BUF, p);
+	return len;
+}
+#else
 int vty_sync_out(struct vty *vty, const char *format, ...)
 {
 	va_list args;
@@ -218,13 +458,7 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 	zpl_char buf[1024];
 	zpl_char *p = NULL;
 	os_bzero(buf, sizeof(buf));
-	if (vty->vty_outputf)
-	{
-		va_start(args, format);
-		len = vty->vty_outputf(vty->p_output, format, args);
-		va_end(args);
-		return len;
-	}
+
 	if (vty_shell(vty))
 	{
 		va_start(args, format);
@@ -286,6 +520,7 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 	}
 	return len;
 }
+#endif
 
 static int vty_log_out(struct vty *vty, const char *level,
 					   const char *proto_str, const char *format, zlog_timestamp_t ctl,
@@ -344,11 +579,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 	if (vty->type == VTY_TERM)
 		buf[len++] = '\r';
 	buf[len++] = '\n';
-	if (vty->vty_outputf)
-	{
-		len = vty->vty_outputf(vty->p_output, "%s", buf);
-		return 0;
-	}
+
 	if (vty_shell(vty))
 	{
 		len = fprintf(stdout, "%s", buf);
@@ -679,7 +910,11 @@ int vty_command(struct vty *vty, zpl_char *buf)
 		os_get_monotonic(&before);
 #endif /* CONSUMED_TIME_CHECK */
 		cli_shell.cli_shell_vty = vty;
+		if(strstr(buf, "show"))
+			vty_filter_set(vty, NULL, VTY_FILTER_NONE);
 		ret = cmd_execute_command(vline, vty, NULL, 0);
+		if(strstr(buf, "show"))
+			vty_filter_set(vty, NULL, VTY_FILTER_NONE);
 		cli_shell.cli_shell_vty = NULL;
 		/* Get the name of the protocol if any */
 		if (zlog_default)

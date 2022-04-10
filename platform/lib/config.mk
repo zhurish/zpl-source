@@ -66,7 +66,7 @@ OBJS	+= connected.o
 OBJS	+= if_rmap.o
 OBJS	+= routemap.o
 OBJS	+= router-id.o
-
+OBJS	+= zclient.o
 
 
 endif

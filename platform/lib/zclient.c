@@ -30,7 +30,7 @@
 #include "if.h"
 #include "log.h"
 #include "thread.h"
-#include "nsm_zclient.h"
+#include "zclient.h"
 #include "zmemory.h"
 #include "table.h"
 
