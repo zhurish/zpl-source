@@ -77,12 +77,12 @@ enum vtylogin_type
     VTY_LOGIN_MAX
 } ;
 
-#define CMD_PIPE_STR		" |(include|exclude|begin|redirect) STRING"
-#ifdef CMD_PIPE_STR
-#define CMD_PIPE_STR_HELP	"Include Key\nExclude Key\n|Begin Key\n|Redirect To\n Key String or File name\n"
+#define CMD_MODIFIER_STR		" |(include|exclude|begin|redirect) STRING"
+#ifdef CMD_MODIFIER_STR
+#define CMD_MODIFIER_STR_HELP	"Include Key\nExclude Key\n|Begin Key\n|Redirect To\n Key String or File name\n"
 
 
-enum vty_filter_type
+enum out_filter_type
 {
     VTY_FILTER_NONE,
 	  VTY_FILTER_BEGIN,
@@ -92,9 +92,9 @@ enum vty_filter_type
     VTY_FILTER_MAX
 } ;
 
-struct vty_filter
+struct out_filter
 {
-    enum vty_filter_type filter_type; 
+    enum out_filter_type filter_type; 
     char  *filter_key; 
     zpl_uint32  key_flags;
     int redirect_fd;
@@ -215,8 +215,8 @@ struct vty
   zpl_bool	reload;
   zpl_bool	cancel;
   zpl_bool	ansync;
-#ifdef CMD_PIPE_STR
-  struct vty_filter vty_filter;
+#ifdef CMD_MODIFIER_STR
+  struct out_filter out_filter;
 #endif
   int	(*vty_output)(void *, const char *, int);
   void *p_output;
@@ -423,8 +423,8 @@ extern int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len);
 extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);
-#ifdef CMD_PIPE_STR
-extern int vty_filter_set(struct vty *vty, const char *key, enum vty_filter_type filter_type);
+#ifdef CMD_MODIFIER_STR
+extern int out_filter_set(struct vty *vty, const char *key, enum out_filter_type filter_type);
 #endif
 extern int cli_shell_result (const char *, ...) PRINTF_ATTRIBUTE(1, 2);
 
