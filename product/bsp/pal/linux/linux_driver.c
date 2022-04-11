@@ -27,7 +27,7 @@
 #include "command.h"
 #include "prefix.h"
 #include "vrf.h"
-#include "nsm_firewalld.h"
+#include "nsm_include.h"
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>
 #include <linux/if_packet.h>

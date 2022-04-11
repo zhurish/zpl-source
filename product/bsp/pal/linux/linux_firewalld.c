@@ -17,6 +17,7 @@
 #include "str.h"
 #include "nsm_firewalld.h"
 #include "pal_include.h"
+#include "nsm_include.h"
 #include "linux_driver.h"
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>

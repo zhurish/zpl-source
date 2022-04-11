@@ -29,8 +29,15 @@
 #include "command.h"
 #include "prefix.h"
 #include "vrf.h"
+#include "nexthop.h"
+#include "pal_include.h"
 #include "nsm_debug.h"
-#include "nsm_rib.h"
+#include "nsm_vlan.h"
+#include "nsm_arp.h"
+#include "nsm_bridge.h"
+#include "nsm_firewalld.h"
+#include "nsm_vlaneth.h"
+#include "nsm_include.h"
 #include "linux_driver.h"
 
 /* Hack for GNU libc version 2. */
@@ -229,8 +236,9 @@ void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interf
  *                     (recursive, multipath, etc.)
  * @param family: Address family which the change concerns
  */
-void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p, struct nexthop *nexthop,
-		const char *routedesc, zpl_family_t family, struct nsm_ip_vrf *zvrf)
+void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p,
+		struct nexthop *nexthop, const char *routedesc, zpl_family_t family,
+		struct nsm_ip_vrf *zvrf)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{

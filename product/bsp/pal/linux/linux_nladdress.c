@@ -31,7 +31,7 @@
 #include "vrf.h"
 #include "nsm_debug.h"
 #include "nsm_rib.h"
-
+#include "nsm_include.h"
 #include "linux_driver.h"
 
 

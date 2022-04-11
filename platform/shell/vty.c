@@ -124,40 +124,57 @@ static void vty_buf_assert(struct vty *vty)
 /*******************************************************************************/
 /*******************************************************************************/
 /*******************************************************************************/
+#ifdef CMD_PIPE_STR
 static int vty_output_filter_key(struct vty_filter *vty_filter, const char *fmt, int len)
 {
+	int ret = 1;
 	if(vty_filter->filter_type == VTY_FILTER_NONE)
-		return 1;
+		ret = 1;
 	else if(vty_filter->filter_type == VTY_FILTER_BEGIN)
 	{
 		if(vty_filter->key_flags == VTY_FILTER_BEGIN)
 		{
-			return 1;
+			ret = 1;
 		}
 		else
 		{
-			if(vty_filter->filter_key && fmt && strstr(fmt, vty_filter->filter_key))
-			{
-				vty_filter->key_flags = VTY_FILTER_BEGIN;
-				return 1;
-			}
+			if(vty_filter->filter_key == NULL)
+				ret = 1;
 			else
-				return 0;
+			{
+				if(fmt && strstr(fmt, vty_filter->filter_key))
+				{
+					vty_filter->key_flags = VTY_FILTER_BEGIN;
+					ret = 1;
+				}
+				else
+					ret = 0;
+			}
 		}	
 	}
 	else if(vty_filter->filter_type == VTY_FILTER_INCLUDE)
 	{
-		if(vty_filter->filter_key && fmt && strstr(fmt, vty_filter->filter_key))
-			return 1;
-		else
-			return 0;	
+		if(vty_filter->filter_key == NULL)
+			ret = 1;
+		else 
+		{
+			if(fmt && strstr(fmt, vty_filter->filter_key))
+				ret = 1;
+			else
+				ret = 0;
+		}	
 	}
 	else if(vty_filter->filter_type == VTY_FILTER_EXCLUDE)
 	{
-		if(vty_filter->filter_key && fmt && !strstr(fmt, vty_filter->filter_key))
-			return 1;
-		else
-			return 0;
+		if(vty_filter->filter_key == NULL)
+			ret = 1;
+		else 
+		{
+			if(fmt && strstr(fmt, vty_filter->filter_key))
+				ret = 0;
+			else
+				ret = 1;
+		}
 	}
 	else if(vty_filter->filter_type == VTY_FILTER_REDIRECT)
 	{
@@ -165,15 +182,16 @@ static int vty_output_filter_key(struct vty_filter *vty_filter, const char *fmt,
 		{
 			write(vty_filter->redirect_fd, fmt, len);
 		}
-		return 0;
+		ret = 0;
 	}
-	return 1;	
+	return ret;	
 }
 
 static int vty_output_filter(struct vty *vty, const char *fmt, int len)
 {
-	//enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV} type;
 	if(vty->type == VTY_FILE)  
+		return 1;
+	if(vty->vty_filter.filter_type == VTY_FILTER_NONE)
 		return 1;
 	return vty_output_filter_key(&vty->vty_filter, fmt,  len);
 }
@@ -189,9 +207,10 @@ int vty_filter_set(struct vty *vty, const char *key, enum vty_filter_type filter
 	if(vty->vty_filter.filter_key)
 	{
 		free(vty->vty_filter.filter_key);
-		if(key)
-			vty->vty_filter.filter_key = strdup(key);
+		vty->vty_filter.filter_key = NULL;
 	}
+	if(key)
+		vty->vty_filter.filter_key = strdup(key);
 	vty->vty_filter.filter_type = filter_type;
 	vty->vty_filter.key_flags = 0;
 	vty->vty_filter.redirect_fd = 0;
@@ -206,6 +225,93 @@ int vty_filter_set(struct vty *vty, const char *key, enum vty_filter_type filter
 	}
 	return 0;
 }
+
+static enum vty_filter_type vty_filter_slpit(char *buf, char *key)
+{
+	enum vty_filter_type filter_type = VTY_FILTER_NONE;
+	if(strstr(buf, "show"))
+	{
+		int i = 0;
+		char *cp = NULL;
+		char filter_key[256];
+		memset(filter_key, '\0', sizeof(filter_key));
+		cp = strstr(buf, "|");
+		if(cp)
+		{
+			cp++;
+			if(strstr(buf, "begin"))
+			{
+				filter_type = VTY_FILTER_BEGIN;
+				cp = strstr(buf, "begin");
+				cp += 5;
+			}
+			else if(strstr(buf, "include"))
+			{
+				filter_type = VTY_FILTER_INCLUDE;
+				cp = strstr(buf, "include");
+				cp += 7;
+			}
+			else if(strstr(buf, "exclude"))
+			{
+				filter_type = VTY_FILTER_EXCLUDE;
+				cp = strstr(buf, "exclude");
+				cp += 7;
+			}
+			while (isspace((int)*cp) && *cp != '\0')
+				cp++;
+			while (*cp != '\0')
+			{
+				key[i++] = *cp;
+				cp++;
+			}
+		}
+		else 
+		{
+			cp = strstr(buf, ">");
+			if(cp)
+			{
+				cp++;
+				filter_type = VTY_FILTER_REDIRECT;
+				while (isspace((int)*cp) && *cp != '\0')
+					cp++;
+				while (*cp != '\0')
+				{
+					key[i++] = *cp;
+					cp++;
+				}
+			}	
+		}
+		cp = NULL;
+		cp = strstr(buf, "|");
+		if(cp)
+		{
+			while (*cp != '\0')
+			{
+				*cp = '\0';
+				cp++;
+			}
+		}
+		else
+		{
+			cp = strstr(buf, ">");
+			if(cp)
+			{
+				while (*cp != '\0')
+				{
+					*cp = '\0';
+					cp++;
+				}
+			}
+		}
+	}
+	return filter_type;
+}
+#else
+static int vty_output_filter(struct vty *vty, const char *fmt, int len)
+{
+	return 1;
+}
+#endif
 /*******************************************************************************/
 /* Sanity/safety wrappers around access to vty->buf */
 static void vty_buf_put(struct vty *vty, zpl_char c)
@@ -844,8 +950,19 @@ int vty_command(struct vty *vty, zpl_char *buf)
 	vector vline;
 	const char *protocolname;
 	zpl_char *cp = NULL;
+#ifdef CMD_PIPE_STR	
+    enum vty_filter_type filter_type = VTY_FILTER_NONE; 	
+	zpl_char filter_key[256];
+#endif
 	if (cli_shell.mutex)
 		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
+#ifdef CMD_PIPE_STR
+	if(strstr(buf, "show"))
+	{
+		memset(filter_key, '\0', sizeof(filter_key));
+		filter_type = vty_filter_slpit(buf, filter_key);		
+	}
+#endif	
 	/*
 	 * Log non empty command lines
 	 */
@@ -909,11 +1026,15 @@ int vty_command(struct vty *vty, zpl_char *buf)
 		os_get_monotonic(&before);
 #endif /* CONSUMED_TIME_CHECK */
 		cli_shell.cli_shell_vty = vty;
+#ifdef CMD_PIPE_STR
 		if(strstr(buf, "show"))
-			vty_filter_set(vty, NULL, VTY_FILTER_NONE);
+			vty_filter_set(vty, filter_key, filter_type);
+#endif			
 		ret = cmd_execute_command(vline, vty, NULL, 0);
+#ifdef CMD_PIPE_STR		
 		if(strstr(buf, "show"))
 			vty_filter_set(vty, NULL, VTY_FILTER_NONE);
+#endif			
 		cli_shell.cli_shell_vty = NULL;
 		/* Get the name of the protocol if any */
 		if (zlog_default)

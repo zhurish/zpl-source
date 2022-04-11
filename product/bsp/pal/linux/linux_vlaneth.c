@@ -16,9 +16,13 @@
 #include "command.h"
 #include "prefix.h"
 #include "vrf.h"
+#include "pal_include.h"
 #include "nsm_debug.h"
 #include "nsm_vlan.h"
-
+#include "nsm_arp.h"
+#include "nsm_bridge.h"
+#include "nsm_firewalld.h"
+#include "nsm_vlaneth.h"
 #include "linux_driver.h"
 #define _LINUX_IP_H
 #include <linux/if_tun.h>
@@ -30,7 +34,7 @@
 #define IPKERNEL_TUN_NAME	"/dev/net/tun"
 #define IPKERNEL_TAP_NAME	"/dev/tap"
 
-static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
+static int _linux_kernel_vlaneth_create (nsm_vlaneth_t *kifp)
 {
 	struct ipstack_ifreq ifr;
 	struct interface *ifp;
@@ -107,7 +111,7 @@ static int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 	return OK;
 }
 
-static int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
+static int _linux_kernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
 {
 
 	//struct ipstack_ifreq ifr;
@@ -213,7 +217,7 @@ int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 	if(if_is_serial(kifp->ifp))
 	{
 		if(kifp->ifp->ll_type != IF_LLT_MODEM)
-			return _ipkernel_vlaneth_create(kifp);
+			return _linux_kernel_vlaneth_create(kifp);
 		return OK;
 	}
 	if(if_is_ethernet(kifp->ifp)  && kifp->root &&
@@ -232,7 +236,7 @@ int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
 	if(if_is_serial(kifp->ifp))
 	{
 		if(kifp->ifp->ll_type != IF_LLT_MODEM)
-			return _ipkernel_vlaneth_destroy(kifp);
+			return _linux_kernel_vlaneth_destroy(kifp);
 		return OK;
 	}
 	if(if_is_ethernet(kifp->ifp) && kifp->root && IF_ID_GET(kifp->ifp->ifindex) &&

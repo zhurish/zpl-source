@@ -2183,7 +2183,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
       if (rib->mtu)
         vty_out (vty, ", mtu %u", rib->mtu);
       vty_out (vty, ", tag %d", rib->tag);
-      vty_out (vty, ", ip_vrf %u, name %s", rib->vrf_id, (ip_vrf_lookup(rib->vrf_id))->name);
+      vty_out (vty, ", vrf %u, name %s", rib->vrf_id, (ip_vrf_lookup(rib->vrf_id))->name);
       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELECTED))
         vty_out (vty, ", best");
       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_FIB_OVERRIDE))
@@ -2343,7 +2343,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
 			    rib->metric);
 
           if (rib->vrf_id != VRF_DEFAULT)
-            len += vty_out (vty, " [ip_vrf %u, name %s]", rib->vrf_id,(ip_vrf_lookup(rib->vrf_id))->name);
+            len += vty_out (vty, " [vrf %u, name %s]", rib->vrf_id,(ip_vrf_lookup(rib->vrf_id))->name);
 	}
       else
 	vty_out (vty, "  %c%*c",
@@ -3010,7 +3010,7 @@ vty_show_ip_route_summary (struct vty *vty, struct route_table *table)
 	    }
 	}
 
-  vty_out (vty, "%-20s %-20s %s  (ip_vrf %u)%s",
+  vty_out (vty, "%-20s %-20s %s  (vrf %u)%s",
            "Route Source", "Routes", "FIB",
            ((rib_table_info_t *)table->info)->zvrf->vrf_id,
            VTY_NEWLINE);
@@ -3091,7 +3091,7 @@ vty_show_ip_route_summary_prefix (struct vty *vty, struct route_table *table)
 	     }
       }
 
-  vty_out (vty, "%-20s %-20s %s  (ip_vrf %u)%s",
+  vty_out (vty, "%-20s %-20s %s  (vrf %u)%s",
            "Route Source", "Prefix Routes", "FIB",
            ((rib_table_info_t *)table->info)->zvrf->vrf_id,
            VTY_NEWLINE);
@@ -3613,10 +3613,10 @@ static int nsm_ipv4_route_config_write_one_info(struct vty *vty, struct route_ta
       if (si->vrf_id != VRF_DEFAULT)
       {
         // if(si->vrf_name)
-        vty_out(vty, "%s ip_vrf %s %s/%d", cmd, ip_vrf_vrfid2name(si->vrf_id), ipstack_inet_ntoa(rn->p.u.prefix4),
+        vty_out(vty, "%s vrf %s %s/%d", cmd, ip_vrf_vrfid2name(si->vrf_id), ipstack_inet_ntoa(rn->p.u.prefix4),
                 rn->p.prefixlen);
         /*         else
-                   vty_out (vty, "%s ip_vrf %d %s/%d", cmd, si->vrf_id, ipstack_inet_ntoa (rn->p.u.prefix4),
+                   vty_out (vty, "%s vrf %d %s/%d", cmd, si->vrf_id, ipstack_inet_ntoa (rn->p.u.prefix4),
                        rn->p.prefixlen);*/
       }
       else
@@ -5808,9 +5808,9 @@ static int nsm_ipv6_route_config_write_one_info(struct vty *vty, struct route_ta
       if (si->vrf_id != VRF_DEFAULT)
       {
         //if(si->vrf_name)
-        vty_out(vty, "ipv6 route ip_vrf %s %s", ip_vrf_vrfid2name(si->vrf_id), prefix2str(up, buf, sizeof buf));
+        vty_out(vty, "ipv6 route vrf %s %s", ip_vrf_vrfid2name(si->vrf_id), prefix2str(up, buf, sizeof buf));
         /*else
-            vty_out (vty, "ipv6 route ip_vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
+            vty_out (vty, "ipv6 route vrf %d %s", si->vrf_id, prefix2str (up, buf, sizeof buf));*/
       }
       else
         vty_out(vty, "ipv6 route %s", prefix2str(up, buf, sizeof buf));

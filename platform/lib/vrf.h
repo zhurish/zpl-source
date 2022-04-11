@@ -38,15 +38,12 @@ extern "C" {
  */
 
 
-/*
-#define VRF_CMD_STR         "ip_vrf <0-65535>"
-#define VRF_CMD_HELP_STR    "Specify the VRF\nThe VRF ID\n"
-*/
-#define VRF_ALL_CMD_STR         "ip_vrf all"
+
+#define VRF_ALL_CMD_STR         "vrf all"
 #define VRF_ALL_CMD_HELP_STR    "Specify the VRF\nAll VRFs\n"
 
 
-#define VRF_CMD_STR		"ip_vrf (NAME|<0-65535>)"
+#define VRF_CMD_STR		"vrf (NAME|<0-65535>)"
 #define VRF_CMD_HELP_STR	"Specify the VRF\nSpecify the VRF name\nThe VRF ID\n"
 
 /*

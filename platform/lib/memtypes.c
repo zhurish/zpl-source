@@ -51,6 +51,7 @@ struct memory_list memory_list_lib[] =
   { MTYPE_IF,			"Interface"			},
   { MTYPE_IF_DESC,			"Interface destination"	},
   { MTYPE_IF_HOOK,			"Interface Hook"			},
+  { MTYPE_IF_INFO,			"Interface Information"	},
   { MTYPE_SECURITY,			"Security information"			},
   { MTYPE_CONNECTED,		"Connected" 			},
   { MTYPE_CONNECTED_LABEL,	"Connected interface label"	},

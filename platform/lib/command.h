@@ -101,7 +101,6 @@ enum cmd_token_type
   TOKEN_TERMINAL = 0,
   TOKEN_MULTIPLE,
   TOKEN_KEYWORD,
-  TOKEN_PIPE,
 };
 
 enum cmd_terminal_type
@@ -121,7 +120,6 @@ enum cmd_terminal_type
   TERMINAL_IPV4_PREFIX,
   TERMINAL_IPV6,
   TERMINAL_IPV6_PREFIX,
-  TERMINAL_PIPE,
 };
 
 /* argument to be recorded on argv[] if it's not a literal */
