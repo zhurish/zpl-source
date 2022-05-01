@@ -9,7 +9,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
+#include "b53_mac.h"
 /****************************************************************************************/
 static int b53125_flush_mac_tbl(sdk_driver_t *dev, u8 mask)
 {
@@ -103,10 +103,7 @@ static int b53125_mac_tbl_rw_op(sdk_driver_t *dev, zpl_uint32 op)
 		reg |= ARLTBL_RW;
 	else
 		reg &= ~ARLTBL_RW;
-	if (((b53_device_t*)dev->sdk_device)->vlan_enabled)
-		reg &= ~ARLTBL_IVL_SVL_SELECT;
-	else
-		reg |= ARLTBL_IVL_SVL_SELECT;
+
 	b53125_write8(dev->sdk_device, B53_ARLIO_PAGE, B53_ARLTBL_RW_CTRL, reg);
 	return b53125_mac_tbl_op_wait(dev);
 }
@@ -416,7 +413,7 @@ int b53_br_join(struct dsa_switch *ds, zpl_phyport_t port, struct net_device *br
 		b53_write16(dev->sdk_device, B53_VLAN_PAGE, B53_JOIN_ALL_VLAN_EN, reg);
 	}
 
-	b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);
+	b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), &pvlan);
 
 	b53_for_each_port(dev->sdk_device, i) {
 		if (dsa_to_port(ds, i)->bridge_dev != br)
@@ -425,9 +422,9 @@ int b53_br_join(struct dsa_switch *ds, zpl_phyport_t port, struct net_device *br
 		/* Add this local port to the remote port VLAN control
 		 * membership and update the remote port bitmask
 		 */
-		b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), &reg);
+		b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), &reg);
 		reg |= BIT(port);
-		b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), reg);
+		b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), reg);
 		dev->ports[i].vlan_ctl_mask = reg;
 
 		pvlan |= BIT(i);
@@ -436,7 +433,7 @@ int b53_br_join(struct dsa_switch *ds, zpl_phyport_t port, struct net_device *br
 	/* Configure the local port VLAN control membership to include
 	 * remote ports and update the local port bitmask
 	 */
-	b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), pvlan);
+	b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), pvlan);
 	dev->ports[port].vlan_ctl_mask = pvlan;
 
 	return 0;
@@ -450,16 +447,16 @@ void b53_br_leave(struct dsa_switch *ds, zpl_phyport_t port, struct net_device *
 	zpl_uint32 i;
 	u16 pvlan, reg, pvid;
 
-	b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);
+	b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), &pvlan);
 
 	b53_for_each_port(dev->sdk_device, i) {
 		/* Don't touch the remaining ports */
 		if (dsa_to_port(ds, i)->bridge_dev != br)
 			continue;
 
-		b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), &reg);
+		b53_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), &reg);
 		reg &= ~BIT(port);
-		b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), reg);
+		b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), reg);
 		dev->ports[port].vlan_ctl_mask = reg;
 
 		/* Prevent self removal to preserve isolation */
@@ -467,7 +464,7 @@ void b53_br_leave(struct dsa_switch *ds, zpl_phyport_t port, struct net_device *
 			pvlan &= ~BIT(i);
 	}
 
-	b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), pvlan);
+	b53_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), pvlan);
 	dev->ports[port].vlan_ctl_mask = pvlan;
 
 	pvid = b53_default_pvid(dev);

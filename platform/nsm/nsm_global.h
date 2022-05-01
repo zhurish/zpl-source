@@ -65,9 +65,12 @@ typedef struct nsm_global_s
 #ifdef ZPL_NSM_IGMP
     nsm_snoop_proto_t snoop_proto;
 #endif
+	zpl_bool			cpu_rate_enable;
+	zpl_uint32			cpu_rate;	
 }nsm_global_t;
 
 
+extern int nsm_cpu_rate_set_api(zpl_uint32	cpu_rate);
 
 extern int nsm_global_jumbo_size_set(zpl_uint32 value);
 extern int nsm_global_jumbo_size_get(zpl_uint32 *value);

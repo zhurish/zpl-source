@@ -95,9 +95,8 @@ int nsm_serial_interface_kernel(struct interface *ifp, zpl_char *kname)
 		if_kname_set(ifp, kname);
 		if(!nsm_halpal_interface_ifindex(ifp->k_name))
 			nsm_halpal_interface_add(ifp);
-		nsm_halpal_interface_refresh_flag(ifp);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
-		pal_interface_get_lladdr(ifp);
+		//pal_interface_get_lladdr(ifp);
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
 		return OK;
 	}

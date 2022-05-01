@@ -70,9 +70,9 @@ static const char * _hal_cmd_namestr(int cmd)
     return "REGISTER";
 	case HAL_MODULE_CMD_KEEPALIVE:
     return "KEEPALIVE";
-	case HAL_MODULE_CMD_INIT:
-    return "INIT";
- 	case HAL_MODULE_CMD_PORTTBL:
+	case HAL_MODULE_CMD_STARTONDE:
+    return "START DONE";
+ 	case HAL_MODULE_CMD_HWPORTTBL:
     return "PORTTBL";   
 	case HAL_MODULE_CMD_MAX:
     return "MAX";
@@ -112,4 +112,26 @@ const char * hal_module_cmd_name(zpl_uint32 cmd)
 
 
 
+hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, int num, int module)
+{
+	int ret = 0;
+	for(ret = 0; ret < num; ret++)
+	{
+		if(cmdtbl[ret].module == module && cmdtbl[ret].module_handle)
+            return &cmdtbl[ret];
+	}
+	zlog_warn(MODULE_HAL, "Can not Find this module:%d ", module);
+	return 0;
+}
 
+hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *cmdtbl, int num, int subcmd)
+{
+	int ret = 0;
+	for(ret = 0; ret < num; ret++)
+	{
+		if(cmdtbl[ret].subcmd == subcmd && cmdtbl[ret].cmd_handle)
+            return &cmdtbl[ret];
+	}
+	zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
+	return 0;
+}

@@ -63,12 +63,12 @@ int bsp_mirror_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint
 	int ret = OK;
 	hal_mirror_param_t	mirrorparam;
 	hal_port_header_t	bspport;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
 	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 	hal_ipcmsg_getl(&client->ipcmsg, &mirrorparam.value);
@@ -80,15 +80,10 @@ int bsp_mirror_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint
 		hal_ipcmsg_getc(&client->ipcmsg, &mirrorparam.filter);
 		hal_ipcmsg_get(&client->ipcmsg, &mirrorparam.mac, NSM_MAC_MAX);
 	}
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mirrorparam);
+	ret = (callback->cmd_handle)(driver, &bspport, &mirrorparam);
 	break;
 	default:
 		break;

@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_IOCTL_H
-#define _ZEBRA_IOCTL_H
+#ifndef __LINUX_IOCTL_H__
+#define __LINUX_IOCTL_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,4 +50,4 @@ int _ipkernel_if_set_metric(struct interface *ifp, zpl_uint32 metric);
 }
 #endif
 
-#endif /* _ZEBRA_IOCTL_H */
+#endif /* __LINUX_IOCTL_H__ */

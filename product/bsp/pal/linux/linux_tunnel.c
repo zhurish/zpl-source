@@ -16,7 +16,7 @@
 #include "prefix.h"
 #include "vrf.h"
 #include "nsm_debug.h"
-#include "nsm_tunnel.h"
+#include "nsm_include.h"
 #include "nsm_arp.h"
 #include "nsm_bridge.h"
 #include "nsm_firewalld.h"

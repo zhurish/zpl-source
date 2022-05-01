@@ -86,23 +86,18 @@ int bsp_dos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	hal_dos_param_t	dos;
 	zpl_uint32 sdksubcmd = subcmd;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
 	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	hal_ipcmsg_getl(&client->ipcmsg, &dos.value);
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &sdksubcmd, &dos.value);
+	ret = (callback->cmd_handle)(driver, &sdksubcmd, &dos.value);
 	break;
 	default:
 		break;

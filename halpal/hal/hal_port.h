@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef ABSTRACT_HAL_HAL_PORT_H_
-#define ABSTRACT_HAL_HAL_PORT_H_
+#ifndef __HAL_PORT_H__
+#define __HAL_PORT_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,14 +29,22 @@ enum hal_port_cmd
 	HAL_PORT_PROTECTED,
     HAL_PORT_VRF,
     HAL_PORT_MODE,
-	HAL_PORT_MAC,
-	HAL_PORT_IPADDR,
+    HAL_PORT_MTU,
+    HAL_PORT_MULTICAST,
+    HAL_PORT_BANDWIDTH,
+	//STORM
+	HAL_PORT_STORM_RATELIMIT,  
+    HAL_PORT_STATS,    
 };
+
+
 
 typedef struct hal_port_param_s
 {
 	zpl_uint32 value;
 	mac_t mac[NSM_MAC_MAX];
+    zpl_uint32 value1;
+    zpl_uint32 value2;
 }hal_port_param_t;
 
 
@@ -57,6 +65,8 @@ extern zpl_bool hal_port_state_get(ifindex_t ifindex);
 extern nsm_speed_en hal_port_speed_get(ifindex_t ifindex);
 extern nsm_duplex_en hal_port_duplex_get(ifindex_t ifindex);
 
+extern int hal_port_stats_get(ifindex_t ifindex, struct if_stats *);
+
 extern int hal_port_flow_set(ifindex_t ifindex, zpl_bool tx, zpl_bool rx);
 extern int hal_port_learning_set(ifindex_t ifindex, zpl_bool enable);
 
@@ -64,19 +74,21 @@ extern int hal_port_software_learning_set(ifindex_t ifindex, zpl_bool enable);
 
 extern int hal_port_protected_set(ifindex_t ifindex, zpl_bool enable);
 
-extern int hal_port_mac_set(ifindex_t ifindex, zpl_uint8 *cp, zpl_bool secondry);
 extern int hal_port_mtu_set(ifindex_t ifindex, zpl_uint32 value);
 extern int hal_port_vrf_set(ifindex_t ifindex, vrf_id_t value);
 extern int hal_port_mode_set(ifindex_t ifindex, if_mode_t value);
+
+extern int hal_port_multicast_set (ifindex_t ifindex, zpl_uint32 value);
+extern int hal_port_bandwidth_set (ifindex_t ifindex, zpl_uint32 value);
+
+//风暴
+int hal_port_stormcontrol_set(ifindex_t ifindex, zpl_uint32 mode, zpl_uint32 limit, zpl_uint32 type);
 
 /* 
  * Enable or disable transmission of pause frames and honoring received
  * pause frames on a port.
  */
-extern int hal_port_pause_set(
-    ifindex_t ifindex, 
-    zpl_bool pause_tx, 
-    zpl_bool pause_rx);
+extern int hal_port_pause_set(ifindex_t ifindex, zpl_bool pause_tx, zpl_bool pause_rx);
 
 
 #if 0
@@ -127,4 +139,4 @@ extern int hal_port_policer_set(
 #endif
 
 
-#endif /* ABSTRACT_HAL_HAL_PORT_H_ */
+#endif /* __HAL_PORT_H__ */

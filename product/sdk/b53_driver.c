@@ -9,6 +9,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
+#include "b53_port.h"
 
 #define B53_BRCM_OUI_1	0x0143bc00
 #define B53_BRCM_OUI_2	0x03625c00
@@ -30,12 +31,8 @@ struct b53_chip_data {
 	u8 jumbo_size_reg;
 };
 
-#define B53_VTA_REGS	\
-	{ B53_VT_ACCESS, B53_VT_INDEX, B53_VT_ENTRY }
-#define B53_VTA_REGS_9798 \
-	{ B53_VT_ACCESS_9798, B53_VT_INDEX_9798, B53_VT_ENTRY_9798 }
-#define B53_VTA_REGS_63XX \
-	{ B53_VT_ACCESS_63XX, B53_VT_INDEX_63XX, B53_VT_ENTRY_63XX }
+#define B53_VLAN_TBL_REGS	\
+	{ B53_VLAN_TBL_ACCESS, B53_VLAN_TBL_INDEX, B53_VLAN_TBL_ENTRY }
 
 static const struct b53_chip_data b53_switch_chips[] = {
 	{
@@ -44,7 +41,7 @@ static const struct b53_chip_data b53_switch_chips[] = {
 		.vlans = 4096,
 		.enabled_ports = 0x1f,
 		.arl_entries = 4,
-		.vta_regs = B53_VTA_REGS,
+		.vta_regs = B53_VLAN_TBL_REGS,
 		.cpu_port = B53_CPU_PORT,
 		.duplex_reg = B53_DUPLEX_STAT_GE,
 		.jumbo_pm_reg = B53_JUMBO_PORT_MASK,
@@ -59,23 +56,11 @@ static const struct b53_chip_data b53_switch_chips[] = {
 		.arl_bins = 4,
 		.arl_buckets = 1024,
 		.cpu_port = B53_CPU_PORT,
-		.vta_regs = B53_VTA_REGS,
+		.vta_regs = B53_VLAN_TBL_REGS,
 		.duplex_reg = B53_DUPLEX_STAT_GE,
 		.jumbo_pm_reg = B53_JUMBO_PORT_MASK,
 		.jumbo_size_reg = B53_JUMBO_MAX_SIZE,
 		
-	},
-	{
-		.chip_id = BCM53128_DEVICE_ID,
-		.dev_name = "BCM53128",
-		.vlans = 4096,
-		.enabled_ports = 0x1ff,
-		.arl_entries = 4,
-		.cpu_port = B53_CPU_PORT,
-		.vta_regs = B53_VTA_REGS,
-		.duplex_reg = B53_DUPLEX_STAT_GE,
-		.jumbo_pm_reg = B53_JUMBO_PORT_MASK,
-		.jumbo_size_reg = B53_JUMBO_MAX_SIZE,
 	},
 };
 
@@ -147,16 +132,7 @@ b53_device_t * b53125_device_probe()
 			b53_device->num_arl_bins = chip->arl_bins;
 			b53_device->num_arl_buckets = chip->arl_buckets;
 			
-			if (b53_device->chip_id == BCM53115_DEVICE_ID)
-			{
-				u64 strap_value;
-				b53125_read48(b53_device, B53_STAT_PAGE, B53_STRAP_VALUE, &strap_value);
-				if (strap_value & SV_GMII_CTRL_115)
-					b53_device->cpu_port = 5;
 
-				_sdk_notice( "Find b53115 device on '%s' ID:0x%x REV:0x%x", B53_DEVICE_NAME,
-						b53_device->chip_id, b53_device->core_rev);
-			}
 			if (b53_device->chip_id == BCM53125_DEVICE_ID)
 				_sdk_notice( "Find b53125 device on '%s' ID:0x%x REV:0x%x", B53_DEVICE_NAME,
 					b53_device->chip_id, b53_device->core_rev);

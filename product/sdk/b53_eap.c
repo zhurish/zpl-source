@@ -10,7 +10,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
+#include "b53_eap.h"
 
 
 //8021X

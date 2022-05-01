@@ -124,7 +124,7 @@ extern "C" {
  */
 
 
-#define IPSTACK_IN6_ARE_ADDR_EQUAL(addr1)            IN6_ARE_ADDR_EQUAL(addr1)
+#define IPSTACK_IN6_ARE_ADDR_EQUAL(addr1,addr2)      IN6_ARE_ADDR_EQUAL(addr1, addr2)
 #define IPSTACK_IN6_IS_ADDR_UNSPECIFIED(addr)        IN6_IS_ADDR_UNSPECIFIED(addr)
 #define IPSTACK_IN6_IS_ADDR_LOOPBACK(addr)           IN6_IS_ADDR_LOOPBACK(addr)
 #define IPSTACK_IN6_IS_ADDR_V4COMPAT(addr)           IN6_IS_ADDR_V4COMPAT(addr)
@@ -791,10 +791,10 @@ extern "C" {
  *                    IPv6 icmp filter
  *===========================================================================
  */
-#define IPSTACK_ICMP6_FILTER_WILLPASS(type)         ICMP6_FILTER_WILLPASS(type)
-#define IPSTACK_ICMP6_FILTER_WILLBLOCK(type)        ICMP6_FILTER_WILLBLOCK(type)
-#define IPSTACK_ICMP6_FILTER_SETPASS(type)          ICMP6_FILTER_SETPASS(type)
-#define IPSTACK_ICMP6_FILTER_SETBLOCK(type)         ICMP6_FILTER_SETBLOCK(type)
+#define IPSTACK_ICMP6_FILTER_WILLPASS(type, f)      ICMP6_FILTER_WILLPASS(type, f)
+#define IPSTACK_ICMP6_FILTER_WILLBLOCK(type, f)     ICMP6_FILTER_WILLBLOCK(type, f)
+#define IPSTACK_ICMP6_FILTER_SETPASS(type, f)       ICMP6_FILTER_SETPASS(type, f)
+#define IPSTACK_ICMP6_FILTER_SETBLOCK(type, f)      ICMP6_FILTER_SETBLOCK(type, f)
 #define IPSTACK_ICMP6_FILTER_SETPASSALL(filterp)    ICMP6_FILTER_SETPASSALL(filterp)
 #define IPSTACK_ICMP6_FILTER_SETBLOCKALL(filterp)   ICMP6_FILTER_SETBLOCKALL(filterp)
 
@@ -857,6 +857,35 @@ extern "C" {
 #define ipstack_ether_header        ether_header
 #define ipstack_ether_arp           ether_arp
 #define ipstack_sockaddr_storage    sockaddr_storage
+
+#define ipstack_icmp6_hdr    icmp6_hdr
+
+
+
+#define IPSTACK_ND_ROUTER_SOLICIT ND_ROUTER_SOLICIT           
+#define IPSTACK_ND_ROUTER_ADVERT ND_ROUTER_ADVERT            
+#define IPSTACK_ND_NEIGHBOR_SOLICIT ND_NEIGHBOR_SOLICIT         
+#define IPSTACK_ND_NEIGHBOR_ADVERT ND_NEIGHBOR_ADVERT          
+#define IPSTACK_ND_REDIRECT ND_REDIRECT                 
+#define IPSTACK_ND_RA_FLAG_MANAGED       ND_RA_FLAG_MANAGED
+#define IPSTACK_ND_RA_FLAG_OTHER         ND_RA_FLAG_OTHER
+#define IPSTACK_ND_RA_FLAG_HOME_AGENT    ND_RA_FLAG_HOME_AGENT
+
+
+#define IPSTACK_ND_OPT_SOURCE_LINKADDR		ND_OPT_SOURCE_LINKADDR
+#define IPSTACK_ND_OPT_TARGET_LINKADDR		ND_OPT_TARGET_LINKADDR
+#define IPSTACK_ND_OPT_PREFIX_INFORMATION	ND_OPT_PREFIX_INFORMATION
+#define IPSTACK_ND_OPT_REDIRECTED_HEADER	ND_OPT_REDIRECTED_HEADER
+#define IPSTACK_ND_OPT_MTU			        ND_OPT_MTU
+#define IPSTACK_ND_OPT_RTR_ADV_INTERVAL		ND_OPT_RTR_ADV_INTERVAL
+#define IPSTACK_ND_OPT_HOME_AGENT_INFO		ND_OPT_HOME_AGENT_INFO
+
+#define IPSTACK_ND_OPT_PI_FLAG_ONLINK	ND_OPT_PI_FLAG_ONLINK
+#define IPSTACK_ND_OPT_PI_FLAG_AUTO	    ND_OPT_PI_FLAG_AUTO
+#define IPSTACK_ND_OPT_PI_FLAG_RADDR	ND_OPT_PI_FLAG_RADDR
+
+
+#define ipstack_nd_router_advert  nd_router_advert
 /*
  *===========================================================================
  *                        in_pktinfo
@@ -994,7 +1023,7 @@ extern "C" {
 #define  ipstack_ifconf                 ifconf
 //#define  ifc_req                        ip_ifc_req
 #define  ipstack_iphdr                  iphdr
-#define  ipstack_ip                     iphdr
+#define  ipstack_ip                     ip
 #define  ipstack_ip_auth_hdr            ip_auth_hdr
 #define  ipstack_ip_esp_hdr             ip_esp_hdr
 #define  ipstack_ip_comp_hdr            ip_comp_hdr

@@ -126,7 +126,7 @@ static int _netlink_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct 
 	}
 	_netlink_addattr_nest_end(&req.n, linkinfo);
 	if(create == zpl_true)
-		return _netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
+		return _netlink_talk(&req.n, &netlink_cmd, zvrf->vrf_id);
 	return ERROR;
 }
 

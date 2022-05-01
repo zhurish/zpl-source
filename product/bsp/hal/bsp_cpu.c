@@ -85,24 +85,19 @@ int bsp_cpu_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	zpl_uint8	value = 0;
 	hal_global_header_t	global;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
 	BSP_ENTER_FUNC();
+	if(!callback)
+	{
+		BSP_LEAVE_FUNC();
+		return OS_NO_CALLBACK;
+	}
 	hal_ipcmsg_global_get(&client->ipcmsg, &global);
-	hal_ipcmsg_getc(&client->ipcmsg, &value);
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
+	hal_ipcmsg_getc(&client->ipcmsg, &value);	
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
+	ret = (callback->cmd_handle)(driver, &global, &value);
 	break;
 	default:
 		break;

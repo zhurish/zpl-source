@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_ZSERV_H
-#define _ZEBRA_ZSERV_H
+#ifndef __NSM_ZSERV_H__
+#define __NSM_ZSERV_H__
 
 #ifdef __cplusplus
 extern "C" {

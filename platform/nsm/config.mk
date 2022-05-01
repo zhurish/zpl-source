@@ -11,7 +11,6 @@ OBJS	+= nsm_rib.o
 
 OBJS	+= nsm_zebra_routemap.o
 OBJS	+= nsm_rnh.o
-OBJS	+= nsm_fpm.o
 OBJS	+= nsm_zserv.o
 
 OBJS	+= nsm_interface.o
@@ -23,6 +22,17 @@ OBJS	+= nsm_global.o
 OBJS	+= nsm_port.o
 
 #OBJS	+= moduletable.o
+#ICMP Router Discovery Messages
+ifeq ($(strip $(ZPL_NSM_IRDP)),true)
+OBJS	+= nsm_irdp_interface.o		
+OBJS	+= nsm_irdp_packet.o	
+OBJS	+= nsm_irdp_main.o		
+endif
+
+#Router advertisement
+ifeq ($(strip $(ZPL_NSM_RTADV)),true)
+OBJS	+= nsm_rtadv.o		
+endif
 
 ifeq ($(strip $(ZPL_NSM_8021X)),true)
 OBJS	+= nsm_8021x.o			
@@ -144,6 +154,7 @@ ifeq ($(strip $(ZPL_NSM_PPP)),true)
 OBJS	+= cmd_ppp.o	
 endif
 ifeq ($(strip $(ZPL_NSM_SECURITY)),true)
+OBJS	+= cmd_security.o
 endif
 ifeq ($(strip $(ZPL_NSM_VLANETH)),true)
 endif

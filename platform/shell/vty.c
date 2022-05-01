@@ -325,6 +325,16 @@ static int vty_output_filter(struct vty *vty, const char *fmt, int len)
 	return 1;
 }
 #endif
+
+int vty_result_out(struct vty *vty, const char *format, ...)
+{
+	va_list args;
+	os_bzero(vty->result_msg, sizeof(vty->result_msg));
+	va_start(args, format);
+	vty->result_len = vsnprintf(vty->result_msg, sizeof(vty->result_msg), format, args);
+	va_end(args);
+	return vty->result_len;
+}
 /*******************************************************************************/
 /* Sanity/safety wrappers around access to vty->buf */
 static void vty_buf_put(struct vty *vty, zpl_char c)
@@ -471,12 +481,12 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 				{
 					if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 					{
-						// tcflush(vty->wfd._fd, TCIOFLUSH);
+						 tcflush(vty->wfd._fd, TCIOFLUSH);
 					}
 					ipstack_write(vty->wfd, p, len);
 					if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 					{
-						// tcdrain(vty->wfd._fd);
+						 tcdrain(vty->wfd._fd);
 					}
 				}
 			}
@@ -508,10 +518,10 @@ static int vty_log_out(struct vty *vty, const char *level,
 		buf[len] = '\0';
 	}
 	if (level)
-		ret = snprintf(buf + len, sizeof(buf) - len, "%-12s: %-8s: ", level,
+		ret = snprintf(buf + len, sizeof(buf) - len, "%s: %s: ", level,
 					   proto_str);
 	else
-		ret = snprintf(buf + len, sizeof(buf) - len, "%-8s: ", proto_str);
+		ret = snprintf(buf + len, sizeof(buf) - len, "%s: ", proto_str);
 
 	if (file)
 	{
@@ -563,12 +573,12 @@ static int vty_log_out(struct vty *vty, const char *level,
 	{
 		if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 		{
-			// tcflush(vty->wfd._fd, TCIOFLUSH);
+			 tcflush(vty->wfd._fd, TCIOFLUSH);
 		}
 		ret = ipstack_write(vty->wfd, buf, len);
 		if (vty_login_type(vty) <= VTY_LOGIN_CONSOLE)
 		{
-			// tcdrain(vty->wfd._fd);
+			 tcdrain(vty->wfd._fd);
 		}
 	}
 	if (ret < 0)
@@ -584,8 +594,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 				  vty->fd, ipstack_strerror(ipstack_errno));
 		if (vty->obuf)
 			buffer_reset(vty->obuf);
-		/* cannot call vty_close, because a parent routine may still try
-		 to access the vty struct */
+		/* cannot call vty_close, because a parent routine may still try to access the vty struct */
 		vty->status = VTY_CLOSE;
 		vty_close(vty);
 		return -1;
@@ -830,14 +839,17 @@ int vty_command(struct vty *vty, zpl_char *buf)
 		/* format the base vty info */
 		snprintf(vty_str, sizeof(vty_str), "vty[??]@%s", vty->address);
 		if (vty)
+		{
 			for (i = 0; i < vector_active(cli_shell.vtyvec); i++)
+			{
 				if (vty == vector_slot(cli_shell.vtyvec, i) && (!vty->cancel))
 				{
 					snprintf(vty_str, sizeof(vty_str), "vty[%d]@%s", i,
 							 vty->address);
 					break;
 				}
-
+			}
+		}
 		/* format the prompt */
 		snprintf(prompt_str, sizeof(prompt_str), cmd_prompt(vty->node),
 				 vty_str);
@@ -910,7 +922,10 @@ int vty_command(struct vty *vty, zpl_char *buf)
 		switch (ret)
 		{
 		case CMD_WARNING:
-			vty_out(vty, "Warning...%s", VTY_NEWLINE);
+			if(vty->result_len)
+				vty_out(vty, "%% Warning %s.%s", vty->result_msg, VTY_NEWLINE);
+			else
+				vty_out(vty, "%% Warning...%s", VTY_NEWLINE);
 			break;
 		case CMD_ERR_AMBIGUOUS:
 			vty_out(vty, "%% Ambiguous command.%s", VTY_NEWLINE);
@@ -1398,9 +1413,10 @@ static void vty_describe_fold(struct vty *vty, zpl_uint32 cmd_width,
 	for (p = token->desc; strlen(p) > desc_width; p += pos + 1)
 	{
 		for (pos = desc_width; pos > 0; pos--)
+		{
 			if (*(p + pos) == ' ')
 				break;
-
+		}
 		if (pos == 0)
 			break;
 
@@ -1456,6 +1472,7 @@ static void vty_describe_command(struct vty *vty)
 	/* Get width of command string. */
 	width = 0;
 	for (i = 0; i < vector_active(describe); i++)
+	{
 		if ((token = vector_slot(describe, i)) != NULL)
 		{
 			zpl_uint32 len;
@@ -1470,12 +1487,14 @@ static void vty_describe_command(struct vty *vty)
 			if (width < len)
 				width = len;
 		}
+	}
 
 	/* Get width of description string. */
 	desc_width = vty->width - (width + 6);
 
 	/* Print out description. */
 	for (i = 0; i < vector_active(describe); i++)
+	{
 		if ((token = vector_slot(describe, i)) != NULL)
 		{
 			if (token->cmd[0] == '\0')
@@ -1504,7 +1523,7 @@ static void vty_describe_command(struct vty *vty)
 					desc->str ? desc->str : "", VTY_NEWLINE);
 #endif /* 0 */
 		}
-
+	}
 	if ((token = token_cr))
 	{
 		if (!token->desc)
@@ -1564,12 +1583,13 @@ static void vty_hist_add(struct vty *vty)
 
 	/* Ignore the same string as previous one. */
 	if (vty->hist[index])
+	{
 		if (strcmp(vty->buf, vty->hist[index]) == 0)
 		{
 			vty->hp = vty->hindex;
 			return;
 		}
-
+	}
 	/* Insert history entry. */
 	if (vty->hist[vty->hindex])
 		XFREE(MTYPE_VTY_HIST, vty->hist[vty->hindex]);
@@ -2456,8 +2476,10 @@ static void vty_console_close_cache(struct vty *vty)
 		}
 		/* Free command history. */
 		for (i = 0; i < VTY_MAXHIST; i++)
+		{
 			if (vty->hist[i])
 				XFREE(MTYPE_VTY_HIST, vty->hist[i]);
+		}
 	}
 }
 
@@ -2769,6 +2791,7 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 	memset(&su, 0, sizeof(union sockunion));
 	su.sa.sa_family = family;
 	if (addr)
+	{
 		switch (family)
 		{
 		case IPSTACK_AF_INET:
@@ -2780,8 +2803,9 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 			break;
 #endif
 		}
-
+	}
 	if (naddr)
+	{
 		switch (ipstack_inet_pton(family, addr, naddr))
 		{
 		case -1:
@@ -2793,7 +2817,7 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 					 ipstack_strerror(ipstack_errno));
 			naddr = NULL;
 		}
-
+	}
 	/* Make new ipstack_socket. */
 	accept_sock = sockunion_stream_socket(&su);
 	if (accept_sock._fd < 0)
@@ -3066,11 +3090,7 @@ static int vtysh_read(struct thread *thread)
 		header->type = msg.type;
 		header->retcode = -1;
 		header->retlen = buffer_size(vty->obuf);
-		if (vty->ssh_enable)
-		{
-			/*if(vty->ssh_write)
-				(vty->ssh_write)(vty, buf, len);*/
-		}
+
 		if (!vty->t_write && (vtysh_flush(vty) < 0))
 			return 0;
 	}
@@ -3108,12 +3128,6 @@ static int vtysh_read(struct thread *thread)
 				header->type = msg.type;
 				header->retcode = ret;
 				header->retlen = buffer_size(vty->obuf);
-
-				if (vty->ssh_enable)
-				{
-					/*				if(vty->ssh_write)
-										(vty->ssh_write)(vty, buf, len);*/
-				}
 				/*else
 				{
 					header[3] = ret;
@@ -3134,11 +3148,7 @@ static int vtysh_read(struct thread *thread)
 		header->type = msg.type;
 		header->retcode = -1;
 		header->retlen = buffer_size(vty->obuf);
-		if (vty->ssh_enable)
-		{
-			/*if(vty->ssh_write)
-				(vty->ssh_write)(vty, buf, len);*/
-		}
+
 		if (!vty->t_write && (vtysh_flush(vty) < 0))
 			return 0;
 	}
@@ -3540,7 +3550,9 @@ void vty_log(const char *level, const char *proto_str, const char *format,
 		return;
 
 	for (i = 0; i < vector_active(cli_shell.vtyvec); i++)
+	{
 		if ((vty = vector_slot(cli_shell.vtyvec, i)) != NULL)
+		{
 			if (vty->monitor && !(vty->cancel))
 			{
 				va_list ac;
@@ -3548,6 +3560,8 @@ void vty_log(const char *level, const char *proto_str, const char *format,
 				vty_log_out(vty, level, proto_str, format, ctl, ac, NULL, NULL, 0);
 				va_end(ac);
 			}
+		}
+	}
 }
 
 void vty_log_debug(const char *level, const char *proto_str, const char *format,
@@ -3560,7 +3574,9 @@ void vty_log_debug(const char *level, const char *proto_str, const char *format,
 		return;
 
 	for (i = 0; i < vector_active(cli_shell.vtyvec); i++)
+	{
 		if ((vty = vector_slot(cli_shell.vtyvec, i)) != NULL)
+		{
 			if (vty->monitor && !(vty->cancel))
 			{
 				va_list ac;
@@ -3568,6 +3584,8 @@ void vty_log_debug(const char *level, const char *proto_str, const char *format,
 				vty_log_out(vty, level, proto_str, format, ctl, ac, file, func, line);
 				va_end(ac);
 			}
+		}
+	}
 }
 
 int vty_trap_log(const char *level, const char *proto_str, const char *format,
@@ -3822,6 +3840,7 @@ void vty_reset()
 	struct eloop *vty_serv_thread;
 
 	for (i = 0; i < vector_active(cli_shell.vtyvec); i++)
+	{
 		if ((vty = vector_slot(cli_shell.vtyvec, i)) != NULL)
 		{
 			if (vty->obuf)
@@ -3832,8 +3851,10 @@ void vty_reset()
 			else
 				vty_close(vty);
 		}
+	}
 
 	for (i = 0; i < vector_active(cli_shell.serv_thread); i++)
+	{
 		if ((vty_serv_thread = vector_slot(cli_shell.serv_thread, i)) != NULL)
 		{
 			eloop_cancel(vty_serv_thread);
@@ -3841,6 +3862,7 @@ void vty_reset()
 			vector_slot(cli_shell.serv_thread, i) = NULL;
 			close(i);
 		}
+	}
 	if (cli_shell.mutex)
 		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	_global_host.vty_timeout_val = VTY_TIMEOUT_DEFAULT;
@@ -3919,11 +3941,13 @@ struct vty *vty_lookup(zpl_socket_t sock)
 	zpl_uint32 i;
 	struct vty *vty = NULL;
 	for (i = 0; i < vector_active(cli_shell.vtyvec); i++)
+	{
 		if ((vty = vector_slot(cli_shell.vtyvec, i)) != NULL)
 		{
 			if (vty->fd._fd == sock._fd)
 				return vty;
 		}
+	}
 	return NULL;
 }
 

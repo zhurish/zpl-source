@@ -14,10 +14,15 @@ extern "C" {
 
 #include "sdk_driver.h"
 #include "b53_mdio.h"
-#include "b53_regs.h"
+#include "b53_global.h"
+#include "b53_mac.h"
+
+/*BCM53125SKMMLG*/
 /*********************************************************************************/
 #define B53_DEVICE_NAME	"b53mdio0"
 #define B53_INVALID_LANE	0xff
+
+#define BIT(n)		(1)<<(n)
 
 enum {
 
@@ -51,13 +56,9 @@ enum {
 #define SPEED_UNKNOWN		-1
 
 
-#define BR_STATE_DISABLED 0
-#define BR_STATE_LISTENING 1
-#define BR_STATE_LEARNING 2
-#define BR_STATE_FORWARDING 3
-#define BR_STATE_BLOCKING 4
+
 /*********************************************************************************/
-#define B53_CPU_PORT_25	5
+
 #define B53_CPU_PORT	8
 
 
@@ -89,7 +90,44 @@ typedef struct b53125_device
 	zpl_phyport_t num_ports;
 }b53_device_t;
 
-
+struct b53_mib_stats
+{
+	zpl_ulong TxOctets;
+	zpl_uint32 TxDropPkts;
+	zpl_uint32 TxBroadcastPkts;
+	zpl_uint32 TxMulticastPkts;
+	zpl_uint32 TxUnicastPkts;
+	zpl_uint32 TxCollisions;
+	zpl_uint32 TxSingleCollision;
+	zpl_uint32 TxMultipleCollision;
+	zpl_uint32 TxDeferredTransmit;
+	zpl_uint32 TxLateCollision;
+	zpl_uint32 TxExcessiveCollision;
+	zpl_uint32 TxPausePkts;
+	zpl_ulong RxOctets;
+	zpl_uint32 RxUndersizePkts;
+	zpl_uint32 RxPausePkts;
+	zpl_uint32 Pkts64Octets;
+	zpl_uint32 Pkts65to127Octets;
+	zpl_uint32 Pkts128to255Octets;
+	zpl_uint32 Pkts256to511Octets;
+	zpl_uint32 Pkts512to1023Octets;
+	zpl_uint32 Pkts1024to1522Octets;
+	zpl_uint32 RxOversizePkts;
+	zpl_uint32 RxJabbers;
+	zpl_uint32 RxAlignmentErrors;
+	zpl_uint32 RxFCSErrors;
+	zpl_ulong RxGoodOctets;
+	zpl_uint32 RxDropPkts;
+	zpl_uint32 RxUnicastPkts;
+	zpl_uint32 RxMulticastPkts;
+	zpl_uint32 RxBroadcastPkts;
+	zpl_uint32 RxSAChanges;
+	zpl_uint32 RxFragments;
+	zpl_uint32 RxJumboPkts;
+	zpl_uint32 RxSymbolErrors;
+	zpl_uint32 RxDiscarded;
+};
 
 struct b53125_mac_arl_entry {
 	u8 port;
@@ -180,7 +218,7 @@ extern int b53125_qos_class4_weight(sdk_driver_t *dev, zpl_bool strict, int weig
 /******* rate *******/
 extern int b53125_qos_cpu_rate(sdk_driver_t *dev, int rate);
 extern int b53125_rate_default(sdk_driver_t *dev);
-extern int b53125_strom_rate(sdk_driver_t *dev, zpl_phyport_t port,int type, int cnt);
+extern int b53125_strom_rate(sdk_driver_t *dev, zpl_phyport_t port,zpl_uint32 mode, zpl_uint32 cnt, zpl_uint32 type);
 extern int b53125_ingress_rate(sdk_driver_t *dev, zpl_phyport_t port, int cnt);
 extern int b53125_egress_rate(sdk_driver_t *dev, zpl_phyport_t port, int rate);
 

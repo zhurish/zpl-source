@@ -18,7 +18,7 @@
 #include <linux/mii.h>
 #include "b53_driver.h"
 #include "b53_mdio.h"
-#include "b53_regs.h"
+#include "b53_global.h"
 
 int b53125_mdio_read(struct b53_mdio_device *dev, u8 page, u8 reg)
 {

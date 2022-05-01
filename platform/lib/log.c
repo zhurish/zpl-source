@@ -47,10 +47,13 @@ static int logfile_fd = -1; /* Used in signal handler. */
 struct zlog *zlog_default = NULL;
 
 
-//#define ZLOG_PRI_FMT	"%-12s"
+
 //static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
 //		"warnings", "notifications", "informational", "debugging", "trapping", "ftrapping", NULL, };
-#define ZLOG_PRI_FMT	"%-8s"
+//#define ZLOG_PRI_FMT	"%-8s"
+//#define ZLOG_PRO_FMT	"%-8s"
+#define ZLOG_PRI_FMT	"%s"
+#define ZLOG_PRO_FMT	"%s"
 static const char *zlog_priority[] = { "emerg", "alert", "crit", "err",
 		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
 
@@ -296,7 +299,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(module));
+		fprintf(zl->testlog.fp, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
 		va_end(ac);
@@ -323,7 +326,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->fp, "%-8s: ", zlog_proto_names(module));
+		fprintf(zl->fp, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
@@ -338,7 +341,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(stdout, "%-8s: ", zlog_proto_names(module));
+		fprintf(stdout, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
@@ -367,7 +370,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 			time_print(stdout, zl->timestamp);
 			if (zl->record_priority)
 				fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-			fprintf(stdout, "%-8s: ", zlog_proto_names(module));
+			fprintf(stdout, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 			va_copy(ac, args);
 			vfprintf(stdout, format, ac);
 			va_end(ac);
@@ -621,7 +624,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(zl->testlog.fp, ZLOG_PRO_FMT": ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->testlog.fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
@@ -654,7 +657,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->fp, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(zl->fp, ZLOG_PRO_FMT": ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);

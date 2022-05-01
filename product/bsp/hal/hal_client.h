@@ -74,17 +74,17 @@ extern "C"
   extern int hal_client_destroy(struct hal_client *hal_client);
   extern int hal_client_start(struct hal_client *hal_client);
   extern int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...);
-  extern int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_getval *getvalue);
-  extern int hal_client_send_result_msg(struct hal_client *hal_client, int ret, struct hal_ipcmsg_getval *getvalue, 
+  extern int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue);
+  extern int hal_client_send_result_msg(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue, 
     int subcmd, char *msg, int len);
   extern int hal_client_callback(struct hal_client *, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *);
 
   extern void hal_client_event(enum event event, struct hal_client *hal_client, int val);
 
-  extern int hal_client_bsp_init(struct hal_client *hal_client, module_t module,
+  extern int hal_client_bsp_register(struct hal_client *hal_client, module_t module,
                                   zpl_int8 unit, zpl_int8 slot, zpl_int8 portnum, zpl_char *version);
 
-  extern int hal_client_bsp_porttbl(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_porttbl *tbl);
+  extern int hal_client_bsp_hwport_register(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_hwport *tbl);
 
 
 #ifdef __cplusplus

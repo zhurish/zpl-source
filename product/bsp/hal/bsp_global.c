@@ -128,7 +128,6 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_BPDU, bsp_global_bpdu_enable),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_AGINT, bsp_global_aging_time),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_WAN_PORT, bsp_global_wan_port),
-	
 };
 
 
@@ -137,24 +136,19 @@ int bsp_global_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint
 {
 	int ret = OK;
 	zpl_uint32 value = 0;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
 	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	hal_ipcmsg_getl(&client->ipcmsg, &value);
 
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, NULL, &value);
+	ret = (callback->cmd_handle)(driver, NULL, &value);
 	break;
 	default:
 		break;
@@ -272,24 +266,19 @@ int bsp_snooping_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_ui
 {
 	int ret = OK;
 	zpl_uint32 value = 0;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_snoop_table, sizeof(subcmd_snoop_table)/sizeof(subcmd_snoop_table[0]), subcmd);
 	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_snoop_table, sizeof(subcmd_snoop_table)/sizeof(subcmd_snoop_table[0]), subcmd);
-	if(ret == 0)
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	hal_ipcmsg_getl(&client->ipcmsg, &value);
 
-	if(!(subcmd_snoop_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_snoop_table[subcmd].cmd_handle)(driver, NULL, &value);
+	ret = (callback->cmd_handle)(driver, NULL, &value);
 	break;
 	default:
 		break;

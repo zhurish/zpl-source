@@ -235,10 +235,13 @@ typedef zpl_uint16 zebra_command_t;
 
 
 
-
-
-
 //typedef int socklen_t;
+#define ZPL_ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
+
+#define ZPL_BIT(n)		      (1)<<(n)
+#define ZPL_TST_BIT(v, n)		(v) & ((1)<<(n))
+#define ZPL_SET_BIT(v, n)		(v) |= (1)<<(n)
+#define ZPL_CLR_BIT(v, n)		(v) &= ~((1)<<(n))
 
 
 #define ZPL_SUB_MODULE_MAX  8

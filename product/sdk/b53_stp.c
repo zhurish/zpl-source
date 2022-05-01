@@ -6,11 +6,12 @@
  */
 
 #include <zplos_include.h>
+#include "nsm_include.h"
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
-
+#include "b53_stp.h"
+#include "b53_port.h"
 /****************************************************************************************/
 static int b53125_set_stp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phyport_t port, zpl_uint32 state)
 {
@@ -46,6 +47,8 @@ static int b53125_set_stp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phypor
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
+
+
 static int b53125_set_mstp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phyport_t port, zpl_uint32 state)
 {
 	int ret = 0;

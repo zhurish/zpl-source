@@ -34,6 +34,7 @@
 
 #include "linux_driver.h"
 #include "pal_include.h"
+#include "bsp_include.h"
 
 #ifdef ZPL_KERNEL_FORWARDING
 int _ipkernel_create(struct interface *ifp)
@@ -293,15 +294,15 @@ int iplinux_stack_init(void)
   pal_stack.ip_stack_set_vlanpri = NULL;
   pal_stack.ip_stack_promisc = NULL;
   //ip address
-  pal_stack.ip_stack_ipv4_dstaddr_add = _ipkernel_if_set_dst_prefix;
-  pal_stack.ip_stack_ipv4_dstaddr_del = _ipkernel_if_unset_dst_prefix;
+  //pal_stack.ip_stack_ipv4_dstaddr_add = _ipkernel_if_set_dst_prefix;
+  //pal_stack.ip_stack_ipv4_dstaddr_del = _ipkernel_if_unset_dst_prefix;
   pal_stack.ip_stack_ipv4_replace = NULL;
-  pal_stack.ip_stack_ipv4_add = _ipkernel_if_set_prefix;
-  pal_stack.ip_stack_ipv4_delete = _ipkernel_if_unset_prefix;
+  //pal_stack.ip_stack_ipv4_add = _ipkernel_if_set_prefix;
+  //pal_stack.ip_stack_ipv4_delete = _ipkernel_if_unset_prefix;
 
 #ifdef ZPL_BUILD_IPV6
-  pal_stack.ip_stack_ipv6_add = _ipkernel_if_prefix_add_ipv6;
-  pal_stack.ip_stack_ipv6_delete = _ipkernel_if_prefix_delete_ipv6;
+  //pal_stack.ip_stack_ipv6_add = _ipkernel_if_prefix_add_ipv6;
+  //pal_stack.ip_stack_ipv6_delete = _ipkernel_if_prefix_delete_ipv6;
 #endif
 
 	pal_stack.ip_stack_vrf_create = _ipkernel_vrf_enable;
@@ -318,5 +319,21 @@ int iplinux_stack_init(void)
   pal_stack.ip_stack_firewall_snat_rule_set = _ipkernel_firewall_snat_rule_set;
   pal_stack.ip_stack_firewall_dnat_rule_set = _ipkernel_firewall_dnat_rule_set;
 #endif
+
+
+	sdk_l3if.sdk_l3if_addif_cb = NULL;
+	sdk_l3if.sdk_l3if_delif_cb = NULL;
+	sdk_l3if.sdk_l3if_mac_cb = NULL;
+	sdk_l3if.sdk_l3if_vrf_cb = NULL;
+
+	sdk_l3if.sdk_l3if_add_addr_cb = _ipkernel_if_set_prefix;
+	sdk_l3if.sdk_l3if_del_addr_cb = _ipkernel_if_unset_prefix;
+	sdk_l3if.sdk_l3if_add_dstaddr_cb = _ipkernel_if_set_dst_prefix;
+	sdk_l3if.sdk_l3if_del_dstaddr_cb = _ipkernel_if_unset_dst_prefix;
+
+
+  sdk_route.sdk_route_add_cb = _netlink_route_rib_add;
+  sdk_route.sdk_route_del_cb = _netlink_route_rib_del;
+
   return OK;
 }

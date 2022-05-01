@@ -218,6 +218,9 @@ struct vty
 #ifdef CMD_MODIFIER_STR
   struct out_filter out_filter;
 #endif
+  char result_msg[VTYSH_BUFSIZ];
+  zpl_uint32 result_len;
+
   int	(*vty_output)(void *, const char *, int);
   void *p_output;
 
@@ -230,7 +233,6 @@ struct vty
 
   zpl_pid_t pid;
   zpl_pthread_t pthd;
-
 
   zpl_bool detail;
   zpl_bool res0;
@@ -293,9 +295,6 @@ typedef struct cli_shell_s
 
 extern cli_shell_t  cli_shell;
 
-#ifdef HAVE_ROUTE_OPTIMIZE
-//extern void (*vty_ctrl_cmd)(int ctrl, struct vty *vty);
-#endif
 
 /* Integrated configuration file. */
 #define INTEGRATE_DEFAULT_CONFIG "Quagga.conf"
@@ -422,6 +421,7 @@ extern int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len);
 
 extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern int vty_result_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);
 #ifdef CMD_MODIFIER_STR
 extern int out_filter_set(struct vty *vty, const char *key, enum out_filter_type filter_type);
@@ -447,11 +447,12 @@ extern int vty_shell_serv (struct vty *);
 extern enum vtylogin_type vty_login_type(struct vty *vty);
 
 extern const char * vty_prompt(struct vty *vty);
+
 #ifdef ZPL_SHRL_MODULE
 extern int vty_stdio_init(struct vty *vty);
 extern int vty_stdio_start(zpl_bool s);
 #endif /*ZPL_SHRL_MODULE*/
-//extern int vty_console_init(const char *tty);
+
 
 
 extern void vty_init (void);

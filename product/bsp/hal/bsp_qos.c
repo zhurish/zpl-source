@@ -68,17 +68,6 @@ static int bsp_qos_diffserv_map_queue(void *driver, hal_port_header_t *port, hal
 }
 */
 
-//风暴
-
-static int bsp_qos_storm_rate_limit(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
-{
-	int ret = NO_SDK;
-	BSP_ENTER_FUNC();
-	if(driver && sdk_qos.sdk_qos_storm_rate_cb)
-		ret = sdk_qos.sdk_qos_storm_rate_cb(driver, port->phyport, param->limit, param->burst_size);
-	BSP_LEAVE_FUNC();
-	return ret;
-}
 
 
 //端口限速
@@ -142,7 +131,7 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_QOS_QUEUE_RATELIMIT, NULL),
 	HAL_CALLBACK_ENTRY(HAL_QOS_PRI_REMARK, NULL),
 
-	HAL_CALLBACK_ENTRY(HAL_QOS_STORM_RATELIMIT, bsp_qos_storm_rate_limit),
+
 	HAL_CALLBACK_ENTRY(HAL_QOS_CPU_RATELIMIT, bsp_qos_cpu_rate_limit),
 	HAL_CALLBACK_ENTRY(HAL_QOS_PORT_INRATELIMIT, bsp_qos_ingress_rate_limit),
 	HAL_CALLBACK_ENTRY(HAL_QOS_PORT_OUTRATELIMIT, bsp_qos_egress_rate_limit),
@@ -155,12 +144,12 @@ int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	hal_qos_param_t	param;
 	hal_port_header_t	bspport;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
 	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 
@@ -168,15 +157,10 @@ int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	hal_ipcmsg_getl(&client->ipcmsg, &param.value);
 	//hal_ipcmsg_get(&client->ipcmsg, &param.mac, NSM_MAC_MAX);
 
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	ret = (callback->cmd_handle)(driver, &bspport, &param);
 	break;
 	default:
 		break;

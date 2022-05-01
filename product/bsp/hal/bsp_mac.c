@@ -70,6 +70,7 @@ static int bsp_mac_read(void *driver, hal_port_header_t *bspport, hal_mac_param_
 	return ret;
 }
 
+
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_AGE, bsp_mac_age),
@@ -85,17 +86,18 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	hal_mac_param_t	mac_param;
 	hal_port_header_t	bspport;
-	struct hal_ipcmsg_getval getvalue;
+	struct hal_ipcmsg_result getvalue;
 	BSP_ENTER_FUNC();
 	memset(&mac_param, 0, sizeof(hal_mac_param_t));
 	memset(&bspport, 0, sizeof(hal_port_header_t));
-	memset(&getvalue, 0, sizeof(struct hal_ipcmsg_getval));
+	memset(&getvalue, 0, sizeof(struct hal_ipcmsg_result));
 
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
+	BSP_ENTER_FUNC();
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	if(subcmd != HAL_MAC_CMD_AGE)
 		hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
@@ -112,21 +114,15 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	{
 		hal_ipcmsg_getw(&client->ipcmsg, &mac_param.vlan);
 	}
-	
-	//hal_ipcmsg_getc(&client->ipcmsg, &mac_param);
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
+
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mac_param);
+	ret = (callback->cmd_handle)(driver, &bspport, &mac_param);
 	break;
 	case HAL_MODULE_CMD_GET:         //设置
 	{
-		ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &mac_param);
+		ret = (callback->cmd_handle)(driver, &bspport, &mac_param);
 		//if(ret == 0)
 		{
 			getvalue.value = mac_param.table.macnum;

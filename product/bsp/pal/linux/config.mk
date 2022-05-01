@@ -6,9 +6,7 @@ ifeq ($(strip $(ZPL_KERNEL_MODULE)),true)
 
 OBJS	+= linux_ioctl.o
 
-ifeq ($(strip $(ZPL_NSM_ARP)),true)
-OBJS	+= linux_arp.o			
-endif
+
 
 #ifeq ($(strip $(ZPL_KERNEL_FORWARDING)),true)
 ifeq ($(strip $(ZPL_NSM_TUNNEL)),true)

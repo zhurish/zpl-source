@@ -19,14 +19,31 @@
  * 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_RT_NETLINK_H
-#define _ZEBRA_RT_NETLINK_H
+#ifndef __LINUX_NETLINK_H__
+#define __LINUX_NETLINK_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifdef HAVE_NETLINK
+
+
+#ifdef ZPL_KERNEL_NETLINK
+/* Socket interface to kernel */
+struct nlsock
+{
+	vrf_id_t vrf_id;
+  zpl_socket_t sock;
+  zpl_uint32 seq;
+  struct ipstack_sockaddr_nl snl;
+  const char *name;
+
+  struct thread *t_netlink;
+
+};
+extern struct nlsock netlink_cmd;
+#endif
 
 #define NL_PKT_BUF_SIZE 8192
 #define NL_DEFAULT_ROUTE_METRIC 20
@@ -55,9 +72,9 @@ extern void _netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, st
 extern void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp);
 
 
-extern void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p,
-		struct nexthop *nexthop, const char *routedesc, zpl_family_t family,
-		struct nsm_ip_vrf *zvrf);
+extern void _netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
+		hal_nexthop_t *nexthop, union g_addr address,
+		vrf_id_t vrfid);
 
 
 extern void _netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index);
@@ -67,18 +84,18 @@ extern int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 extern int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl);
 
 extern int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
-		struct nsm_ip_vrf *zvrf);
+		vrf_id_t vrfid);
 
 extern int _netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
-		struct nlsock *nl, struct nsm_ip_vrf *zvrf);
+		struct nlsock *nl, vrf_id_t vrfid);
 
 
 
 
 
-extern void _netlink_open(struct nsm_ip_vrf *zvrf);
-extern void _netlink_close(struct nsm_ip_vrf *zvrf);
+extern void _netlink_open(vrf_id_t vrfid);
+extern void _netlink_close(void);
 
 
 
@@ -89,4 +106,4 @@ extern void _netlink_close(struct nsm_ip_vrf *zvrf);
 }
 #endif
 
-#endif /* _ZEBRA_RT_NETLINK_H */
+#endif /* __LINUX_NETLINK_H__ */

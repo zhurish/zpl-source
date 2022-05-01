@@ -105,38 +105,6 @@ typedef enum
 } tty_type_en;
 
 
-
-struct if_stats
-{
-   zpl_ulong rx_packets;   /* total packets received       */
-   zpl_ulong tx_packets;   /* total packets transmitted    */
-   zpl_ulong rx_bytes;     /* total bytes received         */
-   zpl_ulong tx_bytes;     /* total bytes transmitted      */
-   zpl_ulong rx_errors;    /* bad packets received         */
-   zpl_ulong tx_errors;    /* packet transmit problems     */
-   zpl_ulong rx_dropped;   /* no space in linux buffers    */
-   zpl_ulong tx_dropped;   /* no space available in linux  */
-   zpl_ulong rx_multicast; /* multicast packets received   */
-   zpl_ulong collisions;
-
-   /* detailed rx_errors: */
-   zpl_ulong rx_length_errors;
-   zpl_ulong rx_over_errors;   /* receiver ring buff overflow  */
-   zpl_ulong rx_crc_errors;    /* recved pkt with crc error    */
-   zpl_ulong rx_frame_errors;  /* recv'd frame alignment error */
-   zpl_ulong rx_fifo_errors;   /* recv'r fifo overrun          */
-   zpl_ulong rx_missed_errors; /* receiver missed packet     */
-   /* detailed tx_errors */
-   zpl_ulong tx_aborted_errors;
-   zpl_ulong tx_carrier_errors;
-   zpl_ulong tx_fifo_errors;
-   zpl_ulong tx_heartbeat_errors;
-   zpl_ulong tx_window_errors;
-   /* for cslip etc */
-   zpl_ulong rx_compressed;
-   zpl_ulong tx_compressed;
-};
-
 typedef enum if_type_s
 {
    IF_NONE,
@@ -188,6 +156,39 @@ typedef enum if_enca_s
    IF_ENCA_HDLC,         //HDLC
    IF_ENCA_RAW,          //RAW
 } if_enca_t;
+
+
+struct if_stats
+{
+   zpl_ulong rx_packets;   /* total packets received       */
+   zpl_ulong tx_packets;   /* total packets transmitted    */
+   zpl_ulong rx_bytes;     /* total bytes received         */
+   zpl_ulong tx_bytes;     /* total bytes transmitted      */
+   zpl_ulong rx_errors;    /* bad packets received         */
+   zpl_ulong tx_errors;    /* packet transmit problems     */
+   zpl_ulong rx_dropped;   /* no space in linux buffers    */
+   zpl_ulong tx_dropped;   /* no space available in linux  */
+   zpl_ulong rx_multicast; /* multicast packets received   */
+   zpl_ulong collisions;
+
+   /* detailed rx_errors: */
+   zpl_ulong rx_length_errors;
+   zpl_ulong rx_over_errors;   /* receiver ring buff overflow  */
+   zpl_ulong rx_crc_errors;    /* recved pkt with crc error    */
+   zpl_ulong rx_frame_errors;  /* recv'd frame alignment error */
+   zpl_ulong rx_fifo_errors;   /* recv'r fifo overrun          */
+   zpl_ulong rx_missed_errors; /* receiver missed packet     */
+   /* detailed tx_errors */
+   zpl_ulong tx_aborted_errors;
+   zpl_ulong tx_carrier_errors;
+   zpl_ulong tx_fifo_errors;
+   zpl_ulong tx_heartbeat_errors;
+   zpl_ulong tx_window_errors;
+   /* for cslip etc */
+   zpl_ulong rx_compressed;
+   zpl_ulong tx_compressed;
+};
+
 
 /* Interface structure */
 struct interface
@@ -261,8 +262,6 @@ struct interface
 
    void *info[MODULE_MAX];
 
-   /* Statistics fileds. */
-   struct if_stats stats;
 
    vrf_id_t vrf_id;
 

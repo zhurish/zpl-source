@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-04-10 19:32:33 CST"
+#define AUTOCONF_TIMESTAMP "2022-04-21 20:48:54 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -83,6 +83,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
+#undef ZPL_NSM_SNMP
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
 #define ZPL_KEYCHAIN 1
@@ -113,7 +114,9 @@
 #undef ZPL_NSM_VLANETH
 #undef ZPL_NSM_WIRELESS
 #undef ZPL_NSM_BRIDGE
-#undef ZPL_NSM_SECURITY
+#define ZPL_NSM_SECURITY 1
+#define ZPL_NSM_RTADV 1
+#define ZPL_NSM_IRDP 1
 #define ZPL_IPCBC_MODULE 1
 #undef ZPL_IPCBUS_MODULE
 
@@ -235,9 +238,9 @@
 #define ZPL_KERNEL_NETLINK 1
 #undef ZPL_KERNEL_FORWARDING
 #define ZPL_IPCOM_ROOT_PATH ""
-#undef ZPL_SDK_MODULE
+#define ZPL_SDK_MODULE 1
 #undef ZPL_SDK_BCMX
-#undef ZPL_SDK_BCM53125
+#define ZPL_SDK_BCM53125 1
 
 /*
  * Externsions Module Config

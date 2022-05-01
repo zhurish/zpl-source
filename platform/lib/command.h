@@ -161,6 +161,33 @@ struct cmd_token
 /* Turn off these macros when uisng cpp with extract.pl */
 #ifndef VTYSH_EXTRACT_PL  
 
+
+#ifdef ZPL_BUILD_DEBUG
+
+#define DEFUN_NODE(nodename, nodetype, promptstr, sh) \
+  struct cmd_node nodename = \
+  { \
+    .node = nodetype, \
+    .prompt = promptstr, \
+    .vtysh = sh, \
+    .func = NULL, \
+    .cmd_vector = NULL, \
+    .cmd_hash = NULL, \
+    .funcname = NULL, \
+  };
+#else 
+#define DEFUN_NODE(nodename, nodetype, promptstr, sh) \
+  struct cmd_node nodename = \
+  { \
+    .node = nodetype, \
+    .prompt = promptstr, \
+    .vtysh = sh, \
+    .func = NULL, \
+    .cmd_vector = NULL, \
+    .cmd_hash = NULL, \
+  }; 
+#endif
+
 /* helper defines for end-user DEFUN* macros */
 #ifdef ZPL_BUILD_DEBUG
 #define DEFUN_CMD_ELEMENT(funcname, cmdname, cmdstr, helpstr, attrs, dnum) \

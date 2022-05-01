@@ -79,12 +79,12 @@ int bsp_trunk_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 	int ret = OK;
 	hal_trunk_param_t	param;
 	hal_port_header_t	bspport;
+	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
 	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	if(!callback)
 	{
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	switch(subcmd)
 	{
@@ -102,15 +102,10 @@ int bsp_trunk_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 	hal_ipcmsg_getl(&client->ipcmsg, &param.trunkid);
 	hal_ipcmsg_getl(&client->ipcmsg, &param.mode);
 
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &bspport, &param);
+	ret = (callback->cmd_handle)(driver, &bspport, &param);
 	break;
 	default:
 		break;

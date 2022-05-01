@@ -5,7 +5,8 @@ MODULEDIR = product/bsp/hal
 #OS
 OBJS	+= hal_client.o
 OBJS	+= bsp_global.o
-
+OBJS	+= bsp_l3if.o
+OBJS	+= bsp_route.o
 ifeq ($(strip $(ZPL_HAL_MODULE)),true)
 OBJS	+= bsp_port.o
 OBJS	+= bsp_misc.o

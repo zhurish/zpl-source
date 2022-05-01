@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-
+#include "nsm_port.h"
 #define BRIDGE_MEMBER_MAX	16
 
 typedef enum bridge_type_s
@@ -22,14 +22,6 @@ typedef enum bridge_type_s
 }bridge_type_t;
 
 //const char *stp_str[] = {"Disable","Listening","Learning","Forwarding","Blocking"};
-typedef enum stp_state_s
-{
-	STP_DISABLE = 0,
-	STP_LISTENING,
-	STP_LEARNING,
-	STP_FORWARDING,
-	STP_BLOCKING,
-}stp_state_t;
 
 typedef struct nsm_bridge_s
 {

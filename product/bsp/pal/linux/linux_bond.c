@@ -16,7 +16,7 @@
 #include "command.h"
 #include "prefix.h"
 #include "nsm_arp.h"
-#include "nsm_bridge.h"
+#include "nsm_include.h"
 #include "nsm_firewalld.h"
 #include "nsm_vlaneth.h"
 #include "pal_include.h"

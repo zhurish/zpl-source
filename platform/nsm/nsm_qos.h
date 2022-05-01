@@ -137,23 +137,6 @@ typedef struct nsm_qos_limit_s
 	//zpl_uint32			qos_ebs;//超出突发尺寸
 }nsm_qos_limit_t;
 
-typedef enum
-{
-	NSM_QOS_STORM_RATE = 0x00,
-	NSM_QOS_STORM_PERCENT = 0x01,
-	NSM_QOS_STORM_PACKET = 0x02,
-}nsm_strorm_mode_e;
-
-typedef struct nsm_qos_storm_s
-{
-	zpl_uint32			qos_unicast;
-	zpl_uint8			unicast_flags;
-	zpl_uint32			qos_multicast;
-	zpl_uint8			multicast_flags;
-	zpl_uint32			qos_broadcast;
-	zpl_uint8			broadcast_flags;
-}nsm_qos_storm_t;
-
 
 typedef enum
 {
@@ -175,14 +158,11 @@ typedef struct nsm_qos_s
 {
 	ifindex_t			ifindex;
 	// input
-	zpl_bool			qos_storm_enable;
-	nsm_qos_storm_t		qos_storm;			//storm control
-
 	//队列调度
 	//队列调度模式（出方向应用）
-	nsm_queue_sched_t		qos_queue_sched[NSM_QOS_QUEUE_MAX];
-	nsm_queue_sched_t		qos_queue_sched_default[NSM_QOS_QUEUE_MAX];
-	zpl_char				qos_queue_sched_weight[NSM_QOS_QUEUE_MAX];
+	nsm_queue_sched_t		qos_queue_sched[NSM_QOS_QUEUE_MAX];//当前队列调度
+	nsm_queue_sched_t		qos_queue_sched_default[NSM_QOS_QUEUE_MAX];//默认队列调度
+	zpl_char				qos_queue_sched_weight[NSM_QOS_QUEUE_MAX];//调度权限
 #ifdef NSM_QOS_QUEUE_MAP_CLASS
 	//队列到class的映射
 	zpl_bool			qos_class_enable;
@@ -193,9 +173,11 @@ typedef struct nsm_qos_s
 	nsm_class_sched_t	qos_class_sched_weight[NSM_QOS_CLASS_MAX];
 #endif
 
-	nsm_qos_trust_e 	qos_trust;
+	nsm_qos_trust_e 	qos_trust;//端口信任
+
 	nsm_qos_queue_e		qos_port_input_queue;//端口到优先级的映射
 	nsm_qos_queue_e		qos_port_input_queue_default;
+
 #ifdef NSM_QOS_USERPRI_MAP_QUEUE
 	//各类优先级到queue的映射
 	nsm_qos_queue_e	cos_map_queue[NSM_QOS_PRI_MAX];
@@ -261,9 +243,7 @@ typedef struct Global_Qos_s
 	nsm_qos_class_e		qos_class[NSM_QOS_QUEUE_MAX]; //queue map to class
 	nsm_class_sched_t	qos_class_sched[NSM_QOS_CLASS_MAX];
 #endif
-	//各类优先级到queue的映射
-	//nsm_qos_map_t qos_pri_queue;
-	//nsm_qos_map_t qos_pri_queue_default;
+
 	//output 内部优先级到队列的映射
 	nsm_qos_queue_e	qos_pri_map_queue[NSM_QOS_PRI_MAX]; //priority map to queue
 	//input 用户优先级到内部优先级的映射（队列到内部优先级的映射）
@@ -291,24 +271,6 @@ COS值		0		1		2		3		4		5		6		7
 */
 extern int nsm_dscp_to_cos(zpl_uint32 dscp);
 extern int nsm_cos_to_dscp(zpl_uint32 cos);
-
-extern int nsm_qos_storm_enable_set_api(struct interface *ifp, zpl_bool enable);
-extern zpl_bool nsm_qos_storm_enable_get_api(struct interface *ifp);
-
-extern int nsm_qos_storm_unicast_set_api(struct interface *ifp, zpl_uint32 qos_unicast,
-		zpl_uint8 unicastflag);
-extern int nsm_qos_storm_unicast_get_api(struct interface *ifp, zpl_uint32 *qos_unicast,
-		zpl_uint8 *unicastflag);
-
-extern int nsm_qos_storm_multicast_set_api(struct interface *ifp, zpl_uint32 qos_multicast,
-		zpl_uint8 multicastflag);
-extern int nsm_qos_storm_multicast_get_api(struct interface *ifp, zpl_uint32 *qos_multicast,
-		zpl_uint8 *multicastflag);
-
-extern int nsm_qos_storm_broadcast_set_api(struct interface *ifp, zpl_uint32 qos_broadcast,
-		zpl_uint8 broadcastflag);
-extern int nsm_qos_storm_broadcast_get_api(struct interface *ifp, zpl_uint32 *qos_broadcast,
-		zpl_uint8 *broadcastflag);
 
 
 extern int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
@@ -400,8 +362,7 @@ extern int nsm_qos_dscp_replace_get_api(struct interface *ifp, nsm_qos_priority_
 extern int nsm_qos_service_policy_set_api(struct interface *ifp, int input, zpl_char * service_policy);
 extern int nsm_qos_service_policy_get_api(struct interface *ifp, int input, zpl_char *service_policy);
 
-//extern int nsm_qos_interface_create_api(struct interface *ifp);
-//extern int nsm_qos_interface_del_api(struct interface *ifp);
+
 extern int nsm_qos_init(void);
 extern int nsm_qos_exit(void);
 #ifdef ZPL_SHELL_MODULE

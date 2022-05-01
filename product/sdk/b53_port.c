@@ -9,9 +9,92 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
+#include "b53_port.h"
+struct b53_mib_desc {
+	u8 size;
+	u8 offset;
+	const char *name;
+};
+/* MIB counters */
+static const struct b53_mib_desc b53_mibs[] = {
+	{ 8, 0x00, "TxOctets" },
+	{ 4, 0x08, "TxDropPkts" },
+	{ 4, 0x10, "TxBroadcastPkts" },
+	{ 4, 0x14, "TxMulticastPkts" },
+	{ 4, 0x18, "TxUnicastPkts" },
+	{ 4, 0x1c, "TxCollisions" },
+	{ 4, 0x20, "TxSingleCollision" },
+	{ 4, 0x24, "TxMultipleCollision" },
+	{ 4, 0x28, "TxDeferredTransmit" },
+	{ 4, 0x2c, "TxLateCollision" },
+	{ 4, 0x30, "TxExcessiveCollision" },
+	{ 4, 0x38, "TxPausePkts" },
+	{ 8, 0x50, "RxOctets" },
+	{ 4, 0x58, "RxUndersizePkts" },
+	{ 4, 0x5c, "RxPausePkts" },
+	{ 4, 0x60, "Pkts64Octets" },
+	{ 4, 0x64, "Pkts65to127Octets" },
+	{ 4, 0x68, "Pkts128to255Octets" },
+	{ 4, 0x6c, "Pkts256to511Octets" },
+	{ 4, 0x70, "Pkts512to1023Octets" },
+	{ 4, 0x74, "Pkts1024to1522Octets" },
+	{ 4, 0x78, "RxOversizePkts" },
+	{ 4, 0x7c, "RxJabbers" },
+	{ 4, 0x80, "RxAlignmentErrors" },
+	{ 4, 0x84, "RxFCSErrors" },
+	{ 8, 0x88, "RxGoodOctets" },
+	{ 4, 0x90, "RxDropPkts" },
+	{ 4, 0x94, "RxUnicastPkts" },
+	{ 4, 0x98, "RxMulticastPkts" },
+	{ 4, 0x9c, "RxBroadcastPkts" },
+	{ 4, 0xa0, "RxSAChanges" },
+	{ 4, 0xa4, "RxFragments" },
+	{ 4, 0xa8, "RxJumboPkts" },
+	{ 4, 0xac, "RxSymbolErrors" },
+	{ 4, 0xc0, "RxDiscarded" },
+};
 
-
+#define B53_MIBS_SIZE	sizeof(b53_mibs)/sizeof(b53_mibs[0])
 /*************************************************************************/
+/*
+static int b53125_port_reset_mib(sdk_driver_t *dev)
+{
+	u8 gc;
+	b53125_read8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, &gc);
+	b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, gc | GC_RESET_MIB);
+	os_msleep(1);
+	b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, gc & ~GC_RESET_MIB);
+	os_msleep(1);
+	return 0;
+}
+*/
+static int b53125_port_get_stats(sdk_driver_t *dev, zpl_phyport_t port, struct b53_mib_stats *state)
+{
+	const struct b53_mib_desc *s;
+	unsigned int i;
+	u64 val = 0;
+	u64 *val64 = (u64 *)state;
+	u32 *val32 = (u32 *)state;
+	u8 *val8 = (u8 *)state;
+
+	for (i = 0; i < B53_MIBS_SIZE; i++) {
+		s = &b53_mibs[i];
+
+		if (s->size == 8) {
+			b53125_read64(dev->sdk_device, B53_MIB_PAGE(port), s->offset, &val);
+			val64 = (u64*)val8;
+			*val64 = (u64)val;
+			val8 += sizeof(u64);
+		} else {
+			u32 val32tmp;
+			b53125_read32(dev->sdk_device, B53_MIB_PAGE(port), s->offset, &val32tmp);
+			val32 = (u32*)val8;
+			*val32 = (u32)val32tmp;
+			val8 += sizeof(u32);
+		}
+	}
+	return 0;
+}
 /*************************************************************************/
 //禁止使能接口收发功能
 static int b53125_port_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
@@ -469,7 +552,40 @@ static zpl_uint32 b53125_port_get_duplex(sdk_driver_t *dev, zpl_phyport_t port)
 
 
 
+static int b53125_port_stats(sdk_driver_t *dev, zpl_phyport_t port, struct if_stats *state)
+{
+	struct b53_mib_stats bspstate;
+	b53125_port_get_stats(dev, port, &bspstate);
 
+	state->rx_packets = bspstate.RxOctets;									   /* total packets received       */
+	state->tx_packets = bspstate.TxUnicastPkts;								   /* total packets transmitted    */
+	state->rx_bytes = bspstate.RxOctets;									   /* total bytes received         */
+	state->tx_bytes = bspstate.TxOctets;									   /* total bytes transmitted      */
+	state->rx_errors = bspstate.RxOctets - bspstate.RxGoodOctets;			   /* bad packets received         */
+	state->tx_errors = bspstate.TxDeferredTransmit;							   /* packet transmit problems     */
+	state->rx_dropped = bspstate.RxDropPkts;								   /* no space in linux buffers    */
+	state->tx_dropped = bspstate.TxDropPkts;								   /* no space available in linux  */
+	state->rx_multicast = bspstate.RxMulticastPkts + bspstate.RxBroadcastPkts; /* multicast packets received   */
+	state->collisions = bspstate.TxCollisions;
+
+	/* detailed rx_errors: */
+	state->rx_length_errors = bspstate.RxAlignmentErrors;
+	state->rx_over_errors = 0;						   /* receiver ring buff overflow  */
+	state->rx_crc_errors = 0;						   /* recved pkt with crc error    */
+	state->rx_frame_errors = 0;						   /* recv'd frame alignment error */
+	state->rx_fifo_errors = 0;						   /* recv'r fifo overrun          */
+	state->rx_missed_errors = bspstate.RxSymbolErrors; /* receiver missed packet     */
+	/* detailed tx_errors */
+	state->tx_aborted_errors = 0;
+	state->tx_carrier_errors = 0;
+	state->tx_fifo_errors = 0;
+	state->tx_heartbeat_errors = 0;
+	state->tx_window_errors = 0;
+	/* for cslip etc */
+	state->rx_compressed = 0;
+	state->tx_compressed = 0;
+	return 0;
+}
 
 int b53125_port_init(sdk_driver_t *dev)
 {
@@ -489,6 +605,11 @@ int b53125_port_init(sdk_driver_t *dev)
 	sdk_port.sdk_port_swlearning_enable_cb = b53125_software_learning;
 	sdk_port.sdk_port_protected_enable_cb = b53125_port_protected_enable;
 	sdk_port.sdk_port_pause_cb = b53125_pasue_enable;
+
+	//风暴
+	sdk_port.sdk_port_storm_rate_cb = b53125_strom_rate;
+
+	sdk_port.sdk_port_stat_cb = b53125_port_stats;
 
 	//sdk_port.sdk_port_wan_enable_cb = b53125_port_wan_enable;
 	//sdk_port.sdk_port_mac_cb)(void *, zpl_phyport_t, zpl_uint8 *, zpl_bool);

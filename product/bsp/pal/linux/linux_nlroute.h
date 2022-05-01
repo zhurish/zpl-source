@@ -5,9 +5,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern int _netlink_route_rib (struct prefix *p, struct rib *old, struct rib *new);
-
+#include "hal_include.h"
+extern int _netlink_route_rib_add (void *, hal_route_param_t *param);
+extern int _netlink_route_rib_del (void *, hal_route_param_t *param);
 
 
 #ifdef __cplusplus

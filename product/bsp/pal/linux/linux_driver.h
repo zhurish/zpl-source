@@ -15,7 +15,6 @@ extern "C" {
 #include "nsm_firewalld.h"
 
 #include "linux_ioctl.h"
-#include "linux_arp.h"
 #include "linux_bond.h"
 #include "linux_brigde.h"
 #include "linux_firewalld.h"

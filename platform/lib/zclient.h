@@ -19,8 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_ZCLIENT_H
-#define _ZEBRA_ZCLIENT_H
+#ifndef __ZCLIENT_H__
+#define __ZCLIENT_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -201,4 +201,4 @@ extern int zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient,
 }
 #endif
 
-#endif /* _ZEBRA_ZCLIENT_H */
+#endif /* __ZCLIENT_H__ */

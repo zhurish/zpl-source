@@ -24,6 +24,16 @@ extern vector cmdvec;
 extern const char *default_motd;
 
 /* Standard command node structures. */
+DEFUN_NODE(host_node, HOST_NODE, "%s(config)# ", 1);
+DEFUN_NODE(hostsrv_node, HOSTSRV_NODE, "%s(config)# ", 1);
+DEFUN_NODE(login_node, LOGIN_NODE, "username: ", 0);
+DEFUN_NODE(auth_node, AUTH_NODE, "Password: ", 0);
+DEFUN_NODE(view_node, VIEW_NODE, "%s> ", 1);
+DEFUN_NODE(auth_enable_node, AUTH_ENABLE_NODE, "Password: ", 0);
+DEFUN_NODE(enable_node, ENABLE_NODE, "%s# ", 1);
+DEFUN_NODE(config_node, CONFIG_NODE, "%s(config)# ", 1);
+
+/*
 static struct cmd_node host_node =
 {
 	HOST_NODE,
@@ -73,7 +83,7 @@ static struct cmd_node config_node =
 	"%s(config)# ",
 	1
 };
-
+*/
 
 
 
@@ -116,9 +126,6 @@ DEFUN (enable,
 #endif
 	if(!vty_user_enable_password(vty, vty->username)
 			|| vty->type == VTY_SHELL_SERV)
-/*	if ((vty->user && vty->user->enable == NULL
-			&& vty->user->enable_encrypt[0] == 0)
-			|| vty->type == VTY_SHELL_SERV)*/
 		vty->node = ENABLE_NODE;
 	else
 		vty->node = AUTH_ENABLE_NODE;
@@ -144,8 +151,6 @@ DEFUN (config_exit,
 {
 	switch (vty->node) {
 	case VIEW_NODE:
-		//case ENABLE_NODE:
-		/*case RESTRICTED_NODE:*/
 		if (vty_shell(vty))
 			exit(0);
 		else

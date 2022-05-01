@@ -50,10 +50,10 @@ enum hal_module_cmd
     HAL_MODULE_CMD_GET,         //获取
 	HAL_MODULE_CMD_REPORT,      //上报
 	HAL_MODULE_CMD_HELLO,       //探测
-    HAL_MODULE_CMD_KEEPALIVE,   //心跳
-	HAL_MODULE_CMD_INIT,        //初始化
-    HAL_MODULE_CMD_PORTTBL,
     HAL_MODULE_CMD_REGISTER,    //注册
+    HAL_MODULE_CMD_HWPORTTBL,     //端口注册
+    HAL_MODULE_CMD_STARTONDE,       //完成
+    HAL_MODULE_CMD_KEEPALIVE,   //心跳
     HAL_MODULE_CMD_MAX,
 };
 
@@ -78,7 +78,8 @@ typedef struct
 #define IPCCMD_SUBCMD_GET(C)               ((C)&0xffFF)
 
 extern const char * hal_module_cmd_name(zpl_uint32 cmd);
-
+extern hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, int num, int module);
+extern hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *cmdtbl, int num, int subcmd);
 
 #ifdef __cplusplus
 }

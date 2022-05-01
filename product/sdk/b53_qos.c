@@ -11,7 +11,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
+#include "b53_qos.h"
 
 /*************************************************************************/
 static int b53125_qos_aggreation_mode(sdk_driver_t *dev, zpl_bool enable)
@@ -462,8 +462,7 @@ int b53125_qos_init(sdk_driver_t *dev)
 	sdk_qos.sdk_qos_enable_cb = b53125_qos_enable;
 
 
-	//风暴
-	sdk_qos.sdk_qos_storm_rate_cb = b53125_strom_rate;
+
 
 	//端口限速
 	sdk_qos.sdk_qos_port_egress_rate_cb = b53125_egress_rate;

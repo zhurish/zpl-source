@@ -17,6 +17,8 @@ extern "C" {
 #include "bsp_driver.h"
 
 #include "bsp_global.h"
+#include "bsp_l3if.h"
+#include "bsp_route.h"
 #ifdef ZPL_NSM_8021X
 #include "bsp_8021x.h"
 #endif

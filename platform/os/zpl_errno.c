@@ -28,6 +28,7 @@ struct zpl_errno_msg errno_tbl[] = {
   	{ OS_NOTEXIST		, "Not Exist"},	//不存在
 	{ OS_UNKNOWN_CMD	, "Unknown CMD"},	//
 	{ OS_NO_SDKSPUUORT	, "No SDK Support"},
+	{ OS_NO_CALLBACK	, "No Callback Func"},
 
   	{ ZPL_OK			, "OK"},			
   	{ ZPL_ERROR			, "ERROR"},
@@ -39,6 +40,7 @@ struct zpl_errno_msg errno_tbl[] = {
   	{ ZPL_OS_NOTEXIST	, "Not Exist"},
 	{ ZPL_UNKNOWN_CMD	, "Unknown CMD"},
 	{ ZPL_NO_SDKSPUUORT	, "No SDK Support"},
+	{ ZPL_NO_CALLBACK	, "No Callback Func"},
 	{ ZPL_ERRNO_UNKNOW	, "Unknown error"}
 };
 

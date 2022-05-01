@@ -39,8 +39,7 @@ enum hal_qos_cmd
 	HAL_QOS_QUEUE_WEIGHT,
 	HAL_QOS_QUEUE_RATELIMIT,
 	HAL_QOS_PRI_REMARK,
-	//STORM
-	HAL_QOS_STORM_RATELIMIT,
+
 	//CPU
 	HAL_QOS_CPU_RATELIMIT,
 
@@ -81,8 +80,7 @@ int hal_qos_queue_class(ifindex_t ifindex, nsm_qos_queue_e queue, nsm_qos_class_
 int hal_qos_queue_scheduling(ifindex_t ifindex, nsm_qos_class_e class, nsm_class_sched_t type);
 int hal_qos_queue_weight(ifindex_t ifindex, nsm_qos_class_e class, zpl_uint32 weight);
 #endif
-//风暴
-int hal_qos_storm_rate_limit(ifindex_t ifindex, zpl_uint32 mode, zpl_uint32 limit, zpl_uint32 burst_size);
+
 
 //端口限速
 int hal_qos_egress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 burst_size);

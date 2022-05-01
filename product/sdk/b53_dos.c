@@ -10,7 +10,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
+#include "b53_dos.h"
 /*************************************************************************/
 static int b53125_dos_icmpv6_longping_drop(sdk_driver_t *dev, zpl_bool enable)
 {

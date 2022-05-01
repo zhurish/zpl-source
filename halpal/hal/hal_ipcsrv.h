@@ -60,8 +60,8 @@ struct hal_ipcclient
 extern int hal_ipcsrv_send_message(int unit, zpl_uint32 command, void *msg, int len);
 extern int hal_ipcsrv_copy_send_ipcmsg(int unit, zpl_uint32 command, struct hal_ipcmsg *src_ipcmsg);
 extern int hal_ipcsrv_send_ipcmsg(int unit, struct hal_ipcmsg *src_ipcmsg);
-extern int hal_ipcsrv_send_and_get_message(int unit, zpl_uint32 command, void *msg, int len, struct hal_ipcmsg_getval *getvalue);
-extern int hal_ipcsrv_getmsg_callback(int unit, zpl_uint32 command, void *msg, int len, struct hal_ipcmsg_getval *getvalue, 
+extern int hal_ipcsrv_send_and_get_message(int unit, zpl_uint32 command, void *msg, int len, struct hal_ipcmsg_result *getvalue);
+extern int hal_ipcsrv_getmsg_callback(int unit, zpl_uint32 command, void *msg, int len, struct hal_ipcmsg_result *getvalue, 
     struct hal_ipcmsg_callback *callback);
 
 
