@@ -43,7 +43,7 @@ struct module_list module_list_sdk =
 };
 
 
-static hal_ipccmd_callback_t moduletable[] = {
+static const hal_ipccmd_callback_t const moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_MGT, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, bsp_global_module_handle),
@@ -117,16 +117,37 @@ static hal_ipccmd_callback_t moduletable[] = {
 
 int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *driver)
 {
-	int ret = 0;
+	int ret = OS_NO_CALLBACK;
 	int module = IPCCMD_MODULE_GET(cmd);
+	hal_ipccmd_callback_t * callback = NULL;
 	BSP_ENTER_FUNC();
-	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX && (moduletable[module].module_handle))
+	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX)
 	{
-		hal_ipccmd_callback_t * callback = hal_ipccmd_callback_get(moduletable, sizeof(moduletable)/sizeof(moduletable[0]), module);
+		int i = 0;
+		for(i = 0; i < ZPL_ARRAY_SIZE(moduletable); i++)
+		{
+			//zlog_warn(MODULE_HAL, "=== this module:%d  %d", moduletable[i].module, module);
+			if(moduletable[i].module == module && moduletable[i].module_handle)
+			{
+				callback = &moduletable[i];
+				//ret = (moduletable[i].module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+				break;
+			}
+		}
+	/*
+		hal_ipccmd_callback_t * callback = hal_ipccmd_callback_get(moduletable, ZPL_ARRAY_SIZE(moduletable), module);
 		if(callback)
 			ret = (callback->module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
 		else
 			ret = OS_NO_CALLBACK;	
+	*/	
+		if(callback)
+			ret = (callback->module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+		else
+		{
+			zlog_warn(MODULE_HAL, "Can not Find this module:%d ", module);
+			ret = OS_NO_CALLBACK;
+		}		
 	}
 	BSP_LEAVE_FUNC();
 	return ret;

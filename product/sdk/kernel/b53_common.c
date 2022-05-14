@@ -355,8 +355,8 @@ static void b53_enable_vlan(struct b53_device *dev, int port, bool enable,
 	u8 mgmt, vc0, vc1, vc4 = 0, vc5;
 
 	b53_read8(dev, B53_CTRL_PAGE, B53_SWITCH_MODE, &mgmt);
-	b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL0, &vc0);
-	b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL1, &vc1);
+	b53_read8(dev, B53_VLAN_PAGE, B53_GLOBAL_8021Q, &vc0);
+	b53_read8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL1, &vc1);
 
 	if (is5325(dev) || is5365(dev)) {
 		b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL4_25, &vc4);
@@ -365,8 +365,8 @@ static void b53_enable_vlan(struct b53_device *dev, int port, bool enable,
 		b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL4_63XX, &vc4);
 		b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL5_63XX, &vc5);
 	} else {
-		b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL4, &vc4);
-		b53_read8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL5, &vc5);
+		b53_read8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, &vc4);
+		b53_read8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL5, &vc5);
 	}
 
 	if (enable) {
@@ -375,10 +375,10 @@ static void b53_enable_vlan(struct b53_device *dev, int port, bool enable,
 		vc4 &= ~VC4_ING_VID_CHECK_MASK;
 		if (enable_filtering) {
 			vc4 |= VC4_ING_VID_VIO_DROP << VC4_ING_VID_CHECK_S;
-			vc5 |= VC5_DROP_VTABLE_MISS;
+			vc5 |= VLAN_DROP_VID_INVALID;
 		} else {
 			vc4 |= VC4_ING_VID_VIO_FWD << VC4_ING_VID_CHECK_S;
-			vc5 &= ~VC5_DROP_VTABLE_MISS;
+			vc5 &= ~VLAN_DROP_VID_INVALID;
 		}
 
 		if (is5325(dev))
@@ -391,7 +391,7 @@ static void b53_enable_vlan(struct b53_device *dev, int port, bool enable,
 		vc0 &= ~(VC0_VLAN_EN | VC0_VID_CHK_EN | VC0_VID_HASH_VID);
 		vc1 &= ~(VC1_RX_MCST_UNTAG_EN | VC1_RX_MCST_FWD_EN);
 		vc4 &= ~VC4_ING_VID_CHECK_MASK;
-		vc5 &= ~VC5_DROP_VTABLE_MISS;
+		vc5 &= ~VLAN_DROP_VID_INVALID;
 
 		if (is5325(dev) || is5365(dev))
 			vc4 |= VC4_ING_VID_VIO_FWD << VC4_ING_VID_CHECK_S;
@@ -403,18 +403,18 @@ static void b53_enable_vlan(struct b53_device *dev, int port, bool enable,
 	}
 
 	if (!is5325(dev) && !is5365(dev))
-		vc5 &= ~VC5_VID_FFF_EN;
+		vc5 &= ~VLAN_DROP_VID_FFF_EN;
 
-	b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL0, vc0);
-	b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL1, vc1);
+	b53_write8(dev, B53_VLAN_PAGE, B53_GLOBAL_8021Q, vc0);
+	b53_write8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL1, vc1);
 
 	if (is5325(dev) || is5365(dev)) {
 		/* enable the high 8 bit vid check on 5325 */
 		if (is5325(dev) && enable)
-			b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL3,
+			b53_write8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3,
 				   VC3_HIGH_8BIT_EN);
 		else
-			b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL3, 0);
+			b53_write8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, 0);
 
 		b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL4_25, vc4);
 		b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL5_25, vc5);
@@ -423,9 +423,9 @@ static void b53_enable_vlan(struct b53_device *dev, int port, bool enable,
 		b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL4_63XX, vc4);
 		b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL5_63XX, vc5);
 	} else {
-		b53_write16(dev, B53_VLAN_PAGE, B53_VLAN_CTRL3, 0);
-		b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL4, vc4);
-		b53_write8(dev, B53_VLAN_PAGE, B53_VLAN_CTRL5, vc5);
+		b53_write16(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, 0);
+		b53_write8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, vc4);
+		b53_write8(dev, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL5, vc5);
 	}
 
 	b53_write8(dev, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
@@ -506,9 +506,9 @@ void b53_imp_vlan_setup(struct dsa_switch *ds, int cpu_port)
 	 * the same VLAN.
 	 */
 	b53_for_each_port(dev, i) {
-		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), &pvlan);
+		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), &pvlan);
 		pvlan |= BIT(cpu_port);
-		b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), pvlan);
+		b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), pvlan);
 	}
 }
 EXPORT_SYMBOL(b53_imp_vlan_setup);
@@ -587,11 +587,11 @@ int b53_enable_port(struct dsa_switch *ds, int port, struct phy_device *phy)
 	 * if member of a bridge, restore its membership prior to
 	 * bringing down this port.
 	 */
-	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);
+	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), &pvlan);
 	pvlan &= ~0x1ff;
 	pvlan |= BIT(port);
 	pvlan |= dev->ports[port].vlan_ctl_mask;
-	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), pvlan);
+	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), pvlan);
 
 	b53_imp_vlan_setup(ds, cpu_port);
 
@@ -1871,7 +1871,7 @@ int b53_br_join(struct dsa_switch *ds, int port, struct net_device *br)
 		b53_write16(dev, B53_VLAN_PAGE, B53_JOIN_ALL_VLAN_EN, reg);
 	}
 
-	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);
+	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), &pvlan);
 
 	b53_for_each_port(dev, i) {
 		if (dsa_to_port(ds, i)->bridge_dev != br)
@@ -1880,9 +1880,9 @@ int b53_br_join(struct dsa_switch *ds, int port, struct net_device *br)
 		/* Add this local port to the remote port VLAN control
 		 * membership and update the remote port bitmask
 		 */
-		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), &reg);
+		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), &reg);
 		reg |= BIT(port);
-		b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), reg);
+		b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), reg);
 		dev->ports[i].vlan_ctl_mask = reg;
 
 		pvlan |= BIT(i);
@@ -1891,7 +1891,7 @@ int b53_br_join(struct dsa_switch *ds, int port, struct net_device *br)
 	/* Configure the local port VLAN control membership to include
 	 * remote ports and update the local port bitmask
 	 */
-	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), pvlan);
+	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), pvlan);
 	dev->ports[port].vlan_ctl_mask = pvlan;
 
 	return 0;
@@ -1906,16 +1906,16 @@ void b53_br_leave(struct dsa_switch *ds, int port, struct net_device *br)
 	unsigned int i;
 	u16 pvlan, reg, pvid;
 
-	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), &pvlan);
+	b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), &pvlan);
 
 	b53_for_each_port(dev, i) {
 		/* Don't touch the remaining ports */
 		if (dsa_to_port(ds, i)->bridge_dev != br)
 			continue;
 
-		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), &reg);
+		b53_read16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), &reg);
 		reg &= ~BIT(port);
-		b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(i), reg);
+		b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), reg);
 		dev->ports[port].vlan_ctl_mask = reg;
 
 		/* Prevent self removal to preserve isolation */
@@ -1923,7 +1923,7 @@ void b53_br_leave(struct dsa_switch *ds, int port, struct net_device *br)
 			pvlan &= ~BIT(i);
 	}
 
-	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT_MASK(port), pvlan);
+	b53_write16(dev, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), pvlan);
 	dev->ports[port].vlan_ctl_mask = pvlan;
 
 	pvid = b53_default_pvid(dev);

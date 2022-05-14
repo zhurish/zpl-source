@@ -529,7 +529,7 @@ DEFUN (interface_tunnel,
 		"tunnel num \n")
 {
 	zpl_uint32 index = 0;
-	char ifname[INTERFACE_NAMSIZ];
+	char ifname[IF_NAME_MAX];
 	struct interface *ifp = NULL;
 	struct utilzpl_interface *uifp = NULL;
 	memset(ifname, 0, sizeof(ifname));
@@ -582,7 +582,7 @@ DEFUN (no_interface_tunnel,
 	    "tunnel Interface\n"
 		"tunnel num \n")
 {
-	char ifname[INTERFACE_NAMSIZ];
+	char ifname[IF_NAME_MAX];
 	struct interface *ifp = NULL;
 	struct utilzpl_interface *tifp = NULL;
 	if(argv[0] == NULL)

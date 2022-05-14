@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-04-21 20:48:54 CST"
+#define AUTOCONF_TIMESTAMP "2022-05-14 15:35:51 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -185,7 +185,7 @@
 /*
  * Multimedia Module Config
  */
-#undef ZPL_MULTIMEDIA_MODULE
+#define ZPL_MULTIMEDIA_MODULE 1
 #undef ZPL_LIVE555_MODULE
 #undef ZPL_SOFTCODEC_MODULE
 #undef ZPL_LIBX264_MODULE
@@ -219,7 +219,7 @@
 #undef ZPL_MEDIAAPP_MODULE
 #undef ZPL_LIBMEDIA_MODULE
 #undef ZPL_LIBRTSP_MODULE
-#undef ZPL_LIBORTP_MODULE
+#define ZPL_LIBORTP_MODULE 1
 #undef ZPL_LIBJPEG_MODULE
 
 /*
@@ -238,9 +238,9 @@
 #define ZPL_KERNEL_NETLINK 1
 #undef ZPL_KERNEL_FORWARDING
 #define ZPL_IPCOM_ROOT_PATH ""
-#define ZPL_SDK_MODULE 1
+#undef ZPL_SDK_MODULE
 #undef ZPL_SDK_BCMX
-#define ZPL_SDK_BCM53125 1
+#undef ZPL_SDK_BCM53125
 
 /*
  * Externsions Module Config

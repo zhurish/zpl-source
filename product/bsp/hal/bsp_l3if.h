@@ -13,7 +13,7 @@ extern "C" {
 
 typedef struct sdk_l3if_s
 {
-	int (*sdk_l3if_addif_cb) (void *, zpl_phyport_t);
+	int (*sdk_l3if_addif_cb) (void *, char *, zpl_phyport_t);
 	int (*sdk_l3if_delif_cb) (void *, zpl_phyport_t);
 	int (*sdk_l3if_mac_cb) (void *, zpl_index_t, mac_t*);
 	int (*sdk_l3if_vrf_cb) (void *, zpl_index_t, vrf_id_t);

@@ -59,6 +59,7 @@ int os_pipe_close(int fd)
 
 int os_get_blocking(int fd)
 {
+#ifdef ZPL_BUILD_OS_LINUX	
 	zpl_uint32 flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
@@ -72,10 +73,12 @@ int os_get_blocking(int fd)
 	if (flags & O_NONBLOCK)
 		return 0;
 	return 1;
+#endif	
 }
 
 int os_set_nonblocking(int fd)
 {
+#ifdef ZPL_BUILD_OS_LINUX	
 	zpl_uint32 flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
@@ -93,10 +96,17 @@ int os_set_nonblocking(int fd)
 		return -1;
 	}
 	return 0;
+#else
+	unsigned long nonBlock = 1;
+	if (ioctlsocket(fd, FIONBIO , &nonBlock) == 0)
+		return 0;
+	return -1;		
+#endif
 }
 
 int os_set_blocking(int fd)
 {
+#ifdef ZPL_BUILD_OS_LINUX	
 	zpl_uint32 flags = 0;
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
@@ -114,6 +124,12 @@ int os_set_blocking(int fd)
 		return -1;
 	}
 	return 0;
+#else
+	unsigned long nonBlock = 1;
+	if (ioctlsocket(fd, FIONBIO , &nonBlock) == 0)
+		return 0;
+	return -1;		
+#endif
 }
 
 static int os_log_file_printf(FILE *fp, const zpl_char *buf, va_list args)

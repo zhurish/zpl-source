@@ -318,7 +318,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->ifindex = IFINDEX_INTERNAL;
 
 	assert(name);
-	assert(namelen <= INTERFACE_NAMSIZ); /* Need space for '\0' at end. */
+	assert(namelen <= IF_NAME_MAX); /* Need space for '\0' at end. */
 	ifp->if_type = if_iftype_make(name);
 
 	ifp->dynamic = zpl_true;
@@ -383,7 +383,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->ifindex = IFINDEX_INTERNAL;
 
 	assert(name);
-	assert(namelen <= INTERFACE_NAMSIZ); /* Need space for '\0' at end. */
+	assert(namelen <= IF_NAME_MAX); /* Need space for '\0' at end. */
 	ifp->if_type = if_iftype_make(name);
 
 	ifp->dynamic = zpl_false;
@@ -651,7 +651,7 @@ if_lookup_by_name_len_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	if (namelen > INTERFACE_NAMSIZ)
+	if (namelen > IF_NAME_MAX)
 		return NULL;
 
 	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
@@ -1117,7 +1117,7 @@ int if_kname_set(struct interface *ifp, const char *str)
 {
 	if (strlen(str))
 	{
-		zpl_char buf[INTERFACE_NAMSIZ + 1];
+		zpl_char buf[IF_NAME_MAX + 1];
 		os_memset(buf, 0, sizeof(buf));
 		os_strcpy(buf, str);
 		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));

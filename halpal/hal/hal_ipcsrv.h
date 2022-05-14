@@ -8,10 +8,10 @@ extern "C" {
 #include "auto_include.h"
 #include "hal_ipcmsg.h"
 
-#define HAL_IPCSRV_SEM_ACK
+//#define HAL_IPCSRV_SEM_ACK
 
 
-#define HAL_IPCSRV_ACK_TIMEOUT  200//MS
+#define HAL_IPCSRV_ACK_TIMEOUT  500//MS
 
 struct hal_ipcsrv
 {

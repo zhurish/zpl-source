@@ -144,10 +144,20 @@ int bsp_qos_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	hal_qos_param_t	param;
 	hal_port_header_t	bspport;
-	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	BSP_ENTER_FUNC();
-	if(!callback)
+	int i = 0;
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
 	{
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}

@@ -28,7 +28,7 @@
 #include "startup_module.h"
 //#include "platform/nsm/filter.h"
 //#include "platform/nsm/plist.h"
-
+extern void ortp_init(void);
 // extern struct zebra_privs_t os_privs;
 // extern struct quagga_signal_t os_signals[];
 // handle SIGUSR2 nostop noprint
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 	/* Set umask before anything for security */
 	umask(0027);
 
-
+ortp_init();
 	startup_option_default();
 	startup_option.progname = ((p = strrchr(argv[0], '/')) ? ++p : argv[0]);
 

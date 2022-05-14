@@ -15,14 +15,18 @@
 #include "hal_misc.h"
 
 
-int hal_l3if_add(ifindex_t ifindex, mac_t *mac)
+int hal_l3if_add(ifindex_t ifindex, char *name, mac_t *mac)
 {
 	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
+	char    ifname[IF_NAME_MAX];
 	HAL_ENTER_FUNC();
+	os_memset(ifname, 0, sizeof(ifname));
+	os_strcpy(ifname, name);
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_put(&ipcmsg, ifname, IF_NAME_MAX);
 	if(mac)
 		hal_ipcmsg_put(&ipcmsg, mac, 6);
 	else

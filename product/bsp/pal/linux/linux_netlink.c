@@ -208,7 +208,7 @@ void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interf
 
 		hw_addr_len = IPSTACK_RTA_PAYLOAD(tb[IPSTACK_IFLA_ADDRESS]);
 
-		if (hw_addr_len > INTERFACE_HWADDR_MAX)
+		if (hw_addr_len > IF_HWADDR_MAX)
 			zlog_warn(MODULE_PAL, "Hardware address is too large: %d",
 					hw_addr_len);
 		else

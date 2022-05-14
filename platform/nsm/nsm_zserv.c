@@ -160,7 +160,7 @@ static void
 zserv_encode_interface(struct stream *s, struct interface *ifp)
 {
   /* Interface information. */
-  stream_put(s, ifp->name, INTERFACE_NAMSIZ);
+  stream_put(s, ifp->name, IF_NAME_MAX);
   stream_putl(s, ifp->ifindex);
   stream_putc(s, ifp->status);
   stream_putq(s, ifp->flags);

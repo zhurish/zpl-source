@@ -135,14 +135,26 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 int bsp_global_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
 	int ret = OK;
+	int i = 0;
 	zpl_uint32 value = 0;
-	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	BSP_ENTER_FUNC();
-	if(!callback)
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
 	{
+        //zlog_warn(MODULE_HAL, "=== this subcmd:%d %d", subcmd_table[i].subcmd, subcmd);
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}
+
 	hal_ipcmsg_getl(&client->ipcmsg, &value);
 
 	switch (cmd)
@@ -265,11 +277,21 @@ static hal_ipcsubcmd_callback_t subcmd_snoop_table[] = {
 int bsp_snooping_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
 	int ret = OK;
+	int i = 0;
 	zpl_uint32 value = 0;
-	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_snoop_table, sizeof(subcmd_snoop_table)/sizeof(subcmd_snoop_table[0]), subcmd);
-	BSP_ENTER_FUNC();
-	if(!callback)
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_snoop_table); i++)
 	{
+		if(subcmd_snoop_table[i].subcmd == subcmd && subcmd_snoop_table[i].cmd_handle)
+		{
+            callback = &subcmd_snoop_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}

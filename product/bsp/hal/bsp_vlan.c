@@ -142,13 +142,24 @@ int bsp_vlan_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	vlan_t vlantbl[4096];
 	hal_vlan_param_t	param;
 	hal_port_header_t	bspport;
-	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	BSP_ENTER_FUNC();
-	if(!callback)
+
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
 	{
+        //zlog_warn(MODULE_HAL, "=== this subcmd:%d %d", subcmd_table[i].subcmd, subcmd);
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
-	}
+	}	
 	param.vlantbl = vlantbl;
 	switch(subcmd)
 	{

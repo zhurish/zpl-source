@@ -29,6 +29,7 @@ enum hal_l3if_cmd
 typedef struct hal_l3if_param_s
 {
   hal_port_header_t  port;
+  char    ifname[IF_NAME_MAX];
 	zpl_uint8 l2if_type;
   vrf_id_t vrfid;
 	mac_t mac[NSM_MAC_MAX];
@@ -43,7 +44,7 @@ typedef struct hal_l3if_addr_param_s
   zpl_uint8 sec;
 }hal_l3if_addr_param_t;
 
-extern int hal_l3if_add(ifindex_t ifindex, mac_t *mac);
+extern int hal_l3if_add(ifindex_t ifindex, char *name, mac_t *mac);
 extern int hal_l3if_del(ifindex_t ifindex);
 
 extern int hal_l3if_addr_add(ifindex_t ifindex, struct prefix *address, zpl_bool sec);

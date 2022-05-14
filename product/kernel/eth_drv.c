@@ -25,7 +25,7 @@
 #include <linux/slab.h>
 
 #include "eth_drv.h"
-
+#include "eth_netlink.h"
 /*
  * Debug messages level
  */
@@ -364,11 +364,13 @@ EXPORT_SYMBOL(ethkernel_destroy_netdevice);
 */
 static int __init _hsl_module_init(void)
 {
+  eth_netlink_init();
   return 0;
 }
 
 static void __exit _hsl_module_deinit(void)
 {
+  eth_netlink_exit();
 }
 
 module_init(_hsl_module_init);

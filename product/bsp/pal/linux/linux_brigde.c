@@ -174,10 +174,10 @@ struct utilzpl_interface
 {
 	struct interface *ifp;
 	zpl_uint32 type;//接口类型，tunnel，vlan，bridge
-	char name[INTERFACE_NAMSIZ + 1];
+	char name[IF_NAME_MAX + 1];
 #ifdef HAVE_UTILS_BRCTL
 	zpl_uint32 br_mode;//接口状态，网桥，桥接接口
-	char br_name[INTERFACE_NAMSIZ + 1];//桥接接口的网桥名称
+	char br_name[IF_NAME_MAX + 1];//桥接接口的网桥名称
 	zpl_uint32 br_stp;//网桥生成树
 	zpl_uint32 br_stp_state;//生成树状态
 	zpl_uint32 max_age;
@@ -717,7 +717,7 @@ DEFUN (ip_bridge,
 #ifdef BRCTL_CMD_DEBUG
 	char cmd[512];
 #endif
-	char ifname[INTERFACE_NAMSIZ];
+	char ifname[IF_NAME_MAX];
 	struct utilzpl_interface *bifp = NULL;
 	if(argv[0] == NULL)
 	{
@@ -775,7 +775,7 @@ DEFUN (no_ip_bridge,
 	    "bridge Interface\n"
 		"Interface name num\n")
 {
-	char ifname[INTERFACE_NAMSIZ];
+	char ifname[IF_NAME_MAX];
 	if(argv[0] == NULL)
 	{
 	      vty_out (vty, "%% invalid input bridge interface name is null %s",VTY_NEWLINE);

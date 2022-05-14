@@ -132,7 +132,7 @@ zpl_uint32  if_name_hash_make(const char *name)
 static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 {
 	if_type_t type = 0;
-	static zpl_char buf[INTERFACE_NAMSIZ];
+	static zpl_char buf[IF_NAME_MAX];
 	if(ifname == NULL || uspv == NULL)
 	{
 		zlog_err(MODULE_DEFAULT,"if type or uspv is NULL ifname when make ifname");
@@ -212,7 +212,7 @@ const char * if_uspv2ifname(if_type_t type, zpl_uint32 unit, zpl_uint32 slot, zp
 const char * if_ifname_split(const char *name)
 {
 	zpl_uint32 n = 0;
-	static zpl_char buf[INTERFACE_NAMSIZ];
+	static zpl_char buf[IF_NAME_MAX];
 	//p = strstr(name," ");
 /*	n = os_strcspn(name, " ");
 	if(n && n != os_strlen(name))
@@ -296,7 +296,7 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 
 static const char * if_ifname_make_by_ifindex(zpl_bool abstract, ifindex_t ifindex)
 {
-	static zpl_char buf[INTERFACE_NAMSIZ];
+	static zpl_char buf[IF_NAME_MAX];
 
 	zpl_char *type_str = NULL;
 	if(abstract)
@@ -410,7 +410,7 @@ int if_uspv_type_setting(struct interface *ifp)
 		{
 			ifp->uspv = IF_TYPE_SET(ifp->if_type) | IF_USPV_SET(unit, slot, port, id);
 			//ifp->encavlan = 0; //子接口封装的VLAN ID
-			//ifp->k_name[INTERFACE_NAMSIZ + 1];
+			//ifp->k_name[IF_NAME_MAX + 1];
 			//ifp->k_name_hash;
 			//ifp->k_ifindex;
 			//ifp->phyid = id;

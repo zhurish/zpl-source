@@ -60,15 +60,15 @@ enum hal_module_cmd
 #define HAL_CALLBACK_ENTRY(m, f) { (m), (f), (#f) }
 typedef struct 
 {
-    int module;
-    int (*module_handle)(void*, zpl_uint32, zpl_uint32, void *);
+    int const module;
+    int const (*module_handle)(void*, zpl_uint32, zpl_uint32, void *);
     const char *name;
 }hal_ipccmd_callback_t;
 
 typedef struct 
 {
-    int subcmd;
-    int (*cmd_handle)(void *, void *, void *);
+    int const subcmd;
+    int const (*cmd_handle)(void *, void *, void *);
     const char *name;
 }hal_ipcsubcmd_callback_t;
 
@@ -78,8 +78,8 @@ typedef struct
 #define IPCCMD_SUBCMD_GET(C)               ((C)&0xffFF)
 
 extern const char * hal_module_cmd_name(zpl_uint32 cmd);
-extern hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, int num, int module);
-extern hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *cmdtbl, int num, int subcmd);
+//extern hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, int num, int module);
+//extern hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *cmdtbl, int num, int subcmd);
 
 #ifdef __cplusplus
 }

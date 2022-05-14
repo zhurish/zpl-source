@@ -41,7 +41,7 @@ int nsm_halpal_interface_add(struct interface *ifp)
 	int ret = 0;
 	if(os_strlen(ifp->k_name))
 	{
-		ret = hal_l3if_add(ifp->ifindex, NULL);
+		ret = hal_l3if_add(ifp->ifindex, ifp->k_name, NULL);
 		if(ret != OK)
 			return ret;
 	}

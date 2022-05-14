@@ -111,7 +111,7 @@ const char * hal_module_cmd_name(zpl_uint32 cmd)
 }
 
 
-
+/*
 hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, int num, int module)
 {
 	int ret = 0;
@@ -121,7 +121,7 @@ hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, i
             return &cmdtbl[ret];
 	}
 	zlog_warn(MODULE_HAL, "Can not Find this module:%d ", module);
-	return 0;
+	return NULL;
 }
 
 hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *cmdtbl, int num, int subcmd)
@@ -133,5 +133,6 @@ hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *
             return &cmdtbl[ret];
 	}
 	zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
-	return 0;
+	return NULL;
 }
+*/

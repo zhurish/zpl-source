@@ -648,10 +648,10 @@ struct interface *
 zebra_interface_add_read (struct stream *s)
 {
   struct interface *ifp;
-  zpl_char ifname_tmp[INTERFACE_NAMSIZ];
+  zpl_char ifname_tmp[IF_NAME_MAX];
 
   /* Read interface name. */
-  stream_get (ifname_tmp, s, INTERFACE_NAMSIZ);
+  stream_get (ifname_tmp, s, IF_NAME_MAX);
 
   /* Lookup/create interface by name. */
   ifp = if_lookup_by_name (ifname_tmp);
@@ -672,14 +672,14 @@ struct interface *
 zebra_interface_state_read (struct stream *s)
 {
   struct interface *ifp;
-  zpl_char ifname_tmp[INTERFACE_NAMSIZ];
+  zpl_char ifname_tmp[IF_NAME_MAX];
 
   /* Read interface name. */
-  stream_get (ifname_tmp, s, INTERFACE_NAMSIZ);
+  stream_get (ifname_tmp, s, IF_NAME_MAX);
 
   /* Lookup this by interface index. */
   ifp = if_lookup_by_name_len (ifname_tmp,
-			       strnlen(ifname_tmp, INTERFACE_NAMSIZ));
+			       strnlen(ifname_tmp, IF_NAME_MAX));
 
   /* If such interface does not exist, indicate an error */
   if (! ifp)

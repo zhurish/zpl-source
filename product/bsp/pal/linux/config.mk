@@ -5,7 +5,7 @@ MODULEDIR = product/bsp/pal/linux
 ifeq ($(strip $(ZPL_KERNEL_MODULE)),true)
 
 OBJS	+= linux_ioctl.o
-
+OBJS	+= linux_ethlink.o
 
 
 #ifeq ($(strip $(ZPL_KERNEL_FORWARDING)),true)

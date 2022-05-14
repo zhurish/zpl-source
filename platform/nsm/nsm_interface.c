@@ -1364,13 +1364,13 @@ int nsm_interface_mac_set_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	ifp->hw_addr_len = MIN(INTERFACE_HWADDR_MAX, maclen);
+	ifp->hw_addr_len = MIN(IF_HWADDR_MAX, maclen);
 	if (os_memcmp(ifp->hw_addr, mac, ifp->hw_addr_len) == OK)
 	{
 		IF_DATA_UNLOCK();
 		return ret;
 	}
-	ret = nsm_halpal_interface_mac(ifp, mac, MIN(INTERFACE_HWADDR_MAX, maclen));
+	ret = nsm_halpal_interface_mac(ifp, mac, MIN(IF_HWADDR_MAX, maclen));
 	if (ret == OK)
 	{
 		os_memcpy(ifp->hw_addr, mac, ifp->hw_addr_len);
@@ -1386,7 +1386,7 @@ int nsm_interface_mac_get_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
 	/*	if(!ifp->hw_addr_len)
-			ifp->hw_addr_len = MIN(INTERFACE_HWADDR_MAX, maclen);*/
+			ifp->hw_addr_len = MIN(IF_HWADDR_MAX, maclen);*/
 	if (mac)
 		os_memcpy(mac, ifp->hw_addr, MIN(ifp->hw_addr_len, maclen));
 	IF_DATA_UNLOCK();

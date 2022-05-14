@@ -47,10 +47,19 @@ int bsp_route_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 {
 	int ret = OK, i = 0;
 	hal_route_param_t	param;
-	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	BSP_ENTER_FUNC();
-	if(!callback)
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
 	{
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}

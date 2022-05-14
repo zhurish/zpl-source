@@ -359,7 +359,7 @@
  *************************************************************************/
 
 /* Port VLAN mask (16 bit) IMP port is always 8, also on 5325 & co */
-#define B53_PVLAN_PORT_MASK(i)		((i) * 2)
+#define B53_PVLAN_PORT(i)		((i) * 2)
 
 /* Join all VLANs register (16 bit) */
 #define B53_JOIN_ALL_VLAN_EN		0x50
@@ -379,7 +379,7 @@
  *************************************************************************/
 
 /* VLAN Control 0 (8 bit) */
-#define B53_VLAN_CTRL0			0x00
+#define B53_GLOBAL_8021Q			0x00
 #define   VC0_8021PF_CTRL_MASK		0x3
 #define   VC0_8021PF_CTRL_NONE		0x0
 #define   VC0_8021PF_CTRL_CHANGE_PRI	0x1
@@ -396,22 +396,22 @@
 #define   VC0_VLAN_EN			BIT(7)	/* 802.1Q VLAN Enabled */
 
 /* VLAN Control 1 (8 bit) */
-#define B53_VLAN_CTRL1			0x01
+#define B53_GLOBAL_VLAN_CTRL1			0x01
 #define   VC1_RX_MCST_TAG_EN		BIT(1)
 #define   VC1_RX_MCST_FWD_EN		BIT(2)
 #define   VC1_RX_MCST_UNTAG_EN		BIT(3)
 
 /* VLAN Control 2 (8 bit) */
-#define B53_VLAN_CTRL2			0x02
+#define B53_GLOBAL_VLAN_CTRL2			0x02
 
 /* VLAN Control 3 (8 bit when BCM5325, 16 bit else) */
-#define B53_VLAN_CTRL3			0x03
+#define B53_GLOBAL_VLAN_CTRL3			0x03
 #define B53_VLAN_CTRL3_63XX		0x04
 #define   VC3_MAXSIZE_1532		BIT(6) /* 5325 only */
 #define   VC3_HIGH_8BIT_EN		BIT(7) /* 5325 only */
 
 /* VLAN Control 4 (8 bit) */
-#define B53_VLAN_CTRL4			0x05
+#define B53_GLOBAL_VLAN_CTRL4			0x05
 #define B53_VLAN_CTRL4_25		0x04
 #define B53_VLAN_CTRL4_63XX		0x06
 #define   VC4_ING_VID_CHECK_S		6
@@ -422,11 +422,11 @@
 #define   VC4_ING_VID_VIO_TO_IMP	3 /* redirect to MII port */
 
 /* VLAN Control 5 (8 bit) */
-#define B53_VLAN_CTRL5			0x06
+#define B53_GLOBAL_VLAN_CTRL5			0x06
 #define B53_VLAN_CTRL5_25		0x05
 #define B53_VLAN_CTRL5_63XX		0x07
 #define   VC5_VID_FFF_EN		BIT(2)
-#define   VC5_DROP_VTABLE_MISS		BIT(3)
+#define   VLAN_DROP_VID_INVALID		BIT(3)
 
 /* VLAN Control 6 (8 bit) */
 #define B53_VLAN_CTRL6			0x07

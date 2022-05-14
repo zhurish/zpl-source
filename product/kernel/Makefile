@@ -1,8 +1,12 @@
 #Deisgn by wolfnx
+-include $(ZPL_MAKE_DIR)/makelinux.mk
+
+-include config.mk
 
 Q       := @
-COBJS  += eth_drv.o
 
+KO_OBJS  += eth_netlink.o
+KO_OBJS  += eth_drv.o
 
 ifeq ($(KERNELRELEASE), )
 
@@ -21,10 +25,12 @@ modules_install:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
 
 clean:
-	$(Q)rm -f  *.ko   *.o   *.mod.c   modules.order   Module.symvers
+	$(Q)rm -f *.ko *.o *.mod.c *.cmd *.mod .*.o.cmd .*.cmd modules.order Module.symvers
 
 .PHONY:modules modules_install clean
 
+all: clean modules
 else
-	obj-m :=$(COBJS)
+	eth_drv-objs := $(KO_OBJS)
+	obj-m := eth_drv.o
 endif

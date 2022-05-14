@@ -22,7 +22,7 @@ static int bsp_l3if_create(void *driver, hal_port_header_t *port, hal_l3if_param
 	int ret = NO_SDK;
 	BSP_ENTER_FUNC();
 	if(driver && sdk_l3if.sdk_l3if_addif_cb)
-		ret = sdk_l3if.sdk_l3if_addif_cb(driver, port->phyport);
+		ret = sdk_l3if.sdk_l3if_addif_cb(driver, param->ifname, port->phyport);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -114,10 +114,20 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	int ret = OK;
 	hal_l3if_param_t param;
 	hal_l3if_addr_param_t addr_param;
-	hal_ipcsubcmd_callback_t * callback = hal_ipcsubcmd_callback_get(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	BSP_ENTER_FUNC();
-	if(!callback)
+	int i = 0;
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
 	{
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}
@@ -125,6 +135,7 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	{
 	case HAL_L3IF_CREATE:
 		hal_ipcmsg_port_get(&client->ipcmsg, &param.port);
+		hal_ipcmsg_get(&client->ipcmsg, &param.ifname, 6);
 		hal_ipcmsg_get(&client->ipcmsg, &param.mac, 6);
 		ret = (callback->cmd_handle)(driver, &param.port, &param);
 		break;

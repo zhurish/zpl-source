@@ -38,7 +38,7 @@ struct module_list module_list_wifi =
 
 iw_t * nsm_iw_get(struct interface *ifp)
 {
-	if(if_is_wireless(ifp)/* && ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
+	if(if_is_wireless(ifp)/* && ifp->ll_type == IF_LLT_WIRELESS*/)
 	{
 		return (iw_t *)nsm_intf_module_data(ifp, NSM_INTF_WIFI);
 	}
@@ -224,7 +224,7 @@ int nsm_iw_update_interface(struct interface *ifp)
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)	
 	int kmode = 0;
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(nsm && if_is_wireless(ifp) && nsm_iw_enable_get_api(ifp) /*&& ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
+	if(nsm && if_is_wireless(ifp) && nsm_iw_enable_get_api(ifp) /*&& ifp->ll_type == IF_LLT_WIRELESS*/)
 	{
 /*		"Auto",
 		"Ad-Hoc",
@@ -344,7 +344,7 @@ int nsm_iw_create_interface(struct interface *ifp)
 	//int kmode = 0;
 	iw_t * iw = nsm_intf_module_data(ifp, NSM_INTF_WIFI);
 	struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-	if(nsm && if_is_wireless(ifp)/* && ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
+	if(nsm && if_is_wireless(ifp)/* && ifp->ll_type == IF_LLT_WIRELESS*/)
 	{
 		if(!iw)
 			iw = XMALLOC(MTYPE_WIFI, sizeof(iw_t));
@@ -455,7 +455,7 @@ int nsm_iw_create_interface(struct interface *ifp)
 
 int nsm_iw_delete_interface(struct interface *ifp)
 {
-	if(ifp && if_is_wireless(ifp) /*&& ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
+	if(ifp && if_is_wireless(ifp) /*&& ifp->ll_type == IF_LLT_WIRELESS*/)
 	{
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
@@ -556,7 +556,7 @@ static int nsm_iw_write_config_client(struct vty *vty, iw_t * iw)
 
 int nsm_iw_write_config_interface(struct vty *vty, struct interface *ifp)
 {
-	if(ifp && if_is_wireless(ifp) /*&& ifp->ll_type == ZEBRA_LLT_WIRELESS*/)
+	if(ifp && if_is_wireless(ifp) /*&& ifp->ll_type == IF_LLT_WIRELESS*/)
 	{
 		iw_t * iw = nsm_iw_get(ifp);
 		if(iw)
