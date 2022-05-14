@@ -32,7 +32,8 @@
 #include "vrf.h"
 #include "nsm_debug.h"
 #include "nsm_rib.h"
-
+#include "nsm_include.h"
+#include "hal_include.h"
 #include "linux_driver.h"
 
 
@@ -48,65 +49,23 @@
  * @param nlmsg: ipstack_nlmsghdr structure to fill in.
  * @param req_size: The size allocated for the message.
  */
-static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 bytelen,
-		struct nexthop *nexthop, struct ipstack_nlmsghdr *nlmsg, struct ipstack_rtmsg *ipstack_rtmsg,
-		size_t req_size)
+static void _netlink_route_build_nexthop(zpl_uint8 family, hal_nexthop_t *nexthop, 
+	struct ipstack_nlmsghdr *nlmsg, struct ipstack_rtmsg *ipstack_rtmsg, size_t req_size)
 {
-	if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ONLINK))
-		ipstack_rtmsg->rtm_flags |= IPSTACK_RTNH_F_ONLINK;
-	if (nexthop->type == NEXTHOP_TYPE_IPV4
-			|| nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX)
+	ipstack_rtmsg->rtm_flags |= IPSTACK_RTNH_F_ONLINK;
+	if (nexthop->kifindex && family == IPSTACK_AF_INET)
 	{
-		_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_GATEWAY, &nexthop->gate.ipv4, bytelen);
-		if (nexthop->src.ipv4.s_addr)
-			_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_PREFSRC, &nexthop->src.ipv4,
-					bytelen);
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-					"nexthop via %s if %u", routedesc,
-					inet_ntoa(nexthop->gate.ipv4), nexthop->ifindex);
+		_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_GATEWAY, &nexthop->gateway.ipv4, IPV4_MAX_BYTELEN);
+		_netlink_addattr32(nlmsg, req_size, IPSTACK_RTA_OIF, nexthop->kifindex);
 	}
 #ifdef ZPL_BUILD_IPV6
-	if (nexthop->type == NEXTHOP_TYPE_IPV6
-			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME
-			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX)
+	if (nexthop->kifindex && family == IPSTACK_AF_INET6)
 	{
 		_netlink_addattr_l (nlmsg, req_size, IPSTACK_RTA_GATEWAY,
-				&nexthop->gate.ipv6, bytelen);
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-				"nexthop via %s if %u",
-				routedesc,
-				inet6_ntoa (nexthop->gate.ipv6),
-				nexthop->ifindex);
+				&nexthop->gateway.ipv6, IPV6_MAX_BYTELEN);
+		_netlink_addattr32(nlmsg, req_size, IPSTACK_RTA_OIF, nexthop->kifindex);		
 	}
 #endif /* ZPL_BUILD_IPV6 */
-	if (nexthop->type == NEXTHOP_TYPE_IFINDEX
-			|| nexthop->type == NEXTHOP_TYPE_IFNAME
-			|| nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX)
-	{
-		_netlink_addattr32(nlmsg, req_size, IPSTACK_RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
-
-		if (nexthop->src.ipv4.s_addr)
-			_netlink_addattr_l(nlmsg, req_size, IPSTACK_RTA_PREFSRC, &nexthop->src.ipv4,
-					bytelen);
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-					"nexthop via if %u", routedesc, nexthop->ifindex);
-	}
-
-	if (nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX
-			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME)
-	{
-		_netlink_addattr32(nlmsg, req_size, IPSTACK_RTA_OIF, ifindex2ifkernel(nexthop->ifindex));
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-					"nexthop via if %u", routedesc, nexthop->ifindex);
-	}
 }
 
 /* This function takes a nexthop as argument and
@@ -125,71 +84,31 @@ static void _netlink_route_build_singlepath(const char *routedesc, zpl_uint32 by
  * @param src: pointer pointing to a location where
  *             the prefsrc should be stored.
  */
-static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 bytelen,
-		struct nexthop *nexthop, struct ipstack_rtattr *rta, struct ipstack_rtnexthop *rtnh,
-		union g_addr **src)
+static void _netlink_route_build_more_nexthop(zpl_uint8 family, zpl_uint32 bytelen,
+		hal_nexthop_t *nexthop, struct ipstack_rtattr *rta, struct ipstack_rtnexthop *rtnh)
 {
 	rtnh->rtnh_len = sizeof(*rtnh);
 	rtnh->rtnh_flags = 0;
 	rtnh->rtnh_hops = 0;
 	rta->rta_len += rtnh->rtnh_len;
 
-	if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ONLINK))
-		rtnh->rtnh_flags |= IPSTACK_RTNH_F_ONLINK;
+	rtnh->rtnh_flags |= IPSTACK_RTNH_F_ONLINK;
 
-	if (nexthop->type == NEXTHOP_TYPE_IPV4
-			|| nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX)
+	if (nexthop->kifindex && family == IPSTACK_AF_INET)
 	{
-		_netlink_rta_addattr_l(rta, NL_PKT_BUF_SIZE, IPSTACK_RTA_GATEWAY, &nexthop->gate.ipv4,
-				bytelen);
+		_netlink_rta_addattr_l(rta, NL_PKT_BUF_SIZE, IPSTACK_RTA_GATEWAY, &nexthop->gateway.ipv4, bytelen);
 		rtnh->rtnh_len += sizeof(struct ipstack_rtattr) + bytelen;
-
-		if (nexthop->src.ipv4.s_addr)
-			*src = &nexthop->src;
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-					"nexthop via %s if %u", routedesc,
-					inet_ntoa(nexthop->gate.ipv4), nexthop->ifindex);
+		rtnh->rtnh_ifindex = (nexthop->kifindex) ;
 	}
 #ifdef ZPL_BUILD_IPV6
-	if (nexthop->type == NEXTHOP_TYPE_IPV6
-			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME
-			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX)
+	if (nexthop->kifindex && family == IPSTACK_AF_INET6)
 	{
 		_netlink_rta_addattr_l (rta, NL_PKT_BUF_SIZE, IPSTACK_RTA_GATEWAY,
-				&nexthop->gate.ipv6, bytelen);
+				&nexthop->gateway.ipv6, bytelen);
 		rtnh->rtnh_len += sizeof (struct ipstack_rtattr) + bytelen;
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-				"nexthop via %s if %u",
-				routedesc,
-				inet6_ntoa (nexthop->gate.ipv6),
-				nexthop->ifindex);
+		rtnh->rtnh_ifindex = (nexthop->kifindex);
 	}
 #endif /* ZPL_BUILD_IPV6 */
-	/* ifindex */
-	if (nexthop->type == NEXTHOP_TYPE_IPV4_IFINDEX
-			|| nexthop->type == NEXTHOP_TYPE_IFINDEX
-			|| nexthop->type == NEXTHOP_TYPE_IFNAME)
-	{
-		rtnh->rtnh_ifindex = ifindex2ifkernel(nexthop->ifindex) ;
-		if (nexthop->src.ipv4.s_addr)
-			*src = &nexthop->src;
-		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-					"nexthop via if %u", routedesc, nexthop->ifindex);
-	}
-	else if (nexthop->type == NEXTHOP_TYPE_IPV6_IFNAME
-			|| nexthop->type == NEXTHOP_TYPE_IPV6_IFINDEX)
-	{
-		rtnh->rtnh_ifindex = ifindex2ifkernel(nexthop->ifindex);
-
-		if (IS_ZEBRA_DEBUG_KERNEL)
-			zlog_debug(MODULE_PAL, "netlink_route_multipath() (%s): "
-					"nexthop via if %u", routedesc, nexthop->ifindex);
-	}
 	else
 	{
 		rtnh->rtnh_ifindex = 0;
@@ -197,17 +116,12 @@ static void _netlink_route_build_multipath(const char *routedesc, zpl_uint32 byt
 }
 
 /* Routing table change via netlink interface. */
-static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib *rib)
+static int _netlink_route_multipath(zpl_uint32 cmd, hal_route_param_t *param)
 {
 	zpl_uint32 bytelen;
 	struct ipstack_sockaddr_nl snl;
-	struct nexthop *nexthop = NULL, *tnexthop;
-	zpl_uint32 recursing;
 	zpl_uint32 nexthop_num;
 	zpl_uint32 discard;
-	zpl_family_t family = PREFIX_FAMILY(p);
-	const char *routedesc;
-
 	struct
 	{
 		struct ipstack_nlmsghdr n;
@@ -215,22 +129,20 @@ static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
-	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(rib->vrf_id);
-
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 
-	bytelen = (family == IPSTACK_AF_INET ? 4 : 16);
+	bytelen = (param->family == IPSTACK_AF_INET ? 4 : 16);
 
 	req.n.nlmsg_len = IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_rtmsg));
 	req.n.nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REPLACE | IPSTACK_NLM_F_REQUEST;
 	req.n.nlmsg_type = cmd;
-	req.r.rtm_family = family;
-	req.r.rtm_table = rib->table;
-	req.r.rtm_dst_len = p->prefixlen;
+	req.r.rtm_family = param->family;
+	req.r.rtm_table = param->table;
+	req.r.rtm_dst_len = param->prefixlen;
 	req.r.rtm_protocol = IPSTACK_RTPROT_ZEBRA;
 	req.r.rtm_scope = IPSTACK_RT_SCOPE_LINK;
 
-	if ((rib->flags & ZEBRA_FLAG_BLACKHOLE) || (rib->flags & ZEBRA_FLAG_REJECT))
+	if ((param->flags & ZEBRA_FLAG_BLACKHOLE) || (param->flags & ZEBRA_FLAG_REJECT))
 		discard = 1;
 	else
 		discard = 0;
@@ -239,9 +151,9 @@ static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib
 	{
 		if (discard)
 		{
-			if (rib->flags & ZEBRA_FLAG_BLACKHOLE)
+			if (param->flags & ZEBRA_FLAG_BLACKHOLE)
 				req.r.rtm_type = IPSTACK_RTN_BLACKHOLE;
-			else if (rib->flags & ZEBRA_FLAG_REJECT)
+			else if (param->flags & ZEBRA_FLAG_REJECT)
 				req.r.rtm_type = IPSTACK_RTN_UNREACHABLE;
 			else
 				assert(IPSTACK_RTN_BLACKHOLE != IPSTACK_RTN_UNREACHABLE); /* false */
@@ -249,90 +161,40 @@ static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib
 		else
 			req.r.rtm_type = IPSTACK_RTN_UNICAST;
 	}
-
-	_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_DST, &p->u.prefix, bytelen);
-
+	if(param->family == IPSTACK_AF_INET)
+		_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_DST, &param->destination.ipv4, bytelen);
+#ifdef ZPL_BUILD_IPV6
+	else
+		_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_DST, &param->destination.ipv6, bytelen);
+#endif
 	/* Metric. */
-	_netlink_addattr32(&req.n, sizeof req, IPSTACK_RTA_PRIORITY, NL_DEFAULT_ROUTE_METRIC);
+	_netlink_addattr32(&req.n, sizeof req, IPSTACK_RTA_PRIORITY, param->metric);
 
-	if (rib->mtu || rib->nexthop_mtu)
+	if (param->mtu)
 	{
 		char buf[NL_PKT_BUF_SIZE];
 		struct ipstack_rtattr *rta = (void *) buf;
-		zpl_uint32 mtu = rib->mtu;
-		if (!mtu || (rib->nexthop_mtu && rib->nexthop_mtu < mtu))
-			mtu = rib->nexthop_mtu;
 		rta->rta_type = IPSTACK_RTA_METRICS;
 		rta->rta_len = IPSTACK_RTA_LENGTH(0);
-		_netlink_rta_addattr_l(rta, NL_PKT_BUF_SIZE, IPSTACK_RTAX_MTU, &mtu, sizeof mtu);
+		_netlink_rta_addattr_l(rta, NL_PKT_BUF_SIZE, IPSTACK_RTAX_MTU, &param->mtu, sizeof param->mtu);
 		_netlink_addattr_l(&req.n, NL_PKT_BUF_SIZE, IPSTACK_RTA_METRICS, IPSTACK_RTA_DATA(rta),
 				IPSTACK_RTA_PAYLOAD(rta));
 	}
 
-	if (discard)
-	{
-		if (cmd == IPSTACK_RTM_NEWROUTE)
-			for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
-			{
-				/* We shouldn't encounter recursive nexthops on discard routes,
-				 * but it is probably better to handle that case correctly anyway.
-				 */
-				if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
-					continue;
-				SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
-			}
-		goto skip;
-	}
-
-	/* Count overall nexthops so we can decide whether to use singlepath
-	 * or multipath case. */
-	nexthop_num = 0;
-	for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
-	{
-		if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
-			continue;
-		if (cmd
-				== IPSTACK_RTM_NEWROUTE&& !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
-			continue;
-		if (cmd == IPSTACK_RTM_DELROUTE && !CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB))
-			continue;
-
-		if (nexthop->type != NEXTHOP_TYPE_IFINDEX
-				&& nexthop->type != NEXTHOP_TYPE_IFNAME)
-			req.r.rtm_scope = IPSTACK_RT_SCOPE_UNIVERSE;
-
-		nexthop_num++;
-	}
-
 	/* Singlepath case. */
-	if (nexthop_num == 1 || MULTIPATH_NUM == 1)
+	if (param->nexthop_num == 1)
 	{
-		nexthop_num = 0;
-		for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
-		{
-			if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
-				continue;
+		_netlink_route_debug( cmd, param->family, param->prefixlen, &param->nexthop[0], param->destination, param->vrf_id);
 
-			if ((cmd == IPSTACK_RTM_NEWROUTE
-					&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
-					|| (cmd == IPSTACK_RTM_DELROUTE
-							&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB)))
-			{
-				routedesc = recursing ? "recursive, 1 hop" : "single hop";
-
-				_netlink_route_debug(cmd, p, nexthop, routedesc, family, zvrf);
-				_netlink_route_build_singlepath(routedesc, bytelen, nexthop,
-						&req.n, &req.r, sizeof req);
-
-				if (cmd == IPSTACK_RTM_NEWROUTE)
-					SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
-
-				nexthop_num++;
-				break;
-			}
-		}
+		_netlink_route_build_nexthop(param->family, &param->nexthop[0], &req.n, &req.r, sizeof req);
+		if(param->family == IPSTACK_AF_INET && param->source.ipv4.s_addr)
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_PREFSRC, &param->source.ipv4, IPV4_MAX_BYTELEN);
+#ifdef ZPL_BUILD_IPV6
+		else if(param->family == IPSTACK_AF_INET6)
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_PREFSRC, &param->source.ipv6, IPV6_MAX_BYTELEN);
+#endif
 	}
-	else
+	else if (param->nexthop_num  > 1)
 	{
 		char buf[NL_PKT_BUF_SIZE];
 		struct ipstack_rtattr *rta = (void *) buf;
@@ -344,34 +206,18 @@ static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib
 		rtnh = IPSTACK_RTA_DATA(rta);
 
 		nexthop_num = 0;
-		for (ALL_NEXTHOPS_RO(rib->nexthop, nexthop, tnexthop, recursing))
+		for (nexthop_num = 0; nexthop_num < param->nexthop_num; nexthop_num++)
 		{
-			if (nexthop_num >= MULTIPATH_NUM)
-				break;
-
-			if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
-				continue;
-
-			if ((cmd == IPSTACK_RTM_NEWROUTE
-					&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
-					|| (cmd == IPSTACK_RTM_DELROUTE
-							&& CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB)))
-			{
-				routedesc = recursing ? "recursive, multihop" : "multihop";
-				nexthop_num++;
-
-				_netlink_route_debug(cmd, p, nexthop, routedesc, family, zvrf);
-				_netlink_route_build_multipath(routedesc, bytelen, nexthop, rta,
-						rtnh, &src);
-				rtnh = IPSTACK_RTNH_NEXT(rtnh);
-
-				if (cmd == IPSTACK_RTM_NEWROUTE)
-					SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
-			}
+			_netlink_route_debug( cmd, param->family, param->prefixlen, &param->nexthop[nexthop_num], param->destination, param->vrf_id);
+			_netlink_route_build_more_nexthop(param->family, bytelen, &param->nexthop[nexthop_num], rta, rtnh);
+			rtnh = IPSTACK_RTNH_NEXT(rtnh);
 		}
-		if (src)
-			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_PREFSRC, &src->ipv4, bytelen);
-
+		if(param->family == IPSTACK_AF_INET && param->source.ipv4.s_addr)
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_PREFSRC, &param->source.ipv4, IPV4_MAX_BYTELEN);
+#ifdef ZPL_BUILD_IPV6
+		else if(param->family == IPSTACK_AF_INET6)
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_RTA_PREFSRC, &param->source.ipv6, IPV6_MAX_BYTELEN);
+#endif
 		if (rta->rta_len > IPSTACK_RTA_LENGTH(0))
 			_netlink_addattr_l(&req.n, NL_PKT_BUF_SIZE, IPSTACK_RTA_MULTIPATH, IPSTACK_RTA_DATA(rta),
 					IPSTACK_RTA_PAYLOAD(rta));
@@ -385,26 +231,19 @@ static int _netlink_route_multipath(zpl_uint32 cmd, struct prefix *p, struct rib
 					"netlink_route_multipath(): No useful nexthop.");
 		return 0;
 	}
-
-	skip:
-
 	/* Destination netlink address. */
 	memset(&snl, 0, sizeof snl);
 	snl.nl_family = IPSTACK_AF_NETLINK;
-
 	/* Talk to netlink ipstack_socket. */
-	return _netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
+	return _netlink_talk(&req.n, &netlink_cmd, param->vrf_id);
 }
 
-int _netlink_route_rib(struct prefix *p, struct rib *old, struct rib *new)
+int _netlink_route_rib_add(void *p, hal_route_param_t *param)
 {
-	if (!old && new)
-		return _netlink_route_multipath(IPSTACK_RTM_NEWROUTE, p, new);
-	if (old && !new)
-		return _netlink_route_multipath(IPSTACK_RTM_DELROUTE, p, old);
+	return _netlink_route_multipath(IPSTACK_RTM_NEWROUTE, param);
+}
 
-	/* Replace, can be done atomically if metric does not change;
-	 * netlink uses [prefix, tos, priority] to identify prefix.
-	 * Now metric is not sent to kernel, so we can just do atomic replace. */
-	return _netlink_route_multipath(IPSTACK_RTM_NEWROUTE, p, new);
+int _netlink_route_rib_del(void *p, hal_route_param_t *param)
+{
+	return _netlink_route_multipath(IPSTACK_RTM_DELROUTE, param);
 }

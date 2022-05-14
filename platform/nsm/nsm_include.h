@@ -28,6 +28,16 @@ extern "C" {
 #include "nsm_global.h"
 #include "nsm_port.h"
 
+
+
+#if defined (ZPL_NSM_IRDP)
+#include "nsm_irdp.h"
+#endif
+
+#if defined (ZPL_NSM_RTADV)
+#include "nsm_rtadv.h"
+#endif
+
 #ifdef ZPL_NSM_MAC
 #include "nsm_mac.h"
 #endif
@@ -59,7 +69,7 @@ extern "C" {
 #ifdef ZPL_NSM_QOS
 #include "nsm_qos.h"
 #include "nsm_qos_acl.h"
-#include "nsm_qos_class.h"
+//#include "nsm_qos_class.h"
 #endif
 #ifdef ZPL_NSM_TRUNK
 #include "nsm_trunk.h"

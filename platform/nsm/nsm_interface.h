@@ -19,18 +19,21 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_INTERFACE_H
-#define _ZEBRA_INTERFACE_H
+#ifndef __NSM_INTERFACE_H__
+#define __NSM_INTERFACE_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <auto_include.h>
-#include <zplos_include.h>
+
 #include <module.h>
 #include "vty.h"
+#include "if.h"
 #include "prefix.h"
+#ifdef ZPL_NSM_IRDP
+#include "nsm_irdp.h"
+#endif
 
 #define NSM_ENTER_FUNC() zlog_debug(MODULE_NSM, "Into %s line %d", __func__, __LINE__)
 #define NSM_LEAVE_FUNC() zlog_debug(MODULE_NSM, "Leave %s line %d", __func__, __LINE__)
@@ -102,6 +105,144 @@ struct nsm_interface_cb
 	int (*nsm_intf_write_cb)(struct vty *, struct interface *);
 };
 
+
+#if defined (ZPL_NSM_RTADV)
+/* Router advertisement parameter.  From RFC4861, RFC6275 and RFC4191. */
+struct nsm_rtadvconf
+{
+  /* A flag indicating whether or not the router sends periodic Router
+     Advertisements and responds to Router Solicitations.
+     Default: FALSE */
+  int AdvSendAdvertisements;
+
+  /* The maximum time allowed between sending unsolicited multicast
+     Router Advertisements from the interface, in milliseconds.
+     MUST be no less than 70 ms [RFC6275 7.5] and no greater
+     than 1800000 ms [RFC4861 6.2.1].
+
+     Default: 600000 milliseconds */
+  int MaxRtrAdvInterval;
+#define RTADV_MAX_RTR_ADV_INTERVAL 600000
+
+  /* The minimum time allowed between sending unsolicited multicast
+     Router Advertisements from the interface, in milliseconds.
+     MUST be no less than 30 ms [RFC6275 7.5].
+     MUST be no greater than .75 * MaxRtrAdvInterval.
+
+     Default: 0.33 * MaxRtrAdvInterval */
+  int MinRtrAdvInterval; /* This field is currently unused. */
+#define RTADV_MIN_RTR_ADV_INTERVAL (0.33 * RTADV_MAX_RTR_ADV_INTERVAL)
+
+  /* Unsolicited Router Advertisements' interval timer. */
+  int AdvIntervalTimer;
+
+  /* The TRUE/FALSE value to be placed in the "Managed address
+     configuration" flag field in the Router Advertisement.  See
+     [ADDRCONF].
+ 
+     Default: FALSE */
+  int AdvManagedFlag;
+
+
+  /* The TRUE/FALSE value to be placed in the "Other stateful
+     configuration" flag field in the Router Advertisement.  See
+     [ADDRCONF].
+
+     Default: FALSE */
+  int AdvOtherConfigFlag;
+
+  /* The value to be placed in MTU options sent by the router.  A
+     value of zero indicates that no MTU options are sent.
+
+     Default: 0 */
+  int AdvLinkMTU;
+
+
+  /* The value to be placed in the Reachable Time field in the Router
+     Advertisement messages sent by the router.  The value zero means
+     unspecified (by this router).  MUST be no greater than 3,600,000
+     milliseconds (1 hour).
+
+     Default: 0 */
+  u_int32_t AdvReachableTime;
+#define RTADV_MAX_REACHABLE_TIME 3600000
+
+
+  /* The value to be placed in the Retrans Timer field in the Router
+     Advertisement messages sent by the router.  The value zero means
+     unspecified (by this router).
+
+     Default: 0 */
+  int AdvRetransTimer;
+
+  /* The default value to be placed in the Cur Hop Limit field in the
+     Router Advertisement messages sent by the router.  The value
+     should be set to that current diameter of the Internet.  The
+     value zero means unspecified (by this router).
+
+     Default: The value specified in the "Assigned Numbers" RFC
+     [ASSIGNED] that was in effect at the time of implementation. */
+  int AdvCurHopLimit;
+
+  /* The value to be placed in the Router Lifetime field of Router
+     Advertisements sent from the interface, in seconds.  MUST be
+     either zero or between MaxRtrAdvInterval and 9000 seconds.  A
+     value of zero indicates that the router is not to be used as a
+     default router.
+
+     Default: 3 * MaxRtrAdvInterval */
+  int AdvDefaultLifetime;
+#define RTADV_MAX_RTRLIFETIME 9000 /* 2.5 hours */
+
+  /* A list of prefixes to be placed in Prefix Information options in
+     Router Advertisement messages sent from the interface.
+
+     Default: all prefixes that the router advertises via routing
+     protocols as being on-link for the interface from which the
+     advertisement is sent. The link-local prefix SHOULD NOT be
+     included in the list of advertised prefixes. */
+  struct list *AdvPrefixList;
+
+  /* The TRUE/FALSE value to be placed in the "Home agent"
+     flag field in the Router Advertisement.  See [RFC6275 7.1].
+
+     Default: FALSE */
+  int AdvHomeAgentFlag;
+#ifndef ND_RA_FLAG_HOME_AGENT
+#define ND_RA_FLAG_HOME_AGENT 	0x20
+#endif
+
+  /* The value to be placed in Home Agent Information option if Home 
+     Flag is set.
+     Default: 0 */
+  int HomeAgentPreference;
+
+  /* The value to be placed in Home Agent Information option if Home 
+     Flag is set. Lifetime (seconds) MUST not be greater than 18.2 
+     hours. 
+     The value 0 has special meaning: use of AdvDefaultLifetime value.
+     
+     Default: 0 */
+  int HomeAgentLifetime;
+#define RTADV_MAX_HALIFETIME 65520 /* 18.2 hours */
+
+  /* The TRUE/FALSE value to insert or not an Advertisement Interval
+     option. See [RFC 6275 7.3]
+
+     Default: FALSE */
+  int AdvIntervalOption;
+
+  /* The value to be placed in the Default Router Preference field of
+     a router advertisement. See [RFC 4191 2.1 & 2.2]
+
+     Default: 0 (medium) */
+  int DefaultPreference;
+#define RTADV_PREF_MEDIUM 0x0 /* Per RFC4191. */
+};
+
+#endif /* ZPL_NSM_RTADV */
+
+
 /* `zebra' daemon local interface structure. */
 struct nsm_interface
 {
@@ -112,6 +253,19 @@ struct nsm_interface
 	nsm_duplex_en	duplex;
 	nsm_speed_en	speed;
 
+  /* Installed addresses chains tree. */
+  //struct route_table *ipv4_subnets;
+
+#if defined(ZPL_NSM_RTADV)
+  struct nsm_rtadvconf rtadv;
+#endif /* RTADV */
+
+#ifdef ZPL_NSM_IRDP
+  struct nsm_irdp irdp;
+#endif
+
+   /* Statistics fileds. */
+   struct if_stats stats;
 
 	void *nsm_intf_data[NSM_INTF_MAX];
 };
@@ -174,9 +328,13 @@ extern void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp,
 extern void cmd_interface_init(void);
 #endif
  
+
+extern int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp);
+extern int nsm_interface_create_hook(struct interface *ifp);
+
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif /* _ZEBRA_INTERFACE_H */
+#endif /* __NSM_INTERFACE_H__ */

@@ -83,11 +83,7 @@ static int config_zebra_write_debug (struct vty *vty)
       vty_out (vty, "debug zebra rib queue%s", VTY_NEWLINE);
       write++;
     }
-  if (IS_ZEBRA_DEBUG_FPM)
-    {
-      vty_out (vty, "debug zebra fpm%s", VTY_NEWLINE);
-      write++;
-    }
+
   //extern int ospf_config_write_debug (struct vty *vty);
   //ospf_config_write_debug (vty);
 //  extern void show_debug_hook_all(struct vty *);
@@ -111,7 +107,7 @@ int cmd_debug_init(void)
 {
 	install_node (&debug_node, config_write_debug);
 
-	zebra_debug_init ();
+	nsm_debug_init ();
 
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_debuging_config_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_debuging_config_cmd);

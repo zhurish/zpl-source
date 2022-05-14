@@ -22,10 +22,13 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
 #include "stream.h"
 #include "zmemory.h"
-#include "log.h"
 #include "network.h"
+#include "prefix.h"
+#include "log.h"
 
 //#pragma  GCC diagnostic ignored error "-Werror=pointer-arith"
 

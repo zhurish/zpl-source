@@ -19,6 +19,8 @@ extern "C" {
 #include "hal_ipcsrv.h"
 
 #include "hal_global.h"
+#include "hal_route.h"
+#include "hal_l3if.h"
 #ifdef ZPL_NSM_8021X
 #include "hal_8021x.h"
 #endif

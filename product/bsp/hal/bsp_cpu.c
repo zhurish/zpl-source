@@ -85,24 +85,29 @@ int bsp_cpu_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	int ret = OK;
 	zpl_uint8	value = 0;
 	hal_global_header_t	global;
-	BSP_ENTER_FUNC();
+	int i = 0;
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
+	{
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
+		BSP_LEAVE_FUNC();
+		return OS_NO_CALLBACK;
+	}
 	hal_ipcmsg_global_get(&client->ipcmsg, &global);
-	hal_ipcmsg_getc(&client->ipcmsg, &value);
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
+	hal_ipcmsg_getc(&client->ipcmsg, &value);	
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, &global, &value);
+	ret = (callback->cmd_handle)(driver, &global, &value);
 	break;
 	default:
 		break;

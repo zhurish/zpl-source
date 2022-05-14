@@ -128,7 +128,6 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_BPDU, bsp_global_bpdu_enable),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_AGINT, bsp_global_aging_time),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_WAN_PORT, bsp_global_wan_port),
-	
 };
 
 
@@ -136,25 +135,32 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 int bsp_global_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
 	int ret = OK;
+	int i = 0;
 	zpl_uint32 value = 0;
-	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_table, sizeof(subcmd_table)/sizeof(subcmd_table[0]), subcmd);
-	if(ret == 0)
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_table); i++)
 	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
+        //zlog_warn(MODULE_HAL, "=== this subcmd:%d %d", subcmd_table[i].subcmd, subcmd);
+		if(subcmd_table[i].subcmd == subcmd && subcmd_table[i].cmd_handle)
+		{
+            callback = &subcmd_table[i];
+			break;
+		}
 	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
+		BSP_LEAVE_FUNC();
+		return OS_NO_CALLBACK;
+	}
+
 	hal_ipcmsg_getl(&client->ipcmsg, &value);
 
-	if(!(subcmd_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_table[subcmd].cmd_handle)(driver, NULL, &value);
+	ret = (callback->cmd_handle)(driver, NULL, &value);
 	break;
 	default:
 		break;
@@ -271,25 +277,30 @@ static hal_ipcsubcmd_callback_t subcmd_snoop_table[] = {
 int bsp_snooping_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
 	int ret = OK;
+	int i = 0;
 	zpl_uint32 value = 0;
-	BSP_ENTER_FUNC();
-	ret = bsp_driver_module_check(subcmd_snoop_table, sizeof(subcmd_snoop_table)/sizeof(subcmd_snoop_table[0]), subcmd);
-	if(ret == 0)
+	hal_ipcsubcmd_callback_t * callback = NULL;
+	BSP_ENTER_FUNC();	
+	for(i = 0; i < ZPL_ARRAY_SIZE(subcmd_snoop_table); i++)
 	{
+		if(subcmd_snoop_table[i].subcmd == subcmd && subcmd_snoop_table[i].cmd_handle)
+		{
+            callback = &subcmd_snoop_table[i];
+			break;
+		}
+	}
+	if(callback == NULL)
+	{
+		zlog_warn(MODULE_HAL, "Can not Find this subcmd:%d ", subcmd);
 		BSP_LEAVE_FUNC();
-		return NO_SDK;
+		return OS_NO_CALLBACK;
 	}
 	hal_ipcmsg_getl(&client->ipcmsg, &value);
 
-	if(!(subcmd_snoop_table[subcmd].cmd_handle))
-	{
-		BSP_LEAVE_FUNC();
-		return NO_SDK;
-	}
 	switch (cmd)
 	{
 	case HAL_MODULE_CMD_REQ:         //设置
-	ret = (subcmd_snoop_table[subcmd].cmd_handle)(driver, NULL, &value);
+	ret = (callback->cmd_handle)(driver, NULL, &value);
 	break;
 	default:
 		break;

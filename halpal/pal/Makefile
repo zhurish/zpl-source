@@ -20,6 +20,13 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
 #
+$(OBJS_DIR)/%.o: $(SRC_DIR)/linux/%.c
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
+#	
 #@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
 #@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 

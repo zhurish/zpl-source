@@ -23,6 +23,13 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "linklist.h"
+#include "prefix.h"
+
+#include "str.h"
+#include "command.h"
+#include "if.h"
+#include "log.h"
+#include "sockunion.h"
 #include "if.h"
 #include "vrf.h"
 #include "host.h"
@@ -41,20 +48,17 @@
 #include "nsm_rib.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
-#include "nsm_fpm.h"
 #include "nsm_rnh.h"
 #include "nsm_halpal.h"
 #include "nsm_debug.h"
-#include "nsm_fpm.h"
-#include "nsm_fpm_private.h"
+#if defined (ZPL_NSM_RTADV)
+#include "nsm_rtadv.h"
+#endif
 #endif
 
 
 
-#ifdef ZPL_KERNEL_MODULE
-extern void _netlink_open(struct nsm_ip_vrf *zvrf);
-extern void _netlink_close(struct nsm_ip_vrf *zvrf);
-#endif
+
 
 struct nsm_rib_t nsm_ribd =
 {
@@ -132,11 +136,6 @@ static int nsm_rib_init(void)
 		{
 			nsm_ribd.initialise = 1;
 			rib_queue_init(&nsm_ribd);
-#if 1//def HAVE_FPM
-  			zfpm_init (nsm_ribd.master, 1, 0, "protobuf");
-#else
-  			zfpm_init (nsm_ribd.master, 0, 0, "protobuf");//'netlink' or 'protobuf'
-#endif
 		}
 	}
 	return OK;
@@ -1153,7 +1152,35 @@ static int nexthop_active_update(struct route_node *rn, struct rib *rib,
 	return OK;
 }*/
 
-static int rib_update_kernel(struct route_node *rn, struct rib *old,
+static int rib_nexthop_num(struct rib *rib)
+{
+	zpl_uint8 num = 0;
+	struct nexthop *nexthop;
+	/* Nexthop */
+	for (nexthop = rib->nexthop; nexthop; nexthop = nexthop->next)
+	{
+		if (CHECK_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE))
+		{
+			num++;
+		}
+	}
+	return num;
+}
+
+static int rib_update_forward_pm_install(safi_t safi, struct prefix *p, struct rib *old, struct rib *new)
+{
+	if (!old && new)
+		return nsm_halpal_route_multipath_add(safi, p, new, rib_nexthop_num(new));
+	if (old && !new)
+		return nsm_halpal_route_multipath_del(safi, p, old, rib_nexthop_num(old));
+
+	/* Replace, can be done atomically if metric does not change;
+	 * netlink uses [prefix, tos, priority] to identify prefix.
+	 * Now metric is not sent to kernel, so we can just do atomic replace. */
+	return nsm_halpal_route_multipath_add(safi, p, new, rib_nexthop_num(new));
+}
+
+static int rib_update_forward_pm(struct route_node *rn, struct rib *old,
 		struct rib *new)
 {
 	int ret = 0;
@@ -1172,13 +1199,7 @@ static int rib_update_kernel(struct route_node *rn, struct rib *old,
 		return 0;
 	}
 
-	/*
-	 * Make sure we update the FPM any time we ipstack_send new information to
-	 * the kernel.
-	 */
-	zfpm_trigger_update (rn, "updating in kernel");
-
-	ret = nsm_halpal_iproute_rib_action(&rn->p, old, new);
+	ret = rib_update_forward_pm_install(info->safi, &rn->p, old, new);
 
 	/* This condition is never met, if we are using rt_socket.c */
 	if (ret < 0 && new)
@@ -1202,13 +1223,11 @@ static void rib_uninstall(struct route_node *rn, struct rib *rib)
 
 	if (CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 	{
-		if (info->safi == SAFI_UNICAST)
-			zfpm_trigger_update (rn, "rib_uninstall");
 #ifdef ZPL_NSM_MODULE
 		redistribute_delete(&rn->p, rib);
 #endif
 		if (!RIB_SYSTEM_ROUTE(rib))
-			rib_update_kernel(rn, rib, NULL);
+			rib_update_forward_pm(rn, rib, NULL);
 		UNSET_FLAG(rib->flags, ZEBRA_FLAG_SELECTED);
 	}
 }
@@ -1394,7 +1413,7 @@ static void rib_process(struct route_node *rn)
 		{
 			if (!RIB_SYSTEM_ROUTE(old_fib)
 					&& (!new_fib || RIB_SYSTEM_ROUTE(new_fib)))
-				rib_update_kernel(rn, old_fib, NULL);
+				rib_update_forward_pm(rn, old_fib, NULL);
 			UNSET_FLAG(old_fib->status, RIB_ENTRY_SELECTED_FIB);
 		}
 
@@ -1403,11 +1422,8 @@ static void rib_process(struct route_node *rn)
 			/* Install new or replace existing FIB entry */
 			SET_FLAG(new_fib->status, RIB_ENTRY_SELECTED_FIB);
 			if (!RIB_SYSTEM_ROUTE(new_fib))
-				rib_update_kernel(rn, old_fib, new_fib);
+				rib_update_forward_pm(rn, old_fib, new_fib);
 		}
-
-		if (info->safi == SAFI_UNICAST)
-			zfpm_trigger_update (rn, "updating existing route");
 	}
 	else if (old_fib == new_fib && new_fib && !RIB_SYSTEM_ROUTE(new_fib))
 	{
@@ -1422,7 +1438,7 @@ static void rib_process(struct route_node *rn)
 				break;
 			}
 		if (!installed)
-			rib_update_kernel(rn, NULL, new_fib);
+			rib_update_forward_pm(rn, NULL, new_fib);
 	}
 
   /* Redistribute SELECTED entry */
@@ -2226,7 +2242,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 			}
 			/* This means someone else, other than Zebra, has deleted
 			 * a Zebra router from the kernel. We will add it back */
-			rib_update_kernel(rn, NULL, fib);
+			rib_update_forward_pm(rn, NULL, fib);
 		}
 		else
 		{
@@ -2955,7 +2971,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 			}
 			/* This means someone else, other than Zebra, has deleted a Zebra
 			 * route from the kernel. We will add it back */
-			rib_update_kernel(rn, NULL, fib);
+			rib_update_forward_pm(rn, NULL, fib);
 		}
 		else
 		{
@@ -3264,7 +3280,7 @@ rib_sweep_table (struct route_table *table)
 		if (rib->type == ZEBRA_ROUTE_KERNEL &&
 				CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELFROUTE))
 		{
-			ret = rib_update_kernel (rn, rib, NULL);
+			ret = rib_update_forward_pm (rn, rib, NULL);
 			if (! ret)
 			rib_delnode (rn, rib);
 		}
@@ -3360,11 +3376,8 @@ void rib_close_table(struct route_table *table)
 				if (!CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 					continue;
 
-				if (info->safi == SAFI_UNICAST)
-					zfpm_trigger_update (rn, NULL);
-
 				if (!RIB_SYSTEM_ROUTE(rib))
-					rib_update_kernel(rn, rib, NULL);
+					rib_update_forward_pm(rn, rib, NULL);
 			}
 		}
 		if(table->mutex)
@@ -3397,11 +3410,6 @@ void rib_init(void)
 		{
 			nsm_ribd.initialise = 1;
 			rib_queue_init(&nsm_ribd);
-#if 1//def HAVE_FPM
-  			zfpm_init (nsm_ribd.master, 1, 0, "protobuf");
-#else
-  			zfpm_init (nsm_ribd.master, 0, 0, "protobuf");//'netlink' or 'protobuf'
-#endif
 		}
 	}
 }
@@ -3646,12 +3654,10 @@ int nsm_vrf_enable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf)
   	assert(ip_vrf->info);
 	zvrf = ip_vrf->info;
 
-#if defined(HAVE_RTADV)
-  rtadv_init(zvrf);
+#if defined(ZPL_NSM_RTADV)
+	nsm_rtadv_init(zvrf);
 #endif
-#ifdef ZPL_KERNEL_MODULE
-  _netlink_open(zvrf);
-#endif
+
   return 0;
 }
 
@@ -3668,8 +3674,6 @@ int nsm_vrf_disable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf)
 
   	list_delete_all_node(zvrf->rid_all_sorted_list);
   	list_delete_all_node(zvrf->rid_lo_sorted_list);
-#ifdef ZPL_KERNEL_MODULE
-	_netlink_close(zvrf);
-#endif	  
+	  
   	return 0;
 }

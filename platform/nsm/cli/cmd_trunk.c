@@ -345,34 +345,33 @@ DEFUN (no_port_channel_load_balance,
 }
 
 
-/*
+
 static int _trunk_group_show_one(l2trunk_group_t *group, struct vty *vty)
 {
 	char *load[] = {"NONE", "dst-mac", "src-mac", "dst-src-mac", "dst-ip"};
 	static char flag = 0;
 	if(group)
 	{
-		if(group->trunkId && flag == 0)
-		{
-			if(group->global->lacp_system_priority != LACP_SYSTEM_PRIORITY_DEFAULT)
-				vty_out(vty, " lacp system-priority %d%s",
-					group->global->lacp_system_priority, VTY_NEWLINE);
-			if(group->global->load_balance != LOAD_BALANCE_DEFAULT)
-				vty_out(vty, " port-channel load-balance %s%s",
-						load[group->global->load_balance], VTY_NEWLINE);
-			flag = 1;
-		}
+		vty_out(vty, " trunkId              : %d%s", group->trunkId, VTY_NEWLINE);
+		vty_out(vty, " lacp_system_priority : %d%s", group->lacp_system_priority, VTY_NEWLINE);
+		vty_out(vty, " load_balance         : %s%s", load[group->load_balance], VTY_NEWLINE);
+		vty_out(vty, " type                 : %d%s", group->type, VTY_NEWLINE);
 	}
 	return 0;
 }
 
-int build_trunk_global_config(struct vty *vty)
-{
-	if(nsm_trunk_is_enable())
-		nsm_trunk_group_callback_api((l2trunk_group_cb)_trunk_group_show_one, vty);
-	return 1;
-}
 
+DEFUN (show_port_channel_all,
+		show_port_channel_all_cmd,
+		"show port-channel all",
+		SHOW_STR
+		"port-channel\n"
+		"all\n")
+{
+	nsm_trunk_group_callback_api((l2trunk_group_cb)_trunk_group_show_one, vty);
+	return CMD_SUCCESS;
+}
+/*
 int build_trunk_interface_config(struct vty *vty, struct interface *ifp)
 {
 	struct trunk_user user;
@@ -444,6 +443,9 @@ void cmd_trunk_init(void)
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_ip_arp_cmd);
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_ip_arp_detail_cmd);
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_ip_arp_interface_cmd);*/
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_port_channel_all_cmd);
+	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_port_channel_all_cmd);
+	
 }
 
 

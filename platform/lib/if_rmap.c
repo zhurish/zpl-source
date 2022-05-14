@@ -19,7 +19,9 @@
  * 02111-1307, USA.  
  */
 
-#include <auto_include.h>
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "hash.h"
 #include "command.h"
 #include "zmemory.h"

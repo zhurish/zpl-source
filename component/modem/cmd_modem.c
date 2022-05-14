@@ -581,7 +581,7 @@ DEFUN (modem_bind_interface_set,
 
 /*		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		{
 			vty_out(vty, "Can not bind this interface %s %s%s",argv[0], argv[1], VTY_NEWLINE);
 			return CMD_WARNING;
@@ -596,7 +596,7 @@ DEFUN (modem_bind_interface_set,
 		}
 		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		{
 			modem->ppp_serial = ifp;
 			return CMD_SUCCESS;
@@ -620,7 +620,7 @@ DEFUN (modem_bind_interface_set,
 /*
 		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		{
 			vty_out(vty, "Can not bind this interface %s %s%s",argv[0], argv[1], VTY_NEWLINE);
 			return CMD_WARNING;
@@ -635,7 +635,7 @@ DEFUN (modem_bind_interface_set,
 		}
 		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		{
 			modem->eth0 = ifp;
 			return CMD_SUCCESS;
@@ -674,7 +674,7 @@ DEFUN (modem_bind_interface_vals_set,
 		if(modem_lookup_by_interface(if_ifname_format("serial", argv[0])))
 /*		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
 
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)*/
+		if(ifp && ifp->ll_type != IF_LLT_MODEM)*/
 		{
 			vty_out(vty, "This interface %s %s already binding%s", "serial", argv[0], VTY_NEWLINE);
 			return CMD_WARNING;
@@ -691,7 +691,7 @@ DEFUN (modem_bind_interface_vals_set,
 		}
 		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
 
-		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		{
 			modem->ppp_serial = ifp;
 			return CMD_SUCCESS;
@@ -708,7 +708,7 @@ DEFUN (modem_bind_interface_vals_set,
 		if(modem_lookup_by_interface(if_ifname_format("serial", argv[0])))
 /*		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
 
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)*/
+		if(ifp && ifp->ll_type != IF_LLT_MODEM)*/
 		{
 			vty_out(vty, "This interface %s %s already binding%s", "serial", argv[0], VTY_NEWLINE);
 			return CMD_WARNING;
@@ -725,7 +725,7 @@ DEFUN (modem_bind_interface_vals_set,
 		}
 		ifp = if_lookup_by_name(if_ifname_format("serial", argv[0]));
 
-		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		{
 			modem->dial_serial = ifp;
 			return CMD_SUCCESS;
@@ -758,7 +758,7 @@ DEFUN (modem_bind_interface_vale_set,
 
 /*		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		{
 			vty_out(vty, "Can not bind this interface %s %s%s", argv[0], argv[1], VTY_NEWLINE);
 			return CMD_WARNING;
@@ -773,7 +773,7 @@ DEFUN (modem_bind_interface_vale_set,
 		}
 		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		{
 			modem->eth1 = ifp;
 			return CMD_SUCCESS;
@@ -797,7 +797,7 @@ DEFUN (modem_bind_interface_vale_set,
 
 /*		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type != ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		{
 			vty_out(vty, "Can not bind this interface %s %s%s",argv[0], argv[1], VTY_NEWLINE);
 			return CMD_WARNING;
@@ -812,7 +812,7 @@ DEFUN (modem_bind_interface_vale_set,
 		}
 		ifp = if_lookup_by_name(if_ifname_format(argv[0], argv[1]));
 
-		if(ifp && ifp->ll_type == ZEBRA_LLT_MODEM)
+		if(ifp && ifp->ll_type == IF_LLT_MODEM)
 		{
 			modem->eth2 = ifp;
 			return CMD_SUCCESS;

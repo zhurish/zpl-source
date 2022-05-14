@@ -9,7 +9,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
+#include "b53_mirror.h"
 /****************************************************************************************/
 //禁止使能镜像功能 //设置镜像目的端口
 static int b53125_mirror_enable_set(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)

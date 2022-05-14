@@ -14,49 +14,66 @@ extern "C" {
 
 #include "nsm_vlan.h"
 
+typedef enum
+{
+	NSM_STORMCONTROL_RATE = 0x00,
+	NSM_STORMCONTROL_PERCENT = 0x01,
+	NSM_STORMCONTROL_PACKET = 0x02,
+}nsm_strorm_mode_e;
+
+typedef struct nsm_stormcontrol_s
+{
+	zpl_uint32			stormcontrol_unicast;
+	zpl_uint8			unicast_flags;
+	zpl_uint32			stormcontrol_multicast;
+	zpl_uint8			multicast_flags;
+	zpl_uint32			stormcontrol_broadcast;
+	zpl_uint8			broadcast_flags;
+}nsm_stormcontrol_t;
+
+
+
 typedef struct nsm_security_s
 {
-	ifindex_t	ifindex;
-	//DOS Prevent
-	zpl_bool	dos_enable;
-
-	zpl_bool	ip_lan_drip;		//IPDA = IPSA
-	zpl_bool	tcp_blat_drop;		//DPort = SPort in a TCP header
-	zpl_bool	udp_blat_drop;		//DPort = SPort in a UDP header
-	zpl_bool	tcp_null_scan_drop;		//Seq_Num = 0 and all TCP_FLAGs = 0 in a TCP header
-	zpl_bool	tcp_xmas_scan_drop;		//Seq_Num = 0, FIN = 1, URG = 1, and PSH = 1 in a TCP header
-
-	zpl_bool	tcp_synfin_scan_drop;
-	zpl_bool	tcp_synerr_scan_drop;
-	zpl_bool	tcp_zpl_int16_hdr_drop;
-	zpl_bool	tcp_fragerr_scan_drop;
-
-	zpl_bool	icmpv4_fragment_drop;
-	zpl_bool	icmpv6_fragment_drop;
-
-	zpl_bool	icmpv4_longping_drop;
-	zpl_bool	icmpv6_longping_drop;
-
-	zpl_uint32	tcp_hdr_min_size;
-	zpl_uint32	icmpv4_max_size;
-	zpl_uint32	icmpv6_max_size;
-	zpl_bool	learn_disable;
-
-	//Jumbo frame
-	zpl_bool	jumbo_enable[PHY_PORT_MAX];
-	zpl_uint32	jumbo_frame_size;
-
-
+	zpl_bool			stormcontrol_enable;
+	nsm_stormcontrol_t	stormcontrol;			//storm control
 }nsm_security_t;
 
+
+typedef struct Global_Security_s
+{
+	zpl_bool			security_enable;
+	
+}Global_Security_t;
+
+
+
+extern int nsm_stormcontrol_enable_set_api(struct interface *ifp, zpl_bool enable);
+extern zpl_bool nsm_stormcontrol_enable_get_api(struct interface *ifp);
+
+extern int nsm_stormcontrol_unicast_set_api(struct interface *ifp, zpl_uint32 stormcontrol_unicast,
+		zpl_uint8 unicastflag);
+extern int nsm_stormcontrol_unicast_get_api(struct interface *ifp, zpl_uint32 *stormcontrol_unicast,
+		zpl_uint8 *unicastflag);
+
+extern int nsm_stormcontrol_multicast_set_api(struct interface *ifp, zpl_uint32 stormcontrol_multicast,
+		zpl_uint8 multicastflag);
+extern int nsm_stormcontrol_multicast_get_api(struct interface *ifp, zpl_uint32 *stormcontrol_multicast,
+		zpl_uint8 *multicastflag);
+
+extern int nsm_stormcontrol_broadcast_set_api(struct interface *ifp, zpl_uint32 stormcontrol_broadcast,
+		zpl_uint8 broadcastflag);
+extern int nsm_stormcontrol_broadcast_get_api(struct interface *ifp, zpl_uint32 *stormcontrol_broadcast,
+		zpl_uint8 *broadcastflag);
 
 
 extern int nsm_security_init(void);
 extern int nsm_security_exit(void);
 extern int nsm_security_interface_create_api(struct interface *ifp);
 extern int nsm_security_interface_del_api(struct interface *ifp);
-extern void cmd_security_init(void);
+
 #ifdef ZPL_SHELL_MODULE
+extern int cmd_security_init(void);
 extern int nsm_security_interface_write_config(struct vty *vty, struct interface *ifp);
 #endif
  

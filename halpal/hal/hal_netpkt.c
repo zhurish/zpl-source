@@ -24,6 +24,6 @@ int hal_netpkt_send(ifindex_t ifindex, zpl_vlan_t vlanid,
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
 	//zpl_skb_data_t
 	hal_ipcmsg_create_header(&ipcmsg, command);
-	hal_ipcmsg_data_set(&ipcmsg, ifindex, vlanid, pri);
+	//hal_ipcmsg_data_set(&ipcmsg, ifindex, vlanid, pri);
 	return hal_ipcmsg_send(IF_UNIT_ALL, &ipcmsg);
 }

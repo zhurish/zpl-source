@@ -22,14 +22,22 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+#include "linklist.h"
+#include "vector.h"
 #include "zmemory.h"
-#include "if.h"
 #include "vrf.h"
+#include "if.h"
+#include "hash.h"
+#include "str.h"
 #include "vty.h"
 #include "prefix.h"
+#include "table.h"
 #include "lib_event.h"
 #include "command.h"
 #include "connected.h"
+#include "log.h"
+#include "nsm_interface.h"
 #ifdef ZPL_DHCP_MODULE
 #include "nsm_dhcp.h"
 #endif
@@ -38,7 +46,7 @@
 static zpl_bool _nsm_intf_init = 0;
 static struct nsm_interface_cb nsm_intf_cb[NSM_INTF_MAX + 1];
 
-static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp);
+//static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp);
 
 
 void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid)
@@ -110,12 +118,9 @@ static void if_addr_wakeup(struct interface *ifp)
 					// if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 					// if_refresh(ifp);
 					nsm_halpal_interface_up(ifp);
-					// nsm_halpal_interface_refresh_flag(ifp);
-					// ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
+
 				}
 				if (nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
-				// ret = _ipkernel_if_set_prefix(ifp, ifc);
-				// if (ret < 0)
 				{
 					zlog_warn(MODULE_NSM, "Can't set interface's address: %s",
 							  ipstack_strerror(ipstack_errno));
@@ -136,12 +141,8 @@ static void if_addr_wakeup(struct interface *ifp)
 					// if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 					// if_refresh(ifp);
 					nsm_halpal_interface_up(ifp);
-					// nsm_halpal_interface_refresh_flag(ifp);
-					// ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 				}
 				if (nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
-				// ret = _ipkernel_if_prefix_add_ipv6(ifp, ifc);
-				// if (ret < 0)
 				{
 					zlog_warn(MODULE_NSM, "Can't set interface's address: %s",
 							  ipstack_strerror(ipstack_errno));
@@ -354,16 +355,22 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 }
 #endif
 
+
 /* Called when new interface is added. */
-static int nsm_interface_new_hook(struct interface *ifp)
+int nsm_interface_create_hook(struct interface *ifp)
 {
 	int ret = -1;
 	struct nsm_interface *nsm_interface = NULL;
 	NSM_ENTER_FUNC();
+
 	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
-	nsm_interface = XCALLOC(MTYPE_IF, sizeof(struct nsm_interface));
-
+	nsm_interface = XCALLOC(MTYPE_IF_INFO, sizeof(struct nsm_interface));
+	if (nsm_interface == NULL)
+	{
+		IF_DATA_UNLOCK();
+		return ERROR;
+	}
 	nsm_interface->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
 	nsm_interface->duplex = NSM_IF_DUPLEX_AUTO;
 	nsm_interface->speed = NSM_IF_SPEED_AUTO;
@@ -374,19 +381,22 @@ static int nsm_interface_new_hook(struct interface *ifp)
 	UNSET_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION);
 	ifp->info[MODULE_NSM] = nsm_interface;
 
+	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+
 	if (if_have_kernel(ifp))
 	{
 		if (nsm_interface_kname_set(ifp) == OK)
 			nsm_interface_kmac_set(ifp);
 	}
-
+	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	ret = nsm_halpal_interface_add(ifp);
 
 	if (ret == OK && if_have_kernel(ifp) && os_strlen(ifp->k_name))
 	{
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
-		// nsm_halpal_interface_refresh_flag(ifp);
 	}
 	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
@@ -402,8 +412,7 @@ int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname)
 	{
 		if_kname_set(ifp, kname);
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
-		nsm_halpal_interface_refresh_flag(ifp);
-		// pal_interface_get_lladdr(ifp);
+
 		nsm_interface_hw_update_api(ifp);
 		return OK;
 	}
@@ -421,7 +430,7 @@ static int nsm_interface_delete_hook(struct interface *ifp)
 	{
 		nsm_interface = ifp->info[MODULE_NSM];
 		/* Free installed address chains tree. */
-		XFREE(MTYPE_IF, nsm_interface);
+		XFREE(MTYPE_IF_INFO, nsm_interface);
 	}
 	return OK;
 }
@@ -1187,12 +1196,13 @@ int nsm_interface_desc_set_api(struct interface *ifp, const char *desc)
 
 int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *stats)
 {
+	struct nsm_interface *nsm_interface = ifp->info[MODULE_NSM];
 	// IF_DATA_LOCK();
 	if (stats)
 	{
 		nsm_halpal_interface_get_statistics(ifp);
 		if (stats)
-			os_memcpy((struct if_stats *)stats, &(ifp->stats), sizeof(struct if_stats));
+			os_memcpy((struct if_stats *)stats, &(nsm_interface->stats), sizeof(struct if_stats));
 	}
 	// IF_DATA_UNLOCK();
 	return OK;
@@ -1375,13 +1385,13 @@ int nsm_interface_mac_set_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	ifp->hw_addr_len = MIN(INTERFACE_HWADDR_MAX, maclen);
+	ifp->hw_addr_len = MIN(IF_HWADDR_MAX, maclen);
 	if (os_memcmp(ifp->hw_addr, mac, ifp->hw_addr_len) == OK)
 	{
 		IF_DATA_UNLOCK();
 		return ret;
 	}
-	ret = nsm_halpal_interface_mac(ifp, mac, MIN(INTERFACE_HWADDR_MAX, maclen));
+	ret = nsm_halpal_interface_mac(ifp, mac, MIN(IF_HWADDR_MAX, maclen));
 	if (ret == OK)
 	{
 		os_memcpy(ifp->hw_addr, mac, ifp->hw_addr_len);
@@ -1397,7 +1407,7 @@ int nsm_interface_mac_get_api(struct interface *ifp, zpl_uchar *mac, zpl_uint32 
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
 	/*	if(!ifp->hw_addr_len)
-			ifp->hw_addr_len = MIN(INTERFACE_HWADDR_MAX, maclen);*/
+			ifp->hw_addr_len = MIN(IF_HWADDR_MAX, maclen);*/
 	if (mac)
 		os_memcpy(mac, ifp->hw_addr, MIN(ifp->hw_addr_len, maclen));
 	IF_DATA_UNLOCK();
@@ -1517,13 +1527,76 @@ static void connected_dump_vty(struct vty *vty, struct connected *connected)
 	vty_out(vty, "%s", VTY_NEWLINE);
 }
 
+
+#if defined (ZPL_NSM_RTADV)
+/* Dump interface ND information to vty. */
+static void nd_dump_vty (struct vty *vty, struct interface *ifp)
+{
+  struct  nsm_interface *zif;
+  struct nsm_rtadvconf *rtadv;
+  int interval;
+
+  zif = (struct zebra_if *) ifp->info[MODULE_NSM];
+  rtadv = &zif->rtadv;
+
+  if (rtadv->AdvSendAdvertisements)
+    {
+      vty_out (vty, "  ND advertised reachable time is %d milliseconds%s",
+	       rtadv->AdvReachableTime, VTY_NEWLINE);
+      vty_out (vty, "  ND advertised retransmit interval is %d milliseconds%s",
+	       rtadv->AdvRetransTimer, VTY_NEWLINE);
+      interval = rtadv->MaxRtrAdvInterval;
+      if (interval % 1000)
+        vty_out (vty, "  ND router advertisements are sent every "
+			"%d milliseconds%s", interval,
+		 VTY_NEWLINE);
+      else
+        vty_out (vty, "  ND router advertisements are sent every "
+			"%d seconds%s", interval / 1000,
+		 VTY_NEWLINE);
+      if (rtadv->AdvDefaultLifetime != -1)
+	vty_out (vty, "  ND router advertisements live for %d seconds%s",
+		 rtadv->AdvDefaultLifetime, VTY_NEWLINE);
+      else
+	vty_out (vty, "  ND router advertisements lifetime tracks ra-interval%s",
+		 VTY_NEWLINE);
+      vty_out (vty, "  ND router advertisement default router preference is "
+			"%s%s", rtadv_pref_strs[rtadv->DefaultPreference],
+		 VTY_NEWLINE);
+      if (rtadv->AdvManagedFlag)
+	vty_out (vty, "  Hosts use DHCP to obtain routable addresses.%s",
+		 VTY_NEWLINE);
+      else
+	vty_out (vty, "  Hosts use stateless autoconfig for addresses.%s",
+		 VTY_NEWLINE);
+      if (rtadv->AdvHomeAgentFlag)
+      {
+      	vty_out (vty, "  ND router advertisements with "
+				"Home Agent flag bit set.%s",
+		 VTY_NEWLINE);
+	if (rtadv->HomeAgentLifetime != -1)
+	  vty_out (vty, "  Home Agent lifetime is %u seconds%s",
+	           rtadv->HomeAgentLifetime, VTY_NEWLINE);
+	else
+	  vty_out (vty, "  Home Agent lifetime tracks ra-lifetime%s",
+	           VTY_NEWLINE);
+	vty_out (vty, "  Home Agent preference is %u%s",
+	         rtadv->HomeAgentPreference, VTY_NEWLINE);
+      }
+      if (rtadv->AdvIntervalOption)
+      	vty_out (vty, "  ND router advertisements with Adv. Interval option.%s",
+		 VTY_NEWLINE);
+    }
+}
+#endif /* ZPL_NSM_RTADV */
+
 /* Interface's information print out to vty interface. */
 void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 {
 	struct connected *connected;
 	struct listnode *node;
-	//struct nsm_interface *nsm_interface;
-	//nsm_interface = ifp->info[MODULE_NSM];
+	struct nsm_interface *nsm_interface = NULL;
+	nsm_interface = ifp->info[MODULE_NSM];
 
 	vty_out(vty, "Interface %s is ", ifp->name);
 	if (if_is_up(ifp))
@@ -1587,36 +1660,41 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	{
 		connected_dump_vty(vty, connected);
 	}
+#include "nsm_rtadv.h"
 
+
+#if defined (ZPL_NSM_RTADV)
+	nd_dump_vty (vty, ifp);
+#endif
 	/* Statistics print out using proc file system. */
 	nsm_interface_statistics_get_api(ifp, NULL);
 
 	vty_out(vty, "    %lu input packets (%lu multicast), %lu bytes, "
 				 "%lu dropped%s",
-			ifp->stats.rx_packets, ifp->stats.rx_multicast,
-			ifp->stats.rx_bytes, ifp->stats.rx_dropped, VTY_NEWLINE);
+			nsm_interface->stats.rx_packets, nsm_interface->stats.rx_multicast,
+			nsm_interface->stats.rx_bytes, nsm_interface->stats.rx_dropped, VTY_NEWLINE);
 
 	vty_out(vty, "    %lu input errors, %lu length, %lu overrun,"
 				 " %lu CRC, %lu frame%s",
-			ifp->stats.rx_errors, ifp->stats.rx_length_errors,
-			ifp->stats.rx_over_errors, ifp->stats.rx_crc_errors,
-			ifp->stats.rx_frame_errors, VTY_NEWLINE);
+			nsm_interface->stats.rx_errors, nsm_interface->stats.rx_length_errors,
+			nsm_interface->stats.rx_over_errors, nsm_interface->stats.rx_crc_errors,
+			nsm_interface->stats.rx_frame_errors, VTY_NEWLINE);
 
-	vty_out(vty, "    %lu fifo, %lu missed%s", ifp->stats.rx_fifo_errors,
-			ifp->stats.rx_missed_errors, VTY_NEWLINE);
+	vty_out(vty, "    %lu fifo, %lu missed%s", nsm_interface->stats.rx_fifo_errors,
+			nsm_interface->stats.rx_missed_errors, VTY_NEWLINE);
 
 	vty_out(vty, "    %lu output packets, %lu bytes, %lu dropped%s",
-			ifp->stats.tx_packets, ifp->stats.tx_bytes,
-			ifp->stats.tx_dropped, VTY_NEWLINE);
+			nsm_interface->stats.tx_packets, nsm_interface->stats.tx_bytes,
+			nsm_interface->stats.tx_dropped, VTY_NEWLINE);
 
 	vty_out(vty, "    %lu output errors, %lu aborted, %lu carrier,"
 				 " %lu fifo, %lu heartbeat%s",
-			ifp->stats.tx_errors, ifp->stats.tx_aborted_errors,
-			ifp->stats.tx_carrier_errors, ifp->stats.tx_fifo_errors,
-			ifp->stats.tx_heartbeat_errors, VTY_NEWLINE);
+			nsm_interface->stats.tx_errors, nsm_interface->stats.tx_aborted_errors,
+			nsm_interface->stats.tx_carrier_errors, nsm_interface->stats.tx_fifo_errors,
+			nsm_interface->stats.tx_heartbeat_errors, VTY_NEWLINE);
 
 	vty_out(vty, "    %lu window, %lu collisions%s",
-			ifp->stats.tx_window_errors, ifp->stats.collisions, VTY_NEWLINE);
+			nsm_interface->stats.tx_window_errors, nsm_interface->stats.collisions, VTY_NEWLINE);
 
 	vty_out(vty, "%s", VTY_NEWLINE);
 	return;
@@ -1740,9 +1818,12 @@ int nsm_interface_write_hook_add(nsm_submodule_t module, int (*write_cb)(struct 
 	return OK;
 }
 
-static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp)
+int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp)
 {
 	NSM_ENTER_FUNC();
+	if(add)
+		zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+			ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	// zlog_debug(MODULE_DEFAULT, "===========nsm_interface_hook_handler %d %d %s",add, module, ifp->name);
 	if (module == NSM_INTF_ALL)
 	{
@@ -1788,6 +1869,6 @@ void nsm_interface_init(void)
 		memset(nsm_intf_cb, 0, sizeof(nsm_intf_cb));
 		_nsm_intf_init = 1;
 	}
-	if_hook_add(nsm_interface_new_hook, nsm_interface_delete_hook);
+	if_hook_add(nsm_interface_create_hook, nsm_interface_delete_hook);
 	lib_event_register_api(MODULE_NSM, nsm_interface_event_hook);
 }

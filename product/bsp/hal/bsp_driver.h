@@ -68,7 +68,6 @@ extern int bsp_driver_exit(bsp_driver_t *);
 extern int bsp_driver_task_exit(bsp_driver_t *);
 
 extern int bsp_module_func(bsp_driver_t *, bsp_sdk_func init_func, bsp_sdk_func start_func, bsp_sdk_func stop_func, bsp_sdk_func exit_func);
-extern int bsp_driver_module_check(hal_ipccmd_callback_t *cmdtbl, int num, int module);
 
 extern int bsp_module_init(void);
 extern int bsp_module_task_init(void);

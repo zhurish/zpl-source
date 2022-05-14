@@ -25,7 +25,7 @@
 #include "if.h"
 #include "vrf.h"
 #include "prefix.h"
-
+#include "zclient.h"
 #include "nsm_include.h"
 
 #ifdef ZPL_HAL_MODULE
@@ -41,7 +41,7 @@ int nsm_halpal_interface_add(struct interface *ifp)
 	int ret = 0;
 	if(os_strlen(ifp->k_name))
 	{
-		ret = pal_interface_create(ifp);
+		ret = hal_l3if_add(ifp->ifindex, ifp->k_name, NULL);
 		if(ret != OK)
 			return ret;
 	}
@@ -51,7 +51,7 @@ int nsm_halpal_interface_add(struct interface *ifp)
 int nsm_halpal_interface_delete (struct interface *ifp)
 {
 	int ret = 0;
-	ret = pal_interface_destroy(ifp);
+	ret = hal_l3if_del(ifp->ifindex);
 	if(ret != OK)
 		return ret;
 	return ret;
@@ -60,10 +60,6 @@ int nsm_halpal_interface_delete (struct interface *ifp)
 int nsm_halpal_interface_up (struct interface *ifp)
 {
 	int ret = 0;
-	if(if_is_l3intf(ifp))
-		ret = pal_interface_up(ifp);
-	if(ret != OK)
-		return ret;
 #ifdef ZPL_HAL_MODULE
 	ret = hal_port_up(ifp->ifindex);
 	if(ret != OK)
@@ -80,59 +76,21 @@ int nsm_halpal_interface_down (struct interface *ifp)
 	if(ret != OK)
 		return ret;
 #endif
-	if(if_is_l3intf(ifp))
-		ret = pal_interface_down(ifp);
-	if(ret != OK)
-		return ret;
 	return ret;
 }
 
-int nsm_halpal_interface_change (struct interface *ifp)
-{
-	int ret = 0;
-	ret = pal_interface_change(ifp);
-	if(ret != OK)
-		return ret;
-	return ret;
-}
-
-int nsm_halpal_interface_refresh_flag(struct interface *ifp)
-{
-	int ret = 0;
-	ret = pal_interface_refresh_flag(ifp);
-	if(ret != OK)
-		return ret;
-	return ret;
-}
-
-int nsm_halpal_interface_update_flag(struct interface *ifp, zpl_uint32 flags)
-{
-	int ret = 0;
-	ret = pal_interface_update_flag(ifp, flags);
-	if(ret != OK)
-		return ret;
-	return ret;
-}
 
 int nsm_halpal_interface_ifindex(char *k_name)
 {
 	int ret = 0;
-	ret = pal_interface_ifindex(k_name);
-	if(ret != OK)
-		return ret;
+	ret = if_nametoindex(k_name);
 	return ret;
 }
-
 
 int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu)
 {
 	int ret = 0;
-	ret = pal_interface_set_mtu(ifp, mtu);
-	if(ret != OK)
-		return ret;
-#ifdef ZPL_HAL_MODULE
-	//ret = hal_port_mtu_set(ifp->ifindex, mtu);
-#endif
+	ret = hal_port_mtu_set(ifp->ifindex, mtu);
 	return ret;
 }
 
@@ -140,20 +98,15 @@ int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu)
 int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_interface_set_vrf(ifp, vrf);
-	if(ret != OK)
-		return ret;
-#ifdef ZPL_HAL_MODULE
 	ret = hal_port_vrf_set(ifp->ifindex, vrf->vrf_id);
-#endif
 	return ret;
 }
 
-int nsm_halpal_interface_multicast (struct interface *ifp, zpl_bool multicast)
+int nsm_halpal_interface_multicast (struct interface *ifp, zpl_uint32 multicast)
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE
-	//ret = hal_port_multicast_set(ifp->ifindex, multicast);
+	ret = hal_port_multicast_set(ifp->ifindex, multicast);
 #endif
 	return ret;
 }
@@ -162,42 +115,39 @@ int nsm_halpal_interface_bandwidth (struct interface *ifp, zpl_uint32 bandwidth)
 {
 	int ret = 0;
 #ifdef ZPL_HAL_MODULE
-	//ret = hal_port_bandwidth_set(ifp->ifindex, bandwidth);
+	ret = hal_port_bandwidth_set(ifp->ifindex, bandwidth);
 #endif
 	return ret;
 }
 
+
+#ifdef ZPL_NSM_L3MODULE
 int nsm_halpal_interface_set_address (struct interface *ifp, struct connected *ifc, zpl_bool secondry)
 {
-	//printf("%s\r\n", __func__);
 	int ret = 0;
-	ret = pal_interface_ipv4_add(ifp, ifc);
+	ret = hal_l3if_addr_add(ifp->ifindex, ifc->address, secondry);
 	if(ret != OK)
 		return ret;
-	//ret = hal_port_address_set(ifp->ifindex, cp, secondry);
 	return ret;
 }
 
 int nsm_halpal_interface_unset_address (struct interface *ifp, struct connected *ifc, zpl_bool secondry)
 {
 	int ret = 0;
-	//ret = hal_port_address_unset(ifp->ifindex, cp, secondry);
-	//if(ret != OK)
-	//	return ret;
-	ret = pal_interface_ipv4_delete(ifp, ifc);
+	ret = hal_l3if_addr_del(ifp->ifindex, ifc->address, secondry);
 	return ret;
 }
 
 int nsm_halpal_interface_set_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry)
 {
 	int ret = 0;
-	ret = pal_interface_ipv4_dstaddr_add(ifp, cp);
+	ret = hal_l3if_dstaddr_add(ifp->ifindex, cp->address);
 	return ret;
 }
 int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry)
 {
 	int ret = 0;
-	ret = pal_interface_ipv4_dstaddr_delete(ifp, cp);
+	ret = hal_l3if_dstaddr_del(ifp->ifindex, cp->address);
 	return ret;
 }
 
@@ -206,17 +156,15 @@ int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected 
 int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len)
 {
 	int ret = 0;
-	ret = pal_interface_set_lladdr(ifp, mac, len);
-	if(ret != OK)
-		return ret;
-	//ret = hal_port_mac_set(ifp->ifindex, mac, len);
+	ret = hal_l3if_mac_set(ifp->ifindex, mac);
 	return ret;
 }
+#endif
 
 int nsm_halpal_interface_get_statistics (struct interface *ifp)
 {
 	int ret = 0;
-	ret = pal_interface_update_statistics(ifp);
+	//ret = pal_interface_update_statistics(ifp);
 	if(ret != OK)
 		return ret;
 	return ret;
@@ -288,14 +236,8 @@ int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en duplex)
 
 
 
-int nsm_halpal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new)
-{
-	int ret = 0;
-	ret = pal_iproute_rib_action(p, old, new);
-	return ret;
-}
 
-
+#if 0
 int nsm_halpal_interface_vlan_set(struct interface *ifp, vlan_t vlan)
 {
 	int ret = 0;
@@ -316,20 +258,20 @@ int nsm_halpal_interface_promisc_link(struct interface *ifp, zpl_bool enable)
 	ret = pal_interface_promisc_link(ifp, enable);
 	return ret;
 }
-
+#endif
 
 
 int nsm_halpal_create_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_create_vrf(vrf);
+	//ret = pal_create_vrf(vrf);
 	return ret;
 }
 
 int nsm_halpal_delete_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_delete_vrf(vrf);
+	//ret = pal_delete_vrf(vrf);
 	return ret;
 }
 
@@ -422,6 +364,24 @@ int nsm_halpal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 {
 	int ret = 0;
 	ret = pal_firewall_dnat_rule_set(rule, action);
+	return ret;
+}
+#endif
+
+#ifdef ZPL_NSM_L3MODULE
+int nsm_halpal_route_multipath_add(safi_t safi, struct prefix *p,
+                          struct rib *rib, zpl_uint8 num)
+{
+	int ret = 0;
+	ret = hal_route_multipath_add(0, safi, p, rib, num);
+	return ret;
+}
+
+int nsm_halpal_route_multipath_del(safi_t safi, struct prefix *p,
+                          struct rib *rib, zpl_uint8 num)
+{
+	int ret = 0;
+	ret = hal_route_multipath_del(0, safi, p, rib, num);
 	return ret;
 }
 #endif

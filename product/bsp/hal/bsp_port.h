@@ -35,13 +35,16 @@ typedef struct sdk_port_s
 
 	int (*sdk_port_protected_enable_cb)(void *, zpl_phyport_t, zpl_bool);
 
-	int (*sdk_port_mac_cb)(void *, zpl_phyport_t, zpl_uint8 *, zpl_bool);
-
 	int (*sdk_port_vrf_cb)(void *, zpl_phyport_t, zpl_uint32);
 	int (*sdk_port_mode_cb)(void *, zpl_phyport_t, zpl_uint32);
 	int (*sdk_port_pause_cb)(void *, zpl_phyport_t, zpl_bool, zpl_bool);
 	int (*sdk_port_discard_cb)(void *, zpl_phyport_t, zpl_bool);
 
+	//风暴
+	int (*sdk_port_storm_rate_cb) (void *, zpl_phyport_t, zpl_uint32 ,
+			zpl_uint32, zpl_uint32);
+
+	int (*sdk_port_stat_cb)(void *, zpl_phyport_t, struct if_stats *);
 
 }sdk_port_t;
 

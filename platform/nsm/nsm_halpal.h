@@ -34,24 +34,24 @@ extern "C" {
 #endif
 #include "nsm_interface.h"
 
+
+
+
 extern int nsm_halpal_interface_add(struct interface *ifp);
 extern int nsm_halpal_interface_delete (struct interface *ifp);
 extern int nsm_halpal_interface_up (struct interface *ifp);
 extern int nsm_halpal_interface_down (struct interface *ifp);
-extern int nsm_halpal_interface_change (struct interface *ifp);
-extern int nsm_halpal_interface_refresh_flag(struct interface *ifp);
-extern int nsm_halpal_interface_update_flag(struct interface *ifp, zpl_uint32 flags);
 extern int nsm_halpal_interface_ifindex(char *k_name);
-
+#ifdef ZPL_NSM_L3MODULE
 extern int nsm_halpal_interface_set_address (struct interface *ifp, struct connected *cp, zpl_bool secondry);
 extern int nsm_halpal_interface_unset_address (struct interface *ifp, struct connected *cp, zpl_bool secondry);
 extern int nsm_halpal_interface_set_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry);
 extern int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry);
-
 extern int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len);
+#endif
 extern int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu);
 extern int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf);
-extern int nsm_halpal_interface_multicast (struct interface *ifp, zpl_bool multicast);
+extern int nsm_halpal_interface_multicast (struct interface *ifp, zpl_uint32 multicast);
 
 extern int nsm_halpal_interface_bandwidth (struct interface *ifp, zpl_uint32 bandwidth);
 extern int nsm_halpal_interface_speed (struct interface *ifp, nsm_speed_en );
@@ -73,7 +73,7 @@ extern int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en );
 
 extern int nsm_halpal_create_vrf(struct ip_vrf *vrf);
 extern int nsm_halpal_delete_vrf(struct ip_vrf *vrf);
-extern int nsm_halpal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
+
 
 
 
@@ -87,6 +87,12 @@ extern int nsm_halpal_arp_age_timeout(zpl_uint32 timeout);
 extern int nsm_halpal_arp_retry_interval(zpl_uint32 interval);
 #endif
 
+#ifdef ZPL_NSM_L3MODULE
+extern int nsm_halpal_route_multipath_add(safi_t safi, struct prefix *p,
+                          struct rib *rib, zpl_uint8 num);
+extern int nsm_halpal_route_multipath_del(safi_t safi, struct prefix *p,
+                          struct rib *rib, zpl_uint8 num);
+#endif
 
 #ifdef __cplusplus
 }

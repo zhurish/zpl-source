@@ -9,8 +9,8 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
-
+#include "b53_cpu.h"
+#include "b53_port.h"
 
 int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 {
@@ -44,9 +44,9 @@ int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 	/* Configure the appropriate IMP port */
 	ret |= b53125_read8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, &hdr_ctl);
 	if (port == 8)
-		hdr_ctl |= GC_FRM_MGMT_PORT_MII;
+		hdr_ctl |= B53_DOUBLE_IMP_EN;
 	else if (port == 5)
-		hdr_ctl |= GC_FRM_MGMT_PORT_M;
+		hdr_ctl |= B53_IMP_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, hdr_ctl);
 
 	/* Enable Broadcom tags for IMP port */

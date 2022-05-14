@@ -22,7 +22,7 @@ extern "C" {
 #include "pal_arp.h"
 #include "pal_interface.h"
 #include "pal_router.h"
-
+#include "linux/linux_arp.h"
 
 #ifdef __cplusplus
 }

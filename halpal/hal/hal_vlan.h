@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#ifndef ABSTRACT_HAL_HAL_VLAN_H_
-#define ABSTRACT_HAL_HAL_VLAN_H_
+#ifndef __HAL_VLAN_H__
+#define __HAL_VLAN_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,4 +119,4 @@ extern int hal_port_unset_vlan(ifindex_t ifindex, vlan_t vlan);
 }
 #endif
 
-#endif /* ABSTRACT_HAL_HAL_VLAN_H_ */
+#endif /* __HAL_VLAN_H__ */

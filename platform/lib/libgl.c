@@ -1,6 +1,7 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "libgl.h"
 
 /*

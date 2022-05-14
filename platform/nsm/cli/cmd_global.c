@@ -761,8 +761,38 @@ DEFUN(no_global_iparpdhcp_enable,
 }
 #endif
 
+
+DEFUN(global_cpu_rate,
+	  global_cpu_rate_cmd,
+	  "cpu rate limit <0-1388889>",
+	  "Cpu System\n"
+	  "Rate Configure\n"
+	  "Limit Configure\n"
+	  "Rate Value For 'pps'\n")
+{
+	int ret = ERROR;
+	ret = nsm_cpu_rate_set_api(atoi(argv[0]));
+	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+}
+
+DEFUN(no_global_cpu_rate,
+	  no_global_cpu_rate_cmd,
+	  "no cpu rate limit",
+	  NO_STR
+	  "Cpu System\n"
+	  "Rate Configure\n"
+	  "Limit Configure\n")
+{
+	int ret = ERROR;
+	ret = nsm_cpu_rate_set_api(0);
+	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+}
+
+
 void cmd_global_init(void)
 {
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_cpu_rate_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_cpu_rate_cmd);
 #ifdef ZPL_NSM_VLAN	
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_dot1q_tpid_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_dot1q_tpid_cmd);

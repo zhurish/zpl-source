@@ -78,10 +78,9 @@ enum if_link_type
    FreeBSD define value in /usr/include/net/if.h.
    #define IFNAMSIZ        16
 */
+
 #define IF_NAME_MAX 64
 #define IF_HWADDR_MAX 20
-#define INTERFACE_NAMSIZ 64
-#define INTERFACE_HWADDR_MAX 20
 #define MAX_CLASS_TYPE 8
 
 #define IF_LOOPBACK_MAX 16
@@ -198,7 +197,8 @@ struct interface
      To delete, just set ifindex to IFINDEX_INTERNAL to indicate that the
      interface does not exist in the kernel.
    */
-   zpl_char name[INTERFACE_NAMSIZ + 1];
+   zpl_char name[IF_NAME_MAX + 1];
+   
    zpl_uint32  name_hash;
    /* Interface index (should be IFINDEX_INTERNAL for non-kernel or
      deleted interfaces). */
@@ -209,7 +209,7 @@ struct interface
    zpl_vlan_t encavlan; //子接口封装的VLAN ID
 
    zpl_bool have_kernel;
-   zpl_char k_name[INTERFACE_NAMSIZ + 1];
+   zpl_char k_name[IF_NAME_MAX + 1];
    zpl_uint32  k_name_hash;
    ifindex_t k_ifindex;
 
@@ -240,7 +240,7 @@ struct interface
 
    /* Link-layer information and hardware address */
    enum if_link_type ll_type;
-   zpl_uchar hw_addr[INTERFACE_HWADDR_MAX];
+   zpl_uchar hw_addr[IF_HWADDR_MAX];
    zpl_uint32 hw_addr_len;
 
    /* interface bandwidth, kbits */
@@ -272,7 +272,17 @@ struct interface
    zpl_uint32 count;
    zpl_uint32 raw_status;
 };
+//__attribute__ ((aligned (1)))
 
+struct if_master
+{
+	int (*if_master_add_cb)(struct interface *);
+	int (*if_master_del_cb)(struct interface *);
+	zpl_uint32 llc;
+	zpl_uint32 mode;
+	void *ifMutex;
+	struct list *intfList;	
+};
 
 
 #define IF_UNIT_ALL (0xEFFFFFFF)

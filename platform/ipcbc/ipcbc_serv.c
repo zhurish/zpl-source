@@ -156,7 +156,7 @@ static void
 zserv_encode_interface(struct stream *s, struct interface *ifp)
 {
   /* Interface information. */
-  stream_put(s, ifp->name, INTERFACE_NAMSIZ);
+  stream_put(s, ifp->name, IF_NAME_MAX);
   stream_putl(s, ifp->ifindex);
   stream_putc(s, ifp->status);
   stream_putq(s, ifp->flags);
@@ -2219,23 +2219,7 @@ static struct cmd_node forwarding_node =
   1
 };
 
-#ifdef HAVE_FPM
-/* function to write the fpm config info */
-static int 
-config_write_fpm (struct vty *vty)
-{
-  return 
-     fpm_remote_srv_write (vty);
-}
 
-/* Zebra node  */
-static struct cmd_node zebra_node = 
-{
-  ZEBRA_NODE,
-  "",
-  1
-};
-#endif
 
 #endif
 
@@ -2248,9 +2232,7 @@ void zebra_init(void)
   /* Install configuration write function. */
   install_node (&table_node, config_write_table);
   install_node (&forwarding_node, config_write_forwarding);
-#ifdef HAVE_FPM
-  install_node (&zebra_node, config_write_fpm);
-#endif
+
 
   install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_forwarding_cmd);
   install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_forwarding_cmd);

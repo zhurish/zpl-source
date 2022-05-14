@@ -22,7 +22,7 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "zassert.h"
+#include "module.h"
 #include "prefix.h"
 #include "table.h"
 #include "zmemory.h"

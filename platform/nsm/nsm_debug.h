@@ -40,7 +40,7 @@ extern "C" {
 #define ZEBRA_DEBUG_RIB     0x01
 #define ZEBRA_DEBUG_RIB_Q   0x02
 
-#define ZEBRA_DEBUG_FPM     0x01
+
 #define ZEBRA_DEBUG_NHT     0x01
 
 /* Debug related macro. */
@@ -56,20 +56,19 @@ extern "C" {
 #define IS_ZEBRA_DEBUG_RIB  (zebra_debug_rib & ZEBRA_DEBUG_RIB)
 #define IS_ZEBRA_DEBUG_RIB_Q  (zebra_debug_rib & ZEBRA_DEBUG_RIB_Q)
 
-#define IS_ZEBRA_DEBUG_FPM (zebra_debug_fpm & ZEBRA_DEBUG_FPM)
 #define IS_ZEBRA_DEBUG_NHT  (zebra_debug_nht & ZEBRA_DEBUG_NHT)
 
 extern zpl_ulong zebra_debug_event;
 extern zpl_ulong zebra_debug_packet;
 extern zpl_ulong zebra_debug_kernel;
 extern zpl_ulong zebra_debug_rib;
-extern zpl_ulong zebra_debug_fpm;
+
 extern zpl_ulong zebra_debug_nht;
 
 extern int cmd_debug_init(void);
 
 
-extern int zebra_debug_init (void);
+extern int nsm_debug_init (void);
  
 #ifdef __cplusplus
 }

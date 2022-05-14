@@ -42,7 +42,8 @@ endif
 ifeq ($(strip $(ZPL_NSM_MIRROR)),true)
 OBJS	+= hal_mirror.o	
 endif
-
+OBJS	+= hal_l3if.o
+OBJS	+= hal_route.o
 OBJS	+= hal_driver.o
 OBJS	+= hal_test.o
 endif

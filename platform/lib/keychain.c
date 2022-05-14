@@ -22,6 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+
 #include "zmemory.h"
 #include "keychain.h"
 #include "linklist.h"

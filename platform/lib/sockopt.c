@@ -21,10 +21,11 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "sockopt.h"
+#include "module.h"
 #include "log.h"
+#include "sockopt.h"
+#include "sockunion.h"
 #include "if.h"
-
 
 int
 setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)
@@ -74,7 +75,7 @@ getsockopt_cmsg_data (struct ipstack_msghdr *msgh, zpl_uint32 level, zpl_uint32 
   struct ipstack_cmsghdr *cmsg;
   void *ptr = NULL;
   
-  for (cmsg = ZCMSG_FIRSTHDR(msgh); 
+  for (cmsg = IPSTACK_CMSG_FIRSTHDR(msgh);
        cmsg != NULL;
        cmsg = IPSTACK_CMSG_NXTHDR(msgh, cmsg))
     if (cmsg->cmsg_level == level && cmsg->cmsg_type)

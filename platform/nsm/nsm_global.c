@@ -24,6 +24,11 @@ static int bulid_global_config(struct vty *vty, void *p)
 	if(nsm_global.mutex)
 		os_mutex_lock(nsm_global.mutex, OS_WAIT_FOREVER);
   //vty_out(vty, "=============bulid_global_config%s", VTY_NEWLINE);
+
+	if(nsm_global.cpu_rate)
+	{
+		vty_out(vty, "cpu rate limit %d%s", nsm_global.cpu_rate, VTY_NEWLINE);
+	}
 	if(nsm_global.qinq_tpid)
 			vty_out(vty, "system dot1q-tpid %x%s", nsm_global.qinq_tpid, VTY_NEWLINE);
 	if(nsm_global.global_jumbo_size && nsm_global.global_jumbo_size != NSM_GLOBAL_JUMBO_DEFAULT)
@@ -129,6 +134,21 @@ int nsm_global_start(void)
 	ret |= nsm_global_switch_forward_set(zpl_true);
   ret |= nsm_global_jumbo_size_set(NSM_GLOBAL_JUMBO_DEFAULT);
   return ret;
+}
+
+
+int nsm_cpu_rate_set_api(zpl_uint32	cpu_rate)
+{
+	if (nsm_global.cpu_rate != cpu_rate)
+	{
+		if(hal_qos_cpu_rate_limit(cpu_rate, 0) == OK)
+		{
+			nsm_global.cpu_rate = cpu_rate;
+			return OK;
+		}
+		return ERROR;
+	}
+	return OK;
 }
 
 int nsm_global_jumbo_size_set(zpl_uint32 value)
@@ -500,6 +520,7 @@ int nsm_snooping_proto_get(enum nsm_snoop_proto_type type, enum nsm_proto_action
 		os_mutex_unlock(nsm_global.mutex);
 	return ret;
 }
+
 
 #endif
 

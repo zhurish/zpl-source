@@ -40,9 +40,14 @@
 #include <sched.h>
 #endif
 
-
-#include "linux_driver.h"
 #include "pal_include.h"
+#include "nsm_debug.h"
+#include "nsm_vlan.h"
+#include "nsm_arp.h"
+#include "nsm_include.h"
+#include "nsm_firewalld.h"
+#include "nsm_vlaneth.h"
+#include "linux_driver.h"
 #ifndef CLONE_NEWNET
 #define CLONE_NEWNET 0x40000000 /* New network namespace (lo, device, names sockets, etc) */
 #endif

@@ -91,7 +91,7 @@ static int pal_module_task_init(void)
 /*
  * 端口映射
  */
-int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
+int apal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_portmap_rule_set)
 		return pal_stack.ip_stack_firewall_portmap_rule_set(rule, action);
@@ -100,35 +100,35 @@ int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 /*
  * 端口开放
  */
-int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
+int apal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_port_filter_rule_set)
 		return pal_stack.ip_stack_firewall_port_filter_rule_set(rule, action);
     return OK;
 }
 
-int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
+int apal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_mangle_rule_set)
 		return pal_stack.ip_stack_firewall_mangle_rule_set(rule, action);
     return OK;
 }
 
-int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
+int apal_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_raw_rule_set)
 		return pal_stack.ip_stack_firewall_raw_rule_set(rule, action);
     return OK;
 }
 
-int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
+int apal_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_snat_rule_set)
 		return pal_stack.ip_stack_firewall_snat_rule_set(rule, action);
     return OK;
 }
 
-int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
+int apal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_dnat_rule_set)
 		return pal_stack.ip_stack_firewall_dnat_rule_set(rule, action);

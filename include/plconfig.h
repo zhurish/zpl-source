@@ -686,7 +686,7 @@ extern "C" {
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 
 /* Maximum number of paths for a route */
-#define MULTIPATH_NUM 1
+#define MULTIPATH_NUM 16
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */

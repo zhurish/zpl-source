@@ -53,7 +53,7 @@ typedef enum load_balance_s
 struct l2trunk_group_s;
 struct Gl2trunk_s;
 
-typedef struct l2trunk_s
+typedef struct l2trunk_member_s
 {
 	NODE			node;
 	zpl_uint32			trunkId;
@@ -66,7 +66,7 @@ typedef struct l2trunk_s
 	ifindex_t 		ifindex;
 
 	struct l2trunk_group_s *group;
-}l2trunk_t;// port-channel member interface
+}l2trunk_member_t;// port-channel member interface
 
 typedef struct l2trunk_group_s
 {
@@ -92,27 +92,31 @@ typedef struct Gl2trunk_s
 
 
 typedef int (*l2trunk_group_cb)(l2trunk_group_t *, void *);
-typedef int (*l2trunk_cb)(l2trunk_t *, void *);
+typedef int (*l2trunk_member_cb)(l2trunk_member_t *, void *);
 
 extern int nsm_trunk_init(void);
 extern int nsm_trunk_exit(void);
 
 extern int nsm_trunk_enable(void);
 extern zpl_bool nsm_trunk_is_enable(void);
-
+/* 创建/删除汇聚接口 */
 extern int nsm_trunk_interface_create_api(struct interface *ifp);
 extern int nsm_trunk_interface_del_api(struct interface *ifp);
-
+/* 获取汇聚接口的信息 */
 extern l2trunk_group_t * nsm_port_channel_get(struct interface *ifp);
 
+/* 查询汇聚组是否存在 */
 extern zpl_bool l2trunk_lookup_api(zpl_uint32 trunkid);
+/* 获取汇聚祖的接口数量 */
 extern int l2trunk_lookup_interface_count_api(zpl_uint32 trunkid);
 
+/* 创建/删除汇聚组 */
 extern int nsm_trunk_create_api(zpl_uint32 trunkid, trunk_type_t type);
 extern int nsm_trunk_destroy_api(zpl_uint32 trunkid);
 
-
+/* 查询该接口是否在汇聚接口下 */
 extern zpl_bool l2trunk_lookup_interface_api(ifindex_t ifindex);
+/* 获取该接口所在的汇聚组ID */
 extern int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, zpl_uint32 *trunkId);
 
 /* 把接口加入trunk组，从trunk组删除 */
@@ -121,11 +125,12 @@ extern int nsm_trunk_del_interface_api(zpl_uint32 trunkid, struct interface *ifp
 extern int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, zpl_uint32 pri);
 extern int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, zpl_uint32 timeout);
 
+/* 汇聚组 优先级和负载分担摸索 */
 extern int nsm_trunk_load_balance_api(zpl_uint32 trunkid, load_balance_t mode);
 extern int nsm_trunk_lacp_system_priority_api(zpl_uint32 trunkid, zpl_uint32 pri);
 
 extern int nsm_trunk_group_callback_api(l2trunk_group_cb cb, void *pVoid);
-extern int nsm_trunk_callback_api(l2trunk_cb cb, void *pVoid);
+extern int nsm_trunk_member_callback_api(l2trunk_member_cb cb, void *pVoid);
 
 #ifdef ZPL_SHELL_MODULE
 extern void cmd_trunk_init(void);

@@ -10,7 +10,7 @@
 #include "hal_driver.h"
 #include "sdk_driver.h"
 #include "b53_driver.h"
-
+#include "b53_port.h"
 
 //设置管理非管理功能
 static int b53125_switch_manege(sdk_driver_t *dev, zpl_bool manege)
@@ -42,11 +42,7 @@ static int b53125_switch_forwarding(sdk_driver_t *dev, zpl_bool enable)
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
 	if(ret == ERROR)
 		return ERROR;
-	/* Include IMP port in dumb forwarding mode
-	 */
-	b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_CTRL, &mgmt);
-	mgmt |= B53_MII_DUMB_FWDG_EN;
-	b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_CTRL, mgmt);
+
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return OK;
 }
@@ -80,7 +76,7 @@ static int b53125_aging_time(sdk_driver_t *dev, int agetime)
 
 /*************************************************************************/
 //禁止使能多播泛洪
-static int b53125_multicast_flood(sdk_driver_t *dev, zpl_bool enable)
+static int b53125_unknow_multicast_flood(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -92,7 +88,7 @@ static int b53125_multicast_flood(sdk_driver_t *dev, zpl_bool enable)
 	return ret;
 }
 //禁止使能单播泛洪
-static int b53125_unicast_flood(sdk_driver_t *dev, zpl_bool enable)
+static int b53125_unknow_unicast_flood(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -209,8 +205,8 @@ int b53125_global_init(sdk_driver_t *dev)
 	sdk_global.sdk_jumbo_size_cb = b53125_jumbo_size;
 	sdk_global.sdk_switch_manege_cb = b53125_switch_manege;
 	sdk_global.sdk_switch_forward_cb = b53125_switch_forwarding;
-	sdk_global.sdk_multicast_flood_cb = b53125_multicast_flood;
-	sdk_global.sdk_unicast_flood_cb = b53125_unicast_flood;
+	sdk_global.sdk_multicast_flood_cb = b53125_unknow_multicast_flood;
+	sdk_global.sdk_unicast_flood_cb = b53125_unknow_unicast_flood;
 	sdk_global.sdk_multicast_learning_cb = b53125_multicast_learning;
 	sdk_global.sdk_bpdu_enable_cb = b53125_enable_bpdu;//全局使能接收BPDU报文
 	sdk_global.sdk_aging_time_cb = b53125_aging_time;
@@ -218,8 +214,8 @@ int b53125_global_init(sdk_driver_t *dev)
 
 	ret |= b53125_switch_manege(dev, zpl_true);//设置为managed mode
 	ret |= b53125_switch_forwarding(dev, zpl_false);//禁止转发
-	ret |= b53125_multicast_flood(dev, zpl_true);//使能多播泛洪
-	ret |= b53125_unicast_flood(dev, zpl_true);//使能单播泛洪
+	ret |= b53125_unknow_multicast_flood(dev, zpl_true);//使能多播泛洪
+	ret |= b53125_unknow_unicast_flood(dev, zpl_true);//使能单播泛洪
 	ret |= b53125_multicast_learning(dev, zpl_true);//使能多播报文学习源MAC
 	return ret;
 }

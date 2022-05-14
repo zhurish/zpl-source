@@ -95,15 +95,15 @@ extern int pal_module_init(void);
 /*
  * 端口映射
  */
-int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action);
+int apal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action);
 /*
  * 端口开放
  */
-int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action);
-int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action);
-int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
-int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
-int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
+int apal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action);
+int apal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action);
+int apal_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
+int apal_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
+int apal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
 #endif
 
 #ifdef __cplusplus

@@ -29,8 +29,15 @@
 #include "command.h"
 #include "prefix.h"
 #include "vrf.h"
+#include "nexthop.h"
+#include "pal_include.h"
 #include "nsm_debug.h"
-#include "nsm_rib.h"
+#include "nsm_vlan.h"
+#include "nsm_arp.h"
+#include "nsm_bridge.h"
+#include "nsm_firewalld.h"
+#include "nsm_vlaneth.h"
+#include "nsm_include.h"
 #include "linux_driver.h"
 
 /* Hack for GNU libc version 2. */
@@ -40,6 +47,8 @@
 
 
 #include "linux_netlink.h"
+
+struct nlsock netlink_cmd;
 
 static const struct message nlmsg_str[] =
 {
@@ -199,7 +208,7 @@ void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interf
 
 		hw_addr_len = IPSTACK_RTA_PAYLOAD(tb[IPSTACK_IFLA_ADDRESS]);
 
-		if (hw_addr_len > INTERFACE_HWADDR_MAX)
+		if (hw_addr_len > IF_HWADDR_MAX)
 			zlog_warn(MODULE_PAL, "Hardware address is too large: %d",
 					hw_addr_len);
 		else
@@ -229,19 +238,15 @@ void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interf
  *                     (recursive, multipath, etc.)
  * @param family: Address family which the change concerns
  */
-void _netlink_route_debug(zpl_uint32 cmd, struct prefix *p, struct nexthop *nexthop,
-		const char *routedesc, zpl_family_t family, struct nsm_ip_vrf *zvrf)
+void _netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
+		hal_nexthop_t *nexthop, union g_addr address,
+		vrf_id_t vrfid)
 {
 	if (IS_ZEBRA_DEBUG_KERNEL)
 	{
-		char buf[PREFIX_STRLEN];
-		union prefix46constptr up;
-		up.p = p;
-		zlog_debug(MODULE_PAL,
-				"netlink_route_multipath() (%s): %s %s vrf %u type %s",
-				routedesc, lookup(nlmsg_str, cmd),
-				prefix2str(up, buf, sizeof(buf)), zvrf->vrf_id,
-				nexthop_type_to_str(nexthop->type));
+		zlog_debug(MODULE_PAL, "(%s): %s/%d vrf %u",
+				lookup(nlmsg_str, cmd),
+				inet_ntoa(address.ipv4), bytelen, vrfid);
 	}
 }
 
@@ -323,7 +328,7 @@ int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl)
  to the given function. */
 int _netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
-		struct nlsock *nl, struct nsm_ip_vrf *zvrf)
+		struct nlsock *nl, vrf_id_t vrfid)
 {
 	zpl_uint32 status;
 	int ret = 0;
@@ -414,7 +419,7 @@ int _netlink_parse_info(
 				}
 
 				/* Deal with errors that occur because of races in link handling */
-				if (nl == &zvrf->netlink_cmd)
+				//if (nl == &netlink_cmd.netlink_cmd)
 				{
 					if( (msg_type == IPSTACK_RTM_NEWROUTE && -errnum == IPSTACK_ERRNO_EEXIST)
 							|| (msg_type == IPSTACK_RTM_DELROUTE && (-errnum == IPSTACK_ERRNO_ENODEV || -errnum == IPSTACK_ERRNO_ESRCH))
@@ -453,15 +458,13 @@ int _netlink_parse_info(
 			 * linux sets the originators port-id for {NEW|DEL}ADDR messages,
 			 * so this has to be checked here. */
 #ifdef ZPL_KERNEL_FORWARDING
-			if (nl == &zvrf->netlink
-					&& h->nlmsg_pid == zvrf->netlink_cmd.snl.nl_pid
-					&& (h->nlmsg_type != IPSTACK_RTM_NEWADDR
+			if ((h->nlmsg_type != IPSTACK_RTM_NEWADDR
 							&& h->nlmsg_type != IPSTACK_RTM_DELADDR))
 			{
 				//if (IS_ZEBRA_DEBUG_KERNEL)
 					zlog_debug(MODULE_PAL,
 							"netlink_parse_info: %s packet comes from %s",
-							zvrf->netlink_cmd.name, nl->name);
+							netlink_cmd.netlink_cmd.name, nl->name);
 				continue;
 			}
 #endif
@@ -473,7 +476,7 @@ int _netlink_parse_info(
 						nl->name, lookup(nlmsg_str, h->nlmsg_type),
 						h->nlmsg_type, h->nlmsg_seq, h->nlmsg_pid);
 */
-				error = (*filter)(&snl, h, zvrf->vrf_id);
+				error = (*filter)(&snl, h, vrfid);
 				if (error < 0)
 				{
 					zlog_err(MODULE_PAL, "%s filter function error", nl->name);
@@ -512,7 +515,7 @@ static int netlink_talk_filter(struct ipstack_sockaddr_nl *snl, struct ipstack_n
 */
 
 /* ipstack_sendmsg() to netlink ipstack_socket then ipstack_recvmsg(). */
-int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, struct nsm_ip_vrf *zvrf)
+int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, vrf_id_t vrfid)
 {
 	zpl_uint32 status;
 	struct ipstack_sockaddr_nl snl;
@@ -549,7 +552,7 @@ int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, struct nsm_ip_v
 	 * Get reply from netlink ipstack_socket.
 	 * The reply should either be an acknowlegement or an error.
 	 */
-	return _netlink_parse_info(NULL, nl, zvrf);
+	return _netlink_parse_info(NULL, nl, vrfid);
 }
 
 static int _netlink_recvbuf(struct nlsock *nl, zpl_socket_t sock, zpl_uint32 newsize)
@@ -668,7 +671,7 @@ static void _netlink_install_filter(zpl_socket_t sock, __u32 pid)
 #endif
 /* Exported interface function.  This function simply calls
  netlink_socket (). */
-static void _kernel_nl_open(struct nsm_ip_vrf *zvrf)
+static void _kernel_nl_open(struct nlsock *nl)
 {
 	zpl_ulong groups;
 
@@ -677,72 +680,70 @@ static void _kernel_nl_open(struct nsm_ip_vrf *zvrf)
 	groups |= IPSTACK_RTMGRP_IPV6_ROUTE | IPSTACK_RTMGRP_IPV6_IFADDR;
 #endif /* ZPL_BUILD_IPV6 */
 #ifdef ZPL_KERNEL_FORWARDING
-	_netlink_socket(&zvrf->netlink, groups, zvrf->vrf_id);
+	_netlink_socket(nl, groups, nl->vrf_id);
 	/* Register kernel ipstack_socket. */
-	if (!ipstack_invalid(zvrf->netlink.sock))
+	if (!ipstack_invalid(nl->sock))
 	{
 		/* Only want non-blocking on the netlink event ipstack_socket */
-		ipstack_set_nonblocking(zvrf->netlink.sock);
+		ipstack_set_nonblocking(nl->sock);
 		/* Set receive buffer size if it's set from command line */
 		nl_rcvbuf.p = XMALLOC(MTYPE_STREAM, NL_PKT_BUF_SIZE);
 		nl_rcvbuf.size = NL_PKT_BUF_SIZE;
 
-		_netlink_install_filter(zvrf->netlink.sock, zvrf->netlink.snl.nl_pid);
+		_netlink_install_filter(nl->sock, nl->snl.nl_pid);
 
 		_netlink_listen(zvrf);
 	}
 #endif
-	_netlink_socket(&zvrf->netlink_cmd, 0, zvrf->vrf_id);
+	_netlink_socket(nl, 0, nl->vrf_id);
 }
 
-void _netlink_close(struct nsm_ip_vrf *zvrf)
+void _netlink_close(void)
 {
 #ifdef ZPL_KERNEL_FORWARDING
-	if (zvrf->t_netlink)
+	if (netlink_cmd.t_netlink)
 	{
-		THREAD_READ_OFF(zvrf->t_netlink);
-		zvrf->t_netlink = NULL;
+		THREAD_READ_OFF(netlink_cmd.t_netlink);
+		netlink_cmd.t_netlink = NULL;
 	}
-	if (!ipstack_invalid(zvrf->netlink.sock))
+	if (!ipstack_invalid(netlink_cmd.sock))
 	{
-		ipstack_close(zvrf->netlink.sock);
+		ipstack_close(netlink_cmd.sock);
 	}
-	if (zvrf->netlink.name)
+	if (netlink_cmd.name)
 	{
-		XFREE(MTYPE_NETLINK_NAME, zvrf->netlink.name);
-		zvrf->netlink.name = NULL;
+		XFREE(MTYPE_NETLINK_NAME, netlink_cmd.name);
+		netlink_cmd.name = NULL;
 	}
-	zvrf->netlink.snl.nl_pid = 0;
+	netlink_cmd.snl.nl_pid = 0;
 #endif
-	if (!ipstack_invalid(zvrf->netlink_cmd.sock))
+	if (!ipstack_invalid(netlink_cmd.sock))
 	{
-		ipstack_close(zvrf->netlink_cmd.sock);
+		ipstack_close(netlink_cmd.sock);
 	}
-	if (zvrf->netlink_cmd.name)
+	if (netlink_cmd.name)
 	{
-		XFREE(MTYPE_NETLINK_NAME, zvrf->netlink_cmd.name);
-		zvrf->netlink_cmd.name = NULL;
+		XFREE(MTYPE_NETLINK_NAME, netlink_cmd.name);
+		netlink_cmd.name = NULL;
 	}
-	zvrf->netlink_cmd.snl.nl_pid = 0;
+	netlink_cmd.snl.nl_pid = 0;
 }
 
-void _netlink_open(struct nsm_ip_vrf *zvrf)
+void _netlink_open(vrf_id_t vrfid)
 {
 	char nl_name[64];
 	/* Initialize netlink sockets */
 #ifdef ZPL_KERNEL_FORWARDING
-	snprintf(nl_name, 64, "nllisten-%u", zvrf->vrf_id);
+	snprintf(nl_name, 64, "nllisten-%u", vrfid);
 
-	zvrf->netlink.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
-	zvrf->netlink.snl.nl_pid = getpid();
+	netlink_cmd.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
+	netlink_cmd.snl.nl_pid = getpid();
 #endif
-	snprintf(nl_name, 64, "nlcmd-%u", zvrf->vrf_id);
-	zvrf->netlink_cmd.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
-	zvrf->netlink_cmd.snl.nl_pid = getpid();
-
-	_kernel_nl_open(zvrf);
-	/*	interface_lookup_netlink(zvrf);
-	 netlink_route_read(zvrf);*/
+	snprintf(nl_name, 64, "nlcmd-%u", vrfid);
+	netlink_cmd.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
+	netlink_cmd.snl.nl_pid = getpid();
+	netlink_cmd.vrf_id = vrfid;
+	_kernel_nl_open(&netlink_cmd);
 }
 
 #if 0

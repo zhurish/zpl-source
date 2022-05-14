@@ -19,14 +19,16 @@
  * 02111-1307, USA.  
  */
 
-#include <auto_include.h>
-#include "zebra_event.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "vector.h"
 #include "vty.h"
 #include "command.h"
 #include "prefix.h"
 #include "table.h"
 #include "stream.h"
+#include "zclient.h"
 #include "linklist.h"
 #include "log.h"
 #include "vrf.h"
@@ -37,7 +39,7 @@
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
 #include "router-id.h"
-#include "zclient.h"
+
 
 
 /* master zebra server structure */

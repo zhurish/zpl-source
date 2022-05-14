@@ -22,6 +22,15 @@ extern "C" {
 #define NSM_PORT_FLOWCONTROL_TX_DEFAULT	zpl_false
 #define NSM_PORT_FLOWCONTROL_RX_DEFAULT	zpl_false
 
+typedef enum stp_state_s
+{
+	STP_DISABLE = 0,
+	STP_LISTENING,
+	STP_LEARNING,
+	STP_FORWARDING,
+	STP_BLOCKING,
+}stp_state_t;
+
 typedef struct nsm_port_s
 {
 	struct interface *ifp;

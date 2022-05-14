@@ -20,8 +20,10 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 
 
-#include <auto_include.h>
-#include <zplos_include.h>
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
+
 #include "linklist.h"
 #include "zmemory.h"
 #include "vector.h"

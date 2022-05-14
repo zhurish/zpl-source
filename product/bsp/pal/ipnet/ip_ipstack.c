@@ -38,7 +38,7 @@ static void _ipkernel_ifreq_set_name (struct Ip_ifreq *ipstack_ifreq, struct int
   {
     return;
   }
-  strncpy (ipstack_ifreq->ifr_name, ifp->k_name, MIN(INTERFACE_NAMSIZ, 16));//IP_IFNAMSIZ
+  strncpy (ipstack_ifreq->ifr_name, ifp->k_name, MIN(IF_NAME_MAX, 16));//IP_IFNAMSIZ
   return;
 }
 

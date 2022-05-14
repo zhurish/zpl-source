@@ -152,10 +152,6 @@ typedef struct rib_dest_t_
    */
   zpl_uint32 flags;
 
-  /*
-   * Linkage to put dest on the FPM processing queue.
-   */
-  TAILQ_ENTRY(rib_dest_t_) fpm_q_entries;
 
 } rib_dest_t;
 
@@ -290,7 +286,7 @@ struct nexthop_vrfid
 };
 
 
-#if defined (HAVE_RTADV)
+#if defined (ZPL_NSM_RTADV)
 /* Structure which hold status of router advertisement. */
 struct rtadv
 {
@@ -299,22 +295,26 @@ struct rtadv
   zpl_uint32 adv_if_count;
   zpl_uint32 adv_msec_if_count;
 
-  struct thread *ra_read;
-  struct thread *ra_timer;
+  struct eloop *ra_read;
+  struct eloop *ra_timer;
 };
-#endif /* HAVE_RTADV */
+#endif /* ZPL_NSM_RTADV */
 
-
-#ifdef HAVE_NETLINK
-/* Socket interface to kernel */
-struct nlsock
+#if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)
+struct nsm_rtadv_t
 {
-  zpl_socket_t sock;
-  zpl_uint32 seq;
-  struct ipstack_sockaddr_nl snl;
-  const char *name;
+  /* eloop master */
+  struct eloop_master *master;
+  zpl_socket_t irdp_sock;
+  struct eloop *t_irdp_raw;
+
+  int irdp_task_id;  
+  int initialise;  
 };
-#endif
+extern struct nsm_rtadv_t nsm_rtadv;
+#endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
+
+
 
 /* Routing table instance.  */
 struct nsm_ip_vrf
@@ -346,17 +346,11 @@ struct nsm_ip_vrf
   struct list *rid_lo_sorted_list;
   struct prefix rid_user_assigned;
 
-#if defined (HAVE_RTADV)
+#if defined (ZPL_NSM_RTADV) 
   struct rtadv rtadv;
-#endif /* HAVE_RTADV */
+#endif /* ZPL_NSM_RTADV */
 
-#ifdef HAVE_NETLINK
-  struct nlsock netlink_cmd; /* command channel */
-#ifdef ZPL_KERNEL_FORWARDING
-  struct nlsock netlink;     /* kernel messages */
-  struct thread *t_netlink;
-#endif  
-#endif
+
   /* Recursive Nexthop table */
   struct route_table *rnh_table[AFI_MAX];
 };

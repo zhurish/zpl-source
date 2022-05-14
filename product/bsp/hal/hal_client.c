@@ -24,7 +24,7 @@ struct module_list module_list_bsp =
         .flags = 0,
 };
 
-/* Prototype for event manager. */
+/* hello ----> init -----> port -----> register done */
 
 /* Allocate hal_client structure. */
 static struct hal_client *hal_client_new(void)
@@ -214,7 +214,7 @@ static int hal_client_send_message(struct hal_client *hal_client, enum hal_ipcms
   return 0;
 }
 
-static int hal_client_hello_send(struct hal_client *hal_client)
+static int hal_client_msg_hello(struct hal_client *hal_client)
 {
   struct hal_ipcmsg_hello *hello = (struct hal_ipcmsg_hello *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
   hal_ipcmsg_reset(&hal_client->outmsg);
@@ -232,10 +232,10 @@ static int hal_client_hello_send(struct hal_client *hal_client)
   return hal_client_send_message(hal_client, 0);
 }
 
-static int hal_client_register(struct hal_client *hal_client)
+static int hal_client_msg_start_done(struct hal_client *hal_client)
 {
   hal_ipcmsg_reset(&hal_client->outmsg);
-  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_REGISTER, 0));
+  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_STARTONDE, 0));
 
   hal_ipcmsg_putl(&hal_client->outmsg, 1);
 
@@ -245,13 +245,13 @@ static int hal_client_register(struct hal_client *hal_client)
   return hal_client_send_message(hal_client, 0);
 }
 
-static int hal_client_initialization(struct hal_client *hal_client)
+static int hal_client_msg_register(struct hal_client *hal_client)
 {
   hal_ipcmsg_reset(&hal_client->outmsg);
   if (IS_HAL_IPCMSG_DEBUG_EVENT(hal_client->debug)&&IS_HAL_IPCMSG_DEBUG_SEND(hal_client->debug))
     zlog_debug(MODULE_HAL, "Client Send init msg unit %d slot %d portnum %d version %s", hal_client->unit, hal_client->slot, hal_client->portnum, hal_client->version);
   
-  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_INIT, 0));
+  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_REGISTER, 0));
   hal_ipcmsg_putl(&hal_client->outmsg, 1);
   //hal_client->outmsg.setp += sizeof(struct hal_ipcmsg_result);
   return hal_client_send_message(hal_client, 0);
@@ -262,14 +262,15 @@ int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ..
   int len = 0;
   va_list args;
   char logbuf[1024];
-  struct hal_ipcmsg_getval getvalue;
+  struct hal_ipcmsg_result getvalue;
   struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
   memset(logbuf, 0, sizeof(logbuf));
   memset(&getvalue, 0, sizeof(getvalue));
   hal_ipcmsg_reset(&hal_client->outmsg);
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
-  hal_ipcmsg_getval_set(&hal_client->outmsg, &getvalue);
-  hal_ipcmsg_putl(&hal_client->outmsg, ret);
+  getvalue.result = ret;
+  hal_ipcmsg_result_set(&hal_client->outmsg, &getvalue);
+  //hal_ipcmsg_putl(&hal_client->outmsg, ret);
   //result->result = htonl(ret);
   //hal_client->outmsg.setp += sizeof(struct hal_ipcmsg_result);
   if (ret != OK)
@@ -287,7 +288,7 @@ int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ..
   return hal_client_send_message(hal_client, 0);
 }
 
-int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_getval *getvalue)
+int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue)
 {
   //int len = 0;
   va_list args;
@@ -296,8 +297,9 @@ int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ip
   memset(logbuf, 0, sizeof(logbuf));
   hal_ipcmsg_reset(&hal_client->outmsg);
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
-  hal_ipcmsg_getval_set(&hal_client->outmsg, getvalue);
-  hal_ipcmsg_putl(&hal_client->outmsg, ret);
+  getvalue->result = ret;
+  hal_ipcmsg_result_set(&hal_client->outmsg, getvalue);
+  //hal_ipcmsg_putl(&hal_client->outmsg, ret);
   //result->result = htonl(ret);
   //hal_client->outmsg.setp += sizeof(struct hal_ipcmsg_result);
 
@@ -309,7 +311,7 @@ int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ip
 }
 
 int hal_client_send_result_msg(struct hal_client *hal_client, int ret, 
-  struct hal_ipcmsg_getval *getvalue, int subcmd, char *msg, int msglen)
+  struct hal_ipcmsg_result *getvalue, int subcmd, char *msg, int msglen)
 {
   int len = 0;
   va_list args;
@@ -318,8 +320,9 @@ int hal_client_send_result_msg(struct hal_client *hal_client, int ret,
   memset(logbuf, 0, sizeof(logbuf));
   hal_ipcmsg_reset(&hal_client->outmsg);
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, subcmd));
-  hal_ipcmsg_getval_set(&hal_client->outmsg, getvalue);
-  hal_ipcmsg_putl(&hal_client->outmsg, ret);
+  getvalue->result = ret;
+  hal_ipcmsg_result_set(&hal_client->outmsg, getvalue);
+  //hal_ipcmsg_putl(&hal_client->outmsg, ret);
   if(msglen && msg)
     hal_ipcmsg_put(&hal_client->outmsg, msg, msglen);
   //result->result = htonl(ret);
@@ -366,7 +369,7 @@ int hal_client_start(struct hal_client *hal_client)
   /* Create read thread. */
   hal_client_event(HAL_EVENT_READ, hal_client, 0);
 
-  hal_client_hello_send(hal_client);
+  hal_client_msg_hello(hal_client);
 
   return 0;
 }
@@ -398,7 +401,7 @@ static int hal_client_register_thread(struct thread *thread)
 {
   struct hal_client *client = THREAD_ARG(thread);
   client->t_time = NULL;
-  hal_client_register(client);
+  hal_client_msg_start_done(client);
   return OK;
 }
 
@@ -520,12 +523,19 @@ hal_client_read_thread(struct thread *thread)
         if(client->bsp_client_msg_handle)
         {
           ret = (client->bsp_client_msg_handle)(client, hdr->command, client->bsp_driver);
-          if (IPCCMD_CMD_GET(hdr->command) != HAL_MODULE_CMD_GET)
-            hal_client_send_return(client,  ret, ipstack_strerror(ret));
+          if(ret == OS_NO_CALLBACK)
+          {
+            hal_client_send_return(client,  OS_NO_CALLBACK, ipstack_strerror(OS_NO_CALLBACK));
+          }
+          else
+          {
+            if (IPCCMD_CMD_GET(hdr->command) != HAL_MODULE_CMD_GET)
+              hal_client_send_return(client,  ret, ipstack_strerror(ret));
+          }
         }
         else
         {
-          hal_client_send_return(client,  ret, ipstack_strerror(ret));
+          hal_client_send_return(client,  OS_NO_CALLBACK, ipstack_strerror(OS_NO_CALLBACK));
         }
       }
       else
@@ -591,18 +601,18 @@ int hal_client_callback(struct hal_client *hal_client, int (*bsp_handle)(struct 
     return OK;
 }
 
-static int hal_client_porttbl(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_porttbl *tbl)
+static int hal_client_hwport_register(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_hwport *tbl)
 {
   int i = 0;
   hal_ipcmsg_reset(&hal_client->outmsg);
-  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_PORTTBL, 0));
+  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_HWPORTTBL, 0));
 
   hal_ipcmsg_putc(&hal_client->outmsg, portnum);
   for (i = 0; i < portnum; i++)
   {
-    hal_ipcmsg_putc(&hal_client->outmsg, tbl[i].type);
     hal_ipcmsg_putc(&hal_client->outmsg, tbl[i].unit);
     hal_ipcmsg_putc(&hal_client->outmsg, tbl[i].slot);
+    hal_ipcmsg_putc(&hal_client->outmsg, tbl[i].type);
     hal_ipcmsg_putc(&hal_client->outmsg, tbl[i].port);
     hal_ipcmsg_putl(&hal_client->outmsg, tbl[i].phyid);
   }
@@ -612,7 +622,7 @@ static int hal_client_porttbl(struct hal_client *hal_client, zpl_int8 portnum, s
   return hal_client_send_message(hal_client, 0);
 }
 
-int hal_client_bsp_init(struct hal_client *hal_client, module_t module, 
+int hal_client_bsp_register(struct hal_client *hal_client, module_t module, 
     zpl_int8 unit, zpl_int8 slot, zpl_int8 portnum, zpl_char *version)
 {
   hal_client->unit = unit;
@@ -620,13 +630,13 @@ int hal_client_bsp_init(struct hal_client *hal_client, module_t module,
   hal_client->slot = slot;
   hal_client->portnum = portnum;
   strcpy(hal_client->version, version);
-  hal_client_initialization(hal_client);
+  hal_client_msg_register(hal_client);
   return OK;
 }
 
-int hal_client_bsp_porttbl(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_porttbl *tbl)
+int hal_client_bsp_hwport_register(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_hwport *tbl)
 {
-  hal_client_porttbl(hal_client,  portnum, tbl);
+  hal_client_hwport_register(hal_client,  portnum, tbl);
   return OK;
 }
 /************************************************************************/

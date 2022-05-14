@@ -17,6 +17,7 @@
 #include "nsm_qos.h"
 #include "nsm_interface.h"
 #include "nsm_qos_acl.h"
+#include "hal_include.h"
 
 static Global_Qos_t mGlobalQos;
 
@@ -91,8 +92,12 @@ static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 
 int nsm_qos_global_enable(zpl_bool enable)
 {
-	mGlobalQos.qos_enable = enable;
-	return OK;
+	if(hal_qos_enable(enable) == OK)
+	{
+		mGlobalQos.qos_enable = enable;
+		return OK;
+	}
+	return ERROR;
 }
 
 zpl_bool nsm_qos_global_get(void)
@@ -102,8 +107,12 @@ zpl_bool nsm_qos_global_get(void)
 
 int nsm_qos_shaping_global_enable(zpl_bool enable)
 {
-	mGlobalQos.qos_shaping = enable;
-	return OK;
+	if(hal_qos_ipg_enable(enable) == OK)
+	{
+		mGlobalQos.qos_shaping = enable;
+		return OK;
+	}
+	return ERROR;	
 }
 
 zpl_bool nsm_qos_shaping_global_get(void)
@@ -134,113 +143,6 @@ static nsm_qos_t *_nsm_qos_get(struct interface *ifp)
 	return NULL;
 }
 
-int nsm_qos_storm_enable_set_api(struct interface *ifp, zpl_bool enable)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		qos->qos_storm_enable = enable;
-		return OK;
-	}
-	return ERROR;
-}
-
-/*
- * port storm control
- */
-zpl_bool nsm_qos_storm_enable_get_api(struct interface *ifp)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		return qos->qos_storm_enable;
-	}
-	return zpl_false;
-}
-
-int nsm_qos_storm_unicast_set_api(struct interface *ifp, zpl_uint32 qos_unicast,
-								  zpl_uint8 unicastflag)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		qos->qos_storm.qos_unicast = qos_unicast;
-		qos->qos_storm.unicast_flags = unicastflag;
-		return OK;
-	}
-	return ERROR;
-}
-
-int nsm_qos_storm_unicast_get_api(struct interface *ifp, zpl_uint32 *qos_unicast,
-								  zpl_uint8 *unicastflag)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		if (qos_unicast)
-			*qos_unicast = qos->qos_storm.qos_unicast;
-		if (unicastflag)
-			*unicastflag = qos->qos_storm.unicast_flags;
-		return OK;
-	}
-	return ERROR;
-}
-
-int nsm_qos_storm_multicast_set_api(struct interface *ifp, zpl_uint32 qos_multicast,
-									zpl_uint8 multicastflag)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		qos->qos_storm.multicast_flags = multicastflag;
-		qos->qos_storm.qos_multicast = qos_multicast;
-		return OK;
-	}
-	return ERROR;
-}
-
-int nsm_qos_storm_multicast_get_api(struct interface *ifp, zpl_uint32 *qos_multicast,
-									zpl_uint8 *multicastflag)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		if (multicastflag)
-			*multicastflag = qos->qos_storm.multicast_flags;
-		if (qos_multicast)
-			*qos_multicast = qos->qos_storm.qos_multicast;
-		return OK;
-	}
-	return ERROR;
-}
-
-int nsm_qos_storm_broadcast_set_api(struct interface *ifp, zpl_uint32 qos_broadcast,
-									zpl_uint8 broadcastflag)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		qos->qos_storm.broadcast_flags = broadcastflag;
-		qos->qos_storm.qos_broadcast = qos_broadcast;
-		return OK;
-	}
-	return ERROR;
-}
-
-int nsm_qos_storm_broadcast_get_api(struct interface *ifp, zpl_uint32 *qos_broadcast,
-									zpl_uint8 *broadcastflag)
-{
-	nsm_qos_t *qos = _nsm_qos_get(ifp);
-	if (qos)
-	{
-		if (broadcastflag)
-			*broadcastflag = qos->qos_storm.broadcast_flags;
-		if (qos_broadcast)
-			*qos_broadcast = qos->qos_storm.qos_broadcast;
-		return OK;
-	}
-	return ERROR;
-}
 
 /*
  * port rate limit
@@ -253,13 +155,19 @@ int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 	{
 		if (qos_dir == NSM_QOS_DIR_INBOUND && rate)
 		{
-			os_memcpy(&qos->qos_input_limit, rate, sizeof(nsm_qos_limit_t));
-			return OK;
+			if(hal_qos_ingress_rate_limit(ifp->ifindex, rate->qos_cir, rate->qos_cbs) == OK)
+			{
+				os_memcpy(&qos->qos_input_limit, rate, sizeof(nsm_qos_limit_t));
+				return OK;
+			}
 		}
 		else if (qos_dir == NSM_QOS_DIR_OUTBOUND && rate)
 		{
-			os_memcpy(&qos->qos_output_limit, rate, sizeof(nsm_qos_limit_t));
-			return OK;
+			if(hal_qos_egress_rate_limit(ifp->ifindex, rate->qos_cir, rate->qos_cbs) == OK)
+			{
+				os_memcpy(&qos->qos_output_limit, rate, sizeof(nsm_qos_limit_t));
+				return OK;
+			}
 		}
 	}
 	return ERROR;
@@ -932,58 +840,7 @@ static int nsm_qos_interface_del_api(struct interface *ifp)
 }
 
 #ifdef ZPL_SHELL_MODULE
-static int nsm_qos_interface_storm_write_config(struct vty *vty, nsm_qos_t *qos)
-{
-	if (qos->qos_storm_enable)
-	{
-		if (qos->qos_storm.qos_unicast)
-		{
-			switch (qos->qos_storm.unicast_flags)
-			{
-			case NSM_QOS_STORM_RATE:
-				vty_out(vty, " storm control unicast %d%s", qos->qos_storm.qos_unicast, VTY_NEWLINE);
-				break;
-			case NSM_QOS_STORM_PERCENT:
-				vty_out(vty, " storm control unicast %s%d%s", " percent ", qos->qos_storm.qos_unicast, VTY_NEWLINE);
-				break;
-			case NSM_QOS_STORM_PACKET:
-				vty_out(vty, " storm control unicast%s%d%s", " pps ", qos->qos_storm.qos_unicast, VTY_NEWLINE);
-				break;
-			}
-		}
-		if (qos->qos_storm.qos_multicast)
-		{
-			switch (qos->qos_storm.multicast_flags)
-			{
-			case NSM_QOS_STORM_RATE:
-				vty_out(vty, " storm control multicast %d%s", qos->qos_storm.qos_multicast, VTY_NEWLINE);
-				break;
-			case NSM_QOS_STORM_PERCENT:
-				vty_out(vty, " storm control multicast %s%d%s", " percent ", qos->qos_storm.qos_multicast, VTY_NEWLINE);
-				break;
-			case NSM_QOS_STORM_PACKET:
-				vty_out(vty, " storm control multicast%s%d%s", " pps ", qos->qos_storm.qos_multicast, VTY_NEWLINE);
-				break;
-			}
-		}
-		if (qos->qos_storm.qos_broadcast)
-		{
-			switch (qos->qos_storm.broadcast_flags)
-			{
-			case NSM_QOS_STORM_RATE:
-				vty_out(vty, " storm control broadcast %d%s", qos->qos_storm.qos_broadcast, VTY_NEWLINE);
-				break;
-			case NSM_QOS_STORM_PERCENT:
-				vty_out(vty, " storm control broadcast %s%d%s", " percent ", qos->qos_storm.qos_broadcast, VTY_NEWLINE);
-				break;
-			case NSM_QOS_STORM_PACKET:
-				vty_out(vty, " storm control broadcast%s%d%s", " pps ", qos->qos_storm.qos_broadcast, VTY_NEWLINE);
-				break;
-			}
-		}
-	}
-	return 0;
-}
+
 int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 {
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
@@ -992,8 +849,6 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 		int32_t i = 0, j = 0, n = 0;
 		zpl_uint32 tmpb[NSM_QOS_DSCP_PRI_MAX];
 		zpl_char tmpstr[512];
-
-		nsm_qos_interface_storm_write_config(vty, qos);
 
 		if (qos->qos_input_limit.qos_cir)
 		{

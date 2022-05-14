@@ -19,10 +19,6 @@ typedef struct sdk_qos_s
 	//禁止使能qos
 	int (*sdk_qos_enable_cb) (void *, zpl_bool);
 
-	//风暴
-	int (*sdk_qos_storm_rate_cb) (void *, zpl_phyport_t, zpl_uint32 ,
-			zpl_uint32  );
-
 	//端口限速
 	int (*sdk_qos_port_egress_rate_cb) (void *, zpl_phyport_t, zpl_uint32);
 	int (*sdk_qos_port_ingress_rate_cb) (void *, zpl_phyport_t, zpl_uint32);

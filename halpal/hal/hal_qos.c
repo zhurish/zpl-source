@@ -161,26 +161,10 @@ int hal_qos_queue_weight(ifindex_t ifindex,nsm_qos_class_e class, zpl_uint32 wei
 }
 #endif
 
-//风暴
-int hal_qos_storm_rate_limit(ifindex_t ifindex, zpl_uint32 mode, zpl_uint32 limit, zpl_uint32 burst_size)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_port_set(&ipcmsg, ifindex);
-	hal_ipcmsg_putc(&ipcmsg, mode);
-	hal_ipcmsg_putl(&ipcmsg, limit);
-	hal_ipcmsg_putl(&ipcmsg, burst_size);
-	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_STORM_RATELIMIT);
-	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
 
 
-//端口限速
 
+//端口限速 //Kb
 int hal_qos_egress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 burst_size)
 {
 	zpl_uint32 command = 0;
@@ -195,7 +179,7 @@ int hal_qos_egress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 bu
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
-
+//Kb
 int hal_qos_ingress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 burst_size)
 {
 	zpl_uint32 command = 0;
@@ -211,7 +195,7 @@ int hal_qos_ingress_rate_limit(ifindex_t ifindex, zpl_uint32 limit, zpl_uint32 b
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-//CPU
+//pps
 int hal_qos_cpu_rate_limit(zpl_uint32 limit, zpl_uint32 burst_size)
 {
 	zpl_uint32 command = 0;
@@ -219,7 +203,6 @@ int hal_qos_cpu_rate_limit(zpl_uint32 limit, zpl_uint32 burst_size)
 	char buf[512];
 	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	//hal_ipcmsg_port_set(&ipcmsg, ifindex);
 	hal_ipcmsg_putl(&ipcmsg, limit);
 	hal_ipcmsg_putl(&ipcmsg, burst_size);
 	command = IPCCMD_SET(HAL_MODULE_QOS, HAL_MODULE_CMD_REQ, HAL_QOS_CPU_RATELIMIT);

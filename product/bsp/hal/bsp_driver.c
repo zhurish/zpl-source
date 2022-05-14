@@ -43,15 +43,15 @@ struct module_list module_list_sdk =
 };
 
 
-static hal_ipccmd_callback_t moduletable[] = {
+static const hal_ipccmd_callback_t const moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_MGT, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, bsp_global_module_handle),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_SWITCH, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_CPU, bsp_cpu_module_handle),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_PORT, bsp_port_module_handle),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, NULL),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_ROUTE, NULL),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, bsp_l3if_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_ROUTE, bsp_route_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_STP, NULL),
 #ifdef ZPL_NSM_MSTP
     HAL_CALLBACK_ENTRY(HAL_MODULE_MSTP, bsp_mstp_module_handle),
@@ -114,35 +114,40 @@ static hal_ipccmd_callback_t moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_STATUS, NULL),
 };
 
-int bsp_driver_module_check(hal_ipccmd_callback_t *cmdtbl, int num, int module)
-{
-	int ret = 0;
-	for(ret = 0; ret < num; ret++)
-	{
-		if(cmdtbl[ret].module == module)
-		{
-			if(ret == module)
-				return 1;
-			else
-			{
-				zlog_warn(MODULE_HAL, "Find this module/subcmd:%d, but this module/subcmd call %s", module, cmdtbl[ret].name);
-				return 0;
-			}	
-		}
-	}
-	zlog_warn(MODULE_HAL, "Can not Find this module/subcmd:%d ", module);
-	return 0;
-}
 
 int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *driver)
 {
-	int ret = 0;
+	int ret = OS_NO_CALLBACK;
 	int module = IPCCMD_MODULE_GET(cmd);
+	hal_ipccmd_callback_t * callback = NULL;
 	BSP_ENTER_FUNC();
-	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX && (moduletable[module].module_handle))
+	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX)
 	{
-		if(bsp_driver_module_check(moduletable, sizeof(moduletable)/sizeof(moduletable[0]), module))
-			ret = (moduletable[module].module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+		int i = 0;
+		for(i = 0; i < ZPL_ARRAY_SIZE(moduletable); i++)
+		{
+			//zlog_warn(MODULE_HAL, "=== this module:%d  %d", moduletable[i].module, module);
+			if(moduletable[i].module == module && moduletable[i].module_handle)
+			{
+				callback = &moduletable[i];
+				//ret = (moduletable[i].module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+				break;
+			}
+		}
+	/*
+		hal_ipccmd_callback_t * callback = hal_ipccmd_callback_get(moduletable, ZPL_ARRAY_SIZE(moduletable), module);
+		if(callback)
+			ret = (callback->module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+		else
+			ret = OS_NO_CALLBACK;	
+	*/	
+		if(callback)
+			ret = (callback->module_handle)(client, IPCCMD_CMD_GET(cmd), IPCCMD_SUBCMD_GET(cmd), driver);
+		else
+		{
+			zlog_warn(MODULE_HAL, "Can not Find this module:%d ", module);
+			ret = OS_NO_CALLBACK;
+		}		
 	}
 	BSP_LEAVE_FUNC();
 	return ret;
@@ -253,7 +258,7 @@ int bsp_module_task_init(void)
 
 int bsp_module_start(void)
 {
-	struct hal_ipcmsg_porttbl porttbl[5];
+	struct hal_ipcmsg_hwport porttbl[5];
 	memset(porttbl, 0, sizeof(porttbl));
 
 	porttbl[0].type = IF_ETHERNET;//lan1
@@ -303,7 +308,7 @@ int bsp_module_start(void)
         */
 	os_sleep(1);
 	zlog_debug(MODULE_BSP, "BSP Init");
-  	hal_client_bsp_init(bsp_driver.hal_client, 0,
+  	hal_client_bsp_register(bsp_driver.hal_client, 0,
         0, 0, 5, "V0.0.0.1");
 
 	os_sleep(1);
@@ -314,7 +319,7 @@ int bsp_module_start(void)
 		(bsp_driver.bsp_sdk_start)(&bsp_driver, bsp_driver.sdk_driver);
 	}
 	zlog_debug(MODULE_BSP, "SDK Register Port Table Info.");
-  	hal_client_bsp_porttbl(bsp_driver.hal_client, 5, porttbl);
+  	hal_client_bsp_hwport_register(bsp_driver.hal_client, 5, porttbl);
 
 	hal_client_event(HAL_EVENT_REGISTER, bsp_driver.hal_client, 1);
 	zlog_debug(MODULE_BSP, "SDK Init, Done.");

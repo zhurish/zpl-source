@@ -31,16 +31,15 @@
 #include "vrf.h"
 #include "nsm_debug.h"
 #include "nsm_rib.h"
-
+#include "nsm_include.h"
 #include "linux_driver.h"
 
 
 /* Interface address modification. */
-static int _netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interface *ifp,
-		struct connected *ifc)
+//void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec
+static int _netlink_address(zpl_uint32 cmd, void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
 	zpl_uint32 bytelen;
-	struct prefix *p;
 
 	struct
 	{
@@ -49,9 +48,7 @@ static int _netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interfac
 		char buf[NL_PKT_BUF_SIZE];
 	} req;
 
-	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(ifp->vrf_id);
 
-	p = ifc->address;
 	memset(&req, 0, sizeof req - NL_PKT_BUF_SIZE);
 
 	bytelen = (family == IPSTACK_AF_INET ? 4 : 16);
@@ -61,70 +58,61 @@ static int _netlink_address(zpl_uint32 cmd, zpl_family_t family, struct interfac
 	req.n.nlmsg_type = cmd;
 	req.ifa.ifa_family = family;
 
-	req.ifa.ifa_index = ifp->k_ifindex;
-	req.ifa.ifa_prefixlen = p->prefixlen;
-
-	_netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_LOCAL, &p->u.prefix, bytelen);
+	req.ifa.ifa_index = kifindex;
+	req.ifa.ifa_prefixlen = prelen;
+  if(family == IPSTACK_AF_INET)
+	  _netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_LOCAL, &ifc.ipv4, bytelen);
+  else  
+	  _netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_LOCAL, &ifc.ipv6, bytelen);
 
 	if (family == IPSTACK_AF_INET && cmd == IPSTACK_RTM_NEWADDR)
 	{
-		if (!CONNECTED_PEER(ifc) && ifc->destination)
-		{
-			p = ifc->destination;
-			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_BROADCAST, &p->u.prefix, bytelen);
-		}
+
+			_netlink_addattr_l(&req.n, sizeof req, IPSTACK_IFA_BROADCAST, &ifc.ipv4, bytelen);
+
 	}
 
-	if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_SECONDARY))
+	if (sec)
 		SET_FLAG(req.ifa.ifa_flags, IPSTACK_IFA_F_SECONDARY);
 
 	if (IS_ZEBRA_DEBUG_KERNEL)
-		zlog_debug(MODULE_PAL, "netlink %s address on %s(%d)", (cmd == IPSTACK_RTM_NEWADDR) ? "add":"del",
-				ifp->name, req.ifa.ifa_index);
-	/*
-	 if (ifc->label)
-	 _netlink_addattr_l (&req.n, sizeof req, IPSTACK_IFA_LABEL, ifc->label,
-	 strlen (ifc->label) + 1);
-	 */
-	return _netlink_talk(&req.n, &zvrf->netlink_cmd, zvrf);
+		zlog_debug(MODULE_PAL, "netlink %s address on (%d)", (cmd == IPSTACK_RTM_NEWADDR) ? "add":"del",req.ifa.ifa_index);
+
+	return _netlink_talk(&req.n, &netlink_cmd, IF_IFINDEX_VRFID_GET(ifkernel2ifindex(kifindex)));
 }
 
-static int _netlink_address_add_ipv4(struct interface *ifp, struct connected *ifc)
+static int _netlink_address_add_ipv4(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
-	return _netlink_address(IPSTACK_RTM_NEWADDR, IPSTACK_AF_INET, ifp, ifc);
+	return _netlink_address(IPSTACK_RTM_NEWADDR, d, kifindex, family, prelen, ifc, sec);
 }
 
-static int _netlink_address_delete_ipv4(struct interface *ifp, struct connected *ifc)
+static int _netlink_address_delete_ipv4(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
-	return _netlink_address(IPSTACK_RTM_DELADDR, IPSTACK_AF_INET, ifp, ifc);
+	return _netlink_address(IPSTACK_RTM_DELADDR, d, kifindex, family, prelen, ifc, sec);
 }
 
 
 /* Interface address setting via netlink interface. */
-int _ipkernel_if_set_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_set_prefix(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
-  return _netlink_address_add_ipv4(ifp, ifc);
+  return _netlink_address_add_ipv4(d, kifindex, family, prelen, ifc, sec);
 }
 
 /* Interface address is removed using netlink interface. */
-int _ipkernel_if_unset_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_unset_prefix(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
-  return _netlink_address_delete_ipv4(ifp, ifc);
+  return _netlink_address_delete_ipv4(d, kifindex, family, prelen, ifc, sec);
 }
 
-int _ipkernel_if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_set_dst_prefix(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
   int ret;
   struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
-  struct prefix_ipv4 *p;
 
-  p = (struct prefix_ipv4 *)ifc->destination;
-
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
-
-  addr.sin_addr = p->prefix;
-  addr.sin_family = p->family;
+  strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(kifindex));
+  addr.sin_addr = ifc.ipv4;
+  addr.sin_family = family;
   memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
   ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFDSTADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
@@ -134,19 +122,16 @@ int _ipkernel_if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
 
 /* Set up interface's address, netmask (and broadcas? ).  Linux or
    Solaris uses ifname:number semantics to set IP address aliases. */
-int _ipkernel_if_unset_dst_prefix(struct interface *ifp, struct connected *ifc)
+int _ipkernel_if_unset_dst_prefix(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
   int ret;
   struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
-  struct prefix_ipv4 *p;
-
-  p = (struct prefix_ipv4 *)ifc->destination;
-
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(kifindex));
 
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
-  addr.sin_family = p->family;
+  addr.sin_family = family;
+  addr.sin_addr = ifc.ipv4;
   memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
   ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFDSTADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
@@ -168,38 +153,35 @@ struct ipstack_in6_ifreq
 #endif /* _LINUX_IN6_H */
 
 /* Interface's address add/delete functions. */
-int _ipkernel_if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc, int sec)
+int _ipkernel_if_prefix_add_ipv6(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
   int ret;
-  struct prefix_ipv6 *p;
   struct ipstack_in6_ifreq ipstack_ifreq;
 
-  p = (struct prefix_ipv6 *)ifc->address;
-
   memset(&ipstack_ifreq, 0, sizeof(struct ipstack_in6_ifreq));
-
-  memcpy(&ipstack_ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
-  ipstack_ifreq.ifr6_ifindex = ifp->ifindex;
-  ipstack_ifreq.ifr6_prefixlen = p->prefixlen;
+  //addr.sin_family = family;
+  //strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(kifindex));
+  memcpy(&ipstack_ifreq.ifr6_addr, &ifc.ipv6, sizeof(struct ipstack_in6_addr));
+  ipstack_ifreq.ifr6_ifindex = kifindex;
+  ipstack_ifreq.ifr6_prefixlen = prelen;
 
   ret = _ipkernel_if_ioctl_ipv6(IPSTACK_SIOCSIFADDR, (caddr_t)&ipstack_ifreq);
 
   return ret;
 }
 
-int _ipkernel_if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc, int sec)
+int _ipkernel_if_prefix_delete_ipv6(void *d, ifindex_t kifindex, zpl_family_t family, zpl_uint8 prelen, union g_addr ifc, zpl_bool sec)
 {
   int ret;
-  struct prefix_ipv6 *p;
   struct ipstack_in6_ifreq ipstack_ifreq;
 
-  p = (struct prefix_ipv6 *)ifc->address;
-
   memset(&ipstack_ifreq, 0, sizeof(struct ipstack_in6_ifreq));
+  //addr.sin_family = family;
+  //strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(kifindex));
 
-  memcpy(&ipstack_ifreq.ifr6_addr, &p->prefix, sizeof(struct ipstack_in6_addr));
-  ipstack_ifreq.ifr6_ifindex = ifp->ifindex;
-  ipstack_ifreq.ifr6_prefixlen = p->prefixlen;
+  memcpy(&ipstack_ifreq.ifr6_addr, &ifc.ipv6, sizeof(struct ipstack_in6_addr));
+  ipstack_ifreq.ifr6_ifindex = kifindex;
+  ipstack_ifreq.ifr6_prefixlen = prelen;
 
   ret = _ipkernel_if_ioctl_ipv6(IPSTACK_SIOCDIFADDR, (caddr_t)&ipstack_ifreq);
 
@@ -208,3 +190,4 @@ int _ipkernel_if_prefix_delete_ipv6(struct interface *ifp, struct connected *ifc
 
 
 #endif /* ZPL_BUILD_IPV6 */
+

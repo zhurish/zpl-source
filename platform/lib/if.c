@@ -38,53 +38,40 @@
 #include "nsm_rib.h"
 #include <net/if_arp.h>
 
-static void *ifMutex = NULL;
-static struct list *intfList = NULL;
 
-struct if_master
-{
-	int (*interface_add_cb)(struct interface *);
-	int (*interface_delete_cb)(struct interface *);
-	zpl_uint32 llc;
-	zpl_uint32 mode;
-};
 
-struct if_master if_master =
-{
-	.interface_add_cb = NULL,
-	.interface_delete_cb = NULL,
-};
+struct if_master _zif_master;
 
 int if_data_lock(void)
 {
-	if (ifMutex)
-		os_mutex_lock(ifMutex, OS_WAIT_FOREVER);
+	if (_zif_master.ifMutex)
+		os_mutex_lock(_zif_master.ifMutex, OS_WAIT_FOREVER);
 	return OK;
 }
 
 int if_data_unlock(void)
 {
-	if (ifMutex)
-		os_mutex_unlock(ifMutex);
+	if (_zif_master.ifMutex)
+		os_mutex_unlock(_zif_master.ifMutex);
 	return OK;
 }
 
 struct list *if_list_get(void)
 {
-	return intfList;
+	return _zif_master.intfList;
 }
 
 int if_hook_add(int (*add_cb)(struct interface *), int (*del_cb)(struct interface *))
 {
-	if_master.interface_add_cb = add_cb;
-	if_master.interface_delete_cb = del_cb;
+	_zif_master.if_master_add_cb = add_cb;
+	_zif_master.if_master_del_cb = del_cb;
 	return OK;
 }
 
 int if_new_llc_type_mode(zpl_uint32 llc, zpl_uint32 mode)
 {
-	if_master.llc = llc;
-	if_master.mode = mode;
+	_zif_master.llc = llc;
+	_zif_master.mode = mode;
 	return OK;
 }
 
@@ -261,15 +248,15 @@ int if_make_llc_type(struct interface *ifp)
 	default:
 		break;
 	}
-	if (if_master.llc)
+	if (_zif_master.llc)
 	{
-		ifp->ll_type = if_master.llc;
-		if_master.llc = 0;
+		ifp->ll_type = _zif_master.llc;
+		_zif_master.llc = 0;
 	}
-	if (if_master.mode)
+	if (_zif_master.mode)
 	{
-		ifp->if_mode = if_master.mode;
-		if_master.mode = 0;
+		ifp->if_mode = _zif_master.mode;
+		_zif_master.mode = 0;
 	}
 	return OK;
 }
@@ -306,13 +293,18 @@ struct interface *
 if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct interface *ifp = NULL;
-	struct list *intf_list = intfList;
+	struct list *intf_list = _zif_master.intfList;
+	assert(name);
+	assert(namelen <= IF_NAME_MAX); /* Need space for '\0' at end. */
 	IF_DATA_LOCK();
 	ifp = XCALLOC(MTYPE_IF, sizeof(struct interface));
+	if (ifp == NULL)
+	{
+		IF_DATA_UNLOCK();
+		return NULL;
+	}
 	ifp->ifindex = IFINDEX_INTERNAL;
 
-	assert(name);
-	assert(namelen <= INTERFACE_NAMSIZ); /* Need space for '\0' at end. */
 	ifp->if_type = if_iftype_make(name);
 
 	ifp->dynamic = zpl_true;
@@ -325,15 +317,9 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 		IF_DATA_UNLOCK();
 		return NULL;
 	}
-	if (if_uspv_type_setting(ifp) == ERROR)
-	{
-		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
-						   "uspv in VRF %u!",
-				 ifp->name, vrf_id);
-		XFREE(MTYPE_IF, ifp);
-		IF_DATA_UNLOCK();
-		return NULL;
-	}
+
+	ifp->ifindex = if_ifindex_make(name, NULL);
+	ifp->uspv = IF_TYPE_CLR(ifp->ifindex);
 
 	ifp->name[namelen] = '\0';
 	ifp->vrf_id = vrf_id;
@@ -361,8 +347,11 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 						   "name exists already in VRF %u!",
 				 ifp->name, vrf_id);
 
-	if (if_master.interface_add_cb)
-		if_master.interface_add_cb(ifp);
+	zlog_debug(MODULE_DEFAULT, "================if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
+		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
+
+	if (_zif_master.if_master_add_cb)
+		(_zif_master.if_master_add_cb)(ifp);
 	IF_DATA_UNLOCK();
 	return ifp;
 }
@@ -371,13 +360,18 @@ struct interface *
 if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct interface *ifp = NULL;
-	struct list *intf_list = intfList;
+	struct list *intf_list = _zif_master.intfList;
+	assert(name);
+	assert(namelen <= IF_NAME_MAX); /* Need space for '\0' at end. */
 	IF_DATA_LOCK();
 	ifp = XCALLOC(MTYPE_IF, sizeof(struct interface));
+	if (ifp == NULL)
+	{
+		IF_DATA_UNLOCK();
+		return NULL;
+	}
 	ifp->ifindex = IFINDEX_INTERNAL;
 
-	assert(name);
-	assert(namelen <= INTERFACE_NAMSIZ); /* Need space for '\0' at end. */
 	ifp->if_type = if_iftype_make(name);
 
 	ifp->dynamic = zpl_false;
@@ -388,16 +382,9 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 		IF_DATA_UNLOCK();
 		return NULL;
 	}
-	if (if_uspv_type_setting(ifp) == ERROR)
-	{
-		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
-						   "uspv in VRF %u!",
-				 ifp->name, vrf_id);
-		XFREE(MTYPE_IF, ifp);
-		IF_DATA_UNLOCK();
-		return NULL;
-	}
 
+	ifp->ifindex = if_ifindex_make(name, NULL);
+	ifp->uspv = IF_TYPE_CLR(ifp->ifindex);
 	ifp->name[namelen] = '\0';
 	ifp->vrf_id = vrf_id;
 
@@ -424,8 +411,10 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 						   "name exists already in VRF %u!",
 				 ifp->name, vrf_id);
 
-	if (if_master.interface_add_cb)
-		if_master.interface_add_cb(ifp);
+	zlog_debug(MODULE_DEFAULT, "if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
+		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
+	if (_zif_master.if_master_add_cb)
+		_zif_master.if_master_add_cb(ifp);
 	IF_DATA_UNLOCK();
 	return ifp;
 }
@@ -446,10 +435,10 @@ if_create_dynamic(const char *name, zpl_uint32 namelen)
 void if_delete(struct interface *ifp)
 {
 	IF_DATA_LOCK();
-	if (if_master.interface_delete_cb)
-		if_master.interface_delete_cb(ifp);
+	if (_zif_master.if_master_del_cb)
+		(_zif_master.if_master_del_cb)(ifp);
 
-	listnode_delete(intfList, ifp);
+	listnode_delete(_zif_master.intfList, ifp);
 	list_delete_all_node(ifp->connected);
 	list_free(ifp->connected);
 	XFREE(MTYPE_IF, ifp);
@@ -463,7 +452,7 @@ if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if ((ifp->ifindex && ifp->ifindex == ifindex) && (ifp->vrf_id == vrf_id))
 			return ifp;
@@ -477,7 +466,7 @@ if_lookup_by_index(ifindex_t ifindex)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->ifindex && ifp->ifindex == ifindex)
 			return ifp;
@@ -492,7 +481,7 @@ if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id)
 	struct interface *ifp = NULL;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 		{
 			if (ifp->k_name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
 				return ifp;
@@ -507,7 +496,7 @@ if_lookup_by_kernel_name(const char *name)
 	struct interface *ifp = NULL;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 		{
 			if (ifp->k_name_hash == if_name_hash_make(name))
 				return ifp;
@@ -521,7 +510,7 @@ if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->k_ifindex && ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
 			return ifp;
@@ -534,7 +523,7 @@ if_lookup_by_kernel_index(ifindex_t kifindex)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->k_ifindex && ifp->k_ifindex == kifindex)
 			return ifp;
@@ -615,7 +604,7 @@ if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id)
 	struct interface *ifp = NULL;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 		{
 			if (ifp->name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
 				return ifp;
@@ -630,7 +619,7 @@ if_lookup_by_name(const char *name)
 	struct interface *ifp = NULL;
 
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 		{
 			if (ifp->name_hash == if_name_hash_make(name))
 				return ifp;
@@ -645,10 +634,10 @@ if_lookup_by_name_len_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	if (namelen > INTERFACE_NAMSIZ)
+	if (namelen > IF_NAME_MAX)
 		return NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
 			return ifp;
@@ -673,7 +662,7 @@ ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->encavlan && ifp->encavlan == encavlan)
 			return ifp->ifindex;
@@ -692,7 +681,7 @@ ifindex_t  if_phy2ifindex(zpl_phyport_t phyid)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->phyid && ifp->phyid == phyid)
 			return ifp->ifindex;
@@ -711,7 +700,7 @@ ifindex_t  if_l3intfid2ifindex(zpl_phyport_t l3intfid)
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->l3intfid && ifp->l3intfid == l3intfid)
 			return ifp->ifindex;
@@ -766,7 +755,7 @@ struct interface *if_lookup_by_encavlan(zpl_ushort encavlan)
 	struct interface *ifp = NULL;
 	if (!encavlan)
 		return NULL;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if ((ifp->encavlan == encavlan))
 			return ifp;
@@ -783,7 +772,7 @@ if_lookup_exact_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 	struct prefix *p = NULL;
 	struct connected *c = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if ((ifp->vrf_id == vrf_id))
 		{
@@ -826,7 +815,7 @@ if_lookup_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 
 	match = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->vrf_id == vrf_id)
 		{
@@ -859,7 +848,7 @@ if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id)
 	struct interface *ifp = NULL;
 	struct connected *c = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp->vrf_id == vrf_id)
 		{
@@ -888,7 +877,7 @@ zpl_uint32 if_count_lookup_type(if_type_t type)
 	struct interface *ifp = NULL;
 	//struct connected *c;
 	int count = 0;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (IF_TYPE_GET(ifp->if_type) == type)
 		{
@@ -1111,7 +1100,7 @@ int if_kname_set(struct interface *ifp, const char *str)
 {
 	if (strlen(str))
 	{
-		zpl_char buf[INTERFACE_NAMSIZ + 1];
+		zpl_char buf[IF_NAME_MAX + 1];
 		os_memset(buf, 0, sizeof(buf));
 		os_strcpy(buf, str);
 		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
@@ -1183,7 +1172,7 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
 	{
 		if (ifp)
 		{
@@ -1303,19 +1292,20 @@ void if_dump_all(void)
 {
 	struct listnode *node = NULL;
 	void *p = NULL;
-	for (ALL_LIST_ELEMENTS_RO(intfList, node, p))
+	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, p))
 		if_dump(p);
 }
 
 /* Initialize interface list. */
 void if_init(void)
 {
-	if(intfList == NULL)
+	memset(&_zif_master, 0, sizeof(struct if_master));
+	if(_zif_master.intfList == NULL)
 	{
-		intfList = list_new();
-		if (ifMutex == NULL)
-			ifMutex = os_mutex_init();
-		(intfList)->cmp = (zpl_int (*)(void *, void *))if_cmp_func;
+		_zif_master.intfList = list_new();
+		if (_zif_master.ifMutex == NULL)
+			_zif_master.ifMutex = os_mutex_init();
+		(_zif_master.intfList)->cmp = (zpl_int (*)(void *, void *))if_cmp_func;
 	}
 }
 
@@ -1325,15 +1315,15 @@ void if_terminate(void)
 	{
 		struct interface *ifp = NULL;
 
-		ifp = listnode_head(intfList);
+		ifp = listnode_head(_zif_master.intfList);
 		if (ifp == NULL)
 			break;
 
 		if_delete(ifp);
 	}
 
-	list_delete(intfList);
-	intfList = NULL;
+	list_delete(_zif_master.intfList);
+	_zif_master.intfList = NULL;
 }
 
 const char *

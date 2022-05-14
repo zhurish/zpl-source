@@ -1843,42 +1843,14 @@ static struct cmd_node modem_interface_node =
 		1};
 #endif
 
-static struct cmd_node serial_interface_node =
-	{
-		SERIAL_INTERFACE_NODE,
-		"%s(config-serial)# ",
-		1};
-static struct cmd_node ifrange_interface_node =
-	{
-		INTERFACE_RANGE_NODE,
-		"%s(config-if-range)# ",
-		1};
-static struct cmd_node ifrange_l3interface_node =
-	{
-		INTERFACE_L3_RANGE_NODE,
-		"%s(config-if-range)# ",
-		1};
-static struct cmd_node e1_ifrange_l3interface_node =
-	{
-		E1_INTERFACE_L3_RANGE_NODE,
-		"%s(config-if-range)# ",
-		1};
-static struct cmd_node epon_ifrange_interface_node =
-	{
-		EPON_INTERFACE_RANGE_NODE,
-		"%s(config-if-range)# ",
-		1};
-static struct cmd_node epon_ifrange_l3interface_node =
-	{
-		EPON_INTERFACE_L3_RANGE_NODE,
-		"%s(config-if-range)# ",
-		1};
+DEFUN_NODE(serial_interface_node, SERIAL_INTERFACE_NODE, "%s(config-serial)# ", 1);
+DEFUN_NODE(ifrange_interface_node, INTERFACE_RANGE_NODE, "%s(config-if-range)# ", 1);
+DEFUN_NODE(ifrange_l3interface_node, INTERFACE_L3_RANGE_NODE, "%s(config-if-range)# ", 1);
+DEFUN_NODE(e1_ifrange_l3interface_node, E1_INTERFACE_L3_RANGE_NODE, "%s(config-if-range)# ", 1);
+DEFUN_NODE(epon_ifrange_interface_node, EPON_INTERFACE_RANGE_NODE, "%s(config-if-range)# ", 1);
+DEFUN_NODE(epon_ifrange_l3interface_node, EPON_INTERFACE_L3_RANGE_NODE, "%s(config-if-range)# ", 1);		
+DEFUN_NODE(trunk_group_node, TRUNK_NODE, "%s(config-trunk-group)# ", 1);
 
-static struct cmd_node trunk_group_node =
-	{
-		TRUNK_NODE,
-		"%s(config-trunk-group)# ",
-		1};
 
 static void cmd_show_interface_init(int node)
 {
