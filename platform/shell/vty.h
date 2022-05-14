@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "log.h"
 #include "sockunion.h"
 #include "thread.h"
@@ -75,7 +77,12 @@ enum vtylogin_type
     VTY_LOGIN_MAX
 } ;
 
-enum vty_filter_type
+#define CMD_MODIFIER_STR		" |(include|exclude|begin|redirect) STRING"
+#ifdef CMD_MODIFIER_STR
+#define CMD_MODIFIER_STR_HELP	"Include Key\nExclude Key\n|Begin Key\n|Redirect To\n Key String or File name\n"
+
+
+enum out_filter_type
 {
     VTY_FILTER_NONE,
 	  VTY_FILTER_BEGIN,
@@ -85,14 +92,14 @@ enum vty_filter_type
     VTY_FILTER_MAX
 } ;
 
-struct vty_filter
+struct out_filter
 {
-    enum vty_filter_type filter_type; 
+    enum out_filter_type filter_type; 
     char  *filter_key; 
     zpl_uint32  key_flags;
     int redirect_fd;
 } ;
-
+#endif
 /* VTY struct. */
 struct vty 
 {
@@ -208,8 +215,11 @@ struct vty
   zpl_bool	reload;
   zpl_bool	cancel;
   zpl_bool	ansync;
-
-  struct vty_filter vty_filter;
+#ifdef CMD_MODIFIER_STR
+  struct out_filter out_filter;
+#endif
+  char result_msg[VTYSH_BUFSIZ];
+  zpl_uint32 result_len;
 
   int	(*vty_output)(void *, const char *, int);
   void *p_output;
@@ -223,7 +233,6 @@ struct vty
 
   zpl_pid_t pid;
   zpl_pthread_t pthd;
-
 
   zpl_bool detail;
   zpl_bool res0;
@@ -286,9 +295,6 @@ typedef struct cli_shell_s
 
 extern cli_shell_t  cli_shell;
 
-#ifdef HAVE_ROUTE_OPTIMIZE
-//extern void (*vty_ctrl_cmd)(int ctrl, struct vty *vty);
-#endif
 
 /* Integrated configuration file. */
 #define INTEGRATE_DEFAULT_CONFIG "Quagga.conf"
@@ -415,9 +421,11 @@ extern int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len);
 
 extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
+extern int vty_result_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);
-
-extern int vty_filter_set(struct vty *vty, const char *key, enum vty_filter_type filter_type);
+#ifdef CMD_MODIFIER_STR
+extern int out_filter_set(struct vty *vty, const char *key, enum out_filter_type filter_type);
+#endif
 extern int cli_shell_result (const char *, ...) PRINTF_ATTRIBUTE(1, 2);
 
 extern int vty_config_lock (struct vty *);
@@ -439,11 +447,12 @@ extern int vty_shell_serv (struct vty *);
 extern enum vtylogin_type vty_login_type(struct vty *vty);
 
 extern const char * vty_prompt(struct vty *vty);
+
 #ifdef ZPL_SHRL_MODULE
 extern int vty_stdio_init(struct vty *vty);
 extern int vty_stdio_start(zpl_bool s);
 #endif /*ZPL_SHRL_MODULE*/
-//extern int vty_console_init(const char *tty);
+
 
 
 extern void vty_init (void);

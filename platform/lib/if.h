@@ -78,7 +78,8 @@ enum if_link_type
    FreeBSD define value in /usr/include/net/if.h.
    #define IFNAMSIZ        16
 */
-
+#define IF_NAME_MAX 64
+#define IF_HWADDR_MAX 20
 #define INTERFACE_NAMSIZ 64
 #define INTERFACE_HWADDR_MAX 20
 #define MAX_CLASS_TYPE 8

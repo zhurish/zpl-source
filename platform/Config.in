@@ -144,6 +144,13 @@ config ZPL_SHRL_MODULE
 	help
 	Build Shell readline Module.
 
+config ZPL_NSM_SNMP
+	bool "NSM SNMP Module"
+	default y
+	depends on ZPL_LIB_MODULE
+	help
+	Build NSM SNMP Module.
+
 config ZPL_NSM_MODULE
 	bool "Network Service Module"
 	default y
@@ -360,6 +367,20 @@ config ZPL_NSM_SECURITY
 	depends on ZPL_NSM_MODULE
 	help
 	Build NSM Security Module.
+
+config ZPL_NSM_RTADV
+	bool "NSM Router Advertisement Module"
+	default y
+	depends on ZPL_NSM_L3MODULE
+	help
+	Build NSM Router Advertisement Module.
+
+config ZPL_NSM_IRDP
+	bool "NSM ICMP Router Discovery Messages Module"
+	default y
+	depends on ZPL_NSM_L3MODULE
+	help
+	Build NSM ICMP Router Discovery Messages Module.
 
 config ZPL_IPCBC_MODULE
 	bool "IPC BoardCard Module"

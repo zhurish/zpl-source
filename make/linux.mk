@@ -55,6 +55,10 @@ ZPLOS_INCLUDE += -I$(CROSS_COMPILE_PATH)/target/usr/include
 #ZPLOS_LDFLAGS += -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4
 endif
 
+
+KERNELDIR ?=/home/zhurish/workspace/working/sunxi/linux-5.15.14
+
+
 ifneq ($(strip $(ZPL_BUILD_ARCH)),$(filter $(ZPL_BUILD_ARCH),X86_64 X86))
 
 ifeq ($(ZPL_ARM_A5),true)

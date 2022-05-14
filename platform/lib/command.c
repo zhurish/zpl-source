@@ -22,6 +22,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "zmemory.h"
 #include "log.h"
 #include "host.h"
@@ -40,11 +41,6 @@ vector cmdvec = NULL;
 struct cmd_token token_cr;
 zpl_char *command_cr = NULL;
 
-
-//#define CMD_PIPE_STR		" (include|exclude|begin|redirect) STRING"
-#ifdef CMD_PIPE_STR
-#define CMD_PIPE_STR_HELP	"Include Key\nExclude Key\n|Begin Key\n|Redirect To\n Key String or File name\n"
-#endif
 
 enum cmd_filter_type
 {
@@ -539,103 +535,6 @@ cmd_prompt(enum node_type node)
   return cnode->prompt;
 }
 
-#ifdef CMD_PIPE_STR
-static void install_element_pipe(enum node_type ntype, enum cmd_privilege privilege, struct cmd_element *cmd)
-{
-  struct cmd_node *cnode;
-
-  /* cmd_init hasn't been called */
-  if (!cmdvec)
-  {
-    fprintf(stderr, "%s called before cmd_init, breakage likely\n",
-            __func__);
-    return;
-  }
-
-  cnode = vector_slot(cmdvec, ntype);
-
-  if (cnode == NULL)
-  {
-    fprintf(stderr, "Command node %d doesn't exist, please check it\n",
-            ntype);
-    exit(1);
-  }
-  cmd->privilege = privilege;
-  if (hash_lookup(cnode->cmd_hash, cmd) != NULL)
-  {
-#ifdef DEV_ZPL_BUILD
-    fprintf(stderr,
-            "Multiple command installs to node %d of command:\n%s\n",
-            ntype, cmd->string);
-#endif
-    return;
-  }
-
-  assert(hash_get(cnode->cmd_hash, cmd, hash_alloc_intern));
-
-  vector_set(cnode->cmd_vector, cmd);
-  if (cmd->tokens == NULL)
-    cmd->tokens = cmd_parse_format(cmd->string, cmd->doc);
-
-  if (ntype == VIEW_NODE)
-    install_element_pipe(ENABLE_NODE, cmd->privilege, cmd);
-}
-
-static struct cmd_element *cmd_element_node_clone(struct cmd_element *cmd)
-{
-  struct cmd_element *tmp = NULL;
-  tmp = XMALLOC(MTYPE_CMD_ELEMENT, sizeof(struct cmd_element));
-  if(tmp)
-  {
-    tmp->string = XSTRDUP(MTYPE_CMD_ELEMENT_KEY,cmd->string);			/* Command specification by string. */
-    tmp->func = cmd->func;
-    tmp->doc = XSTRDUP(MTYPE_CMD_ELEMENT_HELP,cmd->doc);			/* Documentation of this command. */
-    tmp->daemon = cmd->daemon;                   /* Daemon to which this command belong. */
-    tmp->tokens = cmd->tokens;		/* Vector of cmd_tokens */
-    tmp->attr = cmd->attr;			/* Command attributes */
-    tmp->privilege = cmd->privilege;
-  #ifdef ZPL_BUILD_DEBUG
-    tmp->sfuncname = XSTRDUP(MTYPE_CMD_ELEMENT_TMP,cmd->sfuncname);
-  #endif
-  }
-  return tmp;
-}
-
-static int cmd_element_clone_pipe(enum node_type ntype, struct cmd_element *cmd)
-{
-
-  struct cmd_element *tmp = NULL;
-  if(!cmd || !cmd->string)
-    return 0;
-
-  if(strstr(cmd->string, "include") && strstr(cmd->string, "exclude") && strstr(cmd->string, "begin"))
-  {
-    return 0;
-  }
- 
-  fprintf(stderr,"cmd_element_clone_pipe of command:\n%s\n", cmd->string);  
-  fflush(stderr);
-  tmp = cmd_element_node_clone(cmd);
-  if(tmp)
-  {
-    char tmpbuf[2048];
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    strcpy(tmpbuf, tmp->string);
-    strcat(tmpbuf, CMD_PIPE_STR);
-    XFREE(MTYPE_CMD_ELEMENT_KEY, tmp->string);
-    tmp->string = XSTRDUP(MTYPE_CMD_ELEMENT_KEY, tmpbuf);	
-
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    strcpy(tmpbuf, tmp->doc);
-    strcat(tmpbuf, CMD_PIPE_STR_HELP);
-    XFREE(MTYPE_CMD_ELEMENT_HELP, tmp->doc);
-    tmp->doc = XSTRDUP(MTYPE_CMD_ELEMENT_HELP, tmpbuf);	
-
-    install_element_pipe(ntype, cmd->privilege, tmp);
-  }
-  return OK;
-}
-#endif
 
 /* Install a command into a node. */
 void install_element(enum node_type ntype, enum cmd_privilege privilege, struct cmd_element *cmd)
@@ -677,13 +576,6 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
 
   if (ntype == VIEW_NODE)
     install_element(ENABLE_NODE, cmd->privilege, cmd);
-#ifdef CMD_PIPE_STR
-  if (ntype == VIEW_NODE || ntype == ENABLE_NODE)
-  {
-    if(strstr(cmd->string, "show"))
-      cmd_element_clone_pipe(ntype, cmd);  
-  }
-#endif
 }
 
 static const zpl_uchar itoa64[] =
@@ -738,11 +630,11 @@ enum match_type
   iuspv_range_match,
   iuspv_sub_range_match,
   mac_match,
-  pipe_match,
   vararg_match,
   partly_match,
   exact_match
 };
+
 
 static enum match_type
 cmd_ipv4_match(const char *str)

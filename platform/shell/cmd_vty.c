@@ -7,7 +7,8 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zplos_include.h"
+#include "module.h"
 #include "vty.h"
 #include "command.h"
 #include "log.h"

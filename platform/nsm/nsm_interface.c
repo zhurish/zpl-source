@@ -360,6 +360,8 @@ static int nsm_interface_new_hook(struct interface *ifp)
 	int ret = -1;
 	struct nsm_interface *nsm_interface = NULL;
 	NSM_ENTER_FUNC();
+	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	nsm_interface = XCALLOC(MTYPE_IF, sizeof(struct nsm_interface));
 
 	nsm_interface->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
@@ -386,7 +388,8 @@ static int nsm_interface_new_hook(struct interface *ifp)
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 		// nsm_halpal_interface_refresh_flag(ifp);
 	}
-
+	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	nsm_interface_hook_handler(1, -1, ifp);
 
 	return OK;

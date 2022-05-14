@@ -521,7 +521,7 @@ int modem_interface_add_api(char *name)
 	if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		return ERROR;
 
-	if_new_llc_type_mode(IF_LLT_MODEM, IF_MODE_L3);
+	//if_new_llc_type_mode(IF_LLT_MODEM, IF_MODE_L3);
 
 	ifp = if_create_dynamic (name, strlen(name));
 	if(ifp)

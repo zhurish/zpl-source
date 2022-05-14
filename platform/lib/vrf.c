@@ -22,17 +22,26 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "vrf.h"
-#include "if.h"
-#include "zmemory.h"
-#include "nsm_rib.h"
-#include "nsm_halpal.h"
+#include "module.h"
+
 #ifdef HAVE_NETNS
 #undef _GNU_SOURCE
 #define _GNU_SOURCE
 
 #include <sched.h>
 #endif
+
+#include "if.h"
+#include "vrf.h"
+#include "prefix.h"
+#include "table.h"
+#include "log.h"
+#include "zmemory.h"
+#include "command.h"
+#include "vty.h"
+
+#include "nsm_halpal.h"
+#include "nsm_rib.h"
 
 struct ip_vrf_master _ip_vrf_master;
 /*

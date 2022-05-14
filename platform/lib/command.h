@@ -101,7 +101,6 @@ enum cmd_token_type
   TOKEN_TERMINAL = 0,
   TOKEN_MULTIPLE,
   TOKEN_KEYWORD,
-  TOKEN_PIPE,
 };
 
 enum cmd_terminal_type
@@ -121,7 +120,6 @@ enum cmd_terminal_type
   TERMINAL_IPV4_PREFIX,
   TERMINAL_IPV6,
   TERMINAL_IPV6_PREFIX,
-  TERMINAL_PIPE,
 };
 
 /* argument to be recorded on argv[] if it's not a literal */
@@ -162,6 +160,33 @@ struct cmd_token
 
 /* Turn off these macros when uisng cpp with extract.pl */
 #ifndef VTYSH_EXTRACT_PL  
+
+
+#ifdef ZPL_BUILD_DEBUG
+
+#define DEFUN_NODE(nodename, nodetype, promptstr, sh) \
+  struct cmd_node nodename = \
+  { \
+    .node = nodetype, \
+    .prompt = promptstr, \
+    .vtysh = sh, \
+    .func = NULL, \
+    .cmd_vector = NULL, \
+    .cmd_hash = NULL, \
+    .funcname = NULL, \
+  };
+#else 
+#define DEFUN_NODE(nodename, nodetype, promptstr, sh) \
+  struct cmd_node nodename = \
+  { \
+    .node = nodetype, \
+    .prompt = promptstr, \
+    .vtysh = sh, \
+    .func = NULL, \
+    .cmd_vector = NULL, \
+    .cmd_hash = NULL, \
+  }; 
+#endif
 
 /* helper defines for end-user DEFUN* macros */
 #ifdef ZPL_BUILD_DEBUG

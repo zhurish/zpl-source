@@ -21,10 +21,14 @@
  */
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "zmemory.h"
+#include "module.h"
+#include "linklist.h"
 #include "prefix.h"
 #include "if_name.h"
+#include "hash.h"
+#include "str.h"
 #include "if.h"
+#include "zmemory.h"
 #include "log.h"
 #include "connected.h"
 #ifdef ZPL_VRF_MODULE

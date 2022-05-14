@@ -29,8 +29,8 @@ extern "C" {
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "moduletypes.h"
-#include "str.h"
+#include "module.h"
+
 
 #define ZLOG_TASK_ENABLE
 #define ZLOG_TESTING_ENABLE

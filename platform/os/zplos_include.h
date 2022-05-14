@@ -19,6 +19,7 @@ extern "C" {
 #include "os_task.h"
 #include "os_sem.h"
 #include "os_time.h"
+#include "os_ipstack.h"
 
 #include "os_job.h"
 #include "os_ansync.h"

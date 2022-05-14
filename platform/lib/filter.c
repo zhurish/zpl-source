@@ -21,10 +21,14 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+#include "prefix.h"
 #include "command.h"
 #include "filter.h"
 #include "zmemory.h"
-#include "if_name.h"
+#include "sockunion.h"
+#include "buffer.h"
+#include "log.h"
 #include "if.h"
 /* Static structure for IPv4 access_list's master. */
 static struct access_master access_master_ipv4 =

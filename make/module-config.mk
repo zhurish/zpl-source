@@ -345,6 +345,9 @@ endif
 ifeq ($(strip $(ZPL_KERNEL_FORWARDING)),true)
 ZPL_DEFINE += -DZPL_KERNEL_FORWARDING
 endif
+
+#ZPLPRODS += $(PRODUCT_ROOT)/kernel
+
 endif
 
 ifeq ($(strip $(ZPL_IPCOM_MODULE)),true)

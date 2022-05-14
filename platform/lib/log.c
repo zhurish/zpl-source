@@ -22,6 +22,7 @@
 
 #define QUAGGA_DEFINE_DESC_TABLE
 
+#include "auto_include.h"
 #include "zplos_include.h"
 #include "module.h"
 #include "zmemory.h"
@@ -46,10 +47,13 @@ static int logfile_fd = -1; /* Used in signal handler. */
 struct zlog *zlog_default = NULL;
 
 
-//#define ZLOG_PRI_FMT	"%-12s"
+
 //static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
 //		"warnings", "notifications", "informational", "debugging", "trapping", "ftrapping", NULL, };
-#define ZLOG_PRI_FMT	"%-8s"
+//#define ZLOG_PRI_FMT	"%-8s"
+//#define ZLOG_PRO_FMT	"%-8s"
+#define ZLOG_PRI_FMT	"%s"
+#define ZLOG_PRO_FMT	"%s"
 static const char *zlog_priority[] = { "emerg", "alert", "crit", "err",
 		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
 
@@ -295,7 +299,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(module));
+		fprintf(zl->testlog.fp, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
 		va_end(ac);
@@ -322,7 +326,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->fp, "%-8s: ", zlog_proto_names(module));
+		fprintf(zl->fp, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
@@ -337,7 +341,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(stdout, "%-8s: ", zlog_proto_names(module));
+		fprintf(stdout, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
@@ -366,7 +370,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 			time_print(stdout, zl->timestamp);
 			if (zl->record_priority)
 				fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-			fprintf(stdout, "%-8s: ", zlog_proto_names(module));
+			fprintf(stdout, ZLOG_PRO_FMT": ", zlog_proto_names(module));
 			va_copy(ac, args);
 			vfprintf(stdout, format, ac);
 			va_end(ac);
@@ -620,7 +624,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_list ac;
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(zl->testlog.fp, ZLOG_PRO_FMT": ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->testlog.fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
@@ -653,7 +657,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->fp, "%-8s: ", zlog_proto_names(zl->protocol));
+		fprintf(zl->fp, ZLOG_PRO_FMT": ", zlog_proto_names(zl->protocol));
 		zlog_depth_debug_detail(zl->fp, NULL, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
@@ -1878,8 +1882,12 @@ int zlog_buffer_reset(void)
 	if(zlog_default->log_buffer.buffer)
 		XFREE(MTYPE_ZLOG, zlog_default->log_buffer.buffer);
 	zlog_default->log_buffer.start = 0;
-	zlog_default->log_buffer.buffer = XMALLOC(MTYPE_ZLOG, size);
-	memset(zlog_default->log_buffer.buffer, 0 , size);
+	if(size)
+	{
+		zlog_default->log_buffer.buffer = XMALLOC(MTYPE_ZLOG, size);
+		if(zlog_default->log_buffer.buffer)
+			memset(zlog_default->log_buffer.buffer, 0 , size);
+	}
 	if (zlog_default->mutex)
 		os_mutex_unlock(zlog_default->mutex);
 	return OK;
@@ -1924,7 +1932,7 @@ int zlog_buffer_save(void)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER])
+	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER] > ZLOG_DISABLED)
 	{
 #ifdef ZLOG_TESTING_ENABLE
 		if(zlog_default->testing == zpl_false)
@@ -1943,17 +1951,17 @@ int zlog_buffer_save(void)
 					os_mutex_unlock(zlog_default->mutex);
 			return ERROR;
 		}
-		if(fp)
+		if(fp && zlog_default->log_buffer.buffer)
 		{
 			for(i = zlog_default->log_buffer.start; i < zlog_default->log_buffer.max_size; i++)
 			{
-				if(zlog_default->log_buffer.buffer[i].size)
+				if(zlog_default->log_buffer.buffer[i].size > 0)
 					fprintf (fp, "%s: ", zlog_default->log_buffer.buffer[i].log);
 				fflush (fp);
 			}
 			for(i = 0; i < zlog_default->log_buffer.start; i++)
 			{
-				if(zlog_default->log_buffer.buffer[i].size)
+				if(zlog_default->log_buffer.buffer[i].size > 0)
 					fprintf (fp, "%s: ", zlog_default->log_buffer.buffer[i].log);
 				fflush (fp);
 			}
@@ -1972,6 +1980,7 @@ int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
+	if(zlog_default->maxlvl[ZLOG_DEST_BUFFER] > ZLOG_DISABLED && zlog_default->log_buffer.buffer)	
 	{
 		for(i = zlog_default->log_buffer.start; i >= 0; i--)
 		{

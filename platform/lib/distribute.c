@@ -22,6 +22,7 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
 #include "prefix.h"
 #include "if.h"
 #include "hash.h"

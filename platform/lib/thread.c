@@ -24,9 +24,11 @@
 #include "module.h"
 #include "thread.h"
 #include "log.h"
-#include "zmemory.h"
+#include "hash.h"
+#include "pqueue.h"
 #include "command.h"
 #include "pqueue.h"
+#include "zmemory.h"
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_time.h>

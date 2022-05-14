@@ -7,10 +7,9 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "cli_node.h"
+#include "zplos_include.h"
+#include "module.h"
 #include "zmemory.h"
-#include "vector.h"
 #include "command.h"
 #include "vty.h"
 
@@ -38,9 +37,9 @@ static int show_memory_info_detail(struct vty *vty, struct memory_list *ml)
     if (m->index > 0 && mstat[m->index].alloc && m->format != NULL)
     {
       //vty_out(vty, "%-30s: %10ld %s", m->format, mstat[m->index].alloc, VTY_NEWLINE);
-	  memset(bufstr, '\0', sizeof(bufstr));
-	  strncpy(bufstr, m->format, MEMLIST_NAME_LEN+8);
-	  vty_out(vty, "%-30s: %10ld %s", bufstr, mstat[m->index].alloc, VTY_NEWLINE);
+	    memset(bufstr, '\0', sizeof(bufstr));
+	    strncpy(bufstr, m->format, MEMLIST_NAME_LEN);
+	    vty_out(vty, "%-30s: %10ld %s", bufstr, mstat[m->index].alloc, VTY_NEWLINE);
       needsep = 1;
     }
   }

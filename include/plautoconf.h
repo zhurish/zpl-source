@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-04-09 16:23:47 CST"
+#define AUTOCONF_TIMESTAMP "2022-05-14 22:52:17 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -96,9 +96,9 @@
 #undef ZPL_DHCPS_MODULE
 #undef ZPL_DHCPC_MODULE
 #undef ZPL_DHCPR_MODULE
-#define ZPL_NSM_DNS 1
+#undef ZPL_NSM_DNS
 #define ZPL_NSM_DOS 1
-#define ZPL_NSM_FIREWALLD 1
+#undef ZPL_NSM_FIREWALLD
 #define ZPL_NSM_MAC 1
 #define ZPL_NSM_MIRROR 1
 #define ZPL_NSM_PPP 1
@@ -113,7 +113,7 @@
 #undef ZPL_NSM_VLANETH
 #undef ZPL_NSM_WIRELESS
 #undef ZPL_NSM_BRIDGE
-#undef ZPL_NSM_SECURITY
+#define ZPL_NSM_SECURITY 1
 #define ZPL_IPCBC_MODULE 1
 #undef ZPL_IPCBUS_MODULE
 

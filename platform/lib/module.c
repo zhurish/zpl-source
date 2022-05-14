@@ -8,7 +8,6 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "moduletypes.h"
 #include "module.h"
 #include "log.h"
 
