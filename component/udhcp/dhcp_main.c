@@ -195,7 +195,7 @@ int udhcp_module_init(void)
 	}
 
 	if (server_socket <= 0) {
-		server_socket = udhcp_udp_socket(SERVER_PORT);
+		server_socket = udhcp_udp_socket(SERVER_PORT, 0);
 	}
 	dhcp_global_config.sock = server_socket;
 	dhcp_global_config.rawsock = udhcp_raw_socket();

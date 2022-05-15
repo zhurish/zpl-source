@@ -44,184 +44,6 @@
 #include "dhcprelay.h"
 
 /************************************************************************************/
-/**************************************************************/
-static dhcp_relay_t * dhcp_relay_create_interface(zpl_uint32 ifindex) {
-	dhcp_relay_t *ifter = XMALLOC(MTYPE_DHCPR_INFO,
-			sizeof(dhcp_relay_t));
-	if (ifter) {
-		struct interface * ifp = if_lookup_by_index(ifindex);
-		memset(ifter, 0, sizeof(dhcp_relay_t));
-		ifter->ifindex = ifindex;
-		//ifter->port = SERVER_PORT;
-		/*
-		 if(ifp && strlen(ifp->k_name))
-		 ifter->k_name = strdup(ifp->k_name);
-		 if(ifter->k_name)
-		 {
-		 udhcp_read_interface(ifter->k_name, NULL, &ifter->ipaddr, ifter->server_mac);
-		 zlog_debug(MODULE_DHCP, "===========%s", ifter->k_name);
-		 }
-		 */
-		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->mac);
-		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
-		return ifter;
-		//ifter->port;
-		//ifter->server_mac[6];          /* our MAC address (used only for ARP probing) */
-	}
-	return NULL;
-}
-
-
-dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
-	dhcp_relay_t *pstNode = NULL;
-	NODE index;
-	if (!lstCount(&config->relay_list))
-		return NULL;
-	for (pstNode = (dhcp_relay_t *) lstFirst(&config->relay_list);
-			pstNode != NULL;
-			pstNode = (dhcp_relay_t *) lstNext((NODE*) &index)) {
-		index = pstNode->node;
-		if (pstNode->ifindex == ifindex) {
-			return pstNode;
-		}
-	}
-	return NULL;
-}
-
-int dhcp_relay_add_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
-	dhcp_relay_t * ifter = dhcp_relay_create_interface(ifindex);
-	if (ifter) {
-		lstAdd(&config->relay_list, ifter);
-/*		if(config->global->sock == 0)
-			config->global->sock = udhcp_udp_socket(config->global->server_port);
-		if(config->global->rawsock == 0)
-			config->global->rawsock = udhcp_raw_socket();
-
-		zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface -> udhcp_udp_socket udhcp_raw_socket");
-
-		if (config->global->r_thread == NULL && config->global->sock > 0)
-		{
-			zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface");
-			config->global->r_thread = eloop_add_read(
-				config->global->eloop_master, udhcp_read_thread,
-				config->global, config->global->sock);
-		}*/
-		return OK;
-	}
-	return ERROR;
-}
-
-int dhcp_relay_del_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
-	dhcp_relay_t * ifter = dhcp_relay_lookup_interface(config, ifindex);
-	if (ifter) {
-		lstDelete(&config->relay_list, ifter);
-		XFREE(MTYPE_DHCPR_INFO, ifter);
-		return OK;
-	}
-	return ERROR;
-}
-
-
-/************************************************************************************/
-/************************************************************************************/
-/**
- * get_dhcp_packet_type - gets the message type of a dhcp packet
- * p - pointer to the dhcp packet
- * returns the message type on success, -1 otherwise
- */
-static int dhcp_relay_get_packet_type(struct dhcp_packet *p)
-{
-	zpl_uint8 op = 0;
-	/* it must be either a BOOTREQUEST or a BOOTREPLY */
-	if (p->op != BOOTREQUEST && p->op != BOOTREPLY)
-		return -1;
-	/* get message type option */
-	op = dhcp_option_message_type_get(p->options, sizeof(p->options));
-	if (op != 0)
-		return op;
-	return -1;
-}
-
-static int dhcp_relay_forward(int sock, const void *msg, int msg_len, struct ipstack_sockaddr_in *to)
-{
-	int err;
-	ipstack_errno = 0;
-	err = sendto(sock, msg, msg_len, 0, (struct ipstack_sockaddr*) to, sizeof(*to));
-	err -= msg_len;
-	if (err)
-		zlog_err(MODULE_DHCP,"sendto");
-	return err;
-}
-
-/**
- * pass_to_server() - forwards dhcp packets from client to server
- * p - packet to send
- * client - number of the client
- */
-static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len,
-			struct ipstack_sockaddr_in *client_addr, struct ipstack_sockaddr_in *server_addr)
-{
-	zpl_uint32 type;
-	/* check packet_type */
-	type = dhcp_relay_get_packet_type(p);
-	if (type != DHCPDISCOVER && type != DHCPREQUEST
-	 && type != DHCPDECLINE && type != DHCPRELEASE
-	 && type != DHCPINFORM
-	) {
-		return;
-	}
-	/* create new xid entry */
-	//dhcp_relay_xid_add(p->xid, client_addr, client);
-
-	/* forward request to server */
-	/* note that we send from fds[0] which is bound to SERVER_PORT (67).
-	 * IOW: we send _from_ SERVER_PORT! Although this may look strange,
-	 * RFC 1542 not only allows, but prescribes this for BOOTP relays.
-	 */
-	dhcp_relay_forward(ifter->sock, p, packet_len, server_addr);
-}
-
-/**
- * pass_to_client() - forwards dhcp packets from server to client
- * p - packet to send
- */
-static void dhcp_relay_forward_client(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len)
-{
-	zpl_uint32 type;
-	struct dhcp_relay_xid_item *item;
-
-	/* check xid */
-	item = dhcp_relay_xid_find(p->xid);
-	if (!item) {
-		return;
-	}
-
-	/* check packet type */
-	type = dhcp_relay_get_packet_type(p);
-	if (type != DHCPOFFER && type != DHCPACK && type != DHCPNAK) {
-		return;
-	}
-
-//TODO: also do it if (p->flags & htons(BROADCAST_FLAG)) is set!
-	if (item->ip.sin_addr.s_addr == htonl(IPSTACK_INADDR_ANY))
-		item->ip.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
-
-	if (dhcp_relay_forward(ifter->sock, p, packet_len, &item->ip) != 0) {
-		return; /* send error occurred */
-	}
-
-	/* remove xid entry */
-	dhcp_relay_xid_del(p->xid);
-}
-
-
-int udhcp_relay_handle_thread(dhcp_global_t *config, dhcp_relay_t * ifter,
-		struct dhcp_packet *packet, int len)
-{
-
-}
-/************************************************************************************/
-
 /* This list holds information about clients. The xid_* functions manipulate this list. */
 struct dhcp_relay_xid_item {
 	unsigned timestamp;
@@ -231,9 +53,15 @@ struct dhcp_relay_xid_item {
 	struct xid_item *next;
 } FIX_ALIASING;
 
-#define dhcprelay_xid_list (*(struct xid_item*)bb_common_bufsiz1)
+struct dhcp_relay_xid_item dhcprelay_xid_list;
 
-#define INIT_G() do { setup_common_bufsiz(); } while (0)
+
+static int udhcp_relay_read_thread(struct eloop *eloop);
+static int udhcp_server_read_thread(struct eloop *eloop);
+static void dhcp_relay_forward_client(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len);
+static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len,
+			struct ipstack_sockaddr_in *client_addr, struct ipstack_sockaddr_in *server_addr);
+			
 
 static struct dhcp_relay_xid_item *dhcp_relay_xid_add(zpl_uint32  xid, struct ipstack_sockaddr_in *ip, int client)
 {
@@ -246,7 +74,7 @@ static struct dhcp_relay_xid_item *dhcp_relay_xid_add(zpl_uint32  xid, struct ip
 	item->ip = *ip;
 	item->xid = xid;
 	item->client = client;
-	item->timestamp = monotonic_sec();
+	item->timestamp = os_monotonic_time();
 	item->next = dhcprelay_xid_list.next;
 	dhcprelay_xid_list.next = item;
 
@@ -299,7 +127,274 @@ static void dhcp_relay_xid_del(zpl_uint32  xid)
 	}
 }
 
+static int udhcp_relay_time_thread(struct eloop *eloop)
+{
+	dhcp_relay_t * ifter = NULL;
+	dhcp_global_t *config = NULL;
+	ifter = ELOOP_ARG(eloop);	
+	config = ifter->global;
+	ifter->t_thread = NULL;
+	dhcp_relay_xid_expire();
+	ifter->t_thread = eloop_add_timer(config->eloop_master, udhcp_relay_time_thread,
+			ifter, DHCP_RELAY_SELECT_TIMEOUT);	
+	return 0;		
+}
+/**************************************************************/
+static dhcp_relay_t * dhcp_relay_create_interface(zpl_uint32 ifindex) {
+	dhcp_relay_t *ifter = XMALLOC(MTYPE_DHCPR_INFO,
+			sizeof(dhcp_relay_t));
+	if (ifter) {
+		struct interface * ifp = if_lookup_by_index(ifindex);
+		memset(ifter, 0, sizeof(dhcp_relay_t));
+		ifter->ifindex = ifindex;
+		//ifter->port = SERVER_PORT;
+		/*
+		 if(ifp && strlen(ifp->k_name))
+		 ifter->k_name = strdup(ifp->k_name);
+		 if(ifter->k_name)
+		 {
+		 udhcp_read_interface(ifter->k_name, NULL, &ifter->ipaddr, ifter->server_mac);
+		 zlog_debug(MODULE_DHCP, "===========%s", ifter->k_name);
+		 }
+		 */
+		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->mac);
+		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
+		return ifter;
+		//ifter->port;
+		//ifter->server_mac[6];          /* our MAC address (used only for ARP probing) */
+	}
+	return NULL;
+}
 
+
+dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
+	dhcp_relay_t *pstNode = NULL;
+	NODE index;
+	if (!lstCount(&config->relay_list))
+		return NULL;
+	for (pstNode = (dhcp_relay_t *) lstFirst(&config->relay_list);
+			pstNode != NULL;
+			pstNode = (dhcp_relay_t *) lstNext((NODE*) &index)) {
+		index = pstNode->node;
+		if (pstNode->ifindex == ifindex) {
+			return pstNode;
+		}
+	}
+	return NULL;
+}
+
+int dhcp_relay_add_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
+	dhcp_relay_t * ifter = dhcp_relay_create_interface(ifindex);
+	if (ifter) {
+		lstAdd(&config->relay_list, ifter);
+		if(ipstack_invalid(config->sock))
+			config->sock = udhcp_udp_socket(0, 0);
+		if(ipstack_invalid(ifter->client_sock))
+			ifter->client_sock = udhcp_udp_socket(config->server_port, ifindex);
+
+		zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface -> udhcp_udp_socket udhcp_raw_socket");
+
+		if (ifter->cr_thread == NULL && !ipstack_invalid(ifter->client_sock))
+		{
+			zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface");
+			ifter->cr_thread = eloop_add_read(config->eloop_master, udhcp_relay_read_thread,
+				ifter, ifter->client_sock);
+		}
+		if (ifter->sr_thread == NULL && !ipstack_invalid(config->sock))
+		{
+			zlog_debug(MODULE_DHCP, "dhcp_relay_add_interface");
+			ifter->sr_thread = eloop_add_read(config->eloop_master, udhcp_server_read_thread,
+				ifter, config->sock);
+		}
+		if (ifter->t_thread == NULL)
+			ifter->t_thread = eloop_add_timer(config->eloop_master, udhcp_relay_time_thread,
+				ifter, DHCP_RELAY_SELECT_TIMEOUT);	
+		return OK;
+	}
+	return ERROR;
+}
+
+int dhcp_relay_del_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
+	dhcp_relay_t * ifter = dhcp_relay_lookup_interface(config, ifindex);
+	if (ifter) {
+		if(ifter->cr_thread)
+		{
+			eloop_cancel(ifter->cr_thread);
+		}
+		if(ifter->sr_thread)
+		{
+			eloop_cancel(ifter->sr_thread);
+		}
+		if(!ipstack_invalid(ifter->client_sock))
+		{
+			ipstack_close(ifter->client_sock);
+		}
+		lstDelete(&config->relay_list, ifter);
+		XFREE(MTYPE_DHCPR_INFO, ifter);
+		return OK;
+	}
+	return ERROR;
+}
+
+
+static int udhcp_relay_read_thread(struct eloop *eloop)
+{
+	struct dhcp_packet packet;
+	zpl_socket_t sock;
+	zpl_uint32 ifindex = 0;
+	dhcp_relay_t * ifter = NULL;
+	dhcp_global_t *config = NULL;
+	struct interface *ifp = NULL;
+	int bytes;
+	sock = ELOOP_FD(eloop);
+	ifter = ELOOP_ARG(eloop);		
+	config = ifter->global;	
+	memset(&packet, 0, sizeof(struct dhcp_packet));
+	bytes = udhcp_recv_packet(&packet, sock, &ifindex);
+	if (bytes > 0) 
+	{
+		struct ipstack_sockaddr_in server_addr;
+		struct ipstack_sockaddr_in client_addr;
+		server_addr.sin_family = IPSTACK_AF_INET;
+		server_addr.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
+		server_addr.sin_port = htons(DHCP_SERVER_PORT);
+		ifp = if_lookup_by_index(ifindex);
+		if(ifp)
+		{
+			struct prefix address;
+			;
+			if (nsm_interface_address_get_api(ifp, &address) == OK) 
+			{
+				packet.gateway_nip = address.u.prefix4.s_addr;
+			}
+			dhcp_relay_forward_server(ifter, &packet, bytes,
+				&client_addr, &server_addr);
+		}
+	}
+	ifter->sr_thread = eloop_add_read(config->eloop_master, udhcp_server_read_thread,
+			ifter, config->sock);	
+	return 0;
+}
+
+static int udhcp_server_read_thread(struct eloop *eloop)
+{
+	struct dhcp_packet packet;
+	zpl_socket_t sock;
+	zpl_uint32 ifindex = 0;
+	dhcp_relay_t * ifter = NULL;
+	dhcp_global_t *config = NULL;
+	int bytes;
+	sock = ELOOP_FD(eloop);
+	ifter = ELOOP_ARG(eloop);	
+	config = ifter->global;	
+	ifter->sr_thread = NULL;
+	memset(&packet, 0, sizeof(struct dhcp_packet));
+	bytes = udhcp_recv_packet(&packet, sock, &ifindex);
+	if (bytes > 0) 
+	{
+		dhcp_relay_forward_client(ifter, &packet, bytes);
+	}
+	ifter->sr_thread = eloop_add_read(config->eloop_master, udhcp_server_read_thread,
+			ifter, config->sock);	
+	return 0;		
+}
+
+/************************************************************************************/
+/************************************************************************************/
+/**
+ * get_dhcp_packet_type - gets the message type of a dhcp packet
+ * p - pointer to the dhcp packet
+ * returns the message type on success, -1 otherwise
+ */
+static int dhcp_relay_get_packet_type(struct dhcp_packet *p)
+{
+	zpl_uint8 op = 0;
+	/* it must be either a BOOTREQUEST or a BOOTREPLY */
+	if (p->op != BOOTREQUEST && p->op != BOOTREPLY)
+		return -1;
+	/* get message type option */
+	op = dhcp_option_message_type_get(p->options, sizeof(p->options));
+	if (op != 0)
+		return op;
+	return -1;
+}
+
+static int dhcp_relay_forward(zpl_socket_t sock, const void *msg, int msg_len, struct ipstack_sockaddr_in *to)
+{
+	int err;
+	ipstack_errno = 0;
+	err = ipstack_sendto(sock, msg, msg_len, 0, (struct ipstack_sockaddr*) to, sizeof(*to));
+	err -= msg_len;
+	if (err)
+		zlog_err(MODULE_DHCP,"sendto");
+	return err;
+}
+
+/**
+ * pass_to_server() - forwards dhcp packets from client to server
+ * p - packet to send
+ * client - number of the client
+ */
+static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len,
+			struct ipstack_sockaddr_in *client_addr, struct ipstack_sockaddr_in *server_addr)
+{
+	zpl_uint32 type;
+	/* check packet_type */
+	type = dhcp_relay_get_packet_type(p);
+	if (type != DHCPDISCOVER && type != DHCPREQUEST
+	 && type != DHCPDECLINE && type != DHCPRELEASE
+	 && type != DHCPINFORM
+	) 
+	{
+		return;
+	}
+	/* create new xid entry */
+	dhcp_relay_xid_add(p->xid, client_addr, 1);
+
+	/* forward request to server */
+	/* note that we send from fds[0] which is bound to SERVER_PORT (67).
+	 * IOW: we send _from_ SERVER_PORT! Although this may look strange,
+	 * RFC 1542 not only allows, but prescribes this for BOOTP relays.
+	 */
+	dhcp_relay_forward(ifter->sock, p, packet_len, server_addr);
+}
+
+/**
+ * pass_to_client() - forwards dhcp packets from server to client
+ * p - packet to send
+ */
+static void dhcp_relay_forward_client(dhcp_relay_t * ifter, struct dhcp_packet *p, int packet_len)
+{
+	zpl_uint32 type;
+	struct dhcp_relay_xid_item *item;
+
+	/* check xid */
+	item = dhcp_relay_xid_find(p->xid);
+	if (!item) {
+		return;
+	}
+
+	/* check packet type */
+	type = dhcp_relay_get_packet_type(p);
+	if (type != DHCPOFFER && type != DHCPACK && type != DHCPNAK) {
+		return;
+	}
+
+	//TODO: also do it if (p->flags & htons(BROADCAST_FLAG)) is set!
+	if (item->ip.sin_addr.s_addr == htonl(IPSTACK_INADDR_ANY))
+		item->ip.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
+
+	if (dhcp_relay_forward(ifter->client_sock, p, packet_len, &item->ip) != 0) {
+		return; /* send error occurred */
+	}
+
+	/* remove xid entry */
+	dhcp_relay_xid_del(p->xid);
+}
+
+
+#if 0
+/************************************************************************************/
 /**
  * make_iface_list - parses client/server interface names
  * returns array
@@ -325,7 +420,7 @@ static char **dhcp_relay_make_iface_list(char **client_and_server_ifaces, int *c
 	iface_list[0] = client_and_server_ifaces[1]; /* server iface */
 
 	i = 1;
-	s = xstrdup(client_and_server_ifaces[0]); /* list of client ifaces */
+	s = strdup(client_and_server_ifaces[0]); /* list of client ifaces */
 	goto store_client_iface_name;
 
 	while (i < cn) {
@@ -342,25 +437,23 @@ static char **dhcp_relay_make_iface_list(char **client_and_server_ifaces, int *c
 /* Creates listen sockets (in fds) bound to client and server ifaces,
  * and returns numerically max fd.
  */
-static int dhcp_relay_init_sockets(char **iface_list, int num_clients, int *fds)
+static int dhcp_relay_init_sockets(char **iface_list, int num_clients, zpl_socket_t *fds)
 {
 	int i, n;
 
 	n = 0;
 	for (i = 0; i < num_clients; i++) {
-		fds[i] = udhcp_listen_socket(/*IPSTACK_INADDR_ANY,*/ DHCP_SERVER_PORT, iface_list[i]);
-		if (n < fds[i])
-			n = fds[i];
+		fds[i] = udhcp_udp_socket(/*IPSTACK_INADDR_ANY,*/ DHCP_SERVER_PORT, 0);
 	}
 	return n;
 }
 
-static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct ipstack_sockaddr_in *to)
+static int dhcp_relay_sendto_ip4(zpl_socket_t sock, const void *msg, int msg_len, struct ipstack_sockaddr_in *to)
 {
 	int err;
 
 	ipstack_errno = 0;
-	err = sendto(sock, msg, msg_len, 0, (struct ipstack_sockaddr*) to, sizeof(*to));
+	err = ipstack_sendto(sock, msg, msg_len, 0, (struct ipstack_sockaddr*) to, sizeof(*to));
 	err -= msg_len;
 	if (err)
 		zlog_err(MODULE_DHCP,"sendto");
@@ -372,7 +465,7 @@ static int dhcp_relay_sendto_ip4(int sock, const void *msg, int msg_len, struct 
  * p - packet to send
  * client - number of the client
  */
-static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int client, int *fds,
+static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int client, zpl_socket_t *fds,
 			struct ipstack_sockaddr_in *client_addr, struct ipstack_sockaddr_in *server_addr)
 {
 	zpl_uint32 type;
@@ -401,7 +494,7 @@ static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int
  * pass_to_client() - forwards dhcp packets from server to client
  * p - packet to send
  */
-static void dhcp_relay_pass_to_client(struct dhcp_packet *p, int packet_len, int *fds)
+static void dhcp_relay_pass_to_client(struct dhcp_packet *p, int packet_len, zpl_socket_t *fds)
 {
 	zpl_uint32 type;
 	struct dhcp_relay_xid_item *item;
@@ -435,7 +528,7 @@ int dhcprelay_main(int argc, char **argv)
 {
 	struct ipstack_sockaddr_in server_addr;
 	char **iface_list;
-	int *fds;
+	zpl_socket_t *fds;
 	int num_sockets, max_socket;
 	zpl_uint32  our_nip;
 
@@ -448,14 +541,14 @@ int dhcprelay_main(int argc, char **argv)
 	/* dhcprelay CLIENT_IFACE1[,CLIENT_IFACE2...] SERVER_IFACE [SERVER_IP] */
 	if (argc == 4) {
 		if (!ipstack_inet_aton(argv[3], &server_addr.sin_addr))
-			bb_perror_msg_and_die("bad server IP");
+			;//bb_perror_msg_and_die("bad server IP");
 	} else if (argc != 3) {
-		bb_show_usage();
+		//bb_show_usage();
 	}
 
 	iface_list = dhcp_relay_make_iface_list(argv + 1, &num_sockets);
 
-	fds = malloc(num_sockets * sizeof(fds[0]));
+	fds = malloc(num_sockets * sizeof(zpl_socket_t));
 
 	/* Create sockets and bind one to every iface */
 	max_socket = dhcp_relay_init_sockets(iface_list, num_sockets, fds);
@@ -472,18 +565,18 @@ int dhcprelay_main(int argc, char **argv)
 		struct timeval tv;
 		int i;
 
-		FD_ZERO(&rfds);
+		IPSTACK_FD_ZERO(&rfds);
 		for (i = 0; i < num_sockets; i++)
-			FD_SET(fds[i], &rfds);
+			IPSTACK_FD_SET(fds[i]._fd, &rfds);
 		tv.tv_sec = DHCP_RELAY_SELECT_TIMEOUT;
 		tv.tv_usec = 0;
-		if (select(max_socket + 1, &rfds, NULL, NULL, &tv) > 0) {
+		if (ipstack_socketselect(IPCOM_STACK, max_socket + 1, &rfds, NULL, NULL, &tv) > 0) {
 			int packlen;
 			struct dhcp_packet dhcp_msg;
 
 			/* server */
-			if (FD_ISSET(fds[0], &rfds)) {
-				packlen = udhcp_recv_kernel_packet(&dhcp_msg, fds[0]);
+			if (IPSTACK_FD_ISSET(fds[0]._fd, &rfds)) {
+				packlen = udhcp_recv_packet(&dhcp_msg, fds[0], NULL);//udhcp_recv_kernel_packet(&dhcp_msg, fds[0]);
 				if (packlen > 0) {
 					dhcp_relay_pass_to_client(&dhcp_msg, packlen, fds);
 				}
@@ -494,11 +587,11 @@ int dhcprelay_main(int argc, char **argv)
 				struct ipstack_sockaddr_in client_addr;
 				socklen_t addr_size;
 
-				if (!FD_ISSET(fds[i], &rfds))
+				if (!IPSTACK_FD_ISSET(fds[i]._fd, &rfds))
 					continue;
 
 				addr_size = sizeof(client_addr);
-				packlen = recvfrom(fds[i], &dhcp_msg, sizeof(dhcp_msg), 0,
+				packlen = ipstack_recvfrom(fds[i], &dhcp_msg, sizeof(dhcp_msg), 0,
 						(struct ipstack_sockaddr *)(&client_addr), &addr_size);
 				if (packlen <= 0)
 					continue;
@@ -555,3 +648,5 @@ int dhcprelay_main(int argc, char **argv)
 
 	/* return 0; - not reached */
 }
+
+#endif

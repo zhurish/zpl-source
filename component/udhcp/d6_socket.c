@@ -4,11 +4,20 @@
  *
  * Licensed under GPLv2, see file LICENSE in this source tree.
  */
-#include "common.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
+#include "log.h"
+#include "nsm_include.h"
+
+#include "dhcpd.h"
+#include "dhcpc.h"
+#include "dhcp_util.h"
 #include "d6_common.h"
+#include "dhcpd.h"
 #include <net/if.h>
 #include <ifaddrs.h>
-#include <netpacket/packet.h>
+//#include <netpacket/packet.h>
 
 int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct ipstack_in6_addr *nip6, zpl_uint8 *mac)
 {
@@ -69,27 +78,27 @@ int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struc
 	return -1;
 }
 
-int FAST_FUNC d6_listen_socket(int port, const char *inf)
+zpl_socket_t FAST_FUNC d6_listen_socket(zpl_uint16 port, const char *inf)
 {
-	int fd;
+	zpl_socket_t fd;
 	struct ipstack_sockaddr_in6 addr;
 
 	zlog_err(MODULE_DHCP,"opening listen socket on *:%d %s", port, inf);
-	fd = socket(IPSTACK_PF_INET6, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
+	fd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_INET6, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
 
-	setsockopt_reuseaddr(fd);
-	if (setsockopt_broadcast(fd) == -1)
-		zlog_err(MODULE_DHCP,"IPSTACK_SO_BROADCAST");
+	//setsockopt_reuseaddr(fd);
+	//if (setsockopt_broadcast(fd) == -1)
+	//	zlog_err(MODULE_DHCP,"IPSTACK_SO_BROADCAST");
 
 	/* NB: bug 1032 says this doesn't work on ethernet aliases (ethN:M) */
-	if (setsockopt_bindtodevice(fd, inf))
-		;//xfunc_die(); /* warning is already printed */
+	//if (setsockopt_bindtodevice(fd, inf))
+	//	;//xfunc_die(); /* warning is already printed */
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin6_family = IPSTACK_AF_INET6;
 	addr.sin6_port = htons(port);
 	/* addr.sin6_addr is all-zeros */
-	bind(fd, (struct ipstack_sockaddr *)&addr, sizeof(addr));
+	ipstack_bind(fd, (struct ipstack_sockaddr *)&addr, sizeof(addr));
 
 	return fd;
 }

@@ -52,7 +52,7 @@ int icmp_echo_request(zpl_uint32  test_nip,
 	if (!timeo)
 		return 1;
 
-	pfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_PACKET, htons(ETH_P_ARP));
+	pfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_PACKET, htons(IPSTACK_ETH_P_ARP));
 	if (ipstack_invalid(pfd)) {
 		zlog_err(MODULE_DHCP, "can't create raw socket");
 		return -1;
@@ -92,7 +92,7 @@ int icmp_echo_request(zpl_uint32  test_nip,
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 
-		r = safe_poll(pfd, 1, timeout_ms);
+		r = safe_poll(pfd, pfd._fd+1, timeout_ms);
 		if (r < 0)
 			break;
 		if (r) {

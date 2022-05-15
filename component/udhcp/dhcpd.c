@@ -116,7 +116,7 @@ int dhcpd_pool_add_interface(dhcp_pool_t*config, ifindex_t ifindex) {
 		lstAdd(&config->interf, ifter);
 
 		if(ipstack_invalid(config->global->sock))
-			config->global->sock = udhcp_udp_socket(config->global->server_port);
+			config->global->sock = udhcp_udp_socket(config->global->server_port, 0);
 		if(ipstack_invalid(config->global->rawsock))
 			config->global->rawsock = udhcp_raw_socket();
 

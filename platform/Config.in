@@ -88,6 +88,13 @@ config ZPL_LIB_MODULE
 	help
 	Build Platform Lib Module.
 
+config ZPL_IPV6_MODULE
+	bool "Platform IPV6 Module"
+	depends on ZPL_LIB_MODULE
+	default y
+	help
+	Build IPV6 Module.
+
 config ZPL_LIBEVENT_MODULE
 	bool "Libevent Module"
 	default y

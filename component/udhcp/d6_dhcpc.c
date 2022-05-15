@@ -48,15 +48,26 @@
 //#include <syslog.h>
 /* Override ENABLE_FEATURE_PIDFILE - ifupdown needs our pidfile to always exist */
 #define WANT_PIDFILE 1
-#include "common.h"
+#include "auto_include.h"
+#include <zplos_include.h>
+#include "module.h"
+#include "log.h"
+#include "nsm_include.h"
+#include "llist.h"
 #include "dhcpd.h"
 #include "dhcpc.h"
 #include "d6_common.h"
-
+#include "dhcp_util.h"
 #include <netinet/if_ether.h>
-#include <netpacket/packet.h>
+//#include <netpacket/packet.h>
 #include <linux/filter.h>
 
+struct client6_data_t client6_data;
+struct dhcp6_client_data_t  client_config;
+
+const uint8_t MAC_BCAST_ADDR[6] ALIGN2 = {
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
 /* "struct client_config_t client_config" is in bb_common_bufsiz1 */
 
 static const struct dhcp_optflag d6_optflags[] = {
@@ -176,6 +187,14 @@ static void *d6_find_option(zpl_uint8 *option, zpl_uint8 *option_end, unsigned c
 	return NULL;
 }
 
+static void* xmemdup(const void *s, int n)
+{
+	void *ptr = malloc(n);
+	if(ptr)
+		return memcpy(ptr, s, n);
+	return NULL;	
+}
+
 static void *d6_copy_option(zpl_uint8 *option, zpl_uint8 *option_end, unsigned code)
 {
 	zpl_uint8 *opt = d6_find_option(option, option_end, code);
@@ -189,7 +208,7 @@ static void *d6_copy_option(zpl_uint8 *option, zpl_uint8 *option_end, unsigned c
 
 static char** new_env(void)
 {
-	client6_data.env_ptr = xrealloc_vector(client6_data.env_ptr, 3, client6_data.env_idx);
+	//client6_data.env_ptr = xrealloc_vector(client6_data.env_ptr, 3, client6_data.env_idx);
 	return &client6_data.env_ptr[client6_data.env_idx++];
 }
 
@@ -238,10 +257,10 @@ static void option_to_env(zpl_uint8 *option, zpl_uint8 *option_end)
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 			sprint_nip6(ipv6str, option + 4);
-			*new_env() = xasprintf("ipv6=%s", ipv6str);
+			//*new_env() = xasprintf("ipv6=%s", ipv6str);
 
-			move_from_unaligned32(v32, option + 4 + 16 + 4);
-			*new_env() = xasprintf("lease=%u", (unsigned)v32);
+			//move_from_unaligned32(v32, option + 4 + 16 + 4);
+			//*new_env() = xasprintf("lease=%u", (unsigned)v32);
 			break;
 
 		//case D6_OPT_ORO:
@@ -277,11 +296,11 @@ static void option_to_env(zpl_uint8 *option, zpl_uint8 *option_end)
  * |               |
  * +-+-+-+-+-+-+-+-+
  */
-			move_from_unaligned32(v32, option + 4 + 4);
-			*new_env() = xasprintf("ipv6prefix_lease=%u", (unsigned)v32);
+			//move_from_unaligned32(v32, option + 4 + 4);
+			//*new_env() = xasprintf("ipv6prefix_lease=%u", (unsigned)v32);
 
 			sprint_nip6(ipv6str, option + 4 + 4 + 4 + 1);
-			*new_env() = xasprintf("ipv6prefix=%s/%u", ipv6str, (unsigned)(option[4 + 4 + 4]));
+			//*new_env() = xasprintf("ipv6prefix=%s/%u", ipv6str, (unsigned)(option[4 + 4 + 4]));
 			break;
 #if ENABLE_FEATURE_UDHCPC6_RFC3646
 		case D6_OPT_DNS_SERVERS: {
@@ -312,7 +331,7 @@ static void option_to_env(zpl_uint8 *option, zpl_uint8 *option_end)
 		case D6_OPT_DOMAIN_LIST: {
 			char *dlist;
 
-			dlist = dname_dec(option + 4, (option[2] << 8) | option[3], "search=");
+			//dlist = dname_dec(option + 4, (option[2] << 8) | option[3], "search=");
 			if (!dlist)
 				break;
 			*new_env() = dlist;
@@ -333,10 +352,10 @@ static void option_to_env(zpl_uint8 *option, zpl_uint8 *option_end)
 			 * broken server here if any of the reserved bits are set.
 			 */
 			if (option[4] & 0xf8) {
-				*new_env() = xasprintf("fqdn=%.*s", (int)option[3], (char*)option + 4);
+				//*new_env() = xasprintf("fqdn=%.*s", (int)option[3], (char*)option + 4);
 				break;
 			}
-			dlist = dname_dec(option + 5, (/*(option[2] << 8) |*/ option[3]) - 1, "fqdn=");
+			//dlist = dname_dec(option + 5, (/*(option[2] << 8) |*/ option[3]) - 1, "fqdn=");
 			if (!dlist)
 				break;
 			*new_env() = dlist;
@@ -346,10 +365,10 @@ static void option_to_env(zpl_uint8 *option, zpl_uint8 *option_end)
 #if ENABLE_FEATURE_UDHCPC6_RFC4833
 		/* RFC 4833 Timezones */
 		case D6_OPT_TZ_POSIX:
-			*new_env() = xasprintf("tz=%.*s", (int)option[3], (char*)option + 4);
+			//*new_env() = xasprintf("tz=%.*s", (int)option[3], (char*)option + 4);
 			break;
 		case D6_OPT_TZ_NAME:
-			*new_env() = xasprintf("tz_name=%.*s", (int)option[3], (char*)option + 4);
+			//*new_env() = xasprintf("tz_name=%.*s", (int)option[3], (char*)option + 4);
 			break;
 #endif
 		}
@@ -365,7 +384,7 @@ static char **fill_envp(struct d6_packet *packet)
 	client6_data.env_ptr = NULL;
 	client6_data.env_idx = 0;
 
-	*new_env() = xasprintf("interface=%s", client_config.interface);
+	//*new_env() = xasprintf("interface=%s", client_config.interface);
 
 	if (packet)
 		option_to_env(packet->d6_options, packet->d6_options + sizeof(packet->d6_options));
@@ -386,11 +405,11 @@ static void d6_run_script(struct d6_packet *packet, const char *name)
 	envp = fill_envp(packet);
 
 	/* call script */
-	zlog_err(MODULE_DHCP, "executing %s %s", client_config.script, name);
-	argv[0] = (char*) client_config.script;
+	//zlog_err(MODULE_DHCP, "executing %s %s", client_config.script, name);
+	//argv[0] = (char*) client_config.script;
 	argv[1] = (char*) name;
 	argv[2] = NULL;
-	spawn_and_wait(argv);
+	//spawn_and_wait(argv);
 
 	for (curr = envp; *curr; curr++) {
 		zlog_err(MODULE_DHCP, " %s", *curr);
@@ -462,10 +481,12 @@ static int d6_mcast_from_client_config_ifindex(struct d6_packet *packet, zpl_uin
 
 	return d6_send_raw_packet(
 		packet, (end - (zpl_uint8*) packet),
-		/*src*/ &client6_data.ll_ip6, CLIENT_PORT6,
-		/*dst*/ (struct ipstack_in6_addr*)FF02__1_2, SERVER_PORT6, MAC_BCAST_ADDR,
+		/*src*/ &client6_data.ll_ip6, DHCP_CLIENT_PORT6,
+		/*dst*/ (struct ipstack_in6_addr*)FF02__1_2, DHCP_SERVER_PORT6, MAC_BCAST_ADDR,
 		client_config.ifindex
 	);
+
+	return 0;
 }
 
 /* Milticast a DHCPv6 Solicit packet to the network, with an optionally requested IP.
@@ -705,8 +726,8 @@ static  int send_d6_renew(zpl_uint32  xid, struct ipstack_in6_addr *server_ipv6,
 	if (server_ipv6)
 		return d6_send_kernel_packet(
 			&packet, (opt_ptr - (zpl_uint8*) &packet),
-			our_cur_ipv6, CLIENT_PORT6,
-			server_ipv6, SERVER_PORT6,
+			our_cur_ipv6, DHCP_CLIENT_PORT6,
+			server_ipv6, DHCP_SERVER_PORT6,
 			client_config.ifindex
 		);
 	return d6_mcast_from_client_config_ifindex(&packet, opt_ptr);
@@ -728,15 +749,15 @@ static int send_d6_release(struct ipstack_in6_addr *server_ipv6, struct ipstack_
 	zlog_err(MODULE_DHCP,"sending %s", "release");
 	return d6_send_kernel_packet(
 		&packet, (opt_ptr - (zpl_uint8*) &packet),
-		our_cur_ipv6, CLIENT_PORT6,
-		server_ipv6, SERVER_PORT6,
+		our_cur_ipv6, DHCP_CLIENT_PORT6,
+		server_ipv6, DHCP_SERVER_PORT6,
 		client_config.ifindex
 	);
 }
 
 /* Returns -1 on errors that are fatal for the socket, -2 for those that aren't */
 /* NOINLINE: limit stack usage in caller */
-static  int d6_recv_raw_packet(struct ipstack_in6_addr *peer_ipv6, struct d6_packet *d6_pkt, int fd)
+static  int d6_recv_raw_packet(struct ipstack_in6_addr *peer_ipv6, struct d6_packet *d6_pkt, zpl_socket_t fd)
 {
 	int bytes;
 	struct ip6_udp_d6_packet packet;
@@ -765,7 +786,7 @@ static  int d6_recv_raw_packet(struct ipstack_in6_addr *peer_ipv6, struct d6_pac
 	/* make sure its the right packet for us, and that it passes sanity checks */
 	if (packet.ip6.ip6_nxt != IPSTACK_IPPROTO_UDP
 	 || (packet.ip6.ip6_vfc >> 4) != 6
-	 || packet.udp.dest != htons(CLIENT_PORT6)
+	 || packet.udp.dest != htons(DHCP_CLIENT_PORT6)
 	/* || bytes > (int) sizeof(packet) - can't happen */
 	 || packet.udp.len != packet.ip6.ip6_plen
 	) {
@@ -799,7 +820,7 @@ static  int d6_recv_raw_packet(struct ipstack_in6_addr *peer_ipv6, struct d6_pac
 
 /*** Main ***/
 
-static int sockfd = -1;
+static zpl_socket_t sockfd;
 
 #define LISTEN_NONE   0
 #define LISTEN_KERNEL 1
@@ -822,9 +843,9 @@ static int listen_mode;
 #define RELEASED        6
 static int state;
 
-static int d6_raw_socket(int ifindex)
+static zpl_socket_t d6_raw_socket(int ifindex)
 {
-	int fd;
+	zpl_socket_t fd;
 	struct ipstack_sockaddr_ll sock;
 
 	/*
@@ -862,7 +883,7 @@ static int d6_raw_socket(int ifindex)
 		BPF_STMT(BPF_LDX|BPF_B|BPF_MSH, 0),
 		/* load udp destination port from halfword[header_len + 2] */
 		BPF_STMT(BPF_LD|BPF_H|BPF_IND, 2),
-		/* jump to L3 if udp dport is CLIENT_PORT6, else to L4 */
+		/* jump to L3 if udp dport is DHCP_CLIENT_PORT6, else to L4 */
 		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, 68, 0, 1),
 		/* L3: accept packet */
 		BPF_STMT(BPF_RET|BPF_K, 0x7fffffff),
@@ -878,21 +899,23 @@ static int d6_raw_socket(int ifindex)
 
 	zlog_err(MODULE_DHCP,"opening raw socket on ifindex %d", ifindex);
 
-	fd = socket(IPSTACK_PF_PACKET, IPSTACK_SOCK_DGRAM, htons(ETH_P_IPV6));
-	zlog_err(MODULE_DHCP, "got raw socket fd %d", fd);
-
+	fd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_DGRAM, htons(IPSTACK_ETH_P_IPV6));
+	if(ipstack_invalid(fd))
+	{
+		return fd;
+	}
 	memset(&sock, 0, sizeof(sock)); /* let's be deterministic */
 	sock.sll_family = IPSTACK_AF_PACKET;
-	sock.sll_protocol = htons(ETH_P_IPV6);
+	sock.sll_protocol = htons(IPSTACK_ETH_P_IPV6);
 	sock.sll_ifindex = ifindex;
 	/*sock.sll_hatype = ARPHRD_???;*/
 	/*sock.sll_pkttype = PACKET_???;*/
 	/*sock.sll_halen = ???;*/
 	/*sock.sll_addr[8] = ???;*/
-	bind(fd, (struct ipstack_sockaddr *) &sock, sizeof(sock));
+	ipstack_bind(fd, (struct ipstack_sockaddr *) &sock, sizeof(sock));
 
 #if 0
-	if (CLIENT_PORT6 == 546) {
+	if (DHCP_CLIENT_PORT6 == 546) {
 		/* Use only if standard port is in use */
 		/* Ignoring error (kernel may lack support for this) */
 		if (setsockopt(fd, IPSTACK_SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog,
@@ -915,12 +938,11 @@ static void change_listen_mode(int new_mode)
 	);
 
 	listen_mode = new_mode;
-	if (sockfd >= 0) {
-		close(sockfd);
-		sockfd = -1;
+	if (!ipstack_invalid(sockfd)) {
+		ipstack_close(sockfd);
 	}
 	if (new_mode == LISTEN_KERNEL)
-		sockfd = udhcp_listen_socket(/*IPSTACK_INADDR_ANY,*/ CLIENT_PORT6, client_config.interface);
+		sockfd = d6_listen_socket(/*IPSTACK_INADDR_ANY,*/ DHCP_CLIENT_PORT6, client_config.interface);
 	else if (new_mode != LISTEN_NONE)
 		sockfd = d6_raw_socket(client_config.ifindex);
 	/* else LISTEN_NONE: sockfd stays closed */
@@ -1095,11 +1117,11 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	unsigned opt;
 	int retval;
 
-	setup_common_bufsiz();
+	//setup_common_bufsiz();
 
 	/* Default options */
-	SERVER_PORT6 = 547;
-	CLIENT_PORT6 = 546;
+	//DHCP_SERVER_PORT6 = 547;
+	//DHCP_CLIENT_PORT6 = 546;
 	client_config.interface = "eth0";
 	client_config.script = CONFIG_UDHCPC_DEFAULT_SCRIPT;
 
@@ -1131,15 +1153,15 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	}
 #if ENABLE_FEATURE_UDHCP_PORT
 	if (opt & OPT_P) {
-		CLIENT_PORT6 = xatou16(str_P);
-		SERVER_PORT6 = CLIENT_PORT6 + 1;
+		DHCP_CLIENT_PORT6 = xatou16(str_P);
+		DHCP_SERVER_PORT6 = DHCP_CLIENT_PORT6 + 1;
 	}
 #endif
 	while (list_O) {
 		char *optstr = llist_pop(&list_O);
-		unsigned n = bb_strtou(optstr, NULL, 0);
+		unsigned n = strtoul(optstr, NULL, 0);
 		if (ipstack_errno || n > 254) {
-			n = udhcp_option_idx(optstr, d6_option_strings);
+			//n = udhcp_option_idx(optstr, d6_option_strings);
 			n = d6_optflags[n].code;
 		}
 		client_config.opt_mask[n >> 3] |= 1 << (n & 7);
@@ -1159,7 +1181,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 			*colon = ' ';
 		/* now it looks similar to udhcpd's config file line:
 		 * "optname optval", using the common routine: */
-		udhcp_str2optset(optstr, &client_config.options, d6_optflags, d6_option_strings);
+		//udhcp_str2optset(optstr, &client_config.options, d6_optflags, d6_option_strings);
 		if (colon)
 			*colon = ':'; /* restore it for NOMMU reexec */
 	}
@@ -1202,13 +1224,13 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	/* Equivalent of doing a fflush after every \n */
 	//setlinebuf(stdout);
 	/* Create pidfile */
-	write_pidfile(client_config.pidfile);
+	//write_pidfile(client_config.pidfile);
 	/* Goes to stdout (unless NOMMU) and possibly syslog */
 	zlog_err(MODULE_DHCP,"started, v"BB_VER);
 	/* Set up the signal pipe */
-	udhcp_sp_setup();
+	//udhcp_sp_setup();
 	/* We want random_xid to be random... */
-	srand(monotonic_us());
+	//srand(monotonic_us());
 
 	state = INIT_SELECTING;
 	d6_run_script(NULL, "deconfig");
@@ -1223,7 +1245,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 	 */
 	for (;;) {
 		int tv;
-		struct pollfd pfds[2];
+	
 		struct d6_packet packet;
 		zpl_uint8 *packet_end;
 		/* silence "uninitialized!" warning */
@@ -1238,19 +1260,18 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		 * to change_listen_mode(). Thus we open listen socket
 		 * BEFORE we send renew request (see "case BOUND:"). */
 
-		udhcp_sp_fd_set(pfds, sockfd);
 
 		tv = timeout - already_waited_sec;
 		retval = 0;
 		/* If we already timed out, fall through with retval = 0, else... */
 		if (tv > 0) {
-			log1("waiting %u seconds", tv);
-			timestamp_before_wait = (unsigned)monotonic_sec();
-			retval = poll(pfds, 2, tv < INT_MAX/1000 ? tv * 1000 : INT_MAX);
+			//log1("waiting %u seconds", tv);
+			//timestamp_before_wait = (unsigned)os_monotonic_time();
+			retval = safe_poll(sockfd, sockfd._fd+1, tv < INT_MAX/1000 ? tv * 1000 : INT_MAX);
 			if (retval < 0) {
 				/* EINTR? A signal was caught, don't panic */
 				if (ipstack_errno == EINTR) {
-					already_waited_sec += (unsigned)monotonic_sec() - timestamp_before_wait;
+					//already_waited_sec += (unsigned)os_monotonic_time() - timestamp_before_wait;
 					continue;
 				}
 				/* Else: an error occured, panic! */
@@ -1382,7 +1403,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		/* poll() didn't timeout, something happened */
 
 		/* Is it a signal? */
-		switch (udhcp_sp_read()) {
+		switch (packet_num/*udhcp_sp_read()*/) {
 		case SIGUSR1:
 			client_config.first_secs = 0; /* make secs field count from 0 */
 			already_waited_sec = 0;
@@ -1417,7 +1438,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 		}
 
 		/* Is it a packet? */
-		if (!pfds[1].revents)
+		if (/*!pfds[1].revents*/sockfd._fd)
 			continue; /* no */
 
 		{
@@ -1437,7 +1458,7 @@ int udhcpc6_main(int argc UNUSED_PARAM, char **argv)
 			/* If this packet will turn out to be unrelated/bogus,
 			 * we will go back and wait for next one.
 			 * Be sure timeout is properly decreased. */
-			already_waited_sec += (unsigned)monotonic_sec() - timestamp_before_wait;
+			//already_waited_sec += (unsigned)os_monotonic_time() - timestamp_before_wait;
 			if (len < 0)
 				continue;
 			packet_end = (zpl_uint8*)&packet + len;

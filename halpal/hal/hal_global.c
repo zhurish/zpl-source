@@ -12,6 +12,7 @@
 #include "hal_ipcmsg.h"
 #include "hal_global.h"
 
+//jumbo
 int hal_jumbo_size_set(zpl_uint32 size)
 {
 	zpl_uint32 command = 0;
@@ -24,6 +25,8 @@ int hal_jumbo_size_set(zpl_uint32 size)
 	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
+
+
 
 
 /*

@@ -336,6 +336,8 @@ extern "C" {
 
 #define	IPSTACK_ETH_P_ARP   ETH_P_ARP
 #define	IPSTACK_ETH_P_ALL   ETH_P_ALL
+#define	IPSTACK_ETH_P_IPV6   ETH_P_IPV6
+#define	IPSTACK_ETH_P_IP   ETH_P_IP
 #define	IPSTACK_ETHERTYPE_IP   ETHERTYPE_IP
 #define	IPSTACK_ETHERTYPE_ARP   ETHERTYPE_ARP
 #define	IPSTACK_ETH_ALEN        ETH_ALEN
@@ -663,7 +665,12 @@ extern "C" {
 
 #define ipstack_fd_set fd_set
 
+#define IPSTACK_IPFD_ZERO(dsetp)         IPSTACK_FD_ZERO(dsetp) 
+#define IPSTACK_IPFD_CLR(IFD, fdsetp)    IPSTACK_FD_CLR(IFD._fd, dsetp) 
+#define IPSTACK_IPFD_SET(IFD, fdsetp)    IPSTACK_FD_SET(IFD._fd, dsetp) 
+#define IPSTACK_IPFD_ISSET(IFD, fdsetp)  IPSTACK_FD_ISSET(IFD._fd, dsetp) 
 
+#define ipstack_ipfd_set ipstack_fd_set
 
 
 /*
@@ -1030,7 +1037,7 @@ extern "C" {
 #define  ipstack_ip_beet_phdr           ip_beet_phdr
 
 #define  ipstack_ipv6hdr                ipv6hdr
-
+#define  ipstack_ip6_hdr                ip6_hdr
 #define  ipstack_ethhdr                 ethhdr
 #define  ipstack_arphdr                 arphdr
 #define  ipstack_icmphdr                icmphdr
@@ -1125,6 +1132,7 @@ extern "C" {
 //#define IPSTACK_ERRNO_E2BIG    E2BIG
 //#define IPSTACK_ERRNO_ENOENT   ENOENT
 
+#define IPSTACK_ERRNO_ERANGE       	ERANGE
 #define  ipstack_errno       	errno
 
 #ifdef __cplusplus

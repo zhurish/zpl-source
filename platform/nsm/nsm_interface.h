@@ -27,9 +27,8 @@ extern "C" {
 #endif
 
 
-#include <module.h>
 #include "vty.h"
-#include "if.h"
+#include "if_def.h"
 #include "prefix.h"
 #ifdef ZPL_NSM_IRDP
 #include "nsm_irdp.h"
@@ -269,6 +268,8 @@ struct nsm_interface
 
 	void *nsm_intf_data[NSM_INTF_MAX];
 };
+
+
 
 extern void nsm_interface_init(void);
 

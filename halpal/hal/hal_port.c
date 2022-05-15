@@ -95,7 +95,16 @@ int hal_port_loop_set(ifindex_t ifindex, zpl_bool value)
 
 int hal_port_jumbo_set(ifindex_t ifindex, zpl_bool enable)
 {
-	return hal_jumbo_interface_enable(ifindex, enable);
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	command = IPCCMD_SET(HAL_MODULE_PORT, HAL_MODULE_CMD_REQ, HAL_PORT_JUMBO);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
 int hal_port_enable_set(ifindex_t ifindex, zpl_bool enable)

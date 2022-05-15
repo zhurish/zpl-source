@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+#include "dhcp_config.h"
 #include <netinet/ip6.h>
 
 //PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
@@ -38,20 +39,20 @@ struct d6_packet {
 		zpl_uint8 d6_msg_type;
 		zpl_uint32  d6_xid32;
 	} d6_u;
-	zpl_uint8 d6_options[576 - sizeof(struct iphdr) - sizeof(struct udphdr) - 4
+	zpl_uint8 d6_options[576 - sizeof(struct ipstack_iphdr) - sizeof(struct ipstack_udphdr) - 4
 			+ CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 } PACKED;
 #define d6_msg_type d6_u.d6_msg_type
 #define d6_xid32    d6_u.d6_xid32
 
 struct ip6_udp_d6_packet {
-	struct ip6_hdr ip6;
-	struct udphdr udp;
+	struct ipstack_ip6_hdr ip6;
+	struct ipstack_udphdr udp;
 	struct d6_packet data;
 } PACKED;
 
 struct udp_d6_packet {
-	struct udphdr udp;
+	struct ipstack_udphdr udp;
 	struct d6_packet data;
 } PACKED;
 
@@ -141,17 +142,42 @@ struct client6_data_t {
 	unsigned env_idx;
 	/* link-local IPv6 address */
 	struct ipstack_in6_addr ll_ip6;
+
 };
 
-#define client6_data (*(struct client6_data_t*)(&bb_common_bufsiz1[COMMON_BUFSIZE - sizeof(struct client6_data_t)]))
+struct dhcp6_client_data_t {
+	uint8_t client_mac[6];          /* Our mac address */
+	uint16_t port;
+	int ifindex;                    /* Index number of the interface to use */
+	uint8_t opt_mask[256 / 8];      /* Bitmask of options to send (-O option) */
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ TODO: DHCPv6 has 16-bit option numbers
+	const char *interface;          /* The name of the interface to use */
+	char *pidfile;                  /* Optionally store the process ID */
+	const char *script;             /* User script to run at dhcp events */
+	dhcp_option_set_t *options;     /* list of DHCP options to send to server */
+	uint8_t *clientid;              /* Optional client id to use */
+	uint8_t *vendorclass;           /* Optional vendor class-id to use */
+	uint8_t *hostname;              /* Optional hostname to use */
+	uint8_t *fqdn;                  /* Optional fully qualified domain name to use */
+
+	unsigned first_secs;
+	unsigned last_secs;
+
+	zpl_socket_t sockfd;
+	unsigned listen_mode;
+	unsigned state;
+} ;
+
+extern struct client6_data_t client6_data;
+extern struct dhcp6_client_data_t  client_config;
 
 int FAST_FUNC d6_read_interface(const char *interface, ifindex_t *ifindex, struct ipstack_in6_addr *nip6, zpl_uint8 *mac);
 
-int FAST_FUNC d6_listen_socket(zpl_uint16 port, const char *inf);
+zpl_socket_t d6_listen_socket(zpl_uint16 port, const char *inf);
 
 int FAST_FUNC d6_recv_kernel_packet(
 		struct ipstack_in6_addr *peer_ipv6,
-		struct d6_packet *packet, int fd
+		struct d6_packet *packet, zpl_socket_t fd
 );
 
 int FAST_FUNC d6_send_raw_packet(
@@ -174,7 +200,7 @@ void FAST_FUNC d6_dump_packet(struct d6_packet *packet);
 # define d6_dump_packet(packet) ((void)0)
 #endif
 
-
+int udhcpc6_main(int argc UNUSED_PARAM, char **argv);
 //POP_SAVED_FUNCTION_VISIBILITY
  
 #ifdef __cplusplus

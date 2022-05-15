@@ -24,17 +24,17 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "linklist.h"
-#include "vector.h"
+//#include "vector.h"
 #include "zmemory.h"
 #include "vrf.h"
 #include "if.h"
-#include "hash.h"
+//#include "hash.h"
 #include "str.h"
 #include "vty.h"
 #include "prefix.h"
 #include "table.h"
 #include "lib_event.h"
-#include "command.h"
+//#include "command.h"
 #include "connected.h"
 #include "log.h"
 #include "nsm_interface.h"
@@ -821,7 +821,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 				//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 				listnode_delete(ifp->connected, ifc);
 				connected_free(ifc);
-				return CMD_WARNING;
+				return ERROR;
 			}
 		}
 #else
@@ -832,7 +832,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 			//		ipstack_strerror(ipstack_errno), VTY_NEWLINE);
 			listnode_delete(ifp->connected, ifc);
 			connected_free(ifc);
-			return CMD_WARNING;
+			return ERROR;
 		}
 #endif
 		connected_up_ipv6(ifp, ifc);

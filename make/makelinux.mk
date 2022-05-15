@@ -84,7 +84,7 @@ ZPL_BUILD_OS	=$(shell echo $(ARCH_OS) | tr a-z A-Z)
 #
 #
 #ZPL_BUILD_IPV6	= false
-ZPL_BUILD_IPV6	= $(IPV6_ENABLE)
+ZPL_BUILD_IPV6	= $(ZPL_IPV6_MODULE)
 #
 #
 #

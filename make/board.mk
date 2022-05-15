@@ -25,7 +25,7 @@ VERSION = V0.0.0.20
 #
 ARCH_OS	= linux
 #
-IPV6_ENABLE = true
+ZPL_IPV6_MODULE = true
 #
 ifeq ($(OPENWRT),true)
 ZPL_BUILD_OPENWRT=true

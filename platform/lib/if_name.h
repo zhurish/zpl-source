@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "if.h"
+#include "if_def.h"
 
 extern const char *getkernelname(if_type_t	type);
 

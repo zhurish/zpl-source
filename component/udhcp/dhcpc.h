@@ -11,6 +11,7 @@ extern "C" {
 
 #include "dhcp_def.h"
 #include "dhcp_option.h"
+#include "dhcp_lease.h"
 
 #define DHCP_DEFAULT_TIMEOUT		5
 #define DHCP_DEFAULT_RETRIES		5

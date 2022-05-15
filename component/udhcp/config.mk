@@ -16,13 +16,15 @@ OBJS += dhcp_socket.o
 OBJS += dhcp_util.o
 OBJS += dhcp_main.o
 #OBJS += xconnect.o
+ifeq ($(ZPL_BUILD_IPV6),true)
+OBJS += d6_dhcpc.o
+OBJS += d6_packet.o
+OBJS += d6_socket.o
+endif
 
-#OBJS += d6_dhcpc.o
-#OBJS += d6_packet.o
-#OBJS += d6_socket.o
 OBJS += dhcpc.o
 OBJS += dhcpd.o
-#OBJS += dhcprelay.o
+OBJS += dhcprelay.o
 
 OBJS += dhcp_api.o
 #############################################################################

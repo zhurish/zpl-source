@@ -53,6 +53,8 @@ DEFUN (channel_group,
 		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
 		return CMD_WARNING;
 	}
+	else
+		ret = OK;
 	if(ret == OK)
 	{
 		if(!l2trunk_lookup_interface_api(ifp->ifindex))
@@ -97,12 +99,7 @@ DEFUN (channel_group_static,
 		nsm_trunk_enable();
 	trunkid = atoi(argv[0]);
 
-	if(!l2trunk_lookup_api(trunkid))
-	{
-		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-	if(ret == OK)
+	if(l2trunk_lookup_api(trunkid))
 	{
 		if(!l2trunk_lookup_interface_api(ifp->ifindex))
 		{
@@ -124,6 +121,11 @@ DEFUN (channel_group_static,
 			else
 				return CMD_WARNING;
 		}
+	}
+	else
+	{
+		vty_out(vty, "interface port-channel%d is not exist.%s",trunkid, VTY_NEWLINE);
+		return CMD_WARNING;
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }

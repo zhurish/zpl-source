@@ -7,13 +7,26 @@ extern "C" {
 #endif
 
 #include "zpl_type.h"
-#include "zmemory.h"
 #include "module.h"
-#include "memtypes.h"
-#include "zebra_event.h"
-#include "route_types.h"
+#include "zmemory.h"
+#include "linklist.h"
 #include "prefix.h"
+#include "table.h"
+#include "hash.h"
+#include "jhash.h"
+#include "str.h"
+#include "log.h"
+#include "vector.h"
+#include "connected.h"
+#include "algorithm.h"
+#include "checksum.h"
+#include "vector.h"
+
+#ifdef ZPL_VRF_MODULE
+#include "vrf.h"
+#endif
 #include "zassert.h"
+
 
 struct lib_global
 {

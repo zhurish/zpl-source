@@ -323,7 +323,7 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_PORT_SPEED, bsp_port_speed_set),
 	HAL_CALLBACK_ENTRY(HAL_PORT_DUPLEX, bsp_port_duplex_set),
 	HAL_CALLBACK_ENTRY(HAL_PORT_FLOW, bsp_port_flow_set),
-	HAL_CALLBACK_ENTRY(HAL_PORT_FLOW, bsp_port_pause_set),
+	HAL_CALLBACK_ENTRY(HAL_PORT_PAUSE, bsp_port_pause_set),
 	HAL_CALLBACK_ENTRY(HAL_PORT_JUMBO, bsp_port_jumbo_set),
 	HAL_CALLBACK_ENTRY(HAL_PORT_LOOP, bsp_port_loop_set),
 	HAL_CALLBACK_ENTRY(HAL_PORT_LEARNING, bsp_port_learning_set),

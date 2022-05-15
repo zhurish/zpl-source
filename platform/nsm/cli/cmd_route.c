@@ -5398,7 +5398,6 @@ ALIAS (show_ipv6_mroute,
        "IPv6 Multicast routing table\n"
        VRF_CMD_HELP_STR)
 
-#endif
 
 #ifdef ZPL_VRF_MODULE
 DEFUN (show_ipv6_route_vrf_all,
@@ -5469,7 +5468,7 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
   NODE index;
   int ret;
   int first = 1;
-  struct prefix_ipv6 p;
+  struct prefix p;
 
   ret = str2prefix (argv[0], &p);
   if (! ret)
@@ -5784,9 +5783,9 @@ DEFUN (show_ipv6_route_summary_prefix_vrf_all,
       	os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return CMD_SUCCESS;
 }
-#endif
+#endif 
 
-#ifdef ZPL_BUILD_IPV6
+
 /* Write IPv6 static route configuration. */
 static int nsm_ipv6_route_config_write_one_info(struct vty *vty, struct route_table *stable)
 {
@@ -6084,7 +6083,7 @@ void cmd_route_init (void)
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_addr_vrf_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ip_rpf_addr_vrf_all_cmd);
-#endif
+#endif /* ZPL_VRF_MODULE */
 #ifdef ZPL_BUILD_IPV6
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_route_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ipv6_route_flags_cmd);
@@ -6171,7 +6170,7 @@ void cmd_route_init (void)
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_prefix_vrf_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_prefix_longer_vrf_cmd);
 
-/*
+#ifdef ZPL_VRF_MODULE
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_summary_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_summary_prefix_vrf_all_cmd);
@@ -6179,12 +6178,12 @@ void cmd_route_init (void)
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_addr_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_prefix_vrf_all_cmd);
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_route_prefix_longer_vrf_all_cmd);
-*/
+#endif /* ZPL_VRF_MODULE */
 
   install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_mroute_vrf_cmd);
 
-  //install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_mroute_vrf_all_cmd);
-  //install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_ipv6_mroute_vrf_all_cmd);
-#endif
+  install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipv6_mroute_vrf_all_cmd);
+  install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_ipv6_mroute_vrf_all_cmd);
+#endif /* ZPL_BUILD_IPV6 */
 }
 #endif

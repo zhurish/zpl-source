@@ -56,7 +56,7 @@ int udhcp_send_udp_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pkt,
 /*
  * dhcp_util.c
 */
-zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port);
+zpl_socket_t udhcp_udp_socket(zpl_uint16 port, ifindex_t ifindex);
 zpl_socket_t udhcp_raw_socket(void);
 int udhcp_client_socket_bind(zpl_socket_t fd, ifindex_t ifindex);
 int udhcp_client_socket_filter(zpl_socket_t fd, zpl_uint16 port);
@@ -85,12 +85,13 @@ char*  xasprintf(const char *format, ...);
 
 ssize_t  safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count);
 int  safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout);
+ssize_t safe_write(zpl_socket_t fd, const void *buf, size_t count);
 
 //int  index_in_strings(const char *strings, const char *key);
 char*  bin2hex(char *p, const char *cp, zpl_uint32 count);
 char*  hex2bin(char *dst, const char *str, zpl_uint32 count);
 
-
+int FAST_FUNC udhcp_read_interface(const char *interface, int *ifindex, uint32_t *nip, uint8_t *mac);
 
 int udhcp_interface_mac(ifindex_t ifindex, zpl_uint32  *nip, zpl_uint8 *mac);
 int dhcp_client_lease_set(void *ifter);

@@ -29,9 +29,13 @@
 
 /* 1. None of the callers expects it to ever fail */
 /* 2. ip was always IPSTACK_INADDR_ANY */
-zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port)
+zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port, ifindex_t ifindex)
 {
 	zpl_socket_t fd;
+	char kname[64];
+	ifindex_t kifindex = 0;
+	if(ifindex)
+		kifindex = ifindex2ifkernel(ifindex);
 	fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
 	if (ipstack_invalid(fd))
 	{
@@ -39,13 +43,21 @@ zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port)
 		if (sockopt_broadcast(fd) == -1)
 			zlog_err(MODULE_DHCP, "IPSTACK_SO_BROADCAST");
 
+		if(kifindex)
+		{
+			sockopt_bindtodevice(fd, if_indextoname(kifindex, kname));
+			zlog_err(MODULE_DHCP, "IPSTACK_SO_BROADCAST");
+		}
 		if (setsockopt_ifindex(IPSTACK_AF_INET, fd, 1) == -1)
 			zlog_err(MODULE_DHCP, "setsockopt_ifindex");
 
 		sockopt_ttl(IPSTACK_AF_INET, fd, 1);
 		ipstack_set_nonblocking(fd);
-		if (ipstack_sock_bind(fd, NULL, port) == OK)
-			return fd;
+		if(port)
+		{
+			if (ipstack_sock_bind(fd, NULL, port) == OK)
+				return fd;
+		}
 		zlog_err(MODULE_DHCP, "sock_bind");
 	}
 	zlog_err(MODULE_DHCP, "udhcp_udp_socket");
@@ -132,4 +144,56 @@ int udhcp_client_socket_filter(zpl_socket_t fd, zpl_uint16 port)
 		}
 	}
 	return OK;
+}
+
+
+
+int FAST_FUNC udhcp_read_interface(const char *interface, int *ifindex, uint32_t *nip, uint8_t *mac)
+{
+	return 0;
+	#if 0
+	/* char buffer instead of bona-fide struct avoids aliasing warning */
+	char ifr_buf[sizeof(struct ifreq)];
+	struct ifreq *const ifr = (void *)ifr_buf;
+
+	int fd;
+	struct sockaddr_in *our_ip;
+
+	memset(ifr, 0, sizeof(*ifr));
+	fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+
+	ifr->ifr_addr.sa_family = AF_INET;
+	strncpy_IFNAMSIZ(ifr->ifr_name, interface);
+	if (nip) {
+		if (ioctl_or_perror(fd, SIOCGIFADDR, ifr,
+			"is interface %s up and configured?", interface)
+		) {
+			close(fd);
+			return -1;
+		}
+		our_ip = (struct sockaddr_in *) &ifr->ifr_addr;
+		*nip = our_ip->sin_addr.s_addr;
+		log1("IP %s", inet_ntoa(our_ip->sin_addr));
+	}
+
+	if (ifindex) {
+		if (ioctl_or_warn(fd, SIOCGIFINDEX, ifr) != 0) {
+			close(fd);
+			return -1;
+		}
+		log2("ifindex %d", ifr->ifr_ifindex);
+		*ifindex = ifr->ifr_ifindex;
+	}
+
+	if (mac) {
+		if (ioctl_or_warn(fd, SIOCGIFHWADDR, ifr) != 0) {
+			close(fd);
+			return -1;
+		}
+		memcpy(mac, ifr->ifr_hwaddr.sa_data, 6);
+	}
+
+	close(fd);
+	return 0;
+	#endif
 }

@@ -733,15 +733,6 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 			udhcpc_send_request(ifter, ifter->lease.server_address,
 					ifter->lease.lease_address);
 		}
-		/*		if(ifter->state.state >= DHCP_BOUND)
-		 {
-		 if(ifter->state.state == DHCP_BOUND)
-		 ifter->state.state = DHCP_RENEWING;
-		 else
-		 ifter->state = DHCP_REBINDING;
-		 udhcpc_send_renew(ifter, ifter->state.xid, ifter->lease.server_address,
-		 ifter->lease.lease_address);
-		 }*/
 		break;
 
 	case DHCP_BOUND:
@@ -995,7 +986,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 		}
 		if (ipstack_invalid(dhcp_global_config.client_sock))
 			dhcp_global_config.client_sock = udhcp_udp_socket(
-					dhcp_global_config.client_port);
+					dhcp_global_config.client_port, 0);
 
 		ifter->udp_sock = dhcp_global_config.client_sock;
 		dhcp_global_config.client_cnt++;

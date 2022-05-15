@@ -17,12 +17,19 @@ extern "C" {
 typedef struct dhcp_relay_s
 {
 	NODE		node;
-	int			sock;
+	dhcp_global_t *global;
+	zpl_socket_t sock;
 	ifindex_t  	ifindex;
+
+	void		*master;
+	void		*cr_thread;	//read thread
+	void		*sr_thread;	//time thread,
+	void		*t_thread;	//time thread,
 
 	zpl_uint8 	mac[ETHER_ADDR_LEN];          /* our MAC address (used only for ARP probing) */
 	zpl_uint32 	ipaddr;
 
+	zpl_socket_t client_sock;
 	zpl_uint32 	dhcp_server;
 	zpl_uint32 	dhcp_server2;
 
@@ -33,7 +40,7 @@ extern int dhcp_relay_add_interface(dhcp_global_t*config, ifindex_t ifindex);
 extern int dhcp_relay_del_interface(dhcp_global_t*config, ifindex_t ifindex);
 
 
- 
+
 #ifdef __cplusplus
 }
 #endif

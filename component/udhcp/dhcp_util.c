@@ -7,6 +7,8 @@
 
 #include "auto_include.h"
 #include <zplos_include.h>
+#include "module.h"
+#include "log.h"
 #include "nsm_include.h"
 #include "dhcp_def.h"
 #include "dhcp_lease.h"
@@ -152,7 +154,25 @@ ssize_t FAST_FUNC safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count)
 
 	do {
 		n = ipstack_read(fd, buf, count);
-	} while (n < 0 && ipstack_errno == EINTR);
+	} while (n < 0 && ipstack_errno == IPSTACK_ERRNO_EINTR);
+
+	return n;
+}
+ssize_t FAST_FUNC safe_write(zpl_socket_t fd, const void *buf, size_t count)
+{
+	ssize_t n;
+
+	for (;;) {
+		n = ipstack_write(fd, buf, count);
+		if (n >= 0 || ipstack_errno != IPSTACK_ERRNO_EINTR)
+			break;
+		/* Some callers set ipstack_errno=0, are upset when they see EINTR.
+		 * Returning EINTR is wrong since we retry write(),
+		 * the "error" was transient.
+		 */
+		ipstack_errno = 0;
+		/* repeat the write() */
+	}
 
 	return n;
 }
@@ -193,24 +213,6 @@ ssize_t FAST_FUNC full_read(int fd, void *buf, size_t len)
 }
 
 
-ssize_t FAST_FUNC safe_write(int fd, const void *buf, size_t count)
-{
-	ssize_t n;
-
-	for (;;) {
-		n = ipstack_write(fd, buf, count);
-		if (n >= 0 || ipstack_errno != EINTR)
-			break;
-		/* Some callers set ipstack_errno=0, are upset when they see EINTR.
-		 * Returning EINTR is wrong since we retry write(),
-		 * the "error" was transient.
-		 */
-		ipstack_errno = 0;
-		/* repeat the write() */
-	}
-
-	return n;
-}
 
 ssize_t FAST_FUNC full_write(int fd, const void *buf, size_t len)
 {
@@ -266,9 +268,9 @@ int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 			return n;
 		if (timeout > 0)
 			timeout--;
-		if (ipstack_errno == EINTR)
+		if (ipstack_errno == IPSTACK_ERRNO_EINTR)
 			continue;
-		if (ipstack_errno == ENOMEM)
+		if (ipstack_errno == IPSTACK_ERRNO_ENOMEM)
 			continue;
 		return n;
 	}
@@ -281,11 +283,11 @@ int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 		if (timeout > 0)
 			timeout--;
 		/* E.g. strace causes poll to return this */
-		if (ipstack_errno == EINTR)
+		if (ipstack_errno == IPSTACK_ERRNO_EINTR)
 			continue;
 		/* Kernel is very low on memory. Retry. */
 		/* I doubt many callers would handle this correctly! */
-		if (ipstack_errno == ENOMEM)
+		if (ipstack_errno == IPSTACK_ERRNO_ENOMEM)
 			continue;
 		//bb_perror_msg("poll");
 		return n;
@@ -332,7 +334,7 @@ char* FAST_FUNC bin2hex(char *p, const char *cp, zpl_uint32 count)
 /* Convert "[x]x[:][x]x[:][x]x[:][x]x" hex string to binary, no more than COUNT bytes */
 char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
 {
-	ipstack_errno = EINVAL;
+	ipstack_errno = IPSTACK_ERRNO_EINVAL;
 	while (*str && count) {
 		zpl_uint8 val;
 		zpl_uint8 c = *str++;
@@ -360,7 +362,7 @@ char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
 			str++;
 		count--;
 	}
-	ipstack_errno = (*str ? ERANGE : 0);
+	ipstack_errno = (*str ? IPSTACK_ERRNO_ERANGE : 0);
 	return dst;
 }
 

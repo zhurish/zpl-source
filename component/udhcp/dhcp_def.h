@@ -91,13 +91,13 @@ struct dhcp_packet {
 } PACKED;
 
 struct ip_udp_dhcp_packet {
-	struct iphdr ip;
-	struct udphdr udp;
+	struct ipstack_iphdr ip;
+	struct ipstack_udphdr udp;
 	struct dhcp_packet data;
 } PACKED;
 
 struct udp_dhcp_packet {
-	struct udphdr udp;
+	struct ipstack_udphdr udp;
 	struct dhcp_packet data;
 } PACKED;
 
@@ -261,6 +261,7 @@ struct option_set {
 #ifndef DHCP_CLIENT_PORT
 #define DHCP_CLIENT_PORT  68
 #endif
+
 #ifndef DHCP_CLIENT_PORT6
 #define DHCP_CLIENT_PORT6 546
 #endif

@@ -24,8 +24,6 @@ enum hal_misc_cmd
 };
 
 //jumbo
-int hal_jumbo_size(zpl_uint32 size);
-int hal_jumbo_interface_enable(ifindex_t ifindex, zpl_bool enable);
 
 //snooping
 int hal_snooping_enable (zpl_bool enable, zpl_uint32 mode, zpl_bool ipv6);
