@@ -2,15 +2,15 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-05-15 17:02:32 CST"
+#define AUTOCONF_TIMESTAMP "2022-05-29 12:14:35 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
 /*
  * Global Settings
  */
-#define ZPL_RUNNING_BASE_PATH "/home/zhurish/workspace/working/zpl-source/source/debug/app/"
-#define ZPL_REAL_SYSCONFIG_PATH "/home/zhurish/workspace/working/zpl-source/source/debug"
+#define ZPL_RUNNING_BASE_PATH "/tmp/app"
+#define ZPL_REAL_SYSCONFIG_PATH "/home/app"
 #define ZPL_INSTALL_PATH "./_install"
 
 /*
@@ -40,9 +40,9 @@
  */
 #define ZPL_HOST_TOOLCHAIN_MODULE 1
 #undef ZPL_EXTERNAL_TOOLCHAIN_MODULE
-#define ZPL_EXTERNAL_TOOLCHAIN_PREFIX ""
-#undef ZPL_EXTERNAL_TOOLCHAIN_GLIBC
-#undef ZPL_EXTERNAL_TOOLCHAIN_UCLIBC
+#define ZPL_TOOLCHAIN_PREFIX ""
+#undef ZPL_TOOLCHAIN_GLIBC
+#undef ZPL_TOOLCHAIN_UCLIBC
 #define ZPL_TOOLCHAIN_PATH ""
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
@@ -83,7 +83,7 @@
 #define ZPL_IP_PLIST 1
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
-#undef ZPL_SHRL_MODULE
+#define ZPL_SHRL_MODULE 1
 #define ZPL_NSM_SNMP 1
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
@@ -94,11 +94,11 @@
 #define ZPL_NSM_ROUTEMAP 1
 #define ZPL_NSM_8021X 1
 #define ZPL_NSM_ARP 1
-#define ZPL_NSM_DHCP 1
-#define ZPL_DHCPS_MODULE 1
-#define ZPL_DHCPC_MODULE 1
-#define ZPL_DHCPR_MODULE 1
-#define ZPL_NSM_DNS 1
+#undef ZPL_NSM_DHCP
+#undef ZPL_DHCPS_MODULE
+#undef ZPL_DHCPC_MODULE
+#undef ZPL_DHCPR_MODULE
+#undef ZPL_NSM_DNS
 #define ZPL_NSM_DOS 1
 #undef ZPL_NSM_FIREWALLD
 #define ZPL_NSM_MAC 1
@@ -124,7 +124,7 @@
 /*
  * Component Module Config
  */
-#define ZPL_COMPONENT_MODULE 1
+#undef ZPL_COMPONENT_MODULE
 #undef ZPL_MODEM_MODULE
 #undef ZPL_MQTT_MODULE
 #undef ZPL_MQTT_SSL
@@ -147,8 +147,8 @@
 #undef ZPL_LIBSSH_GSSAPI
 #undef ZPL_LIBSSH_GEX
 #undef ZPL_LIBSSH_PCAP
-#define ZPL_WEBSERVER_MODULE 1
-#define ZPL_WEBSERVER_NONESSL 1
+#undef ZPL_WEBSERVER_MODULE
+#undef ZPL_WEBSERVER_NONESSL
 #undef ZPL_WEBSERVER_OPENSSL
 #undef ZPL_WEBSERVER_MATRIXSSL
 #undef ZPL_WEBSERVER_MBEDTLS
@@ -239,19 +239,20 @@
 #define ZPL_KERNEL_NETLINK 1
 #undef ZPL_KERNEL_FORWARDING
 #define ZPL_IPCOM_ROOT_PATH ""
-#undef ZPL_SDK_MODULE
+#define ZPL_SDK_MODULE 1
 #undef ZPL_SDK_BCMX
-#undef ZPL_SDK_BCM53125
+#define ZPL_SDK_BCM53125 1
 
 /*
  * Externsions Module Config
  */
-#undef ZPL_EXTERNSIONS_MODULE
+#define ZPL_EXTERNSIONS_MODULE 1
 #undef ZPL_ZLIB_MODULE
 #undef ZPL_OPENSSL_MODULE
 #undef ZPL_EXFREETYPE_MODULE
 #define ZPL_EXFREETYPE_LIB_PATH ""
 #define ZPL_EXFREETYPE_INC_PATH ""
+#define ZPL_READLINE_MODULE 1
 
 /*
  * Application Module Config
@@ -269,3 +270,4 @@
 #undef ZPL_TOOLS_SYSTEM
 #undef ZPL_VTYSH_MODULE
 #undef ZPL_WATCHDOG_MODULE
+#undef ZPL_SWCONFIG_MODULE

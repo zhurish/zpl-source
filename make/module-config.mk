@@ -18,7 +18,6 @@ ZPL_INCLUDE += -I$(PLATFORM_ROOT)/shell
 ZPL_DEFINE	+= -DZPL_SHELL_MODULE
 ifeq ($(strip $(ZPL_SHRL_MODULE)),true)
 ZPL_DEFINE	+= -DZPL_SHRL_MODULE
-ZPLEX_LDLIBS += -lreadline
 endif
 endif
 
@@ -143,6 +142,11 @@ ZPL_INCLUDE += -I$(DHCP_ROOT)
 ZPL_DEFINE += -DZPL_DHCP_MODULE
 ZPL_DEFINE += -DZPL_DHCPC_MODULE
 ZPL_DEFINE += -DZPL_DHCPD_MODULE
+
+ifeq ($(strip $(ZPL_BUILD_IPV6)),true)
+ZPL_DEFINE += -DZPL_DHCPV6C_MODULE
+endif
+
 endif
 
 
@@ -327,6 +331,17 @@ ZPL_DEFINE += -DZPL_OPENSSL_MODULE
 endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
 
 
+ifeq ($(strip $(ZPL_READLINE_MODULE)),true)
+ZPLEX_DEFINE	+= -DZPL_READLINE_MODULE
+ifneq ($(strip $(ZPL_BUILD_ARCH)),$(filter $(ZPL_BUILD_ARCH),X86_64 X86))
+ZPLEX_DIR += $(EXTERNSION_ROOT)/readline
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/readline
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/readline/_install/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/readline/_install/lib
+endif
+ZPLEX_LDLIBS += -lreadline -lhistory -lncurses
+endif
+
 #
 # PRODUCT
 #
@@ -421,6 +436,13 @@ endif
 ifeq ($(strip $(ZPL_TOOLS_SYSTEM)),true)
 ZPLPRODS += $(TOOLS_ROOT)/system
 ZPL_INCLUDE += -I$(TOOLS_ROOT)/system
+endif
+
+ifeq ($(strip $(ZPL_SWCONFIG_MODULE)),true)
+ZPLPRODS += $(TOOLS_ROOT)/swconfig
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/swconfig
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/swconfig/include
+ZPL_INCLUDE += -I$(TOOLS_ROOT)/swconfig/include/libnl-tiny
 endif
 
 endif

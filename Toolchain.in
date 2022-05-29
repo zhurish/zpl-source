@@ -12,7 +12,7 @@ config ZPL_EXTERNAL_TOOLCHAIN_MODULE
 	bool "Use external Toolchain"
 	default n
 
-config ZPL_EXTERNAL_TOOLCHAIN_PREFIX
+config ZPL_TOOLCHAIN_PREFIX
 	string "External Toolchain Prefix"
 	default ""
 	depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
@@ -20,16 +20,16 @@ config ZPL_EXTERNAL_TOOLCHAIN_PREFIX
 	choice 
 		prompt "Toolchain libc"
 		depends on ZPL_EXTERNAL_TOOLCHAIN_MODULE && !ZPL_HOST_TOOLCHAIN_MODULE
-		default ZPL_EXTERNAL_TOOLCHAIN_GLIBC
+		default ZPL_TOOLCHAIN_GLIBC
 		help
 		  Specify the libc type used by the external toolchain. The given value
 		  is passed as -m flag to all gcc and g++ invocations. This is mainly
 		  intended for multilib toolchains which support glibc and uclibc at
 		  the same time. If no value is specified, no -m flag is passed.
-		config ZPL_EXTERNAL_TOOLCHAIN_GLIBC
+		config ZPL_TOOLCHAIN_GLIBC
 			bool "glibc"
 
-		config ZPL_EXTERNAL_TOOLCHAIN_UCLIBC
+		config ZPL_TOOLCHAIN_UCLIBC
 			bool "uClibc"
 	endchoice
 

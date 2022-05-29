@@ -111,6 +111,17 @@ extern int sockopt_tcp_signature(zpl_socket_t sock, union sockunion *su,
                                  const char *password);
 #endif
 
+extern int sockopt_reuseaddr (zpl_socket_t);
+extern int sockopt_reuseport (zpl_socket_t);
+extern int sockopt_intval(zpl_socket_t fd, int level, int optname, int optval);
+extern int sockopt_broadcast(zpl_socket_t fd);
+extern int sockopt_keepalive(zpl_socket_t fd);
+extern int sockopt_bindtodevice(zpl_socket_t fd, const char *iface);
+extern int sockopt_v6only (zpl_family_t family, zpl_socket_t sock);
+
+extern int sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl);
+extern int sockopt_minttl (zpl_family_t family, zpl_socket_t sock, int minttl);
+extern int sockopt_cork (zpl_socket_t sock, int onoff);
  
 #ifdef __cplusplus
 }

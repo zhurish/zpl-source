@@ -103,18 +103,10 @@ extern void sockunion_set(union sockunion *, zpl_family_t family, const zpl_ucha
 extern union sockunion *sockunion_str2su (const char *str);
 extern zpl_socket_t sockunion_accept (zpl_socket_t sock, union sockunion *);
 extern zpl_socket_t sockunion_stream_socket (union sockunion *);
-extern int sockopt_reuseaddr (zpl_socket_t);
-extern int sockopt_reuseport (zpl_socket_t);
-extern int sockopt_int(zpl_socket_t fd, int level, int optname, int optval);
-extern int sockopt_broadcast(zpl_socket_t fd);
-extern int sockopt_keepalive(zpl_socket_t fd);
-extern int sockopt_bindtodevice(zpl_socket_t fd, const char *iface);
-extern int sockopt_v6only (zpl_family_t family, zpl_socket_t sock);
+
 extern int sockunion_bind (zpl_socket_t sock, union sockunion *, 
                            zpl_ushort, union sockunion *);
-extern int sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl);
-extern int sockopt_minttl (zpl_family_t family, zpl_socket_t sock, int minttl);
-extern int sockopt_cork (zpl_socket_t sock, int onoff);
+
 extern zpl_socket_t sockunion_socket (const union sockunion *su);
 extern const char *inet_sutop (const union sockunion *su, zpl_char *str);
 extern enum connect_result sockunion_connect (zpl_socket_t fd, const union sockunion *su,

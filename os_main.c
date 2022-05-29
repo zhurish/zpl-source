@@ -208,7 +208,7 @@ static int zplmain_getopt(int argc, char **argv)
 	}
 	return OK;
 }
-
+extern int dhcpv6_main( int argc, char* const argv[]);
 extern int do_iplink(int argc, char **argv);
 /* Main startup routine. */
 int main(int argc, char **argv)
@@ -232,6 +232,7 @@ int main(int argc, char **argv)
 #ifdef OS_SIGNAL_SIGWAIT
 	//os_task_sigmaskall();
 #endif
+	//dhcpv6_main(1, NULL);
 	//do_iplink(argc, argv);
 	os_signal_default(zlog_signal, zlog_signal);
 	zpl_base_signal_init(startup_option.daemon_mode);

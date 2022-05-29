@@ -105,10 +105,12 @@ static int b53125_port_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool en
 		u8 reg = 0;
 		ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, &reg);
 		reg |= (B53_INRANGE_ERR_DIS|B53_OUTRANGE_ERR_DIS);
-		ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);		
+		ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);	
+		_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);	
 		ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), &reg);
 		reg &= ~(PORT_CTRL_RX_DISABLE | PORT_CTRL_TX_DISABLE);
 		ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
+		_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
 	}
 	else
 	{
@@ -298,6 +300,7 @@ int b53125_unknow_unicast_forward_port(sdk_driver_t *dev, zpl_phyport_t port, zp
 			reg &= ~(BIT(port));
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_UC_FLOOD_MASK, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_UC_FLOOD_MASK, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -322,6 +325,7 @@ int b53125_unknow_multicast_forward_port(sdk_driver_t *dev, zpl_phyport_t port, 
 			reg &= ~(BIT(port));
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_MC_FLOOD_MASK, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_MC_FLOOD_MASK, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -346,6 +350,7 @@ int b53125_unknow_ipmulticast_forward_port(sdk_driver_t *dev, zpl_phyport_t port
 			reg &= ~(BIT(port));
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_IPMC_FLOOD_MASK, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_IPMC_FLOOD_MASK, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -373,6 +378,7 @@ int b53125_enable_learning(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enabl
 			port_ctrl |= BIT(port);
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_DIS_LEARNING, port_ctrl);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_DIS_LEARNING, port_ctrl);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -398,6 +404,7 @@ static int b53125_software_learning(sdk_driver_t *dev, zpl_phyport_t port, zpl_b
 			port_ctrl &= ~BIT(port);
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_SOFTWARE_LEARNING, port_ctrl);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_SOFTWARE_LEARNING, port_ctrl);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -616,7 +623,7 @@ int b53125_port_init(sdk_driver_t *dev)
 	//sdk_port.sdk_port_mtu_cb)(void *, zpl_phyport_t, zpl_uint32);
 	//sdk_port.sdk_port_vrf_cb)(void *, zpl_phyport_t, zpl_uint32);
 	//sdk_port.sdk_port_mode_cb)(void *, zpl_phyport_t, zpl_uint32);
-	ret |= b53125_enable_learning(dev, ((b53_device_t *)dev->sdk_device)->cpu_port, zpl_true);
+	//ret |= b53125_enable_learning(dev, ((b53_device_t *)dev->sdk_device)->cpu_port, zpl_true);
 	return ret;
 }
 

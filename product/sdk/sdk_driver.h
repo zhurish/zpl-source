@@ -25,6 +25,8 @@ typedef zpl_uint32 u32;
 typedef zpl_uint64 u64;
 
 //#define _SDK_DEBUG_EN
+#define _SDK_CLI_DEBUG_EN
+
 #if defined( _SDK_DEBUG_EN)
 extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zlog_level_t priority, const char *format, ...);
 #define _sdk_debug(format, ...) sdk_log (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_DEBUG, format, ##__VA_ARGS__)
@@ -51,7 +53,7 @@ typedef struct sdk_driver {
 	zpl_phyport_t 	cpu_port;
 	zpl_uint32 		num_vlans;
 	zpl_phyport_t 	num_ports;
-
+	zpl_phyport_t	ports_table[8];
 	void 			*sdk_device;
 }sdk_driver_t;
 

@@ -10,11 +10,6 @@ extern "C"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 
-#ifdef ZPL_SDK_MODULE
-#define NO_SDK OS_NO_SDKSPUUORT
-#else
-#define NO_SDK OK
-#endif
 
 //#define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
 //#define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)

@@ -33,26 +33,6 @@ int udhcp_str2nip(const char *str, void *arg)
 	return 1;
 }
 
-/* note: ip is a pointer to an IPv6 in network order, possibly misaliged */
-int FAST_FUNC sprint_nip6(char *dest, /*const char *pre,*/ const zpl_uint8 *ip)
-{
-	char hexstrbuf[16 * 2];
-	bin2hex(hexstrbuf, (void*)ip, 16);
-	return sprintf(dest, /* "%s" */
-		"%.4s:%.4s:%.4s:%.4s:%.4s:%.4s:%.4s:%.4s",
-		/* pre, */
-		hexstrbuf + 0 * 4,
-		hexstrbuf + 1 * 4,
-		hexstrbuf + 2 * 4,
-		hexstrbuf + 3 * 4,
-		hexstrbuf + 4 * 4,
-		hexstrbuf + 5 * 4,
-		hexstrbuf + 6 * 4,
-		hexstrbuf + 7 * 4
-	);
-}
-
-
 
 
 int udhcp_interface_mac(ifindex_t ifindex, zpl_uint32  *nip, zpl_uint8 *mac)
@@ -75,80 +55,9 @@ int udhcp_interface_mac(ifindex_t ifindex, zpl_uint32  *nip, zpl_uint8 *mac)
 	return -1;
 }
 
-#if 0
-zpl_uint16 FAST_FUNC inet_cksum(zpl_uint16 *addr, zpl_uint32 nleft)
-{
-	/*
-	 * Our algorithm is simple, using a 32 bit accumulator,
-	 * we add sequential 16 bit words to it, and at the end, fold
-	 * back all the carry bits from the top 16 bits into the lower
-	 * 16 bits.
-	 */
-	unsigned sum = 0;
-	while (nleft > 1) {
-		sum += *addr++;
-		nleft -= 2;
-	}
-
-	/* Mop up an odd byte, if necessary */
-	if (nleft == 1) {
-		if (BB_LITTLE_ENDIAN)
-			sum += *(zpl_uint8*)addr;
-		else
-			sum += *(zpl_uint8*)addr << 8;
-	}
-
-	/* Add back carry outs from top 16 bits to low 16 bits */
-	sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
-	sum += (sum >> 16);                     /* add carry */
-
-	return (zpl_uint16)~sum;
-}
-#endif
-/*
-void FAST_FUNC udhcp_sp_fd_set(struct pollfd pfds[], int extra_fd)
-{
-	pfds[0].events = POLLIN;
-	pfds[0].fd = -1;
-	if (extra_fd >= 0) {
-		//close_on_exec_on(extra_fd);
-		pfds[0].fd = extra_fd;
-		pfds[0].events = POLLIN;
-	}
-	pfds[0].revents = 0;
-}
-*/
-/*
-void* FAST_FUNC xrealloc_vector(void *vector, unsigned sizeof_and_shift, int idx)
-{
-	int mask = 1 << (zpl_uint8)sizeof_and_shift;
-
-	if (!(idx & (mask - 1))) {
-		sizeof_and_shift >>= 8;
-		vector = realloc(vector, sizeof_and_shift * (idx + mask + 1));
-		memset((char*)vector + (sizeof_and_shift * idx), 0, sizeof_and_shift * (mask + 1));
-	}
-	return vector;
-}*/
-
-char* FAST_FUNC xasprintf(const char *format, ...)
-{
-	va_list p;
-	int r;
-	char *string_ptr;
-
-	va_start(p, format);
-	r = vasprintf(&string_ptr, format, p);
-	va_end(p);
-
-/*	if (r < 0)
-		bb_error_msg_and_die(bb_msg_memory_exhausted);*/
-	return string_ptr;
-}
 
 
-
-ssize_t FAST_FUNC safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count)
+ssize_t  safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count)
 {
 	ssize_t n;
 
@@ -158,7 +67,7 @@ ssize_t FAST_FUNC safe_read(zpl_socket_t fd, void *buf, zpl_uint32 count)
 
 	return n;
 }
-ssize_t FAST_FUNC safe_write(zpl_socket_t fd, const void *buf, size_t count)
+ssize_t  safe_write(zpl_socket_t fd, const void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -184,7 +93,7 @@ ssize_t FAST_FUNC safe_write(zpl_socket_t fd, const void *buf, size_t count)
  * Returns the amount read, or -1 on an error.
  * A zpl_int16 read is returned on an end of file.
  */
-ssize_t FAST_FUNC full_read(int fd, void *buf, size_t len)
+ssize_t  full_read(int fd, void *buf, size_t len)
 {
 	ssize_t cc;
 	ssize_t total;
@@ -214,7 +123,7 @@ ssize_t FAST_FUNC full_read(int fd, void *buf, size_t len)
 
 
 
-ssize_t FAST_FUNC full_write(int fd, const void *buf, size_t len)
+ssize_t  full_write(int fd, const void *buf, size_t len)
 {
 	ssize_t cc;
 	ssize_t total;
@@ -242,7 +151,7 @@ ssize_t FAST_FUNC full_write(int fd, const void *buf, size_t len)
 }
 
 /* Die with an error message if we can't read the entire buffer. */
-void FAST_FUNC xread(int fd, void *buf, size_t count)
+void  xread(int fd, void *buf, size_t count)
 {
 	if (count) {
 		ssize_t size = full_read(fd, buf, count);
@@ -255,7 +164,7 @@ void FAST_FUNC xread(int fd, void *buf, size_t count)
 /* Wrapper which restarts poll on EINTR or ENOMEM.
  * On other errors does perror("poll") and returns.
  * Warning! May take longer than timeout_ms to return! */
-int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
+int  safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 {
 	int n = 0;
 	ipstack_fd_set rfdset;
@@ -301,24 +210,9 @@ int FAST_FUNC safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 #endif
 
 
-#if 0
-int FAST_FUNC index_in_strings(const char *strings, const char *key)
-{
-	int idx = 0;
-
-	while (*strings) {
-		if (strcmp(strings, key) == 0) {
-			return idx;
-		}
-		strings += strlen(strings) + 1; /* skip NUL */
-		idx++;
-	}
-	return -1;
-}
-#endif
 
 /* Emit a string of hex representation of bytes */
-char* FAST_FUNC bin2hex(char *p, const char *cp, zpl_uint32 count)
+char*  bin2hex(char *p, const char *cp, zpl_uint32 count)
 {
 	const char bb_hexdigits_upcase[] ALIGN1 = "0123456789ABCDEF";
 	while (count) {
@@ -332,7 +226,7 @@ char* FAST_FUNC bin2hex(char *p, const char *cp, zpl_uint32 count)
 }
 
 /* Convert "[x]x[:][x]x[:][x]x[:][x]x" hex string to binary, no more than COUNT bytes */
-char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
+char* hex2bin(char *dst, const char *str, zpl_uint32 count)
 {
 	ipstack_errno = IPSTACK_ERRNO_EINVAL;
 	while (*str && count) {
@@ -366,15 +260,7 @@ char* FAST_FUNC hex2bin(char *dst, const char *str, zpl_uint32 count)
 	return dst;
 }
 
-/*
-void* FAST_FUNC xmemdup(const void *s, int n)
-{
-	char *p = malloc(n);
-	if(p)
-		return memcpy(p, s, n);
-	return NULL;
-}
-*/
+
 static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_t *lease)
 {
 	int ret = 0;
@@ -621,202 +507,7 @@ int dhcp_client_lease_unset(void *p)
 	client_interface_t *ifter = p;
 	return dhcp_client_lease_unset_kernel(ifter, &ifter->lease);
 }
-#if 0
-#!/bin/sh
-[ -z "$1" ] && echo "Error: should be run by udhcpc" && exit 1
 
-set_classless_routes() {
-	local max=128
-	local type
-	while [ -n "$1" -a -n "$2" -a $max -gt 0 ]; do
-		[ ${1##*/} -eq 32 ] && type=host || type=net
-		echo "udhcpc: adding route for $type $1 via $2"
-		route add -$type "$1" gw "$2" dev "$interface"
-		max=$(($max-1))
-		shift 2
-	done
-}
-
-setup_interface() {
-	echo "udhcpc: ifconfig $interface $ip netmask ${subnet:-255.255.255.0} broadcast ${broadcast:-+}"
-	ifconfig $interface $ip netmask ${subnet:-255.255.255.0} broadcast ${broadcast:-+}
-
-	[ -n "$router" ] && [ "$router" != "0.0.0.0" ] && [ "$router" != "255.255.255.255" ] && {
-		echo "udhcpc: setting default routers: $router"
-
-		local valid_gw=""
-		for i in $router ; do
-			route add default gw $i dev $interface
-			valid_gw="${valid_gw:+$valid_gw|}$i"
-		done
-
-		eval $(route -n | awk '
-			/^0.0.0.0\W{9}('$valid_gw')\W/ {next}
-			/^0.0.0.0/ {print "route del -net "$1" gw "$2";"}
-		')
-	}
-
-	# CIDR STATIC ROUTES (rfc3442)
-	[ -n "$staticroutes" ] && set_classless_routes $staticroutes
-	[ -n "$msstaticroutes" ] && set_classless_routes $msstaticroutes
-}
-
-
-applied=
-case "$1" in
-	deconfig)
-		ifconfig "$interface" 0.0.0.0
-	;;
-	renew)
-		setup_interface update
-	;;
-	bound)
-		setup_interface ifup
-	;;
-esac
-
-# user rules
-[ -f /etc/udhcpc.user ] && . /etc/udhcpc.user
-
-exit 0
-
-/* put all the parameters into the environment */
-static char **fill_envp(struct dhcp_packet *packet)
-{
-	int envc;
-	int i;
-	char **envp, **curr;
-	const char *opt_name;
-	zpl_uint8 *temp;
-	zpl_uint8 overload = 0;
-
-#define BITMAP unsigned
-#define BBITS (sizeof(BITMAP) * 8)
-#define BMASK(i) (1 << (i & (sizeof(BITMAP) * 8 - 1)))
-#define FOUND_OPTS(i) (found_opts[(unsigned)i / BBITS])
-	BITMAP found_opts[256 / BBITS];
-
-	memset(found_opts, 0, sizeof(found_opts));
-
-	/* We need 6 elements for:
-	 * "interface=IFACE"
-	 * "ip=N.N.N.N" from packet->yiaddr
-	 * "siaddr=IP" from packet->siaddr_nip (unless 0)
-	 * "boot_file=FILE" from packet->file (unless overloaded)
-	 * "sname=SERVER_HOSTNAME" from packet->sname (unless overloaded)
-	 * terminating NULL
-	 */
-	envc = 6;
-	/* +1 element for each option, +2 for subnet option: */
-	if (packet) {
-		/* note: do not search for "pad" (0) and "end" (255) options */
-//TODO: change logic to scan packet _once_
-		for (i = 1; i < 255; i++) {
-			temp = udhcp_get_option(packet, i);
-			if (temp) {
-				if (i == DHCP_OPTION_OVERLOAD)
-					overload |= *temp;
-				else if (i == DHCP_SUBNET)
-					envc++; /* for $mask */
-				envc++;
-				/*if (i != DHCP_MESSAGE_TYPE)*/
-				FOUND_OPTS(i) |= BMASK(i);
-			}
-		}
-	}
-	curr = envp = xzalloc(sizeof(envp[0]) * envc);
-
-	*curr = xasprintf("interface=%s", client_config.interface);
-	putenv(*curr++);
-
-	if (!packet)
-		return envp;
-
-	/* Export BOOTP fields. Fields we don't (yet?) export:
-	 * zpl_uint8 op;      // always BOOTREPLY
-	 * zpl_uint8 htype;   // hardware address type. 1 = 10mb ethernet
-	 * zpl_uint8 hlen;    // hardware address length
-	 * zpl_uint8 hops;    // used by relay agents only
-	 * zpl_uint32  xid;
-	 * zpl_uint16 secs;   // elapsed since client began acquisition/renewal
-	 * zpl_uint16 flags;  // only one flag so far: bcast. Never set by server
-	 * zpl_uint32  ciaddr; // client IP (usually == yiaddr. can it be different
-	 *                  // if during renew server wants to give us different IP?)
-	 * zpl_uint32  gateway_nip; // relay agent IP address
-	 * zpl_uint8 chaddr[16]; // link-layer client hardware address (MAC)
-	 * TODO: export gateway_nip as $giaddr?
-	 */
-	/* Most important one: yiaddr as $ip */
-	*curr = xmalloc(sizeof("ip=255.255.255.255"));
-	sprint_nip(*curr, "ip=", (zpl_uint8 *) &packet->yiaddr);
-	putenv(*curr++);
-	if (packet->siaddr_nip) {
-		/* IP address of next server to use in bootstrap */
-		*curr = xmalloc(sizeof("siaddr=255.255.255.255"));
-		sprint_nip(*curr, "siaddr=", (zpl_uint8 *) &packet->siaddr_nip);
-		putenv(*curr++);
-	}
-	if (!(overload & FILE_FIELD) && packet->file[0]) {
-		/* watch out for invalid packets */
-		*curr = xasprintf("boot_file=%."DHCP_PKT_FILE_LEN_STR"s", packet->file);
-		putenv(*curr++);
-	}
-	if (!(overload & SNAME_FIELD) && packet->sname[0]) {
-		/* watch out for invalid packets */
-		*curr = xasprintf("sname=%."DHCP_PKT_SNAME_LEN_STR"s", packet->sname);
-		putenv(*curr++);
-	}
-
-	/* Export known DHCP options */
-	opt_name = dhcp_option_strings;
-	i = 0;
-	while (*opt_name) {
-		zpl_uint8 code = dhcp_optflags[i].code;
-		BITMAP *found_ptr = &FOUND_OPTS(code);
-		BITMAP found_mask = BMASK(code);
-		if (!(*found_ptr & found_mask))
-			goto next;
-		*found_ptr &= ~found_mask; /* leave only unknown options */
-		temp = udhcp_get_option(packet, code);
-		*curr = xmalloc_optname_optval(temp, &dhcp_optflags[i], opt_name);
-		putenv(*curr++);
-		if (code == DHCP_SUBNET) {
-			/* Subnet option: make things like "$ip/$mask" possible */
-			zpl_uint32  subnet;
-			move_from_unaligned32(subnet, temp);
-			*curr = xasprintf("mask=%u", mton(subnet));
-			putenv(*curr++);
-		}
- next:
-		opt_name += strlen(opt_name) + 1;
-		i++;
-	}
-	/* Export unknown options */
-	for (i = 0; i < 256;) {
-		BITMAP bitmap = FOUND_OPTS(i);
-		if (!bitmap) {
-			i += BBITS;
-			continue;
-		}
-		if (bitmap & BMASK(i)) {
-			unsigned len, ofs;
-
-			temp = udhcp_get_option(packet, i);
-			/* udhcp_get_option returns ptr to data portion,
-			 * need to go back to get len
-			 */
-			len = temp[-OPT_DATA + OPT_LEN];
-			*curr = xmalloc(sizeof("optNNN=") + 1 + len*2);
-			ofs = sprintf(*curr, "opt%u=", i);
-			*bin2hex(*curr + ofs, (void*) temp, len) = '\0';
-			putenv(*curr++);
-		}
-		i++;
-	}
-
-	return envp;
-}
-#endif
 
 /* really simple implementation, just count the bits */
 static int mton(zpl_uint32  mask)
@@ -901,8 +592,6 @@ static char ** dhcpc_setenv(client_interface_t *ifter)
 		*curr = strdup(tmp);
 		putenv(*curr++);
 	}
-	//routes
-	//static_route_list
 	return envp;
 }
 
@@ -923,13 +612,8 @@ static void dhcpc_unsetenv(const char *var)
 			unsetenv(var);
 			return;
 		}
-/*		else
-		{
-			var = tp = xstrndup(var, sz);
-		}*/
 	}
 	unsetenv(var);
-	//free(tp);
 }
 
 /* Call a script with a par file and env vars */
@@ -944,11 +628,10 @@ void udhcp_run_script(void *p, const char *name)
 	envp = dhcpc_setenv(ifter);
 
 	/* call script */
-	argv[0] = (char*) CONFIG_UDHCPC_DEFAULT_SCRIPT;
+	argv[0] = (char*) CONFIG_DHCPC_DEFAULT_SCRIPT;
 	argv[1] = (char*) name;
 	argv[2] = NULL;
 
-	//spawn_and_wait(argv);
 	pid = child_process_create();
 	if(pid < 0)
 	{
@@ -957,7 +640,7 @@ void udhcp_run_script(void *p, const char *name)
 	}
 	else if(pid == 0)
 	{
-		super_system_execvp(CONFIG_UDHCPC_DEFAULT_SCRIPT, argv);
+		super_system_execvp(CONFIG_DHCPC_DEFAULT_SCRIPT, argv);
 	}
 	else
 	{

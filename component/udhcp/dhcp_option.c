@@ -9,8 +9,10 @@
 #include <zplos_include.h>
 
 #include "dhcp_def.h"
-#include "dhcp_option.h"
 #include "dhcp_util.h"
+#include "dhcp_packet.h"
+#include "dhcp_option.h"
+
 
 
 
@@ -21,53 +23,53 @@ static int dhcp_option_overload_get(char *data, zpl_uint32 len);
 
 static const struct dhcp_optflag dhcp_optflag[] = {
 	/* flags                                    code */
-	{ OPTION_IP                   | OPTION_REQ, 0x01 }, /* DHCP_SUBNET        */
-	{ OPTION_S32                              , 0x02 }, /* DHCP_TIME_OFFSET   */
-	{ OPTION_IP | OPTION_LIST     | OPTION_REQ, 0x03 }, /* DHCP_ROUTER        */
-	{ OPTION_IP | OPTION_LIST                 , 0x04 }, /* DHCP_TIME_SERVER   */
-	{ OPTION_IP | OPTION_LIST                 , 0x05 }, /* DHCP_NAME_SERVER   */
-	{ OPTION_IP | OPTION_LIST     | OPTION_REQ, 0x06 }, /* DHCP_DNS_SERVER    */
-	{ OPTION_IP | OPTION_LIST                 , 0x07 }, /* DHCP_LOG_SERVER    */
-	{ OPTION_IP | OPTION_LIST                 , 0x08 }, /* DHCP_COOKIE_SERVER */
-	{ OPTION_IP | OPTION_LIST                 , 0x09 }, /* DHCP_LPR_SERVER    */
-	{ OPTION_STRING_HOST          | OPTION_REQ, 0x0c }, /* DHCP_HOST_NAME     */
-	{ OPTION_U16                              , 0x0d }, /* DHCP_BOOT_SIZE     */
-	{ OPTION_STRING_HOST          | OPTION_REQ, 0x0f }, /* DHCP_DOMAIN_NAME   */
-	{ OPTION_IP                               , 0x10 }, /* DHCP_SWAP_SERVER   */
-	{ OPTION_STRING                           , 0x11 }, /* DHCP_ROOT_PATH     */
-	{ OPTION_U8                               , 0x17 }, /* DHCP_IP_TTL        */
-	{ OPTION_U16                              , 0x1a }, /* DHCP_MTU           */
+	{ DHCP_OPTION_TYPE_IP                   | DHCP_OPTION_TYPE_REQ, 0x01 }, /* DHCP_SUBNET        */
+	{ DHCP_OPTION_TYPE_S32                              , 0x02 }, /* DHCP_TIME_OFFSET   */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST     | DHCP_OPTION_TYPE_REQ, 0x03 }, /* DHCP_ROUTER        */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x04 }, /* DHCP_TIME_SERVER   */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x05 }, /* DHCP_NAME_SERVER   */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST     | DHCP_OPTION_TYPE_REQ, 0x06 }, /* DHCP_DNS_SERVER    */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x07 }, /* DHCP_LOG_SERVER    */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x08 }, /* DHCP_COOKIE_SERVER */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x09 }, /* DHCP_LPR_SERVER    */
+	{ DHCP_OPTION_TYPE_STRING_HOST          | DHCP_OPTION_TYPE_REQ, 0x0c }, /* DHCP_HOST_NAME     */
+	{ DHCP_OPTION_TYPE_U16                              , 0x0d }, /* DHCP_BOOT_SIZE     */
+	{ DHCP_OPTION_TYPE_STRING_HOST          | DHCP_OPTION_TYPE_REQ, 0x0f }, /* DHCP_DOMAIN_NAME   */
+	{ DHCP_OPTION_TYPE_IP                               , 0x10 }, /* DHCP_SWAP_SERVER   */
+	{ DHCP_OPTION_TYPE_STRING                           , 0x11 }, /* DHCP_ROOT_PATH     */
+	{ DHCP_OPTION_TYPE_U8                               , 0x17 }, /* DHCP_IP_TTL        */
+	{ DHCP_OPTION_TYPE_U16                              , 0x1a }, /* DHCP_MTU           */
 	//TODO: why do we request DHCP_BROADCAST? Can't we assume that
 	//in the unlikely case it is different from typical N.N.255.255,
 	//server would let us know anyway?
-	{ OPTION_IP                   | OPTION_REQ, 0x1c }, /* DHCP_BROADCAST     */
-	{ OPTION_IP_PAIR | OPTION_LIST            , 0x21 }, /* DHCP_ROUTES        */
-	{ OPTION_STRING_HOST                      , 0x28 }, /* DHCP_NIS_DOMAIN    */
-	{ OPTION_IP | OPTION_LIST                 , 0x29 }, /* DHCP_NIS_SERVER    */
-	{ OPTION_IP | OPTION_LIST     | OPTION_REQ, 0x2a }, /* DHCP_NTP_SERVER    */
-	{ OPTION_IP | OPTION_LIST                 , 0x2c }, /* DHCP_WINS_SERVER   */
-	{ OPTION_U32                              , 0x33 }, /* DHCP_LEASE_TIME    */
-	{ OPTION_IP                               , 0x36 }, /* DHCP_SERVER_ID     */
-	{ OPTION_STRING                           , 0x38 }, /* DHCP_ERR_MESSAGE   */
+	{ DHCP_OPTION_TYPE_IP                   | DHCP_OPTION_TYPE_REQ, 0x1c }, /* DHCP_BROADCAST     */
+	{ DHCP_OPTION_TYPE_IP_PAIR | DHCP_OPTION_TYPE_LIST            , 0x21 }, /* DHCP_ROUTES        */
+	{ DHCP_OPTION_TYPE_STRING_HOST                      , 0x28 }, /* DHCP_NIS_DOMAIN    */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x29 }, /* DHCP_NIS_SERVER    */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST     | DHCP_OPTION_TYPE_REQ, 0x2a }, /* DHCP_NTP_SERVER    */
+	{ DHCP_OPTION_TYPE_IP | DHCP_OPTION_TYPE_LIST                 , 0x2c }, /* DHCP_WINS_SERVER   */
+	{ DHCP_OPTION_TYPE_U32                              , 0x33 }, /* DHCP_LEASE_TIME    */
+	{ DHCP_OPTION_TYPE_IP                               , 0x36 }, /* DHCP_SERVER_ID     */
+	{ DHCP_OPTION_TYPE_STRING                           , 0x38 }, /* DHCP_ERR_MESSAGE   */
 	//TODO: must be combined with 'sname' and 'file' handling:
-	{ OPTION_STRING_HOST                      , 0x42 }, /* DHCP_TFTP_SERVER_NAME */
-	{ OPTION_STRING                           , 0x43 }, /* DHCP_BOOT_FILE     */
+	{ DHCP_OPTION_TYPE_STRING_HOST                      , 0x42 }, /* DHCP_TFTP_SERVER_NAME */
+	{ DHCP_OPTION_TYPE_STRING                           , 0x43 }, /* DHCP_BOOT_FILE     */
 	//TODO: not a string, but a set of LASCII strings:
-	{ OPTION_STRING                           , 0x4D }, /* DHCP_USER_CLASS    */
-#if ENABLE_FEATURE_UDHCP_RFC3397
-	{ OPTION_DNS_STRING | OPTION_LIST         , 0x77 }, /* DHCP_DOMAIN_SEARCH */
-	{ OPTION_SIP_SERVERS                      , 0x78 }, /* DHCP_SIP_SERVERS   */
+	{ DHCP_OPTION_TYPE_STRING                           , 0x4D }, /* DHCP_USER_CLASS    */
+#if DHCP_ENABLE_RFC3397
+	{ DHCP_OPTION_TYPE_DNS_STRING | DHCP_OPTION_TYPE_LIST         , 0x77 }, /* DHCP_DOMAIN_SEARCH */
+	{ DHCP_OPTION_TYPE_SIP_SERVERS                      , 0x78 }, /* DHCP_SIP_SERVERS   */
 #endif
-	{ OPTION_STATIC_ROUTES | OPTION_LIST      , 0x79 }, /* DHCP_STATIC_ROUTES */
-#if ENABLE_FEATURE_UDHCP_8021Q
-	{ OPTION_U16                              , 0x84 }, /* DHCP_VLAN_ID       */
-	{ OPTION_U8                               , 0x85 }, /* DHCP_VLAN_PRIORITY */
+	{ DHCP_OPTION_TYPE_STATIC_ROUTES | DHCP_OPTION_TYPE_LIST      , 0x79 }, /* DHCP_STATIC_ROUTES */
+#if DHCP6_ENABLE_8021Q
+	{ DHCP_OPTION_TYPE_U16                              , 0x84 }, /* DHCP_VLAN_ID       */
+	{ DHCP_OPTION_TYPE_U8                               , 0x85 }, /* DHCP_VLAN_PRIORITY */
 #endif
-	{ OPTION_STRING                           , 0xd1 }, /* DHCP_PXE_CONF_FILE */
-	{ OPTION_STRING                           , 0xd2 }, /* DHCP_PXE_PATH_PREFIX */
-	{ OPTION_6RD                              , 0xd4 }, /* DHCP_6RD           */
-	{ OPTION_STATIC_ROUTES | OPTION_LIST      , 0xf9 }, /* DHCP_MS_STATIC_ROUTES */
-	{ OPTION_STRING                           , 0xfc }, /* DHCP_WPAD          */
+	{ DHCP_OPTION_TYPE_STRING                           , 0xd1 }, /* DHCP_PXE_CONF_FILE */
+	{ DHCP_OPTION_TYPE_STRING                           , 0xd2 }, /* DHCP_PXE_PATH_PREFIX */
+	{ DHCP_OPTION_TYPE_6RD                              , 0xd4 }, /* DHCP_6RD           */
+	{ DHCP_OPTION_TYPE_STATIC_ROUTES | DHCP_OPTION_TYPE_LIST      , 0xf9 }, /* DHCP_MS_STATIC_ROUTES */
+	{ DHCP_OPTION_TYPE_STRING                           , 0xfc }, /* DHCP_WPAD          */
 
 	/* Options below have no match in dhcp_option_strings[],
 	 * are not passed to dhcpc scripts, and cannot be specified
@@ -76,13 +78,13 @@ static const struct dhcp_optflag dhcp_optflag[] = {
 	 * to correctly encode options into packets.
 	 */
 
-	{ OPTION_IP                               , 0x32 }, /* DHCP_REQUESTED_IP  */
-	{ OPTION_U8                               , 0x35 }, /* DHCP_MESSAGE_TYPE  */
-	{ OPTION_U16                              , 0x39 }, /* DHCP_MAX_SIZE      */
+	{ DHCP_OPTION_TYPE_IP                               , 0x32 }, /* DHCP_REQUESTED_IP  */
+	{ DHCP_OPTION_TYPE_U8                               , 0x35 }, /* DHCP_MESSAGE_TYPE  */
+	{ DHCP_OPTION_TYPE_U16                              , 0x39 }, /* DHCP_MAX_SIZE      */
 	//looks like these opts will work just fine even without these defs:
-	{ OPTION_STRING                           , 0x3c }, /* DHCP_VENDOR        */
+	{ DHCP_OPTION_TYPE_STRING                           , 0x3c }, /* DHCP_VENDOR        */
 	//	/* not really a string: */
-	{ OPTION_STRING                           , 0x3d }, /* DHCP_CLIENT_ID     */
+	{ DHCP_OPTION_TYPE_STRING                           , 0x3d }, /* DHCP_CLIENT_ID     */
 	{ 0, 0 } /* zeroed terminating entry */
 };
 
@@ -175,24 +177,24 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 		}
 		offset = length;
 
-		switch (optflag->flags & OPTION_TYPE_MASK)
+		switch (optflag->flags & DHCP_OPTION_TYPE_MASK)
 		{
-		case OPTION_IP:
+		case DHCP_OPTION_TYPE_IP:
 			udhcp_str2nip(str, buffer + offset);
 			length += 4;
 			break;
-		case OPTION_IP_PAIR:
+		case DHCP_OPTION_TYPE_IP_PAIR:
 			udhcp_str2nip(str, buffer + offset);
 			length += 4;
 			break;
-		case OPTION_STRING:
-		case OPTION_STRING_HOST:
+		case DHCP_OPTION_TYPE_STRING:
+		case DHCP_OPTION_TYPE_STRING_HOST:
 			optlen = strnlen(str, 254);
 			strncpy(buffer + offset, str, optlen);
 			length += optlen;
 			break;
-	#if ENABLE_FEATURE_UDHCP_RFC3397
-		case OPTION_DNS_STRING:
+	#if DHCP_ENABLE_RFC3397
+		case DHCP_OPTION_TYPE_DNS_STRING:
 			p = dname_enc(NULL, 0, str, &optlen);
 			if(p)
 			{
@@ -201,7 +203,7 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 			}
 	#endif
 			break;
-		case OPTION_BOOLEAN:
+		case DHCP_OPTION_TYPE_BOOLEAN:
 		{
 			if(strstr(str, "no"))
 				buffer[offset] = 0;
@@ -210,15 +212,15 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 			length += 1;
 		}
 		break;
-		case OPTION_U8:
+		case DHCP_OPTION_TYPE_U8:
 			buffer[offset] = strtoul(str, NULL, 10);
 			length += 1;
 			break;
 			/* htonX are macros in older libc's, using temp var
 			 * in code below for safety */
 			/* TODO: use bb_strtoX? */
-		case OPTION_U16:
-		case OPTION_S16:
+		case DHCP_OPTION_TYPE_U16:
+		case DHCP_OPTION_TYPE_S16:
 		{
 			val16 = buffer + offset;
 			zpl_uint32  tmp = strtoul(str, NULL, 0);
@@ -226,8 +228,8 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 			length += 2;
 			break;
 		}
-		case OPTION_U32:
-		case OPTION_S32:
+		case DHCP_OPTION_TYPE_U32:
+		case DHCP_OPTION_TYPE_S32:
 		{
 			val32 = buffer + offset;
 			zpl_uint32  tmp = strtoul(str, NULL, 0);
@@ -235,11 +237,11 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 			length += 4;
 			break;
 		}
-		case OPTION_BIN: /* handled in attach_option() */
+		case DHCP_OPTION_TYPE_BIN: /* handled in attach_option() */
 			buffer[offset] = str[0];
 			length += 1;
 			break;
-		case OPTION_STATIC_ROUTES:
+		case DHCP_OPTION_TYPE_STATIC_ROUTES:
 		{
 			/* Input: "a.b.c.d a.b.c.d" */
 			/* Output: mask(1 byte),pfx(0-4 bytes),gw(4 bytes) */
@@ -254,12 +256,12 @@ int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
 			length += 8;
 			break;
 		}
-		case OPTION_6RD: /* handled in attach_option() */
+		case DHCP_OPTION_TYPE_6RD: /* handled in attach_option() */
 			strncpy(buffer + offset, str, optlen);
 			length += 12;
 			break;
-	#if ENABLE_FEATURE_UDHCP_RFC3397
-		case OPTION_SIP_SERVERS:
+	#if DHCP_ENABLE_RFC3397
+		case DHCP_OPTION_TYPE_SIP_SERVERS:
 			optlen = strnlen(str, 254);
 			strncpy(buffer + offset, str, optlen);
 			length += optlen;
@@ -282,29 +284,29 @@ int dhcp_option_add(dhcp_option_set_t *option_tbl, zpl_uint8 code, const zpl_uin
 		return ERROR;
 	if(!option_tbl || !opt)
 		return ERROR;
-	if(code == DHCP_CLIENT_ID)
+	if(code == DHCP_OPTION_CLIENT_ID)
 	{
 		if(len == 6)
 		{
 			inlen += 1;
-			type = OPTION_61_MAC;
+			type = DHCP_OPTION_61_MAC;
 		}
 		else if(len > 6 && len <= 36)
 		{
 			inlen += 1;
-			type = OPTION_61_UUID;
+			type = DHCP_OPTION_61_UUID;
 		}
 		else// if(len == 6)
 		{
 			inlen += 1;
-			type = OPTION_61_IAID;
+			type = DHCP_OPTION_61_IAID;
 		}
 	}
 	option_tbl[code].data = malloc(inlen);
 	if(option_tbl[code].data)
 	{
 		memset(option_tbl[code].data, 0, inlen);
-		if(code == DHCP_CLIENT_ID)
+		if(code == DHCP_OPTION_CLIENT_ID)
 		{
 			memcpy(option_tbl[code].data + 1, opt, inlen - 1);
 			option_tbl[code].data[0] = type;
@@ -397,7 +399,7 @@ int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, zpl_uint32 len
 	//zpl_uint8 parm_lst[256];
 	if(!option_tbl || !data)
 		return 0;
-	//offset = udhcp_end_option(data);
+	//offset = dhcp_end_option(data);
 	offset = dhcp_option_get_end_padding(data, len, zpl_false);
 	if(offset < 0)
 		return 0;
@@ -414,8 +416,8 @@ int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, zpl_uint32 len
 			memcpy(msg->val.pval, option_tbl[i].data, option_tbl[i].len);
 			//msg->data = (zpl_uint8 *)(p);
 			//memcpy(msg->data, option_tbl[i].data, option_tbl[i].len);
-			offset += OPT_DATA + option_tbl[i].len;
-/*			if(dhcp_option_flags(msg->code) & OPTION_REQ)
+			offset += DHCP_OPT_DATA + option_tbl[i].len;
+/*			if(dhcp_option_flags(msg->code) & DHCP_OPTION_TYPE_REQ)
 				parm_lst[j++] = msg->code;*/
 		}
 	}
@@ -428,11 +430,11 @@ int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, zpl_uint32 len
 	return offset;
 }
 
-/*int FAST_FUNC udhcp_end_option(zpl_uint8 *optionptr)
+/*int  dhcp_end_option(zpl_uint8 *optionptr)
 {
 	int i = 0;
 
-	while (optionptr[i] != DHCP_END) {
+	while (optionptr[i] != DHCP_OPTION_END) {
 		if (optionptr[i] != DHCP_PADDING)
 			i += optionptr[i + OPT_LEN] + OPT_DATA-1;
 		i++;
@@ -451,10 +453,10 @@ static zpl_uint32 dhcp_option_get_end_padding(char *data, zpl_uint32 len, zpl_bo
 		overload = dhcp_option_overload_get(data, len);*/
 	if(overload == ERROR)
 		overload = 0;
-	if(msg->code != DHCP_END)//DHCP_PADDING
+	if(msg->code != DHCP_OPTION_END)//DHCP_PADDING
 	{
-		if(msg->code != DHCP_PADDING)
-			offset += msg->len + OPT_DATA;
+		if(msg->code != DHCP_OPTION_PADDING)
+			offset += msg->len + DHCP_OPT_DATA;
 		else
 			offset++;
 		//return offset;
@@ -463,11 +465,11 @@ static zpl_uint32 dhcp_option_get_end_padding(char *data, zpl_uint32 len, zpl_bo
 	{
 		if(overload == 0)
 			return offset;
-		if(overload & FILE_FIELD)
+		if(overload & DHCP_FILE_FIELD)
 		{
 			offset += DHCP_FILE_LEN;
 		}
-		if(overload & SNAME_FIELD)
+		if(overload & DHCP_SNAME_FIELD)
 		{
 			offset += DHCP_SNAME_LEN;
 		}
@@ -477,22 +479,22 @@ static zpl_uint32 dhcp_option_get_end_padding(char *data, zpl_uint32 len, zpl_bo
 	{
 		msg = (dhcp_option_hdr_t *)(data + offset);
 		//msg->data = (data + offset + OPT_DATA);
-		if(msg->code != DHCP_END)//DHCP_PADDING
+		if(msg->code != DHCP_OPTION_END)//DHCP_PADDING
 		{
-			if(msg->code != DHCP_PADDING)
-				offset += msg->len + OPT_DATA;
+			if(msg->code != DHCP_OPTION_PADDING)
+				offset += msg->len + DHCP_OPT_DATA;
 			else
 				offset++;
 			//return offset;
 		}
 		else
 		{
-			if(overload & FILE_FIELD)
+			if(overload & DHCP_FILE_FIELD)
 			{
 				offset += DHCP_FILE_LEN;
 				continue;
 			}
-			if(overload & SNAME_FIELD)
+			if(overload & DHCP_SNAME_FIELD)
 			{
 				offset += DHCP_SNAME_LEN;
 				continue;
@@ -516,14 +518,14 @@ zpl_uint32 dhcp_option_get_length(char *data)
 }
 
 /* Return the position of the 'end' option (no bounds checking) */
-int udhcp_end_option(zpl_uint8 *optionptr)
+int dhcp_end_option(zpl_uint8 *optionptr)
 {
 	int i = 0;
 	if(!optionptr)
 		return 0;
-	while (optionptr[i] != DHCP_END) {
-		if (optionptr[i] != DHCP_PADDING)
-			i += optionptr[i + OPT_LEN] + OPT_DATA-1;
+	while (optionptr[i] != DHCP_OPTION_END) {
+		if (optionptr[i] != DHCP_OPTION_PADDING)
+			i += optionptr[i + DHCP_OPT_LEN] + DHCP_OPT_DATA-1;
 		i++;
 	}
 	return i;
@@ -537,13 +539,13 @@ int dhcp_option_message_type(char *data, zpl_uint8 code)
 	if(offset < 0)
 		return 0;
 	dhcp_option_hdr_t *msg_type = (data + offset);
-	msg_type->code = DHCP_MESSAGE_TYPE;
+	msg_type->code = DHCP_OPTION_MESSAGE_TYPE;
 	msg_type->len = 1;
 	//msg_type->val.val8 = (zpl_uint8 *)(data + OPT_DATA);
 	msg_type->val.val8 = code;
 	offset += 3;
 	dhcp_option_packet_end(data + offset, DHCP_OPTIONS_BUFSIZE-offset);
-	return OPT_DATA + OPT_LEN;
+	return DHCP_OPT_DATA + DHCP_OPT_LEN;
 }
 
 
@@ -551,7 +553,7 @@ int dhcp_option_packet_set_simple(char *data, zpl_uint32 len, zpl_uint8 code, zp
 {
 	if(!data)
 		return 0;
-	zpl_uint32 offset = 0;//udhcp_end_option(data);
+	zpl_uint32 offset = 0;//dhcp_end_option(data);
 	offset = dhcp_option_get_end_padding(data, len, zpl_false);
 	if(offset < 0)
 		return 0;
@@ -559,7 +561,7 @@ int dhcp_option_packet_set_simple(char *data, zpl_uint32 len, zpl_uint8 code, zp
 	msg->code = code;
 	msg->len = 4;
 	msg->val.val32 = value;
-	offset += OPT_DATA + 4;
+	offset += DHCP_OPT_DATA + 4;
 	dhcp_option_packet_end(data + offset, len - offset);
 	return offset;
 }
@@ -568,7 +570,7 @@ int dhcp_option_packet_set_value(char *data, zpl_uint32 len, zpl_uint8 code, zpl
 {
 	if(!data || opt)
 		return 0;
-	zpl_uint32 offset = 0;//udhcp_end_option(data);
+	zpl_uint32 offset = 0;//dhcp_end_option(data);
 	offset = dhcp_option_get_end_padding(data, len, zpl_false);
 	if(offset < 0)
 		return 0;
@@ -576,17 +578,17 @@ int dhcp_option_packet_set_value(char *data, zpl_uint32 len, zpl_uint8 code, zpl
 	msg->code = code;
 	msg->len = oplen;
 	memcpy(msg->val.pval, opt, oplen);
-	offset += OPT_DATA + oplen;
+	offset += DHCP_OPT_DATA + oplen;
 	dhcp_option_packet_end(data + offset, len - offset);
 	return offset;
 }
 
-int udhcp_add_simple_option(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  value)
+int dhcp_add_simple_option(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  value)
 {
 	return dhcp_option_packet_set_simple(packet->options, dhcp_option_get_length(packet->options), code, value);
 }
 
-int udhcp_add_simple_option_value(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  oplen, zpl_uint8 *opt)
+int dhcp_add_simple_option_value(struct dhcp_packet *packet, zpl_uint8 code, zpl_uint32  oplen, zpl_uint8 *opt)
 {
 	return dhcp_option_packet_set_value(packet->options, dhcp_option_get_length(packet->options), code, oplen, opt);
 }
@@ -595,9 +597,9 @@ static int dhcp_option_packet_end(char *data, zpl_uint32 len)
 {
 	if(!data)
 		return 0;
-	zpl_uint32 offset = 0;//udhcp_end_option(data);
+	zpl_uint32 offset = 0;//dhcp_end_option(data);
 	dhcp_option_hdr_t *msg = (dhcp_option_hdr_t *)(data + offset);
-	msg->code = DHCP_END;
+	msg->code = DHCP_OPTION_END;
 	//msg->len = option_tbl[i].len;
 	return 1;
 }
@@ -616,7 +618,7 @@ static int dhcp_option_overload_get(char *data, zpl_uint32 len)
 	{
 		return msg->val.val8;
 	}
-	offset = msg->len + OPT_DATA;
+	offset = msg->len + DHCP_OPT_DATA;
 	while(1)
 	{
 		msg = (dhcp_option_hdr_t *)(data + offset);
@@ -624,7 +626,7 @@ static int dhcp_option_overload_get(char *data, zpl_uint32 len)
 		{
 			return msg->val.val8;
 		}
-		offset += msg->len + OPT_DATA;
+		offset += msg->len + DHCP_OPT_DATA;
 		if(offset >= len)
 			return ERROR;
 	}
@@ -647,7 +649,7 @@ zpl_uint8 * dhcp_option_get(char *data, zpl_uint32 len, zpl_uint8 code, zpl_uint
 			*optlen = msg->len;
 		return msg->val.pval;
 	}
-	offset = msg->len + OPT_DATA;
+	offset = msg->len + DHCP_OPT_DATA;
 	while(1)
 	{
 		msg = (dhcp_option_hdr_t *)(data + offset);
@@ -658,21 +660,21 @@ zpl_uint8 * dhcp_option_get(char *data, zpl_uint32 len, zpl_uint8 code, zpl_uint
 				*optlen = msg->len;
 			return msg->val.pval;//msg->data;
 		}
-		else if(msg->code == DHCP_END)
+		else if(msg->code == DHCP_OPTION_END)
 		{
-			if(overload & FILE_FIELD)
+			if(overload & DHCP_FILE_FIELD)
 			{
 				offset += DHCP_FILE_LEN;
 				continue;
 			}
-			if(overload & SNAME_FIELD)
+			if(overload & DHCP_SNAME_FIELD)
 			{
 				offset += DHCP_SNAME_LEN;
 				continue;
 			}
 			return NULL;
 		}
-		offset += msg->len + OPT_DATA;
+		offset += msg->len + DHCP_OPT_DATA;
 
 		if(offset >= len)
 			return NULL;
@@ -692,35 +694,35 @@ int dhcp_option_message_type_get(char *data, zpl_uint32 len)
 	int overload = dhcp_option_overload_get(data, len);
 	if(overload == ERROR)
 		return 0;
-	if(msg->code == DHCP_MESSAGE_TYPE)
+	if(msg->code == DHCP_OPTION_MESSAGE_TYPE)
 	{
 		return msg->val.val8;
 	}
-	offset = msg->len + OPT_DATA;
+	offset = msg->len + DHCP_OPT_DATA;
 	while(1)
 	{
 		msg = (dhcp_option_hdr_t *)(data + offset);
-		if(msg->code == DHCP_MESSAGE_TYPE)
+		if(msg->code == DHCP_OPTION_MESSAGE_TYPE)
 		{
 /*			if(optlen)
 				*optlen = msg->len;*/
 			return msg->val.val8;
 		}
-		else if(msg->code == DHCP_END)
+		else if(msg->code == DHCP_OPTION_END)
 		{
-			if(overload & FILE_FIELD)
+			if(overload & DHCP_FILE_FIELD)
 			{
 				offset += DHCP_FILE_LEN;
 				continue;
 			}
-			if(overload & SNAME_FIELD)
+			if(overload & DHCP_SNAME_FIELD)
 			{
 				offset += DHCP_SNAME_LEN;
 				continue;
 			}
 			return 0;
 		}
-		offset += msg->len + OPT_DATA;
+		offset += msg->len + DHCP_OPT_DATA;
 		if(offset >= len)
 			return 0;
 	}
@@ -749,7 +751,7 @@ int dhcp_option_get_simple(const char *data, zpl_uint32 *output, zpl_uint8 code,
 			*output = msg->val.val32;
 		return OK;
 	}
-	offset = msg->len + OPT_DATA;
+	offset = msg->len + DHCP_OPT_DATA;
 	while(1)
 	{
 		msg = (dhcp_option_hdr_t *)(data + offset);
@@ -763,21 +765,21 @@ int dhcp_option_get_simple(const char *data, zpl_uint32 *output, zpl_uint8 code,
 				*output = msg->val.val32;
 			return OK;
 		}
-		else if(msg->code == DHCP_END)
+		else if(msg->code == DHCP_OPTION_END)
 		{
-			if(overload & FILE_FIELD)
+			if(overload & DHCP_FILE_FIELD)
 			{
 				offset += DHCP_FILE_LEN;
 				continue;
 			}
-			if(overload & SNAME_FIELD)
+			if(overload & DHCP_SNAME_FIELD)
 			{
 				offset += DHCP_SNAME_LEN;
 				continue;
 			}
 			return ERROR;
 		}
-		offset += msg->len + OPT_DATA;
+		offset += msg->len + DHCP_OPT_DATA;
 		if(offset >= len)
 			return ERROR;
 	}

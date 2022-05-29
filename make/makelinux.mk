@@ -71,8 +71,9 @@ export ZPL_MAKE_DIR = $(BASE_ROOT)/make
 export BASE_ROOT = $(ROOT_DIR)
 #
 #
-include $(ZPL_MAKE_DIR)/board.mk
-#
+#include $(ZPL_MAKE_DIR)/board.mk
+include $(MENUCONFIG_ZPL_CONFIG)
+# 
 #
 #
 ZPL_BUILD_ARCH	=$(shell echo $(ARCH_TYPE) | tr a-z A-Z)
@@ -118,6 +119,10 @@ ZPLOS_MAP = -Wl,-Map,
 endif
 #
 #
+
+ifeq ($(strip $(ZPL_BUILD_ARCH)),$(filter $(ZPL_BUILD_ARCH),X86_64 X86))
+ZPL_DEFINE = -UBASE_DIR -USYS_REAL_DIR -DBASE_DIR=\"$(BASE_ROOT)/$(ZPL_RELEASEDIR)/tmp/app\" -DSYS_REAL_DIR=\"$(BASE_ROOT)/$(ZPL_RELEASEDIR)\"
+endif
 #
 #
 ifeq ($(ZPL_BUILD_DEBUG),YES)
@@ -247,7 +252,7 @@ endif
 #
 #
 #
-ZPLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++
+ZPLOS_LDLIBS += -lpthread -lrt -rdynamic -lm -lcrypt -ldl -lgcc_s -lstdc++ -lresolv
 #
 ZPL_LDFLAGS += -L$(BASE_ROOT)/$(ZPL_LIB_DIR) -L$(BASE_ROOT)/$(ZPL_ULIB_DIR)
 #

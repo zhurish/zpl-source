@@ -45,4 +45,10 @@ config ZPL_WATCHDOG_MODULE
 	help
 	Build Watchdog Module.
 
+config ZPL_SWCONFIG_MODULE
+	bool "Swconfig Module"
+	depends on ZPL_TOOLS_MODULE
+	default y
+	help
+	Build Swconfig Module.
 endmenu

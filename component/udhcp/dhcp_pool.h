@@ -15,7 +15,7 @@ typedef struct dhcp_pool_s
 {
 	NODE		node;
 	zpl_uint32 	poolid;
-	char 		poolname[UDHCPD_POOL_MAX];
+	char 		poolname[DHCPD_POOLNAME_MAX];
 
 	dhcp_global_t	*global;
 

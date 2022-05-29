@@ -14,7 +14,7 @@
 dhcp_pool_t * dhcpd_pool_lookup(char *name)
 {
 	NODE index;
-	char poolname[UDHCPD_POOL_MAX];
+	char poolname[DHCPD_POOLNAME_MAX];
 	dhcp_pool_t *pstNode = NULL;
 	if (!lstCount(&dhcp_global_config.pool_list))
 		return NULL;
@@ -130,24 +130,7 @@ char * dhcpd_pool_poolid2name(zpl_uint32 poolid)
 	return "Unknow";
 }
 /************************************************************************************/
-/* On these functions, make sure your datatype matches */
-/*static int FAST_FUNC read_str(const char *line, void *arg) {
-	char **dest = arg;
-	free(*dest);
-	*dest = strdup(line);
-	return 1;
-}*/
 
-/*static int FAST_FUNC read_u32(const char *line, void *arg) {
-	*(zpl_uint32 *) arg = strtoul(line, NULL, 10);
-	return ipstack_errno == 0;
-}*/
-
-#if 0
-static int FAST_FUNC read_optset(const int opc, const char *line, void *arg) {
-	return udhcp_str2optset(opc, line, arg, dhcp_optflags, NULL);
-}
-#endif
 /************************************************************************************/
 /************************************************************************************/
 int dhcpd_pool_set_address_range(dhcp_pool_t *config, zpl_uint32  start, zpl_uint32  end)
@@ -241,7 +224,7 @@ int dhcpd_pool_set_boot_file(dhcp_pool_t *config, char *str) {
 	return OK;
 }
 #if 0
-static struct option_set* FAST_FUNC udhcp_find_option_prev(struct option_set *opt_list, zpl_uint8 code)
+static struct option_set*  udhcp_find_option_prev(struct option_set *opt_list, zpl_uint8 code)
 {
 	struct option_set* next = opt_list;
 	struct option_set* prev = opt_list;
@@ -264,14 +247,14 @@ int dhcpd_pool_set_option(dhcp_pool_t *config, zpl_uint8 code, char *str)
 #if 1
 	if(str)
 	{
-		if(config->gateway == 0 && code == DHCP_ROUTER)
+		if(config->gateway == 0 && code == DHCP_OPTION_ROUTER)
 		{
 			config->gateway = ipstack_inet_addr(str);
 		}
 		return dhcp_option_add(config->options,  code, str, strlen(str));
 	}
 		//return dhcp_option_string_set(config->options,  code, str);
-	if(config->gateway && code == DHCP_ROUTER)
+	if(config->gateway && code == DHCP_OPTION_ROUTER)
 	{
 		config->gateway = 0;
 	}

@@ -7,6 +7,7 @@
 #include "vty.h"
 #include "command.h"
 #include "host.h"
+#include "sockopt.h"
 #include "hal_ipcsrv.h"
 #include "hal_ipcmsg.h"
 #include "hal_ipccmd.h"

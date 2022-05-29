@@ -11,7 +11,8 @@
 
 #include "hal_client.h"
 #include "bsp_include.h"
-
+#include "sdk_driver.h"
+#include "b53_driver.h"
 #if 0
 /*
  * Global
@@ -473,42 +474,8 @@ extern int bsp_port_unset_vlan(ifindex_t ifindex, vlan_t vlan);
 
 int bsp_test_init()
 {
-	#if 0
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_manage_mode_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_manage_mode_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_forward_mode_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_forward_mode_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_multicast_learning_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_multicast_learning_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_bpdu_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_bpdu_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_icmp_size_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_tcp_hdr_size_cmd);
+	#if defined( _SDK_CLI_DEBUG_EN)
 
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_dos_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_dos_enable_cmd);
-
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_mirror_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_mirror_enable_cmd);
-
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_mirror_src_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_mirror_src_enable_cmd);
-
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_interface_up_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_interface_down_cmd);
-
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_interface_speed_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_interface_duplex_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_jumbo_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_jumbo_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_enable_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_enable_enable_cmd);
-
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_learning_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_learning_enable_cmd);
-
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_swlearning_enable_cmd);
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &no_bsp_test_swlearning_enable_cmd);
 	#endif
 	return 0;
 }

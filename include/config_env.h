@@ -13,43 +13,30 @@ extern "C" {
 #endif
 
 
-#undef BASE_DIR         //运行时缓存目录
-#undef SYS_REAL_DIR     //flash存储目录
-
-#ifndef BASE_DIR
-#define BASE_DIR	"/home/zhurish/workspace/working/zpl-source/source/debug/app"
-#endif
-
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
+#ifndef BASE_DIR
+#define BASE_DIR	      "/home/zhurish/workspace/working/zpl-source/source/debug/tmp/app"
+#endif
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/home/zhurish/workspace/working/zpl-source/source/debug"
-#undef BASE_DIR
-#define BASE_DIR	SYS_REAL_DIR"/tmp/app"
 #endif
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-#else
-#ifdef ZPL_BUILD_OS_OPENWRT
-#ifndef SYS_REAL_DIR
-#define SYS_REAL_DIR		"/app"
+#else //
+#ifndef BASE_DIR
+#define BASE_DIR	      "/tmp/app"
 #endif
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-#else
 #ifndef SYS_REAL_DIR
 #define SYS_REAL_DIR		"/home/app"
 #endif
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-#endif
 #endif
 
-//#ifdef ZPL_BUILD_OS_OPENWRT
-//#define SYSCONFDIR 		"/etc/app"
-//#else
-//#define SYSCONFDIR 		BASE_DIR "/etc"
-#define SYSCONFDIR 		SYSCONF_REAL_DIR	//flash的etc 目录
-#define RSYSLOGDIR 		SYS_REAL_DIR "/log"	//flash的log 目录
-#define RSYSWWWDIR 		SYS_REAL_DIR "/www"	//flash的www 目录
+/* 运行时配置文件目录 */
+#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
+
+#define SYSCONFDIR 		SYSCONF_REAL_DIR	      //flash的etc 目录
+#define RSYSLOGDIR 		SYS_REAL_DIR "/log"	   //flash的log 目录
+#define RSYSWWWDIR 		SYS_REAL_DIR "/www"	   //flash的www 目录
 #define SYSWEBDIR 		SYSCONF_REAL_DIR "/web"	//flash的/etc/web 目录
-//#endif
+
 
 #define PLSYSCONFDIR 	BASE_DIR "/etc"	//缓存目录
 #define SYSLIBDIR 		BASE_DIR "/lib"

@@ -233,7 +233,7 @@ extern int b53125_trunk_init(sdk_driver_t *dev);
 /******* VLAN *******/
 extern int b53125_vlan_init(sdk_driver_t *dev);
 extern int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-
+extern void b53125_imp_vlan_setup(sdk_driver_t *dev, int cpu_port);
 /******* mirror *******/
 extern int b53125_mirror_init(sdk_driver_t *dev);
 

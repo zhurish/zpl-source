@@ -16,6 +16,7 @@ extern "C" {
 
 
 
+struct bsp_driver;
 
 typedef int (*bsp_sdk_func)(struct bsp_driver *, zpl_void *);
 
@@ -44,7 +45,7 @@ typedef struct sdk_driver {
 	zpl_phyport_t 	cpu_port;
 	zpl_uint32 		num_vlans;
 	zpl_phyport_t 	num_ports;
-
+    zpl_phyport_t	ports_table[8];
 	void 			*sdk_device;
 }sdk_driver_t;
 

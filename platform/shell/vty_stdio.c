@@ -22,15 +22,50 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "module.h"
+#include "linklist.h"
+#include "zmemory.h"
+
+
+#ifdef ZPL_SHELL_MODULE
+#include "cli_node.h"
+#include "buffer.h"
+#include "vector.h"
+#include "command.h"
+#endif
+#include "log.h"
+#include "str.h"
+#include "prefix.h"
+#include "host.h"
+#include "network.h"
+#include "sockunion.h"
+#include "sockopt.h"
+
+#include "eloop.h"
+#include "thread.h"
+#ifdef ZPL_IP_FILTER
+#include "filter.h"	
+#endif
 #include "vty.h"
+#include "vty_user.h"
+
 #include <arpa/telnet.h>
 #include <termios.h>
+#include "sys/wait.h"
+
+#pragma GCC diagnostic ignored "-Werror=strict-prototypes"
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#pragma GCC diagnostic ignored "-Werror=redundant-decls"
+#pragma GCC diagnostic ignored "-Wredundant-decls"
 
 #ifdef ZPL_SHRL_MODULE
 #include <readline/readline.h>
 #include <readline/history.h>
 
 #if 0
+readline: ./configure --prefix=/home/zhurish/workspace/working/zpl-source/source/externsions/readline-8.1/_install --enable-shared --disable-install-examples --host=arm-gnueabihf-linux CC="/opt/gcc-linaro-7.5.0-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc"
+ make all
+ make install
 Readline 基本操作
 输入读取
 很多命令行交互式程序交互方式都差不多，输出提示符，等待用户输入命令，用户输入命令之后按回车，程序开始解析命令并执行。那么这里面有个动作是读入用户的输入，以前我们也许使用 gets() 这样的函数来实现，当我们使用 Readline 库时，可以使用 readline() 函数来替换它，该函数在 ANSI C 中定义如下：
@@ -108,25 +143,36 @@ char ** rl_completion_matches (const char *text, rl_compentry_func_t *entry_func
 
 
 
-struct vty_stdio_t
+struct vtyrl_stdio_t
 {
 	zpl_uint32 rl_taskid;
 	int rl_exit;
 	struct vty *vty;
 	char *line_read;
 	int complete_status;
+
+	zpl_uint32 timer;
+	int timeval;
+	int time_interval;
+	int status;
 };
 
-struct vty_stdio_t  vty_stdio;
+struct vtyrl_stdio_t  vtyrl_stdio;
 
-
-static int vty_stdio_rl_describe(void)
+static int	vtyrl_stdio_vty_output(void *p, const char *data, int len)
 {
-#if 0
-	vty_read_handle(vty_stdio.vty, rl_line_buffer, rl_end);
-	vty_read_handle(vty_stdio.vty, "?", 1);
+	if(p)
+	{
+		//fputs(data, p);
+		int ret = fwrite(data, len, 1, p);
+		fflush(p);
+		return ret;
+	}
 	return 0;
-#else
+}
+
+static int vtyrl_stdio_describe(void)
+{
 	int ret;
 	unsigned int i;
 	vector vline;
@@ -145,7 +191,7 @@ static int vty_stdio_rl_describe(void)
 	else if (rl_end && isspace((int)rl_line_buffer[rl_end - 1]))
 		vector_set(vline, NULL);
 
-	describe = cmd_describe_command(vline, vty_stdio.vty, &ret);
+	describe = cmd_describe_command(vline, vtyrl_stdio.vty, &ret);
 
 	fprintf(stdout, "\n");
 
@@ -169,6 +215,7 @@ static int vty_stdio_rl_describe(void)
 	/* Get width of command string. */
 	width = 0;
 	for (i = 0; i < vector_active(describe); i++)
+	{
 		if ((token = vector_slot(describe, i)) != NULL)
 		{
 			int len;
@@ -183,8 +230,9 @@ static int vty_stdio_rl_describe(void)
 			if (width < len)
 				width = len;
 		}
-
+	}
 	for (i = 0; i < vector_active(describe); i++)
+	{
 		if ((token = vector_slot(describe, i)) != NULL)
 		{
 			if (token->cmd[0] == '\0')
@@ -199,22 +247,23 @@ static int vty_stdio_rl_describe(void)
 						token->cmd[0] == '.' ? token->cmd + 1 : token->cmd,
 						token->desc);
 		}
+	}
 
 	cmd_free_strvec(vline);
 	vector_free(describe);
 	fflush(stdout);
 	rl_on_new_line();
 	return 0;
-#endif
 }
 
+
 /* To disable readline's filename completion. */
-static char *vty_stdio_rl_completion_entry_function(const char *ignore, int invoking_key)
+static char *vtyrl_stdio_completion_entry_function(const char *ignore, int invoking_key)
 {
 	return NULL;
 }
 
-static char * vty_stdio_rl_command_generator(const char *text, int state)
+static char * vtyrl_stdio_command_generator(const char *text, int state)
 {
 	vector vline;
 	static char **matched = NULL;
@@ -225,7 +274,7 @@ static char * vty_stdio_rl_command_generator(const char *text, int state)
 	{
 		index = 0;
 
-		if (vty_stdio.vty->node == AUTH_NODE || vty_stdio.vty->node == AUTH_ENABLE_NODE)
+		if (vtyrl_stdio.vty->node == AUTH_NODE || vtyrl_stdio.vty->node == AUTH_ENABLE_NODE)
 			return NULL;
 
 		vline = cmd_make_strvec(rl_line_buffer);
@@ -235,7 +284,7 @@ static char * vty_stdio_rl_command_generator(const char *text, int state)
 		if (rl_end && isspace((int)rl_line_buffer[rl_end - 1]))
 			vector_set(vline, NULL);
 
-		matched = cmd_complete_command(vline, vty_stdio.vty, &vty_stdio.complete_status);
+		matched = cmd_complete_command(vline, vtyrl_stdio.vty, &vtyrl_stdio.complete_status);
 	}
 
 	if (matched && matched[index])
@@ -244,16 +293,16 @@ static char * vty_stdio_rl_command_generator(const char *text, int state)
 	return NULL;
 }
 
-static char **vty_stdio_rl_new_completion(char *text, int start, int end)
+static char **vtyrl_stdio_new_completion(char *text, int start, int end)
 {
 	char **matches;
 
-	matches = rl_completion_matches(text, vty_stdio_rl_command_generator);
+	matches = rl_completion_matches(text, vtyrl_stdio_command_generator);
 
 	if (matches)
 	{
 		rl_point = rl_end;
-		if (vty_stdio.complete_status != CMD_COMPLETE_FULL_MATCH)
+		if (vtyrl_stdio.complete_status != CMD_COMPLETE_FULL_MATCH)
 			/* only append a space on full match */
 			rl_completion_append_character = '\0';
 	}
@@ -262,95 +311,154 @@ static char **vty_stdio_rl_new_completion(char *text, int start, int end)
 }
 
 /* Read a string, and return a pointer to it.  Returns NULL on EOF. */
-static char *vty_stdio_rl_gets()
+static char *vtyrl_stdio_gets(void)
 {
 	HIST_ENTRY *last;
 	/* If the buffer has already been allocated, return the memory
 	 * to the free pool. */
-	if (vty_stdio.line_read)
+	if (vtyrl_stdio.line_read)
 	{
-		free(vty_stdio.line_read);
-		vty_stdio.line_read = NULL;
+		free(vtyrl_stdio.line_read);
+		vtyrl_stdio.line_read = NULL;
 	}
 
 	/* Get a line from the user.  Change prompt according to node.  XXX. */
-	vty_stdio.line_read = readline(vty_prompt(vty_stdio.vty));
+	vtyrl_stdio.line_read = readline(vty_prompt(vtyrl_stdio.vty));
 
 	/* If the line has any text in it, save it on the history. But only if
 	 * last command in history isn't the same one. */
-	if (vty_stdio.line_read && *vty_stdio.line_read)
+	if (vtyrl_stdio.line_read && *vtyrl_stdio.line_read)
 	{
 		using_history();
 		last = previous_history();
-		if (!last || strcmp(last->line, vty_stdio.line_read) != 0)
+		if (!last || strcmp(last->line, vtyrl_stdio.line_read) != 0)
 		{
-			add_history(vty_stdio.line_read);
+			add_history(vtyrl_stdio.line_read);
 		}
 	}
-	if (vty_stdio.rl_exit == 0)
+	if (vtyrl_stdio.rl_exit == 0)
 	{
-		free(vty_stdio.line_read);
-		vty_stdio.line_read = NULL;
+		free(vtyrl_stdio.line_read);
+		vtyrl_stdio.line_read = NULL;
 	}
-	return (vty_stdio.line_read);
+	return (vtyrl_stdio.line_read);
 }
 
-static int vty_stdio_task(void *p)
+
+
+static int vtyrl_stdio_timeout(void *p)
 {
-	while (vty_stdio.rl_exit)
+	struct vty *vty = vtyrl_stdio.vty;
+	vty_sync_out(vty, "%s%sVty connection is timed out.%s%s",
+				 VTY_NEWLINE, VTY_NEWLINE,
+				 VTY_NEWLINE, VTY_NEWLINE);
+	return 0;			 
+}
+
+static int vtyrl_stdio_task(void *p)
+{
+	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task 1");
+	while(vtyrl_stdio.status == 0)
 	{
-		while (vty_stdio_rl_gets())
+		os_sleep(1);
+	} 
+	zlog_warn(MODULE_LIB, "====  vtyrl_stdio_task 2");
+	while (vtyrl_stdio.rl_exit)
+	{
+		vty_hello(vtyrl_stdio.vty);
+		while (vtyrl_stdio_gets())
 		{
-			//vty_read_handle(vty_stdio.vty, rl_line_buffer, rl_end);
-			vty_command(vty_stdio.vty, vty_stdio.line_read);
-			//vty_read_handle(vty_stdio.vty, buf, i);
+			vty_command(vtyrl_stdio.vty, vtyrl_stdio.line_read);
+			if(vtyrl_stdio.timer)
+			{
+				host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &vtyrl_stdio.vty->v_timeout);
+				os_time_restart(vtyrl_stdio.timer, vtyrl_stdio.vty->v_timeout);
+			}	
+			else
+			{
+				host_config_get_api(API_GET_VTY_TIMEOUT_CMD, &vtyrl_stdio.vty->v_timeout);
+				vtyrl_stdio.timer = os_time_create_once(vtyrl_stdio_timeout, &vtyrl_stdio, vtyrl_stdio.vty->v_timeout);
+
+			}		
 		}
 		break;
 	}
-	vty_stdio.rl_taskid = 0;
+	vtyrl_stdio.rl_taskid = 0;
 	return 0;
 }
 
 
-static int vty_stdio_rl_init(void)
+static int vty_readline_init(void)
 {
 	setlinebuf(stdout);
 	/* Initialize readline. */
 	rl_initialize();
 
 	/* readline related settings. */
-	rl_bind_key('?', (rl_command_func_t *)vty_stdio_rl_describe);
-	rl_completion_entry_function = vty_stdio_rl_completion_entry_function;
-	rl_attempted_completion_function = (rl_completion_func_t *)vty_stdio_rl_new_completion;
+	rl_bind_key('?', (rl_command_func_t *)vtyrl_stdio_describe);
+	/*初始化tab补全*/
+	rl_completion_entry_function = vtyrl_stdio_completion_entry_function;
+	rl_attempted_completion_function = (rl_completion_func_t *)vtyrl_stdio_new_completion;
+	zlog_warn(MODULE_LIB, "==== vty_readline_init");
 	return 0;
 }
 
-int vty_stdio_init(struct vty *vty)
+int vtyrl_stdio_init(void)
 {
-	memset(&vty_stdio, 0, sizeof(vty_stdio));
-	vty_stdio.vty = vty;
-	vty_stdio.vty->node = ENABLE_NODE;
-	vty_stdio.vty->privilege = CMD_CONFIG_LEVEL;
-	vty_stdio.vty->login_type = VTY_LOGIN_VTYSH_STDIO;
-	return vty_stdio_rl_init();
+	zpl_socket_t vty_sock = {OS_STACK, 0};
+	memset(&vtyrl_stdio, 0, sizeof(vtyrl_stdio));
+	vtyrl_stdio.vty = vty_new_init(vty_sock);
+	vtyrl_stdio.vty->node = ENABLE_NODE;
+	vtyrl_stdio.vty->privilege = CMD_CONFIG_LEVEL;
+	vtyrl_stdio.vty->login_type = VTY_LOGIN_VTYSH_STDIO;
+	vtyrl_stdio.vty->vty_output = vtyrl_stdio_vty_output;
+	vtyrl_stdio.vty->p_output = stdout;
+	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_init");
+	return vty_readline_init();
 }
 
-int vty_stdio_start(zpl_bool s)
+
+int vtyrl_stdio_exit(void)
 {
-	if(s)
+	if(vtyrl_stdio.timer)
 	{
-		vty_stdio.rl_exit = 1;
-		if (vty_stdio.rl_taskid == 0)
-			vty_stdio.rl_taskid = os_task_create("stdioTask", OS_TASK_DEFAULT_PRIORITY,
-													 0, vty_stdio_task, &vty_stdio, OS_TASK_DEFAULT_STACK);
-		return OK;
+		os_time_destroy(vtyrl_stdio.timer);
+		vtyrl_stdio.timer = 0;
 	}
-	else
-	{
-		vty_stdio.rl_exit = 0;
-		vty_stdio.rl_taskid = 0;
-		return OK;
-	}
+	rl_initialize();
+	if(vtyrl_stdio.vty)
+		vty_free(vtyrl_stdio.vty);
+	memset(&vtyrl_stdio, 0, sizeof(vtyrl_stdio));
+	return 0;
+}
+
+
+
+int vtyrl_stdio_task_init(void)
+{
+	vtyrl_stdio.rl_exit = 1;
+	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_init");
+	if (vtyrl_stdio.rl_taskid == 0)
+		vtyrl_stdio.rl_taskid = os_task_create("stdioTask", OS_TASK_DEFAULT_PRIORITY,
+													 0, vtyrl_stdio_task, &vtyrl_stdio, OS_TASK_DEFAULT_STACK);
+	return OK;
+}
+
+
+int vtyrl_stdio_task_exit(void)
+{
+	vtyrl_stdio.rl_exit = 0;
+	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_exit");
+	vtyrl_stdio.rl_taskid = 0;
+	return OK;
+}
+
+int vtyrl_stdio_start(zpl_bool s)
+{
+	vtyrl_stdio.status = s;
+	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_start");
+	vtyrl_stdio_task_init();
+	return OK;
 }
 
 

@@ -7,34 +7,36 @@
  * Licensed under GPLv2, see file LICENSE in this source tree.
  */
 #include "dhcp_def.h"
-#include "dhcp_util.h"
+
 #include "dhcpd.h"
 #include "checksum.h"
+#include "dhcp_packet.h"
+#include "dhcp_util.h"
 /*
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 */
 //#include <netpacket/packet.h>
 
-#if ENABLE_UDHCPC || ENABLE_UDHCPD
-void FAST_FUNC udhcp_header_init(struct dhcp_packet *packet, char type)
+#if DHCPC_ENABLE || DHCPD_ENABLE
+void  udhcp_header_init(struct dhcp_packet *packet, char type)
 {
 	memset(packet, 0, sizeof(struct dhcp_packet));
-	packet->op = BOOTREQUEST; /* if client to a server */
+	packet->op = DHCP_BOOTREQUEST; /* if client to a server */
 	switch (type) {
-	case DHCPOFFER:
-	case DHCPACK:
-	case DHCPNAK:
-		packet->op = BOOTREPLY; /* if server to client */
+	case DHCP_MESSAGE_OFFER:
+	case DHCP_MESSAGE_ACK:
+	case DHCP_MESSAGE_NAK:
+		packet->op = DHCP_BOOTREPLY; /* if server to client */
 	}
 	packet->htype = 1; /* ethernet */
 	packet->hlen = 6;
 	packet->cookie = htonl(DHCP_MAGIC);
-	if (DHCP_END != 0)
-		packet->options[0] = DHCP_END;
+	if (DHCP_OPTION_END != 0)
+		packet->options[0] = DHCP_OPTION_END;
 
 	dhcp_option_message_type(packet->options, type);
-	//udhcp_add_simple_option(packet, DHCP_MESSAGE_TYPE, type);
+	//dhcp_add_simple_option(packet, DHCP_MESSAGE_TYPE, type);
 }
 #endif
 static void dhcp_packet_dump(struct dhcp_packet *packet)
@@ -43,26 +45,26 @@ static void dhcp_packet_dump(struct dhcp_packet *packet)
 	//char tmp[128];
 	int len = 0;
 	int message = 0;
-	if(packet->op == BOOTREQUEST)
+	if(packet->op == DHCP_BOOTREQUEST)
 		zlog_debug(MODULE_DHCP, " DHCP Message Type : Request");
-	else if(packet->op == BOOTREPLY)
+	else if(packet->op == DHCP_BOOTREPLY)
 		zlog_debug(MODULE_DHCP, " DHCP Message Type : Reply");
 
-	if(packet->htype == HTYPE_ETHER)
+	if(packet->htype == DHCP_HWTYPE_ETHER)
 	{
 		zlog_debug(MODULE_DHCP, "  Hardware Type : Ethernet");
 		zlog_debug(MODULE_DHCP, "   Hardware address length : %d", packet->hlen);
 	}
-	else if(packet->htype == HTYPE_IPSEC_TUNNEL)
+	else if(packet->htype == DHCP_HWTYPE_IPSEC_TUNNEL)
 	{
 		zlog_debug(MODULE_DHCP, "  Hardware Type : IPsec Tunnel");
 		zlog_debug(MODULE_DHCP, "   Hardware address length : %d", packet->hlen);
 	}
 	zlog_debug(MODULE_DHCP, "  Transaction ID : 0x%x", ntohl(packet->xid));
 
-	if(ntohs(packet->flags) == BROADCAST_FLAG)
+	if(ntohs(packet->flags) == DHCP_PACKET_FLAG_BROADCAST)
 		zlog_debug(MODULE_DHCP, "  Message Type : Request");
-	else if(ntohs(packet->flags) == UNICAST_FLAG)
+	else if(ntohs(packet->flags) == DHCP_PACKET_FLAG_UNICAST)
 		zlog_debug(MODULE_DHCP, "  Message Type : Reply");
 
 	zlog_debug(MODULE_DHCP, "  Client IP address : %s", inet_address(ntohl(packet->ciaddr)));
@@ -82,34 +84,33 @@ static void dhcp_packet_dump(struct dhcp_packet *packet)
 	if(strlen(packet->file))
 		zlog_debug(MODULE_DHCP, "  Boot file name option : %s", packet->file);
 
-	//zpl_uint8 options[DHCP_OPTIONS_BUFSIZE + CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS];
 	len = dhcp_option_get_length(packet->options);
 
 	message = dhcp_option_message_type_get(packet->options, len);
 	switch (message)
 	{
-	case DHCPDISCOVER:
+	case DHCP_MESSAGE_DISCOVER:
 		zlog_debug(MODULE_DHCP, "  Message Type : Discover");
 		break;
-	case DHCPOFFER:
+	case DHCP_MESSAGE_OFFER:
 		zlog_debug(MODULE_DHCP, "  Message Type : Offer");
 		break;
-	case DHCPREQUEST:
+	case DHCP_MESSAGE_REQUEST:
 		zlog_debug(MODULE_DHCP, "  Message Type : Request");
 		break;
-	case DHCPDECLINE:
+	case DHCP_MESSAGE_DECLINE:
 		zlog_debug(MODULE_DHCP, "  Message Type : Decline");
 		break;
-	case DHCPACK:
+	case DHCP_MESSAGE_ACK:
 		zlog_debug(MODULE_DHCP, "  Message Type : ACK");
 		break;
-	case DHCPNAK:
+	case DHCP_MESSAGE_NAK:
 		zlog_debug(MODULE_DHCP, "  Message Type : NACK");
 		break;
-	case DHCPRELEASE:
+	case DHCP_MESSAGE_RELEASE:
 		zlog_debug(MODULE_DHCP, "  Message Type : Release");
 		break;
-	case DHCPINFORM:
+	case DHCP_MESSAGE_INFORM:
 		zlog_debug(MODULE_DHCP, "  Message Type : Inform");
 		break;
 	default:
@@ -160,7 +161,7 @@ static void _udhcp_dump_packet(struct dhcp_packet *packet)
 #endif
 
 /* Read a packet from socket fd, return -1 on read error, -2 on packet error */
-int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, zpl_socket_t fd, zpl_uint32 *ifindex)
+int  udhcp_recv_packet(struct dhcp_packet *packet, zpl_socket_t fd, zpl_uint32 *ifindex)
 {
 #if 1
 	int bytes = 0;
@@ -246,7 +247,7 @@ int FAST_FUNC udhcp_recv_packet(struct dhcp_packet *packet, zpl_socket_t fd, zpl
 }
 
 /* Construct a ip/udp header for a packet, send packet */
-int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pkt,
+int  udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pkt,
 	struct udhcp_packet_cmd *source,
 	struct udhcp_packet_cmd *dest, const zpl_uint8 *dest_arp,
 		ifindex_t ifindex)
@@ -283,7 +284,7 @@ int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	 * Thus, we retain enough padding to not go below 300 BOOTP bytes.
 	 * Some devices have filters which drop DHCP packets zpl_int16er than that.
 	 */
-	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(packet.data.options);
+	padding = DHCP_OPTIONS_BUFSIZE - 1 - dhcp_end_option(packet.data.options);
 	if (padding > DHCP_SIZE - 300)
 		padding = DHCP_SIZE - 300;
 
@@ -323,7 +324,7 @@ int FAST_FUNC udhcp_send_raw_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 }
 
 /* Let the kernel do all the work for packet generation */
-int FAST_FUNC udhcp_send_udp_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pkt,
+int  udhcp_send_udp_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pkt,
 	struct udhcp_packet_cmd *source,
 	struct udhcp_packet_cmd *dest)
 {
@@ -337,7 +338,7 @@ int FAST_FUNC udhcp_send_udp_packet(zpl_socket_t fd, struct dhcp_packet *dhcp_pk
 	sa.sin_addr.s_addr = dest->ip;
 
 	//_udhcp_dump_packet(dhcp_pkt);
-	padding = DHCP_OPTIONS_BUFSIZE - 1 - udhcp_end_option(dhcp_pkt->options);
+	padding = DHCP_OPTIONS_BUFSIZE - 1 - dhcp_end_option(dhcp_pkt->options);
 	if (padding > DHCP_SIZE - 300)
 		padding = DHCP_SIZE - 300;
 

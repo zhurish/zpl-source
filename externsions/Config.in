@@ -45,4 +45,11 @@ config ZPL_EXFREETYPE_INC_PATH
 	help
 		Specify additional directories searched for Freetype include.
 
+config ZPL_READLINE_MODULE
+	bool "extern readline Module"
+	default n
+	depends on  ZPL_SHRL_MODULE
+	select ZPL_EXTERNSIONS_MODULE
+	help
+	Build extern readline Module.
 endmenu

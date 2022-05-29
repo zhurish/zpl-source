@@ -40,6 +40,7 @@
 
 #include "dhcp_def.h"
 #include "dhcp_lease.h"
+#include "dhcp_packet.h"
 #include "dhcp_pool.h"
 #include "dhcp_util.h"
 #include "dhcpd.h"
@@ -55,16 +56,7 @@ static dhcpd_interface_t * dhcpd_pool_create_interface(ifindex_t ifindex) {
 		struct interface * ifp = if_lookup_by_index(ifindex);
 		memset(ifter, 0, sizeof(dhcpd_interface_t));
 		ifter->ifindex = ifindex;
-		//ifter->port = SERVER_PORT;
-		/*
-		 if(ifp && strlen(ifp->k_name))
-		 ifter->k_name = strdup(ifp->k_name);
-		 if(ifter->k_name)
-		 {
-		 udhcp_read_interface(ifter->k_name, NULL, &ifter->ipaddr, ifter->server_mac);
-		 zlog_debug(MODULE_DHCP, "===========%s", ifter->k_name);
-		 }
-		 */
+
 		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->server_mac);
 		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
 		return ifter;
@@ -246,26 +238,11 @@ static zpl_uint32  dhcpd_find_free_lease(const zpl_uint8 *safe_mac,
 	zpl_uint32  addr = 0;
 	struct dyn_lease *oldest_lease = NULL;
 	zpl_uint32  server_nip = ifter->ipaddr;
-#if ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC
-	zpl_uint32  lease_stop;
-	unsigned i, hash;
 
-	/* hash hwaddr: use the SDBM hashing algorithm.  Seems to give good
-	 * dispersal even with similarly-valued "strings".
-	 */
-	hash = 0;
-	for (i = 0; i < 6; i++)
-	hash += safe_mac[i] + (hash << 6) + (hash << 16) - hash;
-
-	/* pick a seed based on hwaddr then iterate until we find a free address. */
-	addr = config->start_ip
-	+ (hash % (1 + config->end_ip - config->start_ip));
-	lease_stop = addr;
-#else
 	addr = config->start_ip;
 	//#define lease_stop (config->end_ip + 1)
 	zpl_uint32  lease_stop = config->end_ip + 1;
-#endif
+
 	do {
 		zpl_uint32  nip;
 		struct dyn_lease *lease;
@@ -296,10 +273,6 @@ static zpl_uint32  dhcpd_find_free_lease(const zpl_uint8 *safe_mac,
 		}
 
 		next_addr: addr++;
-#if ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC
-		if (addr > config->end_ip)
-		addr = config->start_ip;
-#endif
 	} while (addr != lease_stop);
 
 	if (oldest_lease && dhcpd_lease_is_expired(oldest_lease)
@@ -349,45 +322,45 @@ static struct dyn_lease *dhcpd_update_lease(dyn_lease_t *lease,
 	lease->expires = offer_time;
 	lease->ends = lease->starts + offer_time;
 
-	p_host_name = (const char*)udhcp_get_option(olddhcp_pkt, DHCP_HOST_NAME, &hostname_len);
+	p_host_name = (const char*)udhcp_get_option(olddhcp_pkt, DHCP_OPTION_HOST_NAME, &hostname_len);
 	if (p_host_name)
 	{
-		strncpy(lease->hostname, p_host_name, MIN(hostname_len, UDHCPD_HOSTNAME_MAX));
+		strncpy(lease->hostname, p_host_name, MIN(hostname_len, DHCPD_HOSTNAME_MAX));
 	}
-	/*p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_DOMAIN_NAME, &hostname_len);
+	/*p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_OPTION_DOMAIN_NAME, &hostname_len);
 	if (p_host_name)
 	{
-		strncpy(lease->domain_name, p_host_name, MIN(hostname_len, UDHCPD_HOSTNAME_MAX));
+		strncpy(lease->domain_name, p_host_name, MIN(hostname_len, DHCPD_HOSTNAME_MAX));
 	}*/
-/*	p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_SUBNET, &hostname_len);
+/*	p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_OPTION_SUBNET, &hostname_len);
 	if (p_host_name)
 	{
 		udhcp_str2nip(p_host_name, &lease->lease_netmask);
 	}
-	p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_ROUTER, &hostname_len);
+	p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_OPTION_ROUTER, &hostname_len);
 	if (p_host_name)
 	{
 		udhcp_str2nip(p_host_name, &lease->lease_gateway);
 		if(hostname_len > 4)
 			udhcp_str2nip(p_host_name + 4, &lease->lease_gateway2);
 	}
-	p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_DNS_SERVER, &hostname_len);
+	p_host_name = (const char*)udhcp_get_option(dhcp_pkt, DHCP_OPTION_DNS_SERVER, &hostname_len);
 	if (p_host_name)
 	{
 		udhcp_str2nip(p_host_name, &lease->lease_dns1);
 		if(hostname_len > 4)
 			udhcp_str2nip(p_host_name + 4, &lease->lease_dns2);
 	}*/
-	p_host_name = (const char*)udhcp_get_option(olddhcp_pkt, DHCP_VENDOR, &hostname_len);
+	p_host_name = (const char*)udhcp_get_option(olddhcp_pkt, DHCP_OPTION_VENDOR, &hostname_len);
 	if (p_host_name)
 	{
-		strncpy(lease->vendor, p_host_name, MIN(hostname_len, UDHCPD_HOSTNAME_MAX));
+		strncpy(lease->vendor, p_host_name, MIN(hostname_len, DHCPD_HOSTNAME_MAX));
 	}
 
-	p_host_name = (const char*)udhcp_get_option(olddhcp_pkt, DHCP_CLIENT_ID, &hostname_len);
+	p_host_name = (const char*)udhcp_get_option(olddhcp_pkt, DHCP_OPTION_CLIENT_ID, &hostname_len);
 	if (p_host_name)
 	{
-		strncpy(lease->client_id, p_host_name, MIN(hostname_len, UDHCPD_HOSTNAME_MAX));
+		strncpy(lease->client_id, p_host_name, MIN(hostname_len, DHCPD_HOSTNAME_MAX));
 	}
 	//inter->lease = dhcp_lease_add(&inter->pool->dhcp_lease_list, &lease);
 	return lease;
@@ -404,7 +377,7 @@ static void dhcpd_packet_to_client(struct dhcp_packet *dhcp_pkt,
 	// Was:
 	//if (force_broadcast) { /* broadcast */ }
 	//else if (dhcp_pkt->ciaddr) { /* unicast to dhcp_pkt->ciaddr */ }
-	//else if (dhcp_pkt->flags & htons(BROADCAST_FLAG)) { /* broadcast */ }
+	//else if (dhcp_pkt->flags & htons(DHCP_PACKET_FLAG_BROADCAST)) { /* broadcast */ }
 	//else { /* unicast to dhcp_pkt->yiaddr */ }
 	// But this is wrong: yiaddr is _our_ idea what client's IP is
 	// (for example, from lease file). Client may not know that,
@@ -413,7 +386,7 @@ static void dhcpd_packet_to_client(struct dhcp_packet *dhcp_pkt,
 	// dhcp_pkt->ciaddr, OTOH, comes from client's request packet,
 	// and can be used.
 
-	if (force_broadcast || (dhcp_pkt->flags & htons(BROADCAST_FLAG))
+	if (force_broadcast || (dhcp_pkt->flags & htons(DHCP_PACKET_FLAG_BROADCAST))
 			|| dhcp_pkt->ciaddr == 0) {
 		zlog_err(MODULE_DHCP, "broadcasting packet to client");
 		ciaddr = IPSTACK_INADDR_BROADCAST;
@@ -473,8 +446,8 @@ static void dhcpd_packet_init(struct dhcp_packet *packet,
 	packet->flags = oldpacket->flags;
 	packet->gateway_nip = oldpacket->gateway_nip;
 	packet->ciaddr = oldpacket->ciaddr;
-	dhcp_option_packet_set_simple(packet->options, sizeof(packet->options), DHCP_SERVER_ID, server_nip);
-	//udhcp_add_simple_option(packet, DHCP_SERVER_ID, server_nip);
+	dhcp_option_packet_set_simple(packet->options, sizeof(packet->options), DHCP_OPTION_SERVER_ID, server_nip);
+	//dhcp_add_simple_option(packet, DHCP_OPTION_SERVER_ID, server_nip);
 }
 
 /* Fill options field, siaddr_nip, and sname and boot_file fields.
@@ -484,7 +457,7 @@ static void dhcpd_build_options(dhcp_pool_t *config, struct dhcp_packet *packet,
 /*	struct option_set *curr = config->options;
 
 	while (curr) {
-		if (curr->data[OPT_CODE] != DHCP_LEASE_TIME)
+		if (curr->data[DHCP_OPT_CODE] != DHCP_OPTION_LEASE_TIME)
 			udhcp_add_binary_option(packet, curr->data);
 		curr = curr->next;
 	}*/
@@ -507,7 +480,7 @@ static void dhcpd_build_options(dhcp_pool_t *config, struct dhcp_packet *packet,
 static zpl_uint32  dhcpd_select_lease_time(dhcp_pool_t *config,
 		struct dhcp_packet *packet) {
 	zpl_uint32  lease_time_sec = config->max_lease_sec;
-	zpl_uint8 *lease_time_opt = udhcp_get_option(packet, DHCP_LEASE_TIME, NULL);
+	zpl_uint8 *lease_time_opt = udhcp_get_option(packet, DHCP_OPTION_LEASE_TIME, NULL);
 	if (lease_time_opt) {
 		move_from_unaligned32(lease_time_sec, lease_time_opt);
 		lease_time_sec = ntohl(lease_time_sec);
@@ -528,7 +501,7 @@ static int dhcpd_get_lease(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	ifter->state.requested_address = 0;
 	//struct dyn_lease *cu_lease = dhcpd_find_lease_by_mac(config, oldpacket->chaddr);
 
-	dhcp_option_get_address(oldpacket->options, DHCP_REQUESTED_IP, &ifter->state.requested_address);
+	dhcp_option_get_address(oldpacket->options, DHCP_OPTION_REQUESTED_IP, &ifter->state.requested_address);
 	if(ifter->state.requested_address == 0)
 	{
 		//
@@ -577,7 +550,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	//zpl_uint32 arpping_ms = 2000;
 	if (!config)
 		return;
-	dhcpd_packet_init(&packet, oldpacket, DHCPOFFER, ifter->ipaddr/* server ip*/);
+	dhcpd_packet_init(&packet, oldpacket, DHCP_MESSAGE_OFFER, ifter->ipaddr/* server ip*/);
 
 	if (lease->lease_address == 0)
 	{
@@ -595,16 +568,16 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	packet.siaddr_nip = ifter->ipaddr;
 	lease_time_sec = dhcpd_select_lease_time(config, oldpacket);
 
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_LEASE_TIME, htonl(lease_time_sec));
-	//udhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_LEASE_TIME, htonl(lease_time_sec));
+	//dhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
 
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_T1));
-	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_T2);
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_REBINDING_TIME, htonl(lease_time_sec));
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_LEASE_EXPIRES_T1));
+	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_LEASE_EXPIRES_T2);
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_REBINDING_TIME, htonl(lease_time_sec));
 
 	dhcpd_build_options(config, &packet, oldpacket);
 
-	opt_b = dhcp_option_get(oldpacket->options, dhcp_option_get_length(oldpacket->options), DHCP_PARAM_REQ, &optlen);
+	opt_b = dhcp_option_get(oldpacket->options, dhcp_option_get_length(oldpacket->options), DHCP_OPTION_PARAM_REQ, &optlen);
 
 	if(opt_b && optlen)
 	{
@@ -629,7 +602,7 @@ static void dhcpd_send_offer(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 static void dhcpd_send_nak(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 		dhcpd_interface_t *ifter, struct dyn_lease *lease) {
 	struct dhcp_packet packet;
-	dhcpd_packet_init(&packet, oldpacket, DHCPNAK, ifter->ipaddr);
+	dhcpd_packet_init(&packet, oldpacket, DHCP_MESSAGE_NAK, ifter->ipaddr);
 	dhcp_lease_del(&config->dhcp_lease_list, lease);
 	lease = NULL;
 	zlog_err(MODULE_DHCP, "sending %s", "NAK");
@@ -645,17 +618,17 @@ static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	struct dyn_lease *cu_lease = NULL;
 	zpl_uint8 *opt, optlen = 0;
 
-	dhcpd_packet_init(&packet, oldpacket, DHCPACK, ifter->ipaddr);
+	dhcpd_packet_init(&packet, oldpacket, DHCP_MESSAGE_ACK, ifter->ipaddr);
 
 	packet.yiaddr = lease->lease_address;
 	packet.siaddr_nip = ifter->ipaddr;
 
 	lease_time_sec = dhcpd_select_lease_time(config, oldpacket);
-	//udhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_LEASE_TIME, htonl(lease_time_sec));
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_T1));
-	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_T2);
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_REBINDING_TIME, htonl(lease_time_sec));
+	//dhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_LEASE_TIME, htonl(lease_time_sec));
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_LEASE_EXPIRES_T1));
+	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_LEASE_EXPIRES_T2);
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_REBINDING_TIME, htonl(lease_time_sec));
 
 	dhcpd_build_options(config, &packet, oldpacket);
 
@@ -666,16 +639,16 @@ static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	cu_lease = dhcpd_update_lease(lease,
 			lease->lease_address, oldpacket, lease_time_sec);
 
-	dhcp_option_get_address(packet.options, DHCP_SUBNET, &cu_lease->lease_netmask);
+	dhcp_option_get_address(packet.options, DHCP_OPTION_SUBNET, &cu_lease->lease_netmask);
 	optlen = 0;
-	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_ROUTER, &optlen);
+	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_OPTION_ROUTER, &optlen);
 	if(opt && optlen)
 	{
 		move_from_unaligned32(cu_lease->lease_gateway, opt);
 		if(optlen > 4)
 			move_from_unaligned32(cu_lease->lease_gateway2, opt + 4);
 	}
-	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_DNS_SERVER, &optlen);
+	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_OPTION_DNS_SERVER, &optlen);
 	if(opt && optlen)
 	{
 		move_from_unaligned32(cu_lease->lease_dns1, opt);
@@ -686,10 +659,8 @@ static void dhcpd_send_ack(struct dhcp_packet *oldpacket, dhcp_pool_t *config,
 	if (cu_lease) {
 		cu_lease->ifindex = ifter->ifindex;
 	}
-	if (ENABLE_FEATURE_UDHCPD_WRITE_LEASES_EARLY) {
-		/* rewrite the file with leases at every new acceptance */
-		dhcpd_lease_save();
-	}
+	/* rewrite the file with leases at every new acceptance */
+	dhcpd_lease_save();
 }
 
 /* : limit stack usage in caller */
@@ -697,18 +668,18 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 		dhcpd_interface_t *ifter, struct dyn_lease *lease) {
 
 	/* "If a client has obtained a network address through some other means
-	 * (e.g., manual configuration), it may use a DHCPINFORM request message
+	 * (e.g., manual configuration), it may use a DHCP_MESSAGE_INFORM request message
 	 * to obtain other local configuration parameters.  Servers receiving a
-	 * DHCPINFORM message construct a DHCPACK message with any local
+	 * DHCP_MESSAGE_INFORM message construct a DHCP_MESSAGE_ACK message with any local
 	 * configuration parameters appropriate for the client without:
 	 * allocating a new address, checking for an existing binding, filling
 	 * in 'yiaddr' or including lease time parameters.  The servers SHOULD
-	 * unicast the DHCPACK reply to the address given in the 'ciaddr' field
-	 * of the DHCPINFORM message.
+	 * unicast the DHCP_MESSAGE_ACK reply to the address given in the 'ciaddr' field
+	 * of the DHCP_MESSAGE_INFORM message.
 	 * ...
-	 * The server responds to a DHCPINFORM message by sending a DHCPACK
+	 * The server responds to a DHCP_MESSAGE_INFORM message by sending a DHCP_MESSAGE_ACK
 	 * message directly to the address given in the 'ciaddr' field
-	 * of the DHCPINFORM message.  The server MUST NOT send a lease
+	 * of the DHCP_MESSAGE_INFORM message.  The server MUST NOT send a lease
 	 * expiration time to the client and SHOULD NOT fill in 'yiaddr'."
 	 */
 	//TODO: do a few sanity checks: is ciaddr set?
@@ -720,17 +691,17 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	struct dyn_lease *cu_lease = NULL;
 	zpl_uint8 *opt, optlen = 0;
 
-	dhcpd_packet_init(&packet, oldpacket, DHCPACK, ifter->ipaddr);
+	dhcpd_packet_init(&packet, oldpacket, DHCP_MESSAGE_ACK, ifter->ipaddr);
 
 	packet.yiaddr = lease->lease_address;
 	packet.siaddr_nip = ifter->ipaddr;
 
 	lease_time_sec = config->max_lease_sec;
-	//udhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_LEASE_TIME, htonl(lease_time_sec));
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_T1));
-	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_T2);
-	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_REBINDING_TIME, htonl(lease_time_sec));
+	//dhcp_add_simple_option(&packet, DHCP_LEASE_TIME, htonl(lease_time_sec));
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_LEASE_TIME, htonl(lease_time_sec));
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_RENEWAL_TIME, htonl(lease_time_sec>>DHCP_LEASE_EXPIRES_T1));
+	lease_time_sec = (zpl_uint32 )((zpl_float)lease_time_sec * DHCP_LEASE_EXPIRES_T2);
+	dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPTION_REBINDING_TIME, htonl(lease_time_sec));
 
 	//dhcp_option_packet_set_simple(packet.options, sizeof(packet.options), DHCP_OPT82, htonl(lease_time_sec));
 
@@ -743,16 +714,16 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	cu_lease = dhcpd_update_lease(lease,
 			lease->lease_address, oldpacket, lease_time_sec);
 
-	dhcp_option_get_address(packet.options, DHCP_SUBNET, &cu_lease->lease_netmask);
+	dhcp_option_get_address(packet.options, DHCP_OPTION_SUBNET, &cu_lease->lease_netmask);
 	optlen = 0;
-	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_ROUTER, &optlen);
+	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_OPTION_ROUTER, &optlen);
 	if(opt && optlen)
 	{
 		move_from_unaligned32(cu_lease->lease_gateway, opt);
 		if(optlen > 4)
 			move_from_unaligned32(cu_lease->lease_gateway2, opt + 4);
 	}
-	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_DNS_SERVER, &optlen);
+	opt = dhcp_option_get(packet.options, dhcp_option_get_length(packet.options), DHCP_OPTION_DNS_SERVER, &optlen);
 	if(opt && optlen)
 	{
 		move_from_unaligned32(cu_lease->lease_dns1, opt);
@@ -763,10 +734,8 @@ static void dhcpd_send_inform(struct dhcp_packet *oldpacket, dhcp_pool_t *config
 	if (cu_lease) {
 		cu_lease->ifindex = ifter->ifindex;
 	}
-	if (ENABLE_FEATURE_UDHCPD_WRITE_LEASES_EARLY) {
-		/* rewrite the file with leases at every new acceptance */
-		dhcpd_lease_save();
-	}
+	/* rewrite the file with leases at every new acceptance */
+	dhcpd_lease_save();
 }
 
 static void dhcp_discover(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
@@ -808,7 +777,7 @@ static void dhcp_request(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		return;
 	}
 	ifter->state.requested_address = 0;
-	if(dhcp_option_get_address(packet->options, DHCP_REQUESTED_IP, &ifter->state.requested_address) != OK)
+	if(dhcp_option_get_address(packet->options, DHCP_OPTION_REQUESTED_IP, &ifter->state.requested_address) != OK)
 	{
 		ifter->state.requested_address = packet->ciaddr;
 	}
@@ -895,9 +864,9 @@ static void dhcp_decline(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		zlog_warn(MODULE_DHCP, "Can not find lease by '%s'", inet_ethernet(packet->chaddr));
 		return;
 	}
-	/* DHCPDECLINE must specify address. */
+	/* DHCP_MESSAGE_DECLINE must specify address. */
 	ifter->state.requested_address = 0;
-	if(dhcp_option_get_address(packet->options, DHCP_REQUESTED_IP, &ifter->state.requested_address) != OK)
+	if(dhcp_option_get_address(packet->options, DHCP_OPTION_REQUESTED_IP, &ifter->state.requested_address) != OK)
 	{
 		return;
 	}
@@ -941,7 +910,7 @@ static void dhcp_inform(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	 */
 	ifter->state.requested_address = 0;
 	ifter->state.requested_address = packet->ciaddr;
-	if(dhcp_option_get_address(packet->options, DHCP_REQUESTED_IP, &ifter->state.requested_address) != OK)
+	if(dhcp_option_get_address(packet->options, DHCP_OPTION_REQUESTED_IP, &ifter->state.requested_address) != OK)
 	{
 		return;
 	}
@@ -968,7 +937,7 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		zlog_err(MODULE_DHCP, "MAC length != 6, ignoring packet");
 		return ERROR;
 	}
-	if (packet->op != BOOTREQUEST) {
+	if (packet->op != DHCP_BOOTREQUEST) {
 		zlog_err(MODULE_DHCP, "not a REQUEST, ignoring packet");
 		return ERROR;
 	}
@@ -976,10 +945,10 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 	msg_type = dhcp_option_message_type_get(packet->options, sizeof(packet->options));
 
 	/* Get SERVER_ID if present */
-	if(msg_type != DHCPDISCOVER)
+	if(msg_type != DHCP_MESSAGE_DISCOVER)
 	{
 		ifter->state.server_identifier = 0;
-		dhcp_option_get_address(packet->options, DHCP_SERVER_ID, &ifter->state.server_identifier);
+		dhcp_option_get_address(packet->options, DHCP_OPTION_SERVER_ID, &ifter->state.server_identifier);
 		if (ifter->state.server_identifier != ifter->ipaddr) {
 			zlog_err(MODULE_DHCP, "server ID doesn't match, ignoring 0x%x != 0x%x", ifter->state.server_identifier, ifter->ipaddr);
 			//return ERROR;
@@ -988,17 +957,17 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 
 	switch (msg_type) {
 
-	case DHCPDISCOVER:
+	case DHCP_MESSAGE_DISCOVER:
 		zlog_err(MODULE_DHCP, "received %s", "DISCOVER");
 		dhcp_discover(packet, pool, ifter);
 		break;
 
-	case DHCPREQUEST:
+	case DHCP_MESSAGE_REQUEST:
 		zlog_debug(MODULE_DHCP, "received %s", "REQUEST");
 		dhcp_request(packet, pool, ifter);
 		break;
 
-	case DHCPDECLINE:
+	case DHCP_MESSAGE_DECLINE:
 		zlog_err(MODULE_DHCP, "received %s", "DECLINE");
 		dhcp_decline(packet, pool, ifter);
 /*		if (ifter->lease && packet->ciaddr == ifter->lease->lease_address)
@@ -1010,8 +979,8 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		}*/
 		break;
 
-	case DHCPRELEASE:
-		/* "Upon receipt of a DHCPRELEASE message, the server
+	case DHCP_MESSAGE_RELEASE:
+		/* "Upon receipt of a DHCP_MESSAGE_RELEASE message, the server
 		 * marks the network address as not allocated."
 		 *
 		 * SERVER_ID must be present,
@@ -1023,7 +992,7 @@ int udhcp_server_handle_thread(dhcp_pool_t *pool, dhcpd_interface_t * ifter,
 		dhcp_release(packet, pool, ifter);
 		break;
 
-	case DHCPINFORM:
+	case DHCP_MESSAGE_INFORM:
 		zlog_err(MODULE_DHCP, "received %s", "INFORM");
 		dhcp_inform(packet, pool, ifter);
 		break;
@@ -1205,13 +1174,13 @@ int udhcpd_main_a(void *p)
 			zlog_err(MODULE_DHCP, "MAC length != 6, ignoring packet");
 			continue;
 		}
-		if (packet.op != BOOTREQUEST)
+		if (packet.op != DHCP_BOOTREQUEST)
 		{
 			zlog_err(MODULE_DHCP, "not a REQUEST, ignoring packet");
 			continue;
 		}
 		state = udhcp_get_option(&packet, DHCP_MESSAGE_TYPE);
-		if (state == NULL || state[0] < DHCP_MINTYPE || state[0] > DHCP_MAXTYPE)
+		if (state == NULL || state[0] < DHCP_MESSAGE_MINTYPE || state[0] > DHCP_MESSAGE_MAXTYPE)
 		{
 			zlog_err(MODULE_DHCP,
 					"no or bad message type option, ignoring packet");
@@ -1261,38 +1230,38 @@ int udhcpd_main_a(void *p)
 		switch (state[0])
 		{
 
-			case DHCPDISCOVER:
+			case DHCP_MESSAGE_DISCOVER:
 			zlog_err(MODULE_DHCP, "received %s", "DISCOVER");
 
 			dhcpd_send_offer(&packet, static_lease_nip, lease, requested_ip_opt,
 					arpping_ms, ifindex);
 			break;
 
-			case DHCPREQUEST:
+			case DHCP_MESSAGE_REQUEST:
 			zlog_err(MODULE_DHCP, "received %s", "REQUEST");
 			/* RFC 2131:
 
-			 o DHCPREQUEST generated during SELECTING state:
+			 o DHCP_MESSAGE_REQUEST generated during SELECTING state:
 
 			 Client inserts the address of the selected server in 'server
 			 identifier', 'ciaddr' MUST be zero, 'requested IP address' MUST be
-			 filled in with the yiaddr value from the chosen DHCPOFFER.
+			 filled in with the yiaddr value from the chosen DHCP_MESSAGE_OFFER.
 
-			 Note that the client may choose to collect several DHCPOFFER
+			 Note that the client may choose to collect several DHCP_MESSAGE_OFFER
 			 messages and select the "best" offer.  The client indicates its
-			 selection by identifying the offering server in the DHCPREQUEST
+			 selection by identifying the offering server in the DHCP_MESSAGE_REQUEST
 			 message.  If the client receives no acceptable offers, the client
-			 may choose to try another DHCPDISCOVER message.  Therefore, the
-			 servers may not receive a specific DHCPREQUEST from which they can
+			 may choose to try another DHCP_MESSAGE_DISCOVER message.  Therefore, the
+			 servers may not receive a specific DHCP_MESSAGE_REQUEST from which they can
 			 decide whether or not the client has accepted the offer.
 
-			 o DHCPREQUEST generated during INIT-REBOOT state:
+			 o DHCP_MESSAGE_REQUEST generated during INIT-REBOOT state:
 
 			 'server identifier' MUST NOT be filled in, 'requested IP address'
 			 option MUST be filled in with client's notion of its previously
 			 assigned address. 'ciaddr' MUST be zero. The client is seeking to
 			 verify a previously allocated, cached configuration. Server SHOULD
-			 send a DHCPNAK message to the client if the 'requested IP address'
+			 send a DHCP_MESSAGE_NAK message to the client if the 'requested IP address'
 			 is incorrect, or is on the wrong network.
 
 			 Determining whether a client in the INIT-REBOOT state is on the
@@ -1301,30 +1270,30 @@ int udhcpd_main_a(void *p)
 			 server detects that the client is on the wrong net (i.e., the
 			 result of applying the local subnet mask or remote subnet mask (if
 			 'giaddr' is not zero) to 'requested IP address' option value
-			 doesn't match reality), then the server SHOULD send a DHCPNAK
+			 doesn't match reality), then the server SHOULD send a DHCP_MESSAGE_NAK
 			 message to the client.
 
 			 If the network is correct, then the DHCP server should check if
 			 the client's notion of its IP address is correct. If not, then the
-			 server SHOULD send a DHCPNAK message to the client. If the DHCP
+			 server SHOULD send a DHCP_MESSAGE_NAK message to the client. If the DHCP
 			 server has no record of this client, then it MUST remain silent,
 			 and MAY output a warning to the network administrator. This
 			 behavior is necessary for peaceful coexistence of non-
 			 communicating DHCP servers on the same wire.
 
-			 If 'giaddr' is 0x0 in the DHCPREQUEST message, the client is on
+			 If 'giaddr' is 0x0 in the DHCP_MESSAGE_REQUEST message, the client is on
 			 the same subnet as the server.  The server MUST broadcast the
-			 DHCPNAK message to the 0xffffffff broadcast address because the
+			 DHCP_MESSAGE_NAK message to the 0xffffffff broadcast address because the
 			 client may not have a correct network address or subnet mask, and
 			 the client may not be answering ARP requests.
 
-			 If 'giaddr' is set in the DHCPREQUEST message, the client is on a
+			 If 'giaddr' is set in the DHCP_MESSAGE_REQUEST message, the client is on a
 			 different subnet.  The server MUST set the broadcast bit in the
-			 DHCPNAK, so that the relay agent will broadcast the DHCPNAK to the
+			 DHCP_MESSAGE_NAK, so that the relay agent will broadcast the DHCP_MESSAGE_NAK to the
 			 client, because the client may not have a correct network address
 			 or subnet mask, and the client may not be answering ARP requests.
 
-			 o DHCPREQUEST generated during RENEWING state:
+			 o DHCP_MESSAGE_REQUEST generated during RENEWING state:
 
 			 'server identifier' MUST NOT be filled in, 'requested IP address'
 			 option MUST NOT be filled in, 'ciaddr' MUST be filled in with
@@ -1337,10 +1306,10 @@ int udhcpd_main_a(void *p)
 
 			 A client MAY choose to renew or extend its lease prior to T1.  The
 			 server may choose not to extend the lease (as a policy decision by
-			 the network administrator), but should return a DHCPACK message
+			 the network administrator), but should return a DHCP_MESSAGE_ACK message
 			 regardless.
 
-			 o DHCPREQUEST generated during REBINDING state:
+			 o DHCP_MESSAGE_REQUEST generated during REBINDING state:
 
 			 'server identifier' MUST NOT be filled in, 'requested IP address'
 			 option MUST NOT be filled in, 'ciaddr' MUST be filled in with
@@ -1348,9 +1317,9 @@ int udhcpd_main_a(void *p)
 			 configured, and is trying to extend its lease. This message MUST
 			 be broadcast to the 0xffffffff IP broadcast address.  The DHCP
 			 server SHOULD check 'ciaddr' for correctness before replying to
-			 the DHCPREQUEST.
+			 the DHCP_MESSAGE_REQUEST.
 
-			 The DHCPREQUEST from a REBINDING client is intended to accommodate
+			 The DHCP_MESSAGE_REQUEST from a REBINDING client is intended to accommodate
 			 sites that have multiple DHCP servers and a mechanism for
 			 maintaining consistency among leases managed by multiple servers.
 			 A DHCP server MAY extend a client's lease only if it has local
@@ -1385,9 +1354,9 @@ int udhcpd_main_a(void *p)
 
 			break;
 
-			case DHCPDECLINE:
+			case DHCP_MESSAGE_DECLINE:
 			/* RFC 2131:
-			 * "If the server receives a DHCPDECLINE message,
+			 * "If the server receives a DHCP_MESSAGE_DECLINE message,
 			 * the client has discovered through some other means
 			 * that the suggested network address is already
 			 * in use. The server MUST mark the network address
@@ -1408,8 +1377,8 @@ int udhcpd_main_a(void *p)
 			}
 			break;
 
-			case DHCPRELEASE:
-			/* "Upon receipt of a DHCPRELEASE message, the server
+			case DHCP_MESSAGE_RELEASE:
+			/* "Upon receipt of a DHCP_MESSAGE_RELEASE message, the server
 			 * marks the network address as not allocated."
 			 *
 			 * SERVER_ID must be present,
@@ -1425,7 +1394,7 @@ int udhcpd_main_a(void *p)
 			}
 			break;
 
-			case DHCPINFORM:
+			case DHCP_MESSAGE_INFORM:
 			zlog_err(MODULE_DHCP, "received %s", "INFORM");
 			dhcpd_send_inform(&packet, ifindex);
 			break;
@@ -1630,13 +1599,13 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			zlog_err(MODULE_DHCP,"MAC length != 6, ignoring packet");
 			continue;
 		}
-		if (packet.op != BOOTREQUEST)
+		if (packet.op != DHCP_BOOTREQUEST)
 		{
 			zlog_err(MODULE_DHCP,"not a REQUEST, ignoring packet");
 			continue;
 		}
 		state = udhcp_get_option(&packet, DHCP_MESSAGE_TYPE);
-		if (state == NULL || state[0] < DHCP_MINTYPE || state[0] > DHCP_MAXTYPE)
+		if (state == NULL || state[0] < DHCP_MESSAGE_MINTYPE || state[0] > DHCP_MESSAGE_MAXTYPE)
 		{
 			zlog_err(MODULE_DHCP,"no or bad message type option, ignoring packet");
 			continue;
@@ -1681,37 +1650,37 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 		switch (state[0])
 		{
 
-			case DHCPDISCOVER:
+			case DHCP_MESSAGE_DISCOVER:
 			zlog_err(MODULE_DHCP,"received %s", "DISCOVER");
 
 			dhcpd_send_offer(&packet, static_lease_nip, lease, requested_ip_opt, arpping_ms);
 			break;
 
-			case DHCPREQUEST:
+			case DHCP_MESSAGE_REQUEST:
 			zlog_err(MODULE_DHCP,"received %s", "REQUEST");
 			/* RFC 2131:
 
-			 o DHCPREQUEST generated during SELECTING state:
+			 o DHCP_MESSAGE_REQUEST generated during SELECTING state:
 
 			 Client inserts the address of the selected server in 'server
 			 identifier', 'ciaddr' MUST be zero, 'requested IP address' MUST be
-			 filled in with the yiaddr value from the chosen DHCPOFFER.
+			 filled in with the yiaddr value from the chosen DHCP_MESSAGE_OFFER.
 
-			 Note that the client may choose to collect several DHCPOFFER
+			 Note that the client may choose to collect several DHCP_MESSAGE_OFFER
 			 messages and select the "best" offer.  The client indicates its
-			 selection by identifying the offering server in the DHCPREQUEST
+			 selection by identifying the offering server in the DHCP_MESSAGE_REQUEST
 			 message.  If the client receives no acceptable offers, the client
-			 may choose to try another DHCPDISCOVER message.  Therefore, the
-			 servers may not receive a specific DHCPREQUEST from which they can
+			 may choose to try another DHCP_MESSAGE_DISCOVER message.  Therefore, the
+			 servers may not receive a specific DHCP_MESSAGE_REQUEST from which they can
 			 decide whether or not the client has accepted the offer.
 
-			 o DHCPREQUEST generated during INIT-REBOOT state:
+			 o DHCP_MESSAGE_REQUEST generated during INIT-REBOOT state:
 
 			 'server identifier' MUST NOT be filled in, 'requested IP address'
 			 option MUST be filled in with client's notion of its previously
 			 assigned address. 'ciaddr' MUST be zero. The client is seeking to
 			 verify a previously allocated, cached configuration. Server SHOULD
-			 send a DHCPNAK message to the client if the 'requested IP address'
+			 send a DHCP_MESSAGE_NAK message to the client if the 'requested IP address'
 			 is incorrect, or is on the wrong network.
 
 			 Determining whether a client in the INIT-REBOOT state is on the
@@ -1720,30 +1689,30 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			 server detects that the client is on the wrong net (i.e., the
 			 result of applying the local subnet mask or remote subnet mask (if
 			 'giaddr' is not zero) to 'requested IP address' option value
-			 doesn't match reality), then the server SHOULD send a DHCPNAK
+			 doesn't match reality), then the server SHOULD send a DHCP_MESSAGE_NAK
 			 message to the client.
 
 			 If the network is correct, then the DHCP server should check if
 			 the client's notion of its IP address is correct. If not, then the
-			 server SHOULD send a DHCPNAK message to the client. If the DHCP
+			 server SHOULD send a DHCP_MESSAGE_NAK message to the client. If the DHCP
 			 server has no record of this client, then it MUST remain silent,
 			 and MAY output a warning to the network administrator. This
 			 behavior is necessary for peaceful coexistence of non-
 			 communicating DHCP servers on the same wire.
 
-			 If 'giaddr' is 0x0 in the DHCPREQUEST message, the client is on
+			 If 'giaddr' is 0x0 in the DHCP_MESSAGE_REQUEST message, the client is on
 			 the same subnet as the server.  The server MUST broadcast the
-			 DHCPNAK message to the 0xffffffff broadcast address because the
+			 DHCP_MESSAGE_NAK message to the 0xffffffff broadcast address because the
 			 client may not have a correct network address or subnet mask, and
 			 the client may not be answering ARP requests.
 
-			 If 'giaddr' is set in the DHCPREQUEST message, the client is on a
+			 If 'giaddr' is set in the DHCP_MESSAGE_REQUEST message, the client is on a
 			 different subnet.  The server MUST set the broadcast bit in the
-			 DHCPNAK, so that the relay agent will broadcast the DHCPNAK to the
+			 DHCP_MESSAGE_NAK, so that the relay agent will broadcast the DHCP_MESSAGE_NAK to the
 			 client, because the client may not have a correct network address
 			 or subnet mask, and the client may not be answering ARP requests.
 
-			 o DHCPREQUEST generated during RENEWING state:
+			 o DHCP_MESSAGE_REQUEST generated during RENEWING state:
 
 			 'server identifier' MUST NOT be filled in, 'requested IP address'
 			 option MUST NOT be filled in, 'ciaddr' MUST be filled in with
@@ -1756,10 +1725,10 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 
 			 A client MAY choose to renew or extend its lease prior to T1.  The
 			 server may choose not to extend the lease (as a policy decision by
-			 the network administrator), but should return a DHCPACK message
+			 the network administrator), but should return a DHCP_MESSAGE_ACK message
 			 regardless.
 
-			 o DHCPREQUEST generated during REBINDING state:
+			 o DHCP_MESSAGE_REQUEST generated during REBINDING state:
 
 			 'server identifier' MUST NOT be filled in, 'requested IP address'
 			 option MUST NOT be filled in, 'ciaddr' MUST be filled in with
@@ -1767,9 +1736,9 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			 configured, and is trying to extend its lease. This message MUST
 			 be broadcast to the 0xffffffff IP broadcast address.  The DHCP
 			 server SHOULD check 'ciaddr' for correctness before replying to
-			 the DHCPREQUEST.
+			 the DHCP_MESSAGE_REQUEST.
 
-			 The DHCPREQUEST from a REBINDING client is intended to accommodate
+			 The DHCP_MESSAGE_REQUEST from a REBINDING client is intended to accommodate
 			 sites that have multiple DHCP servers and a mechanism for
 			 maintaining consistency among leases managed by multiple servers.
 			 A DHCP server MAY extend a client's lease only if it has local
@@ -1803,9 +1772,9 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 
 			break;
 
-			case DHCPDECLINE:
+			case DHCP_MESSAGE_DECLINE:
 			/* RFC 2131:
-			 * "If the server receives a DHCPDECLINE message,
+			 * "If the server receives a DHCP_MESSAGE_DECLINE message,
 			 * the client has discovered through some other means
 			 * that the suggested network address is already
 			 * in use. The server MUST mark the network address
@@ -1829,8 +1798,8 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			}
 			break;
 
-			case DHCPRELEASE:
-			/* "Upon receipt of a DHCPRELEASE message, the server
+			case DHCP_MESSAGE_RELEASE:
+			/* "Upon receipt of a DHCP_MESSAGE_RELEASE message, the server
 			 * marks the network address as not allocated."
 			 *
 			 * SERVER_ID must be present,
@@ -1848,7 +1817,7 @@ int udhcpd_main(int argc UNUSED_PARAM, char **argv)
 			}
 			break;
 
-			case DHCPINFORM:
+			case DHCP_MESSAGE_INFORM:
 			zlog_err(MODULE_DHCP,"received %s", "INFORM");
 			dhcpd_send_inform(&packet);
 			break;

@@ -363,8 +363,8 @@ int nsm_interface_create_hook(struct interface *ifp)
 	struct nsm_interface *nsm_interface = NULL;
 	NSM_ENTER_FUNC();
 
-	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	nsm_interface = XCALLOC(MTYPE_IF_INFO, sizeof(struct nsm_interface));
 	if (nsm_interface == NULL)
 	{
@@ -381,16 +381,16 @@ int nsm_interface_create_hook(struct interface *ifp)
 	UNSET_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION);
 	ifp->info[MODULE_NSM] = nsm_interface;
 
-	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 
 	if (if_have_kernel(ifp))
 	{
 		if (nsm_interface_kname_set(ifp) == OK)
 			nsm_interface_kmac_set(ifp);
 	}
-	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	ret = nsm_halpal_interface_add(ifp);
 
 	if (ret == OK && if_have_kernel(ifp) && os_strlen(ifp->k_name))
@@ -398,8 +398,8 @@ int nsm_interface_create_hook(struct interface *ifp)
 		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 	}
-	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	nsm_interface_hook_handler(1, -1, ifp);
 
 	return OK;
@@ -1821,9 +1821,9 @@ int nsm_interface_write_hook_add(nsm_submodule_t module, int (*write_cb)(struct 
 int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp)
 {
 	NSM_ENTER_FUNC();
-	if(add)
-		zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-			ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+	//if(add)
+	//	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
+	//		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	// zlog_debug(MODULE_DEFAULT, "===========nsm_interface_hook_handler %d %d %s",add, module, ifp->name);
 	if (module == NSM_INTF_ALL)
 	{

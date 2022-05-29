@@ -8,7 +8,7 @@
  */
 #ifdef DNS_COMPR_TESTING
 # define _GNU_SOURCE
-# define FAST_FUNC /* nothing */
+# define  /* nothing */
 //# define malloc malloc
 # include <stdlib.h>
 # include <stdint.h>
@@ -30,7 +30,7 @@
  * returns a newly allocated string containing the space-separated domains,
  * prefixed with the contents of string pre, or NULL if an error occurs.
  */
-char* FAST_FUNC dname_dec(const zpl_uint8 *cstr, zpl_uint32 clen, const char *pre)
+char*  dname_dec(const zpl_uint8 *cstr, zpl_uint32 clen, const char *pre)
 {
 	char *ret = ret; /* for compiler */
 	char *dst = NULL;
@@ -196,7 +196,7 @@ static int find_offset(const zpl_uint8 *cstr, zpl_uint32 clen, const zpl_uint8 *
  * The computed string is returned directly; its length is returned via retlen;
  * NULL and 0, respectively, are returned if an error occurs.
  */
-zpl_uint8* FAST_FUNC dname_enc(const zpl_uint8 *cstr, zpl_uint32 clen, const char *src, zpl_uint32 *retlen)
+zpl_uint8*  dname_enc(const zpl_uint8 *cstr, zpl_uint32 clen, const char *src, zpl_uint32 *retlen)
 {
 	zpl_uint8 *d, *dname;
 	zpl_uint32 off;

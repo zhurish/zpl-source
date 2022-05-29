@@ -9,8 +9,6 @@ extern "C" {
 int udhcp_read_thread(struct eloop *eloop);
 
 
-int udhcpd_main_a(void *p);
-
  
 #ifdef __cplusplus
 }

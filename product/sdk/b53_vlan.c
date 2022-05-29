@@ -67,7 +67,7 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL5, vc5);
 
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
-
+_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
 	((b53_device_t*)(dev->sdk_device))->vlan_enabled = enable;
 	((b53_device_t*)(dev->sdk_device))->vlan_filtering_enabled = enable_filtering;
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
@@ -237,17 +237,35 @@ static int b53125_vlan_port_untag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t p
 		return b53125_del_vlan_port(dev,  vid,  port, zpl_false);	
 }
 
+
+void b53125_imp_vlan_setup(sdk_driver_t *dev, int cpu_port)
+{
+	unsigned int i;
+	u16 pvlan;
+	for(i = 0; i < 8; i++)
+	{
+		if(dev->ports_table[i] >= 0)
+		{
+			b53125_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), &pvlan);
+			pvlan |= BIT(cpu_port);
+			b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), pvlan);
+			_sdk_debug( "====%s page=0x%x reg=0x%x val=0x%x\n", __func__, B53_PVLAN_PAGE, B53_PVLAN_PORT(i), pvlan);
+		}
+	}
+}
+
 /**************************************************************************************/
 int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 entry = 0;
-	ret |= b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, 2*(port), entry);
+	ret |= b53125_read16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), &entry);
 	if(enable)
 		entry |= BIT(port);
 	else
 		entry &= ~BIT(port);
-	ret |= b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, 2*(port), entry);
+	ret |= b53125_write16(dev->sdk_device, B53_PVLAN_PAGE, B53_PVLAN_PORT(port), entry);
+	b53125_imp_vlan_setup(dev, dev->cpu_port);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }

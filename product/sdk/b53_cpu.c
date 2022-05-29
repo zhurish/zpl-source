@@ -40,15 +40,15 @@ int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 	else
 		hdr_ctl &= ~SM_SW_FWD_MODE;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, hdr_ctl);
-
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_SWITCH_MODE, hdr_ctl);
 	/* Configure the appropriate IMP port */
 	ret |= b53125_read8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, &hdr_ctl);
 	if (port == 8)
-		hdr_ctl |= B53_DOUBLE_IMP_EN;
-	else if (port == 5)
 		hdr_ctl |= B53_IMP_EN;
+	else if (port == 5)
+		hdr_ctl |= B53_DOUBLE_IMP_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, hdr_ctl);
-
+_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_MGMT_PAGE, B53_GLOBAL_CONFIG, hdr_ctl);
 	/* Enable Broadcom tags for IMP port */
 	ret |= b53125_read8(dev->sdk_device, B53_MGMT_PAGE, B53_BRCM_HDR, &hdr_ctl);
 	if (enable)
@@ -56,7 +56,9 @@ int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 	else
 		hdr_ctl &= ~val;
 	ret |= b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_BRCM_HDR, hdr_ctl);
+_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_MGMT_PAGE, B53_BRCM_HDR, hdr_ctl);
 
+	return ret;
 	/* Enable reception Broadcom tag for CPU TX (switch RX) to
 	 * allow us to tag outgoing frames
 	 */
@@ -66,7 +68,7 @@ int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 	else
 		reg |= BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_BRCM_HDR_RX_DIS, reg);
-
+_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_MGMT_PAGE, B53_BRCM_HDR_RX_DIS, reg);
 	/* Enable transmission of Broadcom tags from the switch (CPU RX) to
 	 * allow delivering frames to the per-port net_devices
 	 */
@@ -76,6 +78,7 @@ int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 	else
 		reg |= BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_MGMT_PAGE, B53_BRCM_HDR_TX_DIS, reg);
 	return ret;
 }
 
@@ -86,10 +89,12 @@ int b53125_imp_port_enable(sdk_driver_t *dev)
 	u8 mgmt;
 	/* Include IMP port in dumb forwarding mode
 	 */
-	ret |= b53125_read8(dev->sdk_device, B53_MGMT_PAGE, B53_MGMT_CTRL, &mgmt);
-	mgmt |= B53_IMP_EN;
-	ret |= b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_MGMT_CTRL, mgmt);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	//ret |= b53125_read8(dev->sdk_device, B53_MGMT_PAGE, B53_MGMT_CTRL, &mgmt);
+	//mgmt |= B53_IMP_EN;
+	//ret |= b53125_write8(dev->sdk_device, B53_MGMT_PAGE, B53_MGMT_CTRL, mgmt);
+	//_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_MGMT_PAGE, B53_MGMT_CTRL, mgmt);
+
+	//_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	if(ret == ERROR)
 		return ERROR;
 	return OK;
@@ -105,6 +110,8 @@ int b53125_imp_enable(sdk_driver_t *dev, zpl_bool enable)
 		    PORT_CTRL_RX_MCST_EN |
 		    PORT_CTRL_RX_UCST_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_IMP_CTRL, port_ctrl);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_IMP_CTRL, port_ctrl);
+
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -169,6 +176,7 @@ static int b53125_port_wan_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_boo
 			reg &= ~BIT(port);
 	}
 	ret |= b53125_write16(dev->sdk_device, B53_CTRL_PAGE, B53_WAN_CTRL, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_WAN_CTRL, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }

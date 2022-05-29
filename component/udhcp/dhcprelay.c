@@ -20,6 +20,7 @@
 //usage:       "Relay DHCP requests between clients and server"
 
 #include "dhcp_def.h"
+#include "dhcp_packet.h"
 #include "dhcp_main.h"
 #include "dhcpd.h"
 
@@ -50,8 +51,8 @@ struct dhcp_relay_xid_item {
 	int client;
 	zpl_uint32  xid;
 	struct ipstack_sockaddr_in ip;
-	struct xid_item *next;
-} FIX_ALIASING;
+	struct dhcp_relay_xid_item *next;
+} ;
 
 struct dhcp_relay_xid_item dhcprelay_xid_list;
 
@@ -309,8 +310,8 @@ static int udhcp_server_read_thread(struct eloop *eloop)
 static int dhcp_relay_get_packet_type(struct dhcp_packet *p)
 {
 	zpl_uint8 op = 0;
-	/* it must be either a BOOTREQUEST or a BOOTREPLY */
-	if (p->op != BOOTREQUEST && p->op != BOOTREPLY)
+	/* it must be either a DHCP_BOOTREQUEST or a DHCP_BOOTREPLY */
+	if (p->op != DHCP_BOOTREQUEST && p->op != DHCP_BOOTREPLY)
 		return -1;
 	/* get message type option */
 	op = dhcp_option_message_type_get(p->options, sizeof(p->options));
@@ -341,9 +342,9 @@ static void dhcp_relay_forward_server(dhcp_relay_t * ifter, struct dhcp_packet *
 	zpl_uint32 type;
 	/* check packet_type */
 	type = dhcp_relay_get_packet_type(p);
-	if (type != DHCPDISCOVER && type != DHCPREQUEST
-	 && type != DHCPDECLINE && type != DHCPRELEASE
-	 && type != DHCPINFORM
+	if (type != DHCP_MESSAGE_DISCOVER && type != DHCP_MESSAGE_REQUEST
+	 && type != DHCP_MESSAGE_DECLINE && type != DHCP_MESSAGE_RELEASE
+	 && type != DHCP_MESSAGE_INFORM
 	) 
 	{
 		return;
@@ -376,11 +377,11 @@ static void dhcp_relay_forward_client(dhcp_relay_t * ifter, struct dhcp_packet *
 
 	/* check packet type */
 	type = dhcp_relay_get_packet_type(p);
-	if (type != DHCPOFFER && type != DHCPACK && type != DHCPNAK) {
+	if (type != DHCP_MESSAGE_OFFER && type != DHCP_MESSAGE_ACK && type != DHCP_MESSAGE_NAK) {
 		return;
 	}
 
-	//TODO: also do it if (p->flags & htons(BROADCAST_FLAG)) is set!
+	//TODO: also do it if (p->flags & htons(DHCP_PACKET_FLAG_BROADCAST)) is set!
 	if (item->ip.sin_addr.s_addr == htonl(IPSTACK_INADDR_ANY))
 		item->ip.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
 
@@ -472,9 +473,9 @@ static void dhcp_relay_pass_to_server(struct dhcp_packet *p, int packet_len, int
 
 	/* check packet_type */
 	type = dhcp_relay_get_packet_type(p);
-	if (type != DHCPDISCOVER && type != DHCPREQUEST
-	 && type != DHCPDECLINE && type != DHCPRELEASE
-	 && type != DHCPINFORM
+	if (type != DHCP_MESSAGE_DISCOVER && type != DHCP_MESSAGE_REQUEST
+	 && type != DHCP_MESSAGE_DECLINE && type != DHCP_MESSAGE_RELEASE
+	 && type != DHCP_MESSAGE_INFORM
 	) {
 		return;
 	}
@@ -507,11 +508,11 @@ static void dhcp_relay_pass_to_client(struct dhcp_packet *p, int packet_len, zpl
 
 	/* check packet type */
 	type = dhcp_relay_get_packet_type(p);
-	if (type != DHCPOFFER && type != DHCPACK && type != DHCPNAK) {
+	if (type != DHCP_MESSAGE_OFFER && type != DHCP_MESSAGE_ACK && type != DHCP_MESSAGE_NAK) {
 		return;
 	}
 
-//TODO: also do it if (p->flags & htons(BROADCAST_FLAG)) is set!
+//TODO: also do it if (p->flags & htons(DHCP_PACKET_FLAG_BROADCAST)) is set!
 	if (item->ip.sin_addr.s_addr == htonl(IPSTACK_INADDR_ANY))
 		item->ip.sin_addr.s_addr = htonl(IPSTACK_INADDR_BROADCAST);
 
@@ -599,7 +600,7 @@ int dhcprelay_main(int argc, char **argv)
 				/* Get our IP on corresponding client_iface */
 // RFC 1542
 // 4.1 General BOOTP Processing for Relay Agents
-// 4.1.1 BOOTREQUEST Messages
+// 4.1.1 DHCP_BOOTREQUEST Messages
 //   If the relay agent does decide to relay the request, it MUST examine
 //   the 'giaddr' ("gateway" IP address) field.  If this field is zero,
 //   the relay agent MUST fill this field with the IP address of the
@@ -614,25 +615,25 @@ int dhcprelay_main(int argc, char **argv)
 
 // but why? what if server can't route such IP? Client ifaces may be, say, NATed!
 
-// 4.1.2 BOOTREPLY Messages
-//   BOOTP relay agents relay BOOTREPLY messages only to BOOTP clients.
-//   It is the responsibility of BOOTP servers to send BOOTREPLY messages
+// 4.1.2 DHCP_BOOTREPLY Messages
+//   BOOTP relay agents relay DHCP_BOOTREPLY messages only to BOOTP clients.
+//   It is the responsibility of BOOTP servers to send DHCP_BOOTREPLY messages
 //   directly to the relay agent identified in the 'giaddr' field.
 // (yeah right, unless it is impossible... see comment above)
-//   Therefore, a relay agent may assume that all BOOTREPLY messages it
+//   Therefore, a relay agent may assume that all DHCP_BOOTREPLY messages it
 //   receives are intended for BOOTP clients on its directly-connected
 //   networks.
 //
-//   When a relay agent receives a BOOTREPLY message, it should examine
+//   When a relay agent receives a DHCP_BOOTREPLY message, it should examine
 //   the BOOTP 'giaddr', 'yiaddr', 'chaddr', 'htype', and 'hlen' fields.
 //   These fields should provide adequate information for the relay agent
-//   to deliver the BOOTREPLY message to the client.
+//   to deliver the DHCP_BOOTREPLY message to the client.
 //
 //   The 'giaddr' field can be used to identify the logical interface from
 //   which the reply must be sent (i.e., the host or router interface
 //   connected to the same network as the BOOTP client).  If the content
 //   of the 'giaddr' field does not match one of the relay agent's
-//   directly-connected logical interfaces, the BOOTREPLY message MUST be
+//   directly-connected logical interfaces, the DHCP_BOOTREPLY message MUST be
 //   silently discarded.
 				if (udhcp_read_interface(iface_list[i], NULL, &dhcp_msg.gateway_nip, NULL)) {
 					/* Fall back to our IP on server iface */

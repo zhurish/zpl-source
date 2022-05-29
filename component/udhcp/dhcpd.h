@@ -37,26 +37,18 @@ typedef struct dhcpd_interface_s
 {
 	NODE		node;
 	dhcp_pool_t *pool;
-	//TODO: ifindex, server_nip, server_mac
-	// are obtained from interface name.
-	// Instead of querying them *once*, create update_server_network_data_cache()
-	// and call it before any usage of these fields.
-	// update_server_network_data_cache() must re-query data
-	// if more than N seconds have passed after last use.
+
 	ifindex_t  	ifindex;
 
 	zpl_uint8 	server_mac[ETHER_ADDR_LEN];          /* our MAC address (used only for ARP probing) */
 	zpl_uint32 	ipaddr;
 
-	//dyn_lease_t *lease;
-	
 
 	void		*auto_thread;
 	void		*lease_thread;
 	void		*arp_thread;
 
 	dhcpd_lease_state_t state;
-	//struct dhcp_packet oldpacket;
 
 } dhcpd_interface_t;
 

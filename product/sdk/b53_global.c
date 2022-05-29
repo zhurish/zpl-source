@@ -23,6 +23,8 @@ static int b53125_switch_manege(sdk_driver_t *dev, zpl_bool manege)
 	else
 		mgmt &= ~SM_SW_FWD_MODE;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
+
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	if(ret == ERROR)
 		return ERROR;
@@ -34,15 +36,16 @@ static int b53125_switch_forwarding(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 mgmt;
+	//return OK;//mdf
 	ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, &mgmt);
-	if (enable)
-		mgmt |= SM_SW_FWD_EN;
+	if (enable == zpl_false)
+		mgmt |= (SM_SW_FWD_EN);
 	else
 		mgmt &= ~SM_SW_FWD_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
 	if(ret == ERROR)
 		return ERROR;
-
+_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_SWITCH_MODE, mgmt);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return OK;
 }
@@ -84,6 +87,7 @@ static int b53125_unknow_multicast_flood(sdk_driver_t *dev, zpl_bool enable)
 	reg &= ~ (B53_MC_FWD_EN);
 	reg |= enable ? 0:B53_MC_FWD_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -96,6 +100,7 @@ static int b53125_unknow_unicast_flood(sdk_driver_t *dev, zpl_bool enable)
 	reg &= ~ (B53_UC_FWD_EN);
 	reg |= enable ? 0:B53_UC_FWD_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_IP_MULTICAST_CTRL, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -122,6 +127,7 @@ static int b53125_multicast_learning(sdk_driver_t *dev, zpl_bool enable)
 	reg &= ~ (B53_MC_LEARN_EN);
 	reg |= enable ? B53_MC_LEARN_EN:0;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_MULTICAST_LEARNING, reg);
+	_sdk_debug( "======%s page=0x%x reg=0x%x val=0x%x", __func__, B53_CTRL_PAGE, B53_MULTICAST_LEARNING, reg);
 	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
 	return ret;
 }
@@ -196,11 +202,35 @@ static int b53125_jumbo_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool e
 	return ret;
 }
 
+#if defined( _SDK_CLI_DEBUG_EN)
+DEFUN (bsp_test_manage_mode,
+		bsp_test_manage_mode_cmd,
+		"sdk manage (enable|disable)",
+		"sdk\n"
+		"Manage\n"
+		"enable\n"
+		"disbale\n")
+{
+	int ret = 0;
+	if(memcmp(argv[0], "enable", 3) == 0)
+	{
+		ret = b53125_switch_manege(__msdkdriver, zpl_true);
+		b53_brcm_hdr_setup(__msdkdriver, zpl_true, B53_CPU_PORT);
+	}
+	else if(memcmp(argv[0], "disable", 3) == 0)
+	{
+		ret = b53125_switch_manege(__msdkdriver, zpl_false);
+		b53_brcm_hdr_setup(__msdkdriver, zpl_false, B53_CPU_PORT);
+	}
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
+#endif
 
 int b53125_global_init(sdk_driver_t *dev)
 {
 	int ret = 0;
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &bsp_test_manage_mode_cmd);
 	sdk_maccb.sdk_mac_age_cb = b53125_aging_time;
 	sdk_global.sdk_jumbo_size_cb = b53125_jumbo_size;
 	sdk_global.sdk_switch_manege_cb = b53125_switch_manege;
@@ -216,7 +246,8 @@ int b53125_global_init(sdk_driver_t *dev)
 	ret |= b53125_switch_forwarding(dev, zpl_false);//禁止转发
 	ret |= b53125_unknow_multicast_flood(dev, zpl_true);//使能多播泛洪
 	ret |= b53125_unknow_unicast_flood(dev, zpl_true);//使能单播泛洪
-	ret |= b53125_multicast_learning(dev, zpl_true);//使能多播报文学习源MAC
+	ret |= b53125_multicast_learning(dev, zpl_true);//使能多播报文学习源MAC 
+	
 	return ret;
 }
 
@@ -226,3 +257,5 @@ int b53125_global_start(sdk_driver_t *dev)
 	ret |= b53125_switch_forwarding(dev, zpl_true);//禁止转发
 	return ret;
 }
+
+

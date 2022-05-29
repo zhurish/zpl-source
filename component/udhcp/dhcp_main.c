@@ -3,6 +3,7 @@
 #include "host.h"
 #include "nsm_include.h"
 #include "dhcp_def.h"
+#include "dhcp_packet.h"
 #include "dhcp_lease.h"
 #include "dhcp_pool.h"
 #include "dhcp_util.h"

@@ -68,11 +68,12 @@ enum vtylogin_type
 {
     VTY_LOGIN_NONE,
 	  VTY_LOGIN_STDIO,
-	  VTY_LOGIN_CONSOLE,
+    VTY_LOGIN_STDIO_RL, //READLINE
+	  VTY_LOGIN_CONSOLE,//串口
 	  VTY_LOGIN_TELNET,
 	  VTY_LOGIN_SSH,
-	  VTY_LOGIN_VTYSH,
-    VTY_LOGIN_VTYSH_STDIO,
+	  VTY_LOGIN_VTYSH,  //
+    VTY_LOGIN_VTYSH_STDIO,//readline
     VTY_LOGIN_WATCHDOG,
     VTY_LOGIN_MAX
 } ;
@@ -449,8 +450,11 @@ extern enum vtylogin_type vty_login_type(struct vty *vty);
 extern const char * vty_prompt(struct vty *vty);
 
 #ifdef ZPL_SHRL_MODULE
-extern int vty_stdio_init(struct vty *vty);
-extern int vty_stdio_start(zpl_bool s);
+extern int vtyrl_stdio_init(void);
+extern int vtyrl_stdio_exit(void);
+extern int vtyrl_stdio_task_init(void);
+extern int vtyrl_stdio_task_exit(void);
+extern int vtyrl_stdio_start(zpl_bool s);
 #endif /*ZPL_SHRL_MODULE*/
 
 

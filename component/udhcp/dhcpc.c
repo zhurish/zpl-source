@@ -29,6 +29,7 @@
 #define WANT_PIDFILE 1
 #include "dhcp_def.h"
 #include "dhcp_lease.h"
+#include "dhcp_packet.h"
 #include "dhcp_util.h"
 #include "dhcp_main.h"
 #include "dhcpc.h"
@@ -60,10 +61,6 @@ static zpl_socket_t udhcpc_client_socket(int ifindex);
 static int udhcpc_state_mode_change(client_interface_t * ifter, int mode);
 
 /* Call a script with a par file and env vars */
-/*static void udhcp_run_script(struct dhcp_packet *packet, const char *name)
- {
- return;
- }*/
 
 /*** Sending/receiving packets ***/
 
@@ -91,7 +88,7 @@ static void udhcpc_packet_init(client_interface_t *inter,
 
 	memcpy(packet->chaddr, inter->client_mac, 6);
 	//if (inter->clientid)
-	//	udhcp_add_simple_option_value(packet, DHCP_CLIENT_ID, strlen(inter->clientid), inter->clientid);
+	//	dhcp_add_simple_option_value(packet, DHCP_OPTION_CLIENT_ID, strlen(inter->clientid), inter->clientid);
 	//udhcp_add_binary_option(packet, inter->clientid);
 }
 
@@ -112,7 +109,7 @@ static void udhcpc_add_client_options(client_interface_t *inter,
 		struct dhcp_packet *packet)
 {
 	int i = 0, end = 0, len = 0;
-	//udhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(IP_UDP_DHCP_SIZE));
+	//dhcp_add_simple_option(packet, DHCP_MAX_SIZE, htons(IP_UDP_DHCP_SIZE));
 
 	/* Add a "param req" option with the list of options we'd like to have
 	 * from stubborn DHCP servers. Pull the data from the struct in common.c.
@@ -120,28 +117,28 @@ static void udhcpc_add_client_options(client_interface_t *inter,
 	dhcp_option_packet(inter->options, packet->options,
 			sizeof(packet->options));
 
-	end = udhcp_end_option(packet->options);
+	end = dhcp_end_option(packet->options);
 	len = 0;
-	for (i = 1; i < DHCP_END; i++)
+	for (i = 1; i < DHCP_OPTION_END; i++)
 	{
 		if (inter->opt_mask[i])
 		{
-			packet->options[end + OPT_DATA + len] = i;
+			packet->options[end + DHCP_OPT_DATA + len] = i;
 			len++;
 		}
 	}
 	if (len)
 	{
-		packet->options[end + OPT_CODE] = DHCP_PARAM_REQ;
-		packet->options[end + OPT_LEN] = len;
-		packet->options[end + OPT_DATA + len] = DHCP_END;
+		packet->options[end + DHCP_OPT_CODE] = DHCP_OPTION_PARAM_REQ;
+		packet->options[end + DHCP_OPT_LEN] = len;
+		packet->options[end + DHCP_OPT_DATA + len] = DHCP_OPTION_END;
 	}
 
 	//int dhcp_option_packet_set_value(char *data, int len, zpl_uint8 code, zpl_uint32  oplen, zpl_uint8 *opt)
 
 	/* Request broadcast replies if we have no IP addr */
 	if (/*(option_mask32 & OPT_B) && */packet->ciaddr == 0)
-		packet->flags |= htons(BROADCAST_FLAG);
+		packet->flags |= htons(DHCP_PACKET_FLAG_BROADCAST);
 
 	// This will be needed if we remove -V VENDOR_STR in favor of
 	// -x vendor:VENDOR_STR
@@ -153,16 +150,16 @@ static void udhcpc_add_client_options(client_interface_t *inter,
 /* RFC 2131
  * 4.4.4 Use of broadcast and unicast
  *
- * The DHCP client broadcasts DHCPDISCOVER, DHCPREQUEST and DHCPINFORM
+ * The DHCP client broadcasts DHCP_MESSAGE_DISCOVER, DHCP_MESSAGE_REQUEST and DHCP_MESSAGE_INFORM
  * messages, unless the client knows the address of a DHCP server.
- * The client unicasts DHCPRELEASE messages to the server. Because
+ * The client unicasts DHCP_MESSAGE_RELEASE messages to the server. Because
  * the client is declining the use of the IP address supplied by the server,
- * the client broadcasts DHCPDECLINE messages.
+ * the client broadcasts DHCP_MESSAGE_DECLINE messages.
  *
  * When the DHCP client knows the address of a DHCP server, in either
  * INIT or REBOOTING state, the client may use that address
- * in the DHCPDISCOVER or DHCPREQUEST rather than the IP broadcast address.
- * The client may also use unicast to send DHCPINFORM messages
+ * in the DHCP_MESSAGE_DISCOVER or DHCP_MESSAGE_REQUEST rather than the IP broadcast address.
+ * The client may also use unicast to send DHCP_MESSAGE_INFORM messages
  * to a known DHCP server. If the client receives no response to DHCP
  * messages sent to the IP address of a known DHCP server, the DHCP
  * client reverts to using the IP broadcast address.
@@ -216,11 +213,11 @@ static int udhcpc_send_discover(client_interface_t *inter, zpl_uint32  requested
 	 * random xid field (we override it below),
 	 * client-id option (unless -C), message type option:
 	 */
-	udhcpc_packet_init(inter, &packet, DHCPDISCOVER);
+	udhcpc_packet_init(inter, &packet, DHCP_MESSAGE_DISCOVER);
 
 	packet.xid = htonl(inter->state.xid);
 	if (requested)
-		udhcp_add_simple_option(&packet, DHCP_REQUESTED_IP, requested);
+		dhcp_add_simple_option(&packet, DHCP_OPTION_REQUESTED_IP, requested);
 
 	/* Add options: maxsize,
 	 * optionally: hostname, fqdn, vendorclass,
@@ -230,7 +227,7 @@ static int udhcpc_send_discover(client_interface_t *inter, zpl_uint32  requested
 
 	if (DHCPC_DEBUG_ISON(EVENT))
 	{
-		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPDISCOVER packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_DISCOVER packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 	}
 	if (inter->state.mode == DHCP_RAW_MODE)
@@ -241,7 +238,7 @@ static int udhcpc_send_discover(client_interface_t *inter, zpl_uint32  requested
 
 /* Broadcast a DHCP request message */
 /* RFC 2131 3.1 paragraph 3:
- * "The client _broadcasts_ a DHCPREQUEST message..."
+ * "The client _broadcasts_ a DHCP_MESSAGE_REQUEST message..."
  */
 /* NOINLINE: limit stack usage in caller */
 static int udhcpc_send_request(client_interface_t *inter, zpl_uint32  server,
@@ -249,27 +246,27 @@ static int udhcpc_send_request(client_interface_t *inter, zpl_uint32  server,
 {
 	struct dhcp_packet packet;
 	/*
-	 * RFC 2131 4.3.2 DHCPREQUEST message
+	 * RFC 2131 4.3.2 DHCP_MESSAGE_REQUEST message
 	 * ...
-	 * If the DHCPREQUEST message contains a 'server identifier'
-	 * option, the message is in response to a DHCPOFFER message.
+	 * If the DHCP_MESSAGE_REQUEST message contains a 'server identifier'
+	 * option, the message is in response to a DHCP_MESSAGE_OFFER message.
 	 * Otherwise, the message is a request to verify or extend an
 	 * existing lease. If the client uses a 'client identifier'
-	 * in a DHCPREQUEST message, it MUST use that same 'client identifier'
+	 * in a DHCP_MESSAGE_REQUEST message, it MUST use that same 'client identifier'
 	 * in all subsequent messages. If the client included a list
-	 * of requested parameters in a DHCPDISCOVER message, it MUST
+	 * of requested parameters in a DHCP_MESSAGE_DISCOVER message, it MUST
 	 * include that list in all subsequent messages.
 	 */
 	/* Fill in: op, htype, hlen, cookie, chaddr fields,
 	 * random xid field (we override it below),
 	 * client-id option (unless -C), message type option:
 	 */
-	udhcpc_packet_init(inter, &packet, DHCPREQUEST);
+	udhcpc_packet_init(inter, &packet, DHCP_MESSAGE_REQUEST);
 
 	packet.xid = htonl(inter->state.xid);
-	udhcp_add_simple_option(&packet, DHCP_REQUESTED_IP, requested);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_REQUESTED_IP, requested);
 
-	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_SERVER_ID, server);
 
 	/* Add options: maxsize,
 	 * optionally: hostname, fqdn, vendorclass,
@@ -281,7 +278,7 @@ static int udhcpc_send_request(client_interface_t *inter, zpl_uint32  server,
 	{
 		struct ipstack_in_addr temp_addr;
 		temp_addr.s_addr = requested;
-		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_REQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client  request ip address %s",
 				ipstack_inet_ntoa(temp_addr));
@@ -300,9 +297,9 @@ static int udhcpc_send_renew(client_interface_t *inter, zpl_uint32  server,
 	struct dhcp_packet packet;
 
 	/*
-	 * RFC 2131 4.3.2 DHCPREQUEST message
+	 * RFC 2131 4.3.2 DHCP_MESSAGE_REQUEST message
 	 * ...
-	 * DHCPREQUEST generated during RENEWING state:
+	 * DHCP_MESSAGE_REQUEST generated during RENEWING state:
 	 *
 	 * 'server identifier' MUST NOT be filled in, 'requested IP address'
 	 * option MUST NOT be filled in, 'ciaddr' MUST be filled in with
@@ -317,14 +314,14 @@ static int udhcpc_send_renew(client_interface_t *inter, zpl_uint32  server,
 	 * random xid field (we override it below),
 	 * client-id option (unless -C), message type option:
 	 */
-	udhcpc_packet_init(inter, &packet, DHCPREQUEST);
+	udhcpc_packet_init(inter, &packet, DHCP_MESSAGE_REQUEST);
 
 	packet.xid = htonl(inter->state.xid);
 	packet.ciaddr = ciaddr;
 
-	udhcp_add_simple_option(&packet, DHCP_REQUESTED_IP, ciaddr);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_REQUESTED_IP, ciaddr);
 
-	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_SERVER_ID, server);
 	/* Add options: maxsize,
 	 * optionally: hostname, fqdn, vendorclass,
 	 * "param req" option according to -O, and options specified with -x
@@ -338,7 +335,7 @@ static int udhcpc_send_renew(client_interface_t *inter, zpl_uint32  server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(ciaddr));
-		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPREQUEST packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_REQUEST packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client renew ip address %s from %s",
 				tmpbug, ipstack_inet_ntoa(temp_addr));
@@ -350,10 +347,9 @@ static int udhcpc_send_renew(client_interface_t *inter, zpl_uint32  server,
 	else
 		return udhcpc_packet_bcast_ucast(inter->udp_sock, &packet, ciaddr,
 				server, inter->ifindex);
-//	udhcp_run_script(&packet, state == REQUESTING ? "bound" : "renew");
 }
 
-#if ENABLE_FEATURE_UDHCPC_ARPING
+#if DHCP6_ENABLE_ARPING
 /* Broadcast a DHCP decline message */
 /* NOINLINE: limit stack usage in caller */
 static int udhcpc_send_decline(client_interface_t *inter, zpl_uint32  server,
@@ -364,18 +360,18 @@ static int udhcpc_send_decline(client_interface_t *inter, zpl_uint32  server,
 	/* Fill in: op, htype, hlen, cookie, chaddr, random xid fields,
 	 * client-id option (unless -C), message type option:
 	 */
-	udhcpc_packet_init(inter, &packet, DHCPDECLINE);
+	udhcpc_packet_init(inter, &packet, DHCP_MESSAGE_DECLINE);
 
-	/* RFC 2131 says DHCPDECLINE's xid is randomly selected by client,
-	 * but in case the server is buggy and wants DHCPDECLINE's xid
+	/* RFC 2131 says DHCP_MESSAGE_DECLINE's xid is randomly selected by client,
+	 * but in case the server is buggy and wants DHCP_MESSAGE_DECLINE's xid
 	 * to match the xid which started entire handshake,
-	 * we use the same xid we used in initial DHCPDISCOVER:
+	 * we use the same xid we used in initial DHCP_MESSAGE_DISCOVER:
 	 */
 	packet.xid = htonl(inter->state.xid);
-	/* DHCPDECLINE uses "requested ip", not ciaddr, to store offered IP */
-	udhcp_add_simple_option(&packet, DHCP_REQUESTED_IP, requested);
+	/* DHCP_MESSAGE_DECLINE uses "requested ip", not ciaddr, to store offered IP */
+	dhcp_add_simple_option(&packet, DHCP_OPTION_REQUESTED_IP, requested);
 
-	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_SERVER_ID, server);
 	udhcpc_add_client_options(inter, &packet);
 
 	if (DHCPC_DEBUG_ISON(EVENT))
@@ -385,7 +381,7 @@ static int udhcpc_send_decline(client_interface_t *inter, zpl_uint32  server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(requested));
-		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPDECLINE packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_DECLINE packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client decline ip address %s from %s",
 				tmpbug, ipstack_inet_ntoa(temp_addr));
@@ -409,12 +405,12 @@ static int udhcpc_send_release(client_interface_t *inter, zpl_uint32  server,
 	/* Fill in: op, htype, hlen, cookie, chaddr, random xid fields,
 	 * client-id option (unless -C), message type option:
 	 */
-	udhcpc_packet_init(inter, &packet, DHCPRELEASE);
+	udhcpc_packet_init(inter, &packet, DHCP_MESSAGE_RELEASE);
 
-	/* DHCPRELEASE uses ciaddr, not "requested ip", to store IP being released */
+	/* DHCP_MESSAGE_RELEASE uses ciaddr, not "requested ip", to store IP being released */
 	packet.ciaddr = ciaddr;
 	packet.xid = htonl(inter->state.xid);
-	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_SERVER_ID, server);
 
 	udhcpc_add_client_options(inter, &packet);
 	if (DHCPC_DEBUG_ISON(EVENT))
@@ -424,7 +420,7 @@ static int udhcpc_send_release(client_interface_t *inter, zpl_uint32  server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(ciaddr));
-		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_RELEASE packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client release ip address %s from %s",
 				tmpbug, ipstack_inet_ntoa(temp_addr));
@@ -440,7 +436,6 @@ static int udhcpc_send_release(client_interface_t *inter, zpl_uint32  server,
 		return udhcpc_packet_bcast_ucast(inter->udp_sock, &packet, ciaddr,
 				server, inter->ifindex);
 	//return udhcpc_packet_bcast_ucast(inter->sock, &packet, ciaddr, server, inter->ifindex);
-	//udhcp_run_script(NULL, "deconfig");
 }
 
 static int udhcpc_send_inform(client_interface_t *inter, zpl_uint32  server,
@@ -451,12 +446,12 @@ static int udhcpc_send_inform(client_interface_t *inter, zpl_uint32  server,
 	/* Fill in: op, htype, hlen, cookie, chaddr, random xid fields,
 	 * client-id option (unless -C), message type option:
 	 */
-	udhcpc_packet_init(inter, &packet, DHCPINFORM);
+	udhcpc_packet_init(inter, &packet, DHCP_MESSAGE_INFORM);
 
-	/* DHCPRELEASE uses ciaddr, not "requested ip", to store IP being released */
+	/* DHCP_MESSAGE_RELEASE uses ciaddr, not "requested ip", to store IP being released */
 	packet.ciaddr = ciaddr;
 	packet.xid = htonl(inter->state.xid);
-	udhcp_add_simple_option(&packet, DHCP_SERVER_ID, server);
+	dhcp_add_simple_option(&packet, DHCP_OPTION_SERVER_ID, server);
 
 	udhcpc_add_client_options(inter, &packet);
 
@@ -467,7 +462,7 @@ static int udhcpc_send_inform(client_interface_t *inter, zpl_uint32  server,
 		char tmpbug[64];
 		memset(tmpbug, 0, sizeof(tmpbug));
 		sprintf(tmpbug, "%s", inet_address(ciaddr));
-		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPINFORM packet on interface %s",
+		zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_INFORM packet on interface %s",
 				ifindex2ifname(inter->ifindex));
 		zlog_debug(MODULE_DHCP, "DHCP Client inform ip address %s from %s",
 				tmpbug, ipstack_inet_ntoa(temp_addr));
@@ -540,8 +535,8 @@ static int udhcp_client_release(client_interface_t * ifter, zpl_uint32  server_a
 		zpl_uint32  requested_ip)
 {
 	/* send release packet */
-	if (ifter->state.state == DHCP_BOUND || ifter->state.state == DHCP_RENEWING
-			|| ifter->state.state == DHCP_REBINDING || ifter->state.state == DHCP_REBINDING)
+	if (ifter->state.state == DHCP_STATE_BOUND || ifter->state.state == DHCP_STATE_RENEWING
+			|| ifter->state.state == DHCP_STATE_REBINDING || ifter->state.state == DHCP_STATE_REBINDING)
 	{
 		if (DHCPC_DEBUG_ISON(EVENT))
 		{
@@ -550,7 +545,7 @@ static int udhcp_client_release(client_interface_t * ifter, zpl_uint32  server_a
 			char tmpbug[64];
 			memset(tmpbug, 0, sizeof(tmpbug));
 			sprintf(tmpbug, "%s", inet_address(ntohl(requested_ip)));
-			zlog_debug(MODULE_DHCP, "DHCP Client sending DHCPRELEASE packet on interface %s",
+			zlog_debug(MODULE_DHCP, "DHCP Client sending DHCP_MESSAGE_RELEASE packet on interface %s",
 					ifindex2ifname(ifter->ifindex));
 			zlog_debug(MODULE_DHCP, "DHCP Client release ip address %s from %s",
 					tmpbug, ipstack_inet_ntoa(temp_addr));
@@ -558,7 +553,7 @@ static int udhcp_client_release(client_interface_t * ifter, zpl_uint32  server_a
 		udhcpc_send_release(ifter, server_addr, requested_ip); /* unicast */
 	}
 	if (DHCPC_DEBUG_ISON(EVENT))
-		zlog_debug(MODULE_DHCP, "DHCP Client state change to DHCP_RELEASE");
+		zlog_debug(MODULE_DHCP, "DHCP Client state change to DHCP_STATE_RELEASE");
 	/*
 	 * We can be here on: SIGUSR2,
 	 * or on exit (SIGTERM) and -R "release on quit" is specified.
@@ -566,9 +561,8 @@ static int udhcp_client_release(client_interface_t * ifter, zpl_uint32  server_a
 	 * of the states above.
 	 */
 	dhcp_client_lease_unset(ifter);
-	//udhcp_run_script(NULL, "deconfig");
 
-	ifter->state.state = DHCP_RELEASE;
+	ifter->state.state = DHCP_STATE_RELEASE;
 	return OK;
 }
 
@@ -579,14 +573,14 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 	int optlen = 0;
 	zpl_uint8 *temp = NULL;
 	ifter->lease.lease_address = packet->yiaddr;
-	dhcp_option_get_address(packet->options, DHCP_SERVER_ID,
+	dhcp_option_get_address(packet->options, DHCP_OPTION_SERVER_ID,
 			&ifter->lease.server_address);
-	dhcp_option_get_address(packet->options, DHCP_SUBNET,
+	dhcp_option_get_address(packet->options, DHCP_OPTION_SUBNET,
 			&ifter->lease.lease_netmask);
-	dhcp_option_get_address(packet->options, DHCP_BROADCAST,
+	dhcp_option_get_address(packet->options, DHCP_OPTION_BROADCAST,
 			&ifter->lease.lease_broadcast);
 
-	temp = (const char*) udhcp_get_option(packet, DHCP_DOMAIN_NAME, &optlen);
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_DOMAIN_NAME, &optlen);
 	if (temp)
 	{
 		if (optlen < sizeof(ifter->lease.domain_name))
@@ -597,24 +591,21 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 		}
 	}
 
-	temp = (const char*) udhcp_get_option(packet, DHCP_ROUTER, &optlen);
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_ROUTER, &optlen);
 	if (temp)
 	{
 		move_get_unaligned32(temp, ifter->lease.lease_gateway);
 		if (optlen > 4)
 			move_get_unaligned32(temp + 4, ifter->lease.lease_gateway2);
 	}
-	temp = (const char*) udhcp_get_option(packet, DHCP_DNS_SERVER, &optlen);
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_DNS_SERVER, &optlen);
 	if (temp)
 	{
 		move_get_unaligned32(temp, ifter->lease.lease_dns1);
 		if (optlen > 4)
 			move_get_unaligned32(temp + 4, ifter->lease.lease_dns2);
-		/*		udhcp_str2nip(temp, &ifter->lease.lease_dns1);
-		 if(optlen > 4)
-		 udhcp_str2nip(temp + 4, &ifter->lease.lease_dns2);*/
 	}
-	temp = udhcp_get_option(packet, DHCP_LEASE_TIME, NULL);
+	temp = udhcp_get_option(packet, DHCP_OPTION_LEASE_TIME, NULL);
 	if (!temp)
 	{
 		zlog_warn(MODULE_DHCP, "no lease time with ACK, using 1 hour lease");
@@ -629,42 +620,33 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 		if (ifter->lease.expires > 0x7fffffff / 1000)
 			ifter->lease.expires = 0x7fffffff / 1000;
 	}
-	temp = (const char*) udhcp_get_option(packet, DHCP_TIME_SERVER, &optlen);
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_TIME_SERVER, &optlen);
 	if (temp)
 	{
 		move_get_unaligned32(temp, ifter->lease.lease_timer1);
 		if (optlen > 4)
 			move_get_unaligned32(temp + 4, ifter->lease.lease_timer2);
-		/*		udhcp_str2nip(temp, &ifter->lease.lease_timer1);
-		 if(optlen > 4)
-		 udhcp_str2nip(temp + 4, &ifter->lease.lease_timer2);*/
 	}
 
-	temp = (const char*) udhcp_get_option(packet, DHCP_LOG_SERVER, &optlen);
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_LOG_SERVER, &optlen);
 	if (temp)
 	{
 		move_get_unaligned32(temp, ifter->lease.lease_log1);
 		if (optlen > 4)
 			move_get_unaligned32(temp + 4, ifter->lease.lease_log2);
-		/*		udhcp_str2nip(temp, &ifter->lease.lease_log1);
-		 if(optlen > 4)
-		 udhcp_str2nip(temp + 4, &ifter->lease.lease_log2);*/
 	}
 
-	temp = (const char*) udhcp_get_option(packet, DHCP_NTP_SERVER, &optlen);
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_NTP_SERVER, &optlen);
 	if (temp)
 	{
 		move_get_unaligned32(temp, ifter->lease.lease_ntp1);
 		if (optlen > 4)
 			move_get_unaligned32(temp + 4, ifter->lease.lease_ntp2);
-		/*		udhcp_str2nip(temp, &ifter->lease.lease_ntp1);
-		 if(optlen > 4)
-		 udhcp_str2nip(temp + 4, &ifter->lease.lease_ntp2);*/
 	}
-	dhcp_option_get_8bit(packet->options, DHCP_IP_TTL, &ifter->lease.lease_ttl);
-	dhcp_option_get_8bit(packet->options, DHCP_MTU, &ifter->lease.lease_mtu);
+	dhcp_option_get_8bit(packet->options, DHCP_OPTION_IP_TTL, &ifter->lease.lease_ttl);
+	dhcp_option_get_8bit(packet->options, DHCP_OPTION_MTU, &ifter->lease.lease_mtu);
 
-	temp = (const char*) udhcp_get_option(packet, DHCP_TFTP_SERVER_NAME,
+	temp = (const char*) udhcp_get_option(packet, DHCP_OPTION_TFTP_SERVER_NAME,
 			&optlen);
 	if (temp)
 	{
@@ -683,7 +665,7 @@ static int udhcp_client_explain_lease(struct dhcp_packet *packet,
 	//ifter->lease.server_address = ifter->lease.server_address;
 	ifter->lease.gateway_address = packet->siaddr_nip;
 	ifter->lease.ciaddr = packet->ciaddr; /* client IP (if client is in BOUND, RENEW or REBINDING state) */
-	/* IP address of next server to use in bootstrap, returned in DHCPOFFER, DHCPACK by server */
+	/* IP address of next server to use in bootstrap, returned in DHCP_MESSAGE_OFFER, DHCP_MESSAGE_ACK by server */
 	ifter->lease.siaddr_nip = packet->siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCPACK、DHCPNACK封包中，
 	 此栏填写开机程序代码所在 server 之地址*/
 	ifter->lease.gateway_nip = packet->gateway_nip; /* relay agent IP address */
@@ -695,7 +677,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 {
 	switch (event)
 	{
-	case DHCP_INIT:
+	case DHCP_STATE_INIT:
 		/* broadcast */
 		if (ifter->state.dis_cnt < ifter->state.dis_retries)
 		{
@@ -710,7 +692,7 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 			{
 				zlog_debug(MODULE_DHCP, "DHCP Client state change to INIT");
 			}
-			ifter->state.state = DHCP_INIT;
+			ifter->state.state = DHCP_STATE_INIT;
 			ifter->state.dis_cnt = 0;
 			ifter->state.renew_timeout1 = 0;
 			ifter->state.renew_timeout2 = 0;
@@ -726,60 +708,60 @@ static int udhcp_client_send_handle(client_interface_t * ifter, int event)
 					udhcpc_discover_event, ifter, ifter->state.dis_timeout + 5);
 		}
 		break;
-	case DHCP_REQUESTING:
+	case DHCP_STATE_REQUESTING:
 		/* send broadcast request packet */
-		if (ifter->state.state <= DHCP_REQUESTING)
+		if (ifter->state.state <= DHCP_STATE_REQUESTING)
 		{
 			udhcpc_send_request(ifter, ifter->lease.server_address,
 					ifter->lease.lease_address);
 		}
 		break;
 
-	case DHCP_BOUND:
+	case DHCP_STATE_BOUND:
 		break;
 
-	case DHCP_RENEWING:
+	case DHCP_STATE_RENEWING:
 		udhcpc_send_renew(ifter, ifter->lease.server_address,
 				ifter->lease.lease_address);
-		ifter->state.state = DHCP_RENEWING;
+		ifter->state.state = DHCP_STATE_RENEWING;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
 			zlog_debug(MODULE_DHCP, "DHCP Client state change to RENEWING");
 		}
 		break;
 
-	case DHCP_REBINDING:
+	case DHCP_STATE_REBINDING:
 		udhcpc_send_renew(ifter, ifter->lease.server_address,
 				ifter->lease.lease_address);
-		ifter->state.state = DHCP_REBINDING;
+		ifter->state.state = DHCP_STATE_REBINDING;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
 			zlog_debug(MODULE_DHCP, "DHCP Client state change to REBINDING");
 		}
 		break;
 
-	case DHCP_DECLINE:
+	case DHCP_STATE_DECLINE:
 		udhcpc_send_decline(ifter, ifter->lease.server_address,
 				ifter->lease.lease_address);
-		ifter->state.state = DHCP_DECLINE;
+		ifter->state.state = DHCP_STATE_DECLINE;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
 			zlog_debug(MODULE_DHCP, "DHCP Client state change to DECLINE");
 		}
 		break;
-	case DHCP_RELEASE:
+	case DHCP_STATE_RELEASE:
 		udhcpc_send_release(ifter, ifter->lease.server_address,
 				ifter->lease.lease_address);
-		ifter->state.state = DHCP_RELEASE;
+		ifter->state.state = DHCP_STATE_RELEASE;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
 			zlog_debug(MODULE_DHCP, "DHCP Client state change to RELEASE");
 		}
 		break;
-	case DHCP_INFORM:
+	case DHCP_STATE_INFORM:
 		udhcpc_send_inform(ifter, ifter->lease.server_address,
 				ifter->lease.lease_address);
-		ifter->state.state = DHCP_INFORM;
+		ifter->state.state = DHCP_STATE_INFORM;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
 			zlog_debug(MODULE_DHCP, "DHCP Client state change to INFORM");
@@ -797,8 +779,8 @@ static int udhcpc_discover_event(struct eloop *eloop)
 		return OK;
 	ifter->d_thread = NULL;
 
-	udhcp_client_send_handle(ifter, DHCP_INIT);
-	if (ifter->state.state <= DHCP_INIT)
+	udhcp_client_send_handle(ifter, DHCP_STATE_INIT);
+	if (ifter->state.state <= DHCP_STATE_INIT)
 	{
 		if (ifter->master && !ifter->d_thread)
 			ifter->d_thread = eloop_add_timer(ifter->master,
@@ -815,7 +797,7 @@ static int udhcpc_discover_event(struct eloop *eloop)
 	 }
 	 else
 	 {
-	 ifter->state.state = DHCP_INIT;
+	 ifter->state.state = DHCP_STATE_INIT;
 	 ifter->state.dis_cnt = 0;
 	 ifter->state.renew_timeout1 = 0;
 	 ifter->state.renew_timeout2 = 0;
@@ -839,7 +821,7 @@ static int udhcpc_stop(client_interface_t * ifter)
 	{
 		zlog_debug(MODULE_DHCP, "DHCP Client state change to INIT");
 	}
-	ifter->state.state = DHCP_INIT;
+	ifter->state.state = DHCP_STATE_INIT;
 	//ifter->state.dis_timeout;
 	//ifter->state.dis_retries;
 	ifter->state.dis_cnt = 0;
@@ -877,7 +859,7 @@ static int udhcpc_rebinding_event(struct eloop *eloop)
 	if (ifter == NULL)
 		return OK;
 	ifter->t_thread = NULL;
-	udhcp_client_send_handle(ifter, DHCP_REBINDING);
+	udhcp_client_send_handle(ifter, DHCP_STATE_REBINDING);
 	/*
 	 if(ifter->master && !ifter->d_thread)
 	 ifter->d_thread = eloop_add_timer(ifter->master, udhcpc_discover_event, ifter,
@@ -894,7 +876,7 @@ static int udhcpc_renew_event(struct eloop *eloop)
 	if (ifter == NULL)
 		return OK;
 	ifter->t_thread = NULL;
-	udhcp_client_send_handle(ifter, DHCP_RENEWING);
+	udhcp_client_send_handle(ifter, DHCP_STATE_RENEWING);
 	if (ifter->master)
 		ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_rebinding_event,
 				ifter,
@@ -1028,7 +1010,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 
 	switch (message)
 	{
-	case DHCPOFFER:
+	case DHCP_MESSAGE_OFFER:
 
 		if (ifter->d_thread)
 		{
@@ -1037,23 +1019,23 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 		}
 		//udhcpc_time_cancel(ifter);
 		udhcp_client_explain_lease(packet, ifter);
-		ifter->state.state = DHCP_REQUESTING;
+		ifter->state.state = DHCP_STATE_REQUESTING;
 		if (DHCPC_DEBUG_ISON(STATE))
 		{
 			zlog_debug(MODULE_DHCP, "DHCP Client state change to REQUESTING");
 		}
-		udhcp_client_send_handle(ifter, DHCP_REQUESTING/*DHCPREQUEST*/);
+		udhcp_client_send_handle(ifter, DHCP_STATE_REQUESTING/*DHCP_MESSAGE_REQUEST*/);
 		break;
 
-	case DHCPACK:
+	case DHCP_MESSAGE_ACK:
 		udhcp_client_explain_lease(packet, ifter);
 		udhcpc_time_cancel(ifter);
-		if ((ifter->state.state == DHCP_REQUESTING))
+		if ((ifter->state.state == DHCP_STATE_REQUESTING))
 		{
-			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_T1;
+			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_LEASE_EXPIRES_T1;
 			ifter->state.renew_timeout2 =
-					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_T2);
-			ifter->state.state = DHCP_BOUND;
+					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_LEASE_EXPIRES_T2);
+			ifter->state.state = DHCP_STATE_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
 				zlog_debug(MODULE_DHCP, "DHCP Client state change to BOUND");
@@ -1061,15 +1043,15 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event,
 					ifter, ifter->lease.expires - ifter->state.renew_timeout1);
 			zlog_debug(MODULE_DHCP,
-					"udhcp_client_recv_handle DHCP_REQUESTING ACK and dhcp_client_lease_set");
+					"udhcp_client_recv_handle DHCP_STATE_REQUESTING ACK and dhcp_client_lease_set");
 			dhcp_client_lease_set(ifter);
 		}
-		else if (ifter->state.state == DHCP_RENEWING)
+		else if (ifter->state.state == DHCP_STATE_RENEWING)
 		{
-			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_T1;
+			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_LEASE_EXPIRES_T1;
 			ifter->state.renew_timeout2 =
-					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_T2);
-			ifter->state.state = DHCP_BOUND;
+					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_LEASE_EXPIRES_T2);
+			ifter->state.state = DHCP_STATE_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
 				zlog_debug(MODULE_DHCP, "DHCP Client state change to BOUND");
@@ -1077,15 +1059,15 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event,
 					ifter, ifter->lease.expires - ifter->state.renew_timeout1);
 			zlog_debug(MODULE_DHCP,
-					"udhcp_client_recv_handle DHCP_RENEWING ACK and dhcp_client_lease_set");
+					"udhcp_client_recv_handle DHCP_STATE_RENEWING ACK and dhcp_client_lease_set");
 			dhcp_client_lease_set(ifter);
 		}
-		else if (ifter->state.state == DHCP_REBINDING)
+		else if (ifter->state.state == DHCP_STATE_REBINDING)
 		{
-			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_T1;
+			ifter->state.renew_timeout1 = ifter->lease.expires >> DHCP_LEASE_EXPIRES_T1;
 			ifter->state.renew_timeout2 =
-					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_T2);
-			ifter->state.state = DHCP_BOUND;
+					(zpl_uint32) ((zpl_float) ifter->lease.expires * DHCP_LEASE_EXPIRES_T2);
+			ifter->state.state = DHCP_STATE_BOUND;
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
 				zlog_debug(MODULE_DHCP, "DHCP Client state change to BOUND");
@@ -1093,7 +1075,7 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			ifter->t_thread = eloop_add_timer(ifter->master, udhcpc_renew_event,
 					ifter, ifter->lease.expires - ifter->state.renew_timeout1);
 			zlog_debug(MODULE_DHCP,
-					"udhcp_client_recv_handle DHCP_REBINDING ACK and dhcp_client_lease_set");
+					"udhcp_client_recv_handle DHCP_STATE_REBINDING ACK and dhcp_client_lease_set");
 			dhcp_client_lease_set(ifter);
 		}
 		if (ifter->d_thread)
@@ -1101,15 +1083,14 @@ static int udhcp_client_recv_handle(struct dhcp_packet *packet,
 			eloop_cancel(ifter->d_thread);
 			ifter->d_thread = NULL;
 		}
-		//udhcp_run_script(&packet, state == REQUESTING ? "bound" : "renew");
 		udhcpc_state_mode_change(ifter, DHCP_UDP_MODE);
 		break;
 
-	case DHCPNAK:
+	case DHCP_MESSAGE_NAK:
 	{
 
 		/*			udhcpc_time_cancel(ifter);
-		 ifter->state.state = DHCP_INIT;
+		 ifter->state.state = DHCP_STATE_INIT;
 		 ifter->lease.lease_address = 0;
 		 ifter->state.dis_cnt = 0;
 		 udhcpc_state_mode_change(ifter, DHCP_RAW_MODE);
@@ -1325,21 +1306,21 @@ static int udhcpc_udp_read_thread(struct eloop *eloop)
 /************************************************************************************/
 static int dhcp_client_interface_option_default(client_interface_t *ifter)
 {
-	ifter->opt_mask[DHCP_SUBNET] = 1;
-	ifter->opt_mask[DHCP_ROUTER] = 1;
-	ifter->opt_mask[DHCP_DNS_SERVER] = 1;
-	ifter->opt_mask[DHCP_BROADCAST] = 1;
-	ifter->opt_mask[DHCP_LEASE_TIME] = 1;
-	ifter->opt_mask[DHCP_DOMAIN_NAME] = 1;
+	ifter->opt_mask[DHCP_OPTION_SUBNET] = 1;
+	ifter->opt_mask[DHCP_OPTION_ROUTER] = 1;
+	ifter->opt_mask[DHCP_OPTION_DNS_SERVER] = 1;
+	ifter->opt_mask[DHCP_OPTION_BROADCAST] = 1;
+	ifter->opt_mask[DHCP_OPTION_LEASE_TIME] = 1;
+	ifter->opt_mask[DHCP_OPTION_DOMAIN_NAME] = 1;
 
-	dhcp_option_add(ifter->options, DHCP_CLIENT_ID, ifter->client_mac,
+	dhcp_option_add(ifter->options, DHCP_OPTION_CLIENT_ID, ifter->client_mac,
 			ETHER_ADDR_LEN);
 	if (host_name_get())
-		dhcp_option_add(ifter->options, DHCP_HOST_NAME, host_name_get(),
+		dhcp_option_add(ifter->options, DHCP_OPTION_HOST_NAME, host_name_get(),
 				strlen(host_name_get()));
 
 	if (IF_VLAN_GET(ifter->ifindex) > 0)
-		dhcp_option_add_32bit(ifter->options, DHCP_VLAN_ID,
+		dhcp_option_add_32bit(ifter->options, DHCP_OPTION_VLAN_ID,
 				IF_VLAN_GET(ifter->ifindex));
 
 	return OK;
@@ -1357,7 +1338,7 @@ static client_interface_t * dhcp_client_create_interface(zpl_uint32 ifindex)
 		ifter->ifindex = ifindex;
 		ifter->port = DHCP_CLIENT_PORT;
 
-		ifter->state.state = DHCP_INIT;
+		ifter->state.state = DHCP_STATE_INIT;
 		ifter->state.dis_timeout = DHCP_DEFAULT_TIMEOUT;
 		ifter->state.dis_retries = DHCP_DEFAULT_RETRIES;
 		ifter->state.dis_cnt = 0;
@@ -1525,7 +1506,7 @@ int dhcp_client_interface_clean(void)
 //usage:	IF_FEATURE_UDHCP_PORT(
 //usage:     "\n	-P PORT		Use PORT (default 68)"
 //usage:	)
-//usage:     "\n	-s PROG		Run PROG at DHCP events (default "CONFIG_UDHCPC_DEFAULT_SCRIPT")"
+//usage:     "\n	-s PROG		Run PROG at DHCP events (default "CONFIG_DHCPC_DEFAULT_SCRIPT")"
 //usage:     "\n	-p FILE		Create pidfile"
 //usage:     "\n	-B		Request broadcast replies"
 //usage:     "\n	-t N		Send up to N discover packets (default 3)"
@@ -1565,11 +1546,11 @@ int dhcp_client_interface_clean(void)
  *
 报文类型：
 
-1）DHCPDISCOVER（0x01），此为Client开始DHCP过程的第一个报文
+1）DHCP_MESSAGE_DISCOVER（0x01），此为Client开始DHCP过程的第一个报文
 
-2）DHCPOFFER（0x02），此为Server对DHCPDISCOVER报文的响应
+2）DHCP_MESSAGE_OFFER（0x02），此为Server对DHCP_MESSAGE_DISCOVER报文的响应
 
-3）DHCPREQUEST（0x03），此报文是Client开始DHCP过程中对server的DHCPOFFER报文的回应，或者是Client续延IP地址租期时发出的报文
+3）DHCPREQUEST（0x03），此报文是Client开始DHCP过程中对server的DHCP_MESSAGE_OFFER报文的回应，或者是Client续延IP地址租期时发出的报文
 
 4）DHCPDECLINE（0x04），当Client发现Server分配给它的IP地址无法使用，如IP地址冲突时，将发出此报文，通知Server禁止使用IP地址
 

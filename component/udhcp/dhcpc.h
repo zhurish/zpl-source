@@ -12,7 +12,11 @@ extern "C" {
 #include "dhcp_def.h"
 #include "dhcp_option.h"
 #include "dhcp_lease.h"
-
+#ifdef ZPL_DHCPV6C_MODULE
+#include "dhcpv6c_option.h"
+#include "dhcpv6c_state.h"
+#include "dhcpv6c.h"
+#endif /* ZPL_DHCPV6C_MODULE */
 #define DHCP_DEFAULT_TIMEOUT		5
 #define DHCP_DEFAULT_RETRIES		5
 
@@ -78,25 +82,25 @@ typedef struct client_lease
 	zpl_uint32 	server_address;
 	zpl_uint32 	gateway_address;
 	zpl_uint32  	ciaddr; /* client IP (if client is in BOUND, RENEW or REBINDING state) */
-	/* IP address of next server to use in bootstrap, returned in DHCPOFFER, DHCPACK by server */
-	zpl_uint32  	siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCPACK、DHCPNACK封包中，
+	/* IP address of next server to use in bootstrap, returned in DHCP_MESSAGE_OFFER, DHCP_MESSAGE_ACK by server */
+	zpl_uint32  	siaddr_nip; /*若 client 需要透过网络开机，从 server 送出之 DHCP OFFER、DHCP_MESSAGE_ACK、DHCPNACK封包中，
 							此栏填写开机程序代码所在 server 之地址*/
 	zpl_uint32  	gateway_nip; /* relay agent IP address */
 
-	char 		domain_name[UDHCPD_HOSTNAME_MAX];
-	char 		tftp_srv_name[UDHCPD_HOSTNAME_MAX];
+	char 		domain_name[DHCPD_HOSTNAME_MAX];
+	char 		tftp_srv_name[DHCPD_HOSTNAME_MAX];
 }client_lease_t PACKED;
 
 typedef struct client_interface_s {
 	NODE				node;
 	ifindex_t  			ifindex;
 	zpl_uint16			port;
-	zpl_uint8				client_mac[ETHER_ADDR_LEN];          /* Our mac address */
+	zpl_uint8			client_mac[ETHER_ADDR_LEN];          /* Our mac address */
 
-	zpl_socket_t					sock;
-	zpl_socket_t					udp_sock;
+	zpl_socket_t		sock;
+	zpl_socket_t		udp_sock;
 
-	zpl_uint8				opt_mask[DHCP_OPTION_MAX];      /* Bitmask of options to send (-O option) */
+	zpl_uint8			opt_mask[DHCP_OPTION_MAX];      /* Bitmask of options to send (-O option) */
 	dhcp_option_set_t	options[DHCP_OPTION_MAX];
 
 	zpl_uint32 			instance;
@@ -104,44 +108,37 @@ typedef struct client_interface_s {
 	void				*r_thread;	//read thread
 	void				*t_thread;	//time thread,
 	void				*d_thread;	//discover thread,
-	zpl_uint32				first_secs;
-	zpl_uint32				last_secs;
+	zpl_uint32			first_secs;
+	zpl_uint32			last_secs;
 
 	client_state_t		state;
 	client_lease_t		lease;
 
-} client_interface_t FIX_ALIASING;
+#ifdef ZPL_DHCPV6C_MODULE
+	void				*dhcpv6c;
+#endif /* ZPL_DHCPV6C_MODULE */
 
-#if 0
-#define INIT_SELECTING  0
-#define REQUESTING      1
-#define BOUND           2
-#define RENEWING        3
-#define REBINDING       4
-/* manually requested renew (SIGUSR1) */
-#define RENEW_REQUESTED 5
-/* release, possibly manually requested (SIGUSR2) */
-#define RELEASED        6
-#endif
+} client_interface_t ;
+
 
 /** DHCP client states */
-#define DHCP_OFF          0
+#define DHCP_STATE_OFF          0
 /* initial state: (re)start DHCP negotiation */
-#define DHCP_INIT         1
-/* discover was sent, DHCPOFFER reply received */
-#define DHCP_REQUESTING   2
-/* select/renew was sent, DHCPACK reply received */
-#define DHCP_BOUND        3
+#define DHCP_STATE_INIT         1
+/* discover was sent, DHCP_MESSAGE_OFFER reply received */
+#define DHCP_STATE_REQUESTING   2
+/* select/renew was sent, DHCP_MESSAGE_ACK reply received */
+#define DHCP_STATE_BOUND        3
 /* half of lease passed, want to renew it by sending unicast renew requests */
-#define DHCP_RENEWING     4
+#define DHCP_STATE_RENEWING     4
 /* renew requests were not answered, lease is almost over, send broadcast renew */
-#define DHCP_REBINDING    5
+#define DHCP_STATE_REBINDING    5
 
-#define DHCP_DECLINE    6
-#define DHCP_RELEASE    7
-#define DHCP_INFORM		8
-#define DHCP_CHECKING   9
-#define DHCP_REBOOT		10
+#define DHCP_STATE_DECLINE    6
+#define DHCP_STATE_RELEASE    7
+#define DHCP_STATE_INFORM		8
+#define DHCP_STATE_CHECKING	   9
+#define DHCP_STATE_REBOOT			10
 
 /************************************************************************************/
 extern client_interface_t * dhcp_client_lookup_interface(dhcp_global_t*config, ifindex_t ifindex);

@@ -88,7 +88,7 @@ int icmp_echo_request(zpl_uint32  test_nip,
 	/* wait for arp reply, and check it */
 	timeout_ms = (int)timeo;
 	do {
-		typedef zpl_uint32  aliased_uint32_t FIX_ALIASING;
+		typedef zpl_uint32  aliased_uint32_t ;
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 
@@ -188,7 +188,7 @@ int icmp_echo_request_mac(zpl_uint32  test_nip,
 	/* wait for arp reply, and check it */
 	timeout_ms = (int)timeo;
 	do {
-		typedef zpl_uint32  aliased_uint32_t FIX_ALIASING;
+		typedef zpl_uint32  aliased_uint32_t ;
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 

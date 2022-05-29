@@ -70,31 +70,31 @@ int dhcpc_interface_config(struct interface *ifp, struct vty *vty)
 					ifter->options[code].code == code &&
 					ifter->options[code].data)
 			{
-				if(code == DHCP_HOST_NAME)
+				if(code == DHCP_OPTION_HOST_NAME)
 					vty_out(vty, " dhcp client hostname %s%s", ifter->options[code].data, VTY_NEWLINE);
-				if(code == DHCP_LEASE_TIME)
+				if(code == DHCP_OPTION_LEASE_TIME)
 					vty_out(vty, " dhcp client lease %s%s", ifter->options[code].data, VTY_NEWLINE);
 
-				if(code == DHCP_VENDOR)
+				if(code == DHCP_OPTION_VENDOR)
 					vty_out(vty, " dhcp client class-id %s%s", ifter->options[code].data, VTY_NEWLINE);
 
-				if(code == DHCP_CLIENT_ID)
+				if(code == DHCP_OPTION_CLIENT_ID)
 				{
-					if(ifter->options[code].data[0] == OPTION_61_MAC)
+					if(ifter->options[code].data[0] == DHCP_OPTION_61_MAC)
 					{
 						vty_out(vty, " dhcp client client-id %s%s", inet_ethernet(ifter->options[code].data + 1), VTY_NEWLINE);
 					}
-					else if(ifter->options[code].data[0] == OPTION_61_UUID)
+					else if(ifter->options[code].data[0] == DHCP_OPTION_61_UUID)
 					{
 						vty_out(vty, " dhcp client client-id %s%s", inet_ethernet(ifter->options[code].data + 1), VTY_NEWLINE);
 					}
-					else if(ifter->options[code].data[0] == OPTION_61_IAID)
+					else if(ifter->options[code].data[0] == DHCP_OPTION_61_IAID)
 					{
 						vty_out(vty, " dhcp client client-id %s%s", inet_ethernet(ifter->options[code].data + 1), VTY_NEWLINE);
 					}
 				}
 /*
-				if(code == DHCP_VLAN_ID)
+				if(code == DHCP_OPTION_VLAN_ID)
 					vty_out(vty, " dhcp client client-id %s%s", ifter->options[code].data, VTY_NEWLINE);
 */
 			}
@@ -103,27 +103,27 @@ int dhcpc_interface_config(struct interface *ifp, struct vty *vty)
 		{
 			if(ifter->opt_mask[i])
 			{
-				if(i == DHCP_ROUTER)
+				if(i == DHCP_OPTION_ROUTER)
 					vty_out(vty, " dhcp client request router%s", VTY_NEWLINE);
-				else if(i == DHCP_ROUTES)
+				else if(i == DHCP_OPTION_ROUTES)
 					vty_out(vty, " dhcp client request static-route%s", VTY_NEWLINE);
-				else if(i == DHCP_STATIC_ROUTES)
+				else if(i == DHCP_OPTION_STATIC_ROUTES)
 					vty_out(vty, " dhcp client request classless-static-route%s", VTY_NEWLINE);
-				else if(i == DHCP_MS_STATIC_ROUTES)
+				else if(i == DHCP_OPTION_MS_STATIC_ROUTES)
 					vty_out(vty, " dhcp client request classless-static-route-ms%s", VTY_NEWLINE);
-				else if(i == DHCP_TFTP_SERVER_NAME)
+				else if(i == DHCP_OPTION_TFTP_SERVER_NAME)
 					vty_out(vty, " dhcp client request tftp-server-address%s", VTY_NEWLINE);
-				else if(i == DHCP_DNS_SERVER)
+				else if(i == DHCP_OPTION_DNS_SERVER)
 					vty_out(vty, " dhcp client request dns-nameserver%s", VTY_NEWLINE);
-				else if(i == DHCP_DOMAIN_NAME)
+				else if(i == DHCP_OPTION_DOMAIN_NAME)
 					vty_out(vty, " dhcp client request domain-name%s", VTY_NEWLINE);
-				else if(i == DHCP_LOG_SERVER)
+				else if(i == DHCP_OPTION_LOG_SERVER)
 					vty_out(vty, " dhcp client request log-server%s", VTY_NEWLINE);
-				else if(i == DHCP_TIME_SERVER)
+				else if(i == DHCP_OPTION_TIME_SERVER)
 					vty_out(vty, " dhcp client request time-server%s", VTY_NEWLINE);
-				else if(i == DHCP_SIP_SERVERS)
+				else if(i == DHCP_OPTION_SIP_SERVERS)
 					vty_out(vty, " dhcp client request sip-server%s", VTY_NEWLINE);
-				else if(i == DHCP_NTP_SERVER)
+				else if(i == DHCP_OPTION_NTP_SERVER)
 					vty_out(vty, " dhcp client request ntp-server%s", VTY_NEWLINE);
 			}
 		}
@@ -213,10 +213,10 @@ static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *p
 		vty_out(vty, "  sip srv        :%s%s", inet_address(ntohl(pstNode->lease.lease_sip1)), VTY_NEWLINE);
 
 	if(pstNode->lease.lease_ttl)
-		vty_out(vty, "  IPSTACK_TTL            :%s%s", ((pstNode->lease.lease_ttl)), VTY_NEWLINE);
+		vty_out(vty, "  IPSTACK_TTL            :%d%s", ((pstNode->lease.lease_ttl)), VTY_NEWLINE);
 
 	if(pstNode->lease.lease_mtu)
-		vty_out(vty, "  MTU            :%s%s", (ntohs(pstNode->lease.lease_mtu)), VTY_NEWLINE);
+		vty_out(vty, "  MTU            :%d%s", (ntohs(pstNode->lease.lease_mtu)), VTY_NEWLINE);
 
 	if(strlen(pstNode->lease.tftp_srv_name))
 		vty_out(vty, "  TFTP Server    :%s%s", ((pstNode->lease.tftp_srv_name)), VTY_NEWLINE);
@@ -228,18 +228,6 @@ static int dhcpc_interface_lease_show_one(struct vty *vty, client_interface_t *p
 		vty_out(vty, "  relay address  :%s%s", inet_address(ntohl(pstNode->lease.gateway_nip)), VTY_NEWLINE);
 	}
 
-/*	zpl_uint8				opt_mask[256];
-	dhcp_option_set_t	options[256];
-
-	void				*master;
-	void				*r_thread;	//read thread
-	void				*t_thread;	//time thread,
-
-	zpl_uint32				first_secs;
-	zpl_uint32				last_secs;
-
-	client_state_t		state;
-	client_lease_t		lease;*/
 	vty_out(vty, "%s", VTY_NEWLINE);
 	return OK;
 }

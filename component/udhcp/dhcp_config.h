@@ -98,8 +98,6 @@ extern "C" {
 #define UNUSED_PARAM __attribute__ ((__unused__))
 #define NORETURN __attribute__ ((__noreturn__))
 #define INIT_FUNC __attribute__ ((constructor))
-#define FAST_FUNC
-#define FIX_ALIASING
 
 
 #if defined(i386) || defined(__x86_64__) || defined(__powerpc__)
@@ -160,34 +158,28 @@ extern "C" {
 # define BB_VER "0.0.0.1"
 
 
-#define ENABLE_UDHCPC	1
-#define ENABLE_UDHCPD	1
+#define DHCPC_ENABLE	1
+#define DHCPD_ENABLE	1
 
-#define ENABLE_FEATURE_UDHCP_RFC3397 1
-#define ENABLE_FEATURE_UDHCP_8021Q 1
-#define ENABLE_FEATURE_UDHCPC_ARPING 1
+#define DHCP_ENABLE_RFC3397 1
+#define DHCP6_ENABLE_8021Q 1
+#define DHCP6_ENABLE_ARPING 1
 
-#define ENABLE_FEATURE_UDHCPC6_RFC3646 1
-#define ENABLE_FEATURE_UDHCPC6_RFC4704 1
-#define ENABLE_FEATURE_UDHCPC6_RFC4833 1
+#define DHCP6_ENABLE_RFC3646 1
+#define DHCP6_ENABLE_RFC4704 1
+#define DHCP6_ENABLE_RFC4833 1
 
-#define ENABLE_FEATURE_UDHCPD_WRITE_LEASES_EARLY 0
-#define ENABLE_FEATURE_UDHCPD_BASE_IP_ON_MAC 0
 
-#define CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS 0
-//#define CONFIG_UDHCPC_DEFAULT_SCRIPT	"dhcp.script"
-#define CONFIG_UDHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/dhcp.script"
-//#define CONFIG_UDHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/default.script"
+//#define CONFIG_DHCPC_DEFAULT_SCRIPT	"dhcp.script"
+#define CONFIG_DHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/dhcp.script"
+//#define CONFIG_DHCPC_DEFAULT_SCRIPT 	"/usr/share/udhcpc/default.script"
 
 //PUSH_AND_SET_FUNCTION_VISIBILITY_TO_HIDDEN
 #define CONFIG_DHCPD_LEASES_FILE	"/var/lib/misc/udhcpd.leases"
 
 
-#define UDHCPD_POOL_MAX	64
-#define UDHCPD_HOSTNAME_MAX	64
-
-
-//#define	spawn_and_wait(n)
+#define DHCPD_POOLNAME_MAX	64
+#define DHCPD_HOSTNAME_MAX	64
 
 
  

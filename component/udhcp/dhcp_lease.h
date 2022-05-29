@@ -40,10 +40,10 @@ typedef struct dyn_lease {
 	 * (dhcp packet has chaddr[16], not [6])
 	 */
 	zpl_uint8 		lease_mac[ETHER_ADDR_LEN];
-	char 		hostname[UDHCPD_HOSTNAME_MAX];
-	//char 		domain_name[UDHCPD_HOSTNAME_MAX];
-	char 		vendor[UDHCPD_HOSTNAME_MAX];
-	char 		client_id[UDHCPD_HOSTNAME_MAX];
+	char 		hostname[DHCPD_HOSTNAME_MAX];
+	//char 		domain_name[DHCPD_HOSTNAME_MAX];
+	char 		vendor[DHCPD_HOSTNAME_MAX];
+	char 		client_id[DHCPD_HOSTNAME_MAX];
 
 	ifindex_t 	ifindex;
 	zpl_uint32		poolid;

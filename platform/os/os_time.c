@@ -228,25 +228,25 @@ CLOCK_REALTIME:系统实时时间,随系统实时时间改变而改变,即从UTC
 　　CLOCK_THREAD_CPUTIME_ID:本线程到当前代码系统CPU花费的时间
  *
  *
-zpl_ullong  FAST_FUNC monotonic_ns(void)
+zpl_ullong   monotonic_ns(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000000ULL + tv.tv_usec * 1000;
 }
-zpl_ullong  FAST_FUNC monotonic_us(void)
+zpl_ullong   monotonic_us(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000ULL + tv.tv_usec;
 }
-zpl_ullong  FAST_FUNC monotonic_ms(void)
+zpl_ullong   monotonic_ms(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000ULL + tv.tv_usec / 1000;
 }
-unsigned FAST_FUNC monotonic_sec(void)
+unsigned  monotonic_sec(void)
 {
 	return time(NULL);
 }
