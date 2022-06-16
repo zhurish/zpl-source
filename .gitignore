@@ -33,6 +33,7 @@ externsions/openssl
 externsions/freetype-2.10.0
 externsions/gsoap-2.8
 externsions/SDL2-2.0.12
+externsions/readline
 product/sdk-robo-5.9.2
 product/bsp/pal/linux/iproute2-5.9.0
 product/bsp/pal/linux/libiproute
