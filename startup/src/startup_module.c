@@ -23,10 +23,13 @@
 #include "nsm_include.h"
 #include "nsm_main.h"
 #include "hal_include.h"
-#include "bsp_include.h"
+#include "bsp_driver.h"
+#ifdef ZPL_ACTIVE_STANDBY
+#include "ipcstandby.h"
+#endif
 #include "startup_module.h"
 #include "startup_disk.h"
-
+//#include "sdk_netpkt.h"
 
 
 extern struct module_alllist module_lists_tbl[MODULE_MAX];
@@ -109,7 +112,7 @@ int startup_module_init(int console_enable)
 	#endif
 	_global_host.console_enable = console_enable;
 	//设置准备初始化标志
-	host_loadconfig_stats(LOAD_INIT);
+	host_loadconfig_state(LOAD_INIT);
 	#ifdef ZPL_HAL_MODULE
 	zplib_module_init(MODULE_HAL);
 	#endif
@@ -165,7 +168,7 @@ int startup_module_waitting(void)
 	os_msleep(2000);
 
 	host_waitting_bspinit(15);
-	//printf("==============================================\r\n");
+
 #ifdef ZPL_NSM_MODULE
 	nsm_module_start();
 #endif
@@ -178,6 +181,9 @@ int startup_module_waitting(void)
 #endif
 	//eth_drv_init(0);
 	//eth_drv_start(0);
+#ifdef ZPL_ACTIVE_STANDBY
+	ipcstandby_done(5);
+#endif	
 	return OK;
 }
 

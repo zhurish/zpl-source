@@ -17,7 +17,6 @@ extern "C" {
 #include "str.h"
 #include "log.h"
 #include "vector.h"
-#include "connected.h"
 #include "algorithm.h"
 #include "checksum.h"
 #include "vector.h"

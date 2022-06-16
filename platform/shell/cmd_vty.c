@@ -285,7 +285,7 @@ DEFUN_HIDDEN (exit_platform,
 	 ip_vrf_terminate ();
 	 //	cmd_terminate ();
 	 exit(0);*/
-	kill(getpid(), SIGTERM);
+	os_signal_send(SIGTERM);
 	return CMD_SUCCESS;
 }
 

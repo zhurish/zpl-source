@@ -26,7 +26,7 @@ static os_time_t *current_time = NULL;
 #else
 static zpl_uint32	inter_value = 10;
 #endif
-static zpl_uint32 time_task_id = 0;
+static zpl_taskid_t time_task_id = 0;
 
 #ifdef OS_TIMER_POSIX
 static timer_t os_timerid = 0;

@@ -66,13 +66,11 @@ ZPL_INCLUDE += -I$(PLATFORM_ROOT)/ipcbc
 ZPL_DEFINE += -DZPL_IPCBC_MODULE -DZPL_IPCBCBSP_MODULE
 endif
 
-
-ifeq ($(strip $(ZPL_IPCBUS_MODULE)),true)
-ZPLPRODS += $(PLATFORM_ROOT)/ipcbus
-ZPL_INCLUDE += -I$(PLATFORM_ROOT)/ipcbus
-ZPL_DEFINE += -DZPL_IPCBUS_MODULE
+ifeq ($(strip $(ZPL_ACTIVE_STANDBY)),true)
+ZPLPRODS += $(PLATFORM_ROOT)/ipcstandby
+ZPL_INCLUDE += -I$(PLATFORM_ROOT)/ipcstandby
+ZPL_DEFINE += -DZPL_ACTIVE_STANDBY
 endif
-
 
 
 ifeq ($(strip $(ZPL_NSM_MODULE)),true)
@@ -373,12 +371,27 @@ endif
 
 ifeq ($(strip $(ZPL_SDK_MODULE)),true)
 ZPL_DEFINE += -DZPL_SDK_MODULE
+
+ifeq ($(strip $(ZPL_SDK_USER)),true) 
+ZPL_DEFINE += -DZPL_SDK_USER
 ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
-SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk
-ZPLPRODS += $(PRODUCT_ROOT)/sdk
-ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk
+SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk/user
+ZPLPRODS += $(PRODUCT_ROOT)/sdk/user
+ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk/user
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)
+endif #($(strip $(ZPL_SDK_USER)),true)
+
+ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
+ZPL_DEFINE += -DZPL_SDK_KERNEL
+ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
+SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk/kernel
+ZPLPRODS += $(PRODUCT_ROOT)/sdk/kernel
+ZPL_DEFINE += -DZPL_SDK_BCM53125
+endif #($(strip $(ZPL_SDK_BCM53125)),true)
+endif #($(strip $(ZPL_SDK_KERNEL)),true)
+
+
 endif #($(strip $(ZPL_SDK_MODULE)),true)
 
 

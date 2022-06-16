@@ -10,19 +10,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <zplos_include.h>
+#ifndef ZPL_SDK_USER
 
-#include "zplos_include.h"
-#include "zmemory.h"
-#include "command.h"
-#include "zmemory.h"
-#include "memtypes.h"
-#include "prefix.h"
-#include "if.h"
-#include "nsm_interface.h"
-#include <log.h>
+typedef enum hal_core_cmd
+{
+	HAL_CORE_NONE,
+  	HAL_CORE_COPY_TO_CPU,
+	HAL_CORE_REDIRECT_TO_CPU,
+  	HAL_CORE_FORWARED,
+	HAL_CORE_DROP,
+}hal_core_cmd_t;
 
-
+enum hal_switch_cmd 
+{
+    HAL_SWITCH_NONE,
+	HAL_SWITCH_CPU_MODE,
+	HAL_SWITCH_CPU,
+	HAL_SWITCH_CPU_SPEED,
+	HAL_SWITCH_CPU_DUPLEX,
+	HAL_SWITCH_CPU_FLOW,
+};
+#endif
 
 typedef struct sdk_cpu_s
 {

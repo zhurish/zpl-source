@@ -105,8 +105,7 @@ extern zpl_bool if_is_l3intf(struct interface *ifp);
 extern zpl_bool if_is_online(struct interface *);
 
 extern int if_online(struct interface *ifp, zpl_bool enable);
-extern int if_up(struct interface *ifp);
-extern int if_down(struct interface *ifp);
+
 
 extern void if_init(void);
 extern void if_terminate(void);
@@ -164,6 +163,22 @@ extern zpl_bool if_have_kernel(struct interface *ifp);
 
 extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);
 
+/* Connected address functions. */
+extern struct connected *connected_new(void);
+extern void connected_free(struct connected *);
+extern void connected_add(struct interface *, struct connected *);
+extern struct connected *connected_add_by_prefix(struct interface *,
+                                                 struct prefix *,
+                                                 struct prefix *);
+extern struct connected *connected_delete_by_prefix(struct interface *,
+                                                    struct prefix *);
+extern struct connected *connected_lookup_address(struct interface *,
+                                                  struct ipstack_in_addr);
+extern struct connected *connected_check(struct interface *ifp, struct prefix *p);
+
+
+extern int connected_same (struct connected *ifc1, struct connected *ifc2);
+extern struct connected *connected_lookup(struct interface *, struct prefix *);
 
 extern int if_data_lock(void);
 extern int if_data_unlock(void);
@@ -171,7 +186,6 @@ extern int if_data_unlock(void);
 extern enum if_link_type netlink_to_if_link_type(zpl_uint32  hwt);
  
 #include "if_name.h"
-#include "connected.h"
 
 #ifdef __cplusplus
 }

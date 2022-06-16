@@ -13,9 +13,9 @@ typedef enum {
   MODULE_TELNET,
   MODULE_RIB,
   MODULE_NSM,
+  MODULE_BSP,
   MODULE_HAL, 
   MODULE_PAL, 
-  MODULE_BSP,
   MODULE_SDK, 
 	MODULE_MAX,
 } module_t;

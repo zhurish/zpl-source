@@ -45,7 +45,7 @@ typedef struct _modbus_config_t {
     HANDLE taskhandle;
     DWORD  taskid;
 #else
-    zpl_uint32 taskid;
+    zpl_taskid_t taskid;
 #endif
     modbus_mode_t mode;
     modbus_type_t type;

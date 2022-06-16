@@ -860,7 +860,8 @@ int hal_ipcsrv_init(void *m, int port, const char *path, int evport, const char 
             return ERROR;
         }
     }
-    _ipcsrv.output_msg.length_max = _ipcsrv.input_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
+    _ipcsrv.output_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
+    _ipcsrv.input_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
     hal_ipcmsg_create(&_ipcsrv.output_msg);
     hal_ipcmsg_create(&_ipcsrv.input_msg);
 #ifdef HAL_IPCSRV_SEM_ACK

@@ -90,7 +90,7 @@ typedef enum
 
 typedef struct web_app_s
 {
-	zpl_uint32 taskid;
+	zpl_taskid_t taskid;
 	zpl_bool enable;
 	zpl_bool finished;
 	zpl_bool init;

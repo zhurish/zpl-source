@@ -71,13 +71,6 @@ Hello, this is " OEM_PACKAGE_BASE " (version " OEM_VERSION ").\r\n\
 "
     "\r\n";
 
-/* This is called from main when a daemon is invoked with -v or --version. */
-void print_version(const char *progname)
-{
-  printf("%s version %s\n", progname, OEM_VERSION);
-  printf("%s\n", OEM_PACKAGE_COPYRIGHT);
-  //  printf ("configured with:\n\t%s\n", QUAGGA_CONFIG_ARGS);
-}
 
 /* Utility function to concatenate argv argument into a single string
    with inserting ' ' character between each argument.  */

@@ -11,10 +11,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifndef ZPL_SDK_USER
 
-#include "nsm_vlan.h"
+enum hal_qinq_cmd 
+{
+    HAL_QINQ_CMD_NONE,
+	HAL_QINQ_CMD_ENABLE,
+	HAL_QINQ_CMD_TPID,
+	HAL_QINQ_CMD_IF_ENABLE,
+    HAL_QINQ_CMD_MAX,
+};
 
+typedef struct hal_qinq_param_s
+{
+	zpl_uint32 value;
+}hal_qinq_param_t;
 
+#endif
 typedef struct sdk_qinq_s
 {
 	int (*sdk_qinq_enable_cb) (void *, zpl_bool);

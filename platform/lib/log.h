@@ -167,7 +167,7 @@ struct zlog
   }depth_debug;
 #define ZLOG_DEPTH_DEBUG_DEFAULT ZLOG_DEPTH_LEVEL2
 #ifdef ZLOG_TASK_ENABLE
-  zpl_uint32	taskid;
+  zpl_taskid_t	taskid;
   int	lfd;
   FILE  *lfp;
 #endif

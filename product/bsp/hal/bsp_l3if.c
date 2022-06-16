@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
+#include "bsp_types.h"
 
-#include "hal_client.h"
 #include "bsp_l3if.h"
-#include "bsp_driver.h"
+
 
 
 sdk_l3if_t sdk_l3if;
@@ -154,7 +151,7 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 			hal_ipcmsg_getl(&client->ipcmsg, &addr_param.address.ipv4.s_addr);
 #ifdef ZPL_BUILD_IPV6
 		else
-			hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&addr_param.address.ipv6, IPV6_MAX_BYTELEN);
+			hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&addr_param.address.ipv6, sizeof(addr_param.address.ipv6));
 #endif
 		if(subcmd == HAL_L3IF_ADDR_DEL || subcmd == HAL_L3IF_ADDR_ADD)
 			hal_ipcmsg_getc(&client->ipcmsg, &addr_param.sec);

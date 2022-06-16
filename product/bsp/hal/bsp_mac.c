@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
+#include "bsp_types.h"
 
-#include "hal_client.h"
 #include "bsp_mac.h"
-#include "bsp_driver.h"
+
 
 sdk_mac_t sdk_maccb;
 
@@ -137,7 +134,7 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 			hal_client_send_result_msg(client, ret, &getvalue, HAL_MAC_CMD_READ, mac_param.table.mactbl, 
 				mac_param.table.macnum*sizeof(hal_mac_tbl_t));
 			if(mac_param.table.mactbl)
-				free(mac_param.table.mactbl);	
+				XFREE(MTYPE_SDK_DATA, mac_param.table.mactbl);	
 		}	
 	}
 	break;

@@ -12,8 +12,23 @@
 extern "C" {
 #endif
 
+#ifndef ZPL_SDK_USER
 
+enum hal_8021x_cmd 
+{
+    HAL_8021X_NONE,
+	HAL_8021X,
+	HAL_8021X_PORT_MODE,
+	HAL_8021X_PORT_MAC,
+	HAL_8021X_PORT_STATE,
+};
 
+typedef struct hal_8021x_param_s
+{
+	zpl_uint32 value;
+	mac_t mac[NSM_MAC_MAX];
+}hal_8021x_param_t;
+#endif
 
 typedef struct sdk_8021x_s
 {

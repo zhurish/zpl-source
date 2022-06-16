@@ -206,7 +206,7 @@ typedef struct modem_pppd_s
 	zpl_uint32			t_time;
 
 	zpl_bool			linkup;
-	zpl_uint32 			taskid;
+	zpl_taskid_t 			taskid;
 }modem_pppd_t;
 
 

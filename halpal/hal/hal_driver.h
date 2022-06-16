@@ -22,7 +22,7 @@ extern "C" {
 typedef struct 
 {
 	zpl_void	*master;
-	zpl_uint32 taskid;
+	zpl_taskid_t taskid;
 }hal_driver_t;
 
 typedef enum hal_core_cmd

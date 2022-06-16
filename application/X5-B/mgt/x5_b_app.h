@@ -101,7 +101,7 @@ typedef struct wan_state_s
 typedef struct x5b_app_mgt_s
 {
 	zpl_bool	enable;
-	int		task_id;
+	zpl_taskid_t		task_id;
 	void	*master;
 	int		r_fd;
 	int		w_fd;

@@ -125,7 +125,7 @@ typedef struct iw_ap_s
 	zpl_bool				change;
 	zpl_uint32				crc_sum;
 #ifndef IW_ONCE_TASK
-	zpl_uint32					taskid;
+	zpl_taskid_t					taskid;
 #else
 	void				*master;
 	void				*t_thread;

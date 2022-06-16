@@ -3,11 +3,13 @@
 ###########################################################################
 MODULEDIR = product/bsp/hal
 #OS
-OBJS	+= hal_client.o
+
+ifeq ($(strip $(ZPL_HAL_MODULE)),true)
+ifeq ($(strip $(ZPL_SDK_USER)),true)
 OBJS	+= bsp_global.o
 OBJS	+= bsp_l3if.o
 OBJS	+= bsp_route.o
-ifeq ($(strip $(ZPL_HAL_MODULE)),true)
+
 OBJS	+= bsp_port.o
 OBJS	+= bsp_misc.o
 
@@ -43,9 +45,12 @@ OBJS	+= bsp_mirror.o
 endif
 
 OBJS	+= bsp_cpu.o
-OBJS	+= bsp_driver.o
-
 endif
+
+OBJS	+= bsp_driver.o
+endif
+
+
 #############################################################################
 # LIB
 ###########################################################################

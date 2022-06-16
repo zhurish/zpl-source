@@ -145,19 +145,20 @@ char ** rl_completion_matches (const char *text, rl_compentry_func_t *entry_func
 
 struct vtyrl_stdio_t
 {
-	zpl_uint32 rl_taskid;
+	zpl_taskid_t rl_taskid;
 	int rl_exit;
 	struct vty *vty;
 	char *line_read;
 	int complete_status;
-
+	int init;
 	zpl_uint32 timer;
-	int timeval;
-	int time_interval;
+
 	int status;
+
+	int sigwinch_received;
 };
 
-struct vtyrl_stdio_t  vtyrl_stdio;
+struct vtyrl_stdio_t  vtyrl_stdio = {.init = 0, };
 
 static int	vtyrl_stdio_vty_output(void *p, const char *data, int len)
 {
@@ -349,6 +350,8 @@ static char *vtyrl_stdio_gets(void)
 static int vtyrl_stdio_timeout(void *p)
 {
 	struct vty *vty = vtyrl_stdio.vty;
+	rl_clear_message();
+	rl_redisplay();
 	vty_sync_out(vty, "%s%sVty connection is timed out.%s%s",
 				 VTY_NEWLINE, VTY_NEWLINE,
 				 VTY_NEWLINE, VTY_NEWLINE);
@@ -387,18 +390,37 @@ static int vtyrl_stdio_task(void *p)
 	return 0;
 }
 
+static int vty_readline_attribute(void)
+{
+	struct termios old_termios;
+	if (!tcgetattr(fileno (rl_instream), &old_termios))
+	{
+		old_termios.c_lflag &= ~(ISIG);//忽略终端输入的CTRL+C等信号
+		tcsetattr(fileno (rl_instream), TCSANOW, &old_termios);
+	}
+	return 0;
+}
+static void sigwinch_handler (int sig)
+{
+  vtyrl_stdio.sigwinch_received = 1;
+}
+
 
 static int vty_readline_init(void)
 {
 	setlinebuf(stdout);
 	/* Initialize readline. */
+	
 	rl_initialize();
 
 	/* readline related settings. */
 	rl_bind_key('?', (rl_command_func_t *)vtyrl_stdio_describe);
-	/*初始化tab补全*/
+	//rl_bind_key(3, (rl_command_func_t *)vtyrl_stdio_describe);
+	/* 初始化tab补全 */
 	rl_completion_entry_function = vtyrl_stdio_completion_entry_function;
 	rl_attempted_completion_function = (rl_completion_func_t *)vtyrl_stdio_new_completion;
+	vty_readline_attribute();
+	signal (SIGWINCH, sigwinch_handler);
 	zlog_warn(MODULE_LIB, "==== vty_readline_init");
 	return 0;
 }
@@ -406,28 +428,39 @@ static int vty_readline_init(void)
 int vtyrl_stdio_init(void)
 {
 	zpl_socket_t vty_sock = {OS_STACK, 0};
-	memset(&vtyrl_stdio, 0, sizeof(vtyrl_stdio));
-	vtyrl_stdio.vty = vty_new_init(vty_sock);
-	vtyrl_stdio.vty->node = ENABLE_NODE;
-	vtyrl_stdio.vty->privilege = CMD_CONFIG_LEVEL;
-	vtyrl_stdio.vty->login_type = VTY_LOGIN_VTYSH_STDIO;
-	vtyrl_stdio.vty->vty_output = vtyrl_stdio_vty_output;
-	vtyrl_stdio.vty->p_output = stdout;
-	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_init");
-	return vty_readline_init();
+	if(vtyrl_stdio.init == 0)
+	{
+		memset(&vtyrl_stdio, 0, sizeof(vtyrl_stdio));
+		vtyrl_stdio.vty = vty_new_init(vty_sock);
+		vtyrl_stdio.vty->node = ENABLE_NODE;
+		vtyrl_stdio.vty->privilege = CMD_CONFIG_LEVEL;
+		vtyrl_stdio.vty->login_type = VTY_LOGIN_VTYSH_STDIO;
+		vtyrl_stdio.vty->vty_output = vtyrl_stdio_vty_output;
+		vtyrl_stdio.vty->p_output = stdout;
+		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_init");
+		vtyrl_stdio.init = 1;
+		return vty_readline_init();
+	}
+	return OK;
 }
 
 
 int vtyrl_stdio_exit(void)
 {
-	if(vtyrl_stdio.timer)
+	if(vtyrl_stdio.init)
 	{
-		os_time_destroy(vtyrl_stdio.timer);
-		vtyrl_stdio.timer = 0;
+		if(vtyrl_stdio.timer)
+		{
+			os_time_destroy(vtyrl_stdio.timer);
+			vtyrl_stdio.timer = 0;
+		}
+		rl_initialize();
+		if(vtyrl_stdio.vty)
+		{
+			vty_free(vtyrl_stdio.vty);
+			vtyrl_stdio.vty = NULL;
+		}
 	}
-	rl_initialize();
-	if(vtyrl_stdio.vty)
-		vty_free(vtyrl_stdio.vty);
 	memset(&vtyrl_stdio, 0, sizeof(vtyrl_stdio));
 	return 0;
 }
@@ -436,30 +469,482 @@ int vtyrl_stdio_exit(void)
 
 int vtyrl_stdio_task_init(void)
 {
-	vtyrl_stdio.rl_exit = 1;
-	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_init");
-	if (vtyrl_stdio.rl_taskid == 0)
-		vtyrl_stdio.rl_taskid = os_task_create("stdioTask", OS_TASK_DEFAULT_PRIORITY,
-													 0, vtyrl_stdio_task, &vtyrl_stdio, OS_TASK_DEFAULT_STACK);
+	if(vtyrl_stdio.init)
+	{
+		vtyrl_stdio.rl_exit = 1;
+		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_init");
+		if (vtyrl_stdio.rl_taskid == 0)
+			vtyrl_stdio.rl_taskid = os_task_create("stdioTask", OS_TASK_DEFAULT_PRIORITY,
+														0, vtyrl_stdio_task, &vtyrl_stdio, OS_TASK_DEFAULT_STACK);
+	}
 	return OK;
 }
 
 
 int vtyrl_stdio_task_exit(void)
 {
-	vtyrl_stdio.rl_exit = 0;
-	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_exit");
-	vtyrl_stdio.rl_taskid = 0;
+	if(vtyrl_stdio.init)
+	{
+		vtyrl_stdio.rl_exit = 0;
+		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_exit");
+		vtyrl_stdio.rl_taskid = 0;
+	}
 	return OK;
 }
 
 int vtyrl_stdio_start(zpl_bool s)
 {
-	vtyrl_stdio.status = s;
-	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_start");
-	vtyrl_stdio_task_init();
+	if(vtyrl_stdio.init)
+	{
+		vtyrl_stdio.status = s;
+		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_start");
+		vtyrl_stdio_task_init();
+	}
 	return OK;
 }
 
 
+#if 0
+
+extern int errno;
+
+static void cb_linehandler (char *);
+static void signandler (int);
+
+int running, sigwinch_received;
+const char *prompt = "rltest$ ";
+
+/* Handle SIGWINCH and window size changes when readline is not active and
+   reading a character. */
+static void
+sighandler (int sig)
+{
+  sigwinch_received = 1;
+}
+
+/* Callback function called for each line when accept-line executed, EOF
+   seen, or EOF character read.  This sets a flag and returns; it could
+   also call exit(3). */
+static void
+cb_linehandler (char *line)
+{
+  /* Can use ^D (stty eof) or `exit' to exit. */
+  if (line == NULL || strcmp (line, "exit") == 0)
+    {
+      if (line == 0)
+        printf ("\n");
+      printf ("exit\n");
+      /* This function needs to be called to reset the terminal settings,
+	 and calling it from the line handler keeps one extra prompt from
+	 being displayed. */
+      rl_callback_handler_remove ();
+
+      running = 0;
+    }
+  else
+    {
+      if (*line)
+	add_history (line);
+      printf ("input line: %s\n", line);
+      free (line);
+    }
+}
+
+int
+main (int c, char **v)
+{
+  fd_set fds;
+  int r;
+
+
+  setlocale (LC_ALL, "");
+
+  /* Handle SIGWINCH */
+  signal (SIGWINCH, sighandler);
+  
+  /* Install the line handler. */
+  rl_callback_handler_install (prompt, cb_linehandler);
+
+  /* Enter a simple event loop.  This waits until something is available
+     to read on readline's input stream (defaults to standard input) and
+     calls the builtin character read callback to read it.  It does not
+     have to modify the user's terminal settings. */
+  running = 1;
+  while (running)
+    {
+      FD_ZERO (&fds);
+      FD_SET (fileno (rl_instream), &fds);    
+
+      r = select (FD_SETSIZE, &fds, NULL, NULL, NULL);
+      if (r < 0 && errno != EINTR)
+	{
+	  perror ("rltest: select");
+	  rl_callback_handler_remove ();
+	  break;
+	}
+      if (sigwinch_received)
+	{
+	  rl_resize_terminal ();
+	  sigwinch_received = 0;
+	}
+      if (r < 0)
+	continue;
+
+      if (FD_ISSET (fileno (rl_instream), &fds))
+	rl_callback_read_char ();
+    }
+
+  printf ("rltest: Event loop has exited\n");
+  return 0;
+}
+#endif
+
 #endif /*ZPL_SHRL_MODULE*/
+
+//#define VTYSH_TEST
+
+#ifdef VTYSH_TEST
+
+#define PING_TOKEN "PING"
+
+
+struct daemon
+{
+  const char *name;
+  zpl_socket_t fd;
+  os_ansync_t *t_connect;
+  os_ansync_t *t_read;
+  os_ansync_t *t_write;
+  os_ansync_t *t_timeout;
+  zpl_uint32 total_len;
+  zpl_uint32 already;
+  zpl_uint8 buf[256];
+  zpl_uint8 *payload;
+  zpl_uint32 count;
+};
+
+static os_ansync_lst *master;
+
+#define SET_READ_HANDLER(DMN) \
+  if((DMN)->t_read == NULL) \
+  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, handle_read, (DMN), (DMN)->fd._fd)
+
+#define SET_WAKEUP_ECHO(DMN)                                                             \
+  (DMN)->t_write = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_send_echo, (DMN), \
+                                  2000)
+
+static int try_connect(struct daemon *dmn);
+static int wakeup_send_echo(os_ansync_t *t_write);
+
+static int wakeup_init(os_ansync_t *t_connect)
+{
+  struct daemon *dmn = OS_ANSYNC_ARGV(t_connect);
+
+  dmn->t_connect = NULL;
+  if (try_connect(dmn) < 0)
+  {
+    fdprintf(STDOUT_FILENO, "%s state -> down : initial connection attempt failed\r\n",
+             dmn->name);
+  }
+  return 0;
+}
+
+static void
+daemon_down(struct daemon *dmn, const char *why)
+{
+  if(master && dmn->t_read)
+    os_ansync_cancel(master, dmn->t_read);
+  if(master && dmn->t_write)
+    os_ansync_cancel(master, dmn->t_write);
+
+  if(master && dmn->t_timeout)
+    os_ansync_cancel(master, dmn->t_timeout);
+
+	fdprintf(STDOUT_FILENO, "%s state -> down : %s\r\n", dmn->name, why);
+
+  if (!ipstack_invalid(dmn->fd))
+  {
+    ipstack_close(dmn->fd);
+  } 
+}
+
+static int
+handle_read(os_ansync_t *t_read)
+{
+  struct daemon *dmn = OS_ANSYNC_ARGV(t_read);
+  const char resp[] = PING_TOKEN;
+  vtysh_result_t *vtysh_result = (vtysh_result_t *)dmn->buf;
+  ssize_t rc = 0, rlen = 0;
+  struct timeval delay;
+  dmn->payload = dmn->buf + sizeof(vtysh_result_t);
+
+  if (dmn->already < sizeof(vtysh_result_t))
+  {
+    if ((rc = ipstack_read(dmn->fd, dmn->buf + dmn->already, sizeof(vtysh_result_t) - dmn->already)) < 0)
+    {
+      if (IPSTACK_ERRNO_RETRY(errno))
+      {
+        return 0;
+      }
+      dmn->total_len = dmn->already = 0;
+      daemon_down(dmn, "read error");
+      return 0;
+    }
+    if (rc != (ssize_t)(sizeof(vtysh_result_t) - dmn->already))
+    {
+      dmn->already += rc;
+      return 0;
+    }
+    dmn->already = sizeof(vtysh_result_t);
+  }
+  if (dmn->total_len == 0)
+    dmn->total_len = ntohl(vtysh_result->retlen) + sizeof(vtysh_result_t);
+  if (dmn->total_len > sizeof(dmn->buf))
+  {
+    char why[200];
+    dmn->total_len = dmn->already = 0;
+    snprintf(why, sizeof(why), "is too long\r\n");
+    daemon_down(dmn, why);
+    return 0;
+  }
+  /* Read rest of data. */
+  if (dmn->already < dmn->total_len)
+  {
+    if ((rc = ipstack_read(dmn->fd, dmn->buf + dmn->already, dmn->total_len - dmn->already)) < 0)
+    {
+      if (IPSTACK_ERRNO_RETRY(errno))
+      {
+        return 0;
+      }
+      dmn->total_len = dmn->already = 0;
+      daemon_down(dmn, "read error");
+      return 0;
+    }
+    if (rc != (ssize_t)(dmn->total_len - dmn->already))
+    {
+      dmn->already += rc;
+      return 0;
+    }
+    dmn->already = dmn->total_len;
+  }
+  fdprintf(STDOUT_FILENO, "==%d==echo response received type = %d retcode = %d retlen = %d msg(%s)\r\n", os_time(NULL),
+           ntohl(vtysh_result->type), ntohl(vtysh_result->retcode), ntohl(vtysh_result->retlen), dmn->payload);
+
+	dmn->count++;
+	if(dmn->count == 50)
+	{
+		exit(0);
+	}
+  /* We are expecting an echo response: is there any chance that the
+     response would not be returned entirely in the first read?  That
+     seems inconceivable... */
+  if (memcmp(dmn->payload, resp, sizeof(resp) - 1))
+  {
+    char why[200];
+    snprintf(why, sizeof(why), "read returned bad echo response of %d bytes : %.*s\r\n",
+             (int)dmn->total_len, dmn->payload);
+    daemon_down(dmn, why);
+    return 0;
+  }
+
+  if (dmn->t_timeout)
+    os_ansync_cancel(master, dmn->t_timeout);
+	dmn->total_len = dmn->already = 0;
+  return 0;
+}
+
+static void
+daemon_up(struct daemon *dmn, const char *why)
+{
+  fdprintf(STDOUT_FILENO, "%s state -> up : %s\r\n", dmn->name, why);
+  SET_WAKEUP_ECHO(dmn);
+}
+
+static int
+check_connect(os_ansync_t *t_write)
+{
+  struct daemon *dmn = OS_ANSYNC_ARGV(t_write);
+  int sockerr;
+  socklen_t reslen = sizeof(sockerr);
+
+  dmn->t_write = NULL;
+  if (ipstack_getsockopt(dmn->fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (char *)&sockerr, &reslen) < 0)
+  {
+    fdprintf(STDOUT_FILENO, "%s: check_connect: getsockopt failed: %s\r\n",
+             dmn->name, ipstack_strerror(errno));
+    daemon_down(dmn, "getsockopt failed checking connection success");
+    return 0;
+  }
+  if ((reslen == sizeof(sockerr)) && sockerr)
+  {
+    char why[100];
+    snprintf(why, sizeof(why),
+             "getsockopt reports that connection attempt failed: %s\r\n",
+             ipstack_strerror(sockerr));
+    daemon_down(dmn, why);
+    return 0;
+  }
+  if (dmn->t_timeout)
+    os_ansync_cancel(master, dmn->t_timeout);  
+  if (dmn->t_write)
+    os_ansync_cancel(master, dmn->t_write); 	
+  SET_READ_HANDLER(dmn);
+  daemon_up(dmn, "delayed connect succeeded\r\n");
+  return 0;
+}
+
+static int
+wakeup_connect_hanging(os_ansync_t *t_timeout)
+{
+  struct daemon *dmn = OS_ANSYNC_ARGV(t_timeout);
+  char why[100];
+
+  dmn->t_timeout = NULL;
+  snprintf(why, sizeof(why), "connection attempt timed out after %ld seconds\r\n",
+           10);
+  daemon_down(dmn, why);
+  return 0;
+}
+
+/* Making connection to protocol daemon. */
+static int
+try_connect(struct daemon *dmn)
+{
+  zpl_socket_t sock;
+  struct ipstack_sockaddr_un addr;
+  socklen_t len;
+
+
+  memset(&addr, 0, sizeof(struct ipstack_sockaddr_un));
+  addr.sun_family = AF_UNIX;
+  /*snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/%s.vty",
+           gs.vtydir, dmn->name);
+           */
+  snprintf(addr.sun_path, sizeof(addr.sun_path), "%s",
+           ZEBRA_VTYSH_PATH);
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+  len = addr.sun_len = SUN_LEN(&addr);
+#else
+  len = sizeof(addr.sun_family) + strlen(addr.sun_path);
+#endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
+
+  /* Quick check to see if we might succeed before we go to the trouble
+     of creating a socket. */
+  if (access(addr.sun_path, W_OK) < 0)
+  {
+    if (errno != ENOENT)
+      fdprintf(STDOUT_FILENO, "%s: access to socket %s denied: %s\r\n",
+               dmn->name, addr.sun_path, ipstack_strerror(errno));
+    return -1;
+  }
+  sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+  if (ipstack_invalid(sock))
+  {
+    fdprintf(STDOUT_FILENO, "%s(%s): cannot make socket: %s\r\n",
+             __func__, addr.sun_path, ipstack_strerror(errno));
+    return -1;
+  }
+
+  if (ipstack_set_nonblocking(sock) < 0)
+  {
+    fdprintf(STDOUT_FILENO, "%s(%s): set_nonblocking(%d) failed\r\n",
+             __func__, addr.sun_path, sock);
+    ipstack_close(sock);
+    return -1;
+  }
+
+  if (ipstack_connect(sock, (struct sockaddr *)&addr, len) < 0)
+  {
+    if ((errno != EINPROGRESS) && (errno != EWOULDBLOCK))
+    {
+      ipstack_close(sock);
+      return -1;
+    }
+
+    dmn->fd = sock;
+    dmn->t_write = os_ansync_add(master, OS_ANSYNC_OUTPUT, check_connect, dmn, dmn->fd._fd);
+    dmn->t_timeout = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_connect_hanging, dmn,
+                                  15000);
+    //SET_READ_HANDLER(dmn);
+    return 0;
+  }
+
+  dmn->fd = sock;
+  SET_READ_HANDLER(dmn);
+  daemon_up(dmn, "connect succeeded\r\n");
+  return 1;
+}
+
+
+static int
+wakeup_no_answer(os_ansync_t *t_timeout)
+{
+  struct daemon *dmn = OS_ANSYNC_ARGV(t_timeout);
+
+  dmn->t_timeout = NULL;
+  fdprintf(STDOUT_FILENO, "%s state -> unresponsive : no response yet to ping "
+                          "sent %ld seconds ago\r\n",
+           dmn->name, 10);
+  return 0;
+}
+
+static int
+wakeup_send_echo(os_ansync_t *t_write)
+{
+  const char echocmd[] = "echo " PING_TOKEN;
+  ssize_t rc, mlen = 0;
+  char echobuf[64];
+  struct daemon *dmn = OS_ANSYNC_ARGV(t_write);
+  vtysh_msghdr_t *vtyshhdr = (vtysh_msghdr_t *)echobuf;
+  vtyshhdr->type = htonl(VTYSH_MSG_CMD);
+  vtyshhdr->msglen = htonl(sizeof(echocmd));
+  memcpy(echobuf + sizeof(vtysh_msghdr_t), echocmd, sizeof(echocmd));
+  mlen = sizeof(vtysh_msghdr_t) + sizeof(echocmd);
+  dmn->t_write = NULL;
+  if (((rc = ipstack_write(dmn->fd, echobuf, mlen)) < 0) ||
+      ((size_t)rc != mlen))
+  {
+    char why[100 + mlen];
+    snprintf(why, sizeof(why), "write '%s' returned %d instead of %u\r\n",
+             echocmd, (int)rc, (u_int)mlen);
+    daemon_down(dmn, why);
+  }
+  else
+  {
+    if(dmn->t_timeout)
+    {
+      os_ansync_cancel(master, dmn->t_timeout);
+      dmn->t_timeout = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_no_answer, dmn, 15000);
+    }
+  }
+  SET_WAKEUP_ECHO(dmn);
+  fdprintf(STDOUT_FILENO, "===%d===wakeup_send_echo: %d bytes:%s\r\n", os_time(NULL), rc, echobuf);
+  return 0;
+}
+
+static int vtysh_tets_task(void)
+{
+	os_ansync_t *node = NULL;
+    while (master)
+	{
+    	while ((node = os_ansync_fetch(master)))
+      		os_ansync_execute(master, node, OS_ANSYNC_EXECUTE_NONE);
+	}
+	return 0;
+}
+
+int vtysh_tets(void)
+{
+	struct daemon *dmn;
+	dmn = malloc(sizeof(struct daemon));
+	master = os_ansync_lst_create(0, 1);
+	memset(dmn, 0, sizeof(struct daemon));
+	dmn->t_read = NULL;
+	dmn->t_connect = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_init, dmn,
+                                    10000 + (random() % 900));
+  	os_task_create("vtysh_tets_task", OS_TASK_DEFAULT_PRIORITY,
+	               0, vtysh_tets_task, master, OS_TASK_DEFAULT_STACK);
+	return 0;
+}
+
+#endif /*VTYSH_TEST*/

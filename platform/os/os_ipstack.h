@@ -179,6 +179,9 @@ extern char * ipstack_sockstr(zpl_socket_t _sock);
 #define WANT_OSPF_WRITE_FRAGMENT
 #endif
 
+/* Does the I/O error indicate that the operation should be retried later? */
+#define IPSTACK_ERRNO_RETRY(EN) \
+	(((EN) == IPSTACK_ERRNO_EAGAIN) || ((EN) == IPSTACK_ERRNO_EWOULDBLOCK) || ((EN) == IPSTACK_ERRNO_EINTR))
 
 
 

@@ -90,7 +90,7 @@ typedef struct
 	void	*mutex;		//for list
 	void	*ansync_mutex;	//for execute
 	zpl_uint32		module;
-	zpl_uint32		taskid;
+	zpl_taskid_t		taskid;
 
 	struct timeval 	timeout;		//最小定时时间轴 ms
 	zpl_uint32 	interval;				//最小定时时间 ms
@@ -164,6 +164,7 @@ extern int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, zpl_char *fmt,
 
 #ifdef OS_ANSYNC_GLOBAL_LIST
 extern os_ansync_lst * os_ansync_global_lookup(zpl_uint32 taskid, zpl_uint32 module);
+extern int os_ansync_global_foreach(int (*func)(os_ansync_lst *, void *), void *pVoid);
 #endif
 
 

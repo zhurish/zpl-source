@@ -43,7 +43,7 @@
 
 static struct vty *tftp_vty = NULL;
 
-static int sys_task_id = 0;
+static zpl_taskid_t sys_task_id = 0;
 static void *master_eloop = NULL;
 
 struct module_list module_list_utils = 

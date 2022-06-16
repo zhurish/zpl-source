@@ -111,7 +111,7 @@ struct vty
   zpl_socket_t wfd;
 
   /* Is this vty ipstack_connect to file or not */
-  enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV} type;
+  enum {VTY_TERM, VTY_FILE, VTY_SHELL, VTY_SHELL_SERV, VTY_STABDVY} type;
 
   enum vtylogin_type login_type;
   /* Node status of this vty */
@@ -243,17 +243,13 @@ struct vty
 
 #ifdef VTYSH
 #pragma pack(1)
-enum vtysh_type
-{
-	VTYSH_NONE, 
-  VTYSH_CMD, 
-  VTYSH_MSG, 
-  VTYSH_MAX,
-};
+
 enum vtysh_msg
 {
 	VTYSH_MSG_NONE, 
+  VTYSH_MSG_ECHO,
   VTYSH_MSG_CMD, 
+  VTYSH_MSG_DATA,
   VTYSH_MSG_MAX,
 };
 
@@ -282,9 +278,9 @@ typedef struct cli_shell_s
 
   void *m_thread_master;
   void *m_eloop_master;
-  zpl_uint32 console_taskid;
+  zpl_taskid_t console_taskid;
 #ifdef ZPL_IPCOM_MODULE
-  zpl_uint32 telnet_taskid;
+  zpl_taskid_t telnet_taskid;
 #endif
 	struct tty_com	ttycom;
 	struct vty *vty;

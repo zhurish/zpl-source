@@ -347,6 +347,14 @@ enum
   MTYPE_IPCBUS,
   MTYPE_IPCBUSCLIENT,
   MTYPE_IPCBUSMSG,
+  MTYPE_BSP,
+  MTYPE_BSP_CLIENT,
+  MTYPE_BSP_SERV,
+  MTYPE_BSP_DATA,
+  MTYPE_SDK,
+  MTYPE_SDK_CLIENT,
+  MTYPE_SDK_SERV,
+  MTYPE_SDK_DATA,
   MTYPE_SSH,
   MTYPE_SSHD,
   MTYPE_SSH_CLIENT,
@@ -428,6 +436,7 @@ extern struct memory_list memory_list_dhcp[];
 extern struct memory_list memory_list_wifi[];
 extern struct memory_list memory_list_firewall[];
 extern struct memory_list memory_list_port[];
+extern struct memory_list memory_list_halbsp[];
 extern struct memory_list memory_list_ssh[];
 extern struct memory_list memory_list_voip[];
 extern struct memory_list memory_list_web[];

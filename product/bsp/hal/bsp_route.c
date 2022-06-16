@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
-
+#include "bsp_types.h"
 #include "hal_client.h"
 #include "bsp_route.h"
-#include "bsp_driver.h"
+
 
 
 sdk_route_t sdk_route;
@@ -78,8 +75,8 @@ int bsp_route_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 #ifdef ZPL_BUILD_IPV6
 	else
 	{
-		hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.destination.ipv6, IPV6_MAX_BYTELEN);
-		hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.source.ipv6, IPV6_MAX_BYTELEN);
+		hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.destination.ipv6, sizeof(param.destination.ipv6));
+		hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.source.ipv6, sizeof(param.source.ipv6));
 	}
 #endif
 
@@ -98,8 +95,8 @@ int bsp_route_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 #ifdef ZPL_BUILD_IPV6				
 			else	
 			{
-				hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.nexthop[i].gateway.ipv6, IPV6_MAX_BYTELEN);
-				//hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.nexthop[i].source.ipv6, IPV6_MAX_BYTELEN);
+				hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.nexthop[i].gateway.ipv6, sizeof(param.nexthop[i].gateway.ipv6));
+				//hal_ipcmsg_get(&client->ipcmsg, (zpl_uchar *)&param.nexthop[i].source.ipv6, sizeof(param.nexthop[i].source.ipv6));
 			}
 #endif
 		}

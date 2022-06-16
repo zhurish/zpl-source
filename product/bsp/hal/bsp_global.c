@@ -7,13 +7,14 @@
 
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
+#include "bsp_types.h"
 
-#include "hal_client.h"
 #include "bsp_global.h"
-#include "bsp_driver.h"
+#include "bsp_port.h"
+#include "bsp_mac.h"
+
+
+#pragma GCC diagnostic ignored "-Werror=incompatible-pointer-types"
 
 sdk_global_t sdk_global;
 #ifdef ZPL_NSM_IGMP

@@ -1,6 +1,6 @@
 include $(ZPL_MAKE_DIR)/makelinux.mk
 
-include config.mk
+-include config.mk
 
 #OBJS = $(OSOBJ)
 

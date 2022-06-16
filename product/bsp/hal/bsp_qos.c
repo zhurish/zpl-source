@@ -4,13 +4,10 @@
  *  Created on: 2019年9月10日
  *      Author: DELL
  */
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
-
+#include "bsp_types.h"
 #include "hal_client.h"
 #include "bsp_qos.h"
-#include "bsp_driver.h"
+
 
 sdk_qos_t sdk_qos;
 

@@ -78,8 +78,6 @@ typedef struct
 #define IPCCMD_SUBCMD_GET(C)               ((C)&0xffFF)
 
 extern const char * hal_module_cmd_name(zpl_uint32 cmd);
-//extern hal_ipccmd_callback_t * hal_ipccmd_callback_get(hal_ipccmd_callback_t *cmdtbl, int num, int module);
-//extern hal_ipcsubcmd_callback_t * hal_ipcsubcmd_callback_get(hal_ipcsubcmd_callback_t *cmdtbl, int num, int subcmd);
 
 #ifdef __cplusplus
 }

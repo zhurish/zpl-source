@@ -66,7 +66,7 @@ struct nsm_rib_t
   struct work_queue *ribq;
   struct meta_queue *mq;
   int nsm_rib_id;
-  int rib_task_id;  
+  zpl_taskid_t rib_task_id;  
   int initialise;
 };
 
@@ -308,7 +308,7 @@ struct nsm_rtadv_t
   zpl_socket_t irdp_sock;
   struct eloop *t_irdp_raw;
 
-  int irdp_task_id;  
+  zpl_taskid_t irdp_task_id;  
   int initialise;  
 };
 extern struct nsm_rtadv_t nsm_rtadv;

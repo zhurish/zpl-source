@@ -25,7 +25,7 @@ static LIST *job_list = NULL;
 static LIST *job_unused_list = NULL;
 static os_sem_t *job_sem = NULL;
 static os_mutex_t *job_mutex = NULL;
-static zpl_uint32 job_task_id = 0;
+static zpl_taskid_t job_task_id = 0;
 static int os_job_task(void*p);
 
 int os_job_init(void)

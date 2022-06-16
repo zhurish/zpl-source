@@ -34,7 +34,7 @@
 
 #include "linux_driver.h"
 #include "pal_include.h"
-#include "bsp_include.h"
+//#include "bsp_include.h"
 
 #ifdef ZPL_KERNEL_FORWARDING
 int _ipkernel_create(struct interface *ifp)
@@ -320,7 +320,7 @@ int iplinux_stack_init(void)
   pal_stack.ip_stack_firewall_dnat_rule_set = _ipkernel_firewall_dnat_rule_set;
 #endif
 
-
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)
 	sdk_l3if.sdk_l3if_addif_cb = NULL;
 	sdk_l3if.sdk_l3if_delif_cb = NULL;
 	sdk_l3if.sdk_l3if_mac_cb = NULL;
@@ -334,6 +334,6 @@ int iplinux_stack_init(void)
 
   sdk_route.sdk_route_add_cb = _netlink_route_rib_add;
   sdk_route.sdk_route_del_cb = _netlink_route_rib_del;
-
+#endif
   return OK;
 }

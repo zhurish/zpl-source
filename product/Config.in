@@ -57,14 +57,22 @@ config ZPL_SDK_MODULE
 choice
 	prompt "Switch SDK type"
 	depends on ZPL_SDK_MODULE
-	default ZPL_SDK_BCM53125
+	default ZPL_SDK_USER
 
-config ZPL_SDK_BCMX
-	bool "BCMX"
+config ZPL_SDK_USER
+	bool "Switch SDK in User Mode"
+
+config ZPL_SDK_KERNEL
+	bool "Switch SDK in Kernel Mode"
+
+endchoice
 
 config ZPL_SDK_BCM53125
-	bool "BCM53125"
-	
-endchoice
+	bool "BCM53125 SDK"
+	default n
+	depends on ZPL_SDK_MODULE
+	help
+	Build BCM53125 SDK
+
 
 endmenu

@@ -27,16 +27,17 @@
 #include <sys/wait.h>
 #include <zmemory.h>
 #include <vty.h>
+
 #ifndef MIN
 #define MIN(X, Y) (((X) <= (Y)) ? (X) : (Y))
 #endif
 
 /* Macros to help randomize timers. */
-#define JITTER(X) ((random() % ((X) + 1)) - ((X) / 2))
-#define FUZZY(X) ((X) + JITTER((X) / 20))
+//#define JITTER(X) ((random() % ((X) + 1)) - ((X) / 2))
+//#define FUZZY(X) ((X) + JITTER((X) / 20))
 
 #define DEFAULT_PERIOD 5
-#define DEFAULT_TIMEOUT 10
+#define DEFAULT_TIMEOUT 15
 #define DEFAULT_RESTART_TIMEOUT 20
 #define DEFAULT_LOGLEVEL LOG_INFO
 #define DEFAULT_MIN_RESTART 60
@@ -94,6 +95,24 @@ static const char *phase_str[] =
         "Start jobs running",
 };
 
+typedef enum
+{
+  DAEMON_INIT,
+  DAEMON_DOWN,
+  DAEMON_CONNECTING,
+  DAEMON_UP,
+  DAEMON_UNRESPONSIVE
+} daemon_state_t;
+
+static const char *state_str[] =
+    {
+        "Init",
+        "Down",
+        "Connecting",
+        "Up",
+        "Unresponsive",
+};
+
 #define PHASE_TIMEOUT (3 * gs.restart_timeout)
 
 struct restart_info
@@ -105,6 +124,25 @@ struct restart_info
   long interval;
   os_ansync_t *t_kill;
   int kills;
+};
+
+struct daemon
+{
+  const char *name;
+  daemon_state_t state;
+  zpl_socket_t fd;
+  struct timeval echo_sent;
+  u_int connect_tries;
+  os_ansync_t *t_wakeup;
+  os_ansync_t *t_read;
+  os_ansync_t *t_write;
+  os_ansync_t *t_timeout;
+  struct daemon *next;
+  struct restart_info restart;
+  zpl_uint32 total_len;
+  zpl_uint32 already;
+  zpl_uint8 buf[256];
+  zpl_uint8 *payload;
 };
 
 static struct global_state
@@ -133,50 +171,34 @@ static struct global_state
 } gs = {
     .mode = MODE_MONITOR,
     .phase = PHASE_NONE,
-    .vtydir = VTYDIR,
+    .vtydir = ZEBRA_VTYSH_PATH,
     .period = 1000 * DEFAULT_PERIOD,
-    .timeout = DEFAULT_TIMEOUT,
-    .restart_timeout = DEFAULT_RESTART_TIMEOUT,
+    .timeout = 1000 * DEFAULT_TIMEOUT,
+    .restart_timeout = 1000 * DEFAULT_RESTART_TIMEOUT,
     .loglevel = DEFAULT_LOGLEVEL,
-    .min_restart_interval = DEFAULT_MIN_RESTART,
-    .max_restart_interval = DEFAULT_MAX_RESTART,
+    .min_restart_interval = 1000 * DEFAULT_MIN_RESTART,
+    .max_restart_interval = 1000 * DEFAULT_MAX_RESTART,
     .do_ping = 1,
 };
-
-typedef enum
-{
-  DAEMON_INIT,
-  DAEMON_DOWN,
-  DAEMON_CONNECTING,
-  DAEMON_UP,
-  DAEMON_UNRESPONSIVE
-} daemon_state_t;
 
 #define IS_UP(DMN) \
   (((DMN)->state == DAEMON_UP) || ((DMN)->state == DAEMON_UNRESPONSIVE))
 
-static const char *state_str[] =
-    {
-        "Init",
-        "Down",
-        "Connecting",
-        "Up",
-        "Unresponsive",
-};
+#define SET_READ_HANDLER(DMN) \
+  if ((DMN)->t_read == NULL)  \
+  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, watchdog_read, (DMN), (DMN)->fd._fd)
 
-struct daemon
-{
-  const char *name;
-  daemon_state_t state;
-  zpl_socket_t fd;
-  struct timeval echo_sent;
-  u_int connect_tries;
-  os_ansync_t *t_wakeup;
-  os_ansync_t *t_read;
-  os_ansync_t *t_write;
-  struct daemon *next;
-  struct restart_info restart;
-};
+#define SET_WAKEUP_DOWN(DMN)                                                        \
+  (DMN)->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_down, (DMN), \
+                                  (gs.period))
+
+#define SET_WAKEUP_UNRESPONSIVE(DMN)                                                        \
+  (DMN)->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_unresponsive, (DMN), \
+                                  (gs.period))
+
+#define SET_WAKEUP_ECHO(DMN)                                                         \
+  (DMN)->t_write = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, watchdog_echo, (DMN), \
+                                 (gs.period))
 
 static const struct option longopts[] =
     {
@@ -203,7 +225,7 @@ static const struct option longopts[] =
         {NULL, 0, NULL, 0}};
 
 static int try_connect(struct daemon *dmn);
-static int wakeup_send_echo(os_ansync_t *t_wakeup);
+static int watchdog_echo(os_ansync_t *t_wakeup);
 static void try_restart(struct daemon *dmn);
 static void phase_check(void);
 
@@ -339,26 +361,29 @@ run_background(char *shell_cmd)
   switch (child = fork())
   {
   case -1:
-    fdprintf( STDOUT_FILENO, "fork failed, cannot run command [%s]: %s",
+    fdprintf(STDOUT_FILENO, "fork failed, cannot run command [%s]: %s\r\n",
              shell_cmd, ipstack_strerror(errno));
     return -1;
   case 0:
     /* Child process. */
     /* Use separate process group so child processes can be killed easily. */
     if (setpgid(0, 0) < 0)
-      fdprintf( STDOUT_FILENO, "warning: setpgid(0,0) failed: %s", ipstack_strerror(errno));
+      fdprintf(STDOUT_FILENO, "warning: setpgid(0,0) failed: %s\r\n", ipstack_strerror(errno));
     {
       char shell[] = "sh";
       char dashc[] = "-c";
       char *const argv[4] = {shell, dashc, shell_cmd, NULL};
+      fdprintf(STDOUT_FILENO, "%s: run_background(%s) \r\n",
+             __func__, shell_cmd);
+
       execv("/bin/sh", argv);
-      fdprintf( STDOUT_FILENO, "execv(/bin/sh -c '%s') failed: %s",
+      fdprintf(STDOUT_FILENO, "execv(/bin/sh -c '%s') failed: %s",
                shell_cmd, ipstack_strerror(errno));
       _exit(127);
     }
   default:
     /* Parent process: we will reap the child later. */
-    fdprintf( STDOUT_FILENO, "Forked background command [pid %d]: %s", (int)child, shell_cmd);
+    fdprintf(STDOUT_FILENO, "Forked background command [pid %d]: %s\r\n", (int)child, shell_cmd);
     return child;
   }
 }
@@ -384,14 +409,14 @@ restart_kill(os_ansync_t *t_kill)
   struct timeval delay;
 
   time_elapsed(&delay, &restart->time);
-  fdprintf( STDOUT_FILENO, "Warning: %s %s child process %d still running after "
-                            "%ld seconds, sending signal %d",
-            restart->what, restart->name, (int)restart->pid, (long)delay.tv_sec,
-            (restart->kills ? SIGKILL : SIGTERM));
+  fdprintf(STDOUT_FILENO, "Warning: %s %s child process %d still running after "
+                          "%ld seconds, sending signal %d\r\n",
+           restart->what, restart->name, (int)restart->pid, (long)delay.tv_sec,
+           (restart->kills ? SIGKILL : SIGTERM));
   kill(-restart->pid, (restart->kills ? SIGKILL : SIGTERM));
   restart->kills++;
   restart->t_kill = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, restart_kill, restart,
-                                     gs.restart_timeout);
+                                  gs.restart_timeout);
   return 0;
 }
 
@@ -427,10 +452,10 @@ sigchild(int signo, void *info)
   switch (child = waitpid(-1, &status, WNOHANG))
   {
   case -1:
-    fdprintf( STDOUT_FILENO, "waitpid failed: %s", ipstack_strerror(errno));
+    fdprintf(STDOUT_FILENO, "waitpid failed: %s\r\n", ipstack_strerror(errno));
     return;
   case 0:
-    fdprintf( STDOUT_FILENO, "SIGCHLD received, but waitpid did not reap a child");
+    fdprintf(STDOUT_FILENO, "SIGCHLD received, but waitpid did not reap a child\r\n");
     return;
   }
 
@@ -447,27 +472,27 @@ sigchild(int signo, void *info)
   }
   else
   {
-    fdprintf( STDOUT_FILENO, "waitpid returned status for an unknown child process %d",
+    fdprintf(STDOUT_FILENO, "waitpid returned status for an unknown child process %d\r\n",
              (int)child);
     name = "(unknown)";
     what = "background";
   }
   if (WIFSTOPPED(status))
-    fdprintf( STDOUT_FILENO, "warning: %s %s process %d is stopped",
-              what, name, (int)child);
+    fdprintf(STDOUT_FILENO, "warning: %s %s process %d is stopped\r\n",
+             what, name, (int)child);
   else if (WIFSIGNALED(status))
-    fdprintf( STDOUT_FILENO, "%s %s process %d terminated due to signal %d",
-              what, name, (int)child, WTERMSIG(status));
+    fdprintf(STDOUT_FILENO, "%s %s process %d terminated due to signal %d\r\n",
+             what, name, (int)child, WTERMSIG(status));
   else if (WIFEXITED(status))
   {
     if (WEXITSTATUS(status) != 0)
-      fdprintf( STDOUT_FILENO, "%s %s process %d exited with non-zero status %d",
-                what, name, (int)child, WEXITSTATUS(status));
+      fdprintf(STDOUT_FILENO, "%s %s process %d exited with non-zero status %d\r\n",
+               what, name, (int)child, WEXITSTATUS(status));
     else
-      fdprintf( STDOUT_FILENO,  "%s %s process %d exited normally", what, name, (int)child);
+      fdprintf(STDOUT_FILENO, "%s %s process %d exited normally\r\n", what, name, (int)child);
   }
   else
-    fdprintf( STDOUT_FILENO, "cannot interpret %s %s process %d wait status 0x%x",
+    fdprintf(STDOUT_FILENO, "cannot interpret %s %s process %d wait status 0x%x\r\n",
              what, name, (int)child, status);
   phase_check();
 }
@@ -479,13 +504,13 @@ run_job(struct restart_info *restart, const char *cmdtype, const char *command,
   struct timeval delay;
 
   if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-    fdprintf( STDOUT_FILENO,  "attempting to %s %s", cmdtype, restart->name);
+    fdprintf(STDOUT_FILENO, "attempting to %s %s\r\n", cmdtype, restart->name);
 
   if (restart->pid)
   {
     if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-      fdprintf( STDOUT_FILENO,  "cannot %s %s, previous pid %d still running",
-                 cmdtype, restart->name, (int)restart->pid);
+      fdprintf(STDOUT_FILENO, "cannot %s %s, previous pid %d still running\r\n",
+               cmdtype, restart->name, (int)restart->pid);
     return -1;
   }
 
@@ -496,9 +521,9 @@ run_job(struct restart_info *restart, const char *cmdtype, const char *command,
       !force)
   {
     if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-      fdprintf( STDOUT_FILENO,  "postponing %s %s: "
-                                 "elapsed time %ld < retry interval %ld",
-                 cmdtype, restart->name, (long)delay.tv_sec, restart->interval);
+      fdprintf(STDOUT_FILENO, "postponing %s %s: "
+                              "elapsed time %ld < retry interval %ld\r\n",
+               cmdtype, restart->name, (long)delay.tv_sec, restart->interval);
     return -1;
   }
 
@@ -510,7 +535,7 @@ run_job(struct restart_info *restart, const char *cmdtype, const char *command,
     if ((restart->pid = run_background(cmd)) > 0)
     {
       restart->t_kill = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, restart_kill, restart,
-                                         gs.restart_timeout);
+                                      gs.restart_timeout);
       restart->what = cmdtype;
       gs.numpids++;
     }
@@ -526,26 +551,11 @@ run_job(struct restart_info *restart, const char *cmdtype, const char *command,
     else if ((restart->interval *= 2) > gs.max_restart_interval)
       restart->interval = gs.max_restart_interval;
     if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-      fdprintf( STDOUT_FILENO,  "restart %s interval is now %ld",
-                 restart->name, restart->interval);
+      fdprintf(STDOUT_FILENO, "restart %s interval is now %ld\r\n",
+               restart->name, restart->interval);
   }
   return restart->pid;
 }
-
-#define SET_READ_HANDLER(DMN) \
-  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, handle_read, (DMN), (DMN)->fd._fd)
-
-#define SET_WAKEUP_DOWN(DMN)                                          \
-  (DMN)->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_down, (DMN), \
-                                          FUZZY(gs.period))
-
-#define SET_WAKEUP_UNRESPONSIVE(DMN)                                          \
-  (DMN)->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_unresponsive, (DMN), \
-                                          FUZZY(gs.period))
-
-#define SET_WAKEUP_ECHO(DMN)                                               \
-  (DMN)->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_send_echo, (DMN), \
-                                          FUZZY(gs.period))
 
 static int
 wakeup_down(os_ansync_t *t_wakeup)
@@ -564,12 +574,10 @@ static int
 wakeup_init(os_ansync_t *t_wakeup)
 {
   struct daemon *dmn = OS_ANSYNC_ARGV(t_wakeup);
-
   dmn->t_wakeup = NULL;
   if (try_connect(dmn) < 0)
   {
-    SET_WAKEUP_DOWN(dmn);
-    fdprintf( STDOUT_FILENO, "%s state -> down : initial connection attempt failed",
+    fdprintf(STDOUT_FILENO, "%s state -> down : initial connection attempt failed\r\n",
              dmn->name);
     dmn->state = DAEMON_DOWN;
   }
@@ -579,10 +587,19 @@ wakeup_init(os_ansync_t *t_wakeup)
 static void
 daemon_down(struct daemon *dmn, const char *why)
 {
+  if (master && dmn->t_read)
+    os_ansync_cancel(master, dmn->t_read);
+  if (master && dmn->t_write)
+    os_ansync_cancel(master, dmn->t_write);
+  if (master && dmn->t_wakeup)
+    os_ansync_cancel(master, dmn->t_wakeup);
+  if (master && dmn->t_timeout)
+    os_ansync_cancel(master, dmn->t_timeout);
+
   if (IS_UP(dmn) || (dmn->state == DAEMON_INIT))
-    fdprintf( STDOUT_FILENO, "%s state -> down : %s", dmn->name, why);
+    fdprintf(STDOUT_FILENO, "%s state -> down : %s\r\n", dmn->name, why);
   else if (gs.loglevel > ZLOG_LEVEL_DEBUG)
-    fdprintf( STDOUT_FILENO,  "%s still down : %s", dmn->name, why);
+    fdprintf(STDOUT_FILENO, "%s still down : %s\r\n", dmn->name, why);
   if (IS_UP(dmn))
     gs.numdown++;
   dmn->state = DAEMON_DOWN;
@@ -590,49 +607,79 @@ daemon_down(struct daemon *dmn, const char *why)
   {
     ipstack_close(dmn->fd);
   }
-  os_ansync_cancel(master,dmn->t_read);
-  os_ansync_cancel(master,dmn->t_write);
-  os_ansync_cancel(master,dmn->t_wakeup);
+
   if (try_connect(dmn) < 0)
     SET_WAKEUP_DOWN(dmn);
   phase_check();
 }
 
 static int
-handle_read(os_ansync_t *t_read)
+watchdog_read(os_ansync_t *t_read)
 {
   struct daemon *dmn = OS_ANSYNC_ARGV(t_read);
-  static const char resp[sizeof(PING_TOKEN) + 4] = PING_TOKEN "\n";
-  char buf[sizeof(resp) + 100];
-  ssize_t rc, rlen = sizeof(vtysh_result_t) + sizeof(resp);
+  const char resp[] = PING_TOKEN;
+  vtysh_result_t *vtysh_result = (vtysh_result_t *)dmn->buf;
+  ssize_t rc = 0, rlen = 0;
   struct timeval delay;
+  dmn->payload = dmn->buf + sizeof(vtysh_result_t);
 
-  dmn->t_read = NULL;
-  if ((rc = ipstack_read(dmn->fd, buf, sizeof(buf))) < 0)
+  if (dmn->already < sizeof(vtysh_result_t))
   {
-    char why[100];
-
-    if (IPSTACK_ERRNO_RETRY(errno))
+    if ((rc = ipstack_read(dmn->fd, dmn->buf + dmn->already, sizeof(vtysh_result_t) - dmn->already)) < 0)
     {
-      /* Pretend it never happened. */
-      SET_READ_HANDLER(dmn);
+      if (IPSTACK_ERRNO_RETRY(errno))
+      {
+        return 0;
+      }
+      dmn->total_len = dmn->already = 0;
+      daemon_down(dmn, "read error");
       return 0;
     }
-    snprintf(why, sizeof(why), "unexpected read error: %s",
-             ipstack_strerror(errno));
+    if (rc != (ssize_t)(sizeof(vtysh_result_t) - dmn->already))
+    {
+      dmn->already += rc;
+      return 0;
+    }
+    dmn->already = sizeof(vtysh_result_t);
+  }
+  if (dmn->total_len == 0)
+    dmn->total_len = ntohl(vtysh_result->retlen) + sizeof(vtysh_result_t);
+  if (dmn->total_len > sizeof(dmn->buf))
+  {
+    char why[200];
+    dmn->total_len = dmn->already = 0;
+    snprintf(why, sizeof(why), "is too long\r\n");
     daemon_down(dmn, why);
     return 0;
   }
-  if (rc == 0)
+  /* Read rest of data. */
+  if (dmn->already < dmn->total_len)
   {
-    daemon_down(dmn, "read returned EOF");
-    return 0;
+    if ((rc = ipstack_read(dmn->fd, dmn->buf + dmn->already, dmn->total_len - dmn->already)) < 0)
+    {
+      if (IPSTACK_ERRNO_RETRY(errno))
+      {
+        return 0;
+      }
+      dmn->total_len = dmn->already = 0;
+      daemon_down(dmn, "read error");
+      return 0;
+    }
+    if (rc != (ssize_t)(dmn->total_len - dmn->already))
+    {
+      dmn->already += rc;
+      return 0;
+    }
+    dmn->already = dmn->total_len;
   }
+  fdprintf(STDOUT_FILENO, "==%d==echo response received type = %d retcode = %d retlen = %d msg(%s)\r\n", os_time(NULL),
+           ntohl(vtysh_result->type), ntohl(vtysh_result->retcode), ntohl(vtysh_result->retlen), dmn->payload);
+
   if (!dmn->echo_sent.tv_sec)
   {
-    char why[sizeof(buf) + 100];
-    snprintf(why, sizeof(why), "unexpected read returns %d bytes: %.*s",
-             (int)rc, (int)rc, buf);
+    char why[200];
+    snprintf(why, sizeof(why), "unexpected read returns %d bytes: %.*s\r\n",
+             dmn->total_len, dmn->payload);
     daemon_down(dmn, why);
     return 0;
   }
@@ -640,12 +687,11 @@ handle_read(os_ansync_t *t_read)
   /* We are expecting an echo response: is there any chance that the
      response would not be returned entirely in the first read?  That
      seems inconceivable... */
-  if ((rc != rlen) || memcmp(buf+sizeof(vtysh_result_t), resp, sizeof(resp)))
+  if (memcmp(dmn->payload, resp, sizeof(resp) - 1))
   {
-    char why[100 + sizeof(buf)];
-    snprintf(why, sizeof(why), "read returned bad echo response of %d bytes "
-                               "(expecting %u): %.*s",
-             (int)rc, (u_int)rlen/*sizeof(resp)*/, (int)rc, buf+sizeof(vtysh_result_t));
+    char why[200];
+    snprintf(why, sizeof(why), "read returned bad echo response of %d bytes : %.*s\r\n",
+             (int)dmn->total_len, dmn->payload);
     daemon_down(dmn, why);
     return 0;
   }
@@ -657,26 +703,24 @@ handle_read(os_ansync_t *t_read)
     if (delay.tv_sec < gs.timeout)
     {
       dmn->state = DAEMON_UP;
-      fdprintf( STDOUT_FILENO, "%s state -> up : echo response received after %ld.%06ld "
-                                "seconds",
-                dmn->name,
-                (long)delay.tv_sec, (long)delay.tv_usec);
+      fdprintf(STDOUT_FILENO, "%s state -> up : echo response received after %ld.%06ld "
+                              "seconds\r\n",
+               dmn->name,
+               (long)delay.tv_sec, (long)delay.tv_usec);
     }
     else
-      fdprintf( STDOUT_FILENO, "%s: slow echo response finally received after %ld.%06ld "
-                                "seconds",
-                dmn->name,
-                (long)delay.tv_sec, (long)delay.tv_usec);
+      fdprintf(STDOUT_FILENO, "%s: slow echo response finally received after %ld.%06ld "
+                              "seconds\r\n",
+               dmn->name,
+               (long)delay.tv_sec, (long)delay.tv_usec);
   }
   else if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-    fdprintf( STDOUT_FILENO,  "%s: echo response received after %ld.%06ld seconds",
-               dmn->name, (long)delay.tv_sec, (long)delay.tv_usec);
+    fdprintf(STDOUT_FILENO, "%s: echo response received after %ld.%06ld seconds\r\n",
+             dmn->name, (long)delay.tv_sec, (long)delay.tv_usec);
 
-  SET_READ_HANDLER(dmn);
-  if (dmn->t_wakeup)
-    os_ansync_cancel(master, dmn->t_wakeup);
-  SET_WAKEUP_ECHO(dmn);
-
+  if (dmn->t_timeout)
+    os_ansync_cancel(master, dmn->t_timeout);
+  dmn->total_len = dmn->already = 0;
   return 0;
 }
 
@@ -686,10 +730,11 @@ daemon_up(struct daemon *dmn, const char *why)
   dmn->state = DAEMON_UP;
   gs.numdown--;
   dmn->connect_tries = 0;
-  fdprintf( STDOUT_FILENO, "%s state -> up : %s", dmn->name, why);
+  fdprintf(STDOUT_FILENO, "%s state -> up : %s\r\n", dmn->name, why);
   if (gs.do_ping)
     SET_WAKEUP_ECHO(dmn);
-  phase_check();
+  else
+    phase_check();
 }
 
 static int
@@ -702,8 +747,8 @@ check_connect(os_ansync_t *t_write)
   dmn->t_write = NULL;
   if (ipstack_getsockopt(dmn->fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, (char *)&sockerr, &reslen) < 0)
   {
-    fdprintf( STDOUT_FILENO, "%s: check_connect: getsockopt failed: %s",
-              dmn->name, ipstack_strerror(errno));
+    fdprintf(STDOUT_FILENO, "%s: check_connect: getsockopt failed: %s\r\n",
+             dmn->name, ipstack_strerror(errno));
     daemon_down(dmn, "getsockopt failed checking connection success");
     return 0;
   }
@@ -711,13 +756,13 @@ check_connect(os_ansync_t *t_write)
   {
     char why[100];
     snprintf(why, sizeof(why),
-             "getsockopt reports that connection attempt failed: %s",
+             "getsockopt reports that connection attempt failed: %s\r\n",
              ipstack_strerror(sockerr));
     daemon_down(dmn, why);
     return 0;
   }
-
-  daemon_up(dmn, "delayed connect succeeded");
+  SET_READ_HANDLER(dmn);
+  daemon_up(dmn, "delayed connect succeeded\r\n");
   return 0;
 }
 
@@ -728,7 +773,7 @@ wakeup_connect_hanging(os_ansync_t *t_wakeup)
   char why[100];
 
   dmn->t_wakeup = NULL;
-  snprintf(why, sizeof(why), "connection attempt timed out after %ld seconds",
+  snprintf(why, sizeof(why), "connection attempt timed out after %ld seconds\r\n",
            gs.timeout);
   daemon_down(dmn, why);
   return 0;
@@ -743,13 +788,16 @@ try_connect(struct daemon *dmn)
   socklen_t len;
 
   if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-    fdprintf( STDOUT_FILENO,  "%s: attempting to connect", dmn->name);
+    fdprintf(STDOUT_FILENO, "%s: attempting to connect\r\n", dmn->name);
   dmn->connect_tries++;
 
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_un));
   addr.sun_family = AF_UNIX;
-  snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/%s.vty",
+  /*snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/%s.vty",
            gs.vtydir, dmn->name);
+           */
+  snprintf(addr.sun_path, sizeof(addr.sun_path), "%s",
+           gs.vtydir);
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
   len = addr.sun_len = SUN_LEN(&addr);
 #else
@@ -761,21 +809,21 @@ try_connect(struct daemon *dmn)
   if (access(addr.sun_path, W_OK) < 0)
   {
     if (errno != ENOENT)
-      fdprintf( STDOUT_FILENO, "%s: access to socket %s denied: %s",
+      fdprintf(STDOUT_FILENO, "%s: access to socket %s denied: %s\r\n",
                dmn->name, addr.sun_path, ipstack_strerror(errno));
     return -1;
   }
   sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
   {
-    fdprintf( STDOUT_FILENO, "%s(%s): cannot make socket: %s",
+    fdprintf(STDOUT_FILENO, "%s(%s): cannot make socket: %s\r\n",
              __func__, addr.sun_path, ipstack_strerror(errno));
     return -1;
   }
 
   if (ipstack_set_nonblocking(sock) < 0)
   {
-    fdprintf( STDOUT_FILENO, "%s(%s): set_nonblocking(%d) failed",
+    fdprintf(STDOUT_FILENO, "%s(%s): set_nonblocking(%d) failed\r\n",
              __func__, addr.sun_path, sock);
     ipstack_close(sock);
     return -1;
@@ -786,25 +834,24 @@ try_connect(struct daemon *dmn)
     if ((errno != EINPROGRESS) && (errno != EWOULDBLOCK))
     {
       if (gs.loglevel > ZLOG_LEVEL_DEBUG)
-        fdprintf( STDOUT_FILENO,  "%s(%s): connect failed: %s",
-                   __func__, addr.sun_path, ipstack_strerror(errno));
+        fdprintf(STDOUT_FILENO, "%s(%s): connect failed: %s\r\n",
+                 __func__, addr.sun_path, ipstack_strerror(errno));
       ipstack_close(sock);
       return -1;
     }
     if (gs.loglevel > ZLOG_LEVEL_DEBUG)
-      fdprintf( STDOUT_FILENO,  "%s: connection in progress", dmn->name);
+      fdprintf(STDOUT_FILENO, "%s: connection in progress\r\n", dmn->name);
     dmn->state = DAEMON_CONNECTING;
     dmn->fd = sock;
     dmn->t_write = os_ansync_add(master, OS_ANSYNC_OUTPUT, check_connect, dmn, dmn->fd._fd);
-    dmn->t_wakeup = os_ansync_add(master,OS_ANSYNC_TIMER_ONCE,  wakeup_connect_hanging, dmn,
-                                     gs.timeout);
-    SET_READ_HANDLER(dmn);
+    dmn->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_connect_hanging, dmn,
+                                  gs.timeout);
     return 0;
   }
 
   dmn->fd = sock;
   SET_READ_HANDLER(dmn);
-  daemon_up(dmn, "connect succeeded");
+  daemon_up(dmn, "connect succeeded\r\n");
   return 1;
 }
 
@@ -812,7 +859,7 @@ static int
 phase_hanging(os_ansync_t *t_hanging)
 {
   gs.t_phase_hanging = NULL;
-  fdprintf( STDOUT_FILENO, "Phase [%s] hanging for %ld seconds, aborting phased restart",
+  fdprintf(STDOUT_FILENO, "Phase [%s] hanging for %ld seconds, aborting phased restart\r\n",
            phase_str[gs.phase], PHASE_TIMEOUT);
   gs.phase = PHASE_NONE;
   return 0;
@@ -825,7 +872,7 @@ set_phase(restart_phase_t new_phase)
   if (gs.t_phase_hanging)
     os_ansync_cancel(master, gs.t_phase_hanging);
   gs.t_phase_hanging = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, phase_hanging, NULL,
-                                        PHASE_TIMEOUT);
+                                     PHASE_TIMEOUT);
 }
 
 static void
@@ -838,26 +885,26 @@ phase_check(void)
   case PHASE_STOPS_PENDING:
     if (gs.numpids)
       break;
-    fdprintf( STDOUT_FILENO, "Phased restart: all routing daemon stop jobs have completed.");
+    fdprintf(STDOUT_FILENO, "Phased restart: all routing daemon stop jobs have completed.\r\n");
     set_phase(PHASE_WAITING_DOWN);
     /*FALLTHRU*/
   case PHASE_WAITING_DOWN:
     if (gs.numdown + IS_UP(gs.special) < gs.numdaemons)
       break;
-    fdprintf( STDOUT_FILENO, "Phased restart: all routing daemons now down.");
+    fdprintf(STDOUT_FILENO, "Phased restart: all routing daemons now down.\r\n");
     run_job(&gs.special->restart, "restart", gs.restart_command, 1, 1);
     set_phase(PHASE_ZEBRA_RESTART_PENDING);
     /*FALLTHRU*/
   case PHASE_ZEBRA_RESTART_PENDING:
     if (gs.special->restart.pid)
       break;
-    fdprintf( STDOUT_FILENO, "Phased restart: %s restart job completed.", gs.special->name);
+    fdprintf(STDOUT_FILENO, "Phased restart: %s restart job completed.\r\n", gs.special->name);
     set_phase(PHASE_WAITING_ZEBRA_UP);
     /*FALLTHRU*/
   case PHASE_WAITING_ZEBRA_UP:
     if (!IS_UP(gs.special))
       break;
-    fdprintf( STDOUT_FILENO, "Phased restart: %s is now up.", gs.special->name);
+    fdprintf(STDOUT_FILENO, "Phased restart: %s is now up.\r\n", gs.special->name);
     {
       struct daemon *dmn;
       for (dmn = gs.daemons; dmn; dmn = dmn->next)
@@ -867,8 +914,8 @@ phase_check(void)
       }
     }
     gs.phase = PHASE_NONE;
-    os_ansync_cancel(master,gs.t_phase_hanging);
-    fdprintf( STDOUT_FILENO, "Phased global restart has completed.");
+    os_ansync_cancel(master, gs.t_phase_hanging);
+    fdprintf(STDOUT_FILENO, "Phased global restart has completed.\r\n");
     break;
   }
 }
@@ -892,9 +939,9 @@ try_restart(struct daemon *dmn)
       if ((gs.special->state == DAEMON_UP) && (gs.phase == PHASE_NONE))
         run_job(&dmn->restart, "restart", gs.restart_command, 0, 1);
       else
-        fdprintf( STDOUT_FILENO,  "%s: postponing restart attempt because master %s daemon "
-                                   "not up [%s], or phased restart in progress",
-                   dmn->name, gs.special->name, state_str[gs.special->state]);
+        fdprintf(STDOUT_FILENO, "%s: postponing restart attempt because master %s daemon "
+                                "not up [%s], or phased restart in progress\r\n",
+                 dmn->name, gs.special->name, state_str[gs.special->state]);
       break;
     }
     /*FALLTHRU*/
@@ -902,9 +949,9 @@ try_restart(struct daemon *dmn)
     if ((gs.phase != PHASE_NONE) || gs.numpids)
     {
       if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-        fdprintf( STDOUT_FILENO,  "postponing phased global restart: restart already in "
-                                   "progress [%s], or outstanding child processes [%d]",
-                   phase_str[gs.phase], gs.numpids);
+        fdprintf(STDOUT_FILENO, "postponing phased global restart: restart already in "
+                                "progress [%s], or outstanding child processes [%d]\r\n",
+                 phase_str[gs.phase], gs.numpids);
       break;
     }
     /* Is it too soon for a restart? */
@@ -914,13 +961,13 @@ try_restart(struct daemon *dmn)
           gs.special->restart.interval)
       {
         if (gs.loglevel > ZLOG_LEVEL_DEBUG + 1)
-          fdprintf( STDOUT_FILENO,  "postponing phased global restart: "
-                                     "elapsed time %ld < retry interval %ld",
-                     (long)delay.tv_sec, gs.special->restart.interval);
+          fdprintf(STDOUT_FILENO, "postponing phased global restart: "
+                                  "elapsed time %ld < retry interval %ld\r\n",
+                   (long)delay.tv_sec, gs.special->restart.interval);
         break;
       }
     }
-    fdprintf( STDOUT_FILENO, "Phased restart: stopping all routing daemons.");
+    fdprintf(STDOUT_FILENO, "Phased restart: stopping all routing daemons.\r\n");
     /* First step: stop all other daemons. */
     for (dmn = gs.daemons; dmn; dmn = dmn->next)
     {
@@ -930,7 +977,7 @@ try_restart(struct daemon *dmn)
     set_phase(PHASE_STOPS_PENDING);
     break;
   default:
-    fdprintf( STDOUT_FILENO, "error: unknown restart mode %d", gs.mode);
+    fdprintf(STDOUT_FILENO, "error: unknown restart mode %d\r\n", gs.mode);
     break;
   }
 }
@@ -942,8 +989,8 @@ wakeup_unresponsive(os_ansync_t *t_wakeup)
 
   dmn->t_wakeup = NULL;
   if (dmn->state != DAEMON_UNRESPONSIVE)
-    fdprintf( STDOUT_FILENO, "%s: no longer unresponsive (now %s), "
-                             "wakeup should have been cancelled!",
+    fdprintf(STDOUT_FILENO, "%s: no longer unresponsive (now %s), "
+                            "wakeup should have been cancelled!\r\n",
              dmn->name, state_str[dmn->state]);
   else
   {
@@ -960,8 +1007,8 @@ wakeup_no_answer(os_ansync_t *t_wakeup)
 
   dmn->t_wakeup = NULL;
   dmn->state = DAEMON_UNRESPONSIVE;
-  fdprintf( STDOUT_FILENO, "%s state -> unresponsive : no response yet to ping "
-                           "sent %ld seconds ago",
+  fdprintf(STDOUT_FILENO, "%s state -> unresponsive : no response yet to ping "
+                          "sent %ld seconds ago\r\n",
            dmn->name, gs.timeout);
   if (gs.unresponsive_restart)
   {
@@ -972,49 +1019,45 @@ wakeup_no_answer(os_ansync_t *t_wakeup)
 }
 
 static int
-wakeup_send_echo(os_ansync_t *t_wakeup)
+watchdog_echo(os_ansync_t *t_wakeup)
 {
-  static const char echocmd[] = "echo " PING_TOKEN;
+  const char echocmd[] = "echo " PING_TOKEN;
   ssize_t rc, mlen = 0;
   char echobuf[64];
   struct daemon *dmn = OS_ANSYNC_ARGV(t_wakeup);
   vtysh_msghdr_t *vtyshhdr = (vtysh_msghdr_t *)echobuf;
   vtyshhdr->type = htonl(VTYSH_MSG_CMD);
   vtyshhdr->msglen = htonl(sizeof(echocmd));
-  memcpy(echobuf+sizeof(vtysh_msghdr_t), echocmd, sizeof(echocmd));
+  memcpy(echobuf + sizeof(vtysh_msghdr_t), echocmd, sizeof(echocmd));
   mlen = sizeof(vtysh_msghdr_t) + sizeof(echocmd);
-  #if 1
+  dmn->t_write = NULL;
   if (((rc = ipstack_write(dmn->fd, echobuf, mlen)) < 0) ||
       ((size_t)rc != mlen))
   {
     char why[100 + mlen];
-    snprintf(why, sizeof(why), "write '%s' returned %d instead of %u",
+    snprintf(why, sizeof(why), "write '%s' returned %d instead of %u\r\n",
              echocmd, (int)rc, (u_int)mlen);
     daemon_down(dmn, why);
   }
-  #else
-  //dmn->t_wakeup = NULL;
-  if (((rc = ipstack_write(dmn->fd, echocmd, sizeof(echocmd))) < 0) ||
-      ((size_t)rc != sizeof(echocmd)))
-  {
-    char why[100 + sizeof(echocmd)];
-    snprintf(why, sizeof(why), "write '%s' returned %d instead of %u",
-             echocmd, (int)rc, (u_int)sizeof(echocmd));
-    daemon_down(dmn, why);
-  }
-  #endif
   else
   {
     gettimeofday(&dmn->echo_sent, NULL);
-    dmn->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_no_answer, dmn, gs.timeout);
+    // if (mlen == 100)
+    if (dmn->t_timeout)
+    {
+      os_ansync_cancel(master, dmn->t_timeout);
+      dmn->t_timeout = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_no_answer, dmn, gs.timeout);
+    }
   }
+  SET_WAKEUP_ECHO(dmn);
+  fdprintf(STDOUT_FILENO, "===%d===watchdog_echo: %d bytes:%s\r\n", os_time(NULL), rc, echobuf);
   return 0;
 }
 
 static void
 sigint(int signo, void *info)
 {
-  fdprintf( STDOUT_FILENO, "Terminating on signal");
+  fdprintf(STDOUT_FILENO, "Terminating on signal\r\n");
   exit(0);
 }
 
@@ -1065,9 +1108,10 @@ int main(int argc, char **argv)
     progname = argv[0];
 
   gs.restart.name = "all";
-  while ((opt = getopt_long(argc, argv, "aAb:dek:l:m:M:i:p:r:R:S:s:t:T:zvh",
-                            longopts, 0)) != EOF)
+  while ((opt = getopt_long(argc, argv, "aAb:dek:l:m:M:i:p:r:R:S:s:t:T:zvh", longopts, 0)) != EOF)
   {
+    if (opt == -1)
+      break;
     switch (opt)
     {
     case 0:
@@ -1237,7 +1281,7 @@ int main(int argc, char **argv)
     case 'h':
       return usage(progname, 0);
     default:
-      fputs("Invalid option.\n", stderr);
+      fprintf(stderr, "Invalid option(%d).\n", opt);
       return usage(progname, 1);
     }
   }
@@ -1290,13 +1334,12 @@ int main(int argc, char **argv)
 
   gs.restart.interval = gs.min_restart_interval;
   master = os_ansync_lst_create(0, 1);
-  //signal_init(master, array_size(my_signals), my_signals);
+  // signal_init(master, array_size(my_signals), my_signals);
 
   os_signal_default(NULL, NULL);
   os_signal_add(SIGINT, sigint);
   os_signal_add(SIGTERM, sigint);
   os_signal_add(SIGCHLD, sigchild);
-
 
   srandom(time(NULL));
 
@@ -1320,7 +1363,7 @@ int main(int argc, char **argv)
       gs.numdown++;
       // dmn->fd = -1;
       dmn->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_init, dmn,
-                                            100 + (random() % 900));
+                                    1000 + (random() % 900));
       dmn->restart.interval = gs.min_restart_interval;
       if (tail)
         tail->next = dmn;
@@ -1355,9 +1398,8 @@ int main(int argc, char **argv)
     return usage(progname, 1);
   }
 
-
   /* Make sure we're not already running. */
-  //pid_output(pidfile);
+  // pid_output(pidfile);
 
   /* Announce which daemons are being monitored. */
   {
@@ -1381,13 +1423,13 @@ int main(int argc, char **argv)
     }
   }
 
-	zlog_notice(0,"sssssssssssss");
-	while(master)
-	{
-		while((node = os_ansync_fetch(master)))
-			os_ansync_execute(master, node, OS_ANSYNC_EXECUTE_ARGV);
-	}
+  while (master)
+  {
+    while ((node = os_ansync_fetch(master)))
+      os_ansync_execute(master, node, OS_ANSYNC_EXECUTE_NONE);
+  }
   /* Not reached. */
   return 0;
 }
 
+//	/usr/local/sbin/watchquagga  -adz -r '/sbin/service %s restart' -s '/sbin/service %s start' -k '/sbin/service %s stop' zebra ospf6d bgpd

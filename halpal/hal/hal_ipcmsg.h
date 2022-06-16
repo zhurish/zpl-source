@@ -164,6 +164,7 @@ extern int hal_ipcmsg_destroy(struct hal_ipcmsg *ipcmsg);
 extern int hal_ipcmsg_reset(struct hal_ipcmsg *ipcmsg);
 extern int hal_ipcmsg_msg_init(struct hal_ipcmsg *ipcmsg, char *buf, int len);
 extern int hal_ipcmsg_create_header(struct hal_ipcmsg *ipcmsg, zpl_uint32 command);
+extern int hal_ipcmsg_get_header(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_header *header);
 extern int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint32 unit);
 extern int hal_ipcmsg_hdr_unit_get(struct hal_ipcmsg *ipcmsg);
 extern int hal_ipcmsg_msg_copy(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);

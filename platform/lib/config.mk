@@ -62,7 +62,6 @@ OBJS	+= vrf.o
 endif
 OBJS	+= nexthop.o
 OBJS	+= table.o
-OBJS	+= connected.o
 OBJS	+= if_rmap.o
 OBJS	+= routemap.o
 OBJS	+= router-id.o

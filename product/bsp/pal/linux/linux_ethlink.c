@@ -26,7 +26,7 @@
 
 #include "linux_driver.h"
 #include "pal_include.h"
-#include "bsp_include.h"
+//#include "bsp_include.h"
 
 #include "linux_ethlink.h"
 

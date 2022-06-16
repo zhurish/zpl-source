@@ -18,6 +18,18 @@ extern "C" {
 #ifdef ZPL_SHELL_MODULE
 #include "vty.h"
 #endif
+
+#define IPMC_SLOT_MAX	32
+
+struct ipmc_slot
+{
+	zpl_uint8 slot;
+	zpl_uint8 state;
+	zpl_uint32	power;
+	zpl_uint32	fan;
+	zpl_uint32	temp;
+};
+
 /* Host configuration variable */
 struct zpl_host
 {
@@ -61,6 +73,11 @@ struct zpl_host
 
 	zpl_uint8	sysmac[6];
 
+	struct ipmc_slot ipmctable[IPMC_SLOT_MAX];
+
+#ifdef ZPL_ACTIVE_STANDBY
+	zpl_bool active_standby;	//主备
+#endif
 	void *bspinit_sem;
 
 	enum{LOAD_NONE, LOAD_INIT, LOADING, LOAD_DONE} load;
@@ -98,11 +115,16 @@ extern const char *host_config_get (void);
 extern void host_config_set (zpl_char *);
 
 const char * host_name_get (void);
-
+#ifdef ZPL_ACTIVE_STANDBY
+extern zpl_bool host_isstandby(void);
+extern int host_standby(zpl_bool val);
+extern zpl_bool host_isactive(void);
+extern int host_active(zpl_bool val);
+#endif
 extern int host_config_loading(char *config);
 extern zpl_bool host_waitting_loadconfig(void);
 extern zpl_bool host_loadconfig_done(void);
-extern int host_loadconfig_stats(int);
+extern int host_loadconfig_state(int);
 
 extern int host_waitting_bspinit(int);
 extern int host_bspinit_done(void);

@@ -28,7 +28,6 @@
 #include "module.h"
 #include "router-id.h"
 #include "if.h"
-#include "connected.h"
 #ifdef ZPL_NSM_MODULE
 #include "nsm_zserv.h"
 #endif

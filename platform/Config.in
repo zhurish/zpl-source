@@ -151,6 +151,13 @@ config ZPL_SHRL_MODULE
 	help
 	Build Shell readline Module.
 
+config ZPL_ACTIVE_STANDBY
+	bool "Library Active Standby Module"
+	default y
+	depends on ZPL_LIB_MODULE
+	help
+	Build Library Active Standby Module.
+
 config ZPL_NSM_SNMP
 	bool "NSM SNMP Module"
 	default y
@@ -395,12 +402,5 @@ config ZPL_IPCBC_MODULE
 	depends on ZPL_LIB_MODULE
 	help
 	Build IPC BoardCard Module.
-
-config ZPL_IPCBUS_MODULE
-	bool "IPC Bus Module"
-	default y
-	depends on ZPL_LIB_MODULE
-	help
-	Build IPC Bus Module.
 
 endmenu

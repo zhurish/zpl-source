@@ -54,6 +54,31 @@ extern int sdk_driver_init(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_start(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_stop(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
+#elif defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
+
+#define HAL_CFG_NETLINK_PROTO (30) 
+#define HAL_DATA_NETLINK_PROTO (29)
+#define HAL_CFG_REQUEST_CMD (29)
+
+typedef struct sdk_driver {
+
+	zpl_phyport_t 	cpu_port;
+	zpl_uint32 		num_vlans;
+	zpl_phyport_t 	num_ports;
+    zpl_phyport_t	ports_table[8];
+
+    int debug;
+    zpl_socket_t    cfg_sock;
+    int             cfg_seq;
+    zpl_socket_t    data_sock;
+    int             data_seq;
+}sdk_driver_t;
+
+extern sdk_driver_t *__msdkdriver;
+extern int sdk_driver_init(struct bsp_driver *, zpl_void *);
+extern int sdk_driver_start(struct bsp_driver *, zpl_void *);
+extern int sdk_driver_stop(struct bsp_driver *, zpl_void *);
+extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
 
 #endif
 

@@ -60,7 +60,7 @@ typedef struct
     zpl_uint32	maxsize;
     LIST	list;
     LIST	ulist;
-    zpl_uint32 taskid;
+    zpl_taskid_t taskid;
 }zpl_media_event_queue_t;
 
 extern zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uint32 maxsize);

@@ -109,7 +109,7 @@ zpl_uint32 name2module(const char *name)
 	return 0;
 }
 
-zpl_uint32 module2task(zpl_uint32 module)
+zpl_taskid_t module2task(zpl_uint32 module)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < MODULE_MAX; i++)
@@ -120,21 +120,21 @@ zpl_uint32 module2task(zpl_uint32 module)
 	return 0;
 }
 
-zpl_uint32 task2module(zpl_uint32 taskid)
+zpl_uint32 task2module(zpl_taskid_t taskid)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < MODULE_MAX; i++)
 	{
-		if(_module_lsttable[i].tbl && _module_lsttable[i].tbl->taskid == (zpl_uint32)taskid)
+		if(_module_lsttable[i].tbl && _module_lsttable[i].tbl->taskid == (zpl_taskid_t)taskid)
 			return _module_lsttable[i].tbl->module;
 	}
 	return 0;
 }
 
-zpl_uint32 task_module_self(void)
+zpl_taskid_t task_module_self(void)
 {
 	zpl_uint32 i = 0;
-	zpl_uint32 taskid = os_task_id_self ();
+	zpl_taskid_t taskid = os_task_id_self ();
 	for(i = 0; i < MODULE_MAX; i++)
 	{
 		if(_module_lsttable[i].tbl && _module_lsttable[i].tbl->taskid == taskid)
@@ -144,14 +144,14 @@ zpl_uint32 task_module_self(void)
 }
 
 
-int module_setup_task(zpl_uint32 module, zpl_uint32 taskid)
+int module_setup_task(zpl_uint32 module, zpl_taskid_t taskid)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < MODULE_MAX; i++)
 	{
 		if(_module_lsttable[i].tbl && _module_lsttable[i].tbl->module == (zpl_uint32)module)
 		{
-			_module_lsttable[i].tbl->taskid = (zpl_uint32)taskid;
+			_module_lsttable[i].tbl->taskid = (zpl_taskid_t)taskid;
 			return 0;
 		}
 	}
@@ -396,7 +396,7 @@ int zplib_module_cmd_all(void)
 
 
 
-int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid)
+int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_taskid_t taskid)
 {
 	zpl_uint32 i = 0;
 	for(i = 0; i < MODULE_MAX; i++)
@@ -410,7 +410,7 @@ int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uin
 				{
 					if(_module_lsttable[i].tbl->submodule[j].module == (zpl_uint32)submodule)
 					{
-						_module_lsttable[i].tbl->submodule[j].taskid = (zpl_uint32)taskid;
+						_module_lsttable[i].tbl->submodule[j].taskid = (zpl_taskid_t)taskid;
 						if(name)
 							_module_lsttable[i].tbl->submodule[j].name = strdup(name);
 						return 0;
@@ -419,7 +419,7 @@ int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uin
 			}
 			else
 			{
-				_module_lsttable[i].tbl->taskid = (zpl_uint32)taskid;
+				_module_lsttable[i].tbl->taskid = (zpl_taskid_t)taskid;
 				return 0;
 			}
 		}

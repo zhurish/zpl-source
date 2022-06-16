@@ -57,7 +57,7 @@ typedef struct iw_client_s
 {
 	ifindex_t					ifindex;
 #ifndef IW_ONCE_TASK
-	zpl_uint32					taskid;
+	zpl_taskid_t					taskid;
 #endif
 	zpl_bool				scan_enable;
 	zpl_uint32				scan_interval;

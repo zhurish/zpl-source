@@ -67,7 +67,7 @@ zpl_bool host_loadconfig_done(void)
 	return zpl_false;
 }
 
-int host_loadconfig_stats(int state)
+int host_loadconfig_state(int state)
 {
 	_global_host.load = state;
 	return OK;
@@ -90,6 +90,28 @@ int host_bspinit_done(void)
 	}
 	return OK;
 }
+
+#ifdef ZPL_ACTIVE_STANDBY
+zpl_bool host_isstandby(void)
+{
+	return _global_host.active_standby;
+}
+zpl_bool host_isactive(void)
+{
+	return !_global_host.active_standby;
+}
+
+int host_standby(zpl_bool val)
+{
+	_global_host.active_standby = val;
+	return OK;
+}
+int host_active(zpl_bool val)
+{
+	_global_host.active_standby = !val;
+	return OK;
+}
+#endif
 
 int host_config_init(zpl_char *motd)
 {

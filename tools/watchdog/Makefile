@@ -10,8 +10,8 @@ SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -Xlinker "-(" -los -lbase -lshell -lsyslog -Xlinker "-)" 
-#-lbase -lshell -lsyslog
+LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -Xlinker "-(" -los  -lbase -lshell -Xlinker "-)" 
+#-lbase -lshell -lnsm -lpal -lhal -lkernel -lproduct -lsdk -lipcbc
 
 
 

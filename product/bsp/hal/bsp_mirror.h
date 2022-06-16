@@ -10,7 +10,40 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifndef ZPL_SDK_USER
+enum hal_mirror_cmd 
+{
+    HAL_MIRROR_CMD_NONE,
+	HAL_MIRROR_CMD_DST_PORT,
+	HAL_MIRROR_CMD_SRC_PORT,
+	HAL_MIRROR_CMD_SRC_MAC,
+    HAL_MIRROR_CMD_MAX,
+};
 
+typedef struct hal_mirror_param_s
+{
+	zpl_uint32 value;
+	zpl_uint8 dir;
+	zpl_uint8 filter;
+	mac_t mac[NSM_MAC_MAX];
+}hal_mirror_param_t;
+
+typedef enum
+{
+	MIRROR_NONE = 0,
+	MIRROR_BOTH,
+	MIRROR_INGRESS,
+	MIRROR_EGRESS,
+}mirror_dir_en;
+
+
+typedef enum mirror_filter_e {
+    MIRROR_FILTER_ALL 	= 0,
+    MIRROR_FILTER_DA 	= 1,
+	MIRROR_FILTER_SA 	= 2,
+	MIRROR_FILTER_BOTH	= 3,
+} mirror_filter_t;
+#endif
 typedef struct sdk_mirror_s
 {
 	int (*sdk_mirror_enable_cb) (void *, zpl_phyport_t , zpl_bool );

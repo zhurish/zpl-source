@@ -35,7 +35,7 @@ typedef struct v9_serial_s
 	zpl_bool			enable;
 	void			*master;
 	void			*mutex;
-	zpl_uint32			task_id;
+	zpl_taskid_t			task_id;
 	void			*r_thread;
 
 	struct tty_com *tty;

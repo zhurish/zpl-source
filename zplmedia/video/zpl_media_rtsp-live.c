@@ -19,7 +19,7 @@
 
 static struct rtsp_server_t *rtsp_srv = NULL;//new rtsp_server();
 static char rtsp_srv_running = 5;
-static zpl_uint32 rtsp_srv_taskid = 0;
+static zpl_taskid_t rtsp_srv_taskid = 0;
 
 
 extern int ortp_create_init();

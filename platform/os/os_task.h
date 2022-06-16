@@ -42,6 +42,7 @@ extern "C" {
 
 typedef int(*task_entry)(void *);
 
+
 enum os_task_state
 {
 	OS_STATE_CREATE,//C
@@ -68,7 +69,7 @@ typedef struct os_task_s
 {
 	NODE		node;
 	zpl_bool		active;
-	zpl_uint32		td_id;		/* task id */
+	zpl_taskid_t		td_id;		/* task id */
 	zpl_char 		td_name[TASK_NAME_MAX];	/* name of task */
 	zpl_uint32		td_name_key;
 	zpl_pthread_t 	td_thread; /* POSIX thread ID */
@@ -112,8 +113,8 @@ extern int os_task_give_broadcast(void);
 
 extern int os_task_init(void);
 extern int os_task_exit(void);
-extern int os_task_sigmask(zpl_int32 sigc, zpl_int32 signo[], sigset_t *mask);
-extern int os_task_sigexecute(zpl_int32 sigc, zpl_int32 signo[], sigset_t *mask);
+extern int os_task_sigmask(zpl_taskid_t sigc, zpl_int32 signo[], sigset_t *mask);
+extern int os_task_sigexecute(zpl_taskid_t sigc, zpl_int32 signo[], sigset_t *mask);
 extern int os_task_sigmaskall(void);
 
 extern int os_task_add_start_hook(os_task_hook *cb);
@@ -124,42 +125,43 @@ extern int os_task_del_start_hook(os_task_hook *cb);
 extern int os_task_del_create_hook(os_task_hook *cb);
 extern int os_task_del_destroy_hook(os_task_hook *cb);
 
-extern os_task_t * os_task_tcb_get(zpl_uint32 id, zpl_pthread_t pid);
+extern os_task_t * os_task_tcb_get(zpl_taskid_t id, zpl_pthread_t pid);
 extern os_task_t * os_task_tcb_self(void);
 extern zpl_pthread_t os_task_pthread_self( void);
-extern zpl_uint32 os_task_id_self( void);
+extern zpl_taskid_t os_task_id_self( void);
 extern int os_task_gettid( void);
 extern const zpl_char * os_task_self_name_alisa(void);
 
-extern int os_task_name_get( zpl_uint32 task_id, char *task_name);
-extern zpl_char * os_task_2_name( zpl_uint32 task_id);
-extern zpl_uint32 os_task_lookup_by_name(char *task_name);
-extern int os_task_priority_set(zpl_uint32 TaskID, zpl_int32 Priority);
-extern int os_task_priority_get(zpl_uint32 TaskID, zpl_int32 *Priority);
+extern int os_task_name_get( zpl_taskid_t task_id, char *task_name);
+extern zpl_char * os_task_2_name( zpl_taskid_t task_id);
+extern zpl_taskid_t os_task_lookup_by_name(char *task_name);
+extern int os_task_priority_set(zpl_taskid_t taskId, zpl_int32 Priority);
+extern int os_task_priority_get(zpl_taskid_t taskId, zpl_int32 *Priority);
 extern int os_task_yield ( void );
 extern int os_task_delay(zpl_int32 ticks);
 
-extern int os_task_supend(zpl_uint32 TaskID);
-extern int os_task_resume(zpl_uint32 TaskID);
+extern int os_task_supend(zpl_taskid_t taskId);
+extern int os_task_resume(zpl_taskid_t taskId);
 
-extern int os_task_priv_set(zpl_uint32 TaskID, zpl_pthread_t td_thread, zpl_void *priv);
-extern zpl_void * os_task_priv_get(zpl_uint32 TaskID, zpl_pthread_t td_thread);
+extern int os_task_priv_set(zpl_taskid_t taskId, zpl_pthread_t td_thread, zpl_void *priv);
+extern zpl_void * os_task_priv_get(zpl_taskid_t taskId, zpl_pthread_t td_thread);
 
-extern int os_task_refresh_id(zpl_uint32 td_thread);
-extern int os_task_del(zpl_uint32 td_thread);
+extern int os_task_thread_refresh_id(zpl_pthread_t td_thread);
+extern int os_task_thread_del(zpl_pthread_t td_thread);
+
 extern int os_task_foreach(os_task_hook cb, void *p);
 
 extern int os_task_entry_destroy(os_task_t *task);
-extern int os_task_destroy(zpl_uint32 taskId);
+extern int os_task_destroy(zpl_taskid_t taskId);
 
-extern zpl_uint32 os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
+extern zpl_taskid_t os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
                          task_entry entry, void *pVoid,
                          zpl_char *func_name, zpl_uint32 stacksize);
 
 #define os_task_create(n,p,o,f,a,s)	os_task_entry_create(n,p,o,f,a,#f,s)
 //#define os_task_destroy(i)	os_task_entry_create(i)
 
-extern zpl_uint32 os_task_entry_add(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
+extern zpl_taskid_t os_task_entry_add(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
                          task_entry entry, void *pVoid,
                          zpl_char *func_name, zpl_uint32 stacksize, zpl_uint32 td_thread);
 

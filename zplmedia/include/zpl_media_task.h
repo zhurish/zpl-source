@@ -15,7 +15,7 @@ extern "C" {
 
 typedef struct 
 {
-	zpl_uint32		t_taskid;
+	zpl_taskid_t		t_taskid;
 	zpl_uint32		t_ready;
 	zpl_void*		t_master;
 }zpl_media_task_t;

@@ -170,6 +170,18 @@ static void os_signal_default_interrupt(zpl_int signo)
   return;
 }
 
+int os_signal_send(zpl_uint signo)
+{
+#ifdef OS_SIGNAL_PIPE  
+  zpl_int wsigno = signo;
+  if (os_sigproc_tbl.signal_wfd)
+    write(os_sigproc_tbl.signal_wfd, &wsigno, 4);
+#else
+  kill(getpid(), signo);    
+#endif
+  return 0;
+}
+
 int os_signal_process(zpl_uint timeout)
 {
 #ifdef OS_SIGNAL_PIPE 

@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
-
+#include "bsp_types.h"
 #include "hal_client.h"
 #include "bsp_mstp.h"
-#include "bsp_driver.h"
+
 
 
 sdk_mstp_t sdk_mstp;

@@ -11,6 +11,41 @@
 extern "C" {
 #endif
 
+#ifndef ZPL_SDK_USER
+enum hal_l3if_cmd 
+{
+    HAL_L3IF_NONE,
+	  HAL_L3IF_CREATE,
+	  HAL_L3IF_DELETE,
+	  HAL_L3IF_ADDR_ADD,
+	  HAL_L3IF_ADDR_DEL,
+	  HAL_L3IF_DSTADDR_ADD,
+	  HAL_L3IF_DSTADDR_DEL,
+    HAL_L3IF_VRF,
+	  HAL_L3IF_MAC,
+};
+
+
+
+typedef struct hal_l3if_param_s
+{
+  hal_port_header_t  port;
+  char    ifname[64];
+	zpl_uint8 l2if_type;
+  vrf_id_t vrfid;
+	mac_t mac[NSM_MAC_MAX];
+}hal_l3if_param_t;
+
+typedef struct hal_l3if_addr_param_s
+{
+  hal_port_header_t  port;
+  zpl_uint8 family;
+  zpl_uint8 prefixlen;
+  union g_addr address;  
+  zpl_uint8 sec;
+}hal_l3if_addr_param_t;
+#endif
+
 typedef struct sdk_l3if_s
 {
 	int (*sdk_l3if_addif_cb) (void *, char *, zpl_phyport_t);

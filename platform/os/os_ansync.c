@@ -46,6 +46,21 @@ os_ansync_lst * os_ansync_global_lookup(zpl_uint32 taskid, zpl_uint32 module)
 	}
 	return NULL;
 }
+
+int os_ansync_global_foreach(int (*func)(os_ansync_lst *, void *), void *pVoid)
+{
+	NODE index;
+	os_ansync_lst *pstNode = NULL;
+	for(pstNode = (os_ansync_lst *)lstFirst(ansyncList);
+			pstNode != NULL;  pstNode = (os_ansync_lst *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(func)
+			(func)(pstNode, pVoid);
+		
+	}
+	return OK;
+}
 #endif
 
 static os_ansync_t * os_ansync_lookup_node(os_ansync_lst *lst, os_ansync_t *value);

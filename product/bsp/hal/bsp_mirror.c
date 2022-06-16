@@ -7,13 +7,11 @@
 
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
+#include "bsp_types.h"
 
 #include "hal_client.h"
 #include "bsp_mirror.h"
-#include "bsp_driver.h"
+
 
 sdk_mirror_t sdk_mirror;
 

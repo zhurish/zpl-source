@@ -60,12 +60,35 @@ DEFUN (show_ipcom_process,
 }
 #endif
 
+
+#ifdef OS_ANSYNC_GLOBAL_LIST
+
+static int os_ansync_show_func(os_ansync_lst *lst, void *pVoid)
+{
+	return os_ansync_show(lst, vty_out, pVoid);
+}
+DEFUN (show_ansyc_thread,
+		show_ansyc_thread_cmd,
+		"show ansync thread dump",
+		SHOW_STR
+		"ansync thread information\n"
+		"thread information\n"
+		"dump information\n")
+{
+	os_ansync_global_foreach(os_ansync_show_func, vty);
+	return CMD_SUCCESS;
+}
+#endif
+
 int cmd_os_init(void)
 {
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_process_cmd);
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_process_detail_cmd);
 #ifdef ZPL_IPCOM_MODULE
 	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_ipcom_process_cmd);
+#endif
+#ifdef OS_ANSYNC_GLOBAL_LIST
+	install_element(ENABLE_NODE,  CMD_VIEW_LEVEL,  &show_ansyc_thread_cmd);
 #endif
 	return 0;
 }

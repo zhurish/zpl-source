@@ -5,6 +5,7 @@ MODULEDIR = platform/nsm
 #nsm
 ifeq ($(strip $(ZPL_NSM_MODULE)),true)
 
+OBJS	+= connected.o
 OBJS	+= nsm_debug.o
 OBJS	+= nsm_redistribute.o
 OBJS	+= nsm_rib.o

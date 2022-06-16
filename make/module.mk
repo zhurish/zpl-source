@@ -42,7 +42,7 @@ _MODULELIST_TOOLCHAIN = \
 _MODULELIST_PRODUCT = \
 	ZPL_BSP_MODULE.true	 \
 	ZPL_SDK_MODULE.true	 \
-	ZPL_SDK_BCM53125.true	
+	ZPL_SDK_USER.true	
 
 #
 # Platform configuration
@@ -233,7 +233,7 @@ _MODULELIST_OLD = \
 	ZPL_STARTUP_MODULE.true \
 	ZPL_BSP_MODULE.true \
 	ZPL_SDK_MODULE.false \
-	ZPL_SDK_BCM53125.false \
+	ZPL_SDK_USER.false \
 	ZPL_SHELL_MODULE.true \
 	ZPL_HALPAL_MODULE.true \
 	ZPL_HAL_MODULE.false \

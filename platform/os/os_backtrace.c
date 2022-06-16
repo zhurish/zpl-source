@@ -12,7 +12,9 @@ static struct zpl_backtrace_symb  m_backtrace_symb;
 
 int zpl_backtrace_symb_set(char *funcname, char *schedfrom, zpl_uint32 schedfrom_line)
 {
-	m_backtrace_symb.taskname = os_task_2_name(os_task_id_self());
+	zpl_taskid_t  taskid = os_task_id_self();
+	if(taskid != (zpl_taskid_t)ERROR)
+		m_backtrace_symb.taskname = os_task_2_name(taskid);
 	m_backtrace_symb.funcname = funcname;
 	m_backtrace_symb.schedfrom = schedfrom;
 	m_backtrace_symb.schedfrom_line = schedfrom_line;

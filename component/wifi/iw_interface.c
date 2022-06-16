@@ -18,7 +18,7 @@
 
 
 #ifdef IW_ONCE_TASK
-static int iw_taskid = 0;
+static zpl_taskid_t iw_taskid = 0;
 static void *master_thread = NULL;
 #endif
 

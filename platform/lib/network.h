@@ -33,11 +33,6 @@ extern "C" {
 extern int readn (zpl_socket_t, zpl_uchar *, zpl_uint32);
 extern int writen (zpl_socket_t, const zpl_uchar *, zpl_uint32);
 
-
-/* Does the I/O error indicate that the operation should be retried later? */
-#define IPSTACK_ERRNO_RETRY(EN) \
-	(((EN) == IPSTACK_ERRNO_EAGAIN) || ((EN) == IPSTACK_ERRNO_EWOULDBLOCK) || ((EN) == IPSTACK_ERRNO_EINTR))
-
 extern zpl_float htonf (zpl_float);
 extern zpl_float ntohf (zpl_float);
  

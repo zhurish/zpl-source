@@ -122,7 +122,7 @@ struct mqtt_app_config {
 
 	struct mosquitto *mosq;
 
-	zpl_uint32		taskid;
+	zpl_taskid_t		taskid;
 	zpl_bool		reload;
 	zpl_bool		enable;
 	zpl_bool		taskquit;

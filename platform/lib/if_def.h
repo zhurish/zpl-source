@@ -395,6 +395,63 @@ struct if_master
 #endif /* IFF_VIRTUAL */
 
 
+/* Connected address structure. */
+struct connected
+{
+   /* Attached interface. */
+   struct interface *ifp;
+
+   /* Flags for configuration. */
+   zpl_uchar conf;
+#define ZEBRA_IFC_CONFIGURED (1 << 1)
+#define ZEBRA_IFC_DHCPC (1 << 2)
+   /*
+     The ZEBRA_IFC_REAL flag should be set if and only if this address
+     exists in the kernel and is actually usable. (A case where it exists but
+     is not yet usable would be IPv6 with DAD)
+     The ZEBRA_IFC_CONFIGURED flag should be set if and only if this address
+     was configured by the user from inside quagga.
+     The ZEBRA_IFC_QUEUED flag should be set if and only if the address exists
+     in the kernel. It may and should be set although the address might not be
+     usable yet. (compare with ZEBRA_IFC_REAL)
+   */
+
+   /* Flags for connected address. */
+   zpl_uchar flags;
+#define ZEBRA_IFA_SECONDARY (1 << 0)
+#define ZEBRA_IFA_PEER (1 << 1)
+#define ZEBRA_IFA_UNNUMBERED (1 << 2)
+#define ZEBRA_IFA_DHCPC (1 << 3)
+   /* N.B. the ZEBRA_IFA_PEER flag should be set if and only if
+     a peer address has been configured.  If this flag is set,
+     the destination field must contain the peer address.  
+     Otherwise, if this flag is not set, the destination address
+     will either contain a broadcast address or be NULL.
+   */
+
+   /* Address of connected network. */
+   struct prefix *address;
+
+   /* Peer or Broadcast address, depending on whether ZEBRA_IFA_PEER is set.
+     Note: destination may be NULL if ZEBRA_IFA_PEER is not set. */
+   struct prefix *destination;
+
+   zpl_uint32 count;
+   zpl_uint32 raw_status;
+};
+
+/* Does the destination field contain a peer address? */
+#define CONNECTED_PEER(C) CHECK_FLAG((C)->flags, ZEBRA_IFA_PEER)
+
+/* Prefix to insert into the RIB */
+#define CONNECTED_PREFIX(C) \
+   (CONNECTED_PEER(C) ? (C)->destination : (C)->address)
+
+/* Identifying address.  We guess that if there's a peer address, but the
+   local address is in the same prefix, then the local address may be unique. */
+#define CONNECTED_ID(C) \
+   ((CONNECTED_PEER(C) && !prefix_match((C)->destination, (C)->address)) ? (C)->destination : (C)->address)
+
 
 
 #ifdef __cplusplus

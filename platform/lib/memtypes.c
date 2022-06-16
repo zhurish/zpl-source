@@ -467,7 +467,6 @@ struct memory_list memory_list_port[] =
 	{ MTYPE_QOS,			"QOS information"			},
 	{ MTYPE_DOT1X,			"DOT1X information"			},
 	{ MTYPE_MIRROR,			"MIRROR information"		},
-
 	{ MTYPE_HALIPCSRV,			"HAL IPCSrv information"			},
 	{ MTYPE_HALIPCCLIENT,			"HAL IPC Client information"			},
 	{ MTYPE_HALIPCMSG,			"HAL IPC Msg information"			},
@@ -479,6 +478,20 @@ struct memory_list memory_list_port[] =
   { MTYPE_IPCBUSMSG,			"IPCBUS IPC Msg information"			},
 	{ -1, "" },
 };
+
+struct memory_list memory_list_halbsp[] =
+{
+  { MTYPE_BSP,			  "BSP information"	},
+  { MTYPE_BSP_CLIENT,			"BSP Client information"	},
+  { MTYPE_BSP_SERV,			"BSP Server information"	},
+  { MTYPE_BSP_DATA,			"BSP Data information"	},  
+  { MTYPE_SDK,			  "SDK information"	},
+  { MTYPE_SDK_CLIENT,			"SDK Client information"	},
+  { MTYPE_SDK_SERV,			"SDK Server information"	},
+  { MTYPE_SDK_DATA,			"SDK Data information"	},   
+  { -1, "" },
+};
+
 
 struct memory_list memory_list_ssh[] =
 {
@@ -493,6 +506,7 @@ struct memory_list memory_list_ssh[] =
   { MTYPE_SSH_MSG,		"SSH Msg information"	},
   { -1, "" },
 };
+
 
 #ifdef ZPL_PJSIP_MODULE
 struct memory_list memory_list_voip[] =
@@ -616,6 +630,7 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_firewall,	"FIREWALL"	},
 
   { memory_list_port,	"PORT"	},
+  { memory_list_halbsp,	"BSPSDK"	},  
 
   { memory_list_ssh,	"SSH"	},
 #ifdef ZPL_PJSIP_MODULE

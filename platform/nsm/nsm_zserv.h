@@ -116,7 +116,7 @@ struct nsm_srv_t
   /* default table */
   zpl_uint32 rtm_table_default;
 
-  int nsm_task_id;
+  zpl_taskid_t nsm_task_id;
 };
 
 extern struct nsm_srv_t *nsm_srv;

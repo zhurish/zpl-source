@@ -94,7 +94,7 @@ extern "C" {
 
 typedef struct dhcp_global_s
 {
-	zpl_uint32		task_id;
+	zpl_taskid_t		task_id;
 	zpl_bool	init;
 	LIST 	pool_list;
 	LIST 	client_list;

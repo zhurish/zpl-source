@@ -6,6 +6,7 @@ ifeq ($(strip $(ZPL_HAL_MODULE)),true)
 OBJS	+= hal_ipcsrv.o
 OBJS	+= hal_ipccmd.o
 OBJS	+= hal_ipcmsg.o
+OBJS	+= hal_client.o
 OBJS	+= hal_global.o
 OBJS	+= hal_netpkt.o
 OBJS	+= hal_misc.o
@@ -45,7 +46,7 @@ endif
 OBJS	+= hal_l3if.o
 OBJS	+= hal_route.o
 OBJS	+= hal_driver.o
-OBJS	+= hal_test.o
+#OBJS	+= hal_test.o
 endif
 #############################################################################
 # LIB

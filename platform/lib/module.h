@@ -35,12 +35,12 @@ struct module_list
 
 	zpl_uint32		flags;//模块是否初始化标志
 	zpl_void		  *master;    
-	zpl_uint32		taskid;       //模块任务ID
+	zpl_taskid_t		taskid;       //模块任务ID
 	struct submodule
 	{
 		zpl_uint32 module;
 		char 	*name;
-		zpl_uint32		taskid;
+		zpl_taskid_t		taskid;
 	}submodule[ZPL_SUB_MODULE_MAX];
 };
 
@@ -51,10 +51,10 @@ struct module_alllist
 
 extern const char * module2name(zpl_uint32 module);//
 extern zpl_uint32 name2module(const char *name);//
-extern zpl_uint32 module2task(zpl_uint32 module);
-extern zpl_uint32 task2module(zpl_uint32 taskid);
-extern zpl_uint32 task_module_self(void);
-extern int module_setup_task(zpl_uint32 module, zpl_uint32 taskid);//
+extern zpl_taskid_t module2task(zpl_uint32 module);
+extern zpl_uint32 task2module(zpl_taskid_t taskid);
+extern zpl_taskid_t task_module_self(void);
+extern int module_setup_task(zpl_uint32 module, zpl_taskid_t taskid);//
 
 extern int zplib_module_install(struct module_alllist *_m_table);
 extern int zplib_module_name_show(void);
@@ -72,7 +72,7 @@ extern int zplib_module_task_exit(zpl_uint32 module);
 extern int zplib_module_cmd_init(zpl_uint32 module);
 
 
-extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_uint32 taskid);
+extern int submodule_setup(zpl_uint32 module, zpl_uint32 submodule, char *name, zpl_taskid_t taskid);
 
 
  

@@ -25,7 +25,7 @@
 
 pal_stack_t pal_stack;
 
-static zpl_uint32 kernel_task_id = 0;
+static zpl_taskid_t kernel_task_id = 0;
 static void *master_eloop_kernel = NULL;
 static int pal_module_task_init(void);
 

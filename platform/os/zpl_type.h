@@ -94,6 +94,7 @@ typedef zpl_uint8   safi_t;
 typedef zpl_uint32   zpl_ipaddr_t;
 typedef zpl_uchar   zpl_ipv6addr_t[16];
 
+typedef zpl_int32 zpl_taskid_t;
 
 typedef enum
 {   

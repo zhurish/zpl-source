@@ -11,9 +11,70 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "nsm_qos.h"
+#ifndef ZPL_SDK_USER
+
+enum hal_qos_cmd 
+{
+    HAL_QOS_NONE,
+	HAL_QOS_EN,
+	HAL_QOS_IPG,
+	HAL_QOS_BASE_TRUST,
+	HAL_QOS_8021Q,
+	HAL_QOS_DIFFSERV,
+
+	//CLASS
+	HAL_QOS_QUEUE_MAP_CLASS,
+	HAL_QOS_CLASS_SCHED,
+	HAL_QOS_CLASS_WEIGHT,
+
+	//INPUT
+	HAL_QOS_8021Q_MAP_QUEUE,
+	HAL_QOS_DIFFSERV_MAP_QUEUE,
+	HAL_QOS_IPPRE_MAP_QUEUE,
+    HAL_QOS_MPLSEXP_MAP_QUEUE,		//
+	HAL_QOS_PORT_MAP_QUEUE,
+
+	//OUTPUT
+	HAL_QOS_QUEUE_SCHED,
+	HAL_QOS_QUEUE_WEIGHT,
+	HAL_QOS_QUEUE_RATELIMIT,
+	HAL_QOS_PRI_REMARK,
+
+	//CPU
+	HAL_QOS_CPU_RATELIMIT,
+
+	HAL_QOS_PORT_INRATELIMIT,
+	HAL_QOS_PORT_OUTRATELIMIT,
+};
 
 
+
+typedef struct hal_qos_param_s
+{
+	zpl_bool enable;
+	zpl_uint32 value;
+	zpl_uint32 limit;
+	zpl_uint32 burst_size;
+	zpl_uint32 mode;
+	zpl_uint32 pri;
+	zpl_uint32 diffserv;
+	zpl_uint32 queue;
+	zpl_uint32 class;
+	zpl_uint32 type;
+	zpl_uint32 weight;
+}hal_qos_param_t;
+
+typedef enum
+{
+	NSM_QOS_TRUST_NONE = 0,
+	NSM_QOS_TRUST_PORT,
+	NSM_QOS_TRUST_EXP,
+	NSM_QOS_TRUST_COS,
+	NSM_QOS_TRUST_DSCP,
+	NSM_QOS_TRUST_IP_PRE,
+}nsm_qos_trust_e;
+
+#endif
 typedef struct sdk_qos_s
 {
 	//禁止使能qos

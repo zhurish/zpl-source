@@ -34,7 +34,7 @@ struct onvif_soapsrv
     struct onvif_soapsrv_node onvif_client[ONVIF_CLIENT_MAX];
 
     void        *master;
-    zpl_uint32  taskid;
+    zpl_taskid_t  taskid;
 };
 
 

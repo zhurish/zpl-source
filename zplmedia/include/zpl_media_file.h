@@ -73,7 +73,7 @@ struct zpl_media_file_s
 
     zpl_uint32  last_ts;
 #ifdef ZPL_MEDIA_FILE_TASK
-    uint32_t    taskid;
+    zpl_taskid_t    taskid;
     uint32_t    run;
 #endif
     uint32_t    pack_seq;

@@ -258,7 +258,7 @@ typedef struct
     char 		curDirName [MAX_DIR_NAME_LEN]; /* active directory */
     char        user [MAX_LOGIN_NAME_LEN+1]; /* current user */
 
-	int			taskid;
+	zpl_taskid_t			taskid;
 
     } FTPD_SESSION_DATA;
 

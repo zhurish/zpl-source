@@ -23,7 +23,6 @@ extern "C" {
 #include "prefix.h"
 #include "if.h"
 #include "vrf.h"
-#include "connected.h"
 #include "network.h"
 #include "sockopt.h"
 #include "sockunion.h"

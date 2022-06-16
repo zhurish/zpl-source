@@ -173,17 +173,17 @@ static int pjmain(void *p)
 	cb.cb_start = pl_pjsip_task_load;
 	os_task_cb_install(&cb);
 */
-//	pj_task_cb_init(pl_pjsip_task_add, os_task_del, os_task_refresh_id, pl_pjsip_task_self);
+//	pj_task_cb_init(pl_pjsip_task_add, os_task_thread_del, os_task_thread_refresh_id, pl_pjsip_task_self);
 //	cli_callback_init(0, pl_pjsip_account_set_api);
 
-	host_waitting_loadconfig);
+	host_waitting_loadconfig();
 
 	cfg.running = PJ_TRUE;
 
 	os_task_add_create_hook(&_pl_pjsip_task_create);
 	os_task_add_destroy_hook(&_pl_pjsip_task_destroy);
 
-	pj_task_cb_init(pl_pjsip_task_add, os_task_del, os_task_refresh_id, pl_pjsip_task_self);
+	pj_task_cb_init(pl_pjsip_task_add, os_task_thread_del, os_task_thread_refresh_id, pl_pjsip_task_self);
 
     return pj_run_app(&main_func, pjargc, pjargv, 0);
 }

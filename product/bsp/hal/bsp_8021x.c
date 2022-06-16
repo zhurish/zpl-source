@@ -6,12 +6,7 @@
  */
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_include.h"
-
-#include "hal_client.h"
-#include "bsp_driver.h"
+#include "bsp_types.h"
 #include "bsp_8021x.h"
 
 
@@ -95,10 +90,9 @@ int bsp_8021x_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 	case HAL_8021X:
 	hal_ipcmsg_getl(&client->ipcmsg, &bsp8021x.value);
 	break;
-	case HAL_TRUNK_CMD_CREATE:
-	case HAL_TRUNK_CMD_MODE:
-	case HAL_TRUNK_CMD_ADDIF:
-	case HAL_TRUNK_CMD_DELIF:
+	case HAL_8021X_PORT_MODE:
+	case HAL_8021X_PORT_MAC:
+	case HAL_8021X_PORT_STATE:
 	hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 	hal_ipcmsg_getl(&client->ipcmsg, &bsp8021x.value);
 	break;

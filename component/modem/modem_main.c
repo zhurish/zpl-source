@@ -34,7 +34,7 @@
 #include "modem_process.h"
 #include "modem_usb_driver.h"
 
-static zpl_uint32 modem_task_id = 0;
+static zpl_taskid_t modem_task_id = 0;
 
 os_ansync_lst * modem_ansync_lst = NULL;
 

@@ -175,7 +175,16 @@ int hal_ipcmsg_create_header(struct hal_ipcmsg *ipcmsg, zpl_uint32 command)
     ipcmsg->setp = sizeof(struct hal_ipcmsg_header);
     return ipcmsg->setp;
 }
-
+int hal_ipcmsg_get_header(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_header *header)
+{
+    struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)ipcmsg->buf;
+    header->length = ntohs(hdr->length);
+    header->marker = hdr->marker ;
+    header->version = hdr->version;
+    header->command = ntohl(hdr->command);
+    ipcmsg->getp = sizeof(struct hal_ipcmsg_header);
+    return ipcmsg->getp;
+}
 int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint32 unit)
 {
     struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)ipcmsg->buf;
@@ -291,7 +300,7 @@ int hal_ipcmsg_port_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex)
     hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_PHYID_GET(ifindex));
     //hal_ipcmsg_putl(ipcmsg, (ifindex));
     hal_ipcmsg_putl(ipcmsg, if_ifindex2l3intfid(ifindex));
-    hal_ipcmsg_putw(ipcmsg, IF_IFINDEX_VRFID_GET(ifindex));
+    hal_ipcmsg_putl(ipcmsg, IF_IFINDEX_VRFID_GET(ifindex));
     return OK;
 }
 
@@ -303,7 +312,7 @@ int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, hal_port_header_t *bspport)
     hal_ipcmsg_getl(ipcmsg, &bspport->lgport);
     hal_ipcmsg_getl(ipcmsg, &bspport->phyport);
     hal_ipcmsg_getl(ipcmsg, &bspport->l3ifindex);
-    hal_ipcmsg_getw(ipcmsg, &bspport->vrfid);
+    hal_ipcmsg_getl(ipcmsg, &bspport->vrfid);
     return OK;
 }
 

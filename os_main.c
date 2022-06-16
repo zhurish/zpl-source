@@ -20,7 +20,7 @@
 #ifdef ZPL_HAL_MODULE
 #include "hal_driver.h"
 #endif
-#ifdef ZPL_SDK_MODULE
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)
 #include "sdk_driver.h"
 #endif
 
@@ -33,6 +33,9 @@
 // extern struct quagga_signal_t os_signals[];
 // handle SIGUSR2 nostop noprint
 /*
+sudo ip link add link enp0s25 name enp0s25.200 type vlan id 200
+sudo ip link set enp0s25.200 up
+sudo ip address add 1.1.1.1/24 dev enp0s25.200
  * /proc/sys/net/ipv4/tcp_orphan_retries 1
  * /proc/sys/net/ipv4/tcp_fin_timeout 10
  * cat /proc/sys/net/ipv4/tcp_keepalive_time 30
@@ -195,7 +198,8 @@ static int zplmain_getopt(int argc, char **argv)
 			startup_option.tty = NULL;
 			break;
 		case 'v':
-			print_version(startup_option.progname);
+  			printf("%s version %s\n", startup_option.progname, OEM_VERSION);
+  			printf("%s\n", OEM_PACKAGE_COPYRIGHT);
 			exit(0);
 			break;
 		case 'h':
@@ -253,7 +257,7 @@ int main(int argc, char **argv)
 	 * os shell start
 	 */
 	zpl_base_shell_start(startup_option.zserv_path, startup_option.vty_addr, startup_option.vty_port, startup_option.tty);
-
+	//zpl_base_signal_reload();
 	/*
 	 * load config file
 	 */

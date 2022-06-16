@@ -491,7 +491,7 @@ extern zpl_char **cmd_complete_command_lib (vector, struct vty *, zpl_uint32 *st
 extern const char *cmd_prompt (enum node_type);
 extern int command_config_read_one_line (struct vty *vty, struct cmd_element **, zpl_uint32 use_config_node);
 extern int config_from_file (struct vty *, FILE *, zpl_uint32  *line_num);
-//extern enum node_type node_parent (enum node_type);
+
 extern int cmd_execute_command (vector, struct vty *, struct cmd_element **, zpl_uint32);
 extern int cmd_execute_command_strict (vector, struct vty *, struct cmd_element **);
 extern void cmd_init (zpl_bool);
@@ -499,6 +499,7 @@ extern void cmd_terminate (void);
 extern vector cmd_node_vector (vector v, enum node_type ntype);
 extern void install_default_basic (enum node_type node);
 extern zpl_char * zencrypt (const char *passwd);
+
 /* Export typical functions. */
 extern struct cmd_element config_end_cmd;
 extern struct cmd_element config_exit_cmd;
@@ -511,11 +512,11 @@ extern struct cmd_element config_write_memory_cmd;
 extern struct cmd_element config_write_cmd;
 extern struct cmd_element show_running_config_cmd;
 
-extern void print_version (const char *);
 
 
 
 /* "<cr>" global */
+extern const char *default_motd;
 extern zpl_char *command_cr;
 
 #endif /* ZPL_SHELL_MODULE */ 

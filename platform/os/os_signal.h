@@ -42,6 +42,7 @@ extern void os_signal_default(os_signal_abort_cb abort_func, os_signal_exit_cb e
 extern void os_signal_init(struct os_signal_t *tbl, int num);
 extern int os_signal_add(zpl_int sig, os_signal_handler hander);
 
+extern int os_signal_send(zpl_uint signo);
 extern int os_signal_process(zpl_uint timeout);
 
 

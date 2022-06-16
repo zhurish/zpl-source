@@ -30,7 +30,6 @@
 #include "if.h"
 #include "zmemory.h"
 #include "log.h"
-#include "connected.h"
 #ifdef ZPL_VRF_MODULE
 #include "vrf.h"
 #endif
@@ -888,58 +887,6 @@ zpl_uint32 if_count_lookup_type(if_type_t type)
 }
 /* Get interface by name if given name interface doesn't exist create one. */
 
-int if_up(struct interface *ifp)
-{
-	struct connected *connected = NULL;
-	struct listnode *node = NULL;
-	struct prefix *p = NULL;
-
-	/* Install connected routes to the kernel. */
-	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
-	{
-		p = connected->address;
-
-		if (p->family == IPSTACK_AF_INET)
-			connected_up_ipv4(ifp, connected);
-#ifdef ZPL_BUILD_IPV6
-		else if (p->family == IPSTACK_AF_INET6)
-			connected_up_ipv6(ifp, connected);
-#endif /* ZPL_BUILD_IPV6 */
-	}
-	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
-/* Examine all static routes. */
-#ifdef ZPL_NSM_MODULE
-	if(if_is_l3intf(ifp))
-		rib_update(ifp->vrf_id);
-#endif
-	return OK;
-}
-
-int if_down(struct interface *ifp)
-{
-	struct connected *connected = NULL;
-	struct listnode *node = NULL;
-	struct prefix *p = NULL;
-
-	/* Delete connected routes from the kernel. */
-	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
-	{
-		p = connected->address;
-		if (p->family == IPSTACK_AF_INET)
-			connected_down_ipv4(ifp, connected);
-#ifdef ZPL_BUILD_IPV6
-		else if (p->family == IPSTACK_AF_INET6)
-			connected_down_ipv6(ifp, connected);
-#endif /* ZPL_BUILD_IPV6 */
-	}
-	ifp->flags &= ~(IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
-/* Examine all static routes which direct to the interface. */
-#ifdef ZPL_NSM_MODULE
-	if(if_is_l3intf(ifp))
-		rib_update(ifp->vrf_id);
-#endif
-	return OK;
-}
 /* Does interface up ? */
 zpl_bool if_is_up(struct interface *ifp)
 {
@@ -1107,7 +1054,7 @@ int if_kname_set(struct interface *ifp, const char *str)
 		os_strcpy(ifp->k_name, buf);
 		ifp->k_name_hash = if_name_hash_make(ifp->k_name);
 #ifdef ZPL_PAL_MODULE
-		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
+		ifp->k_ifindex = if_nametoindex(ifp->k_name);
 #endif
 	}
 	else
@@ -1184,6 +1131,163 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 		}
 	}
 	return OK;
+}
+
+
+
+/* Allocate connected structure. */
+struct connected *
+connected_new(void)
+{
+	return XCALLOC(MTYPE_CONNECTED, sizeof(struct connected));
+}
+
+/* Free connected structure. */
+void connected_free(struct connected *connected)
+{
+	if (connected->address)
+		prefix_free(connected->address);
+
+	if (connected->destination)
+		prefix_free(connected->destination);
+
+	XFREE(MTYPE_CONNECTED, connected);
+}
+
+/* If two connected address has same prefix return 1. */
+static int connected_same_prefix(struct prefix *p1, struct prefix *p2)
+{
+	if (p1->family == p2->family)
+	{
+		if (p1->family == IPSTACK_AF_INET &&
+			IPV4_ADDR_SAME(&p1->u.prefix4, &p2->u.prefix4))
+			return 1;
+#ifdef ZPL_BUILD_IPV6
+		if (p1->family == IPSTACK_AF_INET6 &&
+			IPV6_ADDR_SAME(&p1->u.prefix6, &p2->u.prefix6))
+			return 1;
+#endif /* ZPL_BUILD_IPV6 */
+	}
+	return 0;
+}
+
+struct connected *
+connected_delete_by_prefix(struct interface *ifp, struct prefix *p)
+{
+	struct listnode *node = NULL;
+	struct listnode *next = NULL;
+	struct connected *ifc = NULL;
+
+	/* In case of same prefix come, replace it with new one. */
+	for (node = listhead(ifp->connected); node; node = next)
+	{
+		ifc = listgetdata(node);
+		next = node->next;
+
+		if (connected_same_prefix(ifc->address, p))
+		{
+			listnode_delete(ifp->connected, ifc);
+			return ifc;
+		}
+	}
+	return NULL;
+}
+
+/* Find the IPv4 address on our side that will be used when packets
+ are sent to dst. */
+struct connected *
+connected_lookup_address(struct interface *ifp, struct ipstack_in_addr dst)
+{
+	struct prefix addr;
+	struct listnode *cnode = NULL;
+	struct connected *c = NULL;
+	struct connected *match = NULL;
+
+	addr.family = IPSTACK_AF_INET;
+	addr.u.prefix4 = dst;
+	addr.prefixlen = IPV4_MAX_BITLEN;
+
+	match = NULL;
+
+	for (ALL_LIST_ELEMENTS_RO(ifp->connected, cnode, c))
+	{
+		if (c->address && (c->address->family == IPSTACK_AF_INET) && prefix_match(CONNECTED_PREFIX(c), &addr) && (!match || (c->address->prefixlen > match->address->prefixlen)))
+			match = c;
+	}
+	return match;
+}
+
+struct connected *
+connected_add_by_prefix(struct interface *ifp, struct prefix *p,
+						struct prefix *destination)
+{
+	struct connected *ifc = NULL;
+
+	/* Allocate new connected address. */
+	ifc = connected_new();
+	ifc->ifp = ifp;
+
+	/* Fetch interface address */
+	ifc->address = prefix_new();
+	memcpy(ifc->address, p, sizeof(struct prefix));
+
+	/* Fetch dest address */
+	if (destination)
+	{
+		ifc->destination = prefix_new();
+		memcpy(ifc->destination, destination, sizeof(struct prefix));
+	}
+
+	/* Add connected address to the interface. */
+	listnode_add(ifp->connected, ifc);
+	return ifc;
+}
+
+/* If same interface address is already exist... */
+struct connected *
+connected_check(struct interface *ifp, struct prefix *p)
+{
+	struct connected *ifc = NULL;
+	struct listnode *node = NULL;
+
+	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, ifc))
+		if (prefix_same(ifc->address, p))
+			return ifc;
+
+	return NULL;
+}
+
+
+struct connected *
+connected_lookup(struct interface *ifp, struct prefix *p)
+{
+	return connected_check(ifp, p);
+}
+
+/* Check if two ifc's describe the same address in the same state */
+int connected_same(struct connected *ifc1, struct connected *ifc2)
+{
+	if (ifc1->ifp != ifc2->ifp)
+		return 0;
+
+	if (ifc1->destination)
+		if (!ifc2->destination)
+			return 0;
+	if (ifc2->destination)
+		if (!ifc1->destination)
+			return 0;
+
+	if (ifc1->destination && ifc2->destination)
+		if (!prefix_same(ifc1->destination, ifc2->destination))
+			return 0;
+
+	if (ifc1->flags != ifc2->flags)
+		return 0;
+
+	if (ifc1->conf != ifc2->conf)
+		return 0;
+
+	return 1;
 }
 
 /* Print if_addr structure. */

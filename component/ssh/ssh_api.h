@@ -93,7 +93,7 @@ typedef struct ssh_config_s
 	zpl_bool			initialized;
 	zpl_bool			quit;
 	zpl_bool			running;
-	zpl_uint32				sshd_taskid;
+	zpl_taskid_t				sshd_taskid;
     ssh_bind 		sshbind;
     ssh_event 		event;
 

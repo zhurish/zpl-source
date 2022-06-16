@@ -21,7 +21,6 @@
 #define CMD_HOST_DEBUG
 
 extern vector cmdvec;
-extern const char *default_motd;
 
 /* Standard command node structures. */
 DEFUN_NODE(host_node, HOST_NODE, "%s(config)# ", 1);
@@ -372,10 +371,14 @@ DEFUN (config_write_file,
 	char *config_file;
 	char *config_file_sav = NULL;
 	struct vty *file_vty;
+#ifdef ZPL_ACTIVE_STANDBY
+	if(host_isstandby())
+		return CMD_SUCCESS;
+#endif		
 	/* Check and see if we are operating under vtysh configuration */
 	if (_global_host.config == NULL)
 	{
-		vty_out(vty, "Can't save to configuration file, using vtysh.%s", VTY_NEWLINE);
+		vty_out(vty, "Can't save to configuration file, configuration file is not exist.%s", VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 	/* Get filename. */
@@ -403,8 +406,6 @@ DEFUN (config_write_file,
 	file_vty->wfd._fd = fd;
 	file_vty->type = VTY_FILE;
 	
-	//file_vty->fd_type = OS_STACK;
-	/* Config file header print. */
 	vty_out(file_vty, "!\n! Zebra configuration saved from vty\n");
 	vty_out(file_vty, "!\n");
 	vty_out(file_vty, "!");
@@ -432,6 +433,12 @@ DEFUN (config_write_file,
 	vty_out(vty, "Configuration saved to %s%s", config_file, VTY_NEWLINE);
 	vty_out(vty, "[OK]%s", VTY_NEWLINE);
 	host_sysconfig_sync();
+#ifdef ZPL_ACTIVE_STANDBY
+	if(!host_isstandby())
+	{
+		return CMD_SUCCESS;
+	}
+#endif
 	return CMD_SUCCESS;
 }
 
@@ -928,6 +935,20 @@ DEFUN (show_time_queues,
 	return CMD_SUCCESS;
 }
 
+#ifdef ZPL_ACTIVE_STANDBY
+DEFUN(show_ipcstandby_state,
+      show_ipcstandby_state_cmd,
+      "show standby",
+      SHOW_STR
+      "Standby information\n")
+{
+  	if (_global_host.active_standby)
+    	vty_out(vty, " Active Standby Mode : Standby%s", VTY_NEWLINE);
+	else 
+		vty_out(vty, " Active Standby Mode : Master%s", VTY_NEWLINE);
+  	return CMD_SUCCESS;
+}
+#endif
 
 /* This function write configuration of this _global_host. */
 static int
@@ -972,6 +993,7 @@ config_write_hostsrv (struct vty *vty)
 		vty_out(vty, "banner motd file %s%s", _global_host.motdfile, VTY_NEWLINE);
 	else if (!_global_host.motd)
 		vty_out(vty, "no banner motd%s", VTY_NEWLINE);
+		
 	if (_global_host.mutex)
 		os_mutex_unlock(_global_host.mutex);
 	return 1;
@@ -1011,6 +1033,8 @@ static int _cmd_host_base_init(zpl_bool terminal)
 
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_commandtree_cmd);
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &echo_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &echo_cmd);
+	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &echo_cmd);
 
 	install_default(ENABLE_NODE);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &config_disable_cmd);
@@ -1050,6 +1074,10 @@ static int _cmd_host_base_init(zpl_bool terminal)
 	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_time_queues_cmd);
 
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_commandtree_cmd);
+
+#ifdef ZPL_ACTIVE_STANDBY
+	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipcstandby_state_cmd);
+#endif
 	return OK;
 }
 
