@@ -128,3 +128,47 @@ int hal_port_wan_set(ifindex_t ifindex, zpl_bool enable)
 	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
+
+#ifndef ZPL_SDK_USER
+int hal_bsp_client_set(zpl_bool enable, zpl_uint32 val)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	hal_ipcmsg_putl(&ipcmsg, val);
+	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, HAL_CLIENT_DEBUG);
+	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}
+int hal_bsp_netpkt_debug_set(zpl_bool enable, zpl_uint32 val)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	hal_ipcmsg_putl(&ipcmsg, val);
+	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, HAL_NETPKT_DEBUG);
+	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}
+
+int hal_bsp_loglevel_set(zpl_uint32 level)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_putl(&ipcmsg, 0);
+	hal_ipcmsg_putl(&ipcmsg, level);
+	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, HAL_KLOG_LEVEL);
+	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}
+#endif
+

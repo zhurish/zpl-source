@@ -38,6 +38,7 @@ enum hal_module_id
     HAL_MODULE_STATISTICS,//Statistics
     HAL_MODULE_EVENT,
     HAL_MODULE_STATUS,
+    HAL_MODULE_DEBUG,
     HAL_MODULE_MAX,
 };
 

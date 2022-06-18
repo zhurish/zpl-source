@@ -21,6 +21,7 @@
 #include "sdk_driver.h"
 #include "b53_driver.h"
 #include "hal_client.h"
+#include "hal_netpkt.h"
 #endif
 /*************************************************************************/
 /****************************    DOS   ***********************************/
@@ -129,11 +130,9 @@ int sdk_driver_start(struct bsp_driver *bsp, zpl_void *p)
 	sdkdriver->sdk_device = b53125_device_probe();
 	if(sdkdriver->sdk_device)
 	{
-		if(b53125_config_init(sdkdriver) == OK)
+		if(b53125_config_start(sdkdriver) == OK)
 		{
-//#if defined( _SDK_DEBUG_EN)
 			__msdkdriver = sdkdriver;
-//#endif
 		}
 	}
 #endif
@@ -166,22 +165,36 @@ static __init int sdk_driver_init(void)
 		__msdkdriver->hal_client = hal_client_create(__msdkdriver);
 		if(__msdkdriver->hal_client)
 		{
+			netpkt_netlink_init();
+			klog_init();
 			__msdkdriver->sdk_device = b53125_device_probe();
 			if(__msdkdriver->sdk_device)
+			{
+				if(b53125_config_start(__msdkdriver) != OK)
+				{
+					netpkt_netlink_exit();
+					klog_exit();
+					hal_client_destroy(__msdkdriver->hal_client);
+					__msdkdriver->hal_client = NULL;
+					return ERROR;
+				}
 				return OK;
+			}
 			if(__msdkdriver->hal_client)
 			{
+				netpkt_netlink_exit();
+				klog_exit();
 				hal_client_destroy(__msdkdriver->hal_client);
 				__msdkdriver->hal_client = NULL;
-				return -1;
+				return ERROR;
 			}
 		}
 		else
 		{
-			return -1;
+			return ERROR;
 		}	
 	}
-	return 0;	
+	return OK;	
 }
 
 static __exit void sdk_driver_exit(void)
@@ -198,6 +211,8 @@ static __exit void sdk_driver_exit(void)
 			hal_client_destroy(__msdkdriver->hal_client);
 			__msdkdriver->hal_client = NULL;
 		}
+		netpkt_netlink_exit();
+		klog_exit();
 		kfree(__msdkdriver);
 		__msdkdriver = NULL;
 	}

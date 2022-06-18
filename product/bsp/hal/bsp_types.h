@@ -40,9 +40,32 @@ extern "C" {
 
 
 #define XFREE(t, p)         kfree(p)
-#define XMALLOC(t, s)       kmalloc(s, GFP_KERNEL)
-#define XREALLOC(t, p, s)       krealloc(p, s, GFP_KERNEL)
 #define XNLMSG_NEW(t, s)    nlmsg_new(s, GFP_KERNEL)
+
+static inline void *XMALLOC(int type, int size)
+{
+    void *p = kmalloc(size, GFP_KERNEL);
+    if(p)
+    {
+        memset(p, 0, size);
+        return p;
+    }
+    return p;
+}
+
+static inline void *XREALLOC(int type, void *r, int size)
+{
+    void *p = krealloc(r, size, GFP_KERNEL);
+    if(p && r == NULL)
+    {
+        memset(p, 0, size);
+        return p;
+    }
+    return p;
+}
+//#define XMALLOC(t, s)       kmalloc(s, GFP_KERNEL)
+//#define XREALLOC(t, p, s)       krealloc(p, s, GFP_KERNEL)
+
 
 enum zpl_memory_type
 {
@@ -70,20 +93,30 @@ enum zpl_module
     MODULE_SDK = 2,
 };
 
-/* LOG MODULE */
-#define kzlog_emerg(m, fmt, ...) { printk(KERN_EMERG fmt, ##__VA_ARGS__);printk("\r\n");}
-#define kzlog_err(m, fmt, ...) { printk(KERN_ERR fmt, ##__VA_ARGS__);printk("\r\n");}
-#define kzlog_warn(m, fmt, ...) { printk(KERN_WARNING fmt, ##__VA_ARGS__);printk("\r\n");}
-#define kzlog_notice(m, fmt, ...) { printk(KERN_NOTICE fmt, ##__VA_ARGS__);printk("\r\n");}
-#define kzlog_info(m, fmt, ...) { printk(KERN_INFO fmt, ##__VA_ARGS__);printk("\r\n");}
-#define kzlog_debug(m, fmt, ...) { printk(KERN_DEBUG fmt, ##__VA_ARGS__);printk("\r\n");}
+enum zpl_debug_cmd
+{
+    KLOG_LEVEL,
+    NETPKT_DEBUG,
+    HALCLIENT_DEBUG,
+    NETPKT_DEST,
+    NETPKT_BIND,
+    KLOG_DEST,
+};
 
-#define zlog_emerg kzlog_emerg
-#define zlog_err kzlog_err
-#define zlog_warn kzlog_warn
-#define zlog_notice kzlog_notice
-#define zlog_info kzlog_info
-#define zlog_debug kzlog_debug
+#define NO_SDK ERROR
+
+#define ZPL_ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
+
+
+#ifndef NSM_MAC_MAX
+#define NSM_MAC_MAX	6
+#endif
+
+
+#ifndef VLAN_TABLE_MAX
+#define VLAN_TABLE_MAX 4096
+#endif
+
 
 #include "kbsp_types.h"
 #include "hal_client.h"

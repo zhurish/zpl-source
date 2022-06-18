@@ -26,7 +26,9 @@ extern "C" {
 #include "bsp_include.h"
 #endif
 
+#ifndef BIT
 #define BIT(n)		(1)<<(n)
+#endif
 
 enum {
 

@@ -1,1 +1,0 @@
-cmd_/home/zhurish/workspace/working/zpl-source/source/product/kernel/modules.order := {   echo /home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_drv.ko; :; } | awk '!x[$$0]++' - > /home/zhurish/workspace/working/zpl-source/source/product/kernel/modules.order

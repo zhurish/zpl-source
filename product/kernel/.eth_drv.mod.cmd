@@ -1,1 +1,0 @@
-cmd_/home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_drv.mod := { echo  /home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_netlink.o /home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_drv.o;  echo; } > /home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_drv.mod

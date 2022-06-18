@@ -13,13 +13,11 @@ struct netpkt_field
     union 
     {
         struct ipstack_iphdr   iphdr;
-        //struct ipstack_ipv6hdr   ipv6hdr;
         struct ipstack_arphdr   arphdr;
     }ippkt;
     union 
     {
         struct ipstack_icmphdr   icmphdr;
-        //struct ipstack_icmp6hdr   icmp6hdr;
         struct ipstack_igmphdr   igmp;
         struct ipstack_igmpv3_query   igmpv3_query;
         struct ipstack_igmpv3_report   igmpv3_report;

@@ -12,6 +12,10 @@ MODULE_NAME := b53125-kbe
 KBSP_OBJ += hal_ipcmsg.o
 KBSP_OBJ += hal_ipccmd.o
 KBSP_OBJ += hal_client.o
+KBSP_OBJ += hal_netlink.o
+KBSP_OBJ += eth_drv.o
+KBSP_OBJ += hal_netpkt.o
+KBSP_OBJ += klog.o
 
 BSP_OBJ += ../../bsp/hal/bsp_global.o
 BSP_OBJ += ../../bsp/hal/bsp_l3if.o
@@ -75,9 +79,17 @@ make_prepare:
 all:  lib    
   
 lib: 
+	@if test ! -d $(KO_DIR) ; \
+		then \
+		$(MKDIR) -p $(KO_DIR) ; \
+	fi
 	make ARCH=$(KARCH_TYPE) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERN_DIR) M=$(shell pwd) modules 
 
 obj: 
+	@if test ! -d $(KO_DIR) ; \
+		then \
+		$(MKDIR) -p $(KO_DIR) ; \
+	fi
 	make ARCH=$(KARCH_TYPE) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERN_DIR) M=$(shell pwd) modules 
 # 
 # KBUILD_OUTPUT=$(MKBUILD_OUTPUT)
@@ -86,8 +98,8 @@ install:
 	@install -d $(KO_DIR)
 	@install -m 755 $(MODULE_NAME).ko $(KO_DIR)
 	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers
-	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd ../user/*.a
-	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd ../../bsp/hal/*.a
+	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd 
+	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd
 
 
 clean:  objclean                                   
@@ -95,8 +107,8 @@ clean:  objclean
 
 objclean: 
 	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers
-	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd ../user/*.a
-	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd ../../bsp/hal/*.a
+	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd 
+	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd 
 
 
 all: lib install

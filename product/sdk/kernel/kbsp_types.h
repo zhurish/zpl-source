@@ -14,20 +14,41 @@ extern "C" {
 
 #include <linux/types.h>
 
-#define NO_SDK ERROR
+/* LOG MODULE */
+int klog_init(void);
+void klog_exit(void);
+int klog_dstpid(int pid);
+int klog_level(int level);
+void klog_printk(int module, int priority, const char *fmt, ...);
 
-#define ZPL_ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
+/*
+#define zlog_emerg(m, fmt, ...) 	klog_printk(m, 1, fmt, ##__VA_ARGS__)
+#define zlog_err(m, fmt, ...) 		klog_printk(m, 3, fmt, ##__VA_ARGS__)
+#define zlog_warn(m, fmt, ...) 		klog_printk(m, 4, fmt, ##__VA_ARGS__)
+#define zlog_notice(m, fmt, ...) 	klog_printk(m, 5, fmt, ##__VA_ARGS__)
+#define zlog_info(m, fmt, ...) 		klog_printk(m, 6, fmt, ##__VA_ARGS__)
+#define zlog_debug(m, fmt, ...) 	klog_printk(m, 7, fmt, ##__VA_ARGS__)
+*/
+#define zlog_emerg(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+#define zlog_err(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define zlog_warn(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define zlog_notice(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+#define zlog_info(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define zlog_debug(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
 
+/*
+#define zlog_emerg(m, fmt, ...) 	
+#define zlog_err(m, fmt, ...) 		
+#define zlog_warn(m, fmt, ...) 		
+#define zlog_notice(m, fmt, ...) 	
+#define zlog_info(m, fmt, ...) 		
+#define zlog_debug(m, fmt, ...) 	
+*/
 
-#ifndef NSM_MAC_MAX
-#define NSM_MAC_MAX	6
-#endif
-
-
-#ifndef VLAN_TABLE_MAX
-#define VLAN_TABLE_MAX 4096
-#endif
-
+#define KLOG_DEBUG_EVENT	1
+#define KLOG_DEBUG_DETAIL	2
+#define KLOG_DEBUG_RECV		3
+#define KLOG_DEBUG_SEND		4
 
 #define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
 #define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)

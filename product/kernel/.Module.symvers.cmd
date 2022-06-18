@@ -1,1 +1,0 @@
-cmd_/home/zhurish/workspace/working/zpl-source/source/product/kernel/Module.symvers := sed 's/\.ko$$/\.o/' /home/zhurish/workspace/working/zpl-source/source/product/kernel/modules.order | scripts/mod/modpost    -o /home/zhurish/workspace/working/zpl-source/source/product/kernel/Module.symvers -e -i Module.symvers   -T -

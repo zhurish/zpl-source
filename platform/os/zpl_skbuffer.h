@@ -19,6 +19,13 @@ extern "C" {
 #define ZPL_SKBUF_ALIGN(n)      (((((n)+3)/4)*4))
 #define ZPL_SKSIZE_ALIGN(n)     (((((n)+3)/4)*4) + ZPL_SKB_START_OFFSET)
 
+enum zpl_netpkt_reason 
+{
+    NETPKT_REASON_NONE,
+    NETPKT_REASON_COPYTOCPU,
+	NETPKT_REASON_TONETDEV,
+};
+
 	
 typedef struct
 {

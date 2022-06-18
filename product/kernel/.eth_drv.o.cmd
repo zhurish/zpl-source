@@ -1,1 +1,0 @@
-cmd_/home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_drv.o := /opt/gcc-linaro-7.5.0-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ld  -EL    -r -o /home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_drv.o /home/zhurish/workspace/working/zpl-source/source/product/kernel/eth_netlink.o

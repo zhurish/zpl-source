@@ -11,7 +11,7 @@ extern "C" {
 //#define HAL_IPCSRV_SEM_ACK
 
 
-#define HAL_IPCSRV_ACK_TIMEOUT  500//MS
+#define HAL_IPCSRV_ACK_TIMEOUT  5000//MS
 
 struct hal_ipcsrv
 {

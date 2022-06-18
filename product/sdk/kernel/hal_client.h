@@ -9,11 +9,10 @@ extern "C"
 #include "bsp_types.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
+#include "hal_netlink.h"
 
 
 
-#define HAL_CFG_NETLINK_PROTO (30)
-#define HAL_DATA_NETLINK_PROTO (29)
   /* Structure for the zebra client. */
   struct hal_client
   {
@@ -23,10 +22,7 @@ extern "C"
 
     void *bsp_driver;
 
-    struct sock *nlsock;
-    int cmd;
-    int seqno;
-    int pid;
+    struct hal_netlink *netlink;
   };
 
  

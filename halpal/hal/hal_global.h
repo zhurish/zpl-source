@@ -25,7 +25,20 @@ enum hal_global_cmd
 	HAL_GLOBAL_AGINT,  
 	HAL_GLOBAL_WAN_PORT, 
 };
+#ifndef ZPL_SDK_USER
+enum zpl_debug_cmd
+{
+    HAL_KLOG_LEVEL,
+    HAL_NETPKT_DEBUG,
+    HAL_CLIENT_DEBUG
+};
 
+
+
+extern int hal_bsp_client_set(zpl_bool enable, zpl_uint32 val);
+extern int hal_bsp_netpkt_debug_set(zpl_bool enable, zpl_uint32 val);
+extern int hal_bsp_loglevel_set(zpl_uint32 level);
+#endif
 
 extern int hal_jumbo_size_set(zpl_uint32 size);
 /*
@@ -42,7 +55,7 @@ int hal_global_aging_time(zpl_uint32 value);
 
 extern int hal_port_wan_set(ifindex_t ifindex, zpl_bool enable);
 
-	
+extern int hal_driver_debug_set(zpl_bool enable, zpl_uint32 module, zpl_uint32 val);
     
 #ifdef __cplusplus
 }

@@ -25,17 +25,10 @@
 #include <linux/slab.h>
 
 #include "eth_drv.h"
-#include "eth_netlink.h"
-/*
- * Debug messages level
- */
-static int debug;
-module_param(debug, int, 0644);
-MODULE_PARM_DESC(debug, "dm9000 debug level (0-6)");
+#include "hal_netpkt.h"
 
-/* debug code */
 
-#define ethkernel_dbg(db, lev, msg...)
+
 
 static inline struct eth_interface *to_ethkernel_board(struct net_device *dev)
 {
@@ -57,8 +50,7 @@ static int ethkernel_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
   return 0; // generic_mii_ioctl(&dm->mii, if_mii(req), cmd, NULL);
 }
 
-static void
-ethkernel_poll_work(struct work_struct *w)
+static void ethkernel_poll_work(struct work_struct *w)
 {
   struct delayed_work *dw = to_delayed_work(w);
   struct eth_interface *db = container_of(dw, struct eth_interface, phy_poll);
@@ -99,8 +91,6 @@ static int ethkernel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 
   struct eth_interface *db = netdev_priv(dev);
-
-  ethkernel_dbg(db, 3, "%s:\n", __func__);
 
   skb_queue_tail (&db->_eth_tx_queue, skb);
 
@@ -196,8 +186,7 @@ static void ethkernel_rx(struct net_device *dev, char *data, int RxLen)
  *  Open the interface.
  *  The interface is opened whenever "ifconfig" actives it.
  */
-static int
-ethkernel_open(struct net_device *dev)
+static int ethkernel_open(struct net_device *dev)
 {
   struct eth_interface *db = netdev_priv(dev);
 
@@ -294,7 +283,7 @@ static void ethkernel_ether_setup(struct net_device *dev)
 /*
  * Search DM9000 board, allocate space and register it
  */
-struct eth_interface *ethkernel_probe(char *name)
+struct eth_interface *ethkernel_create(char *name)
 {
   struct net_device *ndev;
   struct eth_interface *db;
@@ -339,43 +328,16 @@ struct eth_interface *ethkernel_probe(char *name)
 
   return ret;
 }
-EXPORT_SYMBOL(ethkernel_probe);
 
-  struct sk_buff_head   _eth_tx_queue;
-  struct sk_buff_head   _eth_rx_queue;
 
 /* Destroy netdevice. */
-int ethkernel_destroy_netdevice(struct net_device *ndev)
+int ethkernel_destroy(struct eth_interface *db)
 {
-  struct sk_buff *skb;  
-  struct eth_interface *db;
-  db = netdev_priv(ndev);
+  struct sk_buff *skb = NULL;  
   while ((skb = skb_dequeue (&db->_eth_tx_queue)) != NULL)
     kfree_skb (skb);
   while ((skb = skb_dequeue (&db->_eth_rx_queue)) != NULL)
     kfree_skb (skb);  
-  unregister_netdev(ndev);
+  unregister_netdev(db->ndev);
   return 0;
 }
-
-EXPORT_SYMBOL(ethkernel_destroy_netdevice);
-/*
-  Linux kernel module init and denint registrations.
-*/
-static int __init _hsl_module_init(void)
-{
-  eth_netlink_init();
-  return 0;
-}
-
-static void __exit _hsl_module_deinit(void)
-{
-  eth_netlink_exit();
-}
-
-module_init(_hsl_module_init);
-module_exit(_hsl_module_deinit);
-
-MODULE_LICENSE("Proprietary");
-MODULE_AUTHOR("IP Infusion Inc.");
-MODULE_DESCRIPTION("IP Infusion Broadcom Hardware Services Layer");
