@@ -131,9 +131,9 @@ b53_device_t * b53125_device_probe(void)
 			if (!b53_device->enabled_ports)
 				b53_device->enabled_ports = chip->enabled_ports;
 			b53_device->duplex_reg = chip->duplex_reg;
-			b53_device->vta_regs[0] = chip->vta_regs[0];
-			b53_device->vta_regs[1] = chip->vta_regs[1];
-			b53_device->vta_regs[2] = chip->vta_regs[2];
+			b53_device->vta_regs[0] = B53_VLAN_TBL_ACCESS;//chip->vta_regs[0] = 
+			b53_device->vta_regs[1] = B53_VLAN_TBL_INDEX;//chip->vta_regs[1] = 
+			b53_device->vta_regs[2] = B53_VLAN_TBL_ENTRY;//chip->vta_regs[2] = 
 			b53_device->jumbo_pm_reg = chip->jumbo_pm_reg;
 			b53_device->cpu_port = chip->cpu_port;
 			b53_device->num_vlans = chip->vlans;

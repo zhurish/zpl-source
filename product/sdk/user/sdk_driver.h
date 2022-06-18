@@ -60,7 +60,7 @@ extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, z
 #define _sdk_notice(format, ...) zlog_notice(MODULE_SDK,format, ##__VA_ARGS__)
 #endif
 #else
-#define _sdk_debug(format, ...)	printk(KERN_ERR format, ##__VA_ARGS__)
+#define _sdk_debug(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_warn(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_err(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_info(format, ...)	printk(format, ##__VA_ARGS__)

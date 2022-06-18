@@ -283,7 +283,7 @@ int nsm_module_start(void)
 	nsm_global_start();
 	nsm_port_start();
 #ifdef ZPL_NSM_VLAN	
-	nsm_vlan_default();
+	//nsm_vlan_default();
 #endif
 	return OK;
 }

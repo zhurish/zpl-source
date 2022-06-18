@@ -50,8 +50,10 @@ void klog_printk(int module, int priority, const char *fmt, ...);
 #define KLOG_DEBUG_RECV		3
 #define KLOG_DEBUG_SEND		4
 
-#define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
-#define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
+#define BSP_ENTER_FUNC() 
+//zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
+#define BSP_LEAVE_FUNC() 
+//zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
 
 
 

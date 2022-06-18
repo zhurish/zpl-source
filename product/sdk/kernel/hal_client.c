@@ -71,11 +71,20 @@ static void hal_client_sock_input(struct sk_buff *__skb)
   int *from_pid = NULL;
   nlmsg = (const char *)nlmsg_data(nlh);
   from_pid = (int *)nlmsg;
-  zlog_debug(MODULE_HAL, " cfgnk_sock_input nlmsg_type %d seq %d dstpid %d\n", nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid));
+  //zlog_debug(MODULE_HAL, " cfgnk_sock_input nlmsg_type %d seq %d dstpid %d\n", nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid));
   if (halclient && nlh->nlmsg_type == HAL_CFG_REQUEST_CMD)
+  {
+    /*struct hal_ipcmsg_header *hdr = (struct hal_ipcmsg_header *)(nlmsg + 4);
+    halclient->netlink->cmd = nlh->nlmsg_type;
+    halclient->netlink->seqno = nlh->nlmsg_seq;
+    halclient->netlink->dstpid = ntohl(*from_pid);    
+    hal_client_send_return(halclient, 0, "cmd:%s", hal_module_cmd_name(ntohl(hdr->command)));*/
     hal_client_putdata(halclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
+  }
+    
   else if (halclient && nlh->nlmsg_type == HAL_DATA_REQUEST_CMD)
   {
+    hal_client_putdata(halclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
     // netpkt_netlink_dstpid(ntohl(*from_pid));
     // netpkt_netlink_bind(moudle, value);
     // netpkt_netlink_debug_set(moudle, value);
@@ -110,7 +119,7 @@ static struct hal_client *hal_client_new(void)
       halclient = NULL;
       return hal_client;
     }
-    hal_client->debug = 0x00ffffff;
+    hal_client->debug = 0;
   }
   return hal_client;
 }

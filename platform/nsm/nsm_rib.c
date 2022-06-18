@@ -3555,7 +3555,7 @@ struct nsm_ip_vrf * nsm_vrf_alloc(vrf_id_t vrf_id)
 {
 	struct nsm_ip_vrf *zvrf = NULL;
 
-	fprintf(stdout, "=========%s\r\n", __func__);
+	zlog_trap(MODULE_NSM, "======================%s\r\n", __func__);
 	zvrf = XCALLOC(MTYPE_ZEBRA_VRF, sizeof(struct nsm_ip_vrf));
 	if(zvrf)
 	{

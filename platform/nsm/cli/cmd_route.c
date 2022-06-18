@@ -3675,6 +3675,7 @@ static int nsm_ipv4_route_config_write (struct vty *vty, safi_t safi, const char
 {
   int write = 0;
   struct ip_vrf_temp temp;
+  memset(&temp, 0, sizeof(struct ip_vrf_temp));
   strcpy(temp.name, cmd);
   temp.p = vty;
   temp.value = safi;

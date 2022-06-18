@@ -182,7 +182,7 @@ extern "C" {
 
 #define CMD_VLAN_DATABASE_STR		"vlan-database"
 #define CMD_VLAN_STR_DATABASE_HELP	"Vlan database\n"
-#define CMD_VLAN_STR		"vlan <2-4094>"
+#define CMD_VLAN_STR		"vlan <1-4094>"
 #define CMD_VLAN_STR_HELP	"Vlan information\nVlan ID\n"
 
 #define CMD_AGEING_TIME_STR			"ageing-time"

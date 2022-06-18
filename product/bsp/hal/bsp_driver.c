@@ -450,6 +450,7 @@ static int sdk_cfg_socket_create(sdk_driver_t *sdkdriver)
 		zlog_err(MODULE_SDK, "Can not bind to socket:%s", ipstack_strerror(ipstack_errno));
 		ipstack_close(sdkdriver->cfg_sock);
 	}
+	ipstack_set_nonblocking(sdkdriver->cfg_sock);
 	return OK;
 	hal_bsp_klog_set(getpid());
 	hal_bsp_netpkt_set(getpid());
@@ -468,17 +469,55 @@ static int sdk_cfg_socket_close(sdk_driver_t *sdkdriver)
 }
 
 
+static int sdk_cfg_netlink_flush(sdk_driver_t *sdkdriver)
+{
+	int ret = 0;
+	fd_set readfds;	
+	zpl_uint8 msgbuf[4096];
+	struct ipstack_sockaddr_nl snl;
+	struct ipstack_msghdr msg;
+	struct ipstack_iovec iov;
+	FD_ZERO(&readfds);
+	FD_SET(sdkdriver->cfg_sock._fd, &readfds);
+	while (1)
+	{
+		iov.iov_base = msgbuf;
+		iov.iov_len = sizeof(msgbuf);
+		msg.msg_name = (void *)&snl;
+		msg.msg_namelen = sizeof snl;
+		msg.msg_iov = &iov;
+		msg.msg_iovlen = 1;
+		ret = os_select_wait(sdkdriver->cfg_sock._fd + 1, &readfds, NULL, 5);
+		if (ret == OS_TIMEOUT)
+		{
+			return OS_TIMEOUT;
+		}
+		if (ret == ERROR)
+		{
+			_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
+			return ERROR;
+		}	
+		if (FD_ISSET(sdkdriver->cfg_sock._fd, &readfds))
+		{
+			ret = ipstack_recvmsg(sdkdriver->cfg_sock, &msg, 0);
+		}
+	}
+	return 0;
+}
 static int sdk_cfg_netlink_parse_info(sdk_driver_t *sdkdriver,
 									  int (*filter)(sdk_driver_t *, char *, int, void *), void *p)
 {
-	zpl_uint32 status;
+	zpl_int32 status;
 	int ret = 0;
 	int error = 0;
+	fd_set readfds;	
 	zpl_uint8 msgbuf[4096];
 	struct ipstack_sockaddr_nl snl;
 	struct ipstack_nlmsghdr *h = NULL;
 	struct ipstack_msghdr msg;
 	struct ipstack_iovec iov;
+	FD_ZERO(&readfds);
+	FD_SET(sdkdriver->cfg_sock._fd, &readfds);
 	while (1)
 	{
 		iov.iov_base = msgbuf;
@@ -489,6 +528,21 @@ static int sdk_cfg_netlink_parse_info(sdk_driver_t *sdkdriver,
 		msg.msg_iov = &iov;
 		msg.msg_iovlen = 1;
 
+		ret = os_select_wait(sdkdriver->cfg_sock._fd + 1, &readfds, NULL, 2000);
+		if (ret == OS_TIMEOUT)
+		{
+			return OS_TIMEOUT;
+		}
+		if (ret == ERROR)
+		{
+			_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
+			return ERROR;
+		}
+		if (!FD_ISSET(sdkdriver->cfg_sock._fd, &readfds))
+		{
+			_OS_ERROR("no events on sockfd(%d) found\n", fd);
+			return ERROR;
+		}
 		status = ipstack_recvmsg(sdkdriver->cfg_sock, &msg, 0);
 		if (status < 0)
 		{
@@ -617,6 +671,8 @@ static int sdk_cfg_netlink_talk(sdk_driver_t *sdkdriver, struct ipstack_nlmsghdr
 	if (IS_HAL_IPCMSG_DEBUG_EVENT(sdkdriver->debug))
 		zlog_debug(MODULE_PAL, "netlink_talk: cfg type (%u), seq=%u", n->nlmsg_type, n->nlmsg_seq);
 
+	sdk_cfg_netlink_flush(sdkdriver);
+
 	/* Send message to netlink interface. */
 	status = ipstack_sendmsg(sdkdriver->cfg_sock, &msg, 0);
 	save_errno = ipstack_errno;
@@ -626,6 +682,7 @@ static int sdk_cfg_netlink_talk(sdk_driver_t *sdkdriver, struct ipstack_nlmsghdr
 				ipstack_strerror(save_errno));
 		return -1;
 	}
+	
 	return sdk_cfg_netlink_parse_info(sdkdriver, filter, p);
 }
 

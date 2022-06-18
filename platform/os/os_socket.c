@@ -496,7 +496,7 @@ int os_sock_unix_client_write(int fd, char *name, char *buf, zpl_uint32 len)
 
 int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout_ms)
 {
-	zpl_uint32 num = 0;
+	zpl_int32 num = 0;
 	struct timeval timer_wait = {.tv_sec = 1, .tv_usec = 0};
 	timer_wait.tv_sec = timeout_ms / 1000;
 	timer_wait.tv_usec = (timeout_ms % 1000) * 1000;
@@ -508,13 +508,14 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout
 			// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 			{
-				// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
+				fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 				continue;
 			}
-			/*			if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
-						{
-							return RES_CLOSE;
-						}*/
+			/*if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
+			{
+				return RES_CLOSE;
+			}*/
+			zlog_err(MODULE_LIB, "===========os_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));
 			return -1;
 		}
 		else if (num == 0)
@@ -563,7 +564,7 @@ int os_read_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms
 		//_OS_WARN("os_select_wait timeout on read\n");
 		return OS_TIMEOUT;
 	}
-	if (ret < 0)
+	if (ret == ERROR)
 	{
 		_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
 		return ERROR;
@@ -850,7 +851,7 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",sock._fd, ipaddress);
 				return OS_TIMEOUT;
 			}
-			if (ret < 0)
+			if (ret == ERROR)
 			{
 				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(ipstack_errno));
 				return ERROR;
@@ -884,7 +885,7 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",sock._fd, ipaddress);
 				return OS_TIMEOUT;
 			}
-			if (ret < 0)
+			if (ret == ERROR)
 			{
 				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(ipstack_errno));
 				return ERROR;
@@ -1177,7 +1178,7 @@ int ipstack_sock_unix_client_write(zpl_socket_t fd, char *name, char *buf, zpl_u
 
 int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms)
 {
-	zpl_uint32 num = 0;
+	zpl_int32 num = 0;
 	struct ipstack_timeval timer_wait = {.tv_sec = 1, .tv_usec = 0};
 	timer_wait.tv_sec = timeout_ms / 1000;
 	timer_wait.tv_usec = (timeout_ms % 1000) * 1000;
@@ -1196,6 +1197,7 @@ int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdse
 						{
 							return RES_CLOSE;
 						}*/
+			zlog_err(MODULE_LIB, "===========ipstack_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));			
 			return -1;
 		}
 		else if (num == 0)
@@ -1221,7 +1223,7 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 			_OS_ERROR("os_select_wait timeout on write(%d)\n",fd._fd);
 			return OS_TIMEOUT;
 		}
-		if (ret < 0)
+		if (ret == ERROR)
 		{
 			_OS_ERROR("os_select_wait to write(%d) error %s\n", fd._fd,strerror(ipstack_errno));
 			return ERROR;
@@ -1243,7 +1245,7 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 			_OS_ERROR("ipstack_select_wait timeout on write(%d)\n",fd._fd);
 			return OS_TIMEOUT;
 		}
-		if (ret < 0)
+		if (ret == ERROR)
 		{
 			_OS_ERROR("ipstack_select_wait write(%d) error %s\n",fd._fd, strerror(ipstack_errno));
 			return ERROR;
@@ -1271,7 +1273,7 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 			//_OS_ERROR("os_select_wait timeout on read\n");
 			return OS_TIMEOUT;
 		}
-		if (ret < 0)
+		if (ret == ERROR)
 		{
 			_OS_ERROR("os_select_wait read(%d) error %s\n",fd._fd, strerror(ipstack_errno));
 			return ERROR;
@@ -1293,7 +1295,7 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 			//_OS_ERROR("os_select_wait timeout on read\n");
 			return OS_TIMEOUT;
 		}
-		if (ret < 0)
+		if (ret == ERROR)
 		{
 			_OS_ERROR("ipstack_select_wait read(%d) error %s\n",fd._fd, strerror(ipstack_errno));
 			return ERROR;
