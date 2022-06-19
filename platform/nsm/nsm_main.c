@@ -72,6 +72,9 @@ int nsm_module_init(void)
 	if(nsm_rtadv.master)
 		nsm_rtadv.initialise = 1;	
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
+#ifdef ZPL_VRF_MODULE
+	ip_vrf_init();
+#endif
 	if_init();
 	rib_init();
 
@@ -138,9 +141,7 @@ int nsm_module_init(void)
 #endif
 
 
-#ifdef ZPL_VRF_MODULE
-	ip_vrf_init();
-#endif
+
 	zserv_init();
 	return 0;
 }
@@ -280,6 +281,7 @@ int nsm_module_cmd_init(void)
 
 int nsm_module_start(void)
 {
+	//ip_vrf_create("Default-IP-Routing-Table");
 	nsm_global_start();
 	nsm_port_start();
 #ifdef ZPL_NSM_VLAN	

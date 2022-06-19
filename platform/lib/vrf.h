@@ -54,7 +54,7 @@ extern "C" {
 #define VRF_DELETE_HOOK     1   /* a VRF is to be deleted */
 #define VRF_ENABLE_HOOK     2   /* a VRF is ready to use */
 #define VRF_DISABLE_HOOK    3   /* a VRF is to be unusable */
-
+#define VRF_UPDATE_HOOK    4  /* a VRF is to be unusable */
 #define VRF_NAME_MAX    32
 
 
@@ -63,10 +63,10 @@ struct ip_vrf
   NODE node;
   /* Identifier, same as the vector index */
   vrf_id_t vrf_id;
-  /* Name */
-  char name[VRF_NAME_MAX];
   /* File descriptor */
   zpl_socket_t fd;
+  /* Name */
+  char name[VRF_NAME_MAX];
   /* User data */
   void *info;
 };
@@ -75,10 +75,12 @@ struct ip_vrf_master
 {
   LIST *ip_vrf_list;
   void *vrf_mutex;  
-  int (*vrf_new_hook)(vrf_id_t, struct ip_vrf *);
-  int (*vrf_delete_hook)(vrf_id_t, struct ip_vrf *);
-  int (*vrf_enable_hook)(vrf_id_t, struct ip_vrf *);
-  int (*vrf_disable_hook)(vrf_id_t, struct ip_vrf *);
+  int (*vrf_new_hook)(vrf_id_t, void **);
+  int (*vrf_delete_hook)(vrf_id_t, void **);
+  int (*vrf_enable_hook)(vrf_id_t, void **);
+  int (*vrf_disable_hook)(vrf_id_t, void **);
+  int (*vrf_set_vrfid_hook)(vrf_id_t, void **);
+  
 };
 
 
@@ -105,7 +107,7 @@ extern struct ip_vrf_master _ip_vrf_master;
  *          - param 2: the address of the user data pointer (the user data
  *                     can be stored in or freed from there)
  */
-extern void ip_vrf_add_hook (zpl_uint32, int (*)(vrf_id_t, struct ip_vrf *));
+extern void ip_vrf_add_hook (zpl_uint32, int (*)(vrf_id_t, void **));
 
 
 /*

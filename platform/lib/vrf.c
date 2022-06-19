@@ -40,8 +40,6 @@
 #include "command.h"
 #include "vty.h"
 
-#include "nsm_halpal.h"
-#include "nsm_rib.h"
 
 struct ip_vrf_master _ip_vrf_master;
 /*
@@ -147,12 +145,12 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
 {
   int ret = 0;
   struct ip_vrf *ip_vrf = NULL;
-  if (_ip_vrf_master.vrf_mutex)
-    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
-
   ip_vrf = XCALLOC(MTYPE_VRF, sizeof(struct ip_vrf));
   if(!ip_vrf)
     return NULL;
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+
   memset(ip_vrf, 0, sizeof(struct ip_vrf));  
   ip_vrf->vrf_id = vrf_id;
   //if (name)
@@ -163,28 +161,22 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
   /* Initialize interfaces. */
   zlog_info(MODULE_NSM, "VRF %s %u is created.", ip_vrf->name, vrf_id);
 
-  if(nsm_halpal_create_vrf(ip_vrf) != OK)
-  {
-    //if (ip_vrf->name)
-    //  XFREE(MTYPE_VRF_NAME, ip_vrf->name);
-    XFREE(MTYPE_VRF, ip_vrf);
-    return NULL;
-  }
-
 
   if (_ip_vrf_master.vrf_new_hook)
-    ret = (*_ip_vrf_master.vrf_new_hook)(vrf_id, ip_vrf);
+    ret = (_ip_vrf_master.vrf_new_hook)(vrf_id, &ip_vrf->info);
 
+  zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, ip_vrf->info);
   if (_ip_vrf_master.vrf_enable_hook)
-    ret = (*_ip_vrf_master.vrf_enable_hook)(vrf_id, ip_vrf);
+    ret = (_ip_vrf_master.vrf_enable_hook)(vrf_id, &ip_vrf->info);
+
+    zlog_trap(MODULE_NSM, "===================1===%s %p\r\n", __func__, ip_vrf->info);
+
   if(ret == OK)
   {
     lstAdd(_ip_vrf_master.ip_vrf_list, (NODE *)ip_vrf);
   }
   else
   {
-    //if (ip_vrf->name)
-    //  XFREE(MTYPE_VRF_NAME, ip_vrf->name);
     XFREE(MTYPE_VRF, ip_vrf);
     ip_vrf = NULL;
   }
@@ -202,12 +194,10 @@ static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
     os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
 
   if (_ip_vrf_master.vrf_disable_hook)
-    ret = (*_ip_vrf_master.vrf_disable_hook)(ip_vrf->vrf_id, ip_vrf);
+    ret = (_ip_vrf_master.vrf_disable_hook)(ip_vrf->vrf_id, &ip_vrf->info);
 
   if (_ip_vrf_master.vrf_delete_hook)
-    ret = (*_ip_vrf_master.vrf_delete_hook)(ip_vrf->vrf_id, ip_vrf);
-
-  ret = nsm_halpal_delete_vrf(ip_vrf);
+    ret = (_ip_vrf_master.vrf_delete_hook)(ip_vrf->vrf_id, &ip_vrf->info);
 
   if(ret == OK)
   {
@@ -280,7 +270,7 @@ vrf_id_t ip_vrf_name2vrfid(const char *name)
 
 
 /* Add a VRF hook. Please add hooks before calling vrf_init(). */
-void ip_vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, struct ip_vrf *))
+void ip_vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, void **))
 {
   switch (type)
   {
@@ -296,6 +286,10 @@ void ip_vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, struct ip_vrf *))
   case VRF_DISABLE_HOOK:
     _ip_vrf_master.vrf_disable_hook = func;
     break;
+  case VRF_UPDATE_HOOK:
+    _ip_vrf_master.vrf_set_vrfid_hook = func;
+    break;
+    
   default:
     break;
   }
@@ -339,7 +333,7 @@ ip_vrf_info_lookup(vrf_id_t vrf_id)
 struct ip_vrf *ip_vrf_create(const char *name)
 {
   struct ip_vrf *ip_vrf = NULL;
-  static int local_vrf_id = 1;
+  static int local_vrf_id = 0;
   ip_vrf = ip_vrf_new_one(local_vrf_id++, name);
   return ip_vrf;
 }
@@ -362,14 +356,11 @@ int ip_vrf_set_vrfid(struct ip_vrf *ip_vrf, vrf_id_t vrf_id)
 {
   if (ip_vrf)
   {
-    struct nsm_ip_vrf *zvrf;
     if (_ip_vrf_master.vrf_mutex)
       os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
     ip_vrf->vrf_id = vrf_id;
-
-    zvrf = ip_vrf->info;
-    zvrf->vrf_id = vrf_id;
-
+    if (_ip_vrf_master.vrf_set_vrfid_hook)
+      (_ip_vrf_master.vrf_set_vrfid_hook)(vrf_id, &ip_vrf->info);
     if (_ip_vrf_master.vrf_mutex)
       os_mutex_unlock(_ip_vrf_master.vrf_mutex);
     return 0;
@@ -388,10 +379,6 @@ void ip_vrf_init(void)
   {
     lstInit(_ip_vrf_master.ip_vrf_list);
     _ip_vrf_master.vrf_mutex = os_mutex_init();
-    ip_vrf_add_hook(VRF_NEW_HOOK, nsm_vrf_create);
-    ip_vrf_add_hook(VRF_ENABLE_HOOK, nsm_vrf_enable);
-    ip_vrf_add_hook(VRF_DISABLE_HOOK, nsm_vrf_disable);
-    ip_vrf_new_one(VRF_DEFAULT, "Default-IP-Routing-Table");
   }
 }
 

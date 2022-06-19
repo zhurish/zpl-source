@@ -443,7 +443,6 @@ extern struct nexthop *rib_nexthop_ipv6_ifindex_add (struct rib *,
                                                      ifindex_t);
 
 extern struct nsm_ip_vrf *nsm_vrf_lookup (vrf_id_t vrf_id);
-extern struct nsm_ip_vrf *nsm_vrf_alloc (vrf_id_t);
 extern struct route_table *nsm_vrf_table (afi_t, safi_t, vrf_id_t);
 extern struct route_table *nsm_vrf_static_table (afi_t, safi_t, vrf_id_t);
 
@@ -630,13 +629,6 @@ rib_tables_iter_cleanup (rib_tables_iter_t *iter)
   iter->state = RIB_TABLES_ITER_S_DONE;
 }
  
-
-extern int nsm_vrf_create(vrf_id_t vrf_id, struct ip_vrf *ip_vrf);
-extern int nsm_vrf_destroy(vrf_id_t vrf_id, struct ip_vrf *ip_vrf);
-/* Callback upon enabling a VRF. */
-extern int nsm_vrf_enable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf);
-/* Callback upon disabling a VRF. */
-extern int nsm_vrf_disable(vrf_id_t vrf_id, struct ip_vrf *ip_vrf);
 
 
 
