@@ -711,8 +711,8 @@ static int sdk_cfg_message_request(sdk_driver_t *sdkdriver, char *data, int len,
 	if(len)
 		memcpy (&req.buf[4], data, len); 
 	header = (struct hal_ipcmsg_header *)data;
-	zlog_debug(MODULE_HAL, "===========Client send message relay [%s] %d ",
-               hal_module_cmd_name(ntohl(header->command)), ntohs(header->length));
+	//zlog_debug(MODULE_HAL, "===========Client send message relay [%s] %d ",
+    //           hal_module_cmd_name(ntohl(header->command)), ntohs(header->length));
 	return sdk_cfg_netlink_talk(sdkdriver, nlh, filter, p);
 }
 
@@ -725,8 +725,8 @@ static int sdk_cfg_message_parse_default(sdk_driver_t *sdkdriver, char *buf, int
 	hal_ipcmsg_get_header(&halclient->outmsg, &header);
 	halclient->outmsg.getp -= sizeof(struct hal_ipcmsg_header);
 
-	zlog_debug(MODULE_HAL, "===========Client Recv message relay [%s] %d ",
-               hal_module_cmd_name(header.command), header.length);
+	//zlog_debug(MODULE_HAL, "===========Client Recv message relay [%s] %d ",
+    //           hal_module_cmd_name(header.command), header.length);
 
 	return hal_client_send_message(halclient, 0);
 }
@@ -734,7 +734,9 @@ static int sdk_cfg_message_parse_default(sdk_driver_t *sdkdriver, char *buf, int
 
 static int sdk_driver_set_request(sdk_driver_t *sdkdriver, char *data, int len, void *p)
 {
-	return sdk_cfg_message_request(sdkdriver, data, len, sdk_cfg_message_parse_default, p);
+	if(!ipstack_invalid(sdkdriver->cfg_sock))
+		return sdk_cfg_message_request(sdkdriver, data, len, sdk_cfg_message_parse_default, p);
+	return OK;	
 }
 
 static sdk_driver_t * sdk_driver_malloc(void)

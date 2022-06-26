@@ -30,14 +30,29 @@ enum zpl_debug_cmd
 {
     HAL_KLOG_LEVEL,
     HAL_NETPKT_DEBUG,
-    HAL_CLIENT_DEBUG
+    HAL_CLIENT_DEBUG,
+	HAL_SDK_REG8,
+	HAL_SDK_REG16,
+	HAL_SDK_REG32,
+	HAL_SDK_REG64,
 };
 
-
+typedef struct 
+{
+	zpl_uint8 page;
+	zpl_uint8 reg;
+	zpl_uint8 val8;
+	zpl_uint16 val16;
+	zpl_uint32 val32;
+	zpl_uint64 val64;
+}hal_sdkreg_t;
 
 extern int hal_bsp_client_set(zpl_bool enable, zpl_uint32 val);
 extern int hal_bsp_netpkt_debug_set(zpl_bool enable, zpl_uint32 val);
 extern int hal_bsp_loglevel_set(zpl_uint32 level);
+
+extern int hal_bsp_sdkreg_handle(zpl_bool enable, zpl_uint8 page, zpl_uint8 reg, zpl_uint8 *val, zpl_uint8 w);
+
 #endif
 
 extern int hal_jumbo_size_set(zpl_uint32 size);

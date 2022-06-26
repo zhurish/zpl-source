@@ -40,7 +40,7 @@ int ipstack_invalid(zpl_socket_t _sock)
 	}
 	return 1;
 #else
-	if(_sock._fd >= 3)
+	if(_sock._fd >= 3 && _sock.stack == OS_STACK && _sock._fd != ERROR)
 		return 0;
 	return 1;	
 #endif

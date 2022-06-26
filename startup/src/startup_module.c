@@ -18,7 +18,6 @@
 #include "command.h"
 #include "workqueue.h"
 #include "bmgt.h"
-#include "if_manage.h"
 #include "daemon.h"
 #include "nsm_include.h"
 #include "nsm_main.h"

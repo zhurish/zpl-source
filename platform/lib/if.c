@@ -1117,6 +1117,7 @@ const char *if_enca_string(if_enca_t enca)
 
 int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 {
+	int ret = OK;
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
 	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
@@ -1125,12 +1126,13 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 		{
 			if (cb)
 			{
-				if (OK != (cb)(ifp, pVoid))
+				ret = (cb)(ifp, pVoid);
+				if (OK != ret)
 					break;
 			}
 		}
 	}
-	return OK;
+	return ret;
 }
 
 

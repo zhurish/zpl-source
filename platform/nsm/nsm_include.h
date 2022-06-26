@@ -63,6 +63,7 @@ extern "C" {
 #include "nsm_firewalld.h"
 #endif
 #ifdef ZPL_NSM_VLAN
+#include "nsm_vlan_database.h"
 #include "nsm_vlan.h"
 #endif
 

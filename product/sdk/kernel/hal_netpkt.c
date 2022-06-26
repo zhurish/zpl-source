@@ -11,6 +11,46 @@
 
 static struct hal_netlink *hal_netpkt = NULL;
 
+static void netpkt_sock_skb_dump(zpl_uint8 *nethdr)
+{
+  zpl_uint8 *brcm_tag = NULL;  
+  brcm_tag = nethdr + 12;  
+  //00 00 22 03
+  char *reason_str[] = {"mirroring", "SA Learning", "switching", "proto term", "proto snooping","flooding", "res"};
+  if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  {
+    printk("DEV RECV: type=%c port=%d", (brcm_tag[3] & 0x20)?'T':'R', brcm_tag[3] & BRCM_EG_PID_MASK);
+  }
+  else//if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  {
+    /*
+    if(brcm_tag[2] & 0x01)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[0], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x02)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[1], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x04)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[2], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x08)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[3], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x10)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[4], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x20)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[5], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x40)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[6], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x80)
+      printk("DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[7], brcm_tag[3] & BRCM_EG_PID_MASK);
+      */
+  }  
+  if (hal_netpkt)
+    if (ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL)
+      && nethdr[16] == 0x81 && nethdr[17] == 0x00)
+      printk("DEV RECV: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+                 nethdr[0], nethdr[1], nethdr[2], nethdr[3], nethdr[4], nethdr[5],
+                 nethdr[6], nethdr[7], nethdr[8], nethdr[9], nethdr[10], nethdr[11],
+                 nethdr[12], nethdr[13], nethdr[14], nethdr[15], nethdr[16], nethdr[17], nethdr[18], nethdr[19]);
+}
+
 static struct sk_buff *netpkt_sock_skb_copy(const struct sk_buff *skb, int gport)
 {
   char *nldata = NULL;
@@ -23,12 +63,15 @@ static struct sk_buff *netpkt_sock_skb_copy(const struct sk_buff *skb, int gport
   if (nlskb && hal_netpkt)
   {
     // skb_pull_rcsum(skb, 4);
-    nethdr = skb->data;
-    if (ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
-      zlog_debug(MODULE_SDK, "DEV RECV: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+    nethdr = skb->data - 14;
+    netpkt_sock_skb_dump(nethdr);
+    /*if (ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL)
+      && nethdr[16] == 0x81 && nethdr[17] == 0x00)
+      printk("DEV RECV: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
                  nethdr[0], nethdr[1], nethdr[2], nethdr[3], nethdr[4], nethdr[5],
                  nethdr[6], nethdr[7], nethdr[8], nethdr[9], nethdr[10], nethdr[11],
                  nethdr[12], nethdr[13], nethdr[14], nethdr[15], nethdr[16], nethdr[17]);
+                 */
 
     nlh = nlmsg_put(nlskb, 0, 0, 0, skb->len + sizeof(zpl_netpkt_hdr_t), 0);
     nldata = nlmsg_data(nlh);
@@ -66,8 +109,8 @@ static int netpkt_sock_skb_recv_callback(const struct sk_buff *skb, const struct
     /* Locate which port this is coming from */
     source_port = brcm_tag[3] & BRCM_EG_PID_MASK;
 
-    if (source_port == 3 || source_port == 8) // wan
-      return NET_RX_SUCCESS;
+    //if (source_port == 3 || source_port == 8) // wan
+    //  return NET_RX_SUCCESS;
 
     nlskb = netpkt_sock_skb_copy(skb, source_port);
     if (nlskb)
@@ -195,6 +238,7 @@ static struct netlink_kernel_cfg _netpkt_sock_nkc = {
 
 int netpkt_netlink_init(void)
 {
+  struct net_device *netdev = NULL;
   hal_netpkt = hal_netlink_create("netpkt", HAL_DATA_NETLINK_PROTO, 0, &_netpkt_sock_nkc);
   if (!hal_netpkt)
   {
@@ -202,6 +246,13 @@ int netpkt_netlink_init(void)
     return ERROR;
   }
   hal_netpkt->debug = 0x00ffffff;
+  netdev = dev_get_by_name(&init_net, "eth0");
+  if (netdev)
+  {
+    zlog_debug(MODULE_SDK, " nk_pkt_sock_cmd NK_PKT_SETUP %s", "eth0");
+    netdev->ndev_dsa_pktrx = netpkt_sock_skb_recv_callback;
+    return OK;
+  }  
   return 0;
 }
 

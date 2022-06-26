@@ -40,12 +40,23 @@ typedef struct bsp_driver
 
 
 #ifndef ZPL_SDK_MODULE
+struct sdk_driver_port 
+{
+	zpl_phyport_t		phyport;
+	zpl_vlan_bitmap_t	vlanbitmap;
+};
+
 typedef struct sdk_driver {
 
 	zpl_phyport_t 	cpu_port;
-	zpl_uint32 		num_vlans;
+
 	zpl_phyport_t 	num_ports;
-    zpl_phyport_t	ports_table[8];
+	struct sdk_driver_port	phyports_table[PHY_PORT_MAX];
+
+	zpl_uint32  num_vlans;
+	zpl_bool    vlan_enabled;
+	zpl_bool    vlan_filtering_enabled;
+
 	void 			*sdk_device;
 }sdk_driver_t;
 
@@ -64,12 +75,22 @@ extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
 #define HAL_DATA_NETLINK_PROTO (29)
 #define HAL_KLOG_NETLINK_PROTO (28)
 
+struct sdk_driver_port 
+{
+	zpl_phyport_t		phyport;
+	zpl_vlan_bitmap_t	vlanbitmap;
+};
+
 typedef struct sdk_driver {
 
 	zpl_phyport_t 	cpu_port;
-	zpl_uint32 		num_vlans;
+
 	zpl_phyport_t 	num_ports;
-    zpl_phyport_t	ports_table[8];
+	struct sdk_driver_port	phyports_table[PHY_PORT_MAX];
+
+	zpl_uint32  num_vlans;
+	zpl_bool    vlan_enabled;
+	zpl_bool    vlan_filtering_enabled;
 
     int debug;
     zpl_socket_t    cfg_sock;

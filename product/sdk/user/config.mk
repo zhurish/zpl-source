@@ -7,7 +7,7 @@ ifeq ($(strip $(ZPL_SDK_USER)),true)
 OBJS	+= b53_mdio.o
 OBJS	+= b53_global.o
 OBJS	+= b53_dos.o
-OBJS	+= b53_mac_tbl.o
+OBJS	+= b53_mac.o
 OBJS	+= b53_mirror.o
 OBJS	+= b53_port.o
 OBJS	+= b53_stp.o

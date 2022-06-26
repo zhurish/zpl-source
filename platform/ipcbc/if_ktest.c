@@ -7,7 +7,7 @@
 #include "auto_include.h"
 #include <zplos_include.h>
 #include "nsm_include.h"
-#include "if_manage.h"
+
 #include "bmgt.h"
 
 

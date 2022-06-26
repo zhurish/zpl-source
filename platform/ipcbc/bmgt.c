@@ -223,13 +223,51 @@ int unit_board_port_foreach(unit_board_mgt_t *board, int (*func)(unit_port_mgt_t
 	return OK;
 }
 
+static int unit_board_port_show(unit_board_mgt_t *t, void *pvoid, zpl_char datil)
+{
+	NODE pnode;
+	unit_port_mgt_t *mgt = NULL;
+	zpl_char *state_str[] = {"Init", "Pand", "Acti", "UnAc"};
+#ifdef ZPL_SHELL_MODULE
+	struct vty *vty = (struct vty *)pvoid;
+#endif
+
+#ifdef ZPL_SHELL_MODULE
+	if (t->mutex)
+		os_mutex_lock(t->mutex, OS_WAIT_FOREVER);
+
+	for (mgt = (unit_port_mgt_t *)lstFirst(t->port_list); mgt != NULL; mgt = (unit_port_mgt_t *)lstNext(&pnode))
+	{
+		pnode = mgt->node;
+		if (mgt)
+		{
+			vty_out(vty, "%-8s %-4d %-4d %-4d %-4s %-4d %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
+				mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", VTY_NEWLINE);
+		}
+	}
+	if (t->mutex)
+		os_mutex_unlock(t->mutex);
+#else
+	for (mgt = (unit_port_mgt_t *)lstFirst(t->port_list); mgt != NULL; mgt = (unit_port_mgt_t *)lstNext(&pnode))
+	{
+		pnode = mgt->node;
+		if (mgt)
+		{
+			fprintf(stdout, "%-8s %-4d %-4d %-4d %-4s %-4d %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
+				mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", "\r\n");
+		}
+	}
+	if (t->mutex)
+		os_mutex_unlock(t->mutex);
+#endif
+	return OK;
+}
 
 int unit_board_show(void *pvoid)
 {
 	zpl_char datil = 0;
 	NODE *node = NULL;
 	unit_board_mgt_t *t = NULL;
-	zpl_char *state_str[] = {"Init", "Pand", "Acti", "UnAc"};
 
 #ifdef ZPL_SHELL_MODULE
 	struct vty *vty = (struct vty *)pvoid;
@@ -249,22 +287,13 @@ int unit_board_show(void *pvoid)
 		t = (unit_board_mgt_t *)node;
 		if (node)
 		{
-			unit_port_mgt_t *mgt = NULL;
-			NODE pnode;
-			if (t->mutex)
-				os_mutex_lock(t->mutex, OS_WAIT_FOREVER);
-
-			for (mgt = (unit_port_mgt_t *)lstFirst(t->port_list); mgt != NULL; mgt = (unit_port_mgt_t *)lstNext(&pnode))
+			
+			if(t->state < UBMG_STAT_INIT || t->state > UBMG_STAT_UNACTIVE)
 			{
-				pnode = mgt->node;
-				if (mgt)
-				{
-					vty_out(vty, "%-8s %-4d %-4d %-4d %-4s %-4d %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
-						mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", VTY_NEWLINE);
-				}
+				vty_out(vty, "=====================state=%d%s", t->state, "\r\n");
+				t->state = UBMG_STAT_ACTIVE;
 			}
-			if (t->mutex)
-				os_mutex_unlock(t->mutex);
+			unit_board_port_show(t, pvoid, datil);
 		}
 	}
 	if(datil)
@@ -284,22 +313,12 @@ int unit_board_show(void *pvoid)
 		t = (unit_board_mgt_t *)node;
 		if (node)
 		{
-			unit_port_mgt_t *mgt = NULL;
-			NODE pnode;
-			if (t->mutex)
-				os_mutex_lock(t->mutex, OS_WAIT_FOREVER);
-
-			for (mgt = (unit_port_mgt_t *)lstFirst(t->port_list); mgt != NULL; mgt = (unit_port_mgt_t *)lstNext(&pnode))
+			if(t->state < UBMG_STAT_INIT || t->state > UBMG_STAT_UNACTIVE)
 			{
-				pnode = mgt->node;
-				if (mgt)
-				{
-					fprintf(stdout, "%-8s %-4d %-4d %-4d %-4s %-4d  %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
-						mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", "\r\n");
-				}
+				fprintf(stdout, "=====================state=%d%s", t->state, "\r\n");
+				t->state = UBMG_STAT_ACTIVE;
 			}
-			if (t->mutex)
-				os_mutex_unlock(t->mutex);
+			unit_board_port_show(t, pvoid, datil);
 		}
 	}	
 	if(datil)
@@ -317,98 +336,136 @@ int unit_board_waitting(void)
 	os_sleep(10);
 	return OK;
 }
-/* if manage */
-/*
-static int if_slot_port_to_phy(int u, int s, int p)
-{
-	NODE node;
-	unit_board_mgt_t *t;
-	if (unit_board_mgt_mutex)
-		os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
 
-	for(t = (unit_board_mgt_t *)lstFirst(unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
+
+/* if manage */
+
+static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_uint8 s, zpl_uint8 p, zpl_phyport_t phyid)
+{
+	struct interface *ifp = NULL;
+	zpl_uint32 i = p;
+	char name[64]; //[ethernet|gigabitethernet|tunnel|loopback]
+
+	memset(name, '\0', sizeof(name));
+
+	if (type == IF_SERIAL)
+		sprintf(name, "serial %d/%d/%d", u, s, i);
+	else if (type == IF_ETHERNET)
+		sprintf(name, "ethernet %d/%d/%d", u, s, i);
+	else if (type == IF_GIGABT_ETHERNET)
+		sprintf(name, "gigabitethernet %d/%d/%d", u, s, i);
+	else if (type == IF_WIRELESS)
+		sprintf(name, "wireless %d/%d/%d", u, s, i);
+	else if (type == IF_TUNNEL)
+		sprintf(name, "tunnel %d/%d/%d", u, s, i);
+	else if (type == IF_BRIGDE)
+		sprintf(name, "brigde %d/%d/%d", u, s, i);
+#ifdef CUSTOM_INTERFACE
+	else if (type == IF_WIFI)
+		sprintf(name, "wifi %d/%d/%d", u, s, i);
+	else if (type == IF_MODEM)
+		sprintf(name, "modem %d/%d/%d", u, s, i);
+#endif
+	else if (type == IF_LOOPBACK)
+		sprintf(name, "loopback%d", i);
+	else if (type == IF_VLAN)
+		sprintf(name, "vlan%d", i);
+	else if (type == IF_LAG)
+		sprintf(name, "port-channel%d", i);
+
+	if(!online)
 	{
-		node = t->node;
-		if(t && t->unit == u && t->slot == s && t->port == p)
+		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			zlog_debug(MODULE_NSM, " if_online %s", name);
+		ifp = if_lookup_by_name(name);
+		if(ifp)
 		{
-			if(unit_board_mgt_mutex)
-				os_mutex_unlock(unit_board_mgt_mutex);
-			return t->phyid;
+			if_online(ifp, online);
 		}
 	}
-	if(unit_board_mgt_mutex)
-		os_mutex_unlock(unit_board_mgt_mutex);
-	return 0;
-}
-
-
-const int if_ifindex2phy(ifindex_t ifindex)
-{
-	if( IF_TYPE_GET(ifindex) == IF_SERIAL ||
-			IF_TYPE_GET(ifindex) == IF_ETHERNET ||
-			IF_TYPE_GET(ifindex) == IF_GIGABT_ETHERNET)
+	else// if(online)
 	{
-		return if_slot_port_to_phy(IF_UNIT_GET(ifindex), IF_SLOT_GET(ifindex), IF_PORT_GET(ifindex));
-	}
-	else if(IF_TYPE_GET(ifindex) == IF_VLAN)
-	{
-		return IF_TYPE_CLR(ifindex);
-	}
-	else if(IF_TYPE_GET(ifindex) == IF_LAG)
-	{
-		return IF_TYPE_CLR(ifindex);
-	}
-	else if(IF_TYPE_GET(ifindex) == IF_LOOPBACK)
-	{
-		return IF_TYPE_CLR(ifindex);
-	}
-	else if(IF_TYPE_GET(ifindex) == IF_TUNNEL)
-	{
-		return IF_TYPE_CLR(ifindex);
-	}
-	return -1;
-}
-
-
-static int if_unit_slot_port(zpl_uint32 type, int u, int s, int p)
-{
-	struct interface * ifp = NULL;
-	zpl_uint32 i = 0;
-	char name[64];//[ethernet|gigabitethernet|tunnel|loopback]
-	if(p == 0)
-		return 0;
-	for(i = 1; i <= p; i++)
-	{
-		memset(name, '\0', sizeof(name));
-
-		if(type == IF_SERIAL)
-			sprintf(name,"serial %d/%d/%d",u,s,i);
-		else if(type == IF_ETHERNET)
-			sprintf(name,"ethernet %d/%d/%d",u,s,i);
-		else if(type == IF_GIGABT_ETHERNET)
-			sprintf(name,"gigabitethernet %d/%d/%d",u,s,i);
-		else if(type == IF_WIRELESS)
-			sprintf(name,"wireless %d/%d/%d",u,s,i);
-		else if(type == IF_TUNNEL)
-			sprintf(name,"tunnel %d/%d/%d",u,s,i);
-		else if(type == IF_BRIGDE)
-			sprintf(name,"brigde %d/%d/%d",u,s,i);
-#ifdef CUSTOM_INTERFACE
-		else if(type == IF_WIFI)
-			sprintf(name,"wifi %d/%d/%d",u,s,i);
-		else if(type == IF_MODEM)
-			sprintf(name,"modem %d/%d/%d",u,s,i);
-#endif
-		else if(type == IF_LOOPBACK)
-			sprintf(name,"loopback%d",i);
-		else if(type == IF_VLAN)
-			sprintf(name,"vlan%d",i);
-		else if(type == IF_LAG)
-			sprintf(name,"port-channel%d",i);
-
-		if(os_strlen(name))
-			ifp = if_create (name, strlen(name));
+		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			zlog_debug(MODULE_NSM, " if_create %s", name);
+		if (os_strlen(name) && !if_lookup_by_name(name))
+			ifp = if_create(name, strlen(name));
+		if(ifp)
+			if_update_phyid2(ifp, phyid);
 	}
 	return OK;
 }
-*/
+
+static int unit_board_port_installfunc(unit_port_mgt_t *mgt, void *p)
+{
+	unit_board_mgt_t *board = p;
+	zlog_debug(MODULE_NSM, " unit_board_port_installfunc online=%d %d %d/%d/%d", 
+		board->online, mgt->type, board->unit, board->slot, mgt->port);
+	if (board->state != UBMG_STAT_ACTIVE && board->online)
+	{
+		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+			;//board->state = UBMG_STAT_ACTIVE;
+	}
+	else if (board->state == UBMG_STAT_ACTIVE && !board->online)
+	{
+		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+			;//board->state = UBMG_STAT_UNACTIVE;
+	}
+	return OK;
+}
+
+static int unit_board_installfunc(unit_board_mgt_t *mgt, void *p)
+{
+	zpl_bool *online = (zpl_bool *)p;
+	if (mgt)
+	{
+		mgt->online = online?*online:zpl_true;
+		if (mgt->state != UBMG_STAT_ACTIVE && !mgt->b_install)
+		{
+			unit_board_port_foreach(mgt, unit_board_port_installfunc, mgt);
+			if (mgt->mutex)
+				os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+			mgt->b_install = zpl_true;
+			mgt->state = UBMG_STAT_ACTIVE;
+			zlog_debug(MODULE_NSM, "===================install unit_board_installfunc online=%d state=%d install=%d", 
+				mgt->online, mgt->state, mgt->b_install);
+			if (mgt->mutex)
+				os_mutex_unlock(mgt->mutex);
+		}
+		else if (mgt->state == UBMG_STAT_ACTIVE && mgt->b_install)
+		{
+			unit_board_port_foreach(mgt, unit_board_port_installfunc, mgt);
+			if (mgt->mutex)
+				os_mutex_lock(mgt->mutex, OS_WAIT_FOREVER);
+			mgt->state = UBMG_STAT_UNACTIVE;
+			zlog_debug(MODULE_NSM, "===================uninstall unit_board_installfunc online=%d state=%d install=%d", 
+				mgt->online, mgt->state, mgt->b_install);
+			if (mgt->mutex)
+				os_mutex_unlock(mgt->mutex);
+		}
+	}
+	return 0;
+}
+
+int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable)
+{
+	unit_board_mgt_t *mgt = unit_board_lookup(unit, slot);
+	zpl_bool online = enable;
+	if(mgt)
+	{
+		zlog_debug(MODULE_NSM, " unit_board_dynamic_install %d/%d %d", unit, slot, enable);
+		unit_board_installfunc(mgt, &online);
+	}
+	return OK;
+}
+
+int bsp_usp_module_init(void)
+{
+	zpl_bool online = zpl_true;
+#ifdef ZPL_KERNEL_MODULE
+	if_ktest_init();
+#endif
+	unit_board_foreach(unit_board_installfunc, &online);
+
+	return OK;
+}
+

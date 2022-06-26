@@ -11,6 +11,7 @@ MODULE_NAME := b53125-kbe
 
 KBSP_OBJ += hal_ipcmsg.o
 KBSP_OBJ += hal_ipccmd.o
+KBSP_OBJ += hal_util.o
 KBSP_OBJ += hal_client.o
 KBSP_OBJ += hal_netlink.o
 KBSP_OBJ += eth_drv.o
@@ -44,7 +45,7 @@ SDK_OBJ += ../user/b53_stp.o
 SDK_OBJ += ../user/b53_vlan.o 
 SDK_OBJ += ../user/b53_dos.o  
 SDK_OBJ += ../user/b53_eap.o     
-SDK_OBJ += ../user/b53_mac_tbl.o  
+SDK_OBJ += ../user/b53_mac.o  
 SDK_OBJ += ../user/b53_phy.o     
 SDK_OBJ += ../user/b53_qos.o   
 SDK_OBJ += ../user/b53_snoop.o  

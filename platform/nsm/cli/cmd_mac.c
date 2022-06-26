@@ -311,6 +311,17 @@ DEFUN (clear_mac_address_table_interface,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+#ifdef ZPL_HAL_MODULE
+DEFUN (clear_mac_address_table_all,
+		clear_mac_address_table_all_cmd,
+		"clear macall",
+		CLEAR_STR
+		CMD_MAC_ADDRESS_STR_HELP)
+{
+	hal_mac_clr(0, 0);
+	return CMD_SUCCESS;
+}
+#endif
 
 DEFUN (show_mac_address_table,
 		show_mac_address_table_cmd,
@@ -421,6 +432,7 @@ static int show_nsm_mac_address_table_detail(l2mac_t *node, struct mac_user *use
 #ifdef ZPL_HAL_MODULE
 static int hal_macmsg_callback(zpl_uint8 *buf, zpl_uint32 len, void *pVoid)
 {
+	#if 0
 	zpl_uint32 macnum = 0, i = 0;
 	hal_mac_tbl_t *mactbl = (hal_mac_tbl_t *)buf;
 	l2mac_t macnode;
@@ -448,6 +460,7 @@ static int hal_macmsg_callback(zpl_uint8 *buf, zpl_uint32 len, void *pVoid)
 		show_nsm_mac_address_table_detail(&macnode, pVoid);
 		mactbl++;
 	}
+	#endif
 	return 0;
 }
 //int hal_mac_read(ifindex_t ifindex, vlan_t vlan, int (*callback)(zpl_uint8 *, zpl_uint32, void *), void  *pVoid)
@@ -555,12 +568,23 @@ int nsm_mac_address_table_ageing_config(struct vty *vty)
 	return 1;
 }
 
+DEFUN (show_mac_dump,
+		show_mac_dump_cmd,
+		"show mac dump",
+		SHOW_STR
+		CMD_MAC_ADDRESS_STR_HELP
+		"dump\n")
+{
+	hal_mac_dump(0, 0);
+	return CMD_SUCCESS;
+}
 
 
 
 void cmd_mac_init(void)
 {
 //	install_default(CONFIG_NODE);
+	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &show_mac_dump_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mac_address_table_ageing_time_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mac_address_table_ageing_time_cmd);
 
@@ -584,5 +608,10 @@ void cmd_mac_init(void)
 
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_mac_address_table_value_cmd);
 	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &show_mac_address_table_value_cmd);
+
+
+#ifdef ZPL_HAL_MODULE
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &clear_mac_address_table_all_cmd);
+#endif
 }
 

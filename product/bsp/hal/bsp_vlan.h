@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 #ifndef ZPL_SDK_USER
+
 enum hal_vlan_cmd 
 {
     HAL_VLAN_NONE,
@@ -26,6 +27,7 @@ enum hal_vlan_cmd
     HAL_VLAN_ALLOWE,
     HAL_VLAN_RANGE_ALLOWE,
     HAL_VLAN_PORT_BASE,
+    HAL_VLAN_TEST,
     HAL_VLAN_MAX,
 };
 
@@ -86,9 +88,9 @@ typedef struct hal_vlan_param_s
 	zpl_bool enable;
 	vlan_t vlan;
 	vlan_t vlan_end;
-    zpl_uint32 num;
-    vlan_t *vlantbl;
+    zpl_vlan_bitmap_t vlanbitmap;
 }hal_vlan_param_t;
+
 #endif
 typedef struct sdk_vlan_s
 {

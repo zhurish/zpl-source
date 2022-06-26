@@ -14,8 +14,10 @@ extern "C"
 #define HAL_IPCMSG_CMD_PORT 65300
 #define HAL_IPCMSG_EVENT_PORT 65301
 
-#define HAL_ENTER_FUNC() printk("Into %s line %d", __func__, __LINE__)
-#define HAL_LEAVE_FUNC() printk("Leave %s line %d", __func__, __LINE__)
+#define HAL_ENTER_FUNC()
+// printk("Into %s line %d", __func__, __LINE__)
+#define HAL_LEAVE_FUNC() 
+//printk("Leave %s line %d", __func__, __LINE__)
 
 
 enum hal_ipcmsg_type

@@ -10,6 +10,11 @@ extern "C" {
 
 #include "zpl_type.h"
 
+typedef struct
+{
+  zpl_uchar bitmap[16];   //128 bit
+}zpl_bitmap_t;
+
 
 void os_bitmap_set(zpl_bitmap_t bitmap, zpl_uint32  bit, zpl_uint32  wigth);
 void os_bitmap_clr(zpl_bitmap_t bitmap, zpl_uint32  bit, zpl_uint32  wigth);
@@ -28,6 +33,7 @@ void os_bit64_set(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth);
 void os_bit64_clr(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth);
 int os_bit64_tst(zpl_uint64 *bitmap, zpl_uint32  bit, zpl_uint32  wigth);
  
+
 #ifdef __cplusplus
 }
 #endif

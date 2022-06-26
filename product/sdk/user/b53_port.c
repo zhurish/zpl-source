@@ -556,8 +556,10 @@ static zpl_uint32 b53125_port_get_duplex(sdk_driver_t *dev, zpl_phyport_t port)
 	return (sts & BIT(port))>>(port);
 }
 
-
-
+static int b53125_port_set_mode(sdk_driver_t *dev, zpl_phyport_t port, int mode)
+{
+	return 0;
+}
 
 static int b53125_port_stats(sdk_driver_t *dev, zpl_phyport_t port, struct if_stats *state)
 {
@@ -617,7 +619,7 @@ int b53125_port_init(sdk_driver_t *dev)
 	sdk_port.sdk_port_storm_rate_cb = b53125_strom_rate;
 
 	sdk_port.sdk_port_stat_cb = b53125_port_stats;
-
+	sdk_port.sdk_port_mode_cb = b53125_port_set_mode;
 	//sdk_port.sdk_port_wan_enable_cb = b53125_port_wan_enable;
 	//sdk_port.sdk_port_mac_cb)(void *, zpl_phyport_t, zpl_uint8 *, zpl_bool);
 	//sdk_port.sdk_port_mtu_cb)(void *, zpl_phyport_t, zpl_uint32);
@@ -637,5 +639,7 @@ int b53125_port_start(sdk_driver_t *dev)
 	ret |= b53125_enable_learning(dev, 3, zpl_true);
 	ret |= b53125_enable_learning(dev, 4, zpl_true);
 	ret |= b53125_enable_learning(dev, 6, zpl_true);
+	//ret |= b53125_software_learning(dev, 3, zpl_true);
+	
 	return ret;
 }

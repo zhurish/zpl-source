@@ -98,16 +98,68 @@ void sdk_u64_ether_addr(zpl_uint64 u, zpl_uint8 *addr)
 	//}
 }
 
+int sdk_driver_mac_cache_add(sdk_driver_t *bsp_driver, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild)
+{
+	int i = 0;
+	for(i = 0; i < bsp_driver->mac_cache_max; i++)
+	{
+		if(bsp_driver->mac_cache_entry[i].use == 1 && (memcmp(bsp_driver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
+		{
+			bsp_driver->mac_cache_entry[i].port = port;
+			bsp_driver->mac_cache_entry[i].vid = vid;
+			bsp_driver->mac_cache_entry[i].is_valid = vaild;
+			bsp_driver->mac_cache_entry[i].is_age = isage;
+			bsp_driver->mac_cache_entry[i].is_static = isstatic;
+			bsp_driver->mac_cache_entry[i].use = 1;
+			return OK;
+		}
+	}
+	for(i = 0; i < bsp_driver->mac_cache_max; i++)
+	{
+		if(bsp_driver->mac_cache_entry[i].use == 0)
+		{
+			bsp_driver->mac_cache_entry[i].port = port;
+			bsp_driver->mac_cache_entry[i].vid = vid;
+			bsp_driver->mac_cache_entry[i].is_valid = vaild;
+			bsp_driver->mac_cache_entry[i].is_age = isage;
+			bsp_driver->mac_cache_entry[i].is_static = isstatic;
+			bsp_driver->mac_cache_entry[i].use = 1;
+			memcpy(bsp_driver->mac_cache_entry[i].mac, mac, ETH_ALEN);
+			bsp_driver->mac_cache_num++;
+			return OK;
+		}
+	}
+	return OK;
+}
+
+
+int sdk_driver_mac_cache_update(sdk_driver_t *bsp_driver, zpl_uint8 *mac, zpl_uint8 isage)
+{
+	int i = 0;
+	for(i = 0; i < bsp_driver->mac_cache_max; i++)
+	{
+		if(bsp_driver->mac_cache_entry[i].use == 1 && (memcmp(bsp_driver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
+		{
+			bsp_driver->mac_cache_entry[i].use = isage?1:0;
+			if(isage == 0)
+				bsp_driver->mac_cache_num--;
+			return OK;
+		}
+	}
+	return OK;
+}
+
+
 #ifdef ZPL_SDK_USER
 static sdk_driver_t * sdk_driver_malloc(void)
 {
-	return (sdk_driver_t *)malloc(sizeof(sdk_driver_t));
+	return (sdk_driver_t *)XMALLOC(MTYPE_SDK, sizeof(sdk_driver_t));
 }
 
 static int sdk_driver_free(sdk_driver_t *sdkdriver)
 {
 	if(sdkdriver)
-		free(sdkdriver);
+		XFREE(MTYPE_SDK, sdkdriver);
 	sdkdriver = NULL;
 	return OK;
 }
@@ -159,9 +211,13 @@ int sdk_driver_exit(struct bsp_driver *bsp, zpl_void *p)
 #else
 static __init int sdk_driver_init(void)
 {
-	__msdkdriver = kmalloc(sizeof(sdk_driver_t), GFP_KERNEL);
+	__msdkdriver = XMALLOC(MTYPE_SDK, sizeof(sdk_driver_t));
 	if(__msdkdriver)
 	{
+		__msdkdriver->mac_cache_max = ETH_MAC_CACHE_MAX;
+		__msdkdriver->mac_cache_num = 0;
+		__msdkdriver->mac_cache_entry = XMALLOC(MTYPE_SDK_DATA, __msdkdriver->mac_cache_max*sizeof(hal_mac_cache_t));
+
 		__msdkdriver->hal_client = hal_client_create(__msdkdriver);
 		if(__msdkdriver->hal_client)
 		{
@@ -172,25 +228,42 @@ static __init int sdk_driver_init(void)
 			{
 				if(b53125_config_start(__msdkdriver) != OK)
 				{
+					printk("b53125_config_start ERROR\r\n");
 					netpkt_netlink_exit();
 					klog_exit();
 					hal_client_destroy(__msdkdriver->hal_client);
 					__msdkdriver->hal_client = NULL;
+					if(__msdkdriver->mac_cache_entry)
+					{
+						XFREE(MTYPE_SDK_DATA, __msdkdriver->mac_cache_entry);
+						__msdkdriver->mac_cache_entry = NULL;
+					}
+					XFREE(MTYPE_SDK, __msdkdriver);
+					__msdkdriver = NULL;
 					return ERROR;
 				}
 				return OK;
 			}
+			printk("b53125_device_probe ERROR\r\n");
 			if(__msdkdriver->hal_client)
 			{
 				netpkt_netlink_exit();
 				klog_exit();
 				hal_client_destroy(__msdkdriver->hal_client);
 				__msdkdriver->hal_client = NULL;
+				if(__msdkdriver->mac_cache_entry)
+				{
+					XFREE(MTYPE_SDK_DATA, __msdkdriver->mac_cache_entry);
+					__msdkdriver->mac_cache_entry = NULL;
+				}
+				XFREE(MTYPE_SDK, __msdkdriver);
+				__msdkdriver = NULL;
 				return ERROR;
 			}
 		}
 		else
 		{
+			printk("hal_client_create ERROR\r\n");
 			return ERROR;
 		}	
 	}
@@ -211,9 +284,14 @@ static __exit void sdk_driver_exit(void)
 			hal_client_destroy(__msdkdriver->hal_client);
 			__msdkdriver->hal_client = NULL;
 		}
+		if(__msdkdriver->mac_cache_entry)
+		{
+			XFREE(MTYPE_SDK_DATA, __msdkdriver->mac_cache_entry);
+			__msdkdriver->mac_cache_entry = NULL;
+		}
 		netpkt_netlink_exit();
 		klog_exit();
-		kfree(__msdkdriver);
+		XFREE(MTYPE_SDK, __msdkdriver);
 		__msdkdriver = NULL;
 	}
 	return ;

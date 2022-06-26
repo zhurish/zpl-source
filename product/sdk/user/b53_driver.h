@@ -27,7 +27,8 @@ extern "C" {
 #endif
 
 #ifndef BIT
-#define BIT(n)		(1)<<(n)
+//#define BIT(n)		(1)<<(n)
+#define BIT(nr) (UL(1) << (nr))
 #endif
 
 enum {
@@ -71,11 +72,10 @@ enum {
 typedef struct b53125_device 
 {
 	struct b53_mdio_device mido;
-
-	/* chip specific data */
 	u32 chip_id;
 	u8 core_rev;
 	u8 vta_regs[3];
+
 	u8 duplex_reg;
 	u8 jumbo_pm_reg;
 	u8 jumbo_size_reg;
@@ -83,18 +83,17 @@ typedef struct b53125_device
 	u8 num_arl_entries;
 	u8 num_arl_bins;
 	u16 num_arl_buckets;
-	/* used ports mask */
-	u16 enabled_ports;
+
 	zpl_phyport_t cpu_port;
-
-	/* run time configuration */
-	zpl_bool enable_jumbo;
-
 	zpl_uint32 num_vlans;
-	zpl_bool vlan_enabled;
-	zpl_bool vlan_filtering_enabled;
 	zpl_phyport_t num_ports;
 }b53_device_t;
+
+typedef struct b53_vlan_s {
+	zpl_uint16 tag;
+	zpl_uint16 untag;
+	bool valid;
+}b53_vlan_t;
 
 struct b53_mib_stats
 {
@@ -169,10 +168,6 @@ b53_build_op(write48, u64);
 b53_build_op(write64, u64);
 
 
-#define b53125_for_each_port(dev, i) \
-	for (i = 0; i < B53_N_PORTS; i++) \
-		if (dev->enabled_ports & BIT(i))
-
 
 static inline int is531x5(struct b53125_device *dev)
 {
@@ -241,14 +236,16 @@ extern int b53125_trunk_init(sdk_driver_t *dev);
 extern int b53125_vlan_init(sdk_driver_t *dev);
 extern int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
 extern void b53125_imp_vlan_setup(sdk_driver_t *dev, int cpu_port);
+extern int b53125_enable_vlan_default(sdk_driver_t *dev, zpl_bool enable);
 /******* mirror *******/
 extern int b53125_mirror_init(sdk_driver_t *dev);
 
 /******* MAC *******/
-
+extern int b53125_clear_mac_all(sdk_driver_t *dev);
 extern int b53125_mac_init(sdk_driver_t *dev);
 extern int b53125_mac_address_clr(sdk_driver_t *dev, zpl_phyport_t phyport, 
 	zpl_vlan_t vlanid, zpl_uint32 vrfid);
+extern int b53125_clear_mac_tbl_vlan(sdk_driver_t *dev, vlan_t vid);
 /******* DOS *******/
 extern int b53125_dos_disable_lean(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_dos_init(sdk_driver_t *dev);

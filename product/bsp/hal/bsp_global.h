@@ -40,6 +40,17 @@ enum hal_igmp_cmd
 	HAL_RARP_COPYTOCPU,
 	HAL_DHCP_COPYTOCPU,
 };
+
+typedef struct 
+{
+	zpl_uint8 page;
+	zpl_uint8 reg;
+	zpl_uint8 val8;
+	zpl_uint16 val16;
+	zpl_uint32 val32;
+	zpl_uint64 val64;
+}hal_sdkreg_t;
+
 #endif
 
 typedef struct sdk_global_s

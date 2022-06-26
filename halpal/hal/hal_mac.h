@@ -22,34 +22,32 @@ enum hal_mac_cmd
 	HAL_MAC_CMD_DEL,
 	HAL_MAC_CMD_CLEAR,
 	HAL_MAC_CMD_READ,
+	HAL_MAC_CMD_DUMP,
     HAL_MAC_CMD_MAX,
 };
 
 #pragma pack(1)
-typedef struct hal_mac_tbl_s
+typedef struct hal_mac_cache_s
 {
-	zpl_phyport_t	phyport;
-	vlan_t			vlan;
-	mac_t 			mac[NSM_MAC_MAX];
-	vrf_id_t		vrfid;
-	zpl_uint8 		is_valid:1;
-	zpl_uint8 		is_age:1;
-	zpl_uint8 		is_static:1;
-}hal_mac_tbl_t;
+	zpl_uint8 port;
+	zpl_uint8 mac[ETH_ALEN];
+	vlan_t vid;
+	zpl_uint8 use:1;
+	zpl_uint8 is_valid:1;
+	zpl_uint8 is_age:1;
+	zpl_uint8 is_static:1;
+	zpl_uint8 res:4;
+}hal_mac_cache_t;
 #pragma pack(0)
 
-typedef struct mac_table_info_s
-{
-	hal_mac_tbl_t *mactbl;
-	zpl_uint32 macnum;
-}mac_table_info_t;
 
 typedef struct hal_mac_param_s
 {
 	vlan_t vlan;
 	zpl_uint32 value;
 	mac_t mac[NSM_MAC_MAX];
-	mac_table_info_t table;
+	zpl_uint32 macnum;
+	hal_mac_cache_t *mactbl;
 }hal_mac_param_t;
 
 
@@ -59,7 +57,7 @@ int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, zpl_uint32 pri);
 int hal_mac_del(ifindex_t ifindex, vlan_t vlan, mac_t *mac, zpl_uint32 pri);
 int hal_mac_clr(ifindex_t ifindex, vlan_t vlan);
 int hal_mac_read(ifindex_t ifindex, vlan_t vlan, int (*callback)(zpl_uint8 *, zpl_uint32, void *), void  *pVoid);
-
+int hal_mac_dump(ifindex_t ifindex, vlan_t vlan);
 
 
 #ifdef __cplusplus

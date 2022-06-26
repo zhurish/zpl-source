@@ -9,6 +9,7 @@ extern "C"
 #include "bsp_types.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
+#include "hal_util.h"
 #include "hal_netlink.h"
 
 

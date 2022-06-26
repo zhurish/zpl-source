@@ -47,6 +47,20 @@ extern "C" {
 #define NSM_MAC_MAX	6
 #endif
 
+
+#ifdef ZPL_MODEM_MODULE
+#define MODEM_PHY_MAX	1
+#else
+#define MODEM_PHY_MAX	0
+#endif
+
+#ifdef ZPL_WIFI_MODULE
+#define WIFI_PHY_MAX	1
+#else
+#define WIFI_PHY_MAX	0
+#endif
+
+
 //#include "product.h"
 
 #ifdef __cplusplus

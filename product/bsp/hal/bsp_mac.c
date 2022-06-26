@@ -62,11 +62,21 @@ static int bsp_mac_read(void *driver, hal_port_header_t *bspport, hal_mac_param_
 	BSP_ENTER_FUNC();	
 	if(driver && sdk_maccb.sdk_mac_read_cb)
 		ret = sdk_maccb.sdk_mac_read_cb(driver, bspport->phyport, macparam->vlan, 
-			bspport->vrfid, &macparam->table);	
+			bspport->vrfid, macparam);	
 	BSP_LEAVE_FUNC();
 	return ret;
 }
 
+static int bsp_mac_dump(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
+{
+	int ret = NO_SDK;
+	BSP_ENTER_FUNC();	
+	if(driver && sdk_maccb.sdk_mac_dump_cb)
+		ret = sdk_maccb.sdk_mac_dump_cb(driver, bspport->phyport, macparam->vlan, 
+			bspport->vrfid);	
+	BSP_LEAVE_FUNC();
+	return ret;
+}
 
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_NONE, NULL),
@@ -75,6 +85,7 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_DEL, bsp_mac_del),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_CLEAR, bsp_mac_clr),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_READ, bsp_mac_read),
+	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_DUMP, bsp_mac_dump),
 };
 
 
@@ -115,9 +126,13 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 		hal_ipcmsg_getl(&client->ipcmsg, &mac_param.value);
 		hal_ipcmsg_get(&client->ipcmsg, mac_param.mac, NSM_MAC_MAX);
 	}
-	else if(subcmd == HAL_MAC_CMD_READ || subcmd == HAL_MAC_CMD_CLEAR)
+	else if(subcmd == HAL_MAC_CMD_READ || subcmd == HAL_MAC_CMD_CLEAR || subcmd == HAL_MAC_CMD_DUMP)
 	{
 		hal_ipcmsg_getw(&client->ipcmsg, &mac_param.vlan);
+		if(bspport.type == 0 && subcmd == HAL_MAC_CMD_CLEAR && mac_param.vlan == 0)
+		{
+			bspport.phyport = -1;
+		}
 	}
 
 	switch (cmd)
@@ -127,14 +142,21 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 	break;
 	case HAL_MODULE_CMD_GET:         //设置
 	{
+		if(subcmd == HAL_MAC_CMD_DUMP)
+		{
+			hal_client_send_return(client, OK, "cmd:%s", hal_module_cmd_name(cmd));
+			ret = (callback->cmd_handle)(driver, &bspport, &mac_param);
+			//hal_client_send_return(client, OK, "cmd:%s", hal_module_cmd_name(cmd));
+			BSP_LEAVE_FUNC();
+			return ret;
+		}
+
 		ret = (callback->cmd_handle)(driver, &bspport, &mac_param);
 		//if(ret == 0)
 		{
-			getvalue.value = mac_param.table.macnum;
-			hal_client_send_result_msg(client, ret, &getvalue, HAL_MAC_CMD_READ, mac_param.table.mactbl, 
-				mac_param.table.macnum*sizeof(hal_mac_tbl_t));
-			if(mac_param.table.mactbl)
-				XFREE(MTYPE_SDK_DATA, mac_param.table.mactbl);	
+			getvalue.value = mac_param.macnum;
+			hal_client_send_result_msg(client, ret, &getvalue, HAL_MAC_CMD_READ, mac_param.mactbl, 
+				mac_param.macnum*sizeof(hal_mac_cache_t));	
 		}	
 	}
 	break;

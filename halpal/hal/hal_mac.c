@@ -64,7 +64,9 @@ int hal_mac_clr(ifindex_t ifindex, vlan_t vlan)
 	char buf[512];
 	HAL_ENTER_FUNC();
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+
 	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+
 	hal_ipcmsg_putw(&ipcmsg, vlan);
 	//hal_ipcmsg_putl(&ipcmsg, pri);
 	//hal_ipcmsg_put(&ipcmsg, mac, NSM_MAC_MAX);
@@ -93,3 +95,18 @@ int hal_mac_read(ifindex_t ifindex, vlan_t vlan, int (*callback)(zpl_uint8 *, zp
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg), NULL, &ipcmsg_callback);
 }
 
+
+int hal_mac_dump(ifindex_t ifindex, vlan_t vlan)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	hal_ipcmsg_port_set(&ipcmsg, ifindex);
+	hal_ipcmsg_putw(&ipcmsg, vlan);
+
+	command = IPCCMD_SET(HAL_MODULE_MAC, HAL_MODULE_CMD_GET, HAL_MAC_CMD_DUMP);
+	return hal_ipcmsg_send_message(IF_IFINDEX_UNIT_GET(ifindex), 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}

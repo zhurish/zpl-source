@@ -1071,6 +1071,7 @@ thread_fetch(struct thread_master *m)
 		if (m->bquit)
 		{
 			m->bquit = zpl_false;
+			zlog_debug(MODULE_DEFAULT, "thread_fetch quit RET NULL");
 			return NULL;
 		}
 		/* To be fair to all kinds of threads, and avoid starvation, we
@@ -1125,7 +1126,7 @@ thread_fetch(struct thread_master *m)
 		/* Signals should get quick treatment */
 		if (num < 0)
 		{
-			if (ipstack_errno == IPSTACK_ERRNO_EINTR /*  || m->max_fd == 0*/)
+			if (ipstack_errno == IPSTACK_ERRNO_EINTR || ipstack_errno == IPSTACK_ERRNO_EAGAIN/*  || m->max_fd == 0*/)
 				continue; /* signal received - process it */
 			zlog_warn(MODULE_DEFAULT, "select() error: %s", ipstack_strerror(ipstack_errno));
 			return NULL;
@@ -1166,7 +1167,10 @@ thread_mainloop(struct thread_master *m)
 			thread_call(rethread);
 		}
 		else
+		{
+			zlog_debug(MODULE_LIB, "thread_fetch RET NULL");
 			return NULL;
+		}
 		if (m->bquit)
 		{
 			m->bquit = zpl_false;

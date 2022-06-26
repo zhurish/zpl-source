@@ -488,11 +488,11 @@ hal_client_read_thread(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_HAL_IPCMSG_DEBUG_EVENT(client->debug))
-    zlog_debug(MODULE_HAL, "Client Recv message comes from ipstack_socket [%d]", sock);
+    ;//zlog_debug(MODULE_HAL, "Client Recv message comes from ipstack_socket [%d]", sock);
 
   if (IS_HAL_IPCMSG_DEBUG_PACKET(client->debug) && IS_HAL_IPCMSG_DEBUG_RECV(client->debug))
-    zlog_debug(MODULE_HAL, "Client Recv message received [%s] %d ",
-               hal_module_cmd_name(hdr.command), hdr.length);
+    ;//zlog_debug(MODULE_HAL, "Client Recv message received [%s] %d ",
+    //           hal_module_cmd_name(hdr.command), hdr.length);
 
   if (IS_HAL_IPCMSG_DEBUG_PACKET(client->debug) && 
         IS_HAL_IPCMSG_DEBUG_RECV(client->debug) && 

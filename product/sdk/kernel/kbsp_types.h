@@ -28,7 +28,7 @@ void klog_printk(int module, int priority, const char *fmt, ...);
 #define zlog_notice(m, fmt, ...) 	klog_printk(m, 5, fmt, ##__VA_ARGS__)
 #define zlog_info(m, fmt, ...) 		klog_printk(m, 6, fmt, ##__VA_ARGS__)
 #define zlog_debug(m, fmt, ...) 	klog_printk(m, 7, fmt, ##__VA_ARGS__)
-*/
+
 #define zlog_emerg(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
 #define zlog_err(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
 #define zlog_warn(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
@@ -36,14 +36,14 @@ void klog_printk(int module, int priority, const char *fmt, ...);
 #define zlog_info(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
 #define zlog_debug(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
 
-/*
+*/
 #define zlog_emerg(m, fmt, ...) 	
 #define zlog_err(m, fmt, ...) 		
 #define zlog_warn(m, fmt, ...) 		
 #define zlog_notice(m, fmt, ...) 	
 #define zlog_info(m, fmt, ...) 		
 #define zlog_debug(m, fmt, ...) 	
-*/
+
 
 #define KLOG_DEBUG_EVENT	1
 #define KLOG_DEBUG_DETAIL	2

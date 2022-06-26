@@ -60,27 +60,44 @@ extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, z
 #define _sdk_notice(format, ...) zlog_notice(MODULE_SDK,format, ##__VA_ARGS__)
 #endif
 #else
+#if 1
 #define _sdk_debug(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_warn(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_err(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_info(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_trap(format, ...)	printk(format, ##__VA_ARGS__)
 #define _sdk_notice(format, ...) printk(format, ##__VA_ARGS__)
+#else
+#define _sdk_debug(format, ...)	
+#define _sdk_warn(format, ...)	
+#define _sdk_err(format, ...)	
+#define _sdk_info(format, ...)
+#define _sdk_trap(format, ...)	
+#define _sdk_notice(format, ...) 
+#endif
 #endif
 
 
-#define ETH_ALEN	6
+
 
 typedef struct sdk_driver {
 
 	zpl_phyport_t 	cpu_port;
-	zpl_uint32 		num_vlans;
+
 	zpl_phyport_t 	num_ports;
-	zpl_phyport_t	ports_table[8];
+	struct sdk_driver_port	phyports_table[PHY_PORT_MAX];
+
+	zpl_uint32  num_vlans;
+	zpl_bool    vlan_enabled;
+	zpl_bool    vlan_filtering_enabled;
+
 	void 			*sdk_device;
 #ifndef ZPL_SDK_USER
 	struct hal_client *hal_client;
 #endif
+	zpl_uint32	mac_cache_max;
+	zpl_uint32	mac_cache_num;
+	hal_mac_cache_t *mac_cache_entry;
 }sdk_driver_t;
 
 
@@ -88,6 +105,9 @@ extern sdk_driver_t *__msdkdriver;
 extern zpl_uint64 sdk_ether_addr_u64(const zpl_uint8 *addr);
 extern void sdk_u64_ether_addr(zpl_uint64 u, zpl_uint8 *addr);
 extern bool sdk_is_multicast_ether_addr(const u8 *addr);
+
+extern int sdk_driver_mac_cache_add(sdk_driver_t *, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild);
+extern int sdk_driver_mac_cache_update(sdk_driver_t *, zpl_uint8 *mac, zpl_uint8 isage);
 
 #ifdef ZPL_SDK_USER
 extern int sdk_driver_init(struct bsp_driver *, zpl_void *);

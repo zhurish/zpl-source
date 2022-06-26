@@ -67,6 +67,19 @@ extern int unit_board_port_del(unit_board_mgt_t*, if_type_t type, zpl_uint8 port
 
 extern int unit_board_show(void *pvoid);
 
+/* 动态上线下线板卡 */
+extern int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable);
+
+
+
+/* 初始化 */
+extern int bsp_usp_module_init(void);
+
+
+#ifdef ZPL_KERNEL_MODULE
+extern int if_ktest_init(void);
+#endif
+
 
 #ifdef __cplusplus
 }

@@ -259,9 +259,14 @@ static int bsp_debug_module_handle(struct hal_client *client, zpl_uint32 cmd, zp
 {
   int ret = OK;
   int moudle, value;
+  hal_sdkreg_t sdhreg;
   BSP_ENTER_FUNC();
-  hal_ipcmsg_getl(&client->ipcmsg, &moudle);
-  hal_ipcmsg_getl(&client->ipcmsg, &value);
+
+  if(subcmd < HAL_SDK_REG8 && subcmd > HAL_SDK_REG64)
+  {
+    hal_ipcmsg_getl(&client->ipcmsg, &moudle);
+    hal_ipcmsg_getl(&client->ipcmsg, &value);
+  }
 
   if (subcmd == KLOG_DEST)
     klog_dstpid(value);
@@ -280,6 +285,39 @@ static int bsp_debug_module_handle(struct hal_client *client, zpl_uint32 cmd, zp
     else
       ZPL_CLR_BIT(client->debug, value);
   }
+  else if (subcmd == HAL_SDK_REG8)
+  {
+    hal_ipcmsg_getl(&client->ipcmsg, &value);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.val8);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.page);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.reg);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.val8);
+  }
+  else if (subcmd == HAL_SDK_REG16)
+  {
+    hal_ipcmsg_getl(&client->ipcmsg, &value);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.val8);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.page);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.reg);
+    hal_ipcmsg_getw(&client->ipcmsg, &sdhreg.val16);
+  }
+  else if (subcmd == HAL_SDK_REG32)
+  {
+    hal_ipcmsg_getl(&client->ipcmsg, &value);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.val8);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.page);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.reg);
+    hal_ipcmsg_getl(&client->ipcmsg, &sdhreg.val32);
+  }
+  else if (subcmd == HAL_SDK_REG64)
+  {
+    hal_ipcmsg_getl(&client->ipcmsg, &value);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.val8);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.page);
+    hal_ipcmsg_getc(&client->ipcmsg, &sdhreg.reg);
+    hal_ipcmsg_get(&client->ipcmsg, &sdhreg.val64, 8);
+  }
+
   BSP_LEAVE_FUNC();
   return ret;
 }

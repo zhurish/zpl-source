@@ -15,13 +15,7 @@ extern "C" {
 #include "auto_include.h"
 #include "zplos_include.h"
 
-
-#ifdef PRODUCT_PORT_MAX
-#define PHY_PORT_MAX 	PRODUCT_PORT_MAX
-#endif
-
-#define VLAN_ID_RANGE(n)    (((n)>=1)&&((n) <= VLAN_TABLE_MAX))
-
+#include "nsm_vlan_database.h"
 
 /* VLAN Action definitions. */
 typedef enum nsm_vlan_action_e {
@@ -114,62 +108,15 @@ typedef struct nsm_vlan_s
 
 
 
-typedef enum vlan_mode_s
-{
-	VLAN_UNTAG = 1,
-	VLAN_TAG,
-}vlan_mode_t;
-
-
-typedef struct l2vlan_s
-{
-	NODE	node;
-	vlan_t	vlan;
-	vlan_t 	minvlan;
-	vlan_t	maxvlan;
-    zpl_uint32  mstp;
-	ifindex_t tagport[PHY_PORT_MAX];
-	ifindex_t untagport[PHY_PORT_MAX];
-	zpl_char *vlan_name;
-	zpl_uint32  name_hash;
-}l2vlan_t;
-
-typedef struct Gl2vlan_s
-{
-	LIST	*vlanList;
-	void	*mutex;
-	zpl_bool	enable;
-}Gl2vlan_t;
-
-typedef int (*l2vlan_cb)(l2vlan_t *, void *);
-
 extern int nsm_vlan_init(void);
 extern int nsm_vlan_exit(void);
 extern int nsm_vlan_cleanall(void);
 extern int nsm_vlan_default(void);
-
 extern int nsm_vlan_enable(void);
 extern zpl_bool nsm_vlan_is_enable(void);
 
 extern int nsm_vlan_interface_create_api(struct interface *ifp);
 extern int nsm_vlan_interface_del_api(struct interface *ifp);
-
-extern int nsm_vlan_list_split_api(const char *str, vlan_t *vlanlist);
-extern int nsm_vlan_list_lookup_api(vlan_t *vlanlist, zpl_uint32 num);
-
-extern int nsm_vlan_list_create_api(const char *str);
-extern int nsm_vlan_list_destroy_api(const char *str);
-extern int nsm_vlan_create_api(vlan_t vlan, const char *name);
-extern int nsm_vlan_destroy_api(vlan_t vlan);
-extern int nsm_vlan_batch_create_api(vlan_t minvlan, vlan_t maxvlan);
-extern int nsm_vlan_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan);
-
-extern int nsm_vlan_name_api(vlan_t vlan, const char *name);
-extern void * nsm_vlan_lookup_api(vlan_t vlan);
-extern void * nsm_vlan_lookup_by_name_api(const char *name);
-
-extern int nsm_vlan_callback_api(l2vlan_cb cb, void *);
-
 
 /* 设置access接口的vlan */
 extern int nsm_interface_access_vlan_set_api(struct interface *ifp, vlan_t);

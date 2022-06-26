@@ -62,6 +62,7 @@ ifeq ($(strip $(ZPL_NSM_MAC)),true)
 OBJS	+= nsm_mac.o		
 endif
 ifeq ($(strip $(ZPL_NSM_VLAN)),true)
+OBJS	+= nsm_vlan_database.o
 OBJS	+= nsm_vlan.o		
 endif
 ifeq ($(strip $(ZPL_NSM_QOS)),true)
@@ -133,7 +134,8 @@ ifeq ($(strip $(ZPL_NSM_MAC)),true)
 OBJS	+= cmd_mac.o	
 endif
 ifeq ($(strip $(ZPL_NSM_VLAN)),true)
-OBJS	+= cmd_vlan.o		
+OBJS	+= cmd_vlan.o	
+OBJS	+= cmd_vlan_database.o		
 endif
 ifeq ($(strip $(ZPL_NSM_QOS)),true)
 OBJS	+= cmd_qos.o	

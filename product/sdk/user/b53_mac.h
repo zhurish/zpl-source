@@ -26,17 +26,18 @@ extern "C" {
 
 /* VLAN Table Entry Register (32 bit) */
 #define B53_VLAN_TBL_ENTRY			0x83
+#define   VLAN_FWD_MODE_VLAN			BIT(21)
 #define   VLAN_TBL_MSTP_INDEX_OFFSET		18
 #define   VLAN_TBL_MSTP_INDEX_MASK		3
 #define   VLAN_UNTAG_OFFSET			9
-
+#define   VLAN_VID_MASK			0x01FF
 
 /*****************MAC********************/
 /* ARL Table Read/Write Register (8 bit) */
 #define B53_ARLTBL_RW_CTRL		0x00
 #define    ARLTBL_RW			BIT(0)
 #define    ARLTBL_START_DONE		BIT(7)
-
+#define    ARLTBL_IVL_SVL_SELECT		BIT(6)
 /* MAC Address Index Register (48 bit) */
 #define B53_MAC_ADDR_IDX		0x02
 
