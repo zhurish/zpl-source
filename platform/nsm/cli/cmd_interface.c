@@ -1050,6 +1050,7 @@ DEFUN(no_nsm_interface_ip_vrf,
 }
 #endif
 
+#ifdef IF_ENCAPSULATION_ENABLE
 DEFUN(nsm_interface_enca_dot1q,
 	  nsm_interface_enca_dot1q_cmd,
 	  "encapsulation dot1q <2-4094>",
@@ -1186,6 +1187,7 @@ DEFUN(no_nsm_interface_enca,
 	}
 	return CMD_WARNING;
 }
+#endif
 
 DEFUN(nsm_interface_ip_address,
 	  nsm_interface_ip_address_cmd,
@@ -1621,6 +1623,7 @@ static int nsm_interface_address_info_write(struct interface *ifp, struct vty *v
 	}
 	return 0;
 }
+#ifdef IF_ENCAPSULATION_ENABLE
 static int nsm_interface_encapsulation_info_write(struct interface *ifp, struct vty *vty)
 {
 	if (ifp->if_type == IF_ETHERNET ||
@@ -1628,10 +1631,11 @@ static int nsm_interface_encapsulation_info_write(struct interface *ifp, struct 
 		ifp->if_type == IF_SERIAL)
 	{
 		if (ifp->if_enca != IF_ENCA_NONE)
-			vty_out(vty, " encapsulation %s%s", if_enca_string(ifp->if_enca), VTY_NEWLINE);
+			vty_out(vty, " encapsulation %s%s", if_encapsulation_string(ifp->if_enca), VTY_NEWLINE);
 	}
 	return 0;
 }
+#endif
 static int nsm_interface_bandwidth_info_write(struct interface *ifp, struct vty *vty)
 {
 	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
@@ -1734,8 +1738,9 @@ static int nsm_interface_config_write(struct vty *vty)
 
 			nsm_interface_duplexspeed_info_write(ifp, vty);
 			nsm_interface_bandwidth_info_write(ifp, vty);
+#ifdef IF_ENCAPSULATION_ENABLE
 			nsm_interface_encapsulation_info_write(ifp, vty);
-
+#endif
 			nsm_interface_write_hook_handler(NSM_INTF_PORT, vty, ifp);
 			nsm_interface_write_hook_handler(NSM_INTF_MAC, vty, ifp);
 			nsm_interface_write_hook_handler(NSM_INTF_TRUNK, vty, ifp);
@@ -1911,16 +1916,20 @@ static void cmd_base_interface_init(int node)
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_metric_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_metric_cmd);
 	}
+#ifdef IF_ENCAPSULATION_ENABLE	
 	if (node == SERIAL_INTERFACE_NODE)
 	{
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_enca_ppp_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_enca_cmd);
 	}
+#endif	
 	if (node == INTERFACE_L3_NODE)
 	{
+#ifdef IF_ENCAPSULATION_ENABLE
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_enca_dot1q_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_enca_pppoe_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_enca_cmd);
+#endif
 		install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_mac_cmd);
 		install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_mac_cmd);
 	}

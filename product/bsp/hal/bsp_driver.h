@@ -14,6 +14,13 @@ extern "C" {
 #include "zplos_include.h"
 #include "hal_client.h"
 
+struct sdk_driver_port 
+{
+    zpl_uint32          mode;
+    vlan_t              pvid;
+	zpl_phyport_t		phyport;
+	zpl_vlan_bitmap_t	vlanbitmap;
+};
 
 
 struct bsp_driver;
@@ -33,30 +40,26 @@ typedef struct bsp_driver
     int (*bsp_sdk_unicast)(struct bsp_driver *, zpl_phyport_t, int, zpl_void *, int);
     int (*bsp_sdk_vlan_flood)(struct bsp_driver *, vlan_t, int, zpl_void *, int);
 
+    //bsp private data
+    zpl_phyport_t 	cpu_port;
+	struct sdk_driver_port	phyports[PHY_PORT_MAX];
+	zpl_uint32	mac_cache_max;
+	zpl_uint32	mac_cache_num;
+	hal_mac_cache_t *mac_cache_entry;
+
     zpl_void *sdk_driver;
     
 } bsp_driver_t;
 
+#define BSP_DRIVER(bspdev, bsp)    bsp_driver_t *bspdev =  (bsp_driver_t*)(bsp)
 
+extern int bsp_driver_mac_cache_add(bsp_driver_t *, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild);
+extern int bsp_driver_mac_cache_update(bsp_driver_t *, zpl_uint8 *mac, zpl_uint8 isage);
 
-#ifndef ZPL_SDK_MODULE
-struct sdk_driver_port 
-{
-	zpl_phyport_t		phyport;
-	zpl_vlan_bitmap_t	vlanbitmap;
-};
-
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_NONE)
 typedef struct sdk_driver {
 
 	zpl_phyport_t 	cpu_port;
-
-	zpl_phyport_t 	num_ports;
-	struct sdk_driver_port	phyports_table[PHY_PORT_MAX];
-
-	zpl_uint32  num_vlans;
-	zpl_bool    vlan_enabled;
-	zpl_bool    vlan_filtering_enabled;
-
 	void 			*sdk_device;
 }sdk_driver_t;
 
@@ -65,6 +68,7 @@ extern int sdk_driver_init(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_start(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_stop(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
+
 #elif defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
 
 #define HAL_CFG_REQUEST_CMD (30) 
@@ -75,23 +79,9 @@ extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
 #define HAL_DATA_NETLINK_PROTO (29)
 #define HAL_KLOG_NETLINK_PROTO (28)
 
-struct sdk_driver_port 
-{
-	zpl_phyport_t		phyport;
-	zpl_vlan_bitmap_t	vlanbitmap;
-};
 
 typedef struct sdk_driver {
-
-	zpl_phyport_t 	cpu_port;
-
-	zpl_phyport_t 	num_ports;
-	struct sdk_driver_port	phyports_table[PHY_PORT_MAX];
-
-	zpl_uint32  num_vlans;
-	zpl_bool    vlan_enabled;
-	zpl_bool    vlan_filtering_enabled;
-
+    zpl_phyport_t   cpu_port;
     int debug;
     zpl_socket_t    cfg_sock;
     int             cfg_seq;

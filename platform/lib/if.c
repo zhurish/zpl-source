@@ -281,10 +281,6 @@ static int if_make_ifindex_type(struct interface *ifp)
 		ifp->have_kernel = zpl_true; 
 	}
 
-	if ((ifp->if_type == IF_ETHERNET ||
-		 ifp->if_type == IF_GIGABT_ETHERNET) &&
-		(IF_IS_SUBIF_GET(ifp->ifindex)))
-		ifp->encavlan = IF_IFINDEX_ID_GET(ifp->ifindex);
 	return OK;
 }
 
@@ -650,24 +646,6 @@ if_lookup_by_name_len(const char *name, zpl_uint32 namelen)
 	return if_lookup_by_name(name);
 }
 
-zpl_vlan_t  if_ifindex2vlan(ifindex_t ifindex)
-{
-	struct interface *ifp = if_lookup_by_index(ifindex);
-	return ifp ? ifp->encavlan : IFINDEX_INTERNAL;
-}
-
-ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan)
-{
-	struct listnode *node = NULL;
-	struct interface *ifp = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
-	{
-		if (ifp->encavlan && ifp->encavlan == encavlan)
-			return ifp->ifindex;
-	}
-	return IFINDEX_INTERNAL;
-}
 
 zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex)
 {
@@ -748,19 +726,6 @@ vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex)
 	return ifp ? ifp->vrf_id : IFINDEX_INTERNAL;
 }
 
-struct interface *if_lookup_by_encavlan(zpl_ushort encavlan)
-{
-	struct listnode *node = NULL;
-	struct interface *ifp = NULL;
-	if (!encavlan)
-		return NULL;
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
-	{
-		if ((ifp->encavlan == encavlan))
-			return ifp;
-	}
-	return NULL;
-}
 /* Lookup interface by IPv4 address. */
 struct interface *
 if_lookup_exact_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
@@ -1065,8 +1030,8 @@ int if_kname_set(struct interface *ifp, const char *str)
 	}
 	return OK;
 }
-
-const char *if_enca_string(if_enca_t enca)
+#ifdef IF_ENCAPSULATION_ENABLE
+const char *if_encapsulation_string(if_enca_t enca)
 {
 	switch (enca)
 	{
@@ -1114,7 +1079,7 @@ const char *if_enca_string(if_enca_t enca)
 	}
 	return " ";
 }
-
+#endif
 int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 {
 	int ret = OK;

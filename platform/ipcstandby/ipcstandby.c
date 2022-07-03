@@ -118,7 +118,11 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
 {
   int ret = 0;
   struct ipcstanby_result ack;
-  if(host_isstandby())//备用
+  if(!ipcstandby_client)
+  {
+    return OK;
+  }
+  if(host_isstandby() && ipcstandby_client)//备用
   {
     if(strstr(cmd, "switch master"))
     {
@@ -133,7 +137,7 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
     }
     return OK;
   }
-  if(host_isactive())//
+  if(host_isactive() && ipcstandby_client)//
   {
     if(strstr(cmd, "switch standby"))
     {

@@ -3,9 +3,17 @@
 ###########################################################################
 MODULEDIR = product/bsp/hal
 #OS
+ifeq ($(strip $(ZPL_SDK_USER)),true)
+ZPL_SDK_BUILD=true
+endif
+ifeq ($(strip $(ZPL_SDK_NONE)),true)
+ZPL_SDK_BUILD=true
+endif
+
 
 ifeq ($(strip $(ZPL_HAL_MODULE)),true)
-ifeq ($(strip $(ZPL_SDK_USER)),true)
+ifeq ($(strip $(ZPL_SDK_BUILD)),true)
+
 OBJS	+= bsp_global.o
 OBJS	+= bsp_l3if.o
 OBJS	+= bsp_route.o

@@ -407,7 +407,6 @@ int if_uspv_type_setting(struct interface *ifp)
 		if(vty_iusp_explain (str, &unit, &slot, &port, &id, &rend))
 		{
 			ifp->uspv = IF_TYPE_SET(ifp->if_type) | IF_USPV_SET(unit, slot, port, id);
-			//ifp->encavlan = 0; //子接口封装的VLAN ID
 			//ifp->k_name[IF_NAME_MAX + 1];
 			//ifp->k_name_hash;
 			//ifp->k_ifindex;

@@ -18,9 +18,10 @@ sdk_mirror_t sdk_mirror;
 static int bsp_mirror_enable(void *driver, hal_port_header_t *bspport, hal_mirror_param_t *mirror)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_mirror.sdk_mirror_enable_cb)
-		ret = sdk_mirror.sdk_mirror_enable_cb(driver, bspport->phyport, mirror->value);
+	if(bspdev->sdk_driver && sdk_mirror.sdk_mirror_enable_cb)
+		ret = sdk_mirror.sdk_mirror_enable_cb(bspdev->sdk_driver, bspport->phyport, mirror->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -28,9 +29,10 @@ static int bsp_mirror_enable(void *driver, hal_port_header_t *bspport, hal_mirro
 static int bsp_mirror_source_enable(void *driver, hal_port_header_t *bspport, hal_mirror_param_t *mirror)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_mirror.sdk_mirror_source_enable_cb)
-		ret = sdk_mirror.sdk_mirror_source_enable_cb(driver, bspport->phyport, mirror->value, mirror->dir);
+	if(bspdev->sdk_driver && sdk_mirror.sdk_mirror_source_enable_cb)
+		ret = sdk_mirror.sdk_mirror_source_enable_cb(bspdev->sdk_driver, bspport->phyport, mirror->value, mirror->dir);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -39,9 +41,10 @@ static int bsp_mirror_source_enable(void *driver, hal_port_header_t *bspport, ha
 static int bsp_mirror_source_filter_enable(void *driver, hal_port_header_t *bspport, hal_mirror_param_t *mirror)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_mirror.sdk_mirror_source_filter_enable_cb)
-		ret = sdk_mirror.sdk_mirror_source_filter_enable_cb(driver, bspport->phyport, mirror->value, mirror->filter, mirror->dir, mirror->mac);
+	if(bspdev->sdk_driver && sdk_mirror.sdk_mirror_source_filter_enable_cb)
+		ret = sdk_mirror.sdk_mirror_source_filter_enable_cb(bspdev->sdk_driver, bspport->phyport, mirror->value, mirror->filter, mirror->dir, mirror->mac);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

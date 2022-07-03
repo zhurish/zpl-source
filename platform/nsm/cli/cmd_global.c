@@ -13,44 +13,8 @@
 #include "nsm_global.h"
 #include "vty.h"
 
-#ifdef ZPL_NSM_VLAN	
-DEFUN(global_dot1q_tpid,
-	  global_dot1q_tpid_cmd,
-	  "system dot1q-tpid <1-ffff>",
-	  "Gloabl System\n"
-	  "Dot1q Tpid\n"
-	  "Dot1q Tpid Value\n")
-{
-	int ret = ERROR;
-	vlan_t vlan = 0;
-	ret = nsm_global_switch_forward_get(&vlan);
-	if (ret == OK)
-	{
-		if (vlan != atoi(argv[0]))
-			ret = nsm_global_switch_forward_set(atoi(argv[0]));
-		else
-			ret = OK;
-	}
-	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-}
 
-DEFUN(no_global_dot1q_tpid,
-	  no_global_dot1q_tpid_cmd,
-	  "no system dot1q-tpid",
-	  NO_STR
-	  "Gloabl System\n"
-	  "Dot1q Tpid\n")
-{
-	int ret = ERROR;
-	vlan_t vlan = 0;
-	ret = nsm_global_switch_forward_get(&vlan);
-	if (ret == OK)
-	{
-		ret = nsm_global_switch_forward_set(vlan);
-	}
-	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
-}
-#endif
+
 
 DEFUN(global_jumboframe_size,
 	  global_jumboframe_size_cmd,
@@ -793,10 +757,7 @@ void cmd_global_init(void)
 {
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_cpu_rate_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_cpu_rate_cmd);
-#ifdef ZPL_NSM_VLAN	
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_dot1q_tpid_cmd);
-	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_dot1q_tpid_cmd);
-#endif
+
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_switch_forward_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_switch_forward_cmd);
 

@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 struct if_stats
 {
    zpl_ulong rx_packets;   /* total packets received       */

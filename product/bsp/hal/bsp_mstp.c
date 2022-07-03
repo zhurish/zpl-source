@@ -16,9 +16,10 @@ sdk_mstp_t sdk_mstp;
 static int bsp_mstp_enable(void *driver, hal_port_header_t *bspport, hal_mstp_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_mstp.sdk_mstp_enable_cb)
-		ret = sdk_mstp.sdk_mstp_enable_cb(driver, param->enable);
+	if(bspdev->sdk_driver && sdk_mstp.sdk_mstp_enable_cb)
+		ret = sdk_mstp.sdk_mstp_enable_cb(bspdev->sdk_driver, param->enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -26,9 +27,10 @@ static int bsp_mstp_enable(void *driver, hal_port_header_t *bspport, hal_mstp_pa
 static int bsp_mstp_create(void *driver, hal_port_header_t *bspport, hal_mstp_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_mstp.sdk_mstp_create)
-		ret = sdk_mstp.sdk_mstp_create(driver, param->value);
+	if(bspdev->sdk_driver && sdk_mstp.sdk_mstp_create)
+		ret = sdk_mstp.sdk_mstp_create(bspdev->sdk_driver, param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -36,9 +38,10 @@ static int bsp_mstp_create(void *driver, hal_port_header_t *bspport, hal_mstp_pa
 static int bsp_mstp_add_vlan(void *driver, hal_port_header_t *bspport, hal_mstp_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_mstp.sdk_mstp_add_vlan)
-		ret = sdk_mstp.sdk_mstp_add_vlan(driver, param->value, param->type);
+	if(bspdev->sdk_driver && sdk_mstp.sdk_mstp_add_vlan)
+		ret = sdk_mstp.sdk_mstp_add_vlan(bspdev->sdk_driver, param->value, param->type);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -46,9 +49,10 @@ static int bsp_mstp_add_vlan(void *driver, hal_port_header_t *bspport, hal_mstp_
 static int bsp_mstp_del_vlan(void *driver, hal_port_header_t *bspport, hal_mstp_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_mstp.sdk_mstp_del_vlan)
-		ret = sdk_mstp.sdk_mstp_del_vlan(driver, param->value, param->type);
+	if(bspdev->sdk_driver && sdk_mstp.sdk_mstp_del_vlan)
+		ret = sdk_mstp.sdk_mstp_del_vlan(bspdev->sdk_driver, param->value, param->type);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -56,9 +60,10 @@ static int bsp_mstp_del_vlan(void *driver, hal_port_header_t *bspport, hal_mstp_
 static int bsp_mstp_state(void *driver, hal_port_header_t *bspport, hal_mstp_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_mstp.sdk_mstp_state)
-		ret = sdk_mstp.sdk_mstp_state(driver, param->value, bspport->phyport, param->state);
+	if(bspdev->sdk_driver && sdk_mstp.sdk_mstp_state)
+		ret = sdk_mstp.sdk_mstp_state(bspdev->sdk_driver, param->value, bspport->phyport, param->state);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -66,9 +71,10 @@ static int bsp_mstp_state(void *driver, hal_port_header_t *bspport, hal_mstp_par
 static int bsp_stp_state(void *driver, hal_port_header_t *bspport, hal_mstp_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_mstp.sdk_stp_state_cb)
-		ret = sdk_mstp.sdk_stp_state_cb(driver, param->value, bspport->phyport, param->state);
+	if(bspdev->sdk_driver && sdk_mstp.sdk_stp_state_cb)
+		ret = sdk_mstp.sdk_stp_state_cb(bspdev->sdk_driver, param->value, bspport->phyport, param->state);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

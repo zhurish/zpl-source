@@ -187,7 +187,7 @@ int nsm_serial_interface_devname(struct interface *ifp, zpl_char * devname)
 	}
 	return ERROR;
 }
-
+#ifdef IF_ENCAPSULATION_ENABLE
 int nsm_serial_interface_enca_set_api(struct interface *ifp, if_enca_t mode)
 {
 	if(mode == IF_ENCA_SLIP || mode == IF_ENCA_HDLC)	//SLIP
@@ -196,7 +196,7 @@ int nsm_serial_interface_enca_set_api(struct interface *ifp, if_enca_t mode)
 	}
 	return OK;
 }
-
+#endif
 
 
 

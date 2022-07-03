@@ -17,9 +17,20 @@ typedef struct
 }zpl_vlan_bitmap_t;
 
 
+typedef enum if_mode_s
+{
+   IF_MODE_NONE,
+   IF_MODE_ACCESS_L2,
+   IF_MODE_TRUNK_L2,
+   IF_MODE_L3,
+   IF_MODE_DOT1Q_TUNNEL, //QINQ
+   IF_MODE_BRIGDE,
+} if_mode_t;
 
 struct sdk_driver_port 
 {
+    zpl_uint32    mode;
+    vlan_t      pvid;
 	zpl_phyport_t		phyport;
 	zpl_vlan_bitmap_t	vlanbitmap;
 };
@@ -44,7 +55,10 @@ void zpl_vlan_bitmap_init(zpl_vlan_bitmap_t bitmap);
 void zpl_vlan_bitmap_set(zpl_vlan_bitmap_t bitmap, zpl_uint32  bit);
 void zpl_vlan_bitmap_clr(zpl_vlan_bitmap_t bitmap, zpl_uint32  bit);
 int zpl_vlan_bitmap_tst(zpl_vlan_bitmap_t bitmap, zpl_uint32  bit);
-
+void zpl_vlan_bitmap_or(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
+			const zpl_vlan_bitmap_t src2);
+void zpl_vlan_bitmap_xor(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
+			const zpl_vlan_bitmap_t src2);			
 void zpl_vlan_bitmap_and(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
 			const zpl_vlan_bitmap_t src2);
 

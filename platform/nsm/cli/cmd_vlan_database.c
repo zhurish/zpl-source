@@ -34,6 +34,86 @@ struct vlan_user
 
 static int show_nsm_vlan_database_one(nsm_vlan_database_t *node, struct vlan_user *pVoid);
 
+
+
+DEFUN(global_dot1q_tunnel,
+	  global_dot1q_tunnel_cmd,
+	  "system dot1q-tunnel",
+	  "Gloabl System\n"
+	  "Dot1q Tunnel\n")
+{
+	int ret = ERROR;
+	if (!nsm_vlan_qinq_is_enable())
+	{
+		ret = nsm_vlan_qinq_enable(zpl_true);
+	}
+	else
+		ret = OK;
+	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+}
+
+DEFUN(no_global_dot1q_tunnel,
+	  no_global_dot1q_tunnel_cmd,
+	  "no system dot1q-tunnel",
+	  NO_STR
+	  "Gloabl System\n"
+	  "Dot1q Tunnel\n")
+{
+	int ret = ERROR;
+	if (nsm_vlan_qinq_is_enable())
+	{
+		ret = nsm_vlan_qinq_enable(zpl_false);
+	}
+	else
+		ret = OK;
+	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+}
+DEFUN(global_dot1q_tpid,
+	  global_dot1q_tpid_cmd,
+	  "system dot1q-tpid <1-ffff>",
+	  "Gloabl System\n"
+	  "Dot1q Tpid\n"
+	  "Dot1q Tpid Value\n")
+{
+	int ret = ERROR;
+	vlan_t vlan = 0;
+	if(!nsm_vlan_qinq_is_enable())
+	{
+		vty_out(vty, "%%Qinq is not enable%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if (ret == OK)
+	{
+		char *ptr = NULL;
+		long val = strtol(argv[0], &ptr, 16);
+		vlan = (val & 0xffff);
+
+		ret = nsm_vlan_dot1q_tpid_set_api(vlan);
+	}
+	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+}
+
+DEFUN(no_global_dot1q_tpid,
+	  no_global_dot1q_tpid_cmd,
+	  "no system dot1q-tpid",
+	  NO_STR
+	  "Gloabl System\n"
+	  "Dot1q Tpid\n")
+{
+	int ret = ERROR;
+	vlan_t vlan = 0;
+	if(!nsm_vlan_qinq_is_enable())
+	{
+		vty_out(vty, "%%Qinq is not enable%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if (ret == OK)
+	{
+		ret = nsm_vlan_dot1q_tpid_set_api(vlan);
+	}
+	return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+}
+
 DEFUN(vlan_database,
 	  vlan_database_cmd,
 	  CMD_VLAN_DATABASE_STR,
@@ -43,7 +123,7 @@ DEFUN(vlan_database,
 		vty->node = VLAN_DATABASE_NODE;
 	else
 	{
-		if (nsm_vlan_database_enable() == OK)
+		if (nsm_vlan_database_enable(zpl_true) == OK)
 			vty->node = VLAN_DATABASE_NODE;
 		else
 		{
@@ -447,6 +527,15 @@ static int nsm_vlan_database_config(struct vty *vty)
 	struct vlan_user vuser;
 	os_memset(&vuser, 0, sizeof(vuser));
 	vuser.vty = vty;
+
+	if(nsm_vlan_qinq_is_enable())
+	{
+		vty_out(vty, "system dot1q-tunnel%s", VTY_NEWLINE);
+		if(nsm_vlan_dot1q_tpid_get_api())
+			vty_out(vty, "system dot1q-tpid %04x %s", nsm_vlan_dot1q_tpid_get_api(), VTY_NEWLINE);
+		vty_out(vty, "!%s", VTY_NEWLINE);	
+	}
+
 	nsm_vlan_database_callback_api((nsm_vlan_database_cb)nsm_vlan_database_config_one, &vuser);
 	if (vuser.total)
 	{
@@ -554,6 +643,11 @@ void cmd_vlan_database_init(void)
 	install_default_basic(VLAN_DATABASE_NODE);
 	install_default(VLAN_NODE);
 	install_default_basic(VLAN_NODE);
+
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_dot1q_tpid_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &global_dot1q_tunnel_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_dot1q_tpid_cmd);
+	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_global_dot1q_tunnel_cmd);
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &vlan_database_cmd);
 

@@ -25,7 +25,7 @@ static Gl2vlan_Database_t gvlan;
 
 
 static nsm_vlan_database_t * nsm_vlan_database_lookup_node(vlan_t value);
-
+static int nsm_vlan_database_add_node(nsm_vlan_database_t *value);
 
 
 static const zpl_uchar bitMask[8] = {
@@ -65,6 +65,23 @@ int zpl_vlan_bitmap_tst(zpl_vlan_bitmap_t bitmap,zpl_uint32  bit)
 	if(bittst == 0)
 		return 0;	
     return bittst;
+}
+void zpl_vlan_bitmap_or(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
+			const zpl_vlan_bitmap_t src2)
+{
+	int k = 0;
+	int nr = sizeof(src1.bitmap);
+	for (k = 0; k < nr; k++)
+		dst.bitmap[k] = src1.bitmap[k] | src2.bitmap[k];
+}
+
+void zpl_vlan_bitmap_xor(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
+			const zpl_vlan_bitmap_t src2)
+{
+	int k = 0;
+	int nr = sizeof(src1.bitmap);
+	for (k = 0; k < nr; k++)
+		dst.bitmap[k] = src1.bitmap[k] ^ src2.bitmap[k];
 }
 
 void zpl_vlan_bitmap_and(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
@@ -180,7 +197,11 @@ int nsm_vlan_database_list_lookup_api(vlan_t *vlanlist, zpl_uint32 num)
 
 int nsm_vlan_database_default(void)
 {
-	nsm_vlan_database_enable();
+	nsm_vlan_database_t value;
+	memset(&value, 0, sizeof(value));
+	value.vlan = 1;
+	if(nsm_vlan_database_enable(zpl_true) == OK)
+		nsm_vlan_database_add_node(&value);
 	return OK;
 }
 
@@ -190,6 +211,47 @@ int nsm_vlan_database_init(void)
 	gvlan.mutex = os_mutex_init();
 	lstInit(gvlan.vlanList);
 	return OK;
+}
+
+
+
+int nsm_vlan_qinq_enable(zpl_bool enable)
+{
+	int ret = 0;
+	if(gvlan.mutex)
+		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
+#ifdef ZPL_HAL_MODULE
+	ret = hal_qinq_enable(enable);
+#endif
+	if(ret == OK)
+		gvlan.qinq_enable = enable;
+	if(gvlan.mutex)
+		os_mutex_unlock(gvlan.mutex);
+	return ret;
+}
+
+zpl_bool nsm_vlan_qinq_is_enable(void)
+{
+	return gvlan.qinq_enable;
+}
+
+int nsm_vlan_dot1q_tpid_set_api(vlan_t num)
+{
+	int ret = 0;
+	if(gvlan.mutex)
+		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
+#ifdef ZPL_HAL_MODULE
+	ret = hal_qinq_vlan_tpid(num);
+#endif
+	if(ret == OK)
+		gvlan.qinq_tpid = num;
+	if(gvlan.mutex)
+		os_mutex_unlock(gvlan.mutex);
+	return ret;
+}
+vlan_t nsm_vlan_dot1q_tpid_get_api(void)
+{
+	return gvlan.qinq_tpid;
 }
 
 static int nsm_vlan_database_cleanup(int all)
@@ -240,16 +302,16 @@ int nsm_vlan_database_cleanall(void)
 	return nsm_vlan_database_cleanup(0);
 }
 
-int nsm_vlan_database_enable(void)
+int nsm_vlan_database_enable(zpl_bool enable)
 {
 	int ret = 0;
 	if(gvlan.mutex)
 		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
 #ifdef ZPL_HAL_MODULE
-	ret = hal_vlan_enable(zpl_true);
+	ret = hal_vlan_enable(enable);
 #endif
 	if(ret == OK)
-		gvlan.enable = zpl_true;
+		gvlan.enable = enable;
 	if(gvlan.mutex)
 		os_mutex_unlock(gvlan.mutex);
 	return ret;
@@ -260,7 +322,23 @@ zpl_bool nsm_vlan_database_is_enable(void)
 	return gvlan.enable;
 }
 
+int nsm_vlan_portbase_enable(zpl_bool enable)
+{
+	int ret = 0;
+	if(gvlan.mutex)
+		os_mutex_lock(gvlan.mutex, OS_WAIT_FOREVER);
 
+	if(ret == OK)
+		gvlan.port_base_enable = enable;
+	if(gvlan.mutex)
+		os_mutex_unlock(gvlan.mutex);
+	return ret;
+}
+
+zpl_bool nsm_vlan_portbase_is_enable(void)
+{
+	return gvlan.port_base_enable;
+}
 
 
 static int nsm_vlan_database_add_sort_node(nsm_vlan_database_t *value)
@@ -381,7 +459,7 @@ static int _nsm_vlan_database_del_port(nsm_vlan_database_t *value, ifindex_t ifi
 	return 0;
 }
 
-int nsm_vlan_database_untag_port_update(ifindex_t ifindex)
+int nsm_vlan_database_clear_port(ifindex_t ifindex, nsm_vlan_mode_t mode)
 {
 	nsm_vlan_database_t *pstNode = NULL;
 	NODE index;
@@ -391,9 +469,9 @@ int nsm_vlan_database_untag_port_update(ifindex_t ifindex)
 		index = pstNode->node;
 		if(pstNode)
 		{
-			if(_nsm_vlan_database_lookup_port(pstNode,  ifindex,  NSM_VLAN_UNTAG))
+			if(_nsm_vlan_database_lookup_port(pstNode,  ifindex,  mode))
 			{
-				_nsm_vlan_database_del_port(pstNode,  ifindex,  NSM_VLAN_UNTAG);
+				_nsm_vlan_database_del_port(pstNode,  ifindex,  mode);
 			}
 		}
 	}
@@ -452,7 +530,7 @@ int nsm_vlan_database_del_port(vlan_t vlan, ifindex_t ifindex, nsm_vlan_mode_t m
 static int nsm_vlan_database_lookup_on_port_check(struct interface *ifp, void *pVoid)
 {
 	vlan_t *vlan = (vlan_t*)pVoid;
-	if(nsm_interface_trunk_add_allowed_vlan_lookup_api(ifp,  *vlan))
+	if(if_is_ethernet(ifp) && nsm_interface_trunk_add_allowed_vlan_lookup_api(ifp,  *vlan))
 	{
 		nsm_interface_trunk_add_allowed_vlan_api(ifp, *vlan);
 		return OK;
@@ -544,7 +622,7 @@ int nsm_vlan_database_destroy_api(vlan_t vlan)
 		os_mutex_unlock(gvlan.mutex);
 	if(ret == OK && tmpvlan.vlan)
 	{
-		ret = if_list_each(nsm_vlan_database_update_batch_list, &tmpvlan);
+		ret = nsm_vlan_database_callback_api(nsm_vlan_database_update_batch_list, &tmpvlan);
 	}	
 	return ret;
 }
@@ -639,7 +717,7 @@ int nsm_vlan_database_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 		os_mutex_unlock(gvlan.mutex);
 	if(ret == OK && tmpvlan.vlan)
 	{
-		ret = if_list_each(nsm_vlan_database_update_batch_list, &tmpvlan);
+		ret = nsm_vlan_database_callback_api(nsm_vlan_database_update_batch_list, &tmpvlan);
 	}	
 	return ret;
 }

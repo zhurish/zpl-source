@@ -190,28 +190,17 @@ int nsm_halpal_interface_mode (struct interface *ifp, if_mode_t mode)
 	return ret;
 }
 
-
-int nsm_halpal_interface_enca (struct interface *ifp, zpl_uint32 mode, zpl_uint32 value)
+#ifdef IF_ENCAPSULATION_ENABLE
+int nsm_halpal_interface_enca (struct interface *ifp, zpl_uint32 mode)
 {
 	int ret = 0;
 	#ifdef ZPL_NSM_SERIAL
 	if(if_is_serial(ifp))
 		ret = nsm_serial_interface_enca_set_api(ifp, mode);
-	else if(if_is_ethernet(ifp) &&
-	#else
-	if(if_is_ethernet(ifp) &&
-	#endif
-			IF_IS_SUBIF_GET(ifp->ifindex) &&
-			mode == IF_ENCA_DOT1Q &&
-			ifp->encavlan != value)
-	{
-		#ifdef ZPL_NSM_VLANETH
-		ret = nsm_vlaneth_interface_vid_set_api(ifp, value);
-		#endif
-	}
+	#endif	
 	return ret;
 }
-
+#endif
 
 
 

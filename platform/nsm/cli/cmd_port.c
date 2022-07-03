@@ -125,23 +125,31 @@ DEFUN(no_nsm_interface_switchport,
 
 DEFUN (nsm_interface_switchport_mode,
 		nsm_interface_switchport_mode_cmd,
-		"switchport mode (access|trunk)",
+		"switchport mode (access|trunk|dot1q-tunnel)",
 		"Switchport interface\n"
 		"Switchport mode\n"
 		"access port\n"
-		"trunk port\n")
+		"trunk port\n"
+		"dot1q tunnel port\n")
 {
 	int ret = 0;
 	int mode = 0,newmode = 0;
 	struct interface *ifp = vty->index;
 	if(ifp)
 	{
-		if(nsm_interface_mode_get_api(ifp, &mode) == OK)
+		if(nsm_interface_mode_get_api(ifp, &mode) == OK) 
 		{
 			if(os_memcmp(argv[0], "access", 3) == 0)
 				newmode = IF_MODE_ACCESS_L2;
-			else
+			else if(os_memcmp(argv[0], "dot1q", 3) == 0)
+				newmode = IF_MODE_DOT1Q_TUNNEL;
+			else	
 				newmode = IF_MODE_TRUNK_L2;
+			if(newmode == IF_MODE_DOT1Q_TUNNEL && !nsm_vlan_qinq_is_enable())
+			{
+				vty_out(vty, "%%Qinq is not enable%s",VTY_NEWLINE);
+				return CMD_WARNING;
+			}				
 			if(newmode !=mode)
 				ret = nsm_interface_mode_set_api(ifp, newmode);
 		}
@@ -158,8 +166,15 @@ DEFUN (nsm_interface_switchport_mode,
 				{
 					if(os_memcmp(argv[0], "access", 3) == 0)
 						newmode = IF_MODE_ACCESS_L2;
+					else if(os_memcmp(argv[0], "dot1q", 3) == 0)
+						newmode = IF_MODE_DOT1Q_TUNNEL;
 					else
 						newmode = IF_MODE_TRUNK_L2;
+					if(newmode == IF_MODE_DOT1Q_TUNNEL && !nsm_vlan_qinq_is_enable())
+					{
+						vty_out(vty, "%%Qinq is not enable%s",VTY_NEWLINE);
+						return CMD_WARNING;
+					}
 					if(newmode !=mode)
 						ret = nsm_interface_mode_set_api(vty->vty_range_index[i], newmode);
 					if(ret != OK)

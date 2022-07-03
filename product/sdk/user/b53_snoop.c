@@ -13,38 +13,44 @@
 static int b53125_mldqry_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_MLD_QRY_EN;
+		regval |= B53_MLD_QRY_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_MLD_QRY_EN);
+		regval &= ~(B53_MLD_QRY_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_mldqry_tocpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl |= B53_MLD_QRY_FWD_MODE;
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval |= B53_MLD_QRY_FWD_MODE;
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_mldqry_cpoycpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_MLD_QRY_FWD_MODE);
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval &= ~(B53_MLD_QRY_FWD_MODE);
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -69,38 +75,44 @@ static int b53125_mldqry_snoop_enable(sdk_driver_t *dev, zpl_uint32 type, zpl_bo
 static int b53125_mld_tocpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl |= B53_MLD_RPTDONE_FWD_MODE;
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval |= B53_MLD_RPTDONE_FWD_MODE;
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_mld_cpoycpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_MLD_RPTDONE_FWD_MODE);
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval &= ~(B53_MLD_RPTDONE_FWD_MODE);
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_mld_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_MLD_RPTDONE_EN;
+		regval |= B53_MLD_RPTDONE_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_MLD_RPTDONE_EN);
+		regval &= ~(B53_MLD_RPTDONE_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -125,38 +137,44 @@ static int b53125_mld_snoop_enable(sdk_driver_t *dev, zpl_uint32 type, zpl_bool 
 static int b53125_igmpunknow_tocpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl |= B53_IGMP_UKN_FWD_MODE;
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval |= B53_IGMP_UKN_FWD_MODE;
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_igmpunknow_cpoycpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_IGMP_UKN_FWD_MODE);
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval &= ~(B53_IGMP_UKN_FWD_MODE);
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_igmpunknow_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_IGMP_UKN_EN;
+		regval |= B53_IGMP_UKN_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_IGMP_UKN_EN);
+		regval &= ~(B53_IGMP_UKN_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -180,38 +198,44 @@ static int b53125_igmpunknow_snoop_enable(sdk_driver_t *dev, zpl_uint32 type, zp
 static int b53125_igmpqry_tocpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl |= B53_IGMP_QRY_FWD_MODE;
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval |= B53_IGMP_QRY_FWD_MODE;
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_igmpqry_cpoycpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_IGMP_QRY_FWD_MODE);
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval &= ~(B53_IGMP_QRY_FWD_MODE);
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_igmpqry_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_IGMP_QRY_EN;
+		regval |= B53_IGMP_QRY_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_IGMP_QRY_EN);
+		regval &= ~(B53_IGMP_QRY_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -236,38 +260,44 @@ static int b53125_igmpqry_snoop_enable(sdk_driver_t *dev, zpl_uint32 type, zpl_b
 static int b53125_igmp_tocpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl |= B53_IGMP_RPTLVE_FWD_MODE;
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval |= B53_IGMP_RPTLVE_FWD_MODE;
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_igmp_cpoycpu_enable(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_IGMP_RPTLVE_FWD_MODE);
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	regval &= ~(B53_IGMP_RPTLVE_FWD_MODE);
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_igmp_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_IGMP_RPTLVE_EN;
+		regval |= B53_IGMP_RPTLVE_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_IGMP_RPTLVE_EN);
+		regval &= ~(B53_IGMP_RPTLVE_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -292,70 +322,78 @@ static int b53125_igmp_snoop_enable(sdk_driver_t *dev, zpl_uint32 type, zpl_bool
 static int b53125_igmp_ipcheck_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_IGMP_DIP_EN;
+		regval |= B53_IGMP_DIP_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_IGMP_DIP_EN);
+		regval &= ~(B53_IGMP_DIP_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
 static int b53125_arp_copycpu_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_ARP_EN;
+		regval |= B53_ARP_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_ARP_EN);
+		regval &= ~(B53_ARP_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_rarp_copycpu_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_RARP_EN;
+		regval |= B53_RARP_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_RARP_EN);
+		regval &= ~(B53_RARP_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_dhcp_copycpu_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_DHCP_EN;
+		regval |= B53_DHCP_EN;
 	}
 	else
 	{
-		port_ctrl &= ~(B53_DHCP_EN);
+		regval &= ~(B53_DHCP_EN);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MGMT_PAGE, B53_HIGH_LEVEL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 

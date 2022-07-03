@@ -14,6 +14,9 @@
 static struct hal_netlink *klog = NULL;
 
 
+static const char *sdklog_priority[] = { "emerg", "alert", "crit", "err",
+		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
+		
 static struct netlink_kernel_cfg _klog_sock_nkc = {
 	.groups = 0,
 	.flags = 0,
@@ -90,4 +93,19 @@ int klog_level(int level)
   if(klog)
     klog->debug = level;
   return OK;  
+}
+
+
+
+
+void sdk_log(int module, int priority, const char *file, const char *func, const int line, const char *format, ...)
+{
+	char buflog[2048];
+	va_list args;
+	va_start(args, format);
+	printk("%-8s: ", sdklog_priority[priority]);
+	printk("(%s line %d:) ", file, line);
+	vsprintf(buflog, format, args);
+	printk("%s", buflog);
+	va_end(args);
 }

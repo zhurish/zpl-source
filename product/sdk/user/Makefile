@@ -43,10 +43,12 @@ install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
 
+	
 
 clean: objclean
 	@$(RM) $(LIB_DIR)/$(LIBS)
 	@$(RM) $(LIBS)
+
 
 objclean: 
 	@$(RM) $(OBJS_DIR)/*

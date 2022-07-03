@@ -103,11 +103,19 @@ static struct hal_client *hal_client_new(void)
   hal_client = XMALLOC(MTYPE_HALIPCCLIENT, sizeof(struct hal_client)); // kmalloc(, GFP_KERNEL);
   if (hal_client)
   {
+    hal_client->bsp_driver = XMALLOC(MTYPE_BSP, sizeof(bsp_driver_t)); // kmalloc(, GFP_KERNEL);
+    if(hal_client->bsp_driver == NULL)
+    {
+      XFREE(MTYPE_HALIPCCLIENT, hal_client);
+      halclient = NULL;
+      return hal_client;
+    }
     memset(hal_client, 0, sizeof(struct hal_client));
     hal_client->ipcmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
     hal_client->outmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ / 2;
     if (hal_ipcmsg_create(&hal_client->ipcmsg) != OK)
     {
+      XFREE(MTYPE_BSP, hal_client->bsp_driver);
       XFREE(MTYPE_HALIPCCLIENT, hal_client);
       halclient = NULL;
       return hal_client;
@@ -115,6 +123,7 @@ static struct hal_client *hal_client_new(void)
     if (hal_ipcmsg_create(&hal_client->outmsg) != OK)
     {
       hal_ipcmsg_destroy(&hal_client->ipcmsg);
+      XFREE(MTYPE_BSP, hal_client->bsp_driver);
       XFREE(MTYPE_HALIPCCLIENT, hal_client);
       halclient = NULL;
       return hal_client;
@@ -140,6 +149,7 @@ static void hal_client_free(struct hal_client *hal_client)
       hal_netlink_destroy(hal_client->netlink);
       hal_client->netlink = NULL;
     }
+    XFREE(MTYPE_BSP, hal_client->bsp_driver);
     XFREE(MTYPE_HALIPCCLIENT, hal_client);
     halclient = NULL;
   }
@@ -147,9 +157,10 @@ static void hal_client_free(struct hal_client *hal_client)
 
 /* Initialize zebra client.  Argument redist_default is unwanted
    redistribute route type. */
-struct hal_client *hal_client_create(void *bsp_driver)
+struct hal_client *hal_client_create(void *sdk_driver)
 {
   /* Enable zebra client connection by default. */
+  bsp_driver_t *bspdev;
   struct hal_client *hal_client = hal_client_new();
   if (hal_client)
   {
@@ -162,7 +173,9 @@ struct hal_client *hal_client_create(void *bsp_driver)
       hal_client = NULL;
       return hal_client;
     }
-    hal_client->bsp_driver = bsp_driver;
+    bspdev = (bsp_driver_t*)hal_client->bsp_driver;
+    if(bspdev)
+      bspdev->sdk_driver = sdk_driver;
     halclient = hal_client;
   }
   return hal_client;

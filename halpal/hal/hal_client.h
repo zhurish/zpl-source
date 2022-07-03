@@ -11,10 +11,9 @@ extern "C"
 #include "hal_ipcmsg.h"
 
 
-//#define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
-//#define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
-#define BSP_ENTER_FUNC() 
-#define BSP_LEAVE_FUNC() 
+#define BSP_ENTER_FUNC() zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
+#define BSP_LEAVE_FUNC() zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
+
 
   enum event
   {

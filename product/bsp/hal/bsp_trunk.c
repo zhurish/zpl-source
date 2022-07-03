@@ -16,27 +16,30 @@ sdk_trunk_t sdk_trunk;
 static int bsp_trunk_enable(void *driver, hal_port_header_t *port, hal_trunk_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_trunk.sdk_trunk_enable_cb)
-		ret = sdk_trunk.sdk_trunk_enable_cb(driver, param->enable);
+	if(bspdev->sdk_driver && sdk_trunk.sdk_trunk_enable_cb)
+		ret = sdk_trunk.sdk_trunk_enable_cb(bspdev->sdk_driver, param->enable);
 	BSP_LEAVE_FUNC();	
 	return ret;
 }
 static int bsp_trunk_create(void *driver, hal_port_header_t *port, hal_trunk_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_trunk.sdk_trunk_create_cb)
-		ret = sdk_trunk.sdk_trunk_create_cb(driver, param->trunkid, param->enable);
+	if(bspdev->sdk_driver && sdk_trunk.sdk_trunk_create_cb)
+		ret = sdk_trunk.sdk_trunk_create_cb(bspdev->sdk_driver, param->trunkid, param->enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
 static int bsp_trunk_mode(void *driver, hal_port_header_t *port, hal_trunk_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_trunk.sdk_trunk_mode_cb)
-		ret = sdk_trunk.sdk_trunk_mode_cb(driver, param->trunkid, param->mode);
+	if(bspdev->sdk_driver && sdk_trunk.sdk_trunk_mode_cb)
+		ret = sdk_trunk.sdk_trunk_mode_cb(bspdev->sdk_driver, param->trunkid, param->mode);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -44,9 +47,10 @@ static int bsp_trunk_mode(void *driver, hal_port_header_t *port, hal_trunk_param
 static int bsp_trunk_add_interface(void *driver, hal_port_header_t *port, hal_trunk_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_trunk.sdk_trunk_addif_cb)
-		ret = sdk_trunk.sdk_trunk_addif_cb(driver, param->trunkid,  port->phyport);
+	if(bspdev->sdk_driver && sdk_trunk.sdk_trunk_addif_cb)
+		ret = sdk_trunk.sdk_trunk_addif_cb(bspdev->sdk_driver, param->trunkid,  port->phyport);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -54,9 +58,10 @@ static int bsp_trunk_add_interface(void *driver, hal_port_header_t *port, hal_tr
 static int bsp_trunk_del_interface(void *driver, hal_port_header_t *port, hal_trunk_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_trunk.sdk_trunk_delif_cb)
-		ret = sdk_trunk.sdk_trunk_delif_cb(driver, param->trunkid, port->phyport);
+	if(bspdev->sdk_driver && sdk_trunk.sdk_trunk_delif_cb)
+		ret = sdk_trunk.sdk_trunk_delif_cb(bspdev->sdk_driver, param->trunkid, port->phyport);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

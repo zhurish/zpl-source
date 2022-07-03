@@ -19,7 +19,7 @@ extern "C" {
 #ifdef ZPL_SDK_USER
 /*BCM53125SKMMLG*/
 /*********************************************************************************/
-#define B53_DEVICE_NAME	"b53mdio0"
+#define B53_DEVICE_NAME	"mdiodev0"
 #define B53_INVALID_LANE	0xff
 #else
 
@@ -27,8 +27,8 @@ extern "C" {
 #endif
 
 #ifndef BIT
-//#define BIT(n)		(1)<<(n)
-#define BIT(nr) (UL(1) << (nr))
+#define BIT(n)		((1UL)<<(n))
+//#define BIT(nr) (UL(1) << (nr))
 #endif
 
 enum {
@@ -87,6 +87,7 @@ typedef struct b53125_device
 	zpl_phyport_t cpu_port;
 	zpl_uint32 num_vlans;
 	zpl_phyport_t num_ports;
+	
 }b53_device_t;
 
 typedef struct b53_vlan_s {
@@ -187,7 +188,7 @@ extern int b53125_range_error(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_multicast_forward(sdk_driver_t *dev, u8 *mac, zpl_bool enable);
 extern int b53125_global_init(sdk_driver_t *dev);
 extern int b53125_global_start(sdk_driver_t *dev);
-
+extern int b53125_reset(sdk_driver_t *dev);
 /*******snoop *******/
 extern int b53125_snooping_init(sdk_driver_t *dev);
 
@@ -198,8 +199,8 @@ extern int b53125_imp_enable(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_imp_speed(sdk_driver_t *dev, int speed);
 extern int b53125_imp_duplex(sdk_driver_t *dev, int duplex);
 extern int b53125_imp_flow(sdk_driver_t *dev, zpl_bool rx, zpl_bool tx);
-extern int b53125_imp_port_enable(sdk_driver_t *dev);
-
+extern int b53125_imp_port_enable(sdk_driver_t *dev, zpl_bool enable);
+extern int b53125_imp_mii_overwrite(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_cpu_init(sdk_driver_t *dev);
 
 /******* PORT *******/
@@ -234,9 +235,9 @@ extern int b53125_trunk_init(sdk_driver_t *dev);
 
 /******* VLAN *******/
 extern int b53125_vlan_init(sdk_driver_t *dev);
-extern int b53125_port_vlan(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable);
-extern void b53125_imp_vlan_setup(sdk_driver_t *dev, int cpu_port);
-extern int b53125_enable_vlan_default(sdk_driver_t *dev, zpl_bool enable);
+extern int b53125_add_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag);
+extern int b53125_del_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag);
+extern int b53125_vlan_port_untag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t port , vlan_t vid);
 /******* mirror *******/
 extern int b53125_mirror_init(sdk_driver_t *dev);
 

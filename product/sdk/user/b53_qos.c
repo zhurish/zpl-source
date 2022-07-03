@@ -16,15 +16,17 @@
 static int b53125_qos_aggreation_mode(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u8 port_ctrl = 0;
-	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &port_ctrl);
+	u8 regval = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
 	if(enable)
-		port_ctrl |= B53_AGG_MODE;
+		regval |= B53_AGG_MODE;
 	else
-		port_ctrl &= 0x7f;//~B53_AGG_MODE;
+		regval &= 0x7f;//~B53_AGG_MODE;
 
-	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	sdk_handle_return(ret);
 	ret |= b53125_rate_default(dev);
 	return ret;
 }
@@ -34,15 +36,17 @@ static int b53125_qos_aggreation_mode(sdk_driver_t *dev, zpl_bool enable)
 static int b53125_qos_base_port(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u8 port_ctrl = 0;
-	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &port_ctrl);
+	u8 regval = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
 	if(enable)
-		port_ctrl |= B53_PORT_QOS_EN;
+		regval |= B53_PORT_QOS_EN;
 	else
-		port_ctrl &= ~B53_PORT_QOS_EN;
+		regval &= ~B53_PORT_QOS_EN;
 
-	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -50,19 +54,21 @@ static int b53125_qos_base_port(sdk_driver_t *dev, zpl_bool enable)
 static int b53125_qos_layer_sel(sdk_driver_t *dev, int sel)
 {
 	int ret = 0;
-	u8 port_ctrl = 0;
-	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &port_ctrl);
-	port_ctrl &= ~(3<<B53_QOS_LAYER_SEL_S);
-	port_ctrl |= (sel<<B53_QOS_LAYER_SEL_S);
+	u8 regval = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	regval &= ~(3<<B53_QOS_LAYER_SEL_S);
+	regval |= (sel<<B53_QOS_LAYER_SEL_S);
 /*
 	if(enable)
-		port_ctrl |= (sel<<B53_QOS_LAYER_SEL_S);
+		regval |= (sel<<B53_QOS_LAYER_SEL_S);
 	else
-		port_ctrl &= ~(sel<<B53_QOS_LAYER_SEL_S);
+		regval &= ~(sel<<B53_QOS_LAYER_SEL_S);
 */
 
-	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_GLOBAL_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -70,15 +76,17 @@ static int b53125_qos_layer_sel(sdk_driver_t *dev, int sel)
 static int b53125_qos_8021p(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
-	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_802_1P_CTL, &port_ctrl);
+	u16 regval = 0;
+	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_802_1P_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_802_1P_CTL, regval);
 	if(enable)
-		port_ctrl |= BIT(port);
+		regval |= BIT(port);
 	else
-		port_ctrl &= ~BIT(port);
+		regval &= ~BIT(port);
 
-	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_802_1P_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_802_1P_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_802_1P_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -86,15 +94,17 @@ static int b53125_qos_8021p(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enab
 static int b53125_qos_diffserv(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
-	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_QOS_DIFFSERV_CTL, &port_ctrl);
+	u16 regval = 0;
+	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_QOS_DIFFSERV_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_DIFFSERV_CTL, regval);
 	if(enable)
-		port_ctrl |= BIT(port);
+		regval |= BIT(port);
 	else
-		port_ctrl &= ~BIT(port);
+		regval &= ~BIT(port);
 
-	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_QOS_DIFFSERV_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_QOS_DIFFSERV_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_QOS_DIFFSERV_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -112,12 +122,14 @@ static int b53125_qos_trust_enable_type(sdk_driver_t *dev, zpl_phyport_t port, n
 static int b53125_8021p_map_priority(sdk_driver_t *dev, zpl_phyport_t port, int p, int priority)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), &port_ctrl);
-	port_ctrl &= ~(B53_TC_MASK<<B53_PCP_TO_TC(p));
-	port_ctrl |= (priority<<B53_PCP_TO_TC(p));
-	ret |= b53125_write32(dev->sdk_device, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), regval);
+	regval &= ~(B53_TC_MASK<<B53_PCP_TO_TC(p));
+	regval |= (priority<<B53_PCP_TO_TC(p));
+	ret |= b53125_write32(dev->sdk_device, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -127,7 +139,7 @@ static int b53125_diffserv_map_priority(sdk_driver_t *dev, zpl_phyport_t port, i
 {
 	int ret = 0;
 	int reg = 0;
-	u64 port_ctrl = 0;
+	u64 regval = 0;
 
 	if(diffserv <= 0x0f)
 		reg = B53_QOS_DIFFSERV_MAP_CTL0;
@@ -138,11 +150,13 @@ static int b53125_diffserv_map_priority(sdk_driver_t *dev, zpl_phyport_t port, i
 	else if(diffserv <= 0x3f)
 		reg = B53_QOS_DIFFSERV_MAP_CTL3;
 
-	ret |= b53125_read48(dev->sdk_device, B53_QOS_PAGE, reg, &port_ctrl);
-	port_ctrl &= ~(B53_TC_MASK<<B53_DIFFSERV_TO_TC(diffserv));
-	port_ctrl |= (priority<<B53_DIFFSERV_TO_TC(diffserv));
-	ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_read48(dev->sdk_device, B53_QOS_PAGE, reg, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, reg, regval);
+	regval &= ~(B53_TC_MASK<<B53_DIFFSERV_TO_TC(diffserv));
+	regval |= (priority<<B53_DIFFSERV_TO_TC(diffserv));
+	ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, reg, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -150,13 +164,15 @@ static int b53125_diffserv_map_priority(sdk_driver_t *dev, zpl_phyport_t port, i
 static int b53125_tc_map_queue(sdk_driver_t *dev, zpl_phyport_t port, int priority, int queue)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
-	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_TC_QUEUE_MASK<<B53_TC_TO_QUEUE(priority));
-	port_ctrl |= (queue<<B53_TC_TO_QUEUE(priority));
+	u16 regval = 0;
+	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, regval);
+	regval &= ~(B53_TC_QUEUE_MASK<<B53_TC_TO_QUEUE(priority));
+	regval |= (queue<<B53_TC_TO_QUEUE(priority));
 
-	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -165,11 +181,12 @@ static int b53125_tc_map_queue(sdk_driver_t *dev, zpl_phyport_t port, int priori
 static int b53125_queue_scheduling(sdk_driver_t *dev, zpl_phyport_t port, int mode)
 {
 	int ret = 0;
-	u8 port_ctrl = 0;
-	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_TX_QUEUE_CTL, &port_ctrl);
-	port_ctrl &= ~(B53_TC_QUEUE_MASK);
+	u8 regval = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_QOS_PAGE, B53_TX_QUEUE_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_TX_QUEUE_CTL, regval);
+	regval &= ~(B53_TC_QUEUE_MASK);
 	//if(enable)
-		port_ctrl |= (mode);
+		regval |= (mode);
 /*
 00 = all queues are weighted round robin
 01 = COS3 is strict priority, COS2-COS0 are weighted round
@@ -178,8 +195,9 @@ robin.
 round robin.
 11 = COS3, COS2, COS1 and COS0 are in strict priority.
  */
-	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_TX_QUEUE_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_TX_QUEUE_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_TX_QUEUE_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -187,24 +205,27 @@ round robin.
 static int b53125_queue_weight(sdk_driver_t *dev, zpl_phyport_t port, int queue, int weight)
 {
 	int ret = 0;
-	u8 port_ctrl = 0;
-	port_ctrl |= (weight);
-	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_TX_QUEUE_WEIGHT(queue), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u8 regval = 0;
+	regval |= (weight);
+	ret |= b53125_write8(dev->sdk_device, B53_QOS_PAGE, B53_TX_QUEUE_WEIGHT(queue), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_TX_QUEUE_WEIGHT(queue), regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
 int b53125_qos_class4_weight(sdk_driver_t *dev, zpl_bool strict, int weight)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
-	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_COS4_SERVICE_WEIGHT, &port_ctrl);
-	port_ctrl &= ~(1<<8);
+	u16 regval = 0;
+	ret |= b53125_read16(dev->sdk_device, B53_QOS_PAGE, B53_COS4_SERVICE_WEIGHT, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_COS4_SERVICE_WEIGHT, regval);
+	regval &= ~(1<<8);
 	if(weight >= 0)
-		port_ctrl |= (weight);
-	port_ctrl |= (strict<<8);
-	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_COS4_SERVICE_WEIGHT, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+		regval |= (weight);
+	regval |= (strict<<8);
+	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_COS4_SERVICE_WEIGHT, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_COS4_SERVICE_WEIGHT, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -214,28 +235,29 @@ int b53125_qos_class4_weight(sdk_driver_t *dev, zpl_bool strict, int weight)
 static int b53125_qos_cpu_queue_init(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
+	u32 regval = 0;
 
-	port_ctrl &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_PROTO_FLOOD);
-	port_ctrl |= (B53_CPU_TC_TO_QUEUE(B53_CPU_PROTO_FLOOD_QUEUE)<<B53_CPU_TC_PROTO_FLOOD);
+	regval &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_PROTO_FLOOD);
+	regval |= (B53_CPU_TC_TO_QUEUE(B53_CPU_PROTO_FLOOD_QUEUE)<<B53_CPU_TC_PROTO_FLOOD);
 
-	port_ctrl &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_PROTO_SNOOP);
-	port_ctrl |= (B53_CPU_TC_TO_QUEUE(B53_CPU_PROTO_SNOOP_QUEUE)<<B53_CPU_TC_PROTO_SNOOP);
+	regval &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_PROTO_SNOOP);
+	regval |= (B53_CPU_TC_TO_QUEUE(B53_CPU_PROTO_SNOOP_QUEUE)<<B53_CPU_TC_PROTO_SNOOP);
 
-	port_ctrl &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_PROTO_TERM);
-	port_ctrl |= (B53_CPU_TC_TO_QUEUE(B53_CPU_PROTO_TERM_QUEUE)<<B53_CPU_TC_PROTO_TERM);
+	regval &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_PROTO_TERM);
+	regval |= (B53_CPU_TC_TO_QUEUE(B53_CPU_PROTO_TERM_QUEUE)<<B53_CPU_TC_PROTO_TERM);
 
-	port_ctrl &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_SWITCH);
-	port_ctrl |= (B53_CPU_TC_TO_QUEUE(B53_CPU_SWITCH_QUEUE)<<B53_CPU_TC_SWITCH);
+	regval &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_SWITCH);
+	regval |= (B53_CPU_TC_TO_QUEUE(B53_CPU_SWITCH_QUEUE)<<B53_CPU_TC_SWITCH);
 
-	port_ctrl &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_SALEARN);
-	port_ctrl |= (B53_CPU_TC_TO_QUEUE(B53_CPU_SALEARN_QUEUE)<<B53_CPU_TC_SALEARN);
+	regval &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_SALEARN);
+	regval |= (B53_CPU_TC_TO_QUEUE(B53_CPU_SALEARN_QUEUE)<<B53_CPU_TC_SALEARN);
 
-	port_ctrl &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_MIRROR);
-	port_ctrl |= (B53_CPU_TC_TO_QUEUE(B53_CPU_MIRROR_QUEUE)<<B53_CPU_TC_MIRROR);
+	regval &= (B53_CPU_TC_QUEUE_MASK<<B53_CPU_TC_MIRROR);
+	regval |= (B53_CPU_TC_TO_QUEUE(B53_CPU_MIRROR_QUEUE)<<B53_CPU_TC_MIRROR);
 
-	ret |= b53125_write32(dev->sdk_device, B53_QOS_PAGE, B53_CPU_TO_QUEUE_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_QOS_PAGE, B53_CPU_TO_QUEUE_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_CPU_TO_QUEUE_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -246,81 +268,89 @@ static int b53125_qos_cpu_queue_init(sdk_driver_t *dev)
 static int b53125_qos_cfi_remarking(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, regval);
 	if(enable)
-		port_ctrl |= (B53_CFI_REMARK_EN(port));
+		regval |= (B53_CFI_REMARK_EN(port));
 	else
-		port_ctrl &= ~B53_CFI_REMARK_EN(port);
-	ret |= b53125_write32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+		regval &= ~B53_CFI_REMARK_EN(port);
+	ret |= b53125_write32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
 static int b53125_qos_pcp_remarking(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, regval);
 	if(enable)
-		port_ctrl |= (B53_PCP_REMARK_EN(port));
+		regval |= (B53_PCP_REMARK_EN(port));
 	else
-		port_ctrl &= ~B53_PCP_REMARK_EN(port);
-	ret |= b53125_write32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+		regval &= ~B53_PCP_REMARK_EN(port);
+	ret |= b53125_write32(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TC_REMARK_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
 static int b53125_priority_remarking(sdk_driver_t *dev, zpl_phyport_t port, zpl_uint32 tc, zpl_uint32 priority)
 {
 	int ret = 0;
-	u64 port_ctrl = 0;
-	ret |= b53125_read64(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), &port_ctrl);
-	if(port_ctrl & 0xffffffff)
+	u64 regval = 0;
+	ret |= b53125_read64(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), regval);
+	if(regval & 0xffffffff)
 	{
 		b53125_qos_cfi_remarking(dev,  port, zpl_true);
 		b53125_qos_pcp_remarking(dev,  port, zpl_true);
 	}
 
-	port_ctrl &= ~(B53_TC_PCP_MASK<<B53_TC_PCP_PRI(tc));
-	port_ctrl |= (priority<<B53_TC_PCP_PRI(tc));
+	regval &= ~(B53_TC_PCP_MASK<<B53_TC_PCP_PRI(tc));
+	regval |= (priority<<B53_TC_PCP_PRI(tc));
 
-	ret |= b53125_write64(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write64(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
 static int b53125_priority_remarking_default(sdk_driver_t *dev, zpl_phyport_t port)
 {
 	int ret = 0;
-	u64 port_ctrl = 0;
+	u64 regval = 0;
 	zpl_uint32 tc = 0;
 	zpl_uint32 priority;
 	for(priority = 0; priority < 8; priority++)
 	{
 		tc = priority;
-		port_ctrl &= ~(B53_TC_PCP_MASK<<B53_TC_PCP_PRI(tc));
-		port_ctrl |= (priority<<B53_TC_PCP_PRI(tc));
+		regval &= ~(B53_TC_PCP_MASK<<B53_TC_PCP_PRI(tc));
+		regval |= (priority<<B53_TC_PCP_PRI(tc));
 	}
-	ret |= b53125_write64(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write64(dev->sdk_device, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_TC_REMARK_PAGE, B53_TX_TO_PCP_CTL(port), regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
 static int b53125_qos_pcp_map_default(sdk_driver_t *dev, zpl_phyport_t port)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	port_ctrl |= (0<<B53_PCP_TO_TC(0));
-	port_ctrl |= (1<<B53_PCP_TO_TC(1));
-	port_ctrl |= (2<<B53_PCP_TO_TC(2));
-	port_ctrl |= (3<<B53_PCP_TO_TC(3));
-	port_ctrl |= (4<<B53_PCP_TO_TC(4));
-	port_ctrl |= (5<<B53_PCP_TO_TC(5));
-	port_ctrl |= (6<<B53_PCP_TO_TC(6));
-	port_ctrl |= (7<<B53_PCP_TO_TC(7));
-	ret |= b53125_write32(dev->sdk_device, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u32 regval = 0;
+	regval |= (0<<B53_PCP_TO_TC(0));
+	regval |= (1<<B53_PCP_TO_TC(1));
+	regval |= (2<<B53_PCP_TO_TC(2));
+	regval |= (3<<B53_PCP_TO_TC(3));
+	regval |= (4<<B53_PCP_TO_TC(4));
+	regval |= (5<<B53_PCP_TO_TC(5));
+	regval |= (6<<B53_PCP_TO_TC(6));
+	regval |= (7<<B53_PCP_TO_TC(7));
+	ret |= b53125_write32(dev->sdk_device, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_PCP_TO_TC_PORT_CTL(port), regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -328,7 +358,7 @@ static int b53125_qos_diffserv_map_default(sdk_driver_t *dev)
 {
 	int ret = 0, diffserv = 0, priority = 0;
 	int reg = 0;
-	u64 port_ctrl = 0;
+	u64 regval = 0;
 	for(diffserv = 0; diffserv < 64; diffserv++)
 	{
 		if(diffserv >= 56 && diffserv <= 63)
@@ -348,38 +378,39 @@ static int b53125_qos_diffserv_map_default(sdk_driver_t *dev)
 		else if(diffserv >= 0 && diffserv <= 7)
 			priority = 0;
 
-		port_ctrl &= ~(B53_TC_MASK<<B53_DIFFSERV_TO_TC(diffserv));
-		port_ctrl |= (priority<<B53_DIFFSERV_TO_TC(diffserv));
+		regval &= ~(B53_TC_MASK<<B53_DIFFSERV_TO_TC(diffserv));
+		regval |= (priority<<B53_DIFFSERV_TO_TC(diffserv));
 
 		if(diffserv == 0x0f)
 		{
 			reg = B53_QOS_DIFFSERV_MAP_CTL0;
-			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, port_ctrl);
+			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, regval);
 		}
 		else if(diffserv == 0x1f)
 		{
 			reg = B53_QOS_DIFFSERV_MAP_CTL1;
-			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, port_ctrl);
+			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, regval);
 		}
 		else if(diffserv == 0x2f)
 		{
 			reg = B53_QOS_DIFFSERV_MAP_CTL2;
-			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, port_ctrl);
+			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, regval);
 		}
 		else if(diffserv == 0x3f)
 		{
 			reg = B53_QOS_DIFFSERV_MAP_CTL3;
-			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, port_ctrl);
+			ret |= b53125_write48(dev->sdk_device, B53_QOS_PAGE, reg, regval);
 		}	
+		sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, reg, regval);
 	}
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_handle_return(ret);
 	return ret;
 }
 
 static int b53125_qos_tc_map_default(sdk_driver_t *dev)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
+	u16 regval = 0;
 	int priority = 0;
 	int queue = 0;
 	for(priority = 0; priority < 8; priority++)
@@ -392,11 +423,12 @@ static int b53125_qos_tc_map_default(sdk_driver_t *dev)
 			queue = 2;
 		if(priority>=6 && priority<8)
 			queue = 3;
-		port_ctrl &= ~(B53_TC_QUEUE_MASK<<B53_TC_TO_QUEUE(priority));
-		port_ctrl |= (queue<<B53_TC_TO_QUEUE(priority));
+		regval &= ~(B53_TC_QUEUE_MASK<<B53_TC_TO_QUEUE(priority));
+		regval |= (queue<<B53_TC_TO_QUEUE(priority));
 	}
-	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write16(dev->sdk_device, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_QOS_PAGE, B53_TC_TO_QUEUE_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -449,7 +481,7 @@ static int b53125_qos_enable(sdk_driver_t *dev, zpl_bool enable)
 
 	ret |= b53125_qos_map_default(dev);
 
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_handle_return(ret);
 	return ret;	
 }
 

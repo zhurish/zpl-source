@@ -15,10 +15,11 @@ sdk_qinq_t sdk_qinq;
 
 static int bsp_qinq_enable(void *driver, hal_port_header_t *port, hal_qinq_param_t *param)
 {
-	int ret = NO_SDK;
+	int ret = OK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver  && sdk_qinq.sdk_qinq_enable_cb)
-		ret = sdk_qinq.sdk_qinq_enable_cb(driver, param->value);
+	/*if(bspdev->sdk_driver  && sdk_qinq.sdk_qinq_enable_cb)
+		ret = sdk_qinq.sdk_qinq_enable_cb(bspdev->sdk_driver, param->value);*/
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -26,9 +27,10 @@ static int bsp_qinq_enable(void *driver, hal_port_header_t *port, hal_qinq_param
 static int bsp_qinq_vlan_tpid(void *driver, hal_port_header_t *port, hal_qinq_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver  && sdk_qinq.sdk_qinq_vlan_ptid_cb)
-		ret = sdk_qinq.sdk_qinq_vlan_ptid_cb(driver, param->value);
+	if(bspdev->sdk_driver  && sdk_qinq.sdk_qinq_vlan_ptid_cb)
+		ret = sdk_qinq.sdk_qinq_vlan_ptid_cb(bspdev->sdk_driver, param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -36,9 +38,10 @@ static int bsp_qinq_vlan_tpid(void *driver, hal_port_header_t *port, hal_qinq_pa
 static int bsp_qinq_interface_enable(void *driver, hal_port_header_t *port, hal_qinq_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_qinq.sdk_qinq_port_enable_cb)
-		ret = sdk_qinq.sdk_qinq_port_enable_cb(driver, port->phyport, param->value);
+	if(bspdev->sdk_driver && sdk_qinq.sdk_qinq_port_enable_cb)
+		ret = sdk_qinq.sdk_qinq_port_enable_cb(bspdev->sdk_driver, port->phyport, param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

@@ -39,10 +39,12 @@ static int b53125_set_stp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phypor
 	}
 
 	ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), &reg);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
 	reg &= ~PORT_CTRL_STP_STATE_MASK;
 	reg |= hw_state;
 	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_CTRL_PAGE, B53_PORT_CTRL(port), reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -75,10 +77,12 @@ static int b53125_set_mstp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phypo
 	}
 
 	ret |= b53125_read8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(index), &reg);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MSTP_PAGE, B53_MSTP_TBL_CTL(port), reg);
 	reg &= ~B53_MSTP_TBL_PORT_MASK(port);
 	reg |= B53_MSTP_TBL_PORT(port, hw_state);
 	ret |= b53125_write8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_TBL_CTL(index), reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MSTP_PAGE, B53_MSTP_TBL_CTL(port), reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 /****************************************************************************************/
@@ -91,7 +95,8 @@ static int b53125_mstp_enable(sdk_driver_t *dev, zpl_bool enable)
 	else
 		reg &= ~B53_MSTP_EN;
 	ret |= b53125_write8(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_CTL, reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -102,7 +107,8 @@ static int b53125_mstp_aging_time(sdk_driver_t *dev, zpl_index_t aging)
 	u32 reg = 0;
 	reg |= aging & B53_MSTP_AGE_MASK;
 	ret |= b53125_write32(dev->sdk_device, B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_MSTP_PAGE, B53_MSTP_AGE_CTL, reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 #if 0

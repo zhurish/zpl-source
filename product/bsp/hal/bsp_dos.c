@@ -15,9 +15,10 @@ sdk_dos_t sdk_dos;
 static int bsp_dos_enable(void *driver, zpl_uint32 *cmd, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_dos.sdk_dos_enable_cb)
-		ret = sdk_dos.sdk_dos_enable_cb(driver, *cmd, *value);
+	if(bspdev->sdk_driver && sdk_dos.sdk_dos_enable_cb)
+		ret = sdk_dos.sdk_dos_enable_cb(bspdev->sdk_driver, *cmd, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -25,9 +26,10 @@ static int bsp_dos_enable(void *driver, zpl_uint32 *cmd, zpl_uint32 *value)
 static int bsp_dos_tcp_hdr_size(void *driver, zpl_uint32 *cmd, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_dos.sdk_dos_tcp_hdr_size_cb)
-		ret = sdk_dos.sdk_dos_tcp_hdr_size_cb(driver, *cmd, *value);
+	if(bspdev->sdk_driver && sdk_dos.sdk_dos_tcp_hdr_size_cb)
+		ret = sdk_dos.sdk_dos_tcp_hdr_size_cb(bspdev->sdk_driver, *cmd, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -35,9 +37,10 @@ static int bsp_dos_tcp_hdr_size(void *driver, zpl_uint32 *cmd, zpl_uint32 *value
 static int bsp_dos_icmp_size(void *driver, zpl_uint32 *cmd, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_dos.sdk_dos_icmp_size_cb)
-		ret = sdk_dos.sdk_dos_icmp_size_cb(driver, *cmd, *value);
+	if(bspdev->sdk_driver && sdk_dos.sdk_dos_icmp_size_cb)
+		ret = sdk_dos.sdk_dos_icmp_size_cb(bspdev->sdk_driver, *cmd, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -45,9 +48,10 @@ static int bsp_dos_icmp_size(void *driver, zpl_uint32 *cmd, zpl_uint32 *value)
 static int bsp_dos_icmpv6_size(void *driver, zpl_uint32 *cmd, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_dos.sdk_dos_icmpv6_size_cb)
-		ret = sdk_dos.sdk_dos_icmpv6_size_cb(driver, *cmd, *value);
+	if(bspdev->sdk_driver && sdk_dos.sdk_dos_icmpv6_size_cb)
+		ret = sdk_dos.sdk_dos_icmpv6_size_cb(bspdev->sdk_driver, *cmd, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

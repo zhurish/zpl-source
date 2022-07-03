@@ -71,7 +71,7 @@ b53_device_t * b53125_device_probe(void)
 	b53_device_t* b53_device = XMALLOC(MTYPE_SDK, sizeof(b53_device_t));
 	if(b53_device == NULL)
 	{
-		_sdk_err( " Can not malloc b53125 device");
+		sdk_err( " Can not malloc b53125 device");
 		return NULL;
 	}
 	memset(b53_device, 0, sizeof(b53_device_t));
@@ -80,7 +80,7 @@ b53_device_t * b53125_device_probe(void)
 	if(b53_device->mido.fd <= 0)
 	{
 		free(b53_device);
-		_sdk_err( "Can not open b53125 device '%s'", B53_DEVICE_NAME);
+		sdk_err( "Can not open b53125 device '%s'", B53_DEVICE_NAME);
 		return NULL;
 	}
 	b53125_mdio_probe(&b53_device->mido);
@@ -101,7 +101,7 @@ b53_device_t * b53125_device_probe(void)
 	phy_id |= mdiobus_read(b53_device->mido.bus, 0, 3);
 #endif	
 	//============b53125_device_probe============phy_id=0x3625f24
-	_sdk_debug("b53125 device probe phy_id=0x%x", phy_id);
+	sdk_debug("b53125 device probe phy_id=0x%x", phy_id);
 	/* BCM5325, BCM539x (OUI_1)
 	 * BCM53125, BCM53128 (OUI_2)
 	 * BCM5365 (OUI_3)
@@ -116,7 +116,7 @@ b53_device_t * b53125_device_probe(void)
 	    (phy_id & 0xfffffc00) != B53_BRCM_OUI_3 &&
 	    (phy_id & 0xfffffc00) != B53_BRCM_OUI_4) {
 		XFREE(MTYPE_SDK, b53_device);
-		_sdk_err( "Unsupported device: 0x%08x", phy_id);
+		sdk_err( "Unsupported device: 0x%08x", phy_id);
 		//return NULL;
 	}
 	b53_device->mido.reg_page = 0xff;
@@ -141,7 +141,7 @@ b53_device_t * b53125_device_probe(void)
 			
 
 			if (b53_device->chip_id == BCM53125_DEVICE_ID)
-				_sdk_notice( "Find b53125 device  ID:0x%x REV:0x%x",
+				sdk_notice( "Find b53125 device  ID:0x%x REV:0x%x",
 					b53_device->chip_id, b53_device->core_rev);
 
 			b53_device->num_ports = b53_device->cpu_port + 1;
@@ -149,7 +149,7 @@ b53_device_t * b53125_device_probe(void)
 			return b53_device;
 		}
 	}
-	_sdk_err( "Can not find device by ID'0x%x'", b53_device->chip_id);
+	sdk_err( "Can not find device by ID'0x%x'", b53_device->chip_id);
 	XFREE(MTYPE_SDK, b53_device);
 	return NULL;
 }
@@ -168,61 +168,52 @@ int b53125_config_start(sdk_driver_t *dev)
 		return ERROR;
 	}
 	/*******global *******/
-	memset(dev->phyports_table, 0, sizeof(dev->phyports_table));
-	dev->phyports_table[0].phyport = 0;
-	dev->phyports_table[1].phyport = 1;
-	dev->phyports_table[2].phyport = 2;
-	dev->phyports_table[3].phyport = 3;
-	dev->phyports_table[4].phyport = 4;
-	dev->phyports_table[5].phyport = -1;
-	dev->phyports_table[6].phyport = -1;
-	dev->phyports_table[7].phyport = 8;
 
 
 	ret |= b53_brcm_hdr_setup(dev, zpl_true, ((b53_device_t *)dev->sdk_device)->cpu_port);
-	_sdk_debug( "b53125 brcm hdr init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 brcm hdr init %s", (ret == OK)?"OK":"ERROR");
 	ret |= b53125_imp_enable(dev, zpl_true);//关闭IMP接口
-	_sdk_debug( "b53125 imp init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 imp init %s", (ret == OK)?"OK":"ERROR");
 	//b53125_switch_forwarding and b53125_vlan_init
 	//ret |= b53125_imp_port_enable(dev);
-	//_sdk_debug( "b53125 imp port %s", (ret == OK)?"OK":"ERROR");
+	//sdk_debug_event(dev, "b53125 imp port %s", (ret == OK)?"OK":"ERROR");
 
 	ret = b53125_global_init(dev);
-	_sdk_debug( "b53125 global init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 global init %s", (ret == OK)?"OK":"ERROR");
 	
 	ret = b53125_cpu_init(dev);
-	_sdk_debug( "b53125 cpu init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 cpu init %s", (ret == OK)?"OK":"ERROR");
 
 	ret = b53125_mac_init(dev);
-	_sdk_debug( "b53125 mac init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 mac init %s", (ret == OK)?"OK":"ERROR");
 
 	ret = b53125_port_init(dev);
-	_sdk_debug( "b53125 port init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 port init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_vlan_init(dev);
-	_sdk_debug( "b53125 vlan init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 vlan init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_mstp_init(dev);
-	_sdk_debug( "b53125 mstp init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 mstp init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_trunk_init(dev);
-	_sdk_debug( "b53125 trunk init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 trunk init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_mirror_init(dev);
-	_sdk_debug( "b53125 mirror init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 mirror init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_dos_init(dev);
-	_sdk_debug( "b53125 dos init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 dos init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_eap_init(dev);
-	_sdk_debug( "b53125 eap init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 eap init %s", (ret == OK)?"OK":"ERROR");
 	ret = b53125_qos_init(dev);
-	printk( "b53125 qos init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 qos init %s", (ret == OK)?"OK":"ERROR");
 
 	ret = b53125_snooping_init(dev);
-	printk( "b53125 snooping init %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 snooping init %s", (ret == OK)?"OK":"ERROR");
 
 	ret = b53125_global_start(dev);
-	printk( "b53125  start %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125  start %s", (ret == OK)?"OK":"ERROR");
 	b53125_clear_mac_all(dev);
 	ret = b53125_port_start(dev);
-	printk( "b53125 port start %s", (ret == OK)?"OK":"ERROR");
-	ret = b53125_enable_vlan_default(dev, 1);
-	printk( "b53125_enable_vlan_default start %s", (ret == OK)?"OK":"ERROR");
+	sdk_debug_event(dev, "b53125 port start %s", (ret == OK)?"OK":"ERROR");
+	//ret = b53125_enable_vlan_default(dev, 1);
+	//sdk_debug_event(dev, "b53125_enable_vlan_default start %s", (ret == OK)?"OK":"ERROR");
 	return ret;
 }
 

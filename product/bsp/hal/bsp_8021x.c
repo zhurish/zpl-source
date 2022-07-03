@@ -17,9 +17,10 @@ sdk_8021x_t sdk_8021x_cb;
 static int bsp_8021x_enable(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_enable_cb)
-		ret = sdk_8021x_cb.sdk_8021x_enable_cb(driver, bsp8021x->value);
+		ret = sdk_8021x_cb.sdk_8021x_enable_cb(bspdev->sdk_driver, bsp8021x->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -27,9 +28,10 @@ static int bsp_8021x_enable(void *driver, hal_port_header_t *bspport, hal_8021x_
 static int bsp_8021x_port_state(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_port_state_cb)
-		ret = sdk_8021x_cb.sdk_8021x_port_state_cb(driver, bspport->phyport, bsp8021x->value);
+		ret = sdk_8021x_cb.sdk_8021x_port_state_cb(bspdev->sdk_driver, bspport->phyport, bsp8021x->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -37,9 +39,10 @@ static int bsp_8021x_port_state(void *driver, hal_port_header_t *bspport, hal_80
 static int bsp_8021x_port_mode(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_port_mode_cb)
-		ret = sdk_8021x_cb.sdk_8021x_port_mode_cb(driver, bspport->phyport, bsp8021x->value);
+		ret = sdk_8021x_cb.sdk_8021x_port_mode_cb(bspdev->sdk_driver, bspport->phyport, bsp8021x->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -47,9 +50,10 @@ static int bsp_8021x_port_mode(void *driver, hal_port_header_t *bspport, hal_802
 static int bsp_8021x_auth_dmac(void *driver, hal_port_header_t *bspport, hal_8021x_param_t *bsp8021x)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
 	if(driver && sdk_8021x_cb.sdk_8021x_auth_dmac_cb)
-		ret = sdk_8021x_cb.sdk_8021x_auth_dmac_cb(driver, bspport->phyport, bsp8021x->mac);
+		ret = sdk_8021x_cb.sdk_8021x_auth_dmac_cb(bspdev->sdk_driver, bspport->phyport, bsp8021x->mac);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

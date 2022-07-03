@@ -16,9 +16,10 @@ sdk_cpu_t sdk_cpu_cb;
 static int bsp_cpu_port_mode(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_mode_cb)
-		ret = sdk_cpu_cb.sdk_cpu_mode_cb(driver, global, *enable);
+		ret = sdk_cpu_cb.sdk_cpu_mode_cb(bspdev->sdk_driver, global, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -26,9 +27,10 @@ static int bsp_cpu_port_mode(void *driver, hal_global_header_t *global, zpl_bool
 static int bsp_cpu_port_enable(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_enable_cb)
-		ret = sdk_cpu_cb.sdk_cpu_enable_cb(driver, global, *enable);
+		ret = sdk_cpu_cb.sdk_cpu_enable_cb(bspdev->sdk_driver, global, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -36,9 +38,10 @@ static int bsp_cpu_port_enable(void *driver, hal_global_header_t *global, zpl_bo
 static int bsp_cpu_port_speed(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_speed_cb)
-		ret = sdk_cpu_cb.sdk_cpu_speed_cb(driver, global, *value);
+		ret = sdk_cpu_cb.sdk_cpu_speed_cb(bspdev->sdk_driver, global, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -46,9 +49,10 @@ static int bsp_cpu_port_speed(void *driver, hal_global_header_t *global, zpl_uin
 static int bsp_cpu_port_duplex(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_duplex_cb)
-		ret = sdk_cpu_cb.sdk_cpu_duplex_cb(driver, global, *value);
+		ret = sdk_cpu_cb.sdk_cpu_duplex_cb(bspdev->sdk_driver, global, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -56,9 +60,10 @@ static int bsp_cpu_port_duplex(void *driver, hal_global_header_t *global, zpl_ui
 static int bsp_cpu_port_flow(void *driver, hal_global_header_t *global, zpl_bool *tx)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
 	if(driver && sdk_cpu_cb.sdk_cpu_flow_cb)
-		ret = sdk_cpu_cb.sdk_cpu_flow_cb(driver, global, *tx);
+		ret = sdk_cpu_cb.sdk_cpu_flow_cb(bspdev->sdk_driver, global, *tx);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

@@ -101,6 +101,7 @@ struct nsm_interface_cb
 	int (*nsm_intf_add_cb)(struct interface *);
 	int (*nsm_intf_del_cb)(struct interface *);
 	int (*nsm_intf_updown_cb)(struct interface *, zpl_bool);
+	int (*nsm_intf_mode_cb)(struct interface *, if_mode_t, if_mode_t);   
 	int (*nsm_intf_write_cb)(struct vty *, struct interface *);
 };
 
@@ -279,6 +280,7 @@ extern int nsm_intf_module_data_set(struct interface *ifp, nsm_submodule_t mid, 
 extern int nsm_interface_hook_add(nsm_submodule_t module, int (*add_cb)(struct interface *), int (*del_cb)(struct interface *));
 extern int nsm_interface_write_hook_add(nsm_submodule_t module, int (*show_cb)(struct vty *, struct interface *));
 extern int nsm_interface_write_hook_handler(nsm_submodule_t module, struct vty *vty, struct interface *ifp);
+extern int nsm_interface_mode_hook_add(nsm_submodule_t module, int (*mode_cb)(struct interface *, if_mode_t, if_mode_t));
 
 #ifdef ZPL_SHELL_MODULE
 extern zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, const char *uspv);
@@ -288,8 +290,10 @@ extern int nsm_interface_delete_api(struct interface *ifp);
 
 extern int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode);
 extern int nsm_interface_mode_get_api(struct interface *ifp, if_mode_t *mode);
+#ifdef IF_ENCAPSULATION_ENABLE
 extern int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16 value);
 extern int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, zpl_uint16 *value);
+#endif
 extern int nsm_interface_desc_set_api(struct interface *ifp, const char *desc);
 extern int nsm_interface_down_set_api(struct interface *ifp);
 extern int nsm_interface_up_set_api(struct interface *ifp);

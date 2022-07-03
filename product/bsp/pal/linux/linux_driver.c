@@ -34,7 +34,14 @@
 
 #include "linux_driver.h"
 #include "pal_include.h"
-//#include "bsp_include.h"
+#if defined(ZPL_SDK_KERNEL)
+#undef  ZPL_SDK_KERNEL
+#endif
+#ifndef ZPL_SDK_USER
+//#define ZPL_SDK_USER
+#endif
+
+#include "bsp_include.h"
 
 #ifdef ZPL_KERNEL_FORWARDING
 int _ipkernel_create(struct interface *ifp)

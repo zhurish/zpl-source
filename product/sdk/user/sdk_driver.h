@@ -42,40 +42,31 @@ typedef zpl_uint64 u64;
 #define _SDK_CLI_DEBUG_EN
 #endif
 
+
+
 #ifdef ZPL_SDK_USER
-#if defined( _SDK_DEBUG_EN)
-extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, zlog_level_t priority, const char *format, ...);
-#define _sdk_debug(format, ...) sdk_log (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_DEBUG, format, ##__VA_ARGS__)
-#define _sdk_warn(format, ...) 	sdk_log (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_WARNING, format, ##__VA_ARGS__)
-#define _sdk_err(format, ...) 	sdk_log (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_ERR, format, ##__VA_ARGS__)
-#define _sdk_info(format, ...)	sdk_log(__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_INFO, format, ##__VA_ARGS__)
-#define _sdk_trap(format, ...)	sdk_log(__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_TRAP, format, ##__VA_ARGS__)
-#define _sdk_notice(format, ...) sdk_log(__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, ZLOG_LEVEL_NOTICE, format, ##__VA_ARGS__)
-#else
-#define _sdk_debug(format, ...)	zlog_debug(MODULE_SDK,format, ##__VA_ARGS__)
-#define _sdk_warn(format, ...)	zlog_warn(MODULE_SDK,format, ##__VA_ARGS__)
-#define _sdk_err(format, ...)	zlog_err(MODULE_SDK,format, ##__VA_ARGS__)
-#define _sdk_info(format, ...)	zlog_info(MODULE_SDK,format, ##__VA_ARGS__)
-#define _sdk_trap(format, ...)	zlog_trap(MODULE_SDK,format, ##__VA_ARGS__)
-#define _sdk_notice(format, ...) zlog_notice(MODULE_SDK,format, ##__VA_ARGS__)
+#define sdk_err(format, ...) 				pl_zlog_err (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, format, ##__VA_ARGS__)
+#define sdk_warn(format, ...) 				pl_zlog_warn (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, format, ##__VA_ARGS__)
+#define sdk_info(format, ...) 				pl_zlog_info (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, format, ##__VA_ARGS__)
+#define sdk_notice(format, ...) 			pl_zlog_notice (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, format, ##__VA_ARGS__)
+#define sdk_debug(format, ...) 				pl_zlog_debug (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, format, ##__VA_ARGS__)
+#define sdk_trap(format, ...) 				pl_zlog_trap (__FILE__, __FUNCTION__, __LINE__, MODULE_SDK, format, ##__VA_ARGS__)
 #endif
-#else
-#if 1
-#define _sdk_debug(format, ...)	printk(format, ##__VA_ARGS__)
-#define _sdk_warn(format, ...)	printk(format, ##__VA_ARGS__)
-#define _sdk_err(format, ...)	printk(format, ##__VA_ARGS__)
-#define _sdk_info(format, ...)	printk(format, ##__VA_ARGS__)
-#define _sdk_trap(format, ...)	printk(format, ##__VA_ARGS__)
-#define _sdk_notice(format, ...) printk(format, ##__VA_ARGS__)
-#else
-#define _sdk_debug(format, ...)	
-#define _sdk_warn(format, ...)	
-#define _sdk_err(format, ...)	
-#define _sdk_info(format, ...)
-#define _sdk_trap(format, ...)	
-#define _sdk_notice(format, ...) 
-#endif
-#endif
+
+/* Debug flags. */
+#define SDK_DEBUG_EVENT 0x01
+#define SDK_DEBUG_DETAIL 0x80
+
+/* Debug related macro. */
+#define sdk_debug_detail(dev, format, ...) {if(dev->debug&SDK_DEBUG_DETAIL) sdk_debug(format, ##__VA_ARGS__);}
+#define sdk_debug_event(dev, format, ...) {if(dev->debug&SDK_DEBUG_EVENT) sdk_debug(format, ##__VA_ARGS__);}
+
+#define sdk_handle_return(ret) 	{if(dev->debug&SDK_DEBUG_EVENT) sdk_debug("%s %s", __func__, (ret == OK)?"OK":"ERROR");}
+
+
+
+
+
 
 
 
@@ -83,21 +74,12 @@ extern void sdk_log(const char *file, const char *func, const zpl_uint32 line, z
 typedef struct sdk_driver {
 
 	zpl_phyport_t 	cpu_port;
-
-	zpl_phyport_t 	num_ports;
-	struct sdk_driver_port	phyports_table[PHY_PORT_MAX];
-
-	zpl_uint32  num_vlans;
-	zpl_bool    vlan_enabled;
-	zpl_bool    vlan_filtering_enabled;
-
+	zpl_bool 	vlan_enabled;
 	void 			*sdk_device;
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 	struct hal_client *hal_client;
 #endif
-	zpl_uint32	mac_cache_max;
-	zpl_uint32	mac_cache_num;
-	hal_mac_cache_t *mac_cache_entry;
+	zpl_uint32 debug;
 }sdk_driver_t;
 
 
@@ -106,8 +88,7 @@ extern zpl_uint64 sdk_ether_addr_u64(const zpl_uint8 *addr);
 extern void sdk_u64_ether_addr(zpl_uint64 u, zpl_uint8 *addr);
 extern bool sdk_is_multicast_ether_addr(const u8 *addr);
 
-extern int sdk_driver_mac_cache_add(sdk_driver_t *, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild);
-extern int sdk_driver_mac_cache_update(sdk_driver_t *, zpl_uint8 *mac, zpl_uint8 isage);
+
 
 #ifdef ZPL_SDK_USER
 extern int sdk_driver_init(struct bsp_driver *, zpl_void *);

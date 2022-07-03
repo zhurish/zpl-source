@@ -33,197 +33,246 @@
 #endif
 
 #ifdef ZPL_SDK_USER
-int b53125_mdio_read(struct b53_mdio_device *dev, u8 page, u8 reg)
+int b53125_mdio_read(struct b53_mdio_device *dev, u8 addr, u32 regnum)
 {
 	int ret;
-	struct mido_device data;
+	struct midodev_cmd data;
 	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	ret = read(dev->fd, &data, sizeof(struct mido_device));
-	if(ret >= 0)
+	data.addr = addr;
+	data.regnum = regnum;
+	ret = ioctl(dev->fd, B53_IO_R, &data);
+	if(ret == 0)
 	{
-		return data.val.val16;
+		return data.val;
 	}
 	return -1;
+}
+static int b53125_mdio_write(struct b53_mdio_device *dev, u8 addr, u32 regnum, u16 val)
+{
+	int ret;
+	struct midodev_cmd data;
+	memset(&data, 0, sizeof(data));
+	data.addr = addr;
+	data.regnum = regnum;
+	data.val = val;
+	ret = ioctl(dev->fd, B53_IO_W, &data);
+	return ret;
+}
+
+static int b53125_mdio_op(struct b53_mdio_device *dev, u8 page, u8 reg, u16 op)
+{
+	int i;
+	u16 v;
+	int ret;
+	if (dev->reg_page != page) {
+		/* set page number */
+		v = (page << 8) | REG_MII_PAGE_ENABLE;
+		ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR,
+					   REG_MII_PAGE, v);
+		if (ret)
+			return ret;
+		dev->reg_page = page;
+	}
+
+	/* set register address */
+	v = (reg << 8) | op;
+	ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR, REG_MII_ADDR, v);
+	if (ret)
+		return ret;
+
+	/* check if operation completed */
+	for (i = 0; i < 5; ++i) {
+		v = b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR,
+					REG_MII_ADDR);
+		if (!(v & (REG_MII_ADDR_WRITE | REG_MII_ADDR_READ)))
+			break;
+		usleep_range(10, 100);
+	}
+	/*
+	if (WARN_ON(i == 5))
+		return -EIO;
+	*/
+	return 0;
 }
 
 static int b53125_mdio_read8(struct b53_mdio_device *dev, u8 page, u8 reg, u8 *val)
 {
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	ret = ioctl(dev->fd, B53_IO_R8, &data);
-	if(ret == 0)
-	{
-		*val = 	data.val.val8;
-		return 0;
-	}
-	return ret;
+
+	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
+	if (ret)
+		return ret;
+
+	*val = b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR,
+				   REG_MII_DATA0) & 0xff;
+
+	return 0;
 }
 
 static int b53125_mdio_read16(struct b53_mdio_device *dev, u8 page, u8 reg, u16 *val)
 {
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	ret = ioctl(dev->fd, B53_IO_R16, &data);
-	if(ret == 0)
-	{
-		*val = 	data.val.val16;
-		return 0;
-	}
-	return ret;
+
+	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
+	if (ret)
+		return ret;
+
+	*val = b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR, REG_MII_DATA0);
+
+	return 0;
 }
 
 static int b53125_mdio_read32(struct b53_mdio_device *dev, u8 page, u8 reg, u32 *val)
 {
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	ret = ioctl(dev->fd, B53_IO_R32, &data);
-	if(ret == 0)
-	{
-		*val = 	data.val.val32;
-		return 0;
-	}
-	return ret;
+
+	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
+	if (ret)
+		return ret;
+
+	*val = b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR, REG_MII_DATA0);
+	*val |= b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR,
+				    REG_MII_DATA1) << 16;
+
+	return 0;
 }
 
 static int b53125_mdio_read48(struct b53_mdio_device *dev, u8 page, u8 reg, u64 *val)
 {
+	u64 temp = 0;
+	int i;
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	ret = ioctl(dev->fd, B53_IO_R48, &data);
-	if(ret == 0)
-	{
-		*val = 	data.val.val48;
-		return 0;
+
+	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
+	if (ret)
+		return ret;
+
+	for (i = 2; i >= 0; i--) {
+		temp <<= 16;
+		temp |= b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR,
+				     REG_MII_DATA0 + i);
 	}
-	return ret;
+
+	*val = temp;
+
+	return 0;
 }
 
 static int b53125_mdio_read64(struct b53_mdio_device *dev, u8 page, u8 reg, u64 *val)
 {
+	u64 temp = 0;
+	int i;
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	ret = ioctl(dev->fd, B53_IO_R64, &data);
-	if(ret == 0)
-	{
-		*val = 	data.val.val64;
-		return 0;
+
+	ret = b53125_mdio_op(dev, page, reg, REG_MII_ADDR_READ);
+	if (ret)
+		return ret;
+
+	for (i = 3; i >= 0; i--) {
+		temp <<= 16;
+		temp |= b53125_mdio_read(dev, BRCM_PSEUDO_PHY_ADDR,
+					    REG_MII_DATA0 + i);
 	}
-	return ret;
+
+	*val = temp;
+
+	return 0;
 }
 
 static int b53125_mdio_write8(struct b53_mdio_device *dev, u8 page, u8 reg, u8 value)
 {
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	data.val.val8 = value;
-	ret = ioctl(dev->fd, B53_IO_W8, &data);
-	if(ret == 0)
-	{
-		return 0;
-	}
-	return ret;
+
+	ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR,
+				   REG_MII_DATA0, value);
+	if (ret)
+		return ret;
+
+	return b53125_mdio_op(dev, page, reg, REG_MII_ADDR_WRITE);
 }
 
 static int b53125_mdio_write16(struct b53_mdio_device *dev, u8 page, u8 reg,
 			    u16 value)
 {
 	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	data.val.val16 = value;
-	ret = ioctl(dev->fd, B53_IO_W16, &data);
-	if(ret == 0)
-	{
-		return 0;
-	}
-	return ret;
+
+	ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR,
+				   REG_MII_DATA0, value);
+	if (ret)
+		return ret;
+
+	return b53125_mdio_op(dev, page, reg, REG_MII_ADDR_WRITE);
 }
 
 static int b53125_mdio_write32(struct b53_mdio_device *dev, u8 page, u8 reg,
 			    u32 value)
 {
-	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	data.val.val32 = value;
-	ret = ioctl(dev->fd, B53_IO_W32, &data);
-	if(ret == 0)
-	{
-		return 0;
+	unsigned int i;
+	u32 temp = value;
+
+	for (i = 0; i < 2; i++) {
+		int ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR,
+					       REG_MII_DATA0 + i,
+					       temp & 0xffff);
+		if (ret)
+			return ret;
+		temp >>= 16;
 	}
-	return ret;
+
+	return b53125_mdio_op(dev, page, reg, REG_MII_ADDR_WRITE);
 }
 
 static int b53125_mdio_write48(struct b53_mdio_device *dev, u8 page, u8 reg,
 			    u64 value)
 {
-	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	data.val.val48 = value;
-	ret = ioctl(dev->fd, B53_IO_W48, &data);
-	if(ret == 0)
-	{
-		return 0;
+	unsigned int i;
+	u64 temp = value;
+
+	for (i = 0; i < 3; i++) {
+		int ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR,
+					       REG_MII_DATA0 + i,
+					       temp & 0xffff);
+		if (ret)
+			return ret;
+		temp >>= 16;
 	}
-	return ret;
+
+	return b53125_mdio_op(dev, page, reg, REG_MII_ADDR_WRITE);
 }
 
 static int b53125_mdio_write64(struct b53_mdio_device *dev, u8 page, u8 reg,
 			    u64 value)
 {
-	int ret;
-	struct mido_device data;
-	memset(&data, 0, sizeof(data));
-	data.pape = page;
-	data.regnum = reg;
-	data.val.val64 = value;
-	ret = ioctl(dev->fd, B53_IO_W64, &data);
-	if(ret == 0)
-	{
-		return 0;
+	unsigned int i;
+	u64 temp = value;
+
+	for (i = 0; i < 4; i++) {
+		int ret = b53125_mdio_write(dev, BRCM_PSEUDO_PHY_ADDR,
+					       REG_MII_DATA0 + i,
+					       temp & 0xffff);
+		if (ret)
+			return ret;
+		temp >>= 16;
 	}
-	return ret;
+
+	return b53125_mdio_op(dev, page, reg, REG_MII_ADDR_WRITE);
 }
 
 /*
 static int b53125_mdio_phy_read16(struct b53_mdio_device *dev, int addr, int reg,
 			       u16 *value)
 {
-	*value = __mdio_read(dev, addr, reg);
+
+	*value = b53125_mdio_read(dev, addr, reg);
+
 	return 0;
 }
 
 static int b53125_mdio_phy_write16(struct b53_mdio_device *dev, int addr, int reg,
 				u16 value)
 {
-	return __mdio_write(dev, addr, reg, value);
+
+	return b53125_mdio_write(dev, addr, reg, value);
 }
 */
 

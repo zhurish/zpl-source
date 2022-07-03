@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 
 enum hal_vlan_cmd 
 {
@@ -100,18 +100,15 @@ typedef struct sdk_vlan_s
     int    (*sdk_port_access_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
     int    (*sdk_port_native_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
     int    (*sdk_port_allowed_tag_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
+    int    (*sdk_port_allowed_untag_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
 
-    int    (*sdk_port_pvid_vlan)(void *, zpl_bool, zpl_phyport_t, vlan_t);
+    int    (*sdk_vlan_port_bridge)(void *, zpl_bool, zpl_phyport_t, zpl_phyport_t);
+    int    (*sdk_vlan_port_bridge_join)(void *, zpl_bool, zpl_phyport_t, zpl_phyport_t);
 
     int    (*sdk_vlan_stp_state)(void *, vlan_t, zpl_phyport_t, int stp_state);
 
     int    (*sdk_vlan_mstp_instance)(void *, zpl_bool, vlan_t, zpl_index_t mstpid);
     int    (*sdk_vlan_translate)(void *, zpl_bool, zpl_phyport_t, vlan_t, vlan_t, int);
-
-    int    (*sdk_port_qinq_vlan)(void *, zpl_bool, zpl_phyport_t);
-    int    (*sdk_port_qinq_tpid)(void *, vlan_t);
-
-    int    (*sdk_vlan_port)(void *, vlan_t, zpl_phyport_t);
 
 }sdk_vlan_t;
 

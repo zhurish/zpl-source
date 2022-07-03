@@ -47,7 +47,7 @@ static zpl_bool _nsm_intf_init = 0;
 static struct nsm_interface_cb nsm_intf_cb[NSM_INTF_MAX + 1];
 
 //static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp);
-
+static int nsm_interface_mode_hook_handler(nsm_submodule_t module, struct interface *ifp, if_mode_t oldmode, if_mode_t newmode);
 
 void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid)
 {
@@ -1040,11 +1040,28 @@ int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode)
 		ret = nsm_halpal_interface_mode(ifp, mode);
 		if (ret == OK)
 		{
-			if (IF_MODE_L3 == mode)
+			/*if (IF_MODE_L3 == mode)
 			{
 				//创建对应的L3或者获取刷新对应的L3接口数据
 				// if_have_kernel(ifp);
 			}
+			if (IF_MODE_ACCESS_L2 == mode)
+			{
+
+			}
+			if (IF_MODE_TRUNK_L2 == mode)
+			{
+
+			}
+			if (IF_MODE_L3 == mode)
+			{
+
+			}
+			if (IF_MODE_BRIGDE == mode)
+			{
+			}
+			*/		
+			nsm_interface_mode_hook_handler(NSM_INTF_ALL, ifp, ifp->if_mode, mode);
 			ifp->if_mode = mode;
 #ifdef ZPL_NSM_MODULE
 			zebra_interface_mode_update(ifp, mode);
@@ -1069,41 +1086,19 @@ int nsm_interface_mode_get_api(struct interface *ifp, if_mode_t *mode)
 	IF_DATA_UNLOCK();
 	return OK;
 }
-
-int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16 value)
+#ifdef IF_ENCAPSULATION_ENABLE
+int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca)
 {
 	int ret = ERROR;
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	if (ifp->if_enca != enca || ifp->encavlan != value)
+	if (ifp->if_enca != enca)
 	{
-#ifdef ZPL_KERNEL_MODULE
-		if (if_is_ethernet(ifp) &&
-			IF_IS_SUBIF_GET(ifp->ifindex) &&
-			enca == IF_ENCA_DOT1Q)
-		{
-			ifindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
-			const char *root_kname = ifkernelindex2kernelifname(root_kifindex);
-			zpl_char k_name[64];
-			os_memset(k_name, 0, sizeof(k_name));
-			if (root_kname)
-				sprintf(k_name, "%s.%d", root_kname, value);
-			else
-				sprintf(k_name, "%s%d%d.%d", getkernelname(ifp->if_type),
-						IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex), value);
-			if (os_strlen(k_name))
-				if_kname_set(ifp, k_name);
-		}
-#endif
 		ret = nsm_halpal_interface_enca(ifp, enca, value);
 		if (ret == OK)
 		{
 			ifp->if_enca = enca;
-			ifp->encavlan = value;
-#ifdef ZPL_NSM_MODULE
-// zebra_interface_mode_update (ifp, enca);
-#endif
 		}
 	}
 	else
@@ -1112,7 +1107,7 @@ int nsm_interface_enca_set_api(struct interface *ifp, if_enca_t enca, zpl_uint16
 	return ret;
 }
 
-int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, zpl_uint16 *value)
+int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca)
 {
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
@@ -1120,12 +1115,11 @@ int nsm_interface_enca_get_api(struct interface *ifp, if_enca_t *enca, zpl_uint1
 	if (enca)
 	{
 		*enca = ifp->if_enca;
-		if (value)
-			*value = ifp->encavlan;
 	}
 	IF_DATA_UNLOCK();
 	return OK;
 }
+#endif
 
 int nsm_interface_up_set_api(struct interface *ifp)
 {
@@ -1818,6 +1812,19 @@ int nsm_interface_write_hook_add(nsm_submodule_t module, int (*write_cb)(struct 
 	return OK;
 }
 
+int nsm_interface_mode_hook_add(nsm_submodule_t module, int (*mode_cb)(struct interface *, if_mode_t, if_mode_t))
+{
+	if (_nsm_intf_init == 0)
+	{
+		memset(nsm_intf_cb, 0, sizeof(nsm_intf_cb));
+		_nsm_intf_init = 1;
+	}
+	if (NOT_INT_MAX_MIN_SPACE(module, NSM_INTF_NONE, NSM_INTF_MAX))
+		return ERROR;
+	nsm_intf_cb[module].nsm_intf_mode_cb = mode_cb;
+	return OK;
+}
+
 int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp)
 {
 	NSM_ENTER_FUNC();
@@ -1858,6 +1865,23 @@ int nsm_interface_write_hook_handler(nsm_submodule_t module, struct vty *vty, st
 	}
 	if (nsm_intf_cb[module].nsm_intf_write_cb)
 		(nsm_intf_cb[module].nsm_intf_write_cb)(vty, ifp);
+	return OK;
+}
+
+static int nsm_interface_mode_hook_handler(nsm_submodule_t module, struct interface *ifp, if_mode_t oldmode, if_mode_t newmode)
+{
+	if (module == NSM_INTF_ALL)
+	{
+		int i = 0;
+		for (i = NSM_INTF_NONE; i < NSM_INTF_MAX; i++)
+		{
+			if (nsm_intf_cb[i].nsm_intf_mode_cb)
+				(nsm_intf_cb[i].nsm_intf_mode_cb)(ifp, oldmode, newmode);
+		}
+		return OK;
+	}
+	if (nsm_intf_cb[module].nsm_intf_mode_cb)
+		(nsm_intf_cb[module].nsm_intf_mode_cb)(ifp, oldmode, newmode);
 	return OK;
 }
 

@@ -14,7 +14,11 @@ extern "C" {
 
 
 #ifdef ZPL_SDK_MODULE
+#ifdef ZPL_SDK_NONE
+#define NO_SDK OK
+#else
 #define NO_SDK ERROR
+#endif
 #else
 #define NO_SDK OK
 #endif

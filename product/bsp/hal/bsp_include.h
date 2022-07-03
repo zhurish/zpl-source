@@ -15,7 +15,7 @@ extern "C" {
 
 #include "hal_client.h"
 
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
 #include "bsp_driver.h"
 #endif
 

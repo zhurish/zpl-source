@@ -122,11 +122,13 @@ ifeq ($(ZPL_BUILD_DEBUG),YES)
 target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
 	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
+	$(RM) -rf ./*.o ./*.d
 else
 target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
 	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLOS_MAP) $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
 	$(CHMOD) a+x $(TAGET)
 	$(STRIP) $(TAGET)
+	$(RM) -rf ./*.o ./*.d
 endif
 
 	

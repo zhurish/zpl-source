@@ -25,7 +25,7 @@ enum hal_global_cmd
 	HAL_GLOBAL_AGINT,  
 	HAL_GLOBAL_WAN_PORT, 
 };
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 enum zpl_debug_cmd
 {
     HAL_KLOG_LEVEL,

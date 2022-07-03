@@ -59,6 +59,9 @@ choice
 	depends on ZPL_SDK_MODULE
 	default ZPL_SDK_USER
 
+config ZPL_SDK_NONE
+	bool "NO Switch SDK"
+
 config ZPL_SDK_USER
 	bool "Switch SDK in User Mode"
 

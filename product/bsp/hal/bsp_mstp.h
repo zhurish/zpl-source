@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 typedef enum stp_state_s
 {
 	STP_DISABLE = 0,

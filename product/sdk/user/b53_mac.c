@@ -63,7 +63,6 @@ int b53125_clear_mac_tbl_vlan(sdk_driver_t *dev, vlan_t vid)
 static void b53125_mac_tbl_to_entry(struct b53125_mac_arl_entry *ent,
 				    u64 mac_vid, u32 fwd_entry)
 {
-	//_sdk_err( " b53125_mac_tbl_to_entry:%llx %x", mac_vid, fwd_entry);
 	memset(ent, 0, sizeof(struct b53125_mac_arl_entry));
 	ent->port = fwd_entry & ARLTBL_DATA_PORT_ID_MASK;
 	ent->is_valid = !!(fwd_entry & ARLTBL_VALID);
@@ -76,7 +75,6 @@ static void b53125_mac_tbl_to_entry(struct b53125_mac_arl_entry *ent,
 static void b53125_mac_tbl_from_entry(u64 *mac_vid, u32 *fwd_entry,
 				      const struct b53125_mac_arl_entry *ent)
 {
-	//_sdk_err( " b53125_mac_tbl_from_entry");
 	*mac_vid = sdk_ether_addr_u64(ent->mac);
 	*mac_vid |= (u64)(ent->vid & ARLTBL_VID_MASK) << ARLTBL_VID_S;
 	*fwd_entry = ent->port & ARLTBL_DATA_PORT_ID_MASK;
@@ -95,7 +93,6 @@ static int b53125_mac_tbl_op_wait(sdk_driver_t *dev)
 {
 	zpl_uint32 timeout = 100;
 	u8 reg;
-	//_sdk_err( " b53125_mac_tbl_op_wait");
 	do {
 		b53125_read8(dev->sdk_device, B53_ARLIO_PAGE, B53_ARLTBL_RW_CTRL, &reg);
 		if (!(reg & ARLTBL_START_DONE))
@@ -103,7 +100,7 @@ static int b53125_mac_tbl_op_wait(sdk_driver_t *dev)
 
 		usleep_range(1000, 2000);
 	} while (timeout--);
-	printk( " b53125_mac_tbl_op_wait OS_TIMEOUT\r\n");
+	sdk_err( " b53125_mac_tbl_op_wait OS_TIMEOUT\r\n");
 	return OS_TIMEOUT;
 }
 
@@ -112,7 +109,6 @@ static int b53125_mac_tbl_rw_op(sdk_driver_t *dev, zpl_uint32 op)
 	u8 reg;
 	if (op > ARLTBL_RW)
 		return ERROR;
-	//_sdk_err( " b53125_mac_tbl_rw_op");	
 	b53125_read8(dev->sdk_device, B53_ARLIO_PAGE, B53_ARLTBL_RW_CTRL, &reg);
 	reg |= ARLTBL_START_DONE;
 	if (op)
@@ -130,7 +126,6 @@ static int b53125_mac_tbl_read(sdk_driver_t *dev, u64 mac,
 {
 	zpl_uint32 i;
 	int ret = 0;
-	//_sdk_err( " b53125_mac_tbl_read");
 	ret = b53125_mac_tbl_op_wait(dev);
 	if (ret != 0)
 		return ret;
@@ -167,7 +162,7 @@ static int b53125_mac_tbl_op(sdk_driver_t *dev, int op, zpl_phyport_t port,
 	u64 mac, mac_vid = 0;
 	u8 idx = 0;
 	int ret;
-	//_sdk_err( " b53125_mac_tbl_op");
+	//sdk_err( " b53125_mac_tbl_op");
 	/* Convert the array into a 64-bit MAC */
 	mac = sdk_ether_addr_u64(addr);
 
@@ -220,7 +215,6 @@ static int b53125_mac_tbl_op(sdk_driver_t *dev, int op, zpl_phyport_t port,
 static int b53125_mac_tbl_add(sdk_driver_t *dev, zpl_phyport_t port,
 		const zpl_uint8 *addr, vlan_t vid)
 {
-	//_sdk_err( " b53125_mac_tbl_add");
 	return b53125_mac_tbl_op(dev, 0, port, addr, vid, zpl_true);
 }
 
@@ -235,7 +229,6 @@ static int b53125_mac_tbl_del(sdk_driver_t *dev, zpl_phyport_t port,
 static int b53125_mac_address_add(sdk_driver_t *dev, zpl_phyport_t phyport, 
 	zpl_vlan_t vlanid, zpl_uint32 vrfid, mac_t *mac, zpl_uint32 pri)
 {
-	//_sdk_err( " b53125_mac_address_add");
 	return b53125_mac_tbl_add(dev,  phyport, mac, vlanid);
 }
 
@@ -264,7 +257,7 @@ static int b53125_mac_dump_cb(struct b53125_mac_arl_entry *entry, void *pp)
 	static int n = 0;
 	if(entry->is_valid == 0 || entry->is_static)
 		return 0;
-	printk( "====== read ==%d=== %02x:%02x:%02x:%02x:%02x:%02x port %d vid %d static %d age %d valid %d\r\n", 
+	sdk_debug( "====== read ==%d=== %02x:%02x:%02x:%02x:%02x:%02x port %d vid %d static %d age %d valid %d\r\n", 
 		n++, entry->mac[0], entry->mac[1], entry->mac[2], entry->mac[3], entry->mac[4], entry->mac[5],
 		entry->port, entry->vid, entry->is_static, entry->is_age, entry->is_valid);
 	return OK;	
@@ -323,6 +316,7 @@ static int b53_fast_age_vlan(sdk_driver_t *dev, u16 vid)
 }
 #endif
 /*****************************************************************/
+#if 0
 /* Address Resolution Logic routines */
 static int b53125_arl_op_wait(sdk_driver_t *dev)
 {
@@ -337,7 +331,7 @@ static int b53125_arl_op_wait(sdk_driver_t *dev)
 		usleep_range(1000, 2000);
 	} while (timeout--);
 
-	printk("timeout waiting for ARL to finish: 0x%02x\n", reg);
+	sdk_err("timeout waiting for ARL to finish: 0x%02x\n", reg);
 
 	return -ETIMEDOUT;
 }
@@ -367,16 +361,18 @@ static int b53125_arl_rw_op(sdk_driver_t *dev, unsigned int op)
 static int b53125_arl_read(sdk_driver_t *dev, u64 mac,
 			u16 vid, struct b53125_mac_arl_entry *ent, u8 *idx)
 {
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)	
 	DECLARE_BITMAP(free_bins, B53_ARLTBL_MAX_BIN_ENTRIES);
+#endif	
 	unsigned int i;
 	int ret;
 	struct b53125_device * sdk_device = dev->sdk_device;
 	ret = b53125_arl_op_wait(dev);
 	if (ret)
 		return ret;
-
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
 	bitmap_zero(free_bins, sdk_device->num_arl_bins);
-
+#endif
 	/* Read the bins */
 	for (i = 0; i < sdk_device->num_arl_bins; i++) {
 		u64 mac_vid;
@@ -389,7 +385,9 @@ static int b53125_arl_read(sdk_driver_t *dev, u64 mac,
 		b53125_mac_tbl_to_entry(ent, mac_vid, fwd_entry);
 
 		if (!(fwd_entry & ARLTBL_VALID)) {
+			#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
 			set_bit(i, free_bins);
+			#endif
 			continue;
 		}
 		if ((mac_vid & ARLTBL_MAC_MASK) != mac)
@@ -400,15 +398,16 @@ static int b53125_arl_read(sdk_driver_t *dev, u64 mac,
 		*idx = i;
 		return 0;
 	}
-
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
 	if (bitmap_weight(free_bins, sdk_device->num_arl_bins) == 0)
 		return -ENOSPC;
 
 	*idx = find_first_bit(free_bins, sdk_device->num_arl_bins);
-
+#endif
 	return -ENOENT;
 }
-
+#endif
+#if 0
 static int b53125_arl_op(sdk_driver_t *dev, int op, int port,
 		      const unsigned char *addr, u16 vid, bool is_valid)
 {
@@ -440,17 +439,17 @@ static int b53125_arl_op(sdk_driver_t *dev, int op, int port,
 	case -ETIMEDOUT:
 		return ret;
 	case -ENOSPC:
-		printk( "{%pM,%.4d} no space left in ARL\n",
+		sdk_debug( "{%pM,%.4d} no space left in ARL\n",
 			addr, vid);
 		return is_valid ? ret : 0;
 	case -ENOENT:
 		/* We could not find a matching MAC, so reset to a new entry */
-		printk( "{%pM,%.4d} not found, using idx: %d\n",
+		sdk_debug( "{%pM,%.4d} not found, using idx: %d\n",
 			addr, vid, idx);
 		fwd_entry = 0;
 		break;
 	default:
-		printk( "{%pM,%.4d} found, using idx: %d\n",
+		sdk_debug( "{%pM,%.4d} found, using idx: %d\n",
 			addr, vid, idx);
 		break;
 	}
@@ -483,6 +482,7 @@ static int b53125_arl_op(sdk_driver_t *dev, int op, int port,
 
 	return b53125_arl_rw_op(dev, 0);
 }
+#endif
 
 #if 0
 int b53_fdb_add(struct dsa_switch *ds, int port,
@@ -554,7 +554,7 @@ static int b53125_fdb_copy(const struct b53125_mac_arl_entry *ent,
 
 
 
-int b53125_fdb_dump(sdk_driver_t *dev,
+static int b53125_fdb_dump(sdk_driver_t *dev,
 		 mac_arl_entry_cb cb, void *data)
 {
 	struct b53125_mac_arl_entry results[2];
@@ -595,7 +595,7 @@ int b53125_fdb_dump(sdk_driver_t *dev,
 static int b53125_mac_address_dump(sdk_driver_t *dev, zpl_phyport_t phyport, 
 	zpl_vlan_t vlanid, zpl_uint32 vrfid)
 {
-	printk("===========b53125_mac_address_dump====vlan_enabled:%d==========\r\n", dev->vlan_enabled);
+	sdk_debug("===========b53125_mac_address_dump====vlan_enabled:%d==========\r\n", dev->vlan_enabled);
 	b53125_fdb_dump(dev, b53125_mac_dump_cb, NULL);
 	return 0;
 }
@@ -677,44 +677,12 @@ int b53_fdb_dump_all(struct b53_device *priv, int port,
 }
 #endif
 #endif
-#if defined( _SDK_CLI_DEBUG_EN)	
-static int b53125_macdump(sdk_driver_t *dev)
-{
-	int ret, i = 0;
-	struct b53mac_data *mac_data;
-	b53_device_t *sdkdev = dev->sdk_device;
-	mac_data = XMALLOC(MTYPE_SDK_DATA, sizeof(struct b53mac_data));
-	if(mac_data)
-	{
-		memset(mac_data, 0, sizeof(struct b53mac_data));
-		ret = ioctl(sdkdev->mido.fd, B53_IO_MACDUMP, mac_data);
-		if(mac_data->cnt)
-		{
-			for(i = 0; i < mac_data->cnt; i++)
-			{
-				#if defined( _SDK_CLI_DEBUG_EN)	
-				fprintf(stdout, "====== read ===== %02x:%02x:%02x:%02x:%02x:%02x port %d vid %d static %d age %d valid %d\r\n", 
-					mac_data->macdata[i].mac[0], mac_data->macdata[i].mac[1], mac_data->macdata[i].mac[2], 
-					mac_data->macdata[i].mac[3], mac_data->macdata[i].mac[4], mac_data->macdata[i].mac[5],
-					mac_data->macdata[i].port, mac_data->macdata[i].vlan, mac_data->macdata[i].is_static, 
-					mac_data->macdata[i].is_age, mac_data->macdata[i].is_valid);
-					#endif
-			}
-		}
-	}
-	if(ret == 0)
-	{
-		return 0;
-	}
-	return ret;
-}
 
-#endif
+
 static int b53125_mac_address_read(sdk_driver_t *dev, zpl_phyport_t phyport, 
 	zpl_vlan_t vlanid, zpl_uint32 vrfid, hal_mac_param_t *mactbl)
 {
-	//fprintf(stdout, "==========================================\r\n");
-	int i = 0;
+	/*int i = 0;
 	for(i = 0; i < dev->mac_cache_max-1; i++)
 	{
 		if(dev->mac_cache_entry[i].use == 0)
@@ -723,21 +691,22 @@ static int b53125_mac_address_read(sdk_driver_t *dev, zpl_phyport_t phyport,
 		}
 	}	
 	mactbl->macnum = dev->mac_cache_num;
-	mactbl->mactbl = dev->mac_cache_entry;	
+	mactbl->mactbl = dev->mac_cache_entry;*/	
 	return OK;
 }
 
 #if defined( _SDK_CLI_DEBUG_EN)	
-DEFUN (b53125_mactbl_test,
-		b53125_mactbl_test_cmd,
-		"sdk-mac dump <0-8>",
+
+DEFUN (sdk_mac_dump_show,
+		sdk_mac_dump_show_cmd,
+		"mac show dump <0-8>",
 		"sdk mac\n"
+		"show\n"
 		"dump\n"
 		"port id [0-5]\n")
 {
 	int ret = 0;
-	ret = b53125_macdump(__msdkdriver);
-	//ret = b53125_mac_address_read(__msdkdriver, atoi(argv[0]), 1, 0, NULL);
+	ret = b53125_mac_address_dump(__msdkdriver, 0, 0, 0);
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 #endif
@@ -745,9 +714,8 @@ DEFUN (b53125_mactbl_test,
 int b53125_mac_init(sdk_driver_t *dev)
 {
 	#if defined( _SDK_CLI_DEBUG_EN)	
-	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &b53125_mactbl_test_cmd);
+	install_element(SDK_NODE, CMD_CONFIG_LEVEL, &sdk_mac_dump_show_cmd);
 	#endif
-	//sdk_maccb.sdk_mac_age_cb) (void *, hal_port_header_t *, hal_mac_param_t*);
 	sdk_maccb.sdk_mac_add_cb = b53125_mac_address_add;
 	sdk_maccb.sdk_mac_del_cb = b53125_mac_address_del;
 	sdk_maccb.sdk_mac_clr_cb = b53125_mac_address_clr;

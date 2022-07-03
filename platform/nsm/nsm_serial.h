@@ -58,10 +58,10 @@ extern int nsm_serial_interface_flow_control(struct interface *ifp, zpl_uint32 f
 /* 设置serial接口的驱动 */
 extern int nsm_serial_interface_devname(struct interface *ifp, zpl_char * devname);
 extern int nsm_serial_interface_kernel(struct interface *ifp, zpl_char *kname);
-
+#ifdef IF_ENCAPSULATION_ENABLE
 extern int nsm_serial_interface_enca_set_api(struct interface *ifp, if_enca_t mode);
 //extern int nsm_serial_interface_enca_get_api(struct interface *ifp, if_enca_t *mode);
-
+#endif
 
 extern int nsm_serial_ppp_encapsulation(zpl_char *input, zpl_uint32 inlen, zpl_char *output, zpl_uint32 outlen);
 extern int nsm_serial_ppp_decapsulation(zpl_char *input, zpl_uint32 inlen, zpl_char *output, zpl_uint32 outlen);

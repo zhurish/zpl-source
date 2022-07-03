@@ -10,7 +10,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 
 enum hal_dos_cmd 
 {

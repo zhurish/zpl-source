@@ -22,8 +22,9 @@ enum node_type
   VIEW_NODE,			/* View node. Default mode of vty interface. */
   AUTH_ENABLE_NODE,		/* Authentication mode for change enable. */
   ENABLE_NODE,			/* Enable node. */
-
-  
+#if defined(ZPL_SDK_MODULE)
+  SDK_NODE,
+#endif  
   CONFIG_NODE,			/* Config node. Default mode of config file. */
   DEBUG_NODE,			/* Debug node. */
   

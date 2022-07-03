@@ -4,7 +4,7 @@
 
 
 
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 static const zpl_uchar bitMask[8] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
 };
@@ -42,6 +42,24 @@ int zpl_vlan_bitmap_tst(zpl_vlan_bitmap_t bitmap,zpl_uint32  bit)
 	if(bittst == 0)
 		return 0;	
     return bittst;
+}
+
+void zpl_vlan_bitmap_or(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
+			const zpl_vlan_bitmap_t src2)
+{
+	int k = 0;
+	int nr = sizeof(src1.bitmap);
+	for (k = 0; k < nr; k++)
+		dst.bitmap[k] = src1.bitmap[k] | src2.bitmap[k];
+}
+
+void zpl_vlan_bitmap_xor(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,
+			const zpl_vlan_bitmap_t src2)
+{
+	int k = 0;
+	int nr = sizeof(src1.bitmap);
+	for (k = 0; k < nr; k++)
+		dst.bitmap[k] = src1.bitmap[k] ^ src2.bitmap[k];
 }
 
 void zpl_vlan_bitmap_and(zpl_vlan_bitmap_t dst, const zpl_vlan_bitmap_t src1,

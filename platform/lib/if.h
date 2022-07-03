@@ -71,12 +71,11 @@ extern struct interface *if_lookup_by_name_len(const char *ifname,
 extern struct interface *if_lookup_by_name_len_vrf(const char *ifname,
                                                    zpl_uint32 namelen, vrf_id_t vrf_id);
 
-extern struct interface *if_lookup_by_encavlan(zpl_ushort encavlan);
 
 extern zpl_uint32 if_count_lookup_type(if_type_t type);
-
-extern const char *if_enca_string(if_enca_t enca);
-
+#ifdef IF_ENCAPSULATION_ENABLE
+extern const char *if_encapsulation_string(if_enca_t enca);
+#endif
 extern int if_name_set(struct interface *, const char *str);
 extern int if_kname_set(struct interface *, const char *str);
 
@@ -140,8 +139,7 @@ extern ifindex_t ifkernel2ifindex(ifindex_t);
    
 extern ifindex_t ifname2ifindex(const char *ifname);
 extern ifindex_t ifname2ifindex_vrf(const char *ifname, vrf_id_t vrf_id);
-extern zpl_vlan_t  if_ifindex2vlan(ifindex_t ifindex);
-extern ifindex_t if_vlan2ifindex(zpl_vlan_t encavlan);
+
 extern zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex);
 extern ifindex_t  if_phy2ifindex(zpl_phyport_t phyid);
 extern vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex);

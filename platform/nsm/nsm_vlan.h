@@ -102,8 +102,8 @@ typedef struct nsm_vlan_s
 	trunk_vlan_t trunk_allowed[VLAN_TABLE_MAX];
 	vlan_t	    allowed_max;
 
-    zpl_bool	qinq_enable;
-	vlan_t		qinq_tpid;
+    //zpl_bool	qinq_enable;
+	//vlan_t		qinq_vid;
 }nsm_vlan_t;
 
 
@@ -112,7 +112,7 @@ extern int nsm_vlan_init(void);
 extern int nsm_vlan_exit(void);
 extern int nsm_vlan_cleanall(void);
 extern int nsm_vlan_default(void);
-extern int nsm_vlan_enable(void);
+extern int nsm_vlan_enable(zpl_bool enable);
 extern zpl_bool nsm_vlan_is_enable(void);
 
 extern int nsm_vlan_interface_create_api(struct interface *ifp);
@@ -134,6 +134,9 @@ extern int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp,
 
 extern int nsm_interface_trunk_allowed_vlan_list_api(int add, struct interface *ifp, const char *str);
 extern int nsm_interface_trunk_allowed_vlan_list_lookup_api(struct interface *ifp, vlan_t *vlanlist, zpl_uint32 num);
+
+
+extern int nsm_interface_qinq_vlan_set_api(struct interface *ifp, vlan_t);
 
 #ifdef ZPL_SHELL_MODULE
 extern void cmd_vlan_init (void);

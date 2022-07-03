@@ -414,6 +414,106 @@ ALIAS(switchport_trunk_allow_vlan,
 	  "Vlan information\n"
 	  "VLANLIST string(eg:2,4,5,7,9-100)\n");
 
+
+
+DEFUN(switchport_dot1q_tunnel_vlan,
+	  switchport_dot1q_tunnel_cmd,
+	  "switchport dot1q-tunnel vlan " CMD_VLAN_STR,
+	  "Switchport interface\n"
+	  "Dot1q-tunnel\n"
+	  "Native Config\n" CMD_VLAN_STR_HELP)
+{
+	int ret = 0;
+	if_mode_t mode = 0;
+	vlan_t vlan = 0;
+	struct interface *ifp = vty->index;
+	if(!nsm_vlan_qinq_is_enable())
+	{
+		vty_out(vty, "%%Qinq is not enable%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	VTY_GET_INTEGER("vlan ID", vlan, argv[0]);
+	if (!nsm_vlan_database_lookup_api(vlan))
+	{
+		vty_out(vty, "Error:Can not Find This vlan %d%s", vlan, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if (ifp)
+	{
+		if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+		{
+			ret = nsm_interface_qinq_vlan_set_api(ifp, vlan);
+			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+		}
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+				{
+					ret = nsm_interface_qinq_vlan_set_api(ifp, vlan);
+					if (ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
+DEFUN(no_switchport_dot1q_tunnel,
+	  no_switchport_dot1q_tunnel_cmd,
+	  "no switchport dot1q-tunnel vlan",
+	  NO_STR
+	  "Switchport interface\n"
+	  "Dot1q-tunnel port\n"
+	  "Native Config\n")
+{
+	int ret = 0;
+	if_mode_t mode = 0;
+	struct interface *ifp = vty->index;
+	if(!nsm_vlan_qinq_is_enable())
+	{
+		vty_out(vty, "%%Qinq is not enable%s",VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if (ifp)
+	{
+		if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+		{
+			ret = nsm_interface_qinq_vlan_set_api(ifp, 1);
+			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
+		}
+	}
+	else if (vty->index_range)
+	{
+		zpl_uint32 i = 0;
+		for (i = 0; i < vty->index_range; i++)
+		{
+			if (vty->vty_range_index[i])
+			{
+				if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+				{
+					ret = nsm_interface_qinq_vlan_set_api(ifp, 1);
+					if (ret != OK)
+						return CMD_WARNING;
+				}
+				else
+					return CMD_WARNING;
+			}
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_WARNING;
+}
+
 static void cmd_vlan_interface_attr_init(int node)
 {
 	install_element(node, CMD_CONFIG_LEVEL, &switchport_access_vlan_cmd);
@@ -436,7 +536,12 @@ static void cmd_vlan_interface_attr_init(int node)
 	install_element(node, CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_all_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &switchport_trunk_allow_vlan_list_cmd);
+
+	install_element(node, CMD_CONFIG_LEVEL, &switchport_dot1q_tunnel_cmd);
+	install_element(node, CMD_CONFIG_LEVEL, &no_switchport_dot1q_tunnel_cmd);
 }
+
+
 
 void cmd_vlan_init(void)
 {

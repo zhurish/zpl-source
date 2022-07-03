@@ -31,7 +31,9 @@ DEFUN_NODE(view_node, VIEW_NODE, "%s> ", 1);
 DEFUN_NODE(auth_enable_node, AUTH_ENABLE_NODE, "Password: ", 0);
 DEFUN_NODE(enable_node, ENABLE_NODE, "%s# ", 1);
 DEFUN_NODE(config_node, CONFIG_NODE, "%s(config)# ", 1);
-
+#if defined(ZPL_SDK_MODULE)
+DEFUN_NODE(config_sdk_node, SDK_NODE, "%s(config-sdk)# ", 1);
+#endif
 /*
 static struct cmd_node host_node =
 {
@@ -158,6 +160,9 @@ DEFUN (config_exit,
 	case ENABLE_NODE:
 		vty->node = VIEW_NODE;
 		break;
+#if defined(ZPL_SDK_MODULE)
+	case SDK_NODE:
+#endif
 	case CONFIG_NODE:
 		vty->node = ENABLE_NODE;
 		vty_config_unlock(vty);
@@ -999,7 +1004,17 @@ config_write_hostsrv (struct vty *vty)
 	return 1;
 }
 
-
+#if defined(ZPL_SDK_MODULE)
+DEFUN (into_sdk_node,
+		into_sdk_node_cmd,
+		"sdk view",
+		"SDK View Node\n"
+		"View Node\n")
+{
+	vty->node = SDK_NODE;
+	return CMD_SUCCESS;
+}
+#endif
 
 static int _cmd_host_base_init(zpl_bool terminal)
 {
@@ -1012,7 +1027,14 @@ static int _cmd_host_base_init(zpl_bool terminal)
 	install_node(&auth_enable_node, NULL);
 	install_node(&config_node, NULL);
 
-
+#if defined(ZPL_SDK_MODULE)
+	install_node(&config_sdk_node, NULL);
+	install_default(SDK_NODE);
+	install_default_basic(SDK_NODE);
+	install_element(VIEW_NODE, CMD_VIEW_LEVEL, &into_sdk_node_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &into_sdk_node_cmd);
+	install_element(CONFIG_NODE, CMD_VIEW_LEVEL, &into_sdk_node_cmd);
+#endif
 
 	install_default(VIEW_NODE);
 	install_default(CONFIG_NODE);

@@ -16,9 +16,10 @@ sdk_port_t sdk_port;
 static int bsp_port_up(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_link_cb)
-		ret = sdk_port.sdk_port_link_cb(driver, port->phyport, param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_link_cb)
+		ret = sdk_port.sdk_port_link_cb(bspdev->sdk_driver, port->phyport, param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -29,8 +30,8 @@ static int bsp_port_up(void *driver, hal_port_header_t *port, hal_port_param_t *
 {
 	int ret = NO_SDK;
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_set_address_cb)
-		ret = sdk_port.sdk_port_set_address_cb(driver, port->phyport, cp, secondry);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_set_address_cb)
+		ret = sdk_port.sdk_port_set_address_cb(bspdev->sdk_driver, port->phyport, cp, secondry);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -39,8 +40,8 @@ static int bsp_port_address_unset(ifindex_t port->phyport, struct prefix *cp, st
 {
 	int ret = NO_SDK;
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_unset_address_cb)
-		ret = sdk_port.sdk_port_unset_address_cb(driver, port->phyport, cp, secondry);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_unset_address_cb)
+		ret = sdk_port.sdk_port_unset_address_cb(bspdev->sdk_driver, port->phyport, cp, secondry);
 	BSP_LEAVE_FUNC();
 	return ret;
 }*/
@@ -51,8 +52,8 @@ static int bsp_port_address_unset(ifindex_t port->phyport, struct prefix *cp, st
 {
 	int ret = NO_SDK;
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_metric_cb)
-		ret = sdk_port.sdk_port_metric_cb(driver, port->phyport,  value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_metric_cb)
+		ret = sdk_port.sdk_port_metric_cb(bspdev->sdk_driver, port->phyport,  value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }*/
@@ -60,9 +61,10 @@ static int bsp_port_address_unset(ifindex_t port->phyport, struct prefix *cp, st
 static int bsp_port_vrf_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_vrf_cb)
-		ret = sdk_port.sdk_port_vrf_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_vrf_cb)
+		ret = sdk_port.sdk_port_vrf_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -70,9 +72,10 @@ static int bsp_port_vrf_set(void *driver, hal_port_header_t *port, hal_port_para
 /*static int bsp_port_multicast_set(ifindex_t port->phyport, static int value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_multicast_cb)
-		ret = sdk_port.sdk_port_multicast_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_multicast_cb)
+		ret = sdk_port.sdk_port_multicast_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -80,9 +83,10 @@ static int bsp_port_vrf_set(void *driver, hal_port_header_t *port, hal_port_para
 static int bsp_port_bandwidth_set(ifindex_t port->phyport, static int value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_bandwidth_cb)
-		ret = sdk_port.sdk_port_bandwidth_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_bandwidth_cb)
+		ret = sdk_port.sdk_port_bandwidth_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }*/
@@ -90,9 +94,10 @@ static int bsp_port_bandwidth_set(ifindex_t port->phyport, static int value)
 static int bsp_port_speed_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_speed_cb)
-		ret = sdk_port.sdk_port_speed_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_speed_cb)
+		ret = sdk_port.sdk_port_speed_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -100,9 +105,10 @@ static int bsp_port_speed_set(void *driver, hal_port_header_t *port, hal_port_pa
 static int bsp_port_duplex_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_duplex_cb)
-		ret = sdk_port.sdk_port_duplex_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_duplex_cb)
+		ret = sdk_port.sdk_port_duplex_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -113,9 +119,10 @@ static int bsp_port_duplex_set(void *driver, hal_port_header_t *port, hal_port_p
 static int bsp_port_linkdetect_set(ifindex_t port->phyport, static int value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_linkdetect_cb)
-		ret = sdk_port.sdk_port_linkdetect_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_linkdetect_cb)
+		ret = sdk_port.sdk_port_linkdetect_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -125,9 +132,10 @@ static int bsp_port_linkdetect_set(ifindex_t port->phyport, static int value)
 static int bsp_port_loop_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_loop_cb)
-		ret = sdk_port.sdk_port_loop_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_loop_cb)
+		ret = sdk_port.sdk_port_loop_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -137,9 +145,10 @@ static int bsp_port_loop_set(void *driver, hal_port_header_t *port, hal_port_par
 static int bsp_port_jumbo_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_jumbo_cb)
-		ret = sdk_port.sdk_port_jumbo_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_jumbo_cb)
+		ret = sdk_port.sdk_port_jumbo_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -147,9 +156,10 @@ static int bsp_port_jumbo_set(void *driver, hal_port_header_t *port, hal_port_pa
 static int bsp_port_enable_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_enable_cb)
-		ret = sdk_port.sdk_port_enable_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_enable_cb)
+		ret = sdk_port.sdk_port_enable_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -158,18 +168,20 @@ static int bsp_port_enable_set(void *driver, hal_port_header_t *port, hal_port_p
 static int bsp_port_flow_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_flow_cb)
-		ret = sdk_port.sdk_port_flow_cb(driver, port->phyport,  (param->value>>16), param->value&0xffff);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_flow_cb)
+		ret = sdk_port.sdk_port_flow_cb(bspdev->sdk_driver, port->phyport,  (param->value>>16), param->value&0xffff);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
 static int bsp_port_pause_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_pause_cb)
-		ret = sdk_port.sdk_port_pause_cb(driver, port->phyport,  (param->value>>16), param->value&0xffff);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_pause_cb)
+		ret = sdk_port.sdk_port_pause_cb(bspdev->sdk_driver, port->phyport,  (param->value>>16), param->value&0xffff);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -177,9 +189,10 @@ static int bsp_port_pause_set(void *driver, hal_port_header_t *port, hal_port_pa
 static int bsp_port_learning_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_learning_enable_cb)
-		ret = sdk_port.sdk_port_learning_enable_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_learning_enable_cb)
+		ret = sdk_port.sdk_port_learning_enable_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -187,9 +200,10 @@ static int bsp_port_learning_set(void *driver, hal_port_header_t *port, hal_port
 static int bsp_port_software_learning_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_swlearning_enable_cb)
-		ret = sdk_port.sdk_port_swlearning_enable_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_swlearning_enable_cb)
+		ret = sdk_port.sdk_port_swlearning_enable_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -197,9 +211,10 @@ static int bsp_port_software_learning_set(void *driver, hal_port_header_t *port,
 static int bsp_port_protected_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_protected_enable_cb)
-		ret = sdk_port.sdk_port_protected_enable_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_protected_enable_cb)
+		ret = sdk_port.sdk_port_protected_enable_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -208,9 +223,10 @@ static int bsp_port_protected_set(void *driver, hal_port_header_t *port, hal_por
 static int bsp_port_state_get(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_state_get_cb)
-		ret = sdk_port.sdk_port_state_get_cb(driver, port->phyport);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_state_get_cb)
+		ret = sdk_port.sdk_port_state_get_cb(bspdev->sdk_driver, port->phyport);
 	if(param)
 		param->value	= ret;
 	BSP_LEAVE_FUNC();
@@ -220,9 +236,10 @@ static int bsp_port_state_get(void *driver, hal_port_header_t *port, hal_port_pa
 static int bsp_port_speed_get(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_speed_get_cb)
-		ret = sdk_port.sdk_port_speed_get_cb(driver, port->phyport);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_speed_get_cb)
+		ret = sdk_port.sdk_port_speed_get_cb(bspdev->sdk_driver, port->phyport);
 	if(param)
 		param->value	= ret;
 	BSP_LEAVE_FUNC();
@@ -232,9 +249,10 @@ static int bsp_port_speed_get(void *driver, hal_port_header_t *port, hal_port_pa
 static int bsp_port_duplex_get(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_duplex_get_cb)
-		ret = sdk_port.sdk_port_duplex_get_cb(driver, port->phyport);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_duplex_get_cb)
+		ret = sdk_port.sdk_port_duplex_get_cb(bspdev->sdk_driver, port->phyport);
 	if(param)
 		param->value	= ret;
 	BSP_LEAVE_FUNC();
@@ -245,9 +263,34 @@ static int bsp_port_duplex_get(void *driver, hal_port_header_t *port, hal_port_p
 static int bsp_port_mode_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_mode_cb)
-		ret = sdk_port.sdk_port_mode_cb(driver, port->phyport,  param->value);
+
+	if(bspdev->sdk_driver && sdk_port.sdk_port_mode_cb)
+		ret = sdk_port.sdk_port_mode_cb(bspdev->sdk_driver, port->phyport,  param->value);
+	if(ret == OK)
+	{
+		if(param->value == IF_MODE_ACCESS_L2)
+		{
+			bspdev->phyports[port->phyport].mode = param->value;
+		}
+		else if(param->value == IF_MODE_TRUNK_L2)
+		{
+			bspdev->phyports[port->phyport].mode = param->value;
+		}
+		else if(param->value == IF_MODE_L3)
+		{
+			bspdev->phyports[port->phyport].mode = param->value;
+		}
+		else if(param->value == IF_MODE_DOT1Q_TUNNEL)
+		{
+			bspdev->phyports[port->phyport].mode = param->value;
+		}
+		else if(param->value == IF_MODE_BRIGDE)
+		{
+			bspdev->phyports[port->phyport].mode = param->value;
+		}
+	}	
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -255,9 +298,10 @@ static int bsp_port_mode_set(void *driver, hal_port_header_t *port, hal_port_par
 static int bsp_port_mtu_set(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_speed_cb)
-		ret = sdk_port.sdk_port_speed_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_speed_cb)
+		ret = sdk_port.sdk_port_speed_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -266,9 +310,10 @@ static int bsp_port_mtu_set(void *driver, hal_port_header_t *port, hal_port_para
 static int bsp_port_storm_rate_limit(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_port.sdk_port_storm_rate_cb)
-		ret = sdk_port.sdk_port_storm_rate_cb(driver, port->phyport, param->value, param->value1, param->value2);
+	if(bspdev->sdk_driver && sdk_port.sdk_port_storm_rate_cb)
+		ret = sdk_port.sdk_port_storm_rate_cb(bspdev->sdk_driver, port->phyport, param->value, param->value1, param->value2);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -276,9 +321,10 @@ static int bsp_port_storm_rate_limit(void *driver, hal_port_header_t *port, hal_
 static int bsp_port_stats_get(void *driver, hal_port_header_t *port, struct if_stats *ifstats)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if (driver && sdk_port.sdk_port_stat_cb)
-		ret = sdk_port.sdk_port_stat_cb(driver, port->phyport, ifstats);
+	if (bspdev->sdk_driver && sdk_port.sdk_port_stat_cb)
+		ret = sdk_port.sdk_port_stat_cb(bspdev->sdk_driver, port->phyport, ifstats);
 	if (ret == OK)
 	{
 		ifstats->rx_packets = htonl(ifstats->rx_packets);	  /* total packets received       */

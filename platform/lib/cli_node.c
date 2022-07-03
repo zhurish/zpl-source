@@ -46,6 +46,16 @@ enum node_type cmd_end_node(struct vty *vty)
 		/*case RESTRICTED_NODE:*/
 		/* Nothing to do. */
 		break;
+#if defined(ZPL_SDK_MODULE)
+	case SDK_NODE:
+		vty->index = NULL;
+		vty->index_sub = NULL;
+		vty->index_value = 0;
+		vty->index_range = 0;
+		memset(vty->vty_range_index, 0, sizeof(vty->vty_range_index));
+		return ENABLE_NODE;
+		break;
+#endif  
 	default:
 		if (vty->node >= CONFIG_NODE && vty->node < CMD_NODE_MAX)
 		{
@@ -183,6 +193,11 @@ enum node_type cmd_exit_node(struct vty *vty)
 	case LINK_PARAMS_NODE:
 		ret = INTERFACE_NODE;
 		break;
+#if defined(ZPL_SDK_MODULE)
+	case SDK_NODE:
+		ret = ENABLE_NODE;
+		break;
+#endif
 	default:
 		break;
 	}

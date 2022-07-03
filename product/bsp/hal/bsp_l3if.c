@@ -17,9 +17,10 @@ sdk_l3if_t sdk_l3if;
 static int bsp_l3if_create(void *driver, hal_port_header_t *port, hal_l3if_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_addif_cb)
-		ret = sdk_l3if.sdk_l3if_addif_cb(driver, param->ifname, port->phyport);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_addif_cb)
+		ret = sdk_l3if.sdk_l3if_addif_cb(bspdev->sdk_driver, param->ifname, port->phyport);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -27,9 +28,10 @@ static int bsp_l3if_create(void *driver, hal_port_header_t *port, hal_l3if_param
 static int bsp_l3if_delete(void *driver, hal_port_header_t *port, hal_l3if_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_delif_cb)
-		ret = sdk_l3if.sdk_l3if_delif_cb(driver, port->phyport);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_delif_cb)
+		ret = sdk_l3if.sdk_l3if_delif_cb(bspdev->sdk_driver, port->phyport);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -37,9 +39,10 @@ static int bsp_l3if_delete(void *driver, hal_port_header_t *port, hal_l3if_param
 static int bsp_l3if_vrf(void *driver, hal_port_header_t *port, hal_l3if_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_vrf_cb)
-		ret = sdk_l3if.sdk_l3if_vrf_cb(driver, port->phyport,  param->vrfid);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_vrf_cb)
+		ret = sdk_l3if.sdk_l3if_vrf_cb(bspdev->sdk_driver, port->phyport,  param->vrfid);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -47,9 +50,10 @@ static int bsp_l3if_vrf(void *driver, hal_port_header_t *port, hal_l3if_param_t 
 static int bsp_l3if_mac(void *driver, hal_port_header_t *port, hal_l3if_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_mac_cb)
-		ret = sdk_l3if.sdk_l3if_mac_cb(driver, port->phyport, param->mac);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_mac_cb)
+		ret = sdk_l3if.sdk_l3if_mac_cb(bspdev->sdk_driver, port->phyport, param->mac);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -57,9 +61,10 @@ static int bsp_l3if_mac(void *driver, hal_port_header_t *port, hal_l3if_param_t 
 static int bsp_l3if_add_addr(void *driver, hal_port_header_t *port, hal_l3if_addr_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_add_addr_cb)
-		ret = sdk_l3if.sdk_l3if_add_addr_cb(driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_add_addr_cb)
+		ret = sdk_l3if.sdk_l3if_add_addr_cb(bspdev->sdk_driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -67,9 +72,10 @@ static int bsp_l3if_add_addr(void *driver, hal_port_header_t *port, hal_l3if_add
 static int bsp_l3if_del_addr(void *driver, hal_port_header_t *port, hal_l3if_addr_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_del_addr_cb)
-		ret = sdk_l3if.sdk_l3if_del_addr_cb(driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_del_addr_cb)
+		ret = sdk_l3if.sdk_l3if_del_addr_cb(bspdev->sdk_driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -77,9 +83,10 @@ static int bsp_l3if_del_addr(void *driver, hal_port_header_t *port, hal_l3if_add
 static int bsp_l3if_add_dstaddr(void *driver, hal_port_header_t *port, hal_l3if_addr_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_add_dstaddr_cb)
-		ret = sdk_l3if.sdk_l3if_add_dstaddr_cb(driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_add_dstaddr_cb)
+		ret = sdk_l3if.sdk_l3if_add_dstaddr_cb(bspdev->sdk_driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -87,9 +94,10 @@ static int bsp_l3if_add_dstaddr(void *driver, hal_port_header_t *port, hal_l3if_
 static int bsp_l3if_del_dstaddr(void *driver, hal_port_header_t *port, hal_l3if_addr_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_l3if.sdk_l3if_del_dstaddr_cb)
-		ret = sdk_l3if.sdk_l3if_del_dstaddr_cb(driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
+	if(bspdev->sdk_driver && sdk_l3if.sdk_l3if_del_dstaddr_cb)
+		ret = sdk_l3if.sdk_l3if_del_dstaddr_cb(bspdev->sdk_driver, port->phyport,  param->family, param->prefixlen, param->address, param->sec);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

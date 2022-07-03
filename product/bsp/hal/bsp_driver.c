@@ -19,15 +19,16 @@
 
 #include "bsp_driver.h"
 
-
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)
+#ifndef ZPL_SDK_KERNEL
 #include "bsp_include.h"
+#endif
+#ifdef ZPL_SDK_USER
 #include "sdk_driver.h"
 #endif
-#ifndef ZPL_SDK_MODULE
-sdk_driver_t *__msdkdriver = NULL;
-#elif defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
-sdk_driver_t *__msdkdriver = NULL;
+
+
+
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
 static int sdk_driver_set_request(sdk_driver_t *sdkdriver, char *data, int len, void *p);
 #endif
 
@@ -45,7 +46,58 @@ struct module_list module_list_sdk =
 	.taskid=0,
 };
 
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)
+int bsp_driver_mac_cache_add(bsp_driver_t *sdkdriver, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild)
+{
+	int i = 0;
+	for(i = 0; i < sdkdriver->mac_cache_max; i++)
+	{
+		if(sdkdriver->mac_cache_entry[i].use == 1 && (memcmp(sdkdriver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
+		{
+			sdkdriver->mac_cache_entry[i].port = port;
+			sdkdriver->mac_cache_entry[i].vid = vid;
+			sdkdriver->mac_cache_entry[i].is_valid = vaild;
+			sdkdriver->mac_cache_entry[i].is_age = isage;
+			sdkdriver->mac_cache_entry[i].is_static = isstatic;
+			sdkdriver->mac_cache_entry[i].use = 1;
+			return OK;
+		}
+	}
+	for(i = 0; i < sdkdriver->mac_cache_max; i++)
+	{
+		if(sdkdriver->mac_cache_entry[i].use == 0)
+		{
+			sdkdriver->mac_cache_entry[i].port = port;
+			sdkdriver->mac_cache_entry[i].vid = vid;
+			sdkdriver->mac_cache_entry[i].is_valid = vaild;
+			sdkdriver->mac_cache_entry[i].is_age = isage;
+			sdkdriver->mac_cache_entry[i].is_static = isstatic;
+			sdkdriver->mac_cache_entry[i].use = 1;
+			memcpy(sdkdriver->mac_cache_entry[i].mac, mac, ETH_ALEN);
+			sdkdriver->mac_cache_num++;
+			return OK;
+		}
+	}
+	return OK;
+}
+
+
+int bsp_driver_mac_cache_update(bsp_driver_t *sdkdriver, zpl_uint8 *mac, zpl_uint8 isage)
+{
+	int i = 0;
+	for(i = 0; i < sdkdriver->mac_cache_max; i++)
+	{
+		if(sdkdriver->mac_cache_entry[i].use == 1 && (memcmp(sdkdriver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
+		{
+			sdkdriver->mac_cache_entry[i].use = isage?1:0;
+			if(isage == 0)
+				sdkdriver->mac_cache_num--;
+			return OK;
+		}
+	}
+	return OK;
+}
+
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
 static const hal_ipccmd_callback_t const moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_MGT, NULL),
@@ -124,7 +176,7 @@ int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *drive
 	int module = IPCCMD_MODULE_GET(cmd);
 	hal_ipccmd_callback_t * callback = NULL;
 	BSP_ENTER_FUNC();
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)	
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
 	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX)
 	{
 		int i = 0;
@@ -242,7 +294,17 @@ int bsp_module_init(void)
 {
 	memset(&bsp_driver, 0, sizeof(bsp_driver));
 	bsp_driver_init(&bsp_driver);
-	bsp_module_func(&bsp_driver, sdk_driver_init, sdk_driver_start, sdk_driver_stop, sdk_driver_exit);	
+	bsp_module_func(&bsp_driver, sdk_driver_init, sdk_driver_start, sdk_driver_stop, sdk_driver_exit);
+
+	memset(bsp_driver.phyports, 0, sizeof(bsp_driver.phyports));
+	bsp_driver.phyports[0].phyport = 0;
+	bsp_driver.phyports[1].phyport = 1;
+	bsp_driver.phyports[2].phyport = 2;
+	bsp_driver.phyports[3].phyport = 3;
+	bsp_driver.phyports[4].phyport = 4;
+	bsp_driver.phyports[5].phyport = -1;
+	bsp_driver.phyports[6].phyport = -1;
+	bsp_driver.phyports[7].phyport = 8;// cpu port
 
 	if(bsp_driver.bsp_sdk_init)
 	{
@@ -250,7 +312,7 @@ int bsp_module_init(void)
 	}
 	if(bsp_driver.sdk_driver)
 	{
-		hal_client_callback(bsp_driver.hal_client, bsp_driver_msg_handle, bsp_driver.sdk_driver);
+		hal_client_callback(bsp_driver.hal_client, bsp_driver_msg_handle, &bsp_driver);
 	}
 	return OK;
 }
@@ -265,6 +327,12 @@ int bsp_module_start(void)
 {
 	struct hal_ipcmsg_hwport porttbl[5];
 	memset(porttbl, 0, sizeof(porttbl));
+
+	if(bsp_driver.bsp_sdk_start)
+	{
+		(bsp_driver.bsp_sdk_start)(&bsp_driver, bsp_driver.sdk_driver);
+	}
+	bsp_driver.cpu_port = ((sdk_driver_t*)bsp_driver.sdk_driver)->cpu_port;
 
 	porttbl[0].type = IF_ETHERNET;//lan1
 	porttbl[0].port = 1;
@@ -319,10 +387,7 @@ int bsp_module_start(void)
 	os_sleep(1);
 	zlog_debug(MODULE_BSP, "SDK Init, waitting...");
 
-	if(bsp_driver.bsp_sdk_start)
-	{
-		(bsp_driver.bsp_sdk_start)(&bsp_driver, bsp_driver.sdk_driver);
-	}
+
 	zlog_debug(MODULE_BSP, "SDK Register Port Table Info.");
   	hal_client_bsp_hwport_register(bsp_driver.hal_client, 5, porttbl);
 
@@ -347,7 +412,7 @@ int bsp_module_task_exit(void)
 	return OK;
 }
 
-#ifndef ZPL_SDK_MODULE
+#ifdef ZPL_SDK_NONE
 static sdk_driver_t * sdk_driver_malloc(void)
 {
 	return (sdk_driver_t *)malloc(sizeof(sdk_driver_t));
@@ -391,7 +456,6 @@ int sdk_driver_exit(struct bsp_driver *bsp, zpl_void *p)
 	return OK;
 }
 #elif defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
-
 static int hal_bsp_klog_set(zpl_uint32 val)
 {
 	zpl_uint32 command = 0;

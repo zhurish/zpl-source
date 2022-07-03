@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-06-15 22:32:28 CST"
+#define AUTOCONF_TIMESTAMP "2022-07-02 21:52:19 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -240,8 +240,9 @@
 #undef ZPL_KERNEL_FORWARDING
 #define ZPL_IPCOM_ROOT_PATH ""
 #define ZPL_SDK_MODULE 1
-#undef ZPL_SDK_USER
-#define ZPL_SDK_KERNEL 1
+#undef ZPL_SDK_NONE
+#define ZPL_SDK_USER 1
+#undef ZPL_SDK_KERNEL
 #define ZPL_SDK_BCM53125 1
 
 /*

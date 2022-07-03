@@ -129,7 +129,7 @@ int hal_port_wan_set(ifindex_t ifindex, zpl_bool enable)
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
-#ifndef ZPL_SDK_USER
+#ifdef ZPL_SDK_KERNEL
 int hal_bsp_client_set(zpl_bool enable, zpl_uint32 val)
 {
 	zpl_uint32 command = 0;

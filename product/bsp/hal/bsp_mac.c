@@ -16,9 +16,10 @@ sdk_mac_t sdk_maccb;
 static int bsp_mac_age(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_maccb.sdk_mac_age_cb)
-		ret = sdk_maccb.sdk_mac_age_cb(driver, macparam->value);
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_age_cb)
+		ret = sdk_maccb.sdk_mac_age_cb(bspdev->sdk_driver, macparam->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -26,9 +27,10 @@ static int bsp_mac_age(void *driver, hal_port_header_t *bspport, hal_mac_param_t
 static int bsp_mac_add(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_maccb.sdk_mac_add_cb)
-		ret = sdk_maccb.sdk_mac_add_cb(driver, bspport->phyport, macparam->vlan, 
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_add_cb)
+		ret = sdk_maccb.sdk_mac_add_cb(bspdev->sdk_driver, bspport->phyport, macparam->vlan, 
 			bspport->vrfid, macparam->mac, macparam->value);
 	BSP_LEAVE_FUNC();
 	return ret;
@@ -37,9 +39,10 @@ static int bsp_mac_add(void *driver, hal_port_header_t *bspport, hal_mac_param_t
 static int bsp_mac_del(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_maccb.sdk_mac_del_cb)
-		ret = sdk_maccb.sdk_mac_del_cb(driver, bspport->phyport, macparam->vlan, 
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_del_cb)
+		ret = sdk_maccb.sdk_mac_del_cb(bspdev->sdk_driver, bspport->phyport, macparam->vlan, 
 			bspport->vrfid, macparam->mac, macparam->value);
 	BSP_LEAVE_FUNC();
 	return ret;
@@ -48,9 +51,10 @@ static int bsp_mac_del(void *driver, hal_port_header_t *bspport, hal_mac_param_t
 static int bsp_mac_clr(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_maccb.sdk_mac_clr_cb)
-		ret = sdk_maccb.sdk_mac_clr_cb(driver, bspport->phyport, macparam->vlan, 
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_clr_cb)
+		ret = sdk_maccb.sdk_mac_clr_cb(bspdev->sdk_driver, bspport->phyport, macparam->vlan, 
 			bspport->vrfid);
 	BSP_LEAVE_FUNC();
 	return ret;
@@ -59,9 +63,10 @@ static int bsp_mac_clr(void *driver, hal_port_header_t *bspport, hal_mac_param_t
 static int bsp_mac_read(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_maccb.sdk_mac_read_cb)
-		ret = sdk_maccb.sdk_mac_read_cb(driver, bspport->phyport, macparam->vlan, 
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_read_cb)
+		ret = sdk_maccb.sdk_mac_read_cb(bspdev->sdk_driver, bspport->phyport, macparam->vlan, 
 			bspport->vrfid, macparam);	
 	BSP_LEAVE_FUNC();
 	return ret;
@@ -70,9 +75,10 @@ static int bsp_mac_read(void *driver, hal_port_header_t *bspport, hal_mac_param_
 static int bsp_mac_dump(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_maccb.sdk_mac_dump_cb)
-		ret = sdk_maccb.sdk_mac_dump_cb(driver, bspport->phyport, macparam->vlan, 
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_dump_cb)
+		ret = sdk_maccb.sdk_mac_dump_cb(bspdev->sdk_driver, bspport->phyport, macparam->vlan, 
 			bspport->vrfid);	
 	BSP_LEAVE_FUNC();
 	return ret;

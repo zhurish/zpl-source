@@ -23,17 +23,19 @@
 static int b53125_qos_ingress_ipg(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, regval);
 	if(enable)
-		port_ctrl |= B53_IPG_XLENEN_EN;
+		regval |= B53_IPG_XLENEN_EN;
 	else
-		port_ctrl &= ~B53_IPG_XLENEN_EN;	
-	port_ctrl &= ~(B53_BUCK0_BRM_SEL_EN);
-	port_ctrl &= ~(B53_BUCK1_BRM_SEL_EN);
+		regval &= ~B53_IPG_XLENEN_EN;	
+	regval &= ~(B53_BUCK0_BRM_SEL_EN);
+	regval &= ~(B53_BUCK1_BRM_SEL_EN);
 
-	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -41,20 +43,22 @@ static int b53125_qos_ingress_ipg(sdk_driver_t *dev, zpl_bool enable)
 static int b53125_qos_buck_type(sdk_driver_t *dev, int id, zpl_uint32 type)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, regval);
 	if(id == 1)
 	{
-		port_ctrl &= ~(0x3f<<B53_BUCK1_PACKET_TYPE);
-		port_ctrl |= (type<<B53_BUCK1_PACKET_TYPE);
+		regval &= ~(0x3f<<B53_BUCK1_PACKET_TYPE);
+		regval |= (type<<B53_BUCK1_PACKET_TYPE);
 	}
 	else
 	{
-		port_ctrl &= ~(0x3f<<B53_BUCK0_PACKET_TYPE);
-		port_ctrl |= (type<<B53_BUCK0_PACKET_TYPE);
+		regval &= ~(0x3f<<B53_BUCK0_PACKET_TYPE);
+		regval |= (type<<B53_BUCK0_PACKET_TYPE);
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_INGRESS_RATE_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -65,32 +69,34 @@ static int b53125_qos_buck_type(sdk_driver_t *dev, int id, zpl_uint32 type)
 static int b53125_qos_ingress_rate(sdk_driver_t *dev, zpl_phyport_t port, zpl_uint32 index, int bucket, int cnt)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	if(index == 0)
 	{
-		port_ctrl &= ~(B53_BUCKET_SIZE_MASK<<B53_BUCKET0_SIZE_S |
+		regval &= ~(B53_BUCKET_SIZE_MASK<<B53_BUCKET0_SIZE_S |
 				B53_BUCKET_SIZE_MASK<<B53_BUCKET1_SIZE_S |
 				B53_BUCKET_RATE_MASK<<B53_BUCKET1_RATE_CNT |
 				B53_BUCKET_RATE_MASK);
 
-		port_ctrl |= B53_BUCKET0_EN;
-		port_ctrl |= (bucket & B53_BUCKET_SIZE_MASK)<<B53_BUCKET0_SIZE_S;
-		port_ctrl |= (cnt & B53_BUCKET_RATE_MASK);
+		regval |= B53_BUCKET0_EN;
+		regval |= (bucket & B53_BUCKET_SIZE_MASK)<<B53_BUCKET0_SIZE_S;
+		regval |= (cnt & B53_BUCKET_RATE_MASK);
 	}
 	else if(index == 1)
 	{
-		port_ctrl &= ~(B53_BUCKET_SIZE_MASK<<B53_BUCKET0_SIZE_S |
+		regval &= ~(B53_BUCKET_SIZE_MASK<<B53_BUCKET0_SIZE_S |
 				B53_BUCKET_SIZE_MASK<<B53_BUCKET1_SIZE_S |
 				B53_BUCKET_RATE_MASK<<B53_BUCKET1_RATE_CNT |
 				B53_BUCKET_RATE_MASK);
 
-		port_ctrl |= B53_BUCKET1_EN;
-		port_ctrl |= (bucket & B53_BUCKET_SIZE_MASK)<<B53_BUCKET1_SIZE_S;
-		port_ctrl |= (cnt & B53_BUCKET_RATE_MASK)<<B53_BUCKET1_RATE_CNT;
+		regval |= B53_BUCKET1_EN;
+		regval |= (bucket & B53_BUCKET_SIZE_MASK)<<B53_BUCKET1_SIZE_S;
+		regval |= (cnt & B53_BUCKET_RATE_MASK)<<B53_BUCKET1_RATE_CNT;
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -157,10 +163,11 @@ static int cpu_rate_tbl(int rate)//pps
 int b53125_qos_cpu_rate(sdk_driver_t *dev, int rate)
 {
 	int ret = 0;
-	u8 port_ctrl = 0;
-	port_ctrl = cpu_rate_tbl(rate) & B53_RATE_INDEX_MASK;
-	ret |= b53125_write8(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_IMP_PORT_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	u8 regval = 0;
+	regval = cpu_rate_tbl(rate) & B53_RATE_INDEX_MASK;
+	ret |= b53125_write8(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_IMP_PORT_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_IMP_PORT_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 /*************************************************************************/
@@ -182,57 +189,61 @@ int b53125_rate_default(sdk_driver_t *dev)
 static int b53125_broadcast_rate(sdk_driver_t *dev, zpl_phyport_t port, int pp, int cnt)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	if(cnt <= 0)
 	{
-		//port_ctrl &= ~(B53_STRM_SUPP_EN);
-		//port_ctrl &= ~(B53_RSVMC_SUPP_EN);
-		//port_ctrl &= ~(B53_MC_SUPP_EN);
-		port_ctrl &= ~(B53_BC_SUPP_EN);
-		//port_ctrl &= ~(B53_DLF_SUPP_EN);
-		port_ctrl &= ~(B53_BUCKET1_EN);
+		//regval &= ~(B53_STRM_SUPP_EN);
+		//regval &= ~(B53_RSVMC_SUPP_EN);
+		//regval &= ~(B53_MC_SUPP_EN);
+		regval &= ~(B53_BC_SUPP_EN);
+		//regval &= ~(B53_DLF_SUPP_EN);
+		regval &= ~(B53_BUCKET1_EN);
 	}
 	else
 	{
-		port_ctrl |= (B53_STRM_SUPP_EN);
-		//port_ctrl |= (B53_RSVMC_SUPP_EN);
-		//port_ctrl |= (B53_MC_SUPP_EN);
-		port_ctrl |= (B53_BC_SUPP_EN);
-		//port_ctrl |= (B53_DLF_SUPP_EN);
-		port_ctrl |= B53_BUCKET1_EN;
+		regval |= (B53_STRM_SUPP_EN);
+		//regval |= (B53_RSVMC_SUPP_EN);
+		//regval |= (B53_MC_SUPP_EN);
+		regval |= (B53_BC_SUPP_EN);
+		//regval |= (B53_DLF_SUPP_EN);
+		regval |= B53_BUCKET1_EN;
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), port_ctrl);
+	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	ret |= b53125_qos_ingress_rate(dev,  port, 1, pp, cnt);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_handle_return(ret);
 	return ret;
 }
 static int b53125_multicast_rate(sdk_driver_t *dev, zpl_phyport_t port, int pp, int cnt)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
-	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &port_ctrl);
+	u32 regval = 0;
+	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	if(cnt <= 0)
 	{
-		port_ctrl &= ~(B53_STRM_SUPP_EN);
-		port_ctrl &= ~(B53_RSVMC_SUPP_EN);
-		port_ctrl &= ~(B53_MC_SUPP_EN);
-		//port_ctrl &= ~(B53_BC_SUPP_EN);
-		port_ctrl &= ~(B53_DLF_SUPP_EN);
-		port_ctrl &= ~(B53_BUCKET1_EN);
+		regval &= ~(B53_STRM_SUPP_EN);
+		regval &= ~(B53_RSVMC_SUPP_EN);
+		regval &= ~(B53_MC_SUPP_EN);
+		//regval &= ~(B53_BC_SUPP_EN);
+		regval &= ~(B53_DLF_SUPP_EN);
+		regval &= ~(B53_BUCKET1_EN);
 	}
 	else
 	{
-		port_ctrl |= (B53_STRM_SUPP_EN);
-		port_ctrl |= (B53_RSVMC_SUPP_EN);
-		port_ctrl |= (B53_MC_SUPP_EN);
-		//port_ctrl |= (B53_BC_SUPP_EN);
-		port_ctrl |= (B53_DLF_SUPP_EN);
-		port_ctrl |= B53_BUCKET1_EN;
+		regval |= (B53_STRM_SUPP_EN);
+		regval |= (B53_RSVMC_SUPP_EN);
+		regval |= (B53_MC_SUPP_EN);
+		//regval |= (B53_BC_SUPP_EN);
+		regval |= (B53_DLF_SUPP_EN);
+		regval |= B53_BUCKET1_EN;
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), port_ctrl);
+	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	ret |= b53125_qos_ingress_rate(dev,  port, 1, pp, cnt);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_handle_return(ret);
 	return ret;	
 }
 
@@ -250,36 +261,39 @@ int b53125_strom_rate(sdk_driver_t *dev, zpl_phyport_t port, zpl_uint32 mode, zp
 int b53125_ingress_rate(sdk_driver_t *dev, zpl_phyport_t port, int cnt)
 {
 	int ret = 0;
-	u32 port_ctrl = 0;
+	u32 regval = 0;
 	int value = 1;
 	int bucket = port_rate_tbl(cnt, &value);
 	ret |= b53125_qos_buck_type(dev, 0, BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5));
 
-	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &port_ctrl);
+	ret |= b53125_read32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret,B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	if(cnt <= 0)
 	{
-		port_ctrl &= ~(B53_BUCKET0_EN);
+		regval &= ~(B53_BUCKET0_EN);
 	}
 	else
 	{
-		port_ctrl |= B53_BUCKET0_EN;
+		regval |= B53_BUCKET0_EN;
 	}
-	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), port_ctrl);
+	ret |= b53125_write32(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_PORT_RECEIVE_RATE_CTL(port), regval);
 	ret |= b53125_qos_ingress_rate(dev,  port, 0, bucket, value);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_handle_return(ret);
 	return ret;		
 }
 /*************************************************************************/
 int b53125_egress_rate(sdk_driver_t *dev, zpl_phyport_t port, int rate)//64kB
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
+	u16 regval = 0;
 	int value = 1;
 	int bucket = port_rate_tbl(rate, &value);
-	port_ctrl |= B53_ERC_EN;
-	port_ctrl |= (bucket & B53_BKT_SZE_MASK)<<B53_BKT_SZE_S;
-	port_ctrl |= (value & B53_RATE_CNT_MASK);
-	ret |= b53125_write16(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_EGRESS_RATE_CTL(port), port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	regval |= B53_ERC_EN;
+	regval |= (bucket & B53_BKT_SZE_MASK)<<B53_BKT_SZE_S;
+	regval |= (value & B53_RATE_CNT_MASK);
+	ret |= b53125_write16(dev->sdk_device, B53_BROADCAST_STROM_PAGE, B53_PORT_EGRESS_RATE_CTL(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_BROADCAST_STROM_PAGE, B53_PORT_EGRESS_RATE_CTL(port), regval);
+	sdk_handle_return(ret);
 	return ret;
 }

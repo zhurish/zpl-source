@@ -61,7 +61,6 @@ struct b53_mdio_device
 {
 	int fd;
 	u8 reg_page;
-
 	struct b53_mdio_ops *ops;
 };
 #else
@@ -74,74 +73,23 @@ struct b53_mdio_device
 #endif
 #ifdef ZPL_SDK_USER
 #pragma pack(1)
-struct mido_device
+struct midodev_cmd
 {
-	int pape;
-	int regnum;
-	union 
-	{
-		u8 val[8];
-		u8 val8;
-		u16 val16;
-		u32 val32;
-		u64 val48;
-		u64 val64;
-	}val;
-};
-
-struct b53mac_cmd
-{
-	u16 port;
-	u16 vrfid;
-	u16 vlan;
-	u8 mac[6];
-	u16 pri:13;
-	u16 is_valid:1;
-	u16 is_age:1;
-	u16 is_static:1;
-};
-
-struct b53mac_data
-{
-	u16 cnt;
-	struct b53mac_cmd macdata[4096];
-};
-
-struct b53vlan_cmd
-{
-	u16 subcmd;
-	u16 port;
-	u16 vrfid;
-	u16 vlan;
-	u16 tag;
+	int addr;
+	u32 regnum;
+	u16 val;
 };
 #pragma pack(0)
 
 /*********************************************************************************/
 /*********************************************************************************/
-/*********************************************************************************/
-#define B53_IO	's'
+#define MDIODEV_IO	's'
 
-#define B53_IO_W8	_IOW(B53_IO, 0x10, struct mido_device)
-#define B53_IO_R8	_IOR(B53_IO, 0x11, struct mido_device)
-#define B53_IO_W16	_IOW(B53_IO, 0x12, struct mido_device)
-#define B53_IO_R16	_IOR(B53_IO, 0x13, struct mido_device)
-#define B53_IO_W32	_IOW(B53_IO, 0x14, struct mido_device)
-#define B53_IO_R32	_IOR(B53_IO, 0x15, struct mido_device)
-#define B53_IO_W48	_IOW(B53_IO, 0x16, struct mido_device)
-#define B53_IO_R48	_IOR(B53_IO, 0x17, struct mido_device)
-#define B53_IO_W64	_IOW(B53_IO, 0x18, struct mido_device)
-#define B53_IO_R64	_IOR(B53_IO, 0x19, struct mido_device)
-
-#define B53_IO_WMAC	_IOWR(B53_IO, 0x05, struct b53mac_cmd)
-#define B53_IO_RMAC	 _IOWR(B53_IO, 0x06, struct b53mac_cmd)
-#define B53_IO_MACDUMP _IOWR(B53_IO, 0x07, struct b53mac_cmd)
-#define B53_IO_MACCNT _IOWR(B53_IO, 0x08, struct b53mac_cmd)
-
-#define B53_IO_VLAN	_IOW(B53_IO, 0x50, struct b53vlan_cmd)
+#define B53_IO_W	_IOW(MDIODEV_IO, 0x10, struct midodev_cmd)
+#define B53_IO_R	_IOR(MDIODEV_IO, 0x11, struct midodev_cmd)
 /*********************************************************************************/
 /*********************************************************************************/
-int b53125_mdio_read(struct b53_mdio_device *dev, u8 page, u8 reg);
+int b53125_mdio_read(struct b53_mdio_device *dev, u8 addr, u32 regnum);
 #endif
 
 extern int b53125_mdio_probe(struct b53_mdio_device *mdio);

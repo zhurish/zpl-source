@@ -23,9 +23,10 @@ sdk_snooping_t sdk_snooping;
 static int bsp_global_jumbo_size(void *driver, void *bsp, zpl_uint32 *size)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_global.sdk_jumbo_size_cb)
-		ret = sdk_global.sdk_jumbo_size_cb(driver, *size);
+	if(bspdev->sdk_driver && sdk_global.sdk_jumbo_size_cb)
+		ret = sdk_global.sdk_jumbo_size_cb(bspdev->sdk_driver, *size);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -37,9 +38,10 @@ static int bsp_global_jumbo_size(void *driver, void *bsp, zpl_uint32 *size)
 static int bsp_switch_mode(void *driver, hal_global_header_t *global, zpl_bool *manage)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_global.sdk_switch_manege_cb)
-		ret = sdk_global.sdk_switch_manege_cb(driver, *manage);
+	if(bspdev->sdk_driver && sdk_global.sdk_switch_manege_cb)
+		ret = sdk_global.sdk_switch_manege_cb(bspdev->sdk_driver, *manage);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -47,9 +49,10 @@ static int bsp_switch_mode(void *driver, hal_global_header_t *global, zpl_bool *
 static int bsp_switch_forward(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_global.sdk_switch_forward_cb)
-		ret = sdk_global.sdk_switch_forward_cb(driver, *enable);
+	if(bspdev->sdk_driver && sdk_global.sdk_switch_forward_cb)
+		ret = sdk_global.sdk_switch_forward_cb(bspdev->sdk_driver, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -58,9 +61,10 @@ static int bsp_switch_forward(void *driver, hal_global_header_t *global, zpl_boo
 static int bsp_multicast_flood(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_global.sdk_multicast_flood_cb)
-		ret = sdk_global.sdk_multicast_flood_cb(driver, *enable);
+	if(bspdev->sdk_driver && sdk_global.sdk_multicast_flood_cb)
+		ret = sdk_global.sdk_multicast_flood_cb(bspdev->sdk_driver, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -68,9 +72,10 @@ static int bsp_multicast_flood(void *driver, hal_global_header_t *global, zpl_bo
 static int bsp_unicast_flood(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_global.sdk_unicast_flood_cb)
-		ret = sdk_global.sdk_unicast_flood_cb(driver, *enable);
+	if(bspdev->sdk_driver && sdk_global.sdk_unicast_flood_cb)
+		ret = sdk_global.sdk_unicast_flood_cb(bspdev->sdk_driver, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -79,9 +84,10 @@ static int bsp_unicast_flood(void *driver, hal_global_header_t *global, zpl_bool
 static int bsp_multicast_learning(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_global.sdk_multicast_learning_cb)
-		ret = sdk_global.sdk_multicast_learning_cb(driver, *enable);
+	if(bspdev->sdk_driver && sdk_global.sdk_multicast_learning_cb)
+		ret = sdk_global.sdk_multicast_learning_cb(bspdev->sdk_driver, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -90,9 +96,10 @@ static int bsp_multicast_learning(void *driver, hal_global_header_t *global, zpl
 static int bsp_global_bpdu_enable(void *driver, hal_global_header_t *global, zpl_bool *enable)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_global.sdk_bpdu_enable_cb)
-		ret = sdk_global.sdk_bpdu_enable_cb(driver, *enable);
+	if(bspdev->sdk_driver && sdk_global.sdk_bpdu_enable_cb)
+		ret = sdk_global.sdk_bpdu_enable_cb(bspdev->sdk_driver, *enable);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -101,9 +108,10 @@ static int bsp_global_bpdu_enable(void *driver, hal_global_header_t *global, zpl
 static int bsp_global_aging_time(void *driver, hal_global_header_t *global, zpl_uint32 *value)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();	
-	if(driver && sdk_global.sdk_aging_time_cb)
-		ret = sdk_global.sdk_aging_time_cb(driver, *value);
+	if(bspdev->sdk_driver && sdk_global.sdk_aging_time_cb)
+		ret = sdk_global.sdk_aging_time_cb(bspdev->sdk_driver, *value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -111,9 +119,10 @@ static int bsp_global_aging_time(void *driver, hal_global_header_t *global, zpl_
 static int bsp_global_wan_port(void *driver, hal_port_header_t *port, hal_port_param_t *param)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_global.sdk_wan_port_cb)
-		ret = sdk_global.sdk_wan_port_cb(driver, port->phyport,  param->value);
+	if(bspdev->sdk_driver && sdk_global.sdk_wan_port_cb)
+		ret = sdk_global.sdk_wan_port_cb(bspdev->sdk_driver, port->phyport,  param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

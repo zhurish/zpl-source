@@ -165,11 +165,12 @@ typedef enum if_mode_s
    IF_MODE_ACCESS_L2,
    IF_MODE_TRUNK_L2,
    IF_MODE_L3,
+   IF_MODE_DOT1Q_TUNNEL, //QINQ
    IF_MODE_BRIGDE,
 } if_mode_t;
 
 #define IF_MODE_DEFAULT IF_MODE_ACCESS_L2
-
+#ifdef IF_ENCAPSULATION_ENABLE
 typedef enum if_enca_s
 {
    IF_ENCA_NONE,
@@ -186,7 +187,7 @@ typedef enum if_enca_s
    IF_ENCA_HDLC,         //HDLC
    IF_ENCA_RAW,          //RAW
 } if_enca_t;
-
+#endif
 /* Interface structure */
 struct interface
 {
@@ -206,7 +207,6 @@ struct interface
 #define IFINDEX_INTERNAL 0
 
    zpl_uint32  uspv;
-   zpl_vlan_t encavlan; //子接口封装的VLAN ID
 
    zpl_bool have_kernel;
    zpl_char k_name[IF_NAME_MAX + 1];
@@ -219,7 +219,9 @@ struct interface
    if_type_t if_type;
 
    if_mode_t if_mode;
-   if_enca_t if_enca;
+#ifdef IF_ENCAPSULATION_ENABLE
+   if_enca_t if_enca;   //串口等特殊接口的封装类型
+#endif
    zpl_bool dynamic;
 
    zpl_bool online;  //板卡在线状态
@@ -328,7 +330,7 @@ struct if_master
 
 #define IF_ID_GET(n) ((n)&0x00000FFF)
 
-#define IF_VLAN_GET(n) if_ifindex2vlan((n))
+#define IF_VLAN_GET(n) IF_ID_GET((n))
 
 
 #define IF_IFINDEX_TYPE_GET(n) IF_TYPE_GET(n)

@@ -16,11 +16,13 @@ static int b53125_mirror_enable_set(sdk_driver_t *dev, zpl_phyport_t port, zpl_b
 	u16 reg;//, loc;
 	int ret = 0;
 	ret |= b53125_read16(dev->sdk_device, B53_MGMT_PAGE, B53_MIR_CAP_CTL, &reg);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_MIR_CAP_CTL, reg);
 	reg &= ~(CAP_PORT_MASK|MIRROR_EN|BLK_NOT_MIR);
 	if(enable)
 		reg |= BLK_NOT_MIR|MIRROR_EN|BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_MIR_CAP_CTL, reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_MIR_CAP_CTL, reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 /***************************************************************************************************/
@@ -39,7 +41,8 @@ static int b53125_mirror_ingress_mac(sdk_driver_t *dev, u8 *mac)
 	}
 
 	ret |= b53125_write48(dev->sdk_device, B53_MGMT_PAGE, B53_IG_MIR_MAC, reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_MAC, reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -57,7 +60,8 @@ static int b53125_mirror_egress_mac(sdk_driver_t *dev, u8 *mac)
 	}
 
 	ret |= b53125_write48(dev->sdk_device, B53_MGMT_PAGE, B53_EG_MIR_MAC, reg);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_MAC, reg);
+	sdk_handle_return(ret);
 	return ret;
 }
 /***************************************************************************************************/
@@ -69,10 +73,12 @@ static int b53125_mirror_ingress_source(sdk_driver_t *dev, zpl_phyport_t port)
 	int ret = 0;
 	u16 source = 0;
 	ret |= b53125_read16(dev->sdk_device, B53_MGMT_PAGE, B53_IG_MIR_CTL, &source);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_CTL, source);
 	source &= ~(MIRROR_MASK|(MIRROR_FILTER_MASK<<MIRROR_FILTER_SHIFT));
 	source |= BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_IG_MIR_CTL, source);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_CTL, source);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -81,10 +87,12 @@ static int b53125_mirror_egress_source(sdk_driver_t *dev, zpl_phyport_t port)
 	int ret = 0;
 	u16 source = 0;
 	ret |= b53125_read16(dev->sdk_device, B53_MGMT_PAGE, B53_EG_MIR_CTL, &source);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_CTL, source);
 	source &= ~(MIRROR_MASK|(MIRROR_FILTER_MASK<<MIRROR_FILTER_SHIFT));
 	source |= BIT(port);
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_EG_MIR_CTL, source);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_CTL, source);
+	sdk_handle_return(ret);
 	return ret;
 }
 /***************************************************************************************************/
@@ -93,10 +101,12 @@ static int b53125_mirror_ingress_filter(sdk_driver_t *dev, zpl_uint32 type)
 	int ret = 0;
 	u16 source = 0;
 	ret |= b53125_read16(dev->sdk_device, B53_MGMT_PAGE, B53_IG_MIR_CTL, &source);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_CTL, source);
 	source &= ~(MIRROR_FILTER_MASK << MIRROR_FILTER_SHIFT);
 	source |= type << MIRROR_FILTER_SHIFT;
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_IG_MIR_CTL, source);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_CTL, source);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -105,10 +115,12 @@ static int b53125_mirror_egress_filter(sdk_driver_t *dev, zpl_uint32 type)
 	int ret = 0;
 	u16 source = 0;
 	ret |= b53125_read16(dev->sdk_device, B53_MGMT_PAGE, B53_EG_MIR_CTL, &source);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_CTL, source);
 	source &= ~(MIRROR_FILTER_MASK << MIRROR_FILTER_SHIFT);
 	source |= type << MIRROR_FILTER_SHIFT;
 	ret |= b53125_write16(dev->sdk_device, B53_MGMT_PAGE, B53_EG_MIR_CTL, source);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_CTL, source);
+	sdk_handle_return(ret);
 	return ret;
 }
 

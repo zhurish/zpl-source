@@ -488,11 +488,11 @@ hal_client_read_thread(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_HAL_IPCMSG_DEBUG_EVENT(client->debug))
-    ;//zlog_debug(MODULE_HAL, "Client Recv message comes from ipstack_socket [%d]", sock);
+    zlog_debug(MODULE_HAL, "Client Recv message comes from ipstack_socket [%d]", sock);
 
   if (IS_HAL_IPCMSG_DEBUG_PACKET(client->debug) && IS_HAL_IPCMSG_DEBUG_RECV(client->debug))
-    ;//zlog_debug(MODULE_HAL, "Client Recv message received [%s] %d ",
-    //           hal_module_cmd_name(hdr.command), hdr.length);
+    zlog_debug(MODULE_HAL, "Client Recv message received [%s] %d ",
+               hal_module_cmd_name(hdr.command), hdr.length);
 
   if (IS_HAL_IPCMSG_DEBUG_PACKET(client->debug) && 
         IS_HAL_IPCMSG_DEBUG_RECV(client->debug) && 
@@ -520,7 +520,7 @@ hal_client_read_thread(struct thread *thread)
         if(client->bsp_client_msg_handle)
         {
           ret = (client->bsp_client_msg_handle)(client, hdr.command, client->bsp_driver);
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)          
+#if defined(ZPL_SDK_NONE) || defined(ZPL_SDK_USER)    
           if(ret == OS_NO_CALLBACK)
           {
             hal_client_send_return(client,  OS_NO_CALLBACK, ipstack_strerror(OS_NO_CALLBACK));

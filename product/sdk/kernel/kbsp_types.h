@@ -14,48 +14,6 @@ extern "C" {
 
 #include <linux/types.h>
 
-/* LOG MODULE */
-int klog_init(void);
-void klog_exit(void);
-int klog_dstpid(int pid);
-int klog_level(int level);
-void klog_printk(int module, int priority, const char *fmt, ...);
-
-/*
-#define zlog_emerg(m, fmt, ...) 	klog_printk(m, 1, fmt, ##__VA_ARGS__)
-#define zlog_err(m, fmt, ...) 		klog_printk(m, 3, fmt, ##__VA_ARGS__)
-#define zlog_warn(m, fmt, ...) 		klog_printk(m, 4, fmt, ##__VA_ARGS__)
-#define zlog_notice(m, fmt, ...) 	klog_printk(m, 5, fmt, ##__VA_ARGS__)
-#define zlog_info(m, fmt, ...) 		klog_printk(m, 6, fmt, ##__VA_ARGS__)
-#define zlog_debug(m, fmt, ...) 	klog_printk(m, 7, fmt, ##__VA_ARGS__)
-
-#define zlog_emerg(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
-#define zlog_err(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
-#define zlog_warn(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
-#define zlog_notice(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
-#define zlog_info(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
-#define zlog_debug(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
-
-*/
-#define zlog_emerg(m, fmt, ...) 	
-#define zlog_err(m, fmt, ...) 		
-#define zlog_warn(m, fmt, ...) 		
-#define zlog_notice(m, fmt, ...) 	
-#define zlog_info(m, fmt, ...) 		
-#define zlog_debug(m, fmt, ...) 	
-
-
-#define KLOG_DEBUG_EVENT	1
-#define KLOG_DEBUG_DETAIL	2
-#define KLOG_DEBUG_RECV		3
-#define KLOG_DEBUG_SEND		4
-
-#define BSP_ENTER_FUNC() 
-//zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
-#define BSP_LEAVE_FUNC() 
-//zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
-
-
 
 enum zpl_errno
 {
@@ -200,6 +158,55 @@ union g_addr {
   struct in6_addr ipv6;
 #endif /* ZPL_BUILD_IPV6 */
 };
+
+/* LOG MODULE */
+int klog_init(void);
+void klog_exit(void);
+int klog_dstpid(int pid);
+int klog_level(int level);
+void klog_printk(int module, int priority, const char *fmt, ...);
+
+/*
+#define zlog_emerg(m, fmt, ...) 	klog_printk(m, 1, fmt, ##__VA_ARGS__)
+#define zlog_err(m, fmt, ...) 		klog_printk(m, 3, fmt, ##__VA_ARGS__)
+#define zlog_warn(m, fmt, ...) 		klog_printk(m, 4, fmt, ##__VA_ARGS__)
+#define zlog_notice(m, fmt, ...) 	klog_printk(m, 5, fmt, ##__VA_ARGS__)
+#define zlog_info(m, fmt, ...) 		klog_printk(m, 6, fmt, ##__VA_ARGS__)
+#define zlog_debug(m, fmt, ...) 	klog_printk(m, 7, fmt, ##__VA_ARGS__)
+
+#define zlog_emerg(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+#define zlog_err(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define zlog_warn(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define zlog_notice(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+#define zlog_info(m, fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define zlog_debug(m, fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+
+*/
+extern void sdk_log(int module, int priority, const char *file, const char *func, const int line, const char *format, ...);
+#define sdk_debug(format, ...)	sdk_log(MODULE_SDK, 7, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+#define sdk_warn(format, ...)	sdk_log(MODULE_SDK, 4, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+#define sdk_err(format, ...)	sdk_log(MODULE_SDK, 3, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+#define sdk_info(format, ...)	sdk_log(MODULE_SDK, 6, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+#define sdk_trap(format, ...)	sdk_log(MODULE_SDK, 8, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+#define sdk_notice(format, ...) sdk_log(MODULE_SDK, 5, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+	
+#define zlog_emerg(m, fmt, ...) 	sdk_err(fmt, ##__VA_ARGS__)
+#define zlog_err(m, fmt, ...) 		sdk_err(fmt, ##__VA_ARGS__)
+#define zlog_warn(m, fmt, ...) 		sdk_warn(fmt, ##__VA_ARGS__)
+#define zlog_notice(m, fmt, ...) 	sdk_notice(fmt, ##__VA_ARGS__)
+#define zlog_info(m, fmt, ...) 		sdk_info(fmt, ##__VA_ARGS__)
+#define zlog_debug(m, fmt, ...) 	sdk_debug(fmt, ##__VA_ARGS__)
+
+#define KLOG_DEBUG_EVENT	1
+#define KLOG_DEBUG_DETAIL	2
+#define KLOG_DEBUG_RECV		3
+#define KLOG_DEBUG_SEND		4
+
+#define BSP_ENTER_FUNC() 
+//zlog_debug(MODULE_BSP, "Into %s line %d", __func__, __LINE__)
+#define BSP_LEAVE_FUNC() 
+//zlog_debug(MODULE_BSP, "Leave %s line %d", __func__, __LINE__)
+
 
 
 #ifdef __cplusplus

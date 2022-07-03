@@ -17,9 +17,10 @@ sdk_route_t sdk_route;
 static int bsp_route_multipath_add(void *driver, hal_route_param_t *param, void *p)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_route.sdk_route_add_cb)
-		ret = sdk_route.sdk_route_add_cb(driver, param);
+	if(bspdev->sdk_driver && sdk_route.sdk_route_add_cb)
+		ret = sdk_route.sdk_route_add_cb(bspdev->sdk_driver, param);
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -27,9 +28,10 @@ static int bsp_route_multipath_add(void *driver, hal_route_param_t *param, void 
 static int bsp_route_multipath_del(void *driver, hal_route_param_t *param, void *p)
 {
 	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	if(driver && sdk_route.sdk_route_del_cb)
-		ret = sdk_route.sdk_route_del_cb(driver, param);
+	if(bspdev->sdk_driver && sdk_route.sdk_route_del_cb)
+		ret = sdk_route.sdk_route_del_cb(bspdev->sdk_driver, param);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

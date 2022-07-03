@@ -14,18 +14,20 @@
 int b53125_phy_loopback(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
-	ret |= b53125_read16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, &port_ctrl);
+	u16 regval = 0;
+	ret |= b53125_read16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_PORT_MII_PAGE(port), B53_MII_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_INTERNAL_LOOPBACK;
+		regval |= B53_INTERNAL_LOOPBACK;
 	}
 	else
 	{
-		port_ctrl &= ~B53_INTERNAL_LOOPBACK;
+		regval &= ~B53_INTERNAL_LOOPBACK;
 	}
-	ret |= b53125_write16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_PORT_MII_PAGE(port), B53_MII_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
 
@@ -33,17 +35,19 @@ int b53125_phy_loopback(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 int b53125_phy_powerdown(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
-	u16 port_ctrl = 0;
-	ret |= b53125_read16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, &port_ctrl);
+	u16 regval = 0;
+	ret |= b53125_read16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, &regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_PORT_MII_PAGE(port), B53_MII_CTL, regval);
 	if(enable)
 	{
-		port_ctrl |= B53_POWERDOWN;
+		regval |= B53_POWERDOWN;
 	}
 	else
 	{
-		port_ctrl &= ~B53_POWERDOWN;
+		regval &= ~B53_POWERDOWN;
 	}
-	ret |= b53125_write16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, port_ctrl);
-	_sdk_debug( "%s %s", __func__, (ret == OK)?"OK":"ERROR");
+	ret |= b53125_write16(dev->sdk_device, B53_PORT_MII_PAGE(port), B53_MII_CTL, regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_PORT_MII_PAGE(port), B53_MII_CTL, regval);
+	sdk_handle_return(ret);
 	return ret;
 }
