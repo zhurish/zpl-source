@@ -81,6 +81,7 @@ typedef struct pal_stack_s
 	int (*ip_stack_firewall_snat_rule_set)(firewall_t *rule, zpl_action action);
 	int (*ip_stack_firewall_dnat_rule_set)(firewall_t *rule, zpl_action action);
 #endif
+
 }pal_stack_t;
 
 

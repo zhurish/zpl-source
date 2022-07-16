@@ -6,7 +6,10 @@
 extern "C" {
 #endif
 
-int ip_arp_stack_init(void);
+extern int kernel_arp_del(struct interface *ifp, struct prefix *address);
+extern int kernel_arp_set(struct interface *ifp, struct prefix *address, zpl_uint8 *mac);
+extern int kernel_arp_get(struct interface *ifp, struct prefix *address, zpl_uint8 *mac);
+extern int kernel_arp_gratuitousarp_enable(int enable);
 
 #ifdef __cplusplus
 }

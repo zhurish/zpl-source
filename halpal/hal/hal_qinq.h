@@ -15,14 +15,7 @@ extern "C" {
 //#include "nsm_vlan.h"
 
 
-enum hal_qinq_cmd 
-{
-    HAL_QINQ_CMD_NONE,
-	HAL_QINQ_CMD_ENABLE,
-	HAL_QINQ_CMD_TPID,
-	HAL_QINQ_CMD_IF_ENABLE,
-    HAL_QINQ_CMD_MAX,
-};
+
 
 typedef struct hal_qinq_param_s
 {

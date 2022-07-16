@@ -483,6 +483,8 @@ struct memory_list memory_list_halbsp[] =
 {
   { MTYPE_BSP,			  "BSP information"	},
   { MTYPE_BSP_CLIENT,			"BSP Client information"	},
+  { MTYPE_BSP_NETLINK,			"BSP Netlink information"	},
+  { MTYPE_BSP_NETLINK_DATA,			"BSP Netlink Data information"	},    
   { MTYPE_BSP_SERV,			"BSP Server information"	},
   { MTYPE_BSP_DATA,			"BSP Data information"	},  
   { MTYPE_SDK,			  "SDK information"	},

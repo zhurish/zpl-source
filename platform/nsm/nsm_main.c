@@ -143,6 +143,8 @@ int nsm_module_init(void)
 
 
 	zserv_init();
+	extern void linux_netlink_open(vrf_id_t vrfid, zpl_uint32 msgsize);
+	linux_netlink_open(0, 8192);
 	return 0;
 }
 

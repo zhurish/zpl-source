@@ -25,7 +25,7 @@ static int bsp_qos_enable(void *driver, hal_port_header_t *port, hal_qos_param_t
 static int bsp_qos_ipg_enable(void *driver, hal_port_header_t *port, hal_qos_param_t *param)
 {
 	int ret = NO_SDK;
-	BSP_DRIVER(bspdev, driver);
+	//BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
 	//if(bspdev->sdk_driver && sdk_qos.sdk_qos_ipg_cb)
 	//	ret = sdk_qos.sdk_qos_ipg_cb(bspdev->sdk_driver, zpl_true, param->enable);

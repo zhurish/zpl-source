@@ -8,8 +8,8 @@ extern "C" {
 
 #include "vrf.h"
 
-extern int _ipkernel_vrf_enable(struct ip_vrf *vrf);
-extern int _ipkernel_vrf_disable(struct ip_vrf *vrf);
+extern int linux_ioctl_vrf_enable(struct ip_vrf *vrf);
+extern int linux_ioctl_vrf_disable(struct ip_vrf *vrf);
 extern zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
 

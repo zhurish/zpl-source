@@ -24,6 +24,10 @@ extern "C" {
 #define usleep_range(a,b)   os_usleep((a+b)/2)
 #else
 #include "plconfig.h"
+#include "plconfig.h"
+#include "version.h"
+#include "product.h"
+
 #include <linux/types.h>
 #include <linux/printk.h>
 #include <linux/kernel.h>
@@ -93,19 +97,6 @@ enum zpl_module
     MODULE_SDK = 2,
 };
 
-enum zpl_debug_cmd
-{
-    KLOG_LEVEL,
-    NETPKT_DEBUG,
-    HALCLIENT_DEBUG,
- 	HAL_SDK_REG8,
-	HAL_SDK_REG16,
-	HAL_SDK_REG32,
-	HAL_SDK_REG64,
-    NETPKT_DEST,
-    NETPKT_BIND,
-    KLOG_DEST,
-};
 
 #define NO_SDK ERROR
 
@@ -123,7 +114,7 @@ enum zpl_debug_cmd
 
 
 #include "kbsp_types.h"
-#include "hal_client.h"
+#include "khal_client.h"
 #endif
 
 #ifdef __cplusplus

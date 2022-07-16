@@ -20,7 +20,7 @@
 
 #define CMD_HOST_DEBUG
 
-extern vector cmdvec;
+extern vector cli_cmdvec_list;
 
 /* Standard command node structures. */
 DEFUN_NODE(host_node, HOST_NODE, "%s(config)# ", 1);
@@ -184,7 +184,7 @@ ALIAS(config_exit,
 DEFUN (config_end,
 		config_end_cmd,
 		"end",
-		"End current mode and change to enable mode.")
+		"End current mode and change to enable mode.\n")
 {
 	if(vty->node >= CONFIG_NODE && vty->node < CMD_NODE_MAX)
 	{
@@ -351,7 +351,7 @@ DEFUN (config_list,
 		"Print command list\n")
 {
 	zpl_uint32  i;
-	struct cmd_node *cnode = vector_slot(cmdvec, vty->node);
+	struct cmd_node *cnode = vector_slot(cli_cmdvec_list, vty->node);
 	struct cmd_element *cmd;
 
 	for (i = 0; i < vector_active(cnode->cmd_vector); i++)
@@ -417,8 +417,8 @@ DEFUN (config_write_file,
 	vty_time_print(file_vty, 1);
 	vty_out(file_vty, "!\n");
 
-	for (i = 0; i < vector_active(cmdvec); i++)
-		if ((node = vector_slot(cmdvec, i)) && node->func)
+	for (i = 0; i < vector_active(cli_cmdvec_list); i++)
+		if ((node = vector_slot(cli_cmdvec_list, i)) && node->func)
 		{
 #ifdef ZPL_BUILD_DEBUG
   			zpl_backtrace_symb_set(node->funcname, NULL, 1);
@@ -477,8 +477,8 @@ DEFUN (config_write_terminal,
 
 	if (vty->type == VTY_SHELL_SERV)
 	{
-		for (i = 0; i < vector_active(cmdvec); i++)
-			if ((node = vector_slot(cmdvec, i)) && node->func && node->vtysh)
+		for (i = 0; i < vector_active(cli_cmdvec_list); i++)
+			if ((node = vector_slot(cli_cmdvec_list, i)) && node->func && node->vtysh)
 			{
 #ifdef ZPL_BUILD_DEBUG
   				zpl_backtrace_symb_set(node->funcname, NULL, 1);
@@ -493,8 +493,8 @@ DEFUN (config_write_terminal,
 		VTY_NEWLINE);
 		vty_out(vty, "!%s", VTY_NEWLINE);
 
-		for (i = 0; i < vector_active(cmdvec); i++)
-			if ((node = vector_slot(cmdvec, i)) && node->func)
+		for (i = 0; i < vector_active(cli_cmdvec_list); i++)
+			if ((node = vector_slot(cli_cmdvec_list, i)) && node->func)
 			{
 #ifdef ZPL_BUILD_DEBUG
   				zpl_backtrace_symb_set(node->funcname, NULL, 1);
@@ -913,7 +913,7 @@ DEFUN (show_commandtree,
 	vty_out(vty, "Current node id: %d%s", vty->node, VTY_NEWLINE);
 
 	/* vector of all commands installed at this node */
-	cmd_vector = vector_copy(cmd_node_vector(cmdvec, vty->node));
+	cmd_vector = vector_copy(cmd_node_vector(cli_cmdvec_list, vty->node));
 
 	/* loop over all commands at this node */
 	for (i = 0; i < vector_active(cmd_vector); ++i) {

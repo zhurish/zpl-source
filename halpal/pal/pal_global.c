@@ -75,7 +75,7 @@ int pal_module_init(void)
 		master_eloop_kernel = eloop_master_module_create(MODULE_PAL);
 	iplinux_stack_init();
 	#ifdef ZPL_NSM_ARP
-	ip_arp_stack_init();
+	pal_arp_stack_init();
 	#endif
 
 	return 0;;

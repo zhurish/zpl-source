@@ -14,6 +14,7 @@ extern struct module_list module_list_nsm;
 extern struct module_list module_list_bsp;
 extern struct module_list module_list_hal;
 extern struct module_list module_list_pal;
+extern struct module_list module_list_txrx;
 extern struct module_list module_list_sdk;
  
 struct module_alllist module_lists_tbl[MODULE_MAX] = {
@@ -29,6 +30,7 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_bsp,
   &module_list_hal,
   &module_list_pal,
+  &module_list_txrx,
   &module_list_sdk,
  NULL,
 };

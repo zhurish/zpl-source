@@ -18,9 +18,9 @@
 #include "nsm_tunnel.h"
 
 // ip_tunnel.c
-extern int _ipkernel_tunnel_create(nsm_tunnel_t *tunnel);
-extern int _ipkernel_tunnel_delete(nsm_tunnel_t *tunnel);
-extern int _ipkernel_tunnel_change(nsm_tunnel_t *tunnel);
+extern int linux_ioctl_tunnel_create(nsm_tunnel_t *tunnel);
+extern int linux_ioctl_tunnel_delete(nsm_tunnel_t *tunnel);
+extern int linux_ioctl_tunnel_change(nsm_tunnel_t *tunnel);
 
 
 static int (*ipkernel_tunnel_create)(nsm_tunnel_t *tunnel);
@@ -121,7 +121,7 @@ static int nsm_tunnel_kname(nsm_tunnel_t *tunnel)
 	return OK;
 }
 
-static int nsm_tunnel_ipkernel_create(nsm_tunnel_t *tunnel)
+static int nsm_tunnellinux_ioctl_create(nsm_tunnel_t *tunnel)
 {
 	//TODO create tunnel interface
 	if(ipkernel_tunnel_create)
@@ -134,7 +134,7 @@ static int nsm_tunnel_ipkernel_create(nsm_tunnel_t *tunnel)
 	return OK;
 }
 
-static int nsm_tunnel_ipkernel_change(nsm_tunnel_t *tunnel)
+static int nsm_tunnellinux_ioctl_change(nsm_tunnel_t *tunnel)
 {
 	if(tunnel->active)
 	{
@@ -148,7 +148,7 @@ static int nsm_tunnel_ipkernel_change(nsm_tunnel_t *tunnel)
 	return ERROR;
 }
 
-static int nsm_tunnel_ipkernel_destroy(nsm_tunnel_t *tunnel)
+static int nsm_tunnellinux_ioctl_destroy(nsm_tunnel_t *tunnel)
 {
 	if(ipkernel_tunnel_delete)
 	{
@@ -167,7 +167,7 @@ static int nsm_tunnel_create_thread(struct interface *ifp)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
-		return nsm_tunnel_ipkernel_create(tunnel);
+		return nsm_tunnellinux_ioctl_create(tunnel);
 	return ERROR;
 }
 
@@ -209,7 +209,7 @@ static int nsm_tunnel_create_update(nsm_tunnel_t *tunnel)
 	nsm_tunnel_state_update(tunnel);
 	if(tunnel->active)
 	{
-		return nsm_tunnel_ipkernel_change(tunnel);
+		return nsm_tunnellinux_ioctl_change(tunnel);
 	}
 	if(nsm_tunnel_iph_protocol(tunnel->mode))			//隧道模式
 	{
@@ -400,8 +400,7 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
-		struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-		nsm_tunnel_ipkernel_destroy(tunnel);
+		nsm_tunnellinux_ioctl_destroy(tunnel);
 		XFREE(MTYPE_IF, tunnel);
 		tunnel = NULL;
 		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, NULL);
@@ -413,9 +412,9 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 int nsm_tunnel_init(void)
 {
 	nsm_interface_hook_add(NSM_INTF_TUNNEL, nsm_tunnel_interface_create_api, nsm_tunnel_interface_del_api);
-	//ipkernel_tunnel_create = _ipkernel_tunnel_create;
-	//ipkernel_tunnel_delete = _ipkernel_tunnel_delete;
-	//ipkernel_tunnel_change = _ipkernel_tunnel_change;
+	//ipkernel_tunnel_create = linux_ioctl_tunnel_create;
+	//ipkernel_tunnel_delete = linux_ioctl_tunnel_delete;
+	//ipkernel_tunnel_change = linux_ioctl_tunnel_change;
 	return OK;
 }
 

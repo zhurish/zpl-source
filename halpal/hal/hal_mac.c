@@ -25,6 +25,19 @@ int hal_mac_age(zpl_uint32 age)
 		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
 }
 
+int hal_mac_clrall(void)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	command = IPCCMD_SET(HAL_MODULE_MAC, HAL_MODULE_CMD_REQ, HAL_MAC_CMD_CLEARALL);
+	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
+		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
+}
+
+
 int hal_mac_add(ifindex_t ifindex, vlan_t vlan, mac_t *mac, zpl_uint32 pri)
 {
 	zpl_uint32 command = 0;

@@ -108,7 +108,7 @@ void  zpl_vlan_bitmap_copy(const zpl_vlan_bitmap_t src, zpl_vlan_bitmap_t dst)
 int nsm_vlan_database_list_split_api(const char *str, vlan_t *vlanlist)
 {
 	zpl_char tmp[32];
-	int n = 0, i = 0, ret = 0, j = 0,vid = 0;
+	int n = 0, i = 0, j = 0,vid = 0;
 	vlan_t ibase = 0, iend = 0;
 	vlan_t value = 0;
 	//zpl_char *nm = NULL;
@@ -629,7 +629,7 @@ int nsm_vlan_database_destroy_api(vlan_t vlan)
 
 int nsm_vlan_database_batch_create_api(vlan_t minvlan, vlan_t maxvlan)
 {
-	zpl_uint32 i = 0, j = 0;
+	zpl_uint32 i = 0;//, j = 0;
 	zpl_vlan_bitmap_t	vlanbitmap;
 	int ret = ERROR;
 	nsm_vlan_database_t *value = NULL;
@@ -675,7 +675,7 @@ int nsm_vlan_database_batch_create_api(vlan_t minvlan, vlan_t maxvlan)
 
 int nsm_vlan_database_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 {
-	zpl_uint32 i = 0, j = 0;
+	zpl_uint32 i = 0;//, j = 0;
 	int ret = ERROR;
 	zpl_vlan_bitmap_t	vlanbitmap;
 	nsm_vlan_database_t *value;

@@ -18,8 +18,8 @@ static int bsp_qinq_enable(void *driver, hal_port_header_t *port, hal_qinq_param
 	int ret = OK;
 	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
-	/*if(bspdev->sdk_driver  && sdk_qinq.sdk_qinq_enable_cb)
-		ret = sdk_qinq.sdk_qinq_enable_cb(bspdev->sdk_driver, param->value);*/
+	if(bspdev->sdk_driver  && sdk_qinq.sdk_qinq_enable_cb)
+		ret = sdk_qinq.sdk_qinq_enable_cb(bspdev->sdk_driver, param->value);
 	BSP_LEAVE_FUNC();
 	return ret;
 }

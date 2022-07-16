@@ -76,7 +76,7 @@ static int web_system_handle(Webs *wp, char *path, char *query)
 	{
 		return web_return_text_plain(wp, ERROR);
 	}
-	ether_aton_r (strval, &ether);
+	ethaddr_aton_r (strval, &ether);
 	ret |= host_config_set_api(API_SET_SYSMAC_CMD, ether.octet);
 
 	if(ret == OK)

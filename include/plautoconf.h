@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-07-02 21:52:19 CST"
+#define AUTOCONF_TIMESTAMP "2022-07-16 10:18:18 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -24,37 +24,37 @@
 #undef ZPL_SYSTEM_MSVC32
 #undef ZPL_SYSTEM_MSVC64
 #define ZPL_ARCH_MODULE 1
-#define ZPL_ARCH_ARM 1
+#undef ZPL_ARCH_ARM
 #undef ZPL_ARCH_ARM64
 #undef ZPL_ARCH_AARCH64
 #undef ZPL_ARCH_X86
-#undef ZPL_ARCH_X86_64
+#define ZPL_ARCH_X86_64 1
 #undef ZPL_ARM_A5
 #undef ZPL_ARM_A6
-#define ZPL_ARM_A7 1
+#undef ZPL_ARM_A7
 #undef ZPL_ARM_A8
 #undef ZPL_ARM_A9
 
 /*
  * Toolchain Config
  */
-#undef ZPL_HOST_TOOLCHAIN_MODULE
-#define ZPL_EXTERNAL_TOOLCHAIN_MODULE 1
-#define ZPL_TOOLCHAIN_PREFIX "arm-linux-gnueabihf-"
-#define ZPL_TOOLCHAIN_GLIBC 1
+#define ZPL_HOST_TOOLCHAIN_MODULE 1
+#undef ZPL_EXTERNAL_TOOLCHAIN_MODULE
+#define ZPL_TOOLCHAIN_PREFIX ""
+#undef ZPL_TOOLCHAIN_GLIBC
 #undef ZPL_TOOLCHAIN_UCLIBC
-#define ZPL_TOOLCHAIN_PATH "/opt/gcc-linaro-7.5.0-arm-linux-gnueabihf"
+#define ZPL_TOOLCHAIN_PATH ""
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
 #define ZPL_COMPILE_OPTIONS "-g"
-#define ZPL_COREDUMP_ENABLE 1
+#undef ZPL_COREDUMP_ENABLE
 #define ZPL_FPU_HARD 1
 #undef ZPL_FPU_SOFT
 #undef ZPL_FPU_SOFTFP
 #undef ZPL_FPU_NEON
 #undef ZPL_ARM_VFP
 #undef ZPL_ARM_NEON_VFP
-#define ZPL_TOOLCHAIN_CFLAGS "-D__ARM_PCS_VFP"
+#define ZPL_TOOLCHAIN_CFLAGS ""
 
 /*
  * Platform configuration
@@ -84,7 +84,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#undef ZPL_ACTIVE_STANDBY
+#define ZPL_ACTIVE_STANDBY 1
 #define ZPL_NSM_SNMP 1
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
@@ -240,10 +240,10 @@
 #undef ZPL_KERNEL_FORWARDING
 #define ZPL_IPCOM_ROOT_PATH ""
 #define ZPL_SDK_MODULE 1
-#undef ZPL_SDK_NONE
-#define ZPL_SDK_USER 1
+#define ZPL_SDK_NONE 1
+#undef ZPL_SDK_USER
 #undef ZPL_SDK_KERNEL
-#define ZPL_SDK_BCM53125 1
+#undef ZPL_SDK_BCM53125
 
 /*
  * Externsions Module Config
@@ -271,5 +271,5 @@
 #undef ZPL_TOOLS_QUECTEL_CM
 #undef ZPL_TOOLS_SYSTEM
 #undef ZPL_VTYSH_MODULE
-#undef ZPL_WATCHDOG_MODULE
-#define ZPL_SWCONFIG_MODULE 1
+#define ZPL_WATCHDOG_MODULE 1
+#undef ZPL_SWCONFIG_MODULE

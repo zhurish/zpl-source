@@ -67,7 +67,7 @@ static int bsp_mac_read(void *driver, hal_port_header_t *bspport, hal_mac_param_
 	BSP_ENTER_FUNC();	
 	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_read_cb)
 		ret = sdk_maccb.sdk_mac_read_cb(bspdev->sdk_driver, bspport->phyport, macparam->vlan, 
-			bspport->vrfid, macparam);	
+			bspport->vrfid, bspdev);	
 	BSP_LEAVE_FUNC();
 	return ret;
 }
@@ -84,12 +84,24 @@ static int bsp_mac_dump(void *driver, hal_port_header_t *bspport, hal_mac_param_
 	return ret;
 }
 
+static int bsp_mac_clrall(void *driver, hal_port_header_t *bspport, hal_mac_param_t *macparam)
+{
+	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
+	BSP_ENTER_FUNC();	
+	if(bspdev->sdk_driver && sdk_maccb.sdk_mac_clrall_cb)
+		ret = sdk_maccb.sdk_mac_clrall_cb(bspdev->sdk_driver);
+	BSP_LEAVE_FUNC();
+	return ret;
+}
+
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_AGE, bsp_mac_age),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_ADD, bsp_mac_add),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_DEL, bsp_mac_del),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_CLEAR, bsp_mac_clr),
+	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_CLEARALL, bsp_mac_clrall),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_READ, bsp_mac_read),
 	HAL_CALLBACK_ENTRY(HAL_MAC_CMD_DUMP, bsp_mac_dump),
 };
@@ -98,6 +110,7 @@ static hal_ipcsubcmd_callback_t subcmd_table[] = {
 int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
 	int ret = OK;
+	BSP_DRIVER(bspdev, driver);
 	hal_mac_param_t	mac_param;
 	hal_port_header_t	bspport;
 	struct hal_ipcmsg_result getvalue;
@@ -121,7 +134,11 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}
-	if(subcmd != HAL_MAC_CMD_AGE)
+	if(subcmd == HAL_MAC_CMD_CLEARALL)
+	{
+
+	}
+	else if(subcmd != HAL_MAC_CMD_AGE)
 		hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
 	else
 		hal_ipcmsg_getl(&client->ipcmsg, &mac_param.value);
@@ -152,17 +169,17 @@ int bsp_mac_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 
 		{
 			hal_client_send_return(client, OK, "cmd:%s", hal_module_cmd_name(cmd));
 			ret = (callback->cmd_handle)(driver, &bspport, &mac_param);
-			//hal_client_send_return(client, OK, "cmd:%s", hal_module_cmd_name(cmd));
 			BSP_LEAVE_FUNC();
 			return ret;
 		}
-
+		bspdev->mac_cache_num = 0;
+		memset(bspdev->mac_cache_entry, 0, sizeof(hal_mac_cache_t)*bspdev->mac_cache_max);
 		ret = (callback->cmd_handle)(driver, &bspport, &mac_param);
-		//if(ret == 0)
+		if(ret == 0)
 		{
-			getvalue.value = mac_param.macnum;
-			hal_client_send_result_msg(client, ret, &getvalue, HAL_MAC_CMD_READ, mac_param.mactbl, 
-				mac_param.macnum*sizeof(hal_mac_cache_t));	
+			getvalue.value = bspdev->mac_cache_num;
+			hal_client_send_result_msg(client, ret, &getvalue, HAL_MAC_CMD_READ, bspdev->mac_cache_entry, 
+				bspdev->mac_cache_num*sizeof(hal_mac_cache_t));	
 		}	
 	}
 	break;

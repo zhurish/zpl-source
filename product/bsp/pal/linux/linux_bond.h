@@ -7,8 +7,8 @@ extern "C" {
 #endif
 
 #ifdef ZPL_NSM_TRUNK
-extern int _ipkernel_bond_create(struct interface *ifp);
-extern int _ipkernel_bond_delete(struct interface *ifp);
+extern int linux_ioctl_bond_create(struct interface *ifp);
+extern int linux_ioctl_bond_delete(struct interface *ifp);
 
 extern int _if_bond_add_slave(struct interface *ifp, struct interface *slave);
 extern int _if_bond_delete_slave(struct interface *ifp, struct interface *slave);

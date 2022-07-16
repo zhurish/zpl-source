@@ -225,7 +225,7 @@ DEFUN (lacp_system_priority,
 	int ret = ERROR;
 	zpl_uint32  pri;
 	zpl_uint32 trunkid = vty->index_value;
-	struct interface *ifp = vty->index;
+	//struct interface *ifp = vty->index;
 	pri = atoi(argv[1]);
 
 	ret = nsm_trunk_lacp_system_priority_api(trunkid, pri);
@@ -351,7 +351,6 @@ DEFUN (no_port_channel_load_balance,
 static int _trunk_group_show_one(l2trunk_group_t *group, struct vty *vty)
 {
 	char *load[] = {"NONE", "dst-mac", "src-mac", "dst-src-mac", "dst-ip"};
-	static char flag = 0;
 	if(group)
 	{
 		vty_out(vty, " trunkId              : %d%s", group->trunkId, VTY_NEWLINE);

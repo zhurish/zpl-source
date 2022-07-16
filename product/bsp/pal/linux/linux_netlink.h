@@ -1,4 +1,4 @@
-/* Header file exported by rt_netlink.c to zebra.
+/* Header file exported by rtlinux_netlink.c to zebra.
  * Copyright (C) 1997, 98, 99 Kunihiro Ishiguro
  *
  * This file is part of GNU Zebra.
@@ -34,13 +34,14 @@ extern "C" {
 struct nlsock
 {
 	vrf_id_t vrf_id;
-  zpl_socket_t sock;
-  zpl_uint32 seq;
-  struct ipstack_sockaddr_nl snl;
-  const char *name;
+	zpl_socket_t sock;
+	zpl_uint32 seq;
+	struct ipstack_sockaddr_nl snl;
+	const char *name;
 
-  struct thread *t_netlink;
-
+	zpl_uint8	*msgdata;
+	zpl_uint32	msglen;
+	zpl_uint32	msgmax;
 };
 extern struct nlsock netlink_cmd;
 #endif
@@ -54,39 +55,39 @@ extern struct nlsock netlink_cmd;
 /*
  * linux_netlink.c
  */
-extern const char * _netlink_msg_type_to_str(zpl_uint16 msg_type);
-extern const char * _netlink_rtproto_to_str(zpl_uchar rtproto);
+extern const char * linux_netlink_msg_type_to_str(zpl_uint16 msg_type);
+extern const char * linux_netlink_rtproto_to_str(zpl_uchar rtproto);
 
-extern int _netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
+extern int linux_netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen);
-extern int _netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type,
+extern int linux_netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type,
 		void *data, size_t alen);
-extern int _netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data);
+extern int linux_netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data);
 
-extern struct ipstack_rtattr *_netlink_addattr_nest(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type);
-extern int _netlink_addattr_nest_end(struct ipstack_nlmsghdr *n, struct ipstack_rtattr *nest);
-
-
-
-extern void _netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, struct ipstack_rtattr *rta, zpl_uint32 len);
-extern void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp);
+extern struct ipstack_rtattr *linux_netlink_addattr_nest(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type);
+extern int linux_netlink_addattr_nest_end(struct ipstack_nlmsghdr *n, struct ipstack_rtattr *nest);
 
 
-extern void _netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
+
+extern void linux_netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, struct ipstack_rtattr *rta, zpl_uint32 len);
+extern void linux_netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp);
+
+
+extern void linux_netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
 		hal_nexthop_t *nexthop, union g_addr address,
 		vrf_id_t vrfid);
 
 
-extern void _netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index);
+extern void linux_netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index);
 
-extern int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id);
+extern int linux_netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id);
 
-extern int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl);
+extern int linux_netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl);
 
-extern int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
+extern int linux_netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl,
 		vrf_id_t vrfid);
 
-extern int _netlink_parse_info(
+extern int linux_netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
 		struct nlsock *nl, vrf_id_t vrfid);
 
@@ -94,8 +95,8 @@ extern int _netlink_parse_info(
 
 
 
-extern void _netlink_open(vrf_id_t vrfid);
-extern void _netlink_close(void);
+extern void linux_netlink_open(vrf_id_t vrfid, zpl_uint32 msgsize);
+extern void linux_netlink_close(void);
 
 
 

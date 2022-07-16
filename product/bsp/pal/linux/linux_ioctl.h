@@ -28,20 +28,20 @@ extern "C" {
 #endif
 
 
-extern void _ipkernel_ifreq_set_name (struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp);
-extern int _ipkernel_if_ioctl (zpl_uint32, caddr_t);
+extern void linux_ioctl_ifreq_set_name (struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp);
+extern int linux_ioctl_if_ioctl (zpl_uint32, caddr_t);
 #ifdef ZPL_BUILD_IPV6
-extern int _ipkernel_if_ioctl_ipv6 (zpl_uint32 request, caddr_t buffer);
+extern int linux_ioctl_if_ioctl_ipv6 (zpl_uint32 request, caddr_t buffer);
 #endif
 
-int _ipkernel_if_set_up(struct interface *ifp);
-int _ipkernel_if_set_down(struct interface *ifp);
-int _ipkernel_if_update_flags(struct interface *ifp, uint64_t flag);
-int _ipkernel_if_get_flags(struct interface *ifp);
-int _ipkernel_if_set_mtu(struct interface *ifp, zpl_uint32 mtu);
-int _ipkernel_if_get_hwaddr(struct interface *ifp);
-int _ipkernel_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len);
-int _ipkernel_if_set_metric(struct interface *ifp, zpl_uint32 metric);
+int linux_ioctl_if_set_up(struct interface *ifp);
+int linux_ioctl_if_set_down(struct interface *ifp);
+int linux_ioctl_if_update_flags(struct interface *ifp, uint64_t flag);
+int linux_ioctl_if_get_flags(struct interface *ifp);
+int linux_ioctl_if_set_mtu(struct interface *ifp, zpl_uint32 mtu);
+int linux_ioctl_if_get_hwaddr(struct interface *ifp);
+int linux_ioctl_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len);
+int linux_ioctl_if_set_metric(struct interface *ifp, zpl_uint32 metric);
 
 
 

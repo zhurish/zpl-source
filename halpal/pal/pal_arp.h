@@ -21,6 +21,7 @@ extern int pal_arp_gratuitousarp_enable(zpl_bool enable);
 extern int pal_arp_ttl(zpl_uint32 ttl);
 extern int pal_arp_age_timeout(zpl_uint32 timeout);
 extern int pal_arp_retry_interval(zpl_uint32 interval);
+extern int pal_arp_stack_init(void);
 #endif
 
 

@@ -8,6 +8,7 @@ OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
+
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
 
@@ -19,14 +20,8 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
-
-$(OBJS_DIR)/%.o: $(SRC_DIR)/libiproute/%.c
-	@if test ! -d $(OBJS_DIR) ; \
-		then \
-		$(MKDIR) -p $(OBJS_DIR) ; \
-	fi
-	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)	
 #
+
 #@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
 #@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
@@ -42,7 +37,7 @@ make_prepare:
 lib: $(LIBS)
 
 
-obj: $(BUILT_SOURCES) $(MODULE_OBJS)
+obj: $(MODULE_OBJS)
 
 install: $(LIBS)
 	@install -d $(LIB_DIR)

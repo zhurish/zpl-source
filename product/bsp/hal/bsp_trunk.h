@@ -10,25 +10,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef ZPL_SDK_KERNEL
-enum hal_trunk_cmd 
-{
-    HAL_TRUNK_CMD_NONE,
-	HAL_TRUNK_CMD_ENABLE,
-	HAL_TRUNK_CMD_CREATE,
-	HAL_TRUNK_CMD_ADDIF,
-	HAL_TRUNK_CMD_DELIF,
-	HAL_TRUNK_CMD_MODE,
-    HAL_TRUNK_CMD_MAX,
-};
 
-typedef struct hal_trunk_param_s
-{
-	zpl_bool enable;
-	zpl_uint32 trunkid;
-	zpl_uint32 mode;
-}hal_trunk_param_t;
-#endif
 typedef enum {
     BSP_TRUNK_MODE_MACDASA = 0x0,
     BSP_TRUNK_MODE_MACDA = 0x1,

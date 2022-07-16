@@ -11,43 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef ZPL_SDK_KERNEL
-typedef enum stp_state_s
-{
-	STP_DISABLE = 0,
-	STP_LISTENING,
-	STP_LEARNING,
-	STP_FORWARDING,
-	STP_BLOCKING,
-}stp_state_t;
 
-typedef enum hal_port_stp_state_e {
-    HAL_PORT_STP_DISABLE = 1,
-    HAL_PORT_STP_BLOCK,
-    HAL_PORT_STP_LISTEN,
-    HAL_PORT_STP_LEARN,
-    HAL_PORT_STP_FORWARD
-} hal_port_stp_state_t;
-
-enum hal_mstp_cmd 
-{
-    HAL_MSTP_NONE,
-	HAL_MSTP_ENABLE,
-    HAL_MSTP_CREATE,
-    HAL_MSTP_ADD_VLAN,
-    HAL_MSTP_DEL_VLAN,
-	HAL_MSTP_STATE,
-    HAL_STP_STATE,
-};
-
-typedef struct hal_mstp_param_s
-{
-    zpl_bool enable;
-	zpl_uint32 value;
-	zpl_uint32 type;
-	hal_port_stp_state_t state;
-}hal_mstp_param_t;
-#endif
 typedef struct sdk_mstp_s
 {
 	int (*sdk_mstp_enable_cb) (void *, zpl_bool);

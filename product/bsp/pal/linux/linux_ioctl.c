@@ -55,13 +55,13 @@
 #include "pal_include.h"
 
 /* clear and set interface name string */
-void _ipkernel_ifreq_set_name(struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp)
+void linux_ioctl_ifreq_set_name(struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp)
 {
   strncpy(ipstack_ifreq->ifr_name, ifp->k_name, IFNAMSIZ);
 }
 
 /* call ipstack_ioctl system call */
-int _ipkernel_if_ioctl(zpl_uint32 request, caddr_t buffer)
+int linux_ioctl_if_ioctl(zpl_uint32 request, caddr_t buffer)
 {
   zpl_socket_t sock;
   int ret = -1;
@@ -85,7 +85,7 @@ int _ipkernel_if_ioctl(zpl_uint32 request, caddr_t buffer)
 }
 
 #ifdef ZPL_BUILD_IPV6
-int _ipkernel_if_ioctl_ipv6(zpl_uint32 request, caddr_t buffer)
+int linux_ioctl_if_ioctl_ipv6(zpl_uint32 request, caddr_t buffer)
 {
   zpl_socket_t sock;
   int ret = -1;
@@ -121,9 +121,9 @@ if_get_metric(struct interface *ifp)
 #ifdef IPSTACK_SIOCGIFMETRIC
   struct ipstack_ifreq ipstack_ifreq;
 
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
-  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFMETRIC, (caddr_t)&ipstack_ifreq) < 0)
+  if (linux_ioctl_if_ioctl(IPSTACK_SIOCGIFMETRIC, (caddr_t)&ipstack_ifreq) < 0)
     return -1;
   ifp->metric = ipstack_ifreq.ifr_metric;
   if (ifp->metric == 0)
@@ -134,13 +134,13 @@ if_get_metric(struct interface *ifp)
   return 0;
 }
 
-int _ipkernel_if_set_metric(struct interface *ifp, zpl_uint32 metric)
+int linux_ioctl_if_set_metric(struct interface *ifp, zpl_uint32 metric)
 {
 #ifdef IPSTACK_SIOCGIFMETRIC
   struct ipstack_ifreq ipstack_ifreq;
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
   ipstack_ifreq.ifr_metric = metric;
-  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFMETRIC, (caddr_t)&ipstack_ifreq) < 0)
+  if (linux_ioctl_if_ioctl(IPSTACK_SIOCGIFMETRIC, (caddr_t)&ipstack_ifreq) < 0)
     return -1;
   return 0;
 #else  /* IPSTACK_SIOCGIFMETRIC */
@@ -154,10 +154,10 @@ if_get_mtu(struct interface *ifp)
 {
   struct ipstack_ifreq ipstack_ifreq;
 
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
 #if defined(IPSTACK_SIOCGIFMTU)
-  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFMTU, (caddr_t)&ipstack_ifreq) < 0)
+  if (linux_ioctl_if_ioctl(IPSTACK_SIOCGIFMTU, (caddr_t)&ipstack_ifreq) < 0)
   {
     zlog_info(MODULE_PAL, "Can't lookup mtu by ipstack_ioctl(IPSTACK_SIOCGIFMTU)");
     ifp->mtu6 = ifp->mtu = 1500;
@@ -171,16 +171,16 @@ if_get_mtu(struct interface *ifp)
 }
 
 int
-_ipkernel_if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
+linux_ioctl_if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
 {
   struct ipstack_ifreq ipstack_ifreq;
 
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
   ipstack_ifreq.ifr_mtu = mtu;
 
 #if defined(IPSTACK_SIOCSIFMTU)
-  if (_ipkernel_if_ioctl(IPSTACK_SIOCSIFMTU, (caddr_t)&ipstack_ifreq) < 0)
+  if (linux_ioctl_if_ioctl(IPSTACK_SIOCSIFMTU, (caddr_t)&ipstack_ifreq) < 0)
   {
     zlog_info(MODULE_PAL, "Can't lookup mtu by ipstack_ioctl(IPSTACK_SIOCGIFMTU)");
     ifp->mtu6 = ifp->mtu = -1;
@@ -191,14 +191,14 @@ _ipkernel_if_set_mtu(struct interface *ifp, zpl_uint32 mtu)
 }
 
 int
-_ipkernel_if_get_hwaddr(struct interface *ifp)
+linux_ioctl_if_get_hwaddr(struct interface *ifp)
 {
   struct ipstack_ifreq ipstack_ifreq;
 
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
 #if defined(IPSTACK_SIOCGIFHWADDR)
-  if (_ipkernel_if_ioctl(IPSTACK_SIOCGIFHWADDR, (caddr_t)&ipstack_ifreq) < 0)
+  if (linux_ioctl_if_ioctl(IPSTACK_SIOCGIFHWADDR, (caddr_t)&ipstack_ifreq) < 0)
   {
     zlog_info(MODULE_PAL, "Can't lookup MAC by ipstack_ioctl(IPSTACK_SIOCGIFHWADDR)");
     return -1;
@@ -212,22 +212,22 @@ _ipkernel_if_get_hwaddr(struct interface *ifp)
 
 /* get interface flags */
 int
-_ipkernel_if_get_flags(struct interface *ifp)
+linux_ioctl_if_get_flags(struct interface *ifp)
 {
   int ret;
   struct ipstack_ifreq ipstack_ifreq;
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
   if (ifp->k_ifindex == 0)
     ifp->k_ifindex = if_nametoindex(ifp->k_name);
   // ifp->k_ifindex = if_get_ifindex(ifp->k_name);
   if_get_mtu(ifp);
   if_get_metric(ifp);
-  //  _ipkernel_if_get_hwaddr(ifp);
-  ret = _ipkernel_if_ioctl(IPSTACK_SIOCGIFFLAGS, (caddr_t)&ipstack_ifreq);
+  //  linux_ioctl_if_get_hwaddr(ifp);
+  ret = linux_ioctl_if_ioctl(IPSTACK_SIOCGIFFLAGS, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
   {
-    zlog_err(MODULE_PAL, "_ipkernel_if_ioctl(IPSTACK_SIOCGIFFLAGS) failed: %s", ipstack_strerror(ipstack_errno));
+    zlog_err(MODULE_PAL, "linux_ioctl_if_ioctl(IPSTACK_SIOCGIFFLAGS) failed: %s", ipstack_strerror(ipstack_errno));
     return -1;
   }
   ifp->flags |= ipstack_ifreq.ifr_flags;
@@ -242,12 +242,12 @@ if_set_flags(struct interface *ifp, uint64_t flags)
   struct ipstack_ifreq ipstack_ifreq;
 
   memset(&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
   ipstack_ifreq.ifr_flags = ifp->flags;
   ipstack_ifreq.ifr_flags |= flags;
 
-  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFFLAGS, (caddr_t)&ipstack_ifreq);
+  ret = linux_ioctl_if_ioctl(IPSTACK_SIOCSIFFLAGS, (caddr_t)&ipstack_ifreq);
 
   if (ret < 0)
   {
@@ -265,12 +265,12 @@ if_unset_flags(struct interface *ifp, uint64_t flags)
   struct ipstack_ifreq ipstack_ifreq;
 
   memset(&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
   ipstack_ifreq.ifr_flags = ifp->flags;
   ipstack_ifreq.ifr_flags &= ~flags;
 
-  ret = _ipkernel_if_ioctl(IPSTACK_SIOCSIFFLAGS, (caddr_t)&ipstack_ifreq);
+  ret = linux_ioctl_if_ioctl(IPSTACK_SIOCSIFFLAGS, (caddr_t)&ipstack_ifreq);
 
   if (ret < 0)
   {
@@ -282,16 +282,16 @@ if_unset_flags(struct interface *ifp, uint64_t flags)
 
 
 
-int _ipkernel_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
+int linux_ioctl_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
 {
   int ret;
   struct ipstack_ifreq ipstack_ifreq;
 
   memset(&ipstack_ifreq, 0, sizeof(struct ipstack_ifreq));
-  _ipkernel_ifreq_set_name(&ipstack_ifreq, ifp);
+  linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
   ipstack_ifreq.ifr_hwaddr.sa_family = IPSTACK_ARPHRD_ETHER;
   memcpy(ipstack_ifreq.ifr_hwaddr.sa_data, mac, len);
-  ret = _ipkernel_if_ioctl(SIOCSIFHWADDR, (caddr_t)&ipstack_ifreq);
+  ret = linux_ioctl_if_ioctl(SIOCSIFHWADDR, (caddr_t)&ipstack_ifreq);
   if (ret < 0)
   {
     zlog_info(MODULE_PAL, "can't unset interface flags");
@@ -300,17 +300,17 @@ int _ipkernel_if_set_mac(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len)
   return 0;
 }
 
-int _ipkernel_if_set_up(struct interface *ifp)
+int linux_ioctl_if_set_up(struct interface *ifp)
 {
   return if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 }
 
-int _ipkernel_if_set_down(struct interface *ifp)
+int linux_ioctl_if_set_down(struct interface *ifp)
 {
   return if_unset_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
 }
 
-int _ipkernel_if_update_flags(struct interface *ifp, uint64_t flag)
+int linux_ioctl_if_update_flags(struct interface *ifp, uint64_t flag)
 {
   return if_set_flags(ifp, flag);
 }

@@ -72,12 +72,12 @@ static int bsp_cpu_port_flow(void *driver, hal_global_header_t *global, zpl_bool
 
 
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
-	HAL_CALLBACK_ENTRY(HAL_SWITCH_NONE, NULL),
-	HAL_CALLBACK_ENTRY(HAL_SWITCH_CPU_MODE, bsp_cpu_port_mode),
-	HAL_CALLBACK_ENTRY(HAL_SWITCH_CPU, bsp_cpu_port_enable),
-	HAL_CALLBACK_ENTRY(HAL_SWITCH_CPU_SPEED, bsp_cpu_port_speed),
-	HAL_CALLBACK_ENTRY(HAL_SWITCH_CPU_DUPLEX, bsp_cpu_port_duplex),
-	HAL_CALLBACK_ENTRY(HAL_SWITCH_CPU_FLOW, bsp_cpu_port_flow),
+	HAL_CALLBACK_ENTRY(HAL_CPU_NONE, NULL),
+	HAL_CALLBACK_ENTRY(HAL_CPU_MODE, bsp_cpu_port_mode),
+	HAL_CALLBACK_ENTRY(HAL_CPU_ENABLE, bsp_cpu_port_enable),
+	HAL_CALLBACK_ENTRY(HAL_CPU_SPEED, bsp_cpu_port_speed),
+	HAL_CALLBACK_ENTRY(HAL_CPU_DUPLEX, bsp_cpu_port_duplex),
+	HAL_CALLBACK_ENTRY(HAL_CPU_FLOW, bsp_cpu_port_flow),
 };
 
 

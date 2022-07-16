@@ -78,7 +78,6 @@ DEFUN (ip_vrf_cli_set_vrfid,
        "Specify Route ID the VRF\n"
        "The VRF ID\n")
 {
-	struct ip_vrf *vrf = NULL;
 	vrf_id_t vrf_id = 0;
 	struct prefix rid;
 	rid.u.prefix4.s_addr = ipstack_inet_addr (argv[0]);

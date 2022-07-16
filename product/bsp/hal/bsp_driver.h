@@ -13,6 +13,9 @@ extern "C" {
 
 #include "zplos_include.h"
 #include "hal_client.h"
+#include "bsp_netlink.h"
+
+#define ETH_MAC_CACHE_MAX	4096
 
 struct sdk_driver_port 
 {
@@ -32,6 +35,10 @@ typedef struct bsp_driver
     zpl_void *master;
     zpl_uint32 taskid;
     zpl_void *hal_client;
+
+    bsp_netlink_t   *netlink_cfg;
+    bsp_netlink_t   *netlink_klog;
+
     bsp_sdk_func bsp_sdk_init;
     bsp_sdk_func bsp_sdk_start;
     bsp_sdk_func bsp_sdk_stop;
@@ -53,8 +60,13 @@ typedef struct bsp_driver
 
 #define BSP_DRIVER(bspdev, bsp)    bsp_driver_t *bspdev =  (bsp_driver_t*)(bsp)
 
+extern int bsp_driver_kernel_netlink_proxy(bsp_driver_t *bspdriver, char *data, int len, void *p);
+
 extern int bsp_driver_mac_cache_add(bsp_driver_t *, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild);
 extern int bsp_driver_mac_cache_update(bsp_driver_t *, zpl_uint8 *mac, zpl_uint8 isage);
+
+extern int bsp_driver_start(bsp_driver_t *bspdriver, zpl_uint32 pid, zpl_uint32 ifindex);
+extern int bsp_driver_debug(bsp_driver_t *bspdriver, zpl_uint32 module, zpl_uint32 enable, zpl_uint32 value);
 
 #if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_NONE)
 typedef struct sdk_driver {
@@ -71,13 +83,6 @@ extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
 
 #elif defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
 
-#define HAL_CFG_REQUEST_CMD (30) 
-#define HAL_DATA_REQUEST_CMD (29)
-#define HAL_KLOG_REQUEST_CMD (28)
-
-#define HAL_CFG_NETLINK_PROTO (30)
-#define HAL_DATA_NETLINK_PROTO (29)
-#define HAL_KLOG_NETLINK_PROTO (28)
 
 
 typedef struct sdk_driver {
@@ -96,7 +101,6 @@ extern int sdk_driver_init(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_start(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_stop(struct bsp_driver *, zpl_void *);
 extern int sdk_driver_exit(struct bsp_driver *, zpl_void *);
-
 #endif
 
 extern bsp_driver_t bsp_driver;

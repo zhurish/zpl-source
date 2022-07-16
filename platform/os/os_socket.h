@@ -48,7 +48,7 @@ extern int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 
 extern int os_write_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms);
 extern int os_read_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms);
 
-extern int os_writemsg(int sock, char *m, int len, char *m1, int len1);
+
 extern int os_write_iov(int fd, int type, struct iovec *iov, int iovcnt);
 
 /**************************************************/
@@ -81,7 +81,7 @@ extern int ipstack_unix_sockpair_create(zpl_ipstack, zpl_bool tcp, zpl_socket_t 
 extern int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms);
 extern int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms);
 
-extern int ipstack_writemsg(zpl_socket_t sock, char *m, int len, char *m1, int len1);
+
 extern int ipstack_write_iov(zpl_socket_t fd, int type, struct iovec *iov, int iovcnt);
 
 extern int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms);

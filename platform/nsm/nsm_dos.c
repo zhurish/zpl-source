@@ -245,7 +245,6 @@ int nsm_dos_callback_api(l2dos_cb cb, void *pVoid)
 
 static int nsm_dos_config_write(struct vty *vty, void *p)
 {
-	zpl_char str[INET6_ADDRSTRLEN];
 	if(gdos.mutex)
 		os_mutex_lock(gdos.mutex, OS_WAIT_FOREVER);
 	if(gdos.enable)

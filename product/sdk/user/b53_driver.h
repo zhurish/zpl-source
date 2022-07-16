@@ -183,22 +183,16 @@ extern int b53125_device_exit(struct b53125_device *);
 
 extern int b53125_config_start(sdk_driver_t *dev);
 /*******global *******/
-extern int b53125_range_error(sdk_driver_t *dev, zpl_bool enable);
-
-extern int b53125_multicast_forward(sdk_driver_t *dev, u8 *mac, zpl_bool enable);
 extern int b53125_global_init(sdk_driver_t *dev);
 extern int b53125_global_start(sdk_driver_t *dev);
 extern int b53125_reset(sdk_driver_t *dev);
+
 /*******snoop *******/
 extern int b53125_snooping_init(sdk_driver_t *dev);
 
 
 /******* IMP PORT *******/
-extern int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port);
-extern int b53125_imp_enable(sdk_driver_t *dev, zpl_bool enable);
-extern int b53125_imp_speed(sdk_driver_t *dev, int speed);
-extern int b53125_imp_duplex(sdk_driver_t *dev, int duplex);
-extern int b53125_imp_flow(sdk_driver_t *dev, zpl_bool rx, zpl_bool tx);
+extern int b53125_imp_init(sdk_driver_t *dev);
 extern int b53125_imp_port_enable(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_imp_mii_overwrite(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_cpu_init(sdk_driver_t *dev);
@@ -235,18 +229,17 @@ extern int b53125_trunk_init(sdk_driver_t *dev);
 
 /******* VLAN *******/
 extern int b53125_vlan_init(sdk_driver_t *dev);
-extern int b53125_add_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag);
-extern int b53125_del_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag);
-extern int b53125_vlan_port_untag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t port , vlan_t vid);
+extern int b53125_vlan_port_mode(sdk_driver_t *dev, zpl_phyport_t port, int mode);
+
 /******* mirror *******/
 extern int b53125_mirror_init(sdk_driver_t *dev);
 
 /******* MAC *******/
-extern int b53125_clear_mac_all(sdk_driver_t *dev);
+
 extern int b53125_mac_init(sdk_driver_t *dev);
+extern int b53125_mac_clear_all(sdk_driver_t *dev);
 extern int b53125_mac_address_clr(sdk_driver_t *dev, zpl_phyport_t phyport, 
 	zpl_vlan_t vlanid, zpl_uint32 vrfid);
-extern int b53125_clear_mac_tbl_vlan(sdk_driver_t *dev, vlan_t vid);
 /******* DOS *******/
 extern int b53125_dos_disable_lean(sdk_driver_t *dev, zpl_bool enable);
 extern int b53125_dos_init(sdk_driver_t *dev);
@@ -261,7 +254,9 @@ extern int b53125_phy_powerdown(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool 
 
 /*********************************************************************************/
 
+extern int b53125_range_error(sdk_driver_t *dev, zpl_bool enable);
 
+extern int b53125_multicast_forward(sdk_driver_t *dev, u8 *mac, zpl_bool enable);
 
 
 #ifdef __cplusplus

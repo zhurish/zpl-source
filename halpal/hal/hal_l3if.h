@@ -13,18 +13,7 @@ extern "C" {
 #endif
 
 
-enum hal_l3if_cmd 
-{
-    HAL_L3IF_NONE,
-	  HAL_L3IF_CREATE,
-	  HAL_L3IF_DELETE,
-	  HAL_L3IF_ADDR_ADD,
-	  HAL_L3IF_ADDR_DEL,
-	  HAL_L3IF_DSTADDR_ADD,
-	  HAL_L3IF_DSTADDR_DEL,
-    HAL_L3IF_VRF,
-	  HAL_L3IF_MAC,
-};
+
 
 typedef struct hal_l3if_param_s
 {

@@ -20,16 +20,6 @@ typedef enum hal_port_stp_state_e {
     HAL_PORT_STP_FORWARD
 } hal_port_stp_state_t;
 
-enum hal_mstp_cmd 
-{
-    HAL_MSTP_NONE,
-	HAL_MSTP_ENABLE,
-    HAL_MSTP_CREATE,
-    HAL_MSTP_ADD_VLAN,
-    HAL_MSTP_DEL_VLAN,
-	HAL_MSTP_STATE,
-    HAL_STP_STATE,
-};
 
 typedef struct hal_mstp_param_s
 {

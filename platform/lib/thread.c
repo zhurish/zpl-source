@@ -1747,7 +1747,7 @@ DEFUN(clear_thread_task_cpu,
 	  "Thread CPU usage\n"
 	  "Display filter (rwtexb)\n")
 {
-	zpl_uint32 i = 0, index = 0;
+	zpl_uint32 index = 0;
 	thread_type filter = 0xff;
 #ifdef THREAD_MASTER_LIST
 	struct thread_master *cutmp = NULL;
@@ -1881,12 +1881,6 @@ static int cpu_thread_pqueue_show(struct pqueue *m, struct vty *vty)
 
 static int cpu_thread_show(struct thread_master *m, struct vty *vty)
 {
-	// zpl_uint32 i = 0;
-
-	/*	for (i = 0; i < m->fd_limit; i++)
-			cpu_thread_read_write_show(m->read[i], vty);
-		for (i = 0; i < m->fd_limit; i++)
-			cpu_thread_read_write_show(m->write[i], vty);*/
 	cpu_thread_list_show(&m->read, vty);
 	cpu_thread_list_show(&m->write, vty);
 	cpu_thread_list_show(&m->event, vty);
@@ -1903,7 +1897,6 @@ DEFUN(show_thread_dump,
 	  "system thread information\n"
 	  "thread dump information\n")
 {
-	zpl_uint32 i = 0;
 #ifdef THREAD_MASTER_LIST
 	struct thread_master *cutmp = NULL;
 	struct thread_master *next = NULL;

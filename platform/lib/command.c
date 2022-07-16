@@ -33,10 +33,12 @@ Boston, MA 02111-1307, USA.  */
 #include "vty.h"
 #include "command.h"
 #include "workqueue.h"
+#include "cli.h"
+
 
 /* Command vector which includes some level of command lists. Normally
-   each daemon maintains each own cmdvec. */
-vector cmdvec = NULL;
+   each daemon maintains each own cli_cmdvec_list. */
+vector cli_cmdvec_list = NULL;
 
 struct cmd_token token_cr;
 zpl_char *command_cr = NULL;
@@ -115,7 +117,7 @@ cmd_hash_cmp(const void *a, const void *b)
 #ifdef ZPL_BUILD_DEBUG
 void funcname_install_node (struct cmd_node *node, int (*func) (struct vty *), const char *funcname)
 {
-  vector_set_index(cmdvec, node->node, node);
+  vector_set_index(cli_cmdvec_list, node->node, node);
   node->func = func;
   node->cmd_vector = vector_init(VECTOR_MIN_SIZE);
   node->cmd_hash = hash_create(cmd_hash_key, cmd_hash_cmp);
@@ -123,7 +125,7 @@ void funcname_install_node (struct cmd_node *node, int (*func) (struct vty *), c
 }
 void funcname_reinstall_node (enum node_type node, int (*func) (struct vty *), const char *funcname)
 {
-  struct cmd_node *pNode = vector_lookup(cmdvec, node);
+  struct cmd_node *pNode = vector_lookup(cli_cmdvec_list, node);
   pNode->func = func;
   pNode->funcname = funcname;
 }
@@ -131,7 +133,7 @@ void funcname_reinstall_node (enum node_type node, int (*func) (struct vty *), c
 void install_node(struct cmd_node *node,
                   int (*func)(struct vty *))
 {
-  vector_set_index(cmdvec, node->node, node);
+  vector_set_index(cli_cmdvec_list, node->node, node);
   node->func = func;
   node->cmd_vector = vector_init(VECTOR_MIN_SIZE);
   node->cmd_hash = hash_create(cmd_hash_key, cmd_hash_cmp);
@@ -140,7 +142,7 @@ void install_node(struct cmd_node *node,
 void reinstall_node(enum node_type node,
                     int (*func)(struct vty *))
 {
-  struct cmd_node *pNode = vector_lookup(cmdvec, node);
+  struct cmd_node *pNode = vector_lookup(cli_cmdvec_list, node);
   pNode->func = func;
 }
 #endif
@@ -524,10 +526,144 @@ cmd_prompt(enum node_type node)
 {
   struct cmd_node *cnode;
 
-  cnode = vector_slot(cmdvec, node);
+  cnode = vector_slot(cli_cmdvec_list, node);
   return cnode->prompt;
 }
 
+
+/* malloc a command into a node. */
+struct cmd_element * new_element(const char *string, const char *doc, zpl_uint32 daemon, zpl_uint16 attr, const char *sfuncname)
+{
+  struct cmd_element *cmd = XMALLOC(MTYPE_CMD_ELEMENT, sizeof(struct cmd_element));
+  if(cmd)
+  {
+    cmd->string = XSTRDUP(MTYPE_CMD_ELEMENT_KEY, string);			/* Command specification by string. */
+    cmd->doc = XSTRDUP(MTYPE_CMD_ELEMENT_HELP, doc);			/* Documentation of this command. */
+    cmd->daemon = daemon;                   /* Daemon to which this command belong. */
+    cmd->attr = attr|CMD_ATTR_NEW;			/* Command attributes */
+    #ifdef ZPL_BUILD_DEBUG
+    cmd->sfuncname = sfuncname;
+    #endif
+  }
+  return cmd;
+}
+
+
+/* 获取helpstr 个数 */
+static int cmd_helpstr_maxsize(const char *string)
+{
+  int num = 0;
+  const char *cp = string;
+  while (*cp != '\0')
+  {
+    if(*cp == '\n')
+      num++;
+     cp++; 
+  }
+  return num;
+}
+
+static int cmd_keystr_maxsize(const char *string)
+{
+  int j = 0, k = 0;
+  const char *cp = string;
+  while (isspace(*cp))
+    cp++;
+  while (1)
+  {
+    switch (*cp)
+    {
+    case '\0':
+      return (j + 1 + k);
+    case '(':
+    case ')':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+    case '-':
+      break;
+    case ' ':
+      k++;
+      break;
+    case '|':
+      j++;
+      break;
+    default:
+      break;
+    }
+    cp++;
+  }
+  return (j + 1 + k);
+}
+/*删除多余空格*/
+static int cmd_keystr_surplus_isspace(const char *string, char *cmd)
+{
+  int i = 0, k = 0;
+  const char *cp = string;
+  while (isspace(*cp))
+    cp++;
+  while (1)
+  {
+    switch (*cp)
+    {
+    case '\0':
+      return 0;
+    case '(':
+    case ')':
+    case '|':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+    case '-':
+      k = 1;
+      cmd[i++] = *cp;
+      break;
+    case ' ':
+      switch (*(cp + 1))
+      {
+      case ')':
+      case '|':
+      case '}':
+      case ']':
+      case '-':
+        k = 1;
+        break;
+      case '(':
+      case '{':
+      case '[':
+        break;
+      }
+      if (k == 0)
+      {
+        cmd[i++] = *cp;
+        k = 1;
+      }
+      break;
+    default:
+      k = 0;
+      cmd[i++] = *cp;
+      break;
+    }
+    cp++;
+  }
+  return 0;
+}
+
+static int cmd_element_check(struct cmd_element *cmd)
+{
+  char cmdstr[1024];
+  memset(cmdstr, 0, sizeof(cmdstr));
+  cmd_keystr_surplus_isspace(cmd->string, cmdstr);
+  if(cmd_keystr_maxsize(cmdstr) != cmd_helpstr_maxsize(cmd->doc))
+  {
+    fprintf(stderr, "\nError parsing command: \"%s\"\n", cmd->string);
+    fprintf(stderr, "This is a programming error. Check your CLI helpstr.\n");
+    return ERROR;
+  }
+  return OK;
+}
 
 /* Install a command into a node. */
 void install_element(enum node_type ntype, enum cmd_privilege privilege, struct cmd_element *cmd)
@@ -535,14 +671,16 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
   struct cmd_node *cnode;
 
   /* cmd_init hasn't been called */
-  if (!cmdvec)
+  if (!cli_cmdvec_list)
   {
     fprintf(stderr, "%s called before cmd_init, breakage likely\n",
             __func__);
     return;
   }
+  if(cmd_element_check(cmd) == ERROR)
+    ;//exit(1);
 
-  cnode = vector_slot(cmdvec, ntype);
+  cnode = vector_slot(cli_cmdvec_list, ntype);
 
   if (cnode == NULL)
   {
@@ -980,11 +1118,7 @@ cmd_range_match(const char *keystr, const char *str)
 static int
 cmd_iuspv_match(const char *keystr, const char *str)
 {
-  // IF_USP_STR
-  zpl_uint32 count = 0;
   zpl_char *base = "0123456789/.-";
-  zpl_char *math = (zpl_char *)keystr;
-  //fprintf(stdout,"%s:%s -> %s\r\n",__func__,keystr,str);
   if (keystr == NULL)
     return 0;
   if (str == NULL)
@@ -1208,7 +1342,7 @@ struct cmd_matcher
 };
 
 static int
-push_argument(zpl_uint32 *argc, const char **argv, const char *arg)
+push_argument(zpl_int32 *argc, const char **argv, const char *arg)
 {
   if (!arg || !strlen(arg))
     arg = NULL;
@@ -1262,7 +1396,7 @@ cmd_matcher_get_word(struct cmd_matcher *matcher)
 static enum matcher_rv
 cmd_matcher_match_terminal(struct cmd_matcher *matcher,
                            struct cmd_token *token,
-                           zpl_uint32 *argc, const char **argv)
+                           zpl_int32 *argc, const char **argv)
 {
   const char *word;
   enum match_type word_match;
@@ -1310,7 +1444,7 @@ cmd_matcher_match_terminal(struct cmd_matcher *matcher,
 static enum matcher_rv
 cmd_matcher_match_multiple(struct cmd_matcher *matcher,
                            struct cmd_token *token,
-                           zpl_uint32 *argc, const char **argv)
+                           zpl_int32 *argc, const char **argv)
 {
   enum match_type multiple_match;
   zpl_uint32 multiple_index;
@@ -1372,7 +1506,7 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
   vector keyword_vector = NULL;
   struct cmd_token *word_token = NULL;
   const char *word = NULL;
-  zpl_uint32 keyword_argc;
+  zpl_int32 keyword_argc;
   const char **keyword_argv = NULL;
   enum matcher_rv rv = MATCHER_NO_MATCH;
 
@@ -1474,7 +1608,7 @@ cmd_matcher_read_keywords(struct cmd_matcher *matcher,
 static enum matcher_rv
 cmd_matcher_build_keyword_args(struct cmd_matcher *matcher,
                                struct cmd_token *token,
-                               zpl_uint32 *argc, const char **argv,
+                               zpl_int32 *argc, const char **argv,
                                vector keyword_args_vector)
 {
   zpl_uint32 i, j;
@@ -1544,7 +1678,7 @@ cmd_matcher_build_keyword_args(struct cmd_matcher *matcher,
 static enum matcher_rv
 cmd_matcher_match_keyword(struct cmd_matcher *matcher,
                           struct cmd_token *token,
-                          zpl_uint32 *argc, const char **argv)
+                          zpl_int32 *argc, const char **argv)
 {
   vector keyword_args_vector = NULL;
   enum matcher_rv reader_rv;
@@ -1599,7 +1733,7 @@ cmd_element_match(struct cmd_element *cmd_element,
                   zpl_uint32 index,
                   enum match_type *match_type,
                   vector *match,
-                  zpl_uint32 *argc,
+                  zpl_int32 *argc,
                   const char **argv)
 {
   struct cmd_matcher matcher;
@@ -1752,7 +1886,7 @@ cmd_is_complete(struct cmd_element *cmd_element,
 static int
 cmd_parse(struct cmd_element *cmd_element,
           vector vline,
-          zpl_uint32 *argc, const char **argv)
+          zpl_int32 *argc, const char **argv)
 {
   enum matcher_rv rv = cmd_element_match(cmd_element,
                                          CMD_FILTER_RELAXED,
@@ -2118,7 +2252,7 @@ cmd_describe_command_real(vector vline, struct vty *vty, zpl_uint32 *status)
   index = vector_active(vline) - 1;
 
   /* Make copy vector of current node's command vector. */
-  cmd_vector = vector_copy(cmd_node_vector(cmdvec, vty->node));
+  cmd_vector = vector_copy(cmd_node_vector(cli_cmdvec_list, vty->node));
 
   /* Prepare match vector */
   matchvec = vector_init(INIT_MATCHVEC_SIZE);
@@ -2358,7 +2492,7 @@ static zpl_char **
 cmd_complete_command_real(vector vline, struct vty *vty, zpl_uint32 *status, zpl_uint32 islib)
 {
   zpl_uint32 i;
-  vector cmd_vector = vector_copy(cmd_node_vector(cmdvec, vty->node));
+  vector cmd_vector = vector_copy(cmd_node_vector(cli_cmdvec_list, vty->node));
 #define INIT_MATCHVEC_SIZE 10
   vector matchvec = NULL;
   zpl_uint32 index;
@@ -2581,7 +2715,7 @@ cmd_execute_command_real(vector vline,
   struct cmd_element *cmd_element = NULL;
   struct cmd_element *matched_element = NULL;
   zpl_uint32 matched_count, incomplete_count;
-  zpl_uint32 argc;
+  zpl_int32 argc;
   const char *argv[CMD_ARGC_MAX];
   enum match_type match = 0;
   zpl_char *command = NULL;
@@ -2589,7 +2723,7 @@ cmd_execute_command_real(vector vline,
   vector matches = NULL;
 
   /* Make copy of command elements. */
-  cmd_vector = vector_copy(cmd_node_vector(cmdvec, vty->node));
+  cmd_vector = vector_copy(cmd_node_vector(cli_cmdvec_list, vty->node));
 
   for (index = 0; index < vector_active(vline); index++)
   {
@@ -2675,8 +2809,18 @@ cmd_execute_command_real(vector vline,
   if(vty->type != VTY_FILE)
   zpl_backtrace_symb_set(matched_element->sfuncname, NULL, 1);
 #endif
+  if(matched_element->attr & CMD_ATTR_NEW && matched_element->cli_func)
+  {
+    struct cli cli;
+    cli_callback_init(&cli, vty);
+    ret = (*matched_element->cli_func)(&cli, argc, argv);
+    vty->node = cli.node; 
+    return ret;//(*matched_element->cli_func)(&cli, argc, argv);
+  }
   /* Execute matched command. */
-  return (*matched_element->func)(matched_element, vty, argc, argv);
+  if(matched_element->func)
+    return (*matched_element->func)(matched_element, vty, argc, argv);
+  return CMD_ERR_INCOMPLETE;  
 }
 
 /**
@@ -2877,7 +3021,7 @@ void cmd_init(zpl_bool terminal)
   token_cr.desc = XSTRDUP(MTYPE_CMD_TOKENS, "");
 
   /* Allocate initial top vector of commands. */
-  cmdvec = vector_init(VECTOR_MIN_SIZE);
+  cli_cmdvec_list = vector_init(VECTOR_MIN_SIZE);
 
   host_config_init(default_motd);
   /* Install top nodes. */
@@ -2928,9 +3072,22 @@ cmd_terminate_element(struct cmd_element *cmd)
 
   for (i = 0; i < vector_active(cmd->tokens); i++)
     cmd_terminate_token(vector_slot(cmd->tokens, i));
-
   vector_free(cmd->tokens);
   cmd->tokens = NULL;
+  if(cmd->attr & CMD_ATTR_NEW)
+  {
+    if(cmd->doc)
+    {
+      XFREE(MTYPE_CMD_ELEMENT_HELP, cmd->doc);
+      cmd->doc = NULL;
+    }
+    if(cmd->string)
+    {
+      XFREE(MTYPE_CMD_ELEMENT_KEY, cmd->string);
+      cmd->string = NULL;
+    }
+    XFREE(MTYPE_CMD_ELEMENT, cmd);
+  }
 }
 
 void cmd_terminate()
@@ -2940,10 +3097,10 @@ void cmd_terminate()
   struct cmd_element *cmd_element;
   vector cmd_node_v;
 
-  if (cmdvec)
+  if (cli_cmdvec_list)
   {
-    for (i = 0; i < vector_active(cmdvec); i++)
-      if ((cmd_node = vector_slot(cmdvec, i)) != NULL)
+    for (i = 0; i < vector_active(cli_cmdvec_list); i++)
+      if ((cmd_node = vector_slot(cli_cmdvec_list, i)) != NULL)
       {
         cmd_node_v = cmd_node->cmd_vector;
 
@@ -2957,8 +3114,8 @@ void cmd_terminate()
         cmd_node->cmd_hash = NULL;
       }
 
-    vector_free(cmdvec);
-    cmdvec = NULL;
+    vector_free(cli_cmdvec_list);
+    cli_cmdvec_list = NULL;
   }
 
   if (command_cr)

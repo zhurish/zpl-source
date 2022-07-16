@@ -7,9 +7,9 @@ extern "C" {
 #endif
 
 #ifdef ZPL_NSM_VLANETH
-extern int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp);
-extern int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp);
-extern int _ipkernel_vlaneth_change (nsm_vlaneth_t *kifp, vlan_t vlan);
+extern int linux_ioctl_vlaneth_create (nsm_vlaneth_t *kifp);
+extern int linux_ioctl_vlaneth_destroy (nsm_vlaneth_t *kifp);
+extern int linux_ioctl_vlaneth_change (nsm_vlaneth_t *kifp, vlan_t vlan);
 #endif
 
 #ifdef __cplusplus

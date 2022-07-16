@@ -560,7 +560,7 @@ done:
   return ret;
 }
 
-int ether_aton_r (const void *addrptr, struct ipstack_ethaddr *ether)
+int ethaddr_aton_r (const void *addrptr, struct ipstack_ethaddr *ether)
 {
 	zpl_uint32  a[6], i = 0;
 	if (sscanf(addrptr, "%2x:%2x:%2x:%2x:%2x:%2x", a + 0, a + 1, a + 2, a + 3,

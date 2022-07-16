@@ -49,7 +49,7 @@ static nsm_qos_queue_e _qos_cosipexp_map_tbl[NSM_QOS_PRI_MAX] =
 		NSM_QOS_QUEUE_3,
 		NSM_QOS_QUEUE_NONE
 	};
-
+#ifdef NSM_QOS_QUEUE_MAP_PRIORITY
 static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 	{
 		NSM_QOS_PRI_NONE,
@@ -59,6 +59,7 @@ static nsm_qos_priority_e _qos_cosipexp_mapqueue_tbl[NSM_QOS_QUEUE_MAX] =
 		NSM_QOS_PRI_3,
 		NSM_QOS_PRI_MAX
 	};
+#endif	
 #elif NSM_QOS_PORT_QUEUE_NUM == NSM_QOS_PORT_QUEUE_NUM_8
 #ifdef NSM_QOS_QUEUE_MAP_CLASS
 static nsm_qos_class_e _class_queue_map_tbl[NSM_QOS_QUEUE_MAX] =
@@ -846,8 +847,8 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos && !if_is_loop(ifp) && nsm_qos_global_get())
 	{
-		int32_t i = 0, j = 0, n = 0;
-		zpl_uint32 tmpb[NSM_QOS_DSCP_PRI_MAX];
+		int32_t i = 0;//, j = 0;//, n = 0;
+		//zpl_uint32 tmpb[NSM_QOS_DSCP_PRI_MAX];
 		zpl_char tmpstr[512];
 
 		if (qos->qos_input_limit.qos_cir)
@@ -1018,8 +1019,8 @@ int nsm_qos_interface_show(struct vty *vty, struct interface *ifp)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos && !if_is_loop(ifp) && nsm_qos_global_get())
 	{
-		int32_t i = 0, j = 0, n = 0;
-		zpl_uint32 tmpb[NSM_QOS_DSCP_PRI_MAX];
+		int32_t i = 0;//, j = 0, n = 0;
+		//zpl_uint32 tmpb[NSM_QOS_DSCP_PRI_MAX];
 		zpl_char tmpstr[512], tmpstr1[512], tmpstr2[512];
 		memset(tmpstr, 0, sizeof(tmpstr));
 		memset(tmpstr1, 0, sizeof(tmpstr1));

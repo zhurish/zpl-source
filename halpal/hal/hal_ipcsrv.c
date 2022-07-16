@@ -48,7 +48,6 @@ static int
 hal_ipcclient_client_create(struct hal_ipcsrv *ipcsrv, struct ipstack_sockaddr_in *clientaddr, zpl_socket_t sock, zpl_bool ev)
 {
     struct hal_ipcclient *client;
-    zpl_uint32 i = 0;
     client = XCALLOC(MTYPE_HALIPCCLIENT, sizeof(struct hal_ipcclient));
     if (client == NULL)
         return ERROR;

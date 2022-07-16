@@ -158,7 +158,7 @@ int host_config_init(zpl_char *motd)
 		if(strlen(tmp) && strstr(tmp, ":"))
 		{
 			struct ipstack_ethaddr ether;
-			ether_aton_r (tmp, &ether);
+			ethaddr_aton_r (tmp, &ether);
 			host_config_set_api(API_SET_SYSMAC_CMD, ether.octet);
 		}
 	}

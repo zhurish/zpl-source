@@ -238,8 +238,8 @@ access_list_unlock(struct access_list *access)
 static void
 access_list_delete(struct access_list *access)
 {
-  struct filter_list *filter;
-  struct filter_list *next;
+  //struct filter_list *filter;
+  //struct filter_list *next;
   struct access_list_list *list;
   struct access_master *master;
 
@@ -3701,7 +3701,6 @@ static int filter_set_l2mac(struct vty *vty, const char *name_str,
                             const char *type_str, u_char mpls, struct filter_l2 *l2new,
                             u_char set)
 {
-  int ret;
   enum filter_type type;
   struct filter_list *mfilter;
   struct filter_l2 *filter;

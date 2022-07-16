@@ -45,14 +45,7 @@ typedef enum hal_auth_mac_control_e {
 } hal_auth_mac_control_t;
 
 
-enum hal_8021x_cmd 
-{
-    HAL_8021X_NONE,
-	HAL_8021X,
-	HAL_8021X_PORT_MODE,
-	HAL_8021X_PORT_MAC,
-	HAL_8021X_PORT_STATE,
-};
+
 
 typedef struct hal_8021x_param_s
 {

@@ -593,6 +593,7 @@ static zpl_uint32 b53125_port_get_duplex(sdk_driver_t *dev, zpl_phyport_t port)
 
 static int b53125_port_set_mode(sdk_driver_t *dev, zpl_phyport_t port, int mode)
 {
+	b53125_vlan_port_mode(dev, port, mode);
 	return 0;
 }
 

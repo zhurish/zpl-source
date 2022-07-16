@@ -297,7 +297,7 @@ sockunion_connect (zpl_socket_t fd, const union sockunion *peersu, zpl_ushort po
 		   ifindex_t ifindex)
 {
   int ret;
-  zpl_uint32 val;
+  //zpl_uint32 val;
   union sockunion su;
 
   memcpy (&su, peersu, sizeof (union sockunion));

@@ -27,11 +27,6 @@
 #endif
 
 
-
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
-static int sdk_driver_set_request(sdk_driver_t *sdkdriver, char *data, int len, void *p);
-#endif
-
 bsp_driver_t bsp_driver;
 
 struct module_list module_list_sdk = 
@@ -46,12 +41,15 @@ struct module_list module_list_sdk =
 	.taskid=0,
 };
 
+
 int bsp_driver_mac_cache_add(bsp_driver_t *sdkdriver, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild)
 {
 	int i = 0;
 	for(i = 0; i < sdkdriver->mac_cache_max; i++)
 	{
-		if(sdkdriver->mac_cache_entry[i].use == 1 && (memcmp(sdkdriver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
+		if(sdkdriver->mac_cache_entry[i].use == 1 && 
+			sdkdriver->mac_cache_entry[i].vid == vid && 
+			(memcmp(sdkdriver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
 		{
 			sdkdriver->mac_cache_entry[i].port = port;
 			sdkdriver->mac_cache_entry[i].vid = vid;
@@ -95,6 +93,95 @@ int bsp_driver_mac_cache_update(bsp_driver_t *sdkdriver, zpl_uint8 *mac, zpl_uin
 		}
 	}
 	return OK;
+}
+
+static int bsp_driver_kernel_netlink_request(bsp_driver_t *bspdriver, char *data, int len, int (*filter)(bsp_driver_t *, char *, int, int, void *), void *p)
+{
+	int	*from_pid = NULL;
+	struct ipstack_nlmsghdr *nlh = NULL;
+	struct hal_ipcmsg_header *header = NULL;
+  	struct 
+  	{
+    	struct ipstack_nlmsghdr nlh;
+		char buf[2048];
+  	} req;	
+
+	memset (&req.nlh, 0, sizeof (struct ipstack_nlmsghdr));  
+  	nlh = &req.nlh;
+  	nlh->nlmsg_len = IPSTACK_NLMSG_LENGTH (len+4);
+  	nlh->nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REQUEST;
+  	nlh->nlmsg_type = HAL_CFG_REQUEST_CMD;
+	nlh->nlmsg_seq = ++bspdriver->netlink_cfg->seq;
+	nlh->nlmsg_flags |= IPSTACK_NLM_F_ACK;
+	nlh->nlmsg_pid = 0;
+	from_pid = (int*)req.buf;
+	*from_pid = htonl(getpid());
+	if(len)
+		memcpy (&req.buf[4], data, len); 
+	header = (struct hal_ipcmsg_header *)data;
+	return bsp_netlink_talk(bspdriver->netlink_cfg, nlh, filter, p);
+}
+#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
+static int bsp_driver_kernel_netlink_parse_default(bsp_driver_t *bspdriver, int cmd, char *buf, int len, void *p)
+{
+	struct hal_ipcmsg_header header;
+	struct hal_client *halclient = p;
+	hal_ipcmsg_reset(&halclient->outmsg);
+	hal_ipcmsg_put(&halclient->outmsg, buf, len);
+	hal_ipcmsg_get_header(&halclient->outmsg, &header);
+	halclient->outmsg.getp -= sizeof(struct hal_ipcmsg_header);
+
+	return hal_client_send_message(halclient, 0);
+}
+#else
+static int bsp_driver_kernel_netlink_parse_default(bsp_driver_t *bspdriver, int cmd, char *buf, int len, void *p)
+{
+	struct hal_ipcmsg_header header;
+	struct hal_client *halclient = p;
+	struct hal_ipcmsg_result getvaluetmp;
+	hal_ipcmsg_reset(&halclient->outmsg);
+	hal_ipcmsg_put(&halclient->outmsg, buf, len);
+	hal_ipcmsg_get_header(&halclient->outmsg, &header);
+	hal_ipcmsg_result_get(&halclient->outmsg, &getvaluetmp);
+	return getvaluetmp.result;
+}
+#endif
+
+int bsp_driver_kernel_netlink_proxy(bsp_driver_t *bspdriver, char *data, int len, void *p)
+{
+	if(bspdriver->netlink_cfg && !ipstack_invalid(bspdriver->netlink_cfg->sock))
+		return bsp_driver_kernel_netlink_request(bspdriver, data, len, bsp_driver_kernel_netlink_parse_default, p);
+	return OK;	
+}
+
+
+int bsp_driver_start(bsp_driver_t *bspdriver, zpl_uint32 pid, zpl_uint32 ifindex)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_START);
+	hal_ipcmsg_create_header(&ipcmsg, command);
+	hal_ipcmsg_putl(&ipcmsg, pid);
+	hal_ipcmsg_putl(&ipcmsg, ifindex);
+	return bsp_driver_kernel_netlink_proxy(bspdriver, buf, ipcmsg.setp, bspdriver->hal_client);
+}
+
+int bsp_driver_debug(bsp_driver_t *bspdriver, zpl_uint32 module, zpl_uint32 enable, zpl_uint32 value)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	HAL_ENTER_FUNC();
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, module);
+	hal_ipcmsg_create_header(&ipcmsg, command);
+	hal_ipcmsg_putl(&ipcmsg, module);
+	hal_ipcmsg_putl(&ipcmsg, enable);
+	hal_ipcmsg_putl(&ipcmsg, value);
+	return bsp_driver_kernel_netlink_proxy(bspdriver, buf, ipcmsg.setp, bspdriver->hal_client);
 }
 
 #if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
@@ -202,7 +289,7 @@ int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *drive
 	if(module > HAL_MODULE_NONE && module < HAL_MODULE_MAX)
 	{
 		if(IPCCMD_CMD_GET(cmd) != HAL_MODULE_CMD_ACK)
-			ret = sdk_driver_set_request(client->bsp_driver, client->ipcmsg.buf, client->ipcmsg.setp, client);
+			ret = bsp_driver_kernel_netlink_proxy(client->bsp_driver, client->ipcmsg.buf, client->ipcmsg.setp, client);
 		else
 		{
 			zlog_warn(MODULE_HAL, "=============HAL_MODULE_CMD_ACK:%d ", module);
@@ -239,11 +326,39 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
   struct hal_client *bsp = hal_client_create(MODULE_BSP, zpl_false);
   if (bsp)
   {
+
+	bspdriver->mac_cache_max = ETH_MAC_CACHE_MAX;
+	bspdriver->mac_cache_num = 0;
+	bspdriver->mac_cache_entry = XMALLOC(MTYPE_MAC, sizeof(hal_mac_cache_t)*bspdriver->mac_cache_max);
+	if(bspdriver->mac_cache_entry == NULL)
+	{
+		hal_client_destroy(bsp);
+		return ERROR;
+	}
+
+	bspdriver->netlink_cfg = bsp_netlink_create(4096, 0);
+	if(bspdriver->netlink_cfg == NULL)
+	{
+		XFREE(MTYPE_MAC, bspdriver->mac_cache_entry);
+		bspdriver->mac_cache_entry = NULL;
+		bspdriver->mac_cache_max = 0;
+		bspdriver->mac_cache_num = 0;
+		hal_client_destroy(bsp);
+		return ERROR;
+	}
+
+	if(bsp_netlink_open(bspdriver->netlink_cfg, HAL_CFG_NETLINK_PROTO) != OK)
+	{
+		bsp_driver_exit(bspdriver);
+		return ERROR;
+	}
+
     bsp->debug = 0xffff;
     bspdriver->hal_client = bsp;
     bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
   
     hal_client_start(bsp);
+	bsp_driver_start(bspdriver, getpid(), if_nametoindex("eth0"));
     return OK;
   }
   return ERROR;
@@ -251,13 +366,35 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 
 int bsp_driver_exit(bsp_driver_t *bspdriver)
 {
-  hal_client_destroy(bspdriver->hal_client);
-  if (bspdriver->master)
-  {
-    thread_master_free(bspdriver->master);
-    bspdriver->master = NULL;
-  }
-  return OK;
+	bsp_driver_start(bspdriver, 0, 0);
+	if(bspdriver->mac_cache_entry)
+	{
+		XFREE(MTYPE_MAC, bspdriver->mac_cache_entry);
+		bspdriver->mac_cache_entry = NULL;
+		bspdriver->mac_cache_max = 0;
+		bspdriver->mac_cache_num = 0;
+	}
+	if(bspdriver->netlink_cfg)
+	{
+		bsp_netlink_close(bspdriver->netlink_cfg);
+		bsp_netlink_destroy(bspdriver->netlink_cfg);
+		bspdriver->netlink_cfg = NULL;
+	}
+
+	if(bspdriver->netlink_klog)
+	{
+		bsp_netlink_close(bspdriver->netlink_klog);
+		bsp_netlink_destroy(bspdriver->netlink_klog);
+		bspdriver->netlink_klog = NULL;
+	}		
+	if(bspdriver->hal_client)
+		hal_client_destroy(bspdriver->hal_client);
+	if (bspdriver->master)
+	{
+    	thread_master_free(bspdriver->master);
+    	bspdriver->master = NULL;
+	}
+	return OK;
 }
 
 int bsp_driver_task_init(bsp_driver_t *bspdriver)
@@ -310,7 +447,7 @@ int bsp_module_init(void)
 	{
 		(bsp_driver.bsp_sdk_init)(&bsp_driver, bsp_driver.sdk_driver);
 	}
-	if(bsp_driver.sdk_driver)
+	if(bsp_driver.sdk_driver && bsp_driver.hal_client)
 	{
 		hal_client_callback(bsp_driver.hal_client, bsp_driver_msg_handle, &bsp_driver);
 	}
@@ -381,6 +518,7 @@ int bsp_module_start(void)
         */
 	os_sleep(1);
 	zlog_debug(MODULE_BSP, "BSP Init");
+	if(bsp_driver.hal_client)
   	hal_client_bsp_register(bsp_driver.hal_client, 0,
         0, 0, 5, "V0.0.0.1");
 
@@ -389,8 +527,10 @@ int bsp_module_start(void)
 
 
 	zlog_debug(MODULE_BSP, "SDK Register Port Table Info.");
+	if(bsp_driver.hal_client)
   	hal_client_bsp_hwport_register(bsp_driver.hal_client, 5, porttbl);
 
+	if(bsp_driver.hal_client)
 	hal_client_event(HAL_EVENT_REGISTER, bsp_driver.hal_client, 1);
 	zlog_debug(MODULE_BSP, "SDK Init, Done.");
 	return OK;
@@ -415,20 +555,20 @@ int bsp_module_task_exit(void)
 #ifdef ZPL_SDK_NONE
 static sdk_driver_t * sdk_driver_malloc(void)
 {
-	return (sdk_driver_t *)malloc(sizeof(sdk_driver_t));
+	return (sdk_driver_t *)XMALLOC(MTYPE_SDK, sizeof(sdk_driver_t));
 }
 
 static int sdk_driver_free(sdk_driver_t *sdkdriver)
 {
 	if(sdkdriver)
-		free(sdkdriver);
+		XFREE(MTYPE_SDK, sdkdriver);
 	sdkdriver = NULL;
 	return OK;
 }
 
 int sdk_driver_init(struct bsp_driver *bsp, zpl_void *p)
 {
-	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
+	//sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	bsp->sdk_driver = sdk_driver_malloc();
 	if(bsp->sdk_driver)
 		return OK;
@@ -438,13 +578,13 @@ int sdk_driver_init(struct bsp_driver *bsp, zpl_void *p)
 
 int sdk_driver_start(struct bsp_driver *bsp, zpl_void *p)
 {
-	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
+	//sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	return OK;
 }
 
 int sdk_driver_stop(struct bsp_driver *bsp, zpl_void *p)
 {
-	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
+	//sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	return OK;
 }
 
@@ -456,362 +596,15 @@ int sdk_driver_exit(struct bsp_driver *bsp, zpl_void *p)
 	return OK;
 }
 #elif defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
-static int hal_bsp_klog_set(zpl_uint32 val)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_putl(&ipcmsg, 0);
-	hal_ipcmsg_putl(&ipcmsg, val);
-	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, HAL_CLIENT_DEBUG+3);
-	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-
-static int hal_bsp_netpkt_set(zpl_uint32 val)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_putl(&ipcmsg, 0);
-	hal_ipcmsg_putl(&ipcmsg, val);
-	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, HAL_NETPKT_DEBUG + 1);
-	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-static int hal_bsp_netpkt_bind_set(zpl_uint32 val)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	hal_ipcmsg_putl(&ipcmsg, val?1:0);
-	hal_ipcmsg_putl(&ipcmsg, val);
-	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, HAL_NETPKT_DEBUG + 2);
-	return hal_ipcmsg_send_message(IF_UNIT_ALL, 
-		command, buf, hal_ipcmsg_msglen_get(&ipcmsg));
-}
-
-static int sdk_cfg_socket_create(sdk_driver_t *sdkdriver)
-{
-	int ret = 0;
-	struct ipstack_sockaddr_nl bindaddr;
-	sdkdriver->cfg_sock = ipstack_socket(OS_STACK, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, HAL_CFG_NETLINK_PROTO);
-	if (ipstack_invalid(sdkdriver->cfg_sock))
-		return ERROR;
-	memset(&bindaddr, 0, sizeof(struct  ipstack_sockaddr_nl));	
-	bindaddr.nl_family = IPSTACK_AF_NETLINK;
-	bindaddr.nl_pid = getpid();
-	bindaddr.nl_groups = 0;
-	ret = ipstack_bind(sdkdriver->cfg_sock, &bindaddr, sizeof(bindaddr));
-	if(ret < 0)
-	{
-		zlog_err(MODULE_SDK, "Can not bind to socket:%s", ipstack_strerror(ipstack_errno));
-		ipstack_close(sdkdriver->cfg_sock);
-	}
-	ipstack_set_nonblocking(sdkdriver->cfg_sock);
-	return OK;
-	hal_bsp_klog_set(getpid());
-	hal_bsp_netpkt_set(getpid());
-	hal_bsp_netpkt_bind_set(if_nametoindex("eth0"));
-	return OK;
-}
-
-static int sdk_cfg_socket_close(sdk_driver_t *sdkdriver)
-{
-	/* Close ipstack_socket. */
-	if (!ipstack_invalid(sdkdriver->cfg_sock))
-	{
-		ipstack_close(sdkdriver->cfg_sock);
-	}
-	return OK;
-}
-
-
-static int sdk_cfg_netlink_flush(sdk_driver_t *sdkdriver)
-{
-	int ret = 0;
-	fd_set readfds;	
-	zpl_uint8 msgbuf[4096];
-	struct ipstack_sockaddr_nl snl;
-	struct ipstack_msghdr msg;
-	struct ipstack_iovec iov;
-	FD_ZERO(&readfds);
-	FD_SET(sdkdriver->cfg_sock._fd, &readfds);
-	while (1)
-	{
-		iov.iov_base = msgbuf;
-		iov.iov_len = sizeof(msgbuf);
-		msg.msg_name = (void *)&snl;
-		msg.msg_namelen = sizeof snl;
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-		ret = os_select_wait(sdkdriver->cfg_sock._fd + 1, &readfds, NULL, 5);
-		if (ret == OS_TIMEOUT)
-		{
-			return OS_TIMEOUT;
-		}
-		if (ret == ERROR)
-		{
-			_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
-			return ERROR;
-		}	
-		if (FD_ISSET(sdkdriver->cfg_sock._fd, &readfds))
-		{
-			ret = ipstack_recvmsg(sdkdriver->cfg_sock, &msg, 0);
-		}
-	}
-	return 0;
-}
-static int sdk_cfg_netlink_parse_info(sdk_driver_t *sdkdriver,
-									  int (*filter)(sdk_driver_t *, char *, int, void *), void *p)
-{
-	zpl_int32 status;
-	int ret = 0;
-	int error = 0;
-	fd_set readfds;	
-	zpl_uint8 msgbuf[4096];
-	struct ipstack_sockaddr_nl snl;
-	struct ipstack_nlmsghdr *h = NULL;
-	struct ipstack_msghdr msg;
-	struct ipstack_iovec iov;
-	FD_ZERO(&readfds);
-	FD_SET(sdkdriver->cfg_sock._fd, &readfds);
-	while (1)
-	{
-		iov.iov_base = msgbuf;
-		iov.iov_len = sizeof(msgbuf);
-
-		msg.msg_name = (void *)&snl;
-		msg.msg_namelen = sizeof snl;
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-
-		ret = os_select_wait(sdkdriver->cfg_sock._fd + 1, &readfds, NULL, 2000);
-		if (ret == OS_TIMEOUT)
-		{
-			return OS_TIMEOUT;
-		}
-		if (ret == ERROR)
-		{
-			_OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
-			return ERROR;
-		}
-		if (!FD_ISSET(sdkdriver->cfg_sock._fd, &readfds))
-		{
-			_OS_ERROR("no events on sockfd(%d) found\n", fd);
-			return ERROR;
-		}
-		status = ipstack_recvmsg(sdkdriver->cfg_sock, &msg, 0);
-		if (status < 0)
-		{
-			if (ipstack_errno == IPSTACK_ERRNO_EINTR)
-				continue;
-			if (ipstack_errno == IPSTACK_ERRNO_EWOULDBLOCK || ipstack_errno == IPSTACK_ERRNO_EAGAIN)
-				break;
-			zlog_err(MODULE_PAL, "ipstack_recvmsg from [%d] overrun: %s", sdkdriver->cfg_sock._fd,
-					 ipstack_strerror(ipstack_errno));
-			continue;
-		}
-
-		if (status == 0)
-		{
-			zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] EOF", sdkdriver->cfg_sock._fd);
-			return -1;
-		}
-
-		if (msg.msg_namelen != sizeof snl)
-		{
-			zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] sender address length error: length %d",
-					 sdkdriver->cfg_sock._fd, msg.msg_namelen);
-			return -1;
-		}
-		h = (struct ipstack_nlmsghdr *)msgbuf;
-		while (IPSTACK_NLMSG_OK(h, status))
-		{
-			/* Finish of reading. */
-			if (h->nlmsg_type == IPSTACK_NLMSG_DONE)
-			{
-				zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] IPSTACK_NLMSG_DONE", sdkdriver->cfg_sock._fd);
-				return ret;
-			}
-
-			/* Error handling. */
-			if (h->nlmsg_type == IPSTACK_NLMSG_ERROR)
-			{
-				struct ipstack_nlmsgerr *err = (struct ipstack_nlmsgerr *)IPSTACK_NLMSG_DATA(h);
-				int errnum = err->error;
-				int msg_type = err->msg.nlmsg_type;
-
-				/* If the error field is zero, then this is an ACK */
-				if (err->error == 0)
-				{
-					if (IS_HAL_IPCMSG_DEBUG_EVENT(sdkdriver->debug))
-					{
-						zlog_debug(MODULE_SDK,
-								   "%s: ipstack_recvmsg [%d] ACK: type=%u, seq=%u, pid=%u",
-								   __FUNCTION__, sdkdriver->cfg_sock._fd,
-								   err->msg.nlmsg_type, err->msg.nlmsg_seq,
-								   err->msg.nlmsg_pid);
-					}
-
-					/* return if not a multipart message, otherwise continue */
-					if (!(h->nlmsg_flags & IPSTACK_NLM_F_MULTI))
-					{
-						zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] IPSTACK_NLM_F_MULTI", sdkdriver->cfg_sock._fd);
-						return 0;
-					}
-					continue;
-				}
-
-				if (h->nlmsg_len < IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_nlmsgerr)))
-				{
-					zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] error: message truncated", sdkdriver->cfg_sock._fd);
-					return -1;
-				}
-
-				zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] error: %s, type=%u, seq=%u, pid=%u",
-						 sdkdriver->cfg_sock._fd, ipstack_strerror(-errnum),
-						 msg_type,
-						 err->msg.nlmsg_seq, err->msg.nlmsg_pid);
-				return -1;
-			}
-
-			if (filter)
-			{
-				error = (*filter)(sdkdriver, IPSTACK_NLMSG_DATA (h), IPSTACK_NLMSG_PAYLOAD(h, 0), p);
-				if (error < 0)
-				{
-					zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] filter function error", sdkdriver->cfg_sock._fd);
-					ret = error;
-				}
-				ret = error;
-			}
-			else
-				ret = 0;
-			if ((h->nlmsg_flags & IPSTACK_NLM_F_MULTI))
-				h = IPSTACK_NLMSG_NEXT(h, status);	
-			else
-			{
-				zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] END", sdkdriver->cfg_sock._fd);
-				return ret;	
-			}
-		}
-
-		/* After error care. */
-		if (msg.msg_flags & IPSTACK_MSG_TRUNC)
-		{
-			zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] error: message truncated!", sdkdriver->cfg_sock._fd);
-			zlog_err(MODULE_SDK, "Must restart with larger --nl-bufsize value!");
-			continue;
-		}
-		if (status)
-		{
-			zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] error: data remnant size %d", sdkdriver->cfg_sock._fd, status);
-			return -1;
-		}
-	}
-	zlog_err(MODULE_SDK, "ipstack_recvmsg [%d] end", sdkdriver->cfg_sock._fd);
-	return ret;
-}
-
-
-static int sdk_cfg_netlink_talk(sdk_driver_t *sdkdriver, struct ipstack_nlmsghdr *n, int (*filter)(sdk_driver_t *, char *, int, void *), void *p)
-{
-	zpl_uint32 status;
-	struct ipstack_sockaddr_nl snl;
-	struct ipstack_iovec iov = { .iov_base = (void *) n, .iov_len = n->nlmsg_len };
-	struct ipstack_msghdr msg ={ .msg_name = (void *) &snl, .msg_namelen = sizeof snl, .msg_iov = &iov, .msg_iovlen = 1, };
-	int save_errno;
-
-	memset(&snl, 0, sizeof snl);
-	snl.nl_family = IPSTACK_AF_NETLINK;
-
-	if (IS_HAL_IPCMSG_DEBUG_EVENT(sdkdriver->debug))
-		zlog_debug(MODULE_PAL, "netlink_talk: cfg type (%u), seq=%u", n->nlmsg_type, n->nlmsg_seq);
-
-	sdk_cfg_netlink_flush(sdkdriver);
-
-	/* Send message to netlink interface. */
-	status = ipstack_sendmsg(sdkdriver->cfg_sock, &msg, 0);
-	save_errno = ipstack_errno;
-	if (status < 0)
-	{
-		zlog_err(MODULE_PAL, "netlink_talk ipstack_sendmsg() error: %s",
-				ipstack_strerror(save_errno));
-		return -1;
-	}
-	
-	return sdk_cfg_netlink_parse_info(sdkdriver, filter, p);
-}
-
-static int sdk_cfg_message_request(sdk_driver_t *sdkdriver, char *data, int len, int (*filter)(sdk_driver_t *, char *, int, void *), void *p)
-{
-	int	*from_pid = NULL;
-	struct ipstack_nlmsghdr *nlh = NULL;
-	struct hal_ipcmsg_header *header = NULL;
-	struct hal_client *client = (struct hal_client *)p;
-  	struct 
-  	{
-    	struct ipstack_nlmsghdr nlh;
-		char buf[2048];
-  	} req;	
-
-	memset (&req.nlh, 0, sizeof (struct ipstack_nlmsghdr));  
-  	nlh = &req.nlh;
-  	nlh->nlmsg_len = IPSTACK_NLMSG_LENGTH (len+4);
-  	nlh->nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REQUEST;
-  	nlh->nlmsg_type = HAL_CFG_REQUEST_CMD;
-	nlh->nlmsg_seq = ++sdkdriver->cfg_seq;
-	nlh->nlmsg_flags |= IPSTACK_NLM_F_ACK;
-	nlh->nlmsg_pid = 0;
-	from_pid = (int*)req.buf;
-	*from_pid = htonl(getpid());
-	if(len)
-		memcpy (&req.buf[4], data, len); 
-	header = (struct hal_ipcmsg_header *)data;
-	//zlog_debug(MODULE_HAL, "===========Client send message relay [%s] %d ",
-    //           hal_module_cmd_name(ntohl(header->command)), ntohs(header->length));
-	return sdk_cfg_netlink_talk(sdkdriver, nlh, filter, p);
-}
-
-static int sdk_cfg_message_parse_default(sdk_driver_t *sdkdriver, char *buf, int len, void *p)
-{
-	struct hal_ipcmsg_header header;
-	struct hal_client *halclient = p;
-	hal_ipcmsg_reset(&halclient->outmsg);
-	hal_ipcmsg_put(&halclient->outmsg, buf, len);
-	hal_ipcmsg_get_header(&halclient->outmsg, &header);
-	halclient->outmsg.getp -= sizeof(struct hal_ipcmsg_header);
-
-	//zlog_debug(MODULE_HAL, "===========Client Recv message relay [%s] %d ",
-    //           hal_module_cmd_name(header.command), header.length);
-
-	return hal_client_send_message(halclient, 0);
-}
-
-
-static int sdk_driver_set_request(sdk_driver_t *sdkdriver, char *data, int len, void *p)
-{
-	if(!ipstack_invalid(sdkdriver->cfg_sock))
-		return sdk_cfg_message_request(sdkdriver, data, len, sdk_cfg_message_parse_default, p);
-	return OK;	
-}
-
 static sdk_driver_t * sdk_driver_malloc(void)
 {
-	return (sdk_driver_t *)malloc(sizeof(sdk_driver_t));
+	return (sdk_driver_t *)XMALLOC(MTYPE_SDK, sizeof(sdk_driver_t));
 }
 
 static int sdk_driver_free(sdk_driver_t *sdkdriver)
 {
 	if(sdkdriver)
-		free(sdkdriver);
+		XFREE(MTYPE_SDK, sdkdriver);
 	sdkdriver = NULL;
 	return OK;
 }
@@ -821,11 +614,6 @@ int sdk_driver_init(struct bsp_driver *bsp, zpl_void *p)
 	bsp->sdk_driver = sdk_driver_malloc();
 	if(bsp->sdk_driver)
 	{
-		if(sdk_cfg_socket_create(bsp->sdk_driver) != OK)
-		{
-			sdk_driver_free(bsp->sdk_driver);
-			return ERROR;
-		}
 		return OK;
 	}
 	else
@@ -849,7 +637,6 @@ int sdk_driver_exit(struct bsp_driver *bsp, zpl_void *p)
 	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	if(sdkdriver)
 	{
-		sdk_cfg_socket_close(sdkdriver);
 		sdk_driver_free(sdkdriver);
 	}
 	return OK;

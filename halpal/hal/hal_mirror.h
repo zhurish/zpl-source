@@ -13,14 +13,7 @@ extern "C" {
 #include "nsm_mac.h"
 #include "nsm_mirror.h"
 
-enum hal_mirror_cmd 
-{
-    HAL_MIRROR_CMD_NONE,
-	HAL_MIRROR_CMD_DST_PORT,
-	HAL_MIRROR_CMD_SRC_PORT,
-	HAL_MIRROR_CMD_SRC_MAC,
-    HAL_MIRROR_CMD_MAX,
-};
+
 
 typedef struct hal_mirror_param_s
 {

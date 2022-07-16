@@ -127,9 +127,22 @@ static int bsp_global_wan_port(void *driver, hal_port_header_t *port, hal_port_p
 	return ret;
 }
 
+static int bsp_global_start(void *driver, hal_port_header_t *port, hal_port_param_t *param)
+{
+	int ret = NO_SDK;
+	BSP_DRIVER(bspdev, driver);
+	BSP_ENTER_FUNC();
+	if(bspdev->sdk_driver && sdk_global.sdk_wan_port_cb)
+		ret = sdk_global.sdk_wan_port_cb(bspdev->sdk_driver, port->phyport,  param->value);
+	BSP_LEAVE_FUNC();
+	return ret;
+}
+
+
 static hal_ipcsubcmd_callback_t subcmd_table[] = {
-	HAL_CALLBACK_ENTRY(HAL_GLOBAL_CMD_NONE, NULL),
-	HAL_CALLBACK_ENTRY(HAL_GLOBAL_CMD_JUMBO_SIZE, bsp_global_jumbo_size),
+	HAL_CALLBACK_ENTRY(HAL_GLOBAL_NONE, NULL),
+	HAL_CALLBACK_ENTRY(HAL_GLOBAL_START, bsp_global_start),
+	HAL_CALLBACK_ENTRY(HAL_GLOBAL_JUMBO_SIZE, bsp_global_jumbo_size),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_MANEGE, bsp_switch_mode),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_FORWARD, bsp_switch_forward),
 	HAL_CALLBACK_ENTRY(HAL_GLOBAL_MULTICAST_FLOOD, bsp_multicast_flood),

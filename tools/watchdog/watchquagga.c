@@ -619,7 +619,7 @@ watchdog_read(os_ansync_t *t_read)
   struct daemon *dmn = OS_ANSYNC_ARGV(t_read);
   const char resp[] = PING_TOKEN;
   vtysh_result_t *vtysh_result = (vtysh_result_t *)dmn->buf;
-  ssize_t rc = 0, rlen = 0;
+  ssize_t rc = 0;
   struct timeval delay;
   dmn->payload = dmn->buf + sizeof(vtysh_result_t);
 

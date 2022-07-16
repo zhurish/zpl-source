@@ -9,7 +9,7 @@ extern "C" {
 enum hal_module_id
 {
     HAL_MODULE_NONE,
-	HAL_MODULE_MGT,
+	HAL_MODULE_MGT,             //应答，注册，汇报类
 	HAL_MODULE_GLOBAL,
 	HAL_MODULE_SWITCH,
     HAL_MODULE_CPU,
@@ -79,6 +79,11 @@ typedef struct
 #define IPCCMD_SUBCMD_GET(C)               ((C)&0xffFF)
 
 extern const char * hal_module_cmd_name(zpl_uint32 cmd);
+
+
+#include "hal_cmddef.h"
+
+
 
 #ifdef __cplusplus
 }

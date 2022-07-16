@@ -64,13 +64,6 @@ static const struct message nlmsg_str[] =
 		{ 0, NULL }
 };
 
-//extern struct zebra_t zebrad;
-
-static struct
-{
-	char *p;
-	size_t size;
-} nl_rcvbuf;
 
 static const struct message rtproto_str[] =
 {
@@ -89,26 +82,26 @@ static const struct message rtproto_str[] =
 };
 
 /*
- * _netlink_msg_type_to_str
+ * linux_netlink_msg_type_to_str
  */
 const char *
-_netlink_msg_type_to_str(zpl_uint16 msg_type)
+linux_netlink_msg_type_to_str(zpl_uint16 msg_type)
 {
 	return lookup(nlmsg_str, msg_type);
 }
 
 /*
- * _netlink_rtproto_to_str
+ * linux_netlink_rtproto_to_str
  */
 const char *
-_netlink_rtproto_to_str(zpl_uchar rtproto)
+linux_netlink_rtproto_to_str(zpl_uchar rtproto)
 {
 	return lookup(rtproto_str, rtproto);
 }
 
 /* Utility function  comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-int _netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
+int linux_netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -129,7 +122,7 @@ int _netlink_addattr_l(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 typ
 	return 0;
 }
 
-int _netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type, void *data,
+int linux_netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32 type, void *data,
 		size_t alen)
 {
 	size_t len;
@@ -152,7 +145,7 @@ int _netlink_rta_addattr_l(struct ipstack_rtattr *rta, size_t maxlen, zpl_uint32
 
 /* Utility function comes from iproute2.
  Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru> */
-int _netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data)
+int linux_netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type, zpl_uint32 data)
 {
 	size_t len;
 	struct ipstack_rtattr *rta;
@@ -171,22 +164,22 @@ int _netlink_addattr32(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 typ
 	return 0;
 }
 
-struct ipstack_rtattr *_netlink_addattr_nest(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type)
+struct ipstack_rtattr *linux_netlink_addattr_nest(struct ipstack_nlmsghdr *n, size_t maxlen, zpl_uint32 type)
 {
 	struct ipstack_rtattr *nest = NLMSG_TAIL(n);
 
-	_netlink_addattr_l(n, maxlen, type, NULL, 0);
+	linux_netlink_addattr_l(n, maxlen, type, NULL, 0);
 	return nest;
 }
 
-int _netlink_addattr_nest_end(struct ipstack_nlmsghdr *n, struct ipstack_rtattr *nest)
+int linux_netlink_addattr_nest_end(struct ipstack_nlmsghdr *n, struct ipstack_rtattr *nest)
 {
 	nest->rta_len = (void *) NLMSG_TAIL(n) - (void *) nest;
 	return n->nlmsg_len;
 }
 
 /* Utility function for parse ipstack_rtattr. */
-void _netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, struct ipstack_rtattr *rta,
+void linux_netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, struct ipstack_rtattr *rta,
 		zpl_uint32 len)
 {
 	while (IPSTACK_RTA_OK(rta, len))
@@ -198,7 +191,7 @@ void _netlink_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, struct ip
 }
 
 /* Utility function to parse hardware link-layer address and update ifp */
-void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp)
+void linux_netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp)
 {
 	zpl_uint32 i;
 
@@ -238,7 +231,7 @@ void _netlink_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interf
  *                     (recursive, multipath, etc.)
  * @param family: Address family which the change concerns
  */
-void _netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
+void linux_netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
 		hal_nexthop_t *nexthop, union g_addr address,
 		vrf_id_t vrfid)
 {
@@ -252,7 +245,7 @@ void _netlink_route_debug(zpl_uint32 cmd, zpl_uint8 family, zpl_uint32 bytelen,
 
 /* Note: on netlink systems, there should be a 1-to-1 mapping between interface
  names and ifindex values. */
-void _netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index)
+void linux_netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 {
 	struct interface *oifp;
 
@@ -281,7 +274,7 @@ void _netlink_set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 }
 
 /* Get type specified information from netlink. */
-int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl)
+int linux_netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl)
 {
 	int ret;
 	struct ipstack_sockaddr_nl snl;
@@ -326,11 +319,11 @@ int _netlink_request(zpl_family_t family, zpl_uint32 type, struct nlsock *nl)
 
 /* Receive message from netlink interface and pass those information
  to the given function. */
-int _netlink_parse_info(
+int linux_netlink_parse_info(
 		int (*filter)(struct ipstack_sockaddr_nl *, struct ipstack_nlmsghdr *, vrf_id_t),
 		struct nlsock *nl, vrf_id_t vrfid)
 {
-	zpl_uint32 status;
+	zpl_int32 status;
 	int ret = 0;
 	int error;
 	struct ipstack_sockaddr_nl snl;
@@ -339,8 +332,8 @@ int _netlink_parse_info(
 	{
 		struct ipstack_iovec iov =
 		{
-			.iov_base = nl_rcvbuf.p,
-			.iov_len = nl_rcvbuf.size,
+			.iov_base = nl->msgdata,
+			.iov_len = nl->msgmax,
 		};
 
 		struct ipstack_msghdr msg =
@@ -377,8 +370,8 @@ int _netlink_parse_info(
 			return -1;
 		}
 
-		for (h = (struct ipstack_nlmsghdr *) nl_rcvbuf.p;
-				IPSTACK_NLMSG_OK(h, (zpl_uint32) status); h = IPSTACK_NLMSG_NEXT(h, status))
+		for (h = (struct ipstack_nlmsghdr *) nl->msgdata;
+				IPSTACK_NLMSG_OK(h, (zpl_int32) status); h = IPSTACK_NLMSG_NEXT(h, status))
 		{
 			/* Finish of reading. */
 			if (h->nlmsg_type == IPSTACK_NLMSG_DONE)
@@ -515,15 +508,18 @@ static int netlink_talk_filter(struct ipstack_sockaddr_nl *snl, struct ipstack_n
 */
 
 /* ipstack_sendmsg() to netlink ipstack_socket then ipstack_recvmsg(). */
-int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, vrf_id_t vrfid)
+int linux_netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, vrf_id_t vrfid)
 {
-	zpl_uint32 status;
+	zpl_int32 status;
 	struct ipstack_sockaddr_nl snl;
-	struct ipstack_iovec iov =
-	{ .iov_base = (void *) n, .iov_len = n->nlmsg_len };
+	struct ipstack_iovec iov = { .iov_base = (void *) n, .iov_len = n->nlmsg_len };
 	struct ipstack_msghdr msg =
-	{ .msg_name = (void *) &snl, .msg_namelen = sizeof snl, .msg_iov = &iov,
-			.msg_iovlen = 1, };
+	{ 
+		.msg_name = (void *) &snl, 
+		.msg_namelen = sizeof snl, 
+		.msg_iov = &iov,
+		.msg_iovlen = 1, 
+	};
 	int save_errno;
 
 	memset(&snl, 0, sizeof snl);
@@ -547,15 +543,14 @@ int _netlink_talk(struct ipstack_nlmsghdr *n, struct nlsock *nl, vrf_id_t vrfid)
 				ipstack_strerror(save_errno));
 		return -1;
 	}
-
 	/*
 	 * Get reply from netlink ipstack_socket.
 	 * The reply should either be an acknowlegement or an error.
 	 */
-	return _netlink_parse_info(NULL, nl, vrfid);
+	return linux_netlink_parse_info(NULL, nl, vrfid);
 }
 
-static int _netlink_recvbuf(struct nlsock *nl, zpl_socket_t sock, zpl_uint32 newsize)
+static int linux_netlink_recvbuf(struct nlsock *nl, zpl_socket_t sock, zpl_uint32 newsize)
 {
 	int ret = 0;
 	zpl_uint32 nl_rcvbufsize = newsize;
@@ -580,7 +575,7 @@ static int _netlink_recvbuf(struct nlsock *nl, zpl_socket_t sock, zpl_uint32 new
 }
 
 /* Make ipstack_socket for Linux netlink interface. */
-int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
+int linux_netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 {
 	int ret;
 	struct ipstack_sockaddr_nl snl;
@@ -611,7 +606,7 @@ int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 		ipstack_close(sock);
 		return -1;
 	}
-	if (_netlink_recvbuf(nl, sock, NL_PKT_BUF_SIZE) != 0)
+	if (linux_netlink_recvbuf(nl, sock, nl->msgmax) != 0)
 	{
 		ipstack_close(sock);
 		return -1;
@@ -638,85 +633,19 @@ int _netlink_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 	return ret;
 }
 
-/* Filter out messages from self that occur on listener ipstack_socket,
- caused by our actions on the command ipstack_socket
- */
-#ifdef ZPL_KERNEL_FORWARDING
-static void _netlink_install_filter(zpl_socket_t sock, __u32 pid)
-{
-	struct sock_filter filter[] =
-	{
-	/* 0: ldh [4]	          */
-	BPF_STMT(BPF_LD | BPF_ABS | BPF_H, offsetof(struct ipstack_nlmsghdr, nlmsg_type)),
-	/* 1: jeq 0x18 jt 3 jf 6  */
-	BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, htons(IPSTACK_RTM_NEWROUTE), 1, 0),
-	/* 2: jeq 0x19 jt 3 jf 6  */
-	BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, htons(IPSTACK_RTM_DELROUTE), 0, 3),
-	/* 3: ldw [12]		  */
-	BPF_STMT(BPF_LD | BPF_ABS | BPF_W, offsetof(struct ipstack_nlmsghdr, nlmsg_pid)),
-	/* 4: jeq XX  jt 5 jf 6   */
-	BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, htonl(pid), 0, 1),
-	/* 5: ret 0    (skip)     */
-	BPF_STMT(BPF_RET | BPF_K, 0),
-	/* 6: ret 0xffff (keep)   */
-	BPF_STMT(BPF_RET | BPF_K, 0xffff), };
-
-	struct sock_fprog prog =
-	{ .len = array_size(filter), .filter = filter, };
-
-	if (ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog)) < 0)
-		zlog_warn(MODULE_PAL, "Can't install ipstack_socket filter: %s\n",
-				ipstack_strerror(ipstack_errno));
-}
-#endif
 /* Exported interface function.  This function simply calls
  netlink_socket (). */
 static void _kernel_nl_open(struct nlsock *nl)
 {
-	zpl_ulong groups;
+	//zpl_ulong groups;
 
-	groups = IPSTACK_RTMGRP_LINK | IPSTACK_RTMGRP_IPV4_ROUTE | IPSTACK_RTMGRP_IPV4_IFADDR;
-#ifdef ZPL_BUILD_IPV6
-	groups |= IPSTACK_RTMGRP_IPV6_ROUTE | IPSTACK_RTMGRP_IPV6_IFADDR;
-#endif /* ZPL_BUILD_IPV6 */
-#ifdef ZPL_KERNEL_FORWARDING
-	_netlink_socket(nl, groups, nl->vrf_id);
-	/* Register kernel ipstack_socket. */
-	if (!ipstack_invalid(nl->sock))
-	{
-		/* Only want non-blocking on the netlink event ipstack_socket */
-		ipstack_set_nonblocking(nl->sock);
-		/* Set receive buffer size if it's set from command line */
-		nl_rcvbuf.p = XMALLOC(MTYPE_STREAM, NL_PKT_BUF_SIZE);
-		nl_rcvbuf.size = NL_PKT_BUF_SIZE;
+	//groups = IPSTACK_RTMGRP_LINK | IPSTACK_RTMGRP_IPV4_ROUTE | IPSTACK_RTMGRP_IPV4_IFADDR;
 
-		_netlink_install_filter(nl->sock, nl->snl.nl_pid);
-
-		_netlink_listen(zvrf);
-	}
-#endif
-	_netlink_socket(nl, 0, nl->vrf_id);
+	linux_netlink_socket(nl, 0, nl->vrf_id);
 }
 
-void _netlink_close(void)
+void linux_netlink_close(void)
 {
-#ifdef ZPL_KERNEL_FORWARDING
-	if (netlink_cmd.t_netlink)
-	{
-		THREAD_READ_OFF(netlink_cmd.t_netlink);
-		netlink_cmd.t_netlink = NULL;
-	}
-	if (!ipstack_invalid(netlink_cmd.sock))
-	{
-		ipstack_close(netlink_cmd.sock);
-	}
-	if (netlink_cmd.name)
-	{
-		XFREE(MTYPE_NETLINK_NAME, netlink_cmd.name);
-		netlink_cmd.name = NULL;
-	}
-	netlink_cmd.snl.nl_pid = 0;
-#endif
 	if (!ipstack_invalid(netlink_cmd.sock))
 	{
 		ipstack_close(netlink_cmd.sock);
@@ -729,37 +658,45 @@ void _netlink_close(void)
 	netlink_cmd.snl.nl_pid = 0;
 }
 
-void _netlink_open(vrf_id_t vrfid)
+void linux_netlink_open(vrf_id_t vrfid, zpl_uint32 msgsize)
 {
 	char nl_name[64];
 	/* Initialize netlink sockets */
-#ifdef ZPL_KERNEL_FORWARDING
-	snprintf(nl_name, 64, "nllisten-%u", vrfid);
 
-	netlink_cmd.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
-	netlink_cmd.snl.nl_pid = getpid();
-#endif
 	snprintf(nl_name, 64, "nlcmd-%u", vrfid);
 	netlink_cmd.name = XSTRDUP(MTYPE_NETLINK_NAME, nl_name);
 	netlink_cmd.snl.nl_pid = getpid();
 	netlink_cmd.vrf_id = vrfid;
-	_kernel_nl_open(&netlink_cmd);
+	netlink_cmd.msgdata = XMALLOC(MTYPE_STREAM, msgsize);
+	if(netlink_cmd.msgdata)
+	{
+		netlink_cmd.msgmax = msgsize;
+		netlink_cmd.msglen = 0;
+			
+		_kernel_nl_open(&netlink_cmd);
+		return;
+	}
+	if (netlink_cmd.name)
+	{
+		XFREE(MTYPE_NETLINK_NAME, netlink_cmd.name);
+		netlink_cmd.name = NULL;
+	}
 }
 
 #if 0
-static int _netlink_load_all_one (struct ip_vrf *vrf, void *p)
+static int linux_netlink_load_all_one (struct ip_vrf *vrf, void *p)
 {
 	struct nsm_ip_vrf *zvrf = vrf->info;
-	_netlink_open(zvrf);
+	linux_netlink_open(zvrf);
 
 	//kernel_interface_load(zvrf);
 	//kernel_route_table_load(zvrf);
 	return 0;			
 }
 
-void _netlink_load_all()
+void linux_netlink_load_all()
 {
-	ip_vrf_foreach(_netlink_load_all_one, NULL);
+	ip_vrf_foreach(linux_netlink_load_all_one, NULL);
 	return;
 }
 #endif

@@ -592,58 +592,7 @@ int os_write_iov(int fd, int type, struct iovec *iov, int iovcnt)
 	return written;
 }
 
-int os_writemsg(int sock, char *m, int len, char *m1, int len1)
-{
-	struct msghdr msg;
-	struct iovec iov[3];
-	int iovlen = 2;
-	int error = 0;
 
-	iov[0].iov_base = m;
-	iov[0].iov_len = len;
-
-	iov[1].iov_base = m1;
-	iov[1].iov_len = len1;
-	msg.msg_iov = &iov[0];
-	msg.msg_iovlen = iovlen;
-	msg.msg_flags = 0;
-	error = sendmsg((int)sock, &msg, 0);
-
-	if (error == -1 && (ipstack_errno == EINVAL || ipstack_errno == ENETUNREACH || ipstack_errno == EFAULT))
-	{
-		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(ipstack_errno));
-		msg.msg_controllen = 0;
-		msg.msg_control = NULL;
-		error = sendmsg((int)sock, &msg, 0);
-	}
-	else if (error < 0 && ipstack_errno == EAGAIN)
-	{
-		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(ipstack_errno));
-		error = sendmsg((int)sock, &msg, 0);
-	}
-	return error;
-}
-
-/*
-static int rtp_recvmsg(ortp_socket_t socket, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen, struct msghdr *msghdr, int bufsz) {
-	struct iovec iov;
-	int error = 0;
-
-	memset(&iov, 0, sizeof(iov));
-	iov.iov_base = msg->b_wptr;
-	iov.iov_len = bufsz;
-	if ((from != NULL) && (fromlen != NULL)) {
-		msghdr->msg_name = from;
-		msghdr->msg_namelen = *fromlen;
-	}
-	msghdr->msg_iov = &iov;
-	msghdr->msg_iovlen = 1;
-	error = recvmsg(socket, msghdr, flags);
-	if (fromlen != NULL)
-		*fromlen = msghdr->msg_namelen;
-	return error;
-}
-*/
 
 /*************************************************************************/
 
@@ -1323,59 +1272,6 @@ int ipstack_write_iov(zpl_socket_t fd, int type, struct iovec *iov, int iovcnt)
 	}
 	return written;
 }
-
-int ipstack_writemsg(zpl_socket_t sock, char *m, int len, char *m1, int len1)
-{
-	struct ipstack_msghdr msg;
-	struct ipstack_iovec iov[3];
-	int iovlen = 2;
-	int error = 0;
-
-	iov[0].iov_base = m;
-	iov[0].iov_len = len;
-
-	iov[1].iov_base = m1;
-	iov[1].iov_len = len1;
-	msg.msg_iov = &iov[0];
-	msg.msg_iovlen = iovlen;
-	msg.msg_flags = 0;
-	error = ipstack_sendmsg(sock, &msg, 0);
-
-	if (error == -1 && (ipstack_errno == EINVAL || ipstack_errno == ENETUNREACH || ipstack_errno == EFAULT))
-	{
-		fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(ipstack_errno));
-		msg.msg_controllen = 0;
-		msg.msg_control = NULL;
-		error = ipstack_sendmsg(sock, &msg, 0);
-	}
-	else if (error < 0 && ipstack_errno == EAGAIN)
-	{
-		fprintf(stdout, "============rtp_sendmsg====aaa=====%s\r\n", strerror(ipstack_errno));
-		error = ipstack_sendmsg(sock, &msg, 0);
-	}
-	return error;
-}
-
-/*
-static int rtp_recvmsg(ortp_socket_t socket, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen, struct msghdr *msghdr, int bufsz) {
-	struct iovec iov;
-	int error = 0;
-
-	memset(&iov, 0, sizeof(iov));
-	iov.iov_base = msg->b_wptr;
-	iov.iov_len = bufsz;
-	if ((from != NULL) && (fromlen != NULL)) {
-		msghdr->msg_name = from;
-		msghdr->msg_namelen = *fromlen;
-	}
-	msghdr->msg_iov = &iov;
-	msghdr->msg_iovlen = 1;
-	error = recvmsg(socket, msghdr, flags);
-	if (fromlen != NULL)
-		*fromlen = msghdr->msg_namelen;
-	return error;
-}
-*/
 
 
 

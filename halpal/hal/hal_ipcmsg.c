@@ -86,7 +86,6 @@ int hal_ipcmsg_put_reset(struct hal_ipcmsg *ipcmsg)
 
 int hal_ipcmsg_getnull(struct hal_ipcmsg *ipcmsg, zpl_uint32 len)
 {
-    zpl_uint8 *pval = (zpl_uint8 *)(ipcmsg->buf + ipcmsg->getp);
     if((ipcmsg->getp + len) > ipcmsg->length_max || (ipcmsg->getp + len) > ipcmsg->setp)
         return ERROR;
     ipcmsg->getp += len;

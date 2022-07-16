@@ -13,9 +13,9 @@ extern "C" {
 #endif
 
 //route
-extern int apal_create_vrf(struct ip_vrf *vrf);
-extern int apal_delete_vrf(struct ip_vrf *vrf);
-extern int apal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
+extern int pal_create_vrf(struct ip_vrf *vrf);
+extern int pal_delete_vrf(struct ip_vrf *vrf);
+extern int pal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
 
 
 #ifdef __cplusplus

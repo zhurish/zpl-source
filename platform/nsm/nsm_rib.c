@@ -1219,7 +1219,7 @@ static int rib_update_forward_pm(struct route_node *rn, struct rib *old,
 /* Uninstall the route from kernel. */
 static void rib_uninstall(struct route_node *rn, struct rib *rib)
 {
-	rib_table_info_t *info = rn->table->info;
+	//rib_table_info_t *info = rn->table->info;
 
 	if (CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 	{
@@ -3362,7 +3362,7 @@ void rib_close_table(struct route_table *table)
 	struct route_node *rn = NULL;
 	zassert(table != NULL);
 	zassert(table->info != NULL);
-	rib_table_info_t *info = table->info;
+	//rib_table_info_t *info = table->info;
 	struct rib *rib = NULL;
 
 	if (table)
@@ -3618,7 +3618,7 @@ static int nsm_vrf_create(vrf_id_t vrf_id, void **info)
 
 static int nsm_vrf_destroy(vrf_id_t vrf_id, void **info)
 {
-  	struct nsm_ip_vrf *zvrf = NULL;
+  	//struct nsm_ip_vrf *zvrf = NULL;
 
   	assert(*info);
   	if (*info)

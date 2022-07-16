@@ -253,14 +253,14 @@ int nsm_halpal_interface_promisc_link(struct interface *ifp, zpl_bool enable)
 int nsm_halpal_create_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	//ret = pal_create_vrf(vrf);
+	ret = pal_create_vrf(vrf);
 	return ret;
 }
 
 int nsm_halpal_delete_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	//ret = pal_delete_vrf(vrf);
+	ret = pal_delete_vrf(vrf);
 	return ret;
 }
 

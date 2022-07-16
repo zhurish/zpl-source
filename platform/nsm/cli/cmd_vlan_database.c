@@ -591,7 +591,6 @@ DEFUN(hal_vlan_test_cli,
 	  "Create information\n"
 	  "Vlan ID\n")
 {
-	int cmd = 0;
 	ifindex_t phyport = 0;
 	vlan_t vlan = atoi(argv[0]);
 	if(argc == 1)

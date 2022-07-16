@@ -170,13 +170,11 @@ int b53125_config_start(sdk_driver_t *dev)
 	/*******global *******/
 
 
-	ret |= b53_brcm_hdr_setup(dev, zpl_true, ((b53_device_t *)dev->sdk_device)->cpu_port);
-	sdk_debug_event(dev, "b53125 brcm hdr init %s", (ret == OK)?"OK":"ERROR");
-	ret |= b53125_imp_enable(dev, zpl_true);//关闭IMP接口
+	//ret |= b53_brcm_hdr_setup(dev, zpl_true, ((b53_device_t *)dev->sdk_device)->cpu_port);
+	//sdk_debug_event(dev, "b53125 brcm hdr init %s", (ret == OK)?"OK":"ERROR");
+	//ret |= b53125_imp_enable(dev, zpl_true);//关闭IMP接口
+	ret |= b53125_imp_init(dev);
 	sdk_debug_event(dev, "b53125 imp init %s", (ret == OK)?"OK":"ERROR");
-	//b53125_switch_forwarding and b53125_vlan_init
-	//ret |= b53125_imp_port_enable(dev);
-	//sdk_debug_event(dev, "b53125 imp port %s", (ret == OK)?"OK":"ERROR");
 
 	ret = b53125_global_init(dev);
 	sdk_debug_event(dev, "b53125 global init %s", (ret == OK)?"OK":"ERROR");
@@ -209,7 +207,9 @@ int b53125_config_start(sdk_driver_t *dev)
 
 	ret = b53125_global_start(dev);
 	sdk_debug_event(dev, "b53125  start %s", (ret == OK)?"OK":"ERROR");
-	b53125_clear_mac_all(dev);
+	
+	b53125_mac_clear_all(dev);
+
 	ret = b53125_port_start(dev);
 	sdk_debug_event(dev, "b53125 port start %s", (ret == OK)?"OK":"ERROR");
 	//ret = b53125_enable_vlan_default(dev, 1);

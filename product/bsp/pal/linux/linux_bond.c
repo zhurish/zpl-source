@@ -120,7 +120,7 @@ int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 	strcpy (ifr.ifr_slave, slave->k_name);
 
 
-	if (_ipkernel_if_ioctl (SIOCBONDENSLAVE, (caddr_t) &ifr) < 0)
+	if (linux_ioctl_if_ioctl (SIOCBONDENSLAVE, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
@@ -132,7 +132,7 @@ int _if_bond_delete_slave(struct interface *ifp, struct interface *slave)
 	strcpy (ifr.ifr_name, ifp->k_name);
 	strcpy (ifr.ifr_slave, slave->k_name);
 
-	if (_ipkernel_if_ioctl (SIOCBONDRELEASE, (caddr_t) &ifr) < 0)
+	if (linux_ioctl_if_ioctl (SIOCBONDRELEASE, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
@@ -145,22 +145,22 @@ int _if_bond_slave_active(struct interface *ifp, struct interface *slave)
 	strcpy (ifr.ifr_name, ifp->k_name);
 	strcpy (ifr.ifr_slave, slave->k_name);
 
-	if (_ipkernel_if_ioctl (SIOCBONDCHANGEACTIVE, (caddr_t) &ifr) < 0)
+	if (linux_ioctl_if_ioctl (SIOCBONDCHANGEACTIVE, (caddr_t) &ifr) < 0)
 	    return -1;
 	return 0;
 }
 
 
 
-int _ipkernel_bond_create(struct interface *ifp)
+int linux_ioctl_bond_create(struct interface *ifp)
 {
-	return 	_netlink_create_interface(ifp);
+	return 	linux_netlink_create_interface(ifp);
 }
 
 
-int _ipkernel_bond_delete(struct interface *ifp)
+int linux_ioctl_bond_delete(struct interface *ifp)
 {
-	return _netlink_destroy_interface(ifp);
+	return linux_netlink_destroy_interface(ifp);
 }
 
 #endif

@@ -1,4 +1,4 @@
-#include <netinet/ip_icmp.h>
+
 #include "zplos_include.h"
 #include "nsm_include.h"
 #include "hal_include.h"
@@ -14,6 +14,7 @@ struct netpkt_filter
 
 static osker_list_head_t netpkt_filter_lst;
 static int netpkt_filter_destroy(struct netpkt_filter *session);
+
 
 int netpkt_filter_init(void)
 {

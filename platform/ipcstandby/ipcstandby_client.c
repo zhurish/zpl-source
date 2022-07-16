@@ -75,7 +75,7 @@ void ipcstandby_client_free(struct ipcstandby_client *client)
    redistribute route type. */
 void ipcstandby_client_init(struct ipcstandby_client *client, zpl_uint32 slot)
 {
-  zpl_uint32 i = 0;
+  //zpl_uint32 i = 0;
 
   /* Schedule first client connection. */
   if (client->debug)
@@ -221,7 +221,7 @@ ipcstandby_client_timeout(struct thread *t)
 /* Make connection to ipcstandby daemon. */
 int ipcstandby_client_start(struct ipcstandby_client *client)
 {
-  zpl_uint32 i = 0;
+  //zpl_uint32 i = 0;
 
   if (client->debug)
     zlog_debug(MODULE_DEFAULT, "ipcstandby_client_start is called");

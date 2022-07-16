@@ -339,6 +339,15 @@ ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/readline/_install/lib
 endif
 ZPLEX_LDLIBS += -lreadline -lhistory -lncurses
 endif
+ZPL_LIBNL_MODULE=true
+ifeq ($(strip $(ZPL_LIBNL_MODULE)),true)
+ZPLEX_DEFINE	+= -DZPL_LIBNL_MODULE
+ZPLEX_DIR += $(EXTERNSION_ROOT)/libnl
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl/_install/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/libnl/_install/lib
+#ZPLEX_LDLIBS += -lnl-3 -lnl-genl-3 -lnl-route-3 -lnl-idiag-3 -lnl-nf -lnl-xfrm
+endif
 
 #
 # PRODUCT
@@ -377,9 +386,8 @@ endif
 ifeq ($(strip $(ZPL_SDK_USER)),true) 
 ZPL_DEFINE += -DZPL_SDK_USER
 ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
-SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk/user
 ZPLPRODS += $(PRODUCT_ROOT)/sdk/user
-ZPLPRODS += $(PRODUCT_ROOT)/sdk/user/kernel
+ZPLPRODS += $(PRODUCT_ROOT)/bsp/kernel
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk/user
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)
@@ -388,8 +396,7 @@ endif #($(strip $(ZPL_SDK_USER)),true)
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 ZPL_DEFINE += -DZPL_SDK_KERNEL
 ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
-SW_SDK_ROOT=$(PRODUCT_ROOT)/sdk/kernel
-ZPLPRODS += $(PRODUCT_ROOT)/sdk/kernel
+ZPLPRODS += $(PRODUCT_ROOT)/bsp/kernel
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)
 endif #($(strip $(ZPL_SDK_KERNEL)),true)

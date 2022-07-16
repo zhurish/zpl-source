@@ -32,7 +32,7 @@ iptables -t filter -L -n -v --line-numbers
 /*
  * 端口映射
  */
-int _ipkernel_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
+int linux_ioctl_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 {
 	char cmd[512];
 	char proto[16];
@@ -113,7 +113,7 @@ int _ipkernel_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 /*
  * 端口开放
  */
-int _ipkernel_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
+int linux_ioctl_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 {
 	char cmd[512];
 	char proto[16];
@@ -226,14 +226,14 @@ int _ipkernel_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 
 
 
-int _ipkernel_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
+int linux_ioctl_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
 {
 	if (rule && rule->class == FIREWALL_C_MANGLE)
 		return OK;
 	return ERROR;
 }
 
-int _ipkernel_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
+int linux_ioctl_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
 {
 	if (rule && rule->class == FIREWALL_C_RAW)
 		return OK;
@@ -288,7 +288,7 @@ iptables -t nat -A POSTROUTING -s 10.0.2.0/22 -o eth0 -j SNAT --to-source 124.42
 2.7 系统防火墙与网络内核优化标准参数
 */
 
-int _ipkernel_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
+int linux_ioctl_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 {
 	/*
 	需要将192.168.10.10转换为111.196.211.212，iptables命令如下：
@@ -402,7 +402,7 @@ int _ipkernel_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 }
 
 
-int _ipkernel_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
+int linux_ioctl_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 {
 	/*
 目标地址192.168.10.6在路由前就转换成61.240.149.149，需在网关上运行iptables命令如下：

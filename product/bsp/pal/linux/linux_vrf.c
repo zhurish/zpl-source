@@ -145,7 +145,7 @@ static int vrf_is_enabled(struct ip_vrf *vrf)
  *
  * RETURN: 1 - enabled successfully; otherwise, 0.
  */
-int _ipkernel_vrf_enable(struct ip_vrf *vrf)
+int linux_ioctl_vrf_enable(struct ip_vrf *vrf)
 {
 	if(!vrf)
 		return -1;
@@ -185,7 +185,7 @@ int _ipkernel_vrf_enable(struct ip_vrf *vrf)
  * The VRF_DELETE_HOOK callback will be called to inform
  * that they must release the resources in the VRF.
  */
-int _ipkernel_vrf_disable(struct ip_vrf *vrf)
+int linux_ioctl_vrf_disable(struct ip_vrf *vrf)
 {
 	if(!vrf)
 		return -1;

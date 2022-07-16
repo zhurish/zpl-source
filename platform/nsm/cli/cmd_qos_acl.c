@@ -18,7 +18,7 @@ static int qos_access_filter_zebos_extended_adddel(qos_access_filter_list_t *acl
                                                    const char *dprefix, const char *dport_op,
                                                    const char *dport, const char *deport, u_char set)
 {
-    int ret;
+    //int ret;
     qos_access_filter_t *node = qos_access_filter_alloc();
     if (node)
     {
@@ -1418,7 +1418,6 @@ static int qos_access_filter_l2mac_adddel(qos_access_filter_list_t *acllist, str
                                           const char *type_str, u_char mpls, struct filter_l2 *l2new,
                                           u_char set)
 {
-    int ret;
     qos_access_filter_t *node = qos_access_filter_alloc();
     if (node)
     {

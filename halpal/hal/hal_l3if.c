@@ -98,7 +98,7 @@ int hal_l3if_addr_del(ifindex_t ifindex, struct prefix *address, zpl_bool sec)
 
 int hal_l3if_dstaddr_add(ifindex_t ifindex, struct prefix *address)
 {
-		zpl_uint32 command = 0;
+	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	HAL_ENTER_FUNC();
@@ -141,7 +141,7 @@ int hal_l3if_dstaddr_del(ifindex_t ifindex, struct prefix *address)
 
 int hal_l3if_vrf_set(ifindex_t ifindex, vrf_id_t vrfid)
 {
-		zpl_uint32 command = 0;
+	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	HAL_ENTER_FUNC();

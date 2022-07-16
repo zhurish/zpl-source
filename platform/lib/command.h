@@ -68,8 +68,9 @@ struct cmd_node
 
 enum
 {
-  CMD_ATTR_DEPRECATED = 1,
-  CMD_ATTR_HIDDEN,
+  CMD_ATTR_DEPRECATED = 0x01,
+  CMD_ATTR_HIDDEN = 0x02,
+  CMD_ATTR_NEW = 0x08,
 };
 
 enum cmd_privilege {
@@ -88,8 +89,9 @@ struct cmd_element
   const char *doc;			/* Documentation of this command. */
   zpl_uint32 daemon;                   /* Daemon to which this command belong. */
   vector tokens;		/* Vector of cmd_tokens */
-  zpl_uchar attr;			/* Command attributes */
+  zpl_uint16 attr;			/* Command attributes */
   enum cmd_privilege privilege;
+  int (*cli_func) (void *, int, const char **);
   #ifdef ZPL_BUILD_DEBUG
   const char *sfuncname;
   #endif
@@ -477,6 +479,8 @@ extern void reinstall_node (enum node_type node, int (*func) (struct vty *));
 #endif
 extern void install_default (enum node_type);
 extern void install_element (enum node_type, enum cmd_privilege privilege, struct cmd_element *);
+
+extern struct cmd_element * new_element(const char *string, const char *doc, zpl_uint32 daemon, zpl_uint16 attr, const char *sfuncname);
 
 /* Concatenates argv[shift] through argv[argc-1] into a single NUL-terminated
    string with a space between each element (allocated using

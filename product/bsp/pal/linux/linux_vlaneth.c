@@ -140,7 +140,7 @@ static int ip_vlan_create(const char *name, vlan_t vid)
 	v_req.cmd = ADD_VLAN_CMD;
 	strcpy(v_req.device1,name);
 	v_req.u.VID = vid;
-	ret = _ipkernel_if_ioctl (IPSTACK_SIOCSIFVLAN, &v_req);
+	ret = linux_ioctl_if_ioctl (IPSTACK_SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -152,7 +152,7 @@ static int ip_vlan_delete(const char *name, vlan_t vid)
 	v_req.cmd = DEL_VLAN_CMD;
 	strcpy(v_req.device1,name);
 	v_req.u.VID = vid;
-	ret = _ipkernel_if_ioctl (IPSTACK_SIOCSIFVLAN, &v_req);
+	ret = linux_ioctl_if_ioctl (IPSTACK_SIOCSIFVLAN, &v_req);
 	//ret = ipstack_ioctl(vlan_sock_fd, IPSTACK_SIOCSIFVLAN, &v_req);
 	return ret;
 }
@@ -165,7 +165,7 @@ static int ip_vlan_name_type(zpl_uint32 type)
 	memset(&v_req, 0, sizeof(struct vlan_ioctl_args));
 	v_req.cmd = SET_VLAN_NAME_TYPE_CMD;
 	v_req.u.name_type = type;
-	ret = _ipkernel_if_ioctl(SIOCSIFVLAN, &v_req);
+	ret = linux_ioctl_if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -179,7 +179,7 @@ static int ip_vlan_egress(const char *vname, int skb_priority, int vlan_qos)
 	strcpy(v_req.device1,vname);
 	v_req.u.skb_priority = skb_priority;
 	v_req.vlan_qos = vlan_qos;
-	ret = _ipkernel_if_ioctl(SIOCSIFVLAN, &v_req);
+	ret = linux_ioctl_if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
 
@@ -192,12 +192,12 @@ static int ip_vlan_ingress(const char *vname, int skb_priority, int vlan_qos)
 	strcpy(v_req.device1,vname);
 	v_req.u.skb_priority = skb_priority;
 	v_req.vlan_qos = vlan_qos;
-	ret = _ipkernel_if_ioctl(SIOCSIFVLAN, &v_req);
+	ret = linux_ioctl_if_ioctl(SIOCSIFVLAN, &v_req);
 	return ret;
 }
 #endif
 
-static int _ipkernel_vlan_create (nsm_vlaneth_t *kifp)
+static int linux_ioctl_vlan_create (nsm_vlaneth_t *kifp)
 {
 	if(ip_vlan_create(kifp->root->k_name, kifp->vlanid) == 0)
 	{
@@ -206,13 +206,13 @@ static int _ipkernel_vlan_create (nsm_vlaneth_t *kifp)
 	return ERROR;
 }
 
-static int _ipkernel_vlan_destroy (nsm_vlaneth_t *kifp)
+static int linux_ioctl_vlan_destroy (nsm_vlaneth_t *kifp)
 {
 	return ip_vlan_delete(kifp->root->k_name, kifp->vlanid);
 }
 
 
-int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
+int linux_ioctl_vlaneth_create (nsm_vlaneth_t *kifp)
 {
 	if(if_is_serial(kifp->ifp))
 	{
@@ -225,13 +225,13 @@ int _ipkernel_vlaneth_create (nsm_vlaneth_t *kifp)
 			IF_VLAN_GET(kifp->ifp->ifindex))
 	{
 		if(kifp->ifp->ll_type != IF_LLT_MODEM)
-			return _ipkernel_vlan_create(kifp);
+			return linux_ioctl_vlan_create(kifp);
 		return OK;
 	}
 	return ERROR;
 }
 
-int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
+int linux_ioctl_vlaneth_destroy (nsm_vlaneth_t *kifp)
 {
 	if(if_is_serial(kifp->ifp))
 	{
@@ -243,22 +243,22 @@ int _ipkernel_vlaneth_destroy (nsm_vlaneth_t *kifp)
 			IF_VLAN_GET(kifp->ifp->ifindex) && kifp->active)
 	{
 		if(kifp->ifp->ll_type != IF_LLT_MODEM)
-			return _ipkernel_vlan_destroy(kifp);
+			return linux_ioctl_vlan_destroy(kifp);
 		return OK;
 	}
 	return ERROR;
 }
 
-int _ipkernel_vlaneth_change (nsm_vlaneth_t *kifp, vlan_t vlan)
+int linux_ioctl_vlaneth_change (nsm_vlaneth_t *kifp, vlan_t vlan)
 {
 	if(if_is_ethernet(kifp->ifp) && kifp->root && IF_ID_GET(kifp->ifp->ifindex))
 	{
 		if(kifp->ifp->ll_type == IF_LLT_MODEM)
 			return OK;
 		if(kifp->active)
-			_ipkernel_vlan_destroy(kifp);
+			linux_ioctl_vlan_destroy(kifp);
 		kifp->vlanid = vlan;
-		if(_ipkernel_vlan_create(kifp) == 0)
+		if(linux_ioctl_vlan_create(kifp) == 0)
 		{
 			kifp->active = zpl_true;
 			return OK;

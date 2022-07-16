@@ -188,6 +188,23 @@ typedef enum if_enca_s
    IF_ENCA_RAW,          //RAW
 } if_enca_t;
 #endif
+
+typedef struct
+{
+    zpl_uint16      vlantype; 
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+    zpl_uint16       vid:12;
+    zpl_uint16       cfi:1; 
+    zpl_uint16       pri:3; 
+#else    
+    zpl_uint16       pri:3; 
+    zpl_uint16       cfi:1; 
+    zpl_uint16       vid:12; 
+#endif 
+    zpl_uint16      ethtype; 
+}zpl_vlancfipri_t __attribute__ ((aligned (1)));
+
+
 /* Interface structure */
 struct interface
 {

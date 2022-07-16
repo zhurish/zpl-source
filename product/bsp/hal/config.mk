@@ -15,6 +15,7 @@ ifeq ($(strip $(ZPL_HAL_MODULE)),true)
 ifeq ($(strip $(ZPL_SDK_BUILD)),true)
 
 OBJS	+= bsp_global.o
+OBJS	+= bsp_txrx.o
 OBJS	+= bsp_l3if.o
 OBJS	+= bsp_route.o
 
@@ -54,7 +55,7 @@ endif
 
 OBJS	+= bsp_cpu.o
 endif
-
+OBJS	+= bsp_netlink.o
 OBJS	+= bsp_driver.o
 endif
 

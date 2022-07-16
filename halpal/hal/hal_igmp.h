@@ -12,19 +12,7 @@
 extern "C" {
 #endif
 
-enum hal_igmp_cmd 
-{
-    HAL_IGMP_NONE,
-    HAL_IGMP_IPCHECK,
-	HAL_IGMP_SNOOPING,
-	HAL_IGMPQRY_SNOOPING,
-	HAL_IGMPUNKNOW_SNOOPING,
-	HAL_MLD_SNOOPING,
-	HAL_MLDQRY_SNOOPING,
-	HAL_ARP_COPYTOCPU,
-	HAL_RARP_COPYTOCPU,
-	HAL_DHCP_COPYTOCPU,
-};
+
 
 /* Initialize IGMP Snooping. */
 extern int hal_igmp_snooping_init(void);

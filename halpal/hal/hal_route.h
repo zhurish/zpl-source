@@ -14,12 +14,7 @@ extern "C" {
 
 #include "nexthop.h"
 
-enum hal_route_cmd 
-{
-  HAL_ROUTE_NONE,
-	HAL_ROUTE_ADD,
-	HAL_ROUTE_DEL,
-};
+
 
 
 typedef struct hal_nexthop

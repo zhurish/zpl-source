@@ -15,7 +15,7 @@
 [    1.663593] ==b53dev==:B53_CTRL_PAGE, B53_PORT_OVERRIDE_CTRL val: 0x0a                                                                 
 [    1.664090] ==b53dev==:B53_MGMT_PAGE, B53_GLOBAL_CONFIG val: 0x00 
  */
-int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
+static int b53_brcm_hdr_setup(sdk_driver_t *dev, zpl_bool enable, zpl_phyport_t port)
 {
 	int ret = 0;
 	u8 hdr_ctl = 0, val = 0;
@@ -127,7 +127,7 @@ int b53125_imp_port_enable(sdk_driver_t *dev, zpl_bool enable)
 }
 
 //使能禁止IMP接口收发功能
-int b53125_imp_enable(sdk_driver_t *dev, zpl_bool enable)
+static int b53125_imp_enable(sdk_driver_t *dev, zpl_bool enable)
 {
 	int ret = 0;
 	u8 regval = 0;
@@ -157,7 +157,7 @@ int b53125_imp_mii_overwrite(sdk_driver_t *dev, zpl_bool enable)
 	return ret;
 }
 
-int b53125_imp_speed(sdk_driver_t *dev, int speed)
+static int b53125_imp_speed(sdk_driver_t *dev, int speed)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -181,7 +181,7 @@ int b53125_imp_speed(sdk_driver_t *dev, int speed)
 	return ret;
 }
 
-int b53125_imp_duplex(sdk_driver_t *dev, int duplex)
+static int b53125_imp_duplex(sdk_driver_t *dev, int duplex)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -195,7 +195,7 @@ int b53125_imp_duplex(sdk_driver_t *dev, int duplex)
 	return ret;
 }
 
-int b53125_imp_flow(sdk_driver_t *dev, zpl_bool rx, zpl_bool tx)
+static int b53125_imp_flow(sdk_driver_t *dev, zpl_bool rx, zpl_bool tx)
 {
 	int ret = 0;
 	u8 reg = 0;
@@ -267,6 +267,23 @@ DEFUN (sdk_imp_mii_enable,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 #endif
+
+
+int b53125_imp_init(sdk_driver_t *dev)
+{
+	int ret = 0;
+	ret |= b53_brcm_hdr_setup(dev, zpl_true, ((b53_device_t *)dev->sdk_device)->cpu_port);
+	sdk_debug_event(dev, "b53125 brcm hdr init %s", (ret == OK)?"OK":"ERROR");
+	ret |= b53125_imp_enable(dev, zpl_true);//关闭IMP接口
+	sdk_debug_event(dev, "b53125 imp init %s", (ret == OK)?"OK":"ERROR");
+	ret |= b53125_imp_flow(dev, zpl_true, zpl_true);
+	sdk_debug_event(dev, "b53125 imp flow init %s", (ret == OK)?"OK":"ERROR");
+	ret |= b53125_imp_duplex(dev, PORT_OVERRIDE_FULL_DUPLEX);
+	sdk_debug_event(dev, "b53125 imp duplex init %s", (ret == OK)?"OK":"ERROR");
+	ret |= b53125_imp_speed(dev, PORT_OVERRIDE_SPEED_1000M);
+	sdk_debug_event(dev, "b53125 imp speed init %s", (ret == OK)?"OK":"ERROR");
+	return ret;
+}
 
 int b53125_cpu_init(sdk_driver_t *dev)
 {

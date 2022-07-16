@@ -263,7 +263,7 @@ int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ..
   va_list args;
   char logbuf[1024];
   struct hal_ipcmsg_result getvalue;
-  struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
+  //struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
   memset(logbuf, 0, sizeof(logbuf));
   memset(&getvalue, 0, sizeof(getvalue));
   hal_ipcmsg_reset(&hal_client->outmsg);
@@ -291,9 +291,9 @@ int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ..
 int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue)
 {
   //int len = 0;
-  va_list args;
+  //va_list args;
   char logbuf[1024];
-  struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
+  //struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
   memset(logbuf, 0, sizeof(logbuf));
   hal_ipcmsg_reset(&hal_client->outmsg);
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
@@ -310,10 +310,10 @@ int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ip
 int hal_client_send_result_msg(struct hal_client *hal_client, int ret, 
     struct hal_ipcmsg_result *getvalue, int subcmd, char *msg, int msglen)
 {
-  int len = 0;
-  va_list args;
+  //int len = 0;
+  //va_list args;
   char logbuf[1024];
-  struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
+  //struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
   memset(logbuf, 0, sizeof(logbuf));
   hal_ipcmsg_reset(&hal_client->outmsg);
   hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, subcmd));
@@ -335,7 +335,6 @@ int hal_client_send_result_msg(struct hal_client *hal_client, int ret,
 /* Make connection to zebra daemon. */
 int hal_client_start(struct hal_client *hal_client)
 {
-  zpl_uint32 i = 0;
 
   if (IS_HAL_IPCMSG_DEBUG_EVENT(hal_client->debug))
     zlog_debug(MODULE_HAL, "hal_client_start is called");
@@ -508,7 +507,7 @@ hal_client_read_thread(struct thread *thread)
     case HAL_MODULE_MGT:
       if (IPCCMD_CMD_GET(hdr.command) == HAL_MODULE_CMD_HELLO)
       {
-        ; // hal_ipcsrv_msg_hello(client, &client->ipcmsg);
+
       }
       
       break;

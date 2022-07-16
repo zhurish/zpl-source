@@ -16,7 +16,6 @@
  * 基于8021Q的vlan 用于配置trunk接口
  */
 
-static zpl_bool enable_filtering = zpl_true;
 
 static int b53125_do_vlan_op(sdk_driver_t *dev, u8 op)
 {
@@ -40,9 +39,7 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 	int ret = 0;
 	u8 vc0 = 0, vc1 = 0, vc2 = 0, vc4 = 0, vc5 = 0;
 	u16 vc3 = 0;
-	enable_filtering = enable;
-	u8 regval = 0;
-	ret |= b53125_read8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, &regval);
+
 	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_8021Q, &vc0);
 	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL1, &vc1);
 	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL2, &vc2);
@@ -50,7 +47,6 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, &vc4);
 	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL5, &vc5);
 
-	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_CTRL_PAGE, B53_SWITCH_MODE, regval);
 	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x vc0=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_8021Q, vc0);
 	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x vc1=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL1, vc1);
 	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x vc2=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL2, vc2);
@@ -63,34 +59,34 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 		vc0 |= IEEE8021Q_VLAN_EN|VLAN_LEARNING_MODE(VLAN_LEARNING_MODE_IVL);
 		vc0 &= ~VLAN_CHANGE_PVID_EN;
 
-		vc1 |= VLAN_MCST_UNTAG_CHECK_EN | VLAN_MCST_FWD_CHECK_EN|VLAN_RES_MCST_FWD_CHECK_EN|VLAN_RES_MCST_UNTAG_CHECK_EN;
-		vc4 &= ~VLAN_ING_VID_CHECK_MASK;
-		vc2 |= VLAN_GMVRP_UNTAG_CHECK_EN|VLAN_GMVRP_FWD_CHECK_EN|VLAN_IMP_FWD_BYPASS;
-		
-		if (enable_filtering)
-		{
-			vc4 |= VLAN_NO_ING_VID_CHK << VLAN_ING_VID_CHECK_S|VLAN_RSV_MCAST_FLOOD|VLAN_GVRP_FWD_IMP_EN|VLAN_GMRP_FWD_IMP_EN;
-			vc5 |= VLAN_DROP_VID_INVALID;
-		}
-		else
-		{
-			vc4 |= VLAN_NO_ING_VID_CHK << VLAN_ING_VID_CHECK_S|VLAN_GVRP_FWD_IMP_EN|VLAN_GMRP_FWD_IMP_EN;
-			vc5 &= ~VLAN_DROP_VID_INVALID;
-		}	
+		vc1 |= VLAN_RES_MCST_FWD_CHECK_EN|VLAN_RES_MCST_UNTAG_CHECK_EN;
+		vc1 &= ~(VLAN_MCST_UNTAG_CHECK_EN | VLAN_MCST_FWD_CHECK_EN);
+
+		vc2 |= VLAN_GMVRP_UNTAG_CHECK_EN|VLAN_GMVRP_FWD_CHECK_EN;
+		vc2 |= VLAN_IMP_FWD_BYPASS;
+
+		vc3 = 0;
+
+		vc4 |= VLAN_GVRP_FWD_IMP_EN|VLAN_GMRP_FWD_IMP_EN|VLAN_RSV_MCAST_FLOOD;
+		vc4 |= VLAN_NO_ING_VID_CHK << VLAN_ING_VID_CHECK_S;
+
+		vc5 |= VLAN_DROP_VID_INVALID|VLAN_DROP_VID_FFF_EN|VLAN_TRUNK_CHECK_BYPASS;	
 	}
 	else
 	{
-		vc0 &= ~(IEEE8021Q_VLAN_EN|VLAN_LEARNING_MODE(VLAN_LEARNING_MODE_IVL)|VLAN_CHANGE_PVID_EN);
-		vc1 &= ~(VLAN_MCST_UNTAG_CHECK_EN | VLAN_MCST_FWD_CHECK_EN|VLAN_RES_MCST_FWD_CHECK_EN|VLAN_RES_MCST_UNTAG_CHECK_EN);
-		vc4 &= ~VLAN_ING_VID_CHECK_MASK;
-		vc5 &= ~VLAN_DROP_VID_INVALID;
+		vc0 = 0;
+		vc0 |= VLAN_LEARNING_MODE(VLAN_LEARNING_MODE_SVL);
+		vc1 = 0;
+		vc2 = 0;
+		vc3 = 0;
 
+		vc4 = 0;
 		vc4 |= VLAN_ING_VID_VIO_TO_IMP << VLAN_ING_VID_CHECK_S;
+
+		vc5 = 0;
+		vc5 |= VLAN_TRUNK_CHECK_BYPASS;
 	}
-	//regval &= ~SM_SW_FWD_MODE;
-	
-	vc5 &= ~VLAN_DROP_VID_FFF_EN;
-	vc5 |= VLAN_DROP_VID_INVALID;
+
 	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_8021Q, vc0);
 	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL1, vc1);
 	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL2, vc2);
@@ -98,7 +94,6 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, vc4);
 	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL5, vc5);
 
-	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_CTRL_PAGE, B53_SWITCH_MODE, regval);
 	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x vc0=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_8021Q, vc0);
 	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x vc1=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL1, vc1);
 	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x vc2=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL2, vc2);
@@ -106,7 +101,6 @@ static int b53125_enable_vlan(sdk_driver_t *dev, zpl_bool enable)
 	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x vc4=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, vc4);
 	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x vvc5=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL5, vc5);
 
-	ret |= b53125_write8(dev->sdk_device, B53_CTRL_PAGE, B53_SWITCH_MODE, regval);
 	if(ret == OK)
 	{
 		dev->vlan_enabled = enable;
@@ -137,8 +131,7 @@ static int b53125_set_vlan_entry(sdk_driver_t *dev, vlan_t vid, b53_vlan_t *vlan
 	int ret = 0, vlanentryval = 0;;
 	ret |= b53125_write16(dev->sdk_device, B53_ARLIO_PAGE, B53_VLAN_TBL_INDEX, vid);
 	vlanentryval = (vlanentry->untag << VLAN_UNTAG_OFFSET) | vlanentry->tag;
-	//vlanentryval |= VLAN_FWD_MODE_VLAN;
-	//vlanentryval |= BIT(8);
+
 	ret |= b53125_write32(dev->sdk_device, B53_ARLIO_PAGE, B53_VLAN_TBL_ENTRY, vlanentryval);
 	ret |= b53125_do_vlan_op(dev, VLAN_TBL_CMD_WRITE);
 
@@ -176,7 +169,7 @@ static int b53125_add_vlan_entry(sdk_driver_t *dev, vlan_t vid)
 */
 //	entry |= BIT(8);
 	ret |= b53125_set_vlan_entry(dev,  vid, &vlanentry);
-	b53125_clear_mac_tbl_vlan(dev, vid);	
+	b53125_mac_address_clr(dev, -1, vid, 0);	
 	sdk_handle_return(ret);
 	return ret;
 }
@@ -188,13 +181,13 @@ static int b53125_del_vlan_entry(sdk_driver_t *dev, vlan_t vid)
 	ret |= b53125_get_vlan_entry(dev,  vid, &vlanentry);
 	vlanentry.untag = vlanentry.tag = 0;
 	ret |= b53125_set_vlan_entry(dev,  vid, &vlanentry);
-	b53125_clear_mac_tbl_vlan(dev, vid);
+	b53125_mac_address_clr(dev, -1, vid, 0);
 	sdk_handle_return(ret);
 	return ret;
 }
 
 
-int b53125_add_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag)
+static int b53125_add_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag)
 {
 	int ret = 0, i = 0;
 	zpl_bool untagged = !tag;
@@ -218,7 +211,7 @@ int b53125_add_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, 
 	return ret;
 }
 
-int b53125_del_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag)
+static int b53125_del_vlan_portlst(sdk_driver_t *dev, vlan_t vid, zpl_phyport_t *port, int num, zpl_bool tag)
 {
 	int ret = 0, i = 0;
 	bool untagged = !tag;
@@ -298,7 +291,7 @@ static int b53125_vlan_port_tag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t por
 	return ret;
 }
 
-int b53125_vlan_port_untag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t port , vlan_t vid)
+static int b53125_vlan_port_untag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t port , vlan_t vid)
 {
 	if(a)
 		return b53125_add_vlan_port(dev,  vid,  port, zpl_false);
@@ -306,8 +299,39 @@ int b53125_vlan_port_untag(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t port , v
 		return b53125_del_vlan_port(dev,  vid,  port, zpl_false);	
 }
 
+static int b53125_vlan_port_tag_range(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t *port, int num, vlan_t vid)
+{
+	int ret = 0;
+	if(a)
+		ret = b53125_add_vlan_portlst(dev,  vid,  port, num, zpl_true);
+	else 
+		ret = b53125_del_vlan_portlst(dev,  vid,  port, num, zpl_true);	
+	return ret;
+}
 
+static int b53125_vlan_port_untag_range(sdk_driver_t *dev, zpl_bool a, zpl_phyport_t *port, int num, vlan_t vid)
+{
+	if(a)
+		return b53125_add_vlan_portlst(dev,  vid,  port, num, zpl_false);
+	else 
+		return b53125_del_vlan_portlst(dev,  vid,  port, num, zpl_false);	
+}
 
+int b53125_vlan_port_mode(sdk_driver_t *dev, zpl_phyport_t port, int mode)
+{
+	int ret = 0;
+	u8 reg = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, &reg);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x entry=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, reg);
+	if(mode == IF_MODE_TRUNK_L2 || mode == IF_MODE_DOT1Q_TUNNEL)
+		reg |= BIT(port);
+	else
+		reg &= ~BIT(port);
+	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, reg);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x entry=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, reg);
+	sdk_handle_return(ret);
+	return ret;
+}
 
 static int b53125_port_access_pvid(sdk_driver_t *dev, zpl_bool e, zpl_phyport_t port, vlan_t vid)
 {
@@ -329,7 +353,7 @@ static int b53125_port_pvid(sdk_driver_t *dev, zpl_bool e, zpl_phyport_t port, v
 	return ret;
 }
 
-static int b53125_vlan_double_tagging_tpid(sdk_driver_t *dev, u16 tpid)
+static int b53125_qinq_tpid(sdk_driver_t *dev, u16 tpid)
 {
 	int ret = 0;
 	ret |= b53125_write16(dev->sdk_device, B53_VLAN_PAGE, B53_VLAN_ISP_TPID, tpid);
@@ -338,7 +362,23 @@ static int b53125_vlan_double_tagging_tpid(sdk_driver_t *dev, u16 tpid)
 	return ret;
 }
 
-static int b53125_ISP_port(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
+static int b53125_qinq_enable(sdk_driver_t *dev, zpl_bool enable)
+{
+	int ret = 0;
+	u8 reg = 0;
+	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, &reg);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x entry=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, reg);
+	if(enable)
+		reg |= VLAN_DOUBLE_TAG_EN;
+	else
+		reg &= ~VLAN_DOUBLE_TAG_EN;
+	ret |= b53125_write8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, reg);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x entry=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL4, reg);
+	sdk_handle_return(ret);
+	return ret;
+}
+
+static int b53125_qinq_port_enable(sdk_driver_t *dev, zpl_phyport_t port, zpl_bool enable)
 {
 	int ret = 0;
 	u16 reg = 0;
@@ -423,10 +463,6 @@ DEFUN (sdk_b53125_vlan_enable,
 {
 	int ret = 0;
 
-	if(strstr(argv[0], "enable"))
-		enable_filtering = zpl_true;
-	else
-		enable_filtering = zpl_false;	
 	if(strstr(argv[0], "enable"))
 		ret = b53125_enable_vlan(__msdkdriver, 1);
 	else
@@ -636,6 +672,10 @@ int b53125_vlan_init(sdk_driver_t *dev)
 	//sdk_vlan.sdk_port_pvid_vlan = b53125_port_pvid;
     sdk_vlan.sdk_port_allowed_tag_vlan = b53125_vlan_port_tag;
     sdk_vlan.sdk_port_allowed_untag_vlan = b53125_vlan_port_untag;
+ 
+    sdk_vlan.sdk_port_allowed_tag_vlan_range = b53125_vlan_port_tag_range;
+    sdk_vlan.sdk_port_allowed_untag_vlan_range = b53125_vlan_port_untag_range;
+
 
     sdk_vlan.sdk_vlan_port_bridge = b53125_port_bridge;
 	sdk_vlan.sdk_vlan_port_bridge_join = b53125_port_bridge_join;
@@ -643,8 +683,9 @@ int b53125_vlan_init(sdk_driver_t *dev)
     //sdk_vlan.sdk_vlan_stp_instance = NULL;
     sdk_vlan.sdk_vlan_translate = NULL;
 
-	sdk_qinq.sdk_qinq_port_enable_cb = b53125_ISP_port;
-    sdk_qinq.sdk_qinq_vlan_ptid_cb = b53125_vlan_double_tagging_tpid;
+	sdk_qinq.sdk_qinq_enable_cb = b53125_qinq_enable;
+	sdk_qinq.sdk_qinq_port_enable_cb = b53125_qinq_port_enable;
+    sdk_qinq.sdk_qinq_vlan_ptid_cb = b53125_qinq_tpid;
 
 	return OK;
 }

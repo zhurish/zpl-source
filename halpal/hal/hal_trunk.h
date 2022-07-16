@@ -11,16 +11,7 @@
 extern "C" {
 #endif
 
-enum hal_trunk_cmd 
-{
-    HAL_TRUNK_CMD_NONE,
-	HAL_TRUNK_CMD_ENABLE,
-	HAL_TRUNK_CMD_CREATE,
-	HAL_TRUNK_CMD_ADDIF,
-	HAL_TRUNK_CMD_DELIF,
-	HAL_TRUNK_CMD_MODE,
-    HAL_TRUNK_CMD_MAX,
-};
+
 
 typedef struct hal_trunk_param_s
 {

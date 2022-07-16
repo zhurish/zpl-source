@@ -12,23 +12,7 @@
 extern "C" {
 #endif
 
-enum hal_vlan_cmd 
-{
-    HAL_VLAN_NONE,
-	HAL_VLAN,
-	HAL_VLAN_CREATE,
-	HAL_VLAN_DELETE,
-	HAL_VLAN_RANGE_CREATE,
-    HAL_VLAN_RANGE_DELETE,
-    //PORT
-    HAL_VLAN_ACCESS,
-    HAL_VLAN_NATIVE,
-    HAL_VLAN_ALLOWE,
-    HAL_VLAN_RANGE_ALLOWE,
-    HAL_VLAN_PORT_BASE,
-    HAL_VLAN_TEST,
-    HAL_VLAN_MAX,
-};
+
 
 /* hal_vlan_control_t */
 typedef enum hal_vlan_control_e {

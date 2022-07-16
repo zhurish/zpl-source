@@ -5585,7 +5585,7 @@ DEFUN (show_ipv6_route_addr_vrf_all,
   struct prefix_ipv6 p;
   struct route_table *table = NULL;
   struct route_node *rn = NULL;
-  struct rib *rib = NULL;
+  //struct rib *rib = NULL;
   struct nsm_ip_vrf *zvrf = NULL;
   struct ip_vrf *ip_vrf = NULL;
   NODE index;
@@ -5635,7 +5635,6 @@ DEFUN (show_ipv6_route_prefix_vrf_all,
   struct prefix_ipv6 p;
   struct route_table *table = NULL;
   struct route_node *rn = NULL;
-  struct rib *rib = NULL;
   struct nsm_ip_vrf *zvrf = NULL;
   struct ip_vrf *ip_vrf = NULL;
   NODE index;

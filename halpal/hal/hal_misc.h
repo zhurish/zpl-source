@@ -13,15 +13,7 @@ extern "C" {
 #endif
 
 
-enum hal_misc_cmd 
-{
-    HAL_MISC_NONE,
-	HAL_MISC_JUMBO,
-	HAL_MISC_JUMBO_SIZE,
-	HAL_MISC_DHCP_SNOOP,
-	HAL_MISC_IGMP_SNOOP,
-    HAL_MISC_EEE,
-};
+
 
 //jumbo
 

@@ -159,7 +159,7 @@ static void
 ipcstandby_serv_client_create(zpl_socket_t sock, struct ipstack_sockaddr_in *remote)
 {
   struct ipcstandby_serv *client;
-  zpl_uint32 i = 0;
+  //zpl_uint32 i = 0;
 
   client = XCALLOC(MTYPE_TMP, sizeof(struct ipcstandby_serv));
 

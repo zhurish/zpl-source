@@ -83,6 +83,8 @@ ZPL_BUILD_DEBUG	=$(shell echo $(ARCH_DEBUG) | tr a-z A-Z)
 #ZPL_BUILD_OS	=$(ARCH_OS)
 ZPL_BUILD_OS	=$(shell echo $(ARCH_OS) | tr a-z A-Z) 
 #
+ZPL_RUN_ARCH	=$(shell echo $(ARCH_TYPE) | tr A-Z a-z)
+ZPL_RUN_OS	=$(shell echo $(ARCH_OS) | tr A-Z a-z) 
 #
 #ZPL_BUILD_IPV6	= false
 ZPL_BUILD_IPV6	= $(ZPL_IPV6_MODULE)
@@ -167,7 +169,7 @@ ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args \
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
 			  -Werror=overflow -Werror=format-security -Werror=shadow \
 			  -Werror=unsafe-loop-optimizations -Werror=init-self \
-			  -Werror=unused-function -Werror=redundant-decls -Werror=unused-value \
+			  -Werror=unused-function -Werror=redundant-decls -Werror=unused-variable \
 			  -Werror=missing-prototypes -Werror=sequence-point -Werror=float-equal \
 			  -Werror=strict-prototypes -Werror=overlength-strings -Werror=unused-label \
 			  -Werror=shift-count-overflow  -Werror=int-conversion -Werror=unsafe-loop-optimizations \

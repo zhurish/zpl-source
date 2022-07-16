@@ -21,7 +21,7 @@
 #include "hal_driver.h"
 #endif
 #if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_USER)
-#include "sdk_driver.h"
+//#include "sdk_driver.h"
 #endif
 
 #include "startup_start.h"
@@ -212,8 +212,7 @@ static int zplmain_getopt(int argc, char **argv)
 	}
 	return OK;
 }
-extern int dhcpv6_main( int argc, char* const argv[]);
-extern int do_iplink(int argc, char **argv);
+
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -226,6 +225,8 @@ int main(int argc, char **argv)
 	/* Set umask before anything for security */
 	umask(0027);
 
+	//ip_main( argc, argv);
+	//tc_main( argc, argv);
 
 	startup_option_default();
 	startup_option.progname = ((p = strrchr(argv[0], '/')) ? ++p : argv[0]);

@@ -69,6 +69,7 @@ change outer VID to PVID.
 #define B53_GLOBAL_VLAN_CTRL4			0x05
 #define   VLAN_ING_VID_CHECK_S		6
 #define   VLAN_ING_VID_CHECK_MASK	(0x3 << VLAN_ING_VID_CHECK_S)
+
 #define   VLAN_ING_VID_VIO_FWD		0 /* forward, but do not learn */
 #define   VLAN_ING_VID_VIO_DROP		1 /* drop VID violations */
 #define   VLAN_NO_ING_VID_CHK		2 /* do not check */

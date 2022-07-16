@@ -89,11 +89,7 @@ int nsm_ppp_interface_del_api(struct interface *ifp)
 #ifdef ZPL_SHELL_MODULE
 int nsm_ppp_interface_write_config(struct vty *vty, struct interface *ifp)
 {
-	//zpl_uint32 = 0;
-	//int count = 0;
-	//zpl_char tmp[128];
 	zpl_char tmpcli_str[256];
-	struct nsm_interface *nsm_ifp = NULL;
 	nsm_pppd_t *nsm_ppp = NULL;
 	if(!if_is_serial(ifp))
 		return OK;

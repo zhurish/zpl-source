@@ -401,8 +401,6 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 		struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args)
 {
-	zpl_uint16 protocol = 0;
-
 	/* If zlog is not specified, use default one. */
 	if (zl == NULL)
 		zl = zlog_default;
@@ -443,7 +441,6 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 		loghdr.module = module;
 		loghdr.priority = priority;
 		loghdr.len = 0;
-		//loghdr.logbuf[LOG_MSG_SIZE];
 		offset = zlog_depth_debug_detail(NULL, loghdr.logbuf, zl->depth_debug, file, func, line);
 		va_copy(ac, args);
 		loghdr.len += vsnprintf(loghdr.logbuf + offset, sizeof(loghdr.logbuf) - offset, format, ac);

@@ -84,7 +84,6 @@ static int sdk_driver_free(sdk_driver_t *sdkdriver)
 
 int sdk_driver_init(struct bsp_driver *bsp, zpl_void *p)
 {
-	sdk_driver_t *sdkdriver = (sdk_driver_t *)p;
 	bsp->sdk_driver = sdk_driver_malloc();
 	if(bsp->sdk_driver)
 		return OK;
