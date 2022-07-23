@@ -436,11 +436,6 @@ static struct cmd_node rmap_node =
   "%s(config-route-map)# "
 };
 
-static struct cmd_node zebra_node =
-{
-  ZEBRA_NODE,
-  "%s(config-router)# "
-};
 
 static struct cmd_node bgp_vpnv4_node =
 {
@@ -566,7 +561,7 @@ void vtysh_init(void)
   install_node (&interface_node, NULL);
   install_node (&link_params_node, NULL);
   install_node (&rmap_node, NULL);
-  install_node (&zebra_node, NULL);
+
   install_node (&bgp_vpnv4_node, NULL);
   install_node (&bgp_vpnv6_node, NULL);
   install_node (&bgp_encap_node, NULL);
@@ -596,7 +591,7 @@ void vtysh_init(void)
   vtysh_install_default (INTERFACE_NODE);
   vtysh_install_default (LINK_PARAMS_NODE);
   vtysh_install_default (RMAP_NODE);
-  vtysh_install_default (ZEBRA_NODE);
+
   vtysh_install_default (BGP_VPNV4_NODE);
   vtysh_install_default (BGP_VPNV6_NODE);
   vtysh_install_default (BGP_ENCAP_NODE);

@@ -85,9 +85,6 @@ ifeq ($(strip $(ZPL_VRF_MODULE)),true)
 ZPL_DEFINE	+= -DZPL_VRF_MODULE
 endif
 
-ifeq ($(strip $(ZPL_VRF_MODULE)),true)
-ZPL_DEFINE	+= -DZPL_VRF_MODULE
-endif
 
 ifeq ($(strip $(ZPL_NSM_NEXTHOP)),true)
 ZPL_DEFINE	+= -DZPL_NSM_NEXTHOP
@@ -113,6 +110,20 @@ ifeq ($(strip $(ZPL_PAL_MODULE)),true)
 ZPLPRODS += $(HALPAL_ROOT)/pal
 ZPL_INCLUDE += -I$(HALPAL_ROOT)/pal
 ZPL_DEFINE += -DZPL_PAL_MODULE
+
+ifeq ($(strip $(ZPL_KERNEL_MODULE)),true)
+ZPLPRODS += $(HALPAL_ROOT)/pal/linux
+ZPL_INCLUDE += -I$(HALPAL_ROOT)/pal/linux
+ifeq ($(strip $(ZPL_KERNEL_NETLINK)),true)
+ZPL_DEFINE += -DZPL_KERNEL_NETLINK
+endif
+endif
+
+ifeq ($(strip $(ZPL_IPCOM_MODULE)),true)
+ZPLPRODS += $(HALPAL_ROOT)/pal/ipnet
+ZPL_INCLUDE += -I$(HALPAL_ROOT)/pal/ipnet
+endif
+
 endif #($(strip $(ZPL_HAL_MODULE)),true)
 
 
@@ -339,12 +350,12 @@ ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/readline/_install/lib
 endif
 ZPLEX_LDLIBS += -lreadline -lhistory -lncurses
 endif
-ZPL_LIBNL_MODULE=true
+
 ifeq ($(strip $(ZPL_LIBNL_MODULE)),true)
 ZPLEX_DEFINE	+= -DZPL_LIBNL_MODULE
 ZPLEX_DIR += $(EXTERNSION_ROOT)/libnl
 ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl/_install/include
+ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl/_install/include/libnl3
 ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/libnl/_install/lib
 #ZPLEX_LDLIBS += -lnl-3 -lnl-genl-3 -lnl-route-3 -lnl-idiag-3 -lnl-nf -lnl-xfrm
 endif
@@ -357,26 +368,6 @@ ifeq ($(strip $(ZPL_BSP_MODULE)),true)
 ZPLPRODS += $(PRODUCT_ROOT)/bsp/hal
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/hal
 ZPL_DEFINE += -DZPL_BSP_MODULE
-
-ifeq ($(strip $(ZPL_KERNEL_MODULE)),true)
-ZPLPRODS += $(PRODUCT_ROOT)/bsp/pal/linux
-ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/pal/linux
-ifeq ($(strip $(ZPL_KERNEL_NETLINK)),true)
-ZPL_DEFINE += -DZPL_KERNEL_NETLINK
-endif
-ifeq ($(strip $(ZPL_KERNEL_FORWARDING)),true)
-ZPL_DEFINE += -DZPL_KERNEL_FORWARDING
-endif
-
-#ZPLPRODS += $(PRODUCT_ROOT)/kernel
-
-endif
-
-ifeq ($(strip $(ZPL_IPCOM_MODULE)),true)
-ZPLPRODS += $(PRODUCT_ROOT)/bsp/pal/ipnet
-ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/pal/ipnet
-endif
-
 
 ifeq ($(strip $(ZPL_SDK_MODULE)),true)
 ZPL_DEFINE += -DZPL_SDK_MODULE

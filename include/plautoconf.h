@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-07-16 10:18:18 CST"
+#define AUTOCONF_TIMESTAMP "2022-07-23 15:42:28 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -113,9 +113,9 @@
 #define ZPL_NSM_IGMP 1
 #define ZPL_NSM_MSTP 1
 #define ZPL_NSM_PORT 1
-#undef ZPL_NSM_VLANETH
+#define ZPL_NSM_VLANETH 1
 #undef ZPL_NSM_WIRELESS
-#undef ZPL_NSM_BRIDGE
+#define ZPL_NSM_BRIDGE 1
 #define ZPL_NSM_SECURITY 1
 #define ZPL_NSM_RTADV 1
 #define ZPL_NSM_IRDP 1
@@ -165,6 +165,10 @@
 #define ZPL_HALPAL_MODULE 1
 #define ZPL_HAL_MODULE 1
 #define ZPL_PAL_MODULE 1
+#undef ZPL_IPCOM_MODULE
+#define ZPL_KERNEL_MODULE 1
+#define ZPL_KERNEL_NETLINK 1
+#define ZPL_IPCOM_ROOT_PATH ""
 
 /*
  * Service Module Config
@@ -234,11 +238,6 @@
  * BSP Module Config
  */
 #define ZPL_BSP_MODULE 1
-#undef ZPL_IPCOM_MODULE
-#define ZPL_KERNEL_MODULE 1
-#define ZPL_KERNEL_NETLINK 1
-#undef ZPL_KERNEL_FORWARDING
-#define ZPL_IPCOM_ROOT_PATH ""
 #define ZPL_SDK_MODULE 1
 #define ZPL_SDK_NONE 1
 #undef ZPL_SDK_USER
@@ -255,6 +254,7 @@
 #define ZPL_EXFREETYPE_LIB_PATH ""
 #define ZPL_EXFREETYPE_INC_PATH ""
 #undef ZPL_READLINE_MODULE
+#undef ZPL_LIBNL_MODULE
 
 /*
  * Application Module Config
@@ -266,10 +266,10 @@
 /*
  * Tools Module Config
  */
-#define ZPL_TOOLS_MODULE 1
+#undef ZPL_TOOLS_MODULE
 #undef ZPL_TOOLS_PROCESS
 #undef ZPL_TOOLS_QUECTEL_CM
 #undef ZPL_TOOLS_SYSTEM
 #undef ZPL_VTYSH_MODULE
-#define ZPL_WATCHDOG_MODULE 1
+#undef ZPL_WATCHDOG_MODULE
 #undef ZPL_SWCONFIG_MODULE

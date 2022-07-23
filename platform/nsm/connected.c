@@ -112,10 +112,10 @@ void connected_up_ipv4(struct interface *ifp, struct connected *ifc)
 	if (prefix_ipv4_any(&p))
 		return;
 #ifdef ZPL_NSM_MODULE
-	rib_add_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
+	rib_add_ipv4(ZPL_ROUTE_PROTO_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
 				 ifp->vrf_id, IPSTACK_RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
 
-	rib_add_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
+	rib_add_ipv4(ZPL_ROUTE_PROTO_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
 				 ifp->vrf_id, IPSTACK_RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_MULTICAST);
 
 	rib_update(ifp->vrf_id);
@@ -127,7 +127,7 @@ void connected_down_ipv4(struct interface *ifp, struct connected *ifc)
 	struct prefix_ipv4 p;
 
 	/*
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_REAL))
+	if (!CHECK_FLAG(ifc->conf, IF_IFC_REAL))
 		return;
 */
 
@@ -142,10 +142,10 @@ void connected_down_ipv4(struct interface *ifp, struct connected *ifc)
 		return;
 #ifdef ZPL_NSM_MODULE
 	/* Same logic as for connected_up_ipv4(): push the changes into the head. */
-	rib_delete_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
+	rib_delete_ipv4(ZPL_ROUTE_PROTO_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
 					SAFI_UNICAST);
 
-	rib_delete_ipv4(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
+	rib_delete_ipv4(ZPL_ROUTE_PROTO_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
 					SAFI_MULTICAST);
 
 	rib_update(ifp->vrf_id);
@@ -158,7 +158,7 @@ void connected_up_ipv6(struct interface *ifp, struct connected *ifc)
 	struct prefix_ipv6 p;
 
 	/*
-	if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL))
+	if (! CHECK_FLAG (ifc->conf, IF_IFC_REAL))
 	return;
 */
 
@@ -173,7 +173,7 @@ void connected_up_ipv6(struct interface *ifp, struct connected *ifc)
 		return;
 #endif
 #ifdef ZPL_NSM_MODULE
-	rib_add_ipv6(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
+	rib_add_ipv6(ZPL_ROUTE_PROTO_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
 				 IPSTACK_RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
 
 	rib_update(ifp->vrf_id);
@@ -185,7 +185,7 @@ void connected_down_ipv6(struct interface *ifp, struct connected *ifc)
 	struct prefix_ipv6 p;
 
 	/*
-	if (! CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL))
+	if (! CHECK_FLAG (ifc->conf, IF_IFC_REAL))
 	return;
 */
 
@@ -196,7 +196,7 @@ void connected_down_ipv6(struct interface *ifp, struct connected *ifc)
 	if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED(&p.prefix))
 		return;
 #ifdef ZPL_NSM_MODULE
-	rib_delete_ipv6(ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
+	rib_delete_ipv6(ZPL_ROUTE_PROTO_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
 					SAFI_UNICAST);
 
 	rib_update(ifp->vrf_id);
@@ -224,7 +224,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	ifc->flags = flags;
 	/* If we get a notification from the kernel,
 	 * we can safely assume the address is known to the kernel */
-	//SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
+	//SET_FLAG(ifc->conf, IF_IFC_QUEUED);
 	/* Allocate new connected address. */
 	p = prefix_ipv4_new();
 	p->family = IPSTACK_AF_INET;
@@ -276,12 +276,12 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	}
 	else
 	{
-		if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_PEER))
+		if (CHECK_FLAG(ifc->flags, IF_IFA_PEER))
 		{
 			zlog_warn(MODULE_DEFAULT, "warning: %s called for interface %s "
 								"with peer flag set, but no peer address supplied",
 					  __func__, ifp->name);
-			UNSET_FLAG(ifc->flags, ZEBRA_IFA_PEER);
+			UNSET_FLAG(ifc->flags, IF_IFA_PEER);
 		}
 
 		/* no broadcast or destination address was supplied */
@@ -292,14 +292,14 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	}
 #ifdef ZPL_DHCP_MODULE
 	if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 #endif
 	/* Label of this address. */
 	//if (label)
 	//  ifc->label = XSTRDUP (MTYPE_CONNECTED_LABEL, label);
 	/* For all that I know an IPv4 address is always ready when we receive
 	 * the notification. So it should be safe to set the REAL flag here. */
-	//SET_FLAG(ifc->conf, ZEBRA_IFC_REAL);
+	//SET_FLAG(ifc->conf, IF_IFC_REAL);
 	//connected_update(ifp, ifc);
 	listnode_add(ifp->connected, ifc);
 	connected_up_ipv4(ifp, ifc);
@@ -352,7 +352,7 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	ifc->flags = flags;
 	/* If we get a notification from the kernel,
 	 * we can safely assume the address is known to the kernel */
-	//SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
+	//SET_FLAG(ifc->conf, IF_IFC_QUEUED);
 	/* Allocate new connected address. */
 	p = prefix_ipv6_new();
 	p->family = IPSTACK_AF_INET6;
@@ -382,29 +382,29 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 			ifc->destination = (struct prefix *)p;
 		}
 	}
-	if (CHECK_FLAG(ifc->flags, ZEBRA_IFA_PEER) && !ifc->destination)
+	if (CHECK_FLAG(ifc->flags, IF_IFA_PEER) && !ifc->destination)
 	{
 		zlog_warn(MODULE_DEFAULT, "warning: %s called for interface %s "
 							"with peer flag set, but no peer address supplied",
 				  __func__,
 				  ifp->name);
-		UNSET_FLAG(ifc->flags, ZEBRA_IFA_PEER);
+		UNSET_FLAG(ifc->flags, IF_IFA_PEER);
 	}
 #ifdef ZPL_DHCP_MODULE
 	if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 #endif
 	/* Label of this address. */
 	//if (label)
 	//  ifc->label = XSTRDUP (MTYPE_CONNECTED_LABEL, label);
 	/* On Linux, we only get here when DAD is complete, therefore we can set
-	 * ZEBRA_IFC_REAL.
+	 * IF_IFC_REAL.
 	 *
 	 * On BSD, there currently doesn't seem to be a way to check for completion of
-	 * DAD, so we replicate the old behaviour and set ZEBRA_IFC_REAL, although DAD
+	 * DAD, so we replicate the old behaviour and set IF_IFC_REAL, although DAD
 	 * might still be running.
 	 */
-	//SET_FLAG(ifc->conf, ZEBRA_IFC_REAL);
+	//SET_FLAG(ifc->conf, IF_IFC_REAL);
 	//connected_update(ifp, ifc);
 	listnode_add(ifp->connected, ifc);
 	connected_up_ipv6(ifp, ifc);

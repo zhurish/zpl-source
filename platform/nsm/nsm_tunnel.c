@@ -13,19 +13,10 @@
 #include "zmemory.h"
 #include "template.h"
 #include "algorithm.h"
+#include "nsm_halpal.h"
 #include "nsm_qos.h"
 #include "nsm_interface.h"
 #include "nsm_tunnel.h"
-
-// ip_tunnel.c
-extern int linux_ioctl_tunnel_create(nsm_tunnel_t *tunnel);
-extern int linux_ioctl_tunnel_delete(nsm_tunnel_t *tunnel);
-extern int linux_ioctl_tunnel_change(nsm_tunnel_t *tunnel);
-
-
-static int (*ipkernel_tunnel_create)(nsm_tunnel_t *tunnel);
-static int (*ipkernel_tunnel_delete)(nsm_tunnel_t *tunnel);
-static int (*ipkernel_tunnel_change)(nsm_tunnel_t *tunnel);
 
 
 nsm_tunnel_t * nsm_tunnel_get(struct interface *ifp)
@@ -124,12 +115,11 @@ static int nsm_tunnel_kname(nsm_tunnel_t *tunnel)
 static int nsm_tunnellinux_ioctl_create(nsm_tunnel_t *tunnel)
 {
 	//TODO create tunnel interface
-	if(ipkernel_tunnel_create)
+#ifdef ZPL_HAL_MODULE
+	if(nsm_halpal_interface_add(tunnel->ifp) == OK)
+#endif
 	{
-		if((ipkernel_tunnel_create)(tunnel) == OK)
-		{
-			return nsm_interface_up_set_api(tunnel->ifp);
-		}
+		return nsm_interface_up_set_api(tunnel->ifp);
 	}
 	return OK;
 }
@@ -139,26 +129,23 @@ static int nsm_tunnellinux_ioctl_change(nsm_tunnel_t *tunnel)
 	if(tunnel->active)
 	{
 		//TODO change tunnel interface
-		if(ipkernel_tunnel_change)
-		{
-			return (ipkernel_tunnel_change)(tunnel);
-		}
-		return OK;
+#ifdef ZPL_HAL_MODULE
+		return nsm_halpal_interface_update(tunnel->ifp);
+#endif
 	}
 	return ERROR;
 }
 
 static int nsm_tunnellinux_ioctl_destroy(nsm_tunnel_t *tunnel)
 {
-	if(ipkernel_tunnel_delete)
+#ifdef ZPL_HAL_MODULE
+	if(nsm_halpal_interface_delete(tunnel->ifp) == OK)
+#endif
 	{
-		if((ipkernel_tunnel_delete)(tunnel) == OK)
-		{
-			if_kname_set(tunnel->ifp, NULL);
-			tunnel->active = zpl_false;
-			tunnel->ready = zpl_false;
-			return OK;
-		}
+		if_kname_set(tunnel->ifp, NULL);
+		tunnel->active = zpl_false;
+		tunnel->ready = zpl_false;
+		return OK;
 	}
 	return ERROR;
 }
@@ -379,7 +366,7 @@ int nsm_tunnel_interface_create_api(struct interface *ifp)
 		return OK;
 	if(!tunnel)
 	{
-		tunnel = XMALLOC(MTYPE_IF, sizeof(nsm_tunnel_t));
+		tunnel = XMALLOC(MTYPE_IF_DATA, sizeof(nsm_tunnel_t));
 		zassert(tunnel);
 		os_memset(tunnel, 0, sizeof(nsm_tunnel_t));
 		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, tunnel);
@@ -401,7 +388,7 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 	if(tunnel)
 	{
 		nsm_tunnellinux_ioctl_destroy(tunnel);
-		XFREE(MTYPE_IF, tunnel);
+		XFREE(MTYPE_IF_DATA, tunnel);
 		tunnel = NULL;
 		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, NULL);
 	}

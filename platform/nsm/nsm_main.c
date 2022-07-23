@@ -73,7 +73,7 @@ int nsm_module_init(void)
 		nsm_rtadv.initialise = 1;	
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
 #ifdef ZPL_VRF_MODULE
-	ip_vrf_init();
+	ipvrf_init();
 #endif
 	if_init();
 	rib_init();
@@ -140,11 +140,9 @@ int nsm_module_init(void)
 	nsm_vlaneth_init();
 #endif
 
-
-
-	zserv_init();
-	extern void linux_netlink_open(vrf_id_t vrfid, zpl_uint32 msgsize);
-	linux_netlink_open(0, 8192);
+	nsm_zserv_init();
+	extern void librtnl_open(vrf_id_t vrfid, zpl_uint32 msgsize);
+	librtnl_open(0, 8192);
 	return 0;
 }
 
@@ -228,7 +226,7 @@ int nsm_module_cmd_init(void)
 #endif
 
 #ifdef ZPL_VRF_MODULE
-	cmd_ip_vrf_init();
+	cmd_ipvrf_init();
 #endif
 
 	cmd_global_init();
@@ -277,6 +275,7 @@ int nsm_module_cmd_init(void)
 #ifdef ZPL_NSM_QOS
 	cmd_qos_init();
 #endif
+	cmd_nsm_zserv_init();
 	return OK;
 }
 

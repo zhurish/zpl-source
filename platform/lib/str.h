@@ -2,8 +2,8 @@
  * $Id: str.h,v 1.4 2005/09/19 09:53:21 hasso Exp $
  */
 
-#ifndef _ZEBRA_STR_H
-#define _ZEBRA_STR_H
+#ifndef __LIB_STR_H
+#define __LIB_STR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,5 +79,5 @@ strtonum(const char *numstr, long long minval, long long maxval,
 }
 #endif
 
-#endif /* _ZEBRA_STR_H */
+#endif /* __LIB_STR_H */
 

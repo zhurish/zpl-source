@@ -20,50 +20,50 @@
  * Boston, MA 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_DEBUG_H
-#define _ZEBRA_DEBUG_H
+#ifndef _NSM_DEBUG_H
+#define _NSM_DEBUG_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Debug flags. */
-#define ZEBRA_DEBUG_EVENT   0x01
+#define NSM_DEBUG_EVENT   0x01
 
-#define ZEBRA_DEBUG_PACKET  0x01
-#define ZEBRA_DEBUG_SEND    0x20
-#define ZEBRA_DEBUG_RECV    0x40
-#define ZEBRA_DEBUG_DETAIL  0x80
+#define NSM_DEBUG_PACKET  0x01
+#define NSM_DEBUG_SEND    0x20
+#define NSM_DEBUG_RECV    0x40
+#define NSM_DEBUG_DETAIL  0x80
 
-#define ZEBRA_DEBUG_KERNEL  0x01
+#define NSM_DEBUG_KERNEL  0x01
 
-#define ZEBRA_DEBUG_RIB     0x01
-#define ZEBRA_DEBUG_RIB_Q   0x02
+#define NSM_DEBUG_RIB     0x01
+#define NSM_DEBUG_RIB_Q   0x02
 
 
-#define ZEBRA_DEBUG_NHT     0x01
+#define NSM_DEBUG_NHT     0x01
 
 /* Debug related macro. */
-#define IS_ZEBRA_DEBUG_EVENT  (zebra_debug_event & ZEBRA_DEBUG_EVENT)
+#define IS_NSM_DEBUG_EVENT  (nsm_debug_event & NSM_DEBUG_EVENT)
 
-#define IS_ZEBRA_DEBUG_PACKET (zebra_debug_packet & ZEBRA_DEBUG_PACKET)
-#define IS_ZEBRA_DEBUG_SEND   (zebra_debug_packet & ZEBRA_DEBUG_SEND)
-#define IS_ZEBRA_DEBUG_RECV   (zebra_debug_packet & ZEBRA_DEBUG_RECV)
-#define IS_ZEBRA_DEBUG_DETAIL (zebra_debug_packet & ZEBRA_DEBUG_DETAIL)
+#define IS_NSM_DEBUG_PACKET (nsm_debug_packet & NSM_DEBUG_PACKET)
+#define IS_NSM_DEBUG_SEND   (nsm_debug_packet & NSM_DEBUG_SEND)
+#define IS_NSM_DEBUG_RECV   (nsm_debug_packet & NSM_DEBUG_RECV)
+#define IS_NSM_DEBUG_DETAIL (nsm_debug_packet & NSM_DEBUG_DETAIL)
 
-#define IS_ZEBRA_DEBUG_KERNEL (zebra_debug_kernel & ZEBRA_DEBUG_KERNEL)
+#define IS_NSM_DEBUG_KERNEL (nsm_debug_kernel & NSM_DEBUG_KERNEL)
 
-#define IS_ZEBRA_DEBUG_RIB  (zebra_debug_rib & ZEBRA_DEBUG_RIB)
-#define IS_ZEBRA_DEBUG_RIB_Q  (zebra_debug_rib & ZEBRA_DEBUG_RIB_Q)
+#define IS_NSM_DEBUG_RIB  (nsm_debug_rib & NSM_DEBUG_RIB)
+#define IS_NSM_DEBUG_RIB_Q  (nsm_debug_rib & NSM_DEBUG_RIB_Q)
 
-#define IS_ZEBRA_DEBUG_NHT  (zebra_debug_nht & ZEBRA_DEBUG_NHT)
+#define IS_NSM_DEBUG_NHT  (nsm_debug_nht & NSM_DEBUG_NHT)
 
-extern zpl_ulong zebra_debug_event;
-extern zpl_ulong zebra_debug_packet;
-extern zpl_ulong zebra_debug_kernel;
-extern zpl_ulong zebra_debug_rib;
+extern zpl_ulong nsm_debug_event;
+extern zpl_ulong nsm_debug_packet;
+extern zpl_ulong nsm_debug_kernel;
+extern zpl_ulong nsm_debug_rib;
 
-extern zpl_ulong zebra_debug_nht;
+extern zpl_ulong nsm_debug_nht;
 
 extern int cmd_debug_init(void);
 
@@ -74,4 +74,4 @@ extern int nsm_debug_init (void);
 }
 #endif
 
-#endif /* _ZEBRA_DEBUG_H */
+#endif /* _NSM_DEBUG_H */

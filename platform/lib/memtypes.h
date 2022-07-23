@@ -42,6 +42,7 @@ enum
   MTYPE_IF_DESC,
   MTYPE_IF_HOOK,
   MTYPE_IF_INFO,
+  MTYPE_IF_DATA,
   MTYPE_SECURITY,
   MTYPE_CONNECTED,
   MTYPE_CONNECTED_LABEL,
@@ -95,7 +96,7 @@ enum
   MTYPE_IF_LINK_PARAMS,
   MTYPE_CJSON,
   MTYPE_RTADV_PREFIX,
-  MTYPE_ZEBRA_VRF,
+  MTYPE_NSM_VRF,
   MTYPE_NEXTHOP,
   MTYPE_RIB,
   MTYPE_RIB_QUEUE,
@@ -419,7 +420,7 @@ enum
 };
 
 extern struct memory_list memory_list_lib[];
-extern struct memory_list memory_list_zebra[];
+extern struct memory_list memory_list_nsm[];
 extern struct memory_list memory_list_bgp[];
 extern struct memory_list memory_list_rip[];
 extern struct memory_list memory_list_ripng[];

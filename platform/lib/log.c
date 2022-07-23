@@ -29,7 +29,7 @@
 #include "log.h"
 #include "host.h"
 #include "route_types.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "vty.h"
 #ifndef SUNOS_5
 #include <sys/un.h>
@@ -2114,37 +2114,37 @@ mes_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, cons
 
 
 #define DESC_ENTRY(T) [(T)] = { (T), (#T), '\0' }
-static const struct zebra_desc_table command_types[] = {
-DESC_ENTRY (ZEBRA_INTERFACE_ADD),
-DESC_ENTRY (ZEBRA_INTERFACE_DELETE),
-DESC_ENTRY (ZEBRA_INTERFACE_ADDRESS_ADD),
-DESC_ENTRY (ZEBRA_INTERFACE_ADDRESS_DELETE),
-DESC_ENTRY (ZEBRA_INTERFACE_UP),
-DESC_ENTRY (ZEBRA_INTERFACE_DOWN),
-DESC_ENTRY (ZEBRA_IPV4_ROUTE_ADD),
-DESC_ENTRY (ZEBRA_IPV4_ROUTE_DELETE),
-DESC_ENTRY (ZEBRA_IPV6_ROUTE_ADD),
-DESC_ENTRY (ZEBRA_IPV6_ROUTE_DELETE),
-DESC_ENTRY (ZEBRA_REDISTRIBUTE_ADD),
-DESC_ENTRY (ZEBRA_REDISTRIBUTE_DELETE),
-DESC_ENTRY (ZEBRA_REDISTRIBUTE_DEFAULT_ADD),
-DESC_ENTRY (ZEBRA_REDISTRIBUTE_DEFAULT_DELETE),
-DESC_ENTRY (ZEBRA_IPV4_NEXTHOP_LOOKUP),
-DESC_ENTRY (ZEBRA_IPV6_NEXTHOP_LOOKUP),
-DESC_ENTRY (ZEBRA_IPV4_IMPORT_LOOKUP),
-DESC_ENTRY (ZEBRA_IPV6_IMPORT_LOOKUP),
-DESC_ENTRY (ZEBRA_INTERFACE_RENAME),
-DESC_ENTRY (ZEBRA_ROUTER_ID_ADD),
-DESC_ENTRY (ZEBRA_ROUTER_ID_DELETE),
-DESC_ENTRY (ZEBRA_ROUTER_ID_UPDATE),
-DESC_ENTRY (ZEBRA_NEXTHOP_REGISTER),
-DESC_ENTRY (ZEBRA_NEXTHOP_UNREGISTER),
-DESC_ENTRY (ZEBRA_NEXTHOP_UPDATE), };
+static const struct route_desc_table command_types[] = {
+DESC_ENTRY (NSM_EVENT_INTERFACE_ADD),
+DESC_ENTRY (NSM_EVENT_INTERFACE_DELETE),
+DESC_ENTRY (NSM_EVENT_INTERFACE_ADDRESS_ADD),
+DESC_ENTRY (NSM_EVENT_INTERFACE_ADDRESS_DELETE),
+DESC_ENTRY (NSM_EVENT_INTERFACE_UP),
+DESC_ENTRY (NSM_EVENT_INTERFACE_DOWN),
+DESC_ENTRY (NSM_EVENT_IPV4_ROUTE_ADD),
+DESC_ENTRY (NSM_EVENT_IPV4_ROUTE_DELETE),
+DESC_ENTRY (NSM_EVENT_IPV6_ROUTE_ADD),
+DESC_ENTRY (NSM_EVENT_IPV6_ROUTE_DELETE),
+DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_ADD),
+DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_DELETE),
+DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_DEFAULT_ADD),
+DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_DEFAULT_DELETE),
+DESC_ENTRY (NSM_EVENT_IPV4_NEXTHOP_LOOKUP),
+DESC_ENTRY (NSM_EVENT_IPV6_NEXTHOP_LOOKUP),
+DESC_ENTRY (NSM_EVENT_IPV4_IMPORT_LOOKUP),
+DESC_ENTRY (NSM_EVENT_IPV6_IMPORT_LOOKUP),
+DESC_ENTRY (NSM_EVENT_INTERFACE_RENAME),
+DESC_ENTRY (NSM_EVENT_ROUTER_ID_ADD),
+DESC_ENTRY (NSM_EVENT_ROUTER_ID_DELETE),
+DESC_ENTRY (NSM_EVENT_ROUTER_ID_UPDATE),
+DESC_ENTRY (NSM_EVENT_NEXTHOP_REGISTER),
+DESC_ENTRY (NSM_EVENT_NEXTHOP_UNREGISTER),
+DESC_ENTRY (NSM_EVENT_NEXTHOP_UPDATE), };
 #undef DESC_ENTRY
 
-static const struct zebra_desc_table unknown = { 0, "unknown", '?' };
+static const struct route_desc_table unknown = { 0, "unknown", '?' };
 
-static const struct zebra_desc_table *
+static const struct route_desc_table *
 zroute_lookup(zpl_uint32 zroute) {
 	zpl_uint32 i;
 
@@ -2169,11 +2169,11 @@ zroute_lookup(zpl_uint32 zroute) {
 }
 
 const char *
-zebra_route_string(zpl_uint32 zroute) {
+nsm_route_string(zpl_uint32 zroute) {
 	return zroute_lookup(zroute)->string;
 }
 
-zpl_char zebra_route_char(zpl_uint32 zroute) {
+zpl_char nsm_route_char(zpl_uint32 zroute) {
 	return zroute_lookup(zroute)->chr;
 }
 
@@ -2200,67 +2200,67 @@ zpl_proto_t proto_redistnum(zpl_uint16 afi, const char *s) {
 		return -1;
 	if (afi == AFI_IP) {
 		if (strncmp(s, "sy", 2) == 0)
-			return ZEBRA_ROUTE_SYSTEM;
+			return ZPL_ROUTE_PROTO_SYSTEM;
 		else if (strncmp(s, "ke", 2) == 0)
-			return ZEBRA_ROUTE_KERNEL;
+			return ZPL_ROUTE_PROTO_KERNEL;
 		else if (strncmp(s, "co", 2) == 0)
-			return ZEBRA_ROUTE_CONNECT;
+			return ZPL_ROUTE_PROTO_CONNECT;
 		else if (strncmp(s, "st", 2) == 0)
-			return ZEBRA_ROUTE_STATIC;
+			return ZPL_ROUTE_PROTO_STATIC;
 		else if (strncmp(s, "ri", 2) == 0)
-			return ZEBRA_ROUTE_RIP;
+			return ZPL_ROUTE_PROTO_RIP;
 		else if (strncmp(s, "os", 2) == 0)
-			return ZEBRA_ROUTE_OSPF;
+			return ZPL_ROUTE_PROTO_OSPF;
 		else if (strncmp(s, "is", 2) == 0)
-			return ZEBRA_ROUTE_ISIS;
+			return ZPL_ROUTE_PROTO_ISIS;
 		else if (strncmp(s, "bg", 2) == 0)
-			return ZEBRA_ROUTE_BGP;
+			return ZPL_ROUTE_PROTO_BGP;
 		else if (strncmp(s, "pi", 2) == 0)
-			return ZEBRA_ROUTE_PIM;
+			return ZPL_ROUTE_PROTO_PIM;
 		else if (strncmp(s, "hs", 2) == 0)
-			return ZEBRA_ROUTE_HSLS;
+			return ZPL_ROUTE_PROTO_HSLS;
 		else if (strncmp(s, "ol", 2) == 0)
-			return ZEBRA_ROUTE_OLSR;
+			return ZPL_ROUTE_PROTO_OLSR;
 		else if (strncmp(s, "ba", 2) == 0)
-			return ZEBRA_ROUTE_BABEL;
+			return ZPL_ROUTE_PROTO_BABEL;
 		else if (strncmp(s, "n", 1) == 0)
-			return ZEBRA_ROUTE_NHRP;
+			return ZPL_ROUTE_PROTO_NHRP;
 		else if (strncmp(s, "vr", 2) == 0)
-			return ZEBRA_ROUTE_VRRP;
+			return ZPL_ROUTE_PROTO_VRRP;
 		else if (strncmp(s, "fr", 2) == 0)
-			return ZEBRA_ROUTE_FRP;
+			return ZPL_ROUTE_PROTO_FRP;
 	}
 	if (afi == AFI_IP6) {
 		if (strncmp(s, "sy", 2) == 0)
-			return ZEBRA_ROUTE_SYSTEM;
+			return ZPL_ROUTE_PROTO_SYSTEM;
 		else if (strncmp(s, "ke", 2) == 0)
-			return ZEBRA_ROUTE_KERNEL;
+			return ZPL_ROUTE_PROTO_KERNEL;
 		else if (strncmp(s, "co", 2) == 0)
-			return ZEBRA_ROUTE_CONNECT;
+			return ZPL_ROUTE_PROTO_CONNECT;
 		else if (strncmp(s, "st", 2) == 0)
-			return ZEBRA_ROUTE_STATIC;
+			return ZPL_ROUTE_PROTO_STATIC;
 		else if (strncmp(s, "ri", 2) == 0)
-			return ZEBRA_ROUTE_RIPNG;
+			return ZPL_ROUTE_PROTO_RIPNG;
 		else if (strncmp(s, "os", 2) == 0)
-			return ZEBRA_ROUTE_OSPF6;
+			return ZPL_ROUTE_PROTO_OSPF6;
 		else if (strncmp(s, "is", 2) == 0)
-			return ZEBRA_ROUTE_ISIS;
+			return ZPL_ROUTE_PROTO_ISIS;
 		else if (strncmp(s, "bg", 2) == 0)
-			return ZEBRA_ROUTE_BGP;
+			return ZPL_ROUTE_PROTO_BGP;
 		else if (strncmp(s, "pi", 2) == 0)
-			return ZEBRA_ROUTE_PIM;
+			return ZPL_ROUTE_PROTO_PIM;
 		else if (strncmp(s, "hs", 2) == 0)
-			return ZEBRA_ROUTE_HSLS;
+			return ZPL_ROUTE_PROTO_HSLS;
 		else if (strncmp(s, "ol", 2) == 0)
-			return ZEBRA_ROUTE_OLSR;
+			return ZPL_ROUTE_PROTO_OLSR;
 		else if (strncmp(s, "ba", 2) == 0)
-			return ZEBRA_ROUTE_BABEL;
+			return ZPL_ROUTE_PROTO_BABEL;
 		else if (strncmp(s, "n", 1) == 0)
-			return ZEBRA_ROUTE_NHRP;
+			return ZPL_ROUTE_PROTO_NHRP;
 		else if (strncmp(s, "vr", 2) == 0)
-			return ZEBRA_ROUTE_VRRP;
+			return ZPL_ROUTE_PROTO_VRRP;
 		else if (strncmp(s, "fr", 2) == 0)
-			return ZEBRA_ROUTE_FRP;
+			return ZPL_ROUTE_PROTO_FRP;
 	}
 	return -1;
 }

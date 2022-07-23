@@ -34,7 +34,6 @@ extern "C" {
 #endif
 #include "route_types.h"
 /* Default port information. */
-//#define ZEBRA_VTY_PORT                2610
 
 /* Default configuration filename. */
 //#define DEFAULT_CONFIG_FILE "zebra.conf"
@@ -63,7 +62,7 @@ struct zserv
   zpl_uint32 rtm_table;
 #ifdef ZPL_VRF_MODULE
   /* This client's redistribute flag. */
-  vrf_bitmap_t redist[ZEBRA_ROUTE_MAX];
+  vrf_bitmap_t redist[ZPL_ROUTE_PROTO_MAX];
 #endif
   /* Redistribute default route flag. */
   vrf_bitmap_t redist_default;
@@ -122,46 +121,34 @@ struct nsm_srv_t
 extern struct nsm_srv_t *nsm_srv;
 
 /* Prototypes. */
-extern void zebra_init (void);
-extern void zebra_if_init (void);
-extern void zebra_zserv_socket_init (zpl_char *path);
-
-extern void hostinfo_get (void);
-//extern void rib_init (void);
-extern void zserv_init(void);
-
-extern void kernel_load(struct nsm_ip_vrf *zvrf);
-extern void kernel_load_all(void);
+extern void nsm_zserv_init (void);
+extern void cmd_nsm_zserv_init(void);
 
 
-extern void zebra_route_map_init (void);
-extern void zebra_snmp_init (void);
-extern void zebra_vty_init (void);
 
-extern int zsend_interface_add (struct zserv *, struct interface *);
-extern int zsend_interface_delete (struct zserv *, struct interface *);
-extern int zsend_interface_address (zpl_uint16, struct zserv *, struct interface *,
+extern int nsm_zserv_send_interface_add (struct zserv *, struct interface *);
+extern int nsm_zserv_send_interface_delete (struct zserv *, struct interface *);
+extern int nsm_zserv_send_interface_address (zpl_uint16, struct zserv *, struct interface *,
                                     struct connected *);
-extern int zsend_interface_state (zpl_uint16, struct zserv *, struct interface *);
-extern int zsend_interface_mode (struct zserv *, struct interface *, zpl_uint32 mode);
+extern int nsm_zserv_send_interface_state (zpl_uint16, struct zserv *, struct interface *);
+extern int nsm_zserv_send_interface_mode (struct zserv *, struct interface *, zpl_uint32 mode);
 
 
-extern int zsend_route_multipath (zpl_uint16, struct zserv *, struct prefix *, 
+extern int nsm_zserv_send_route_multipath (zpl_uint16, struct zserv *, struct prefix *, 
                                   struct rib *);
-extern int zsend_router_id_update (struct zserv *, struct prefix *,
+extern int nsm_zserv_send_router_id_update (struct zserv *, struct prefix *,
                                    vrf_id_t);
 
-//extern int zsend_interface_link_params (struct zserv *, struct interface *);
-
-//extern pid_t pid;
-
-extern void zserv_create_header(struct stream *s, zpl_uint16 cmd, vrf_id_t);
-extern int zebra_server_send_message(struct zserv *client);
 
 
- 
+extern void nsm_zserv_create_header(struct stream *s, zpl_uint16 cmd, vrf_id_t);
+extern int nsm_zserv_send_message(struct zserv *client);
+
+
+extern void nsm_route_map_init (void);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _ZEBRA_ZEBRA_H */
+#endif /* __NSM_ZSERV_H */

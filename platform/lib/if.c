@@ -324,7 +324,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	if_make_ifindex_type(ifp);
 
-	SET_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE);
+	SET_FLAG(ifp->status, IF_INTERFACE_ACTIVE);
 
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
@@ -388,7 +388,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	if_make_ifindex_type(ifp);
 
-	SET_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE);
+	SET_FLAG(ifp->status, IF_INTERFACE_ACTIVE);
 
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
@@ -865,10 +865,10 @@ zpl_bool if_is_running(struct interface *ifp)
 }
 
 /* Is the interface operative, eg. either UP & RUNNING
- or UP & !ZEBRA_INTERFACE_LINK_DETECTION */
+ or UP & !IF_INTERFACE_LINK_DETECTION */
 zpl_bool if_is_operative(struct interface *ifp)
 {
-	return ((ifp->flags & IPSTACK_IFF_UP) && (ifp->flags & IPSTACK_IFF_RUNNING || !CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)));
+	return ((ifp->flags & IPSTACK_IFF_UP) && (ifp->flags & IPSTACK_IFF_RUNNING || !CHECK_FLAG(ifp->status, IF_INTERFACE_LINKDETECTION)));
 }
 
 /* Is this loopback interface ? */
@@ -941,9 +941,14 @@ zpl_bool if_is_lag_member(struct interface *ifp)
 
 zpl_bool if_is_vlan(struct interface *ifp)
 {
-	if (os_strstr(ifp->name, "vlan"))
-		return zpl_true;
 	if (ifp->if_type == IF_VLAN)
+		return zpl_true;
+	return zpl_false;
+}
+
+zpl_bool if_is_subvlan(struct interface *ifp)
+{
+	if (ifp->if_type == IF_SUBVLAN)
 		return zpl_true;
 	return zpl_false;
 }

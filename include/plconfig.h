@@ -273,7 +273,8 @@ extern "C" {
 
 #ifndef __UCLIBC__
 /* Have netns */
-#define HAVE_NETNS /**/
+//ZPL_VRF_MODULE
+#define ZPL_NETNS_ENABLE /**/
 #endif
 /* Define to 1 if you have the <net/if_dl.h> header file. */
 /* #undef HAVE_NET_IF_DL_H */
@@ -601,7 +602,7 @@ extern "C" {
 /* #undef HAVE_TCP_MD5_LINUX24 */
 
 /* Use TCP for zebra communication */
-//#define HAVE_TCP_ZEBRA /**/
+//#define NSM_MSG_TCP /**/
 
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1

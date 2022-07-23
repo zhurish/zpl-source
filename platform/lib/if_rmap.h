@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_IF_RMAP_H
-#define _ZEBRA_IF_RMAP_H
+#ifndef __LIB_IF_RMAP_H
+#define __LIB_IF_RMAP_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,4 +55,4 @@ extern int config_write_if_rmap (struct vty *);
 }
 #endif
 
-#endif /* _ZEBRA_IF_RMAP_H */
+#endif /* __LIB_IF_RMAP_H */

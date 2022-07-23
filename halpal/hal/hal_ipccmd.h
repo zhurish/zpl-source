@@ -61,15 +61,15 @@ enum hal_module_cmd
 #define HAL_CALLBACK_ENTRY(m, f) { (m), (f), (#f) }
 typedef struct 
 {
-    int const module;
-    int const (*module_handle)(void*, zpl_uint32, zpl_uint32, void *);
+    int module;
+    int (*module_handle)(void*, zpl_uint32, zpl_uint32, void *);
     const char *name;
 }hal_ipccmd_callback_t;
 
 typedef struct 
 {
-    int const subcmd;
-    int const (*cmd_handle)(void *, void *, void *);
+    int  subcmd;
+    int  (*cmd_handle)(void *, void *, void *);
     const char *name;
 }hal_ipcsubcmd_callback_t;
 

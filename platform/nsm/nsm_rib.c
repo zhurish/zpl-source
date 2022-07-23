@@ -98,20 +98,20 @@ static const struct
 {
 	int key;
 	int distance;
-} route_info[ZEBRA_ROUTE_MAX] =
+} route_info[ZPL_ROUTE_PROTO_MAX] =
 {
-  [ZEBRA_ROUTE_SYSTEM]  = {ZEBRA_ROUTE_SYSTEM,    0},
-  [ZEBRA_ROUTE_KERNEL]  = {ZEBRA_ROUTE_KERNEL,    0},
-  [ZEBRA_ROUTE_CONNECT] = {ZEBRA_ROUTE_CONNECT,   0},
-  [ZEBRA_ROUTE_STATIC]  = {ZEBRA_ROUTE_STATIC,    1},
-  [ZEBRA_ROUTE_RIP]     = {ZEBRA_ROUTE_RIP,     120},
-  [ZEBRA_ROUTE_RIPNG]   = {ZEBRA_ROUTE_RIPNG,   120},
-  [ZEBRA_ROUTE_OSPF]    = {ZEBRA_ROUTE_OSPF,    110},
-  [ZEBRA_ROUTE_OSPF6]   = {ZEBRA_ROUTE_OSPF6,   110},
-  [ZEBRA_ROUTE_ISIS]    = {ZEBRA_ROUTE_ISIS,    115},
-  [ZEBRA_ROUTE_BGP]     = {ZEBRA_ROUTE_BGP,      20  /* IBGP is 200. */},
-  [ZEBRA_ROUTE_BABEL]   = {ZEBRA_ROUTE_BABEL,    95},
-  [ZEBRA_ROUTE_NHRP]    = {ZEBRA_ROUTE_NHRP,     10},
+  [ZPL_ROUTE_PROTO_SYSTEM]  = {ZPL_ROUTE_PROTO_SYSTEM,    0},
+  [ZPL_ROUTE_PROTO_KERNEL]  = {ZPL_ROUTE_PROTO_KERNEL,    0},
+  [ZPL_ROUTE_PROTO_CONNECT] = {ZPL_ROUTE_PROTO_CONNECT,   0},
+  [ZPL_ROUTE_PROTO_STATIC]  = {ZPL_ROUTE_PROTO_STATIC,    1},
+  [ZPL_ROUTE_PROTO_RIP]     = {ZPL_ROUTE_PROTO_RIP,     120},
+  [ZPL_ROUTE_PROTO_RIPNG]   = {ZPL_ROUTE_PROTO_RIPNG,   120},
+  [ZPL_ROUTE_PROTO_OSPF]    = {ZPL_ROUTE_PROTO_OSPF,    110},
+  [ZPL_ROUTE_PROTO_OSPF6]   = {ZPL_ROUTE_PROTO_OSPF6,   110},
+  [ZPL_ROUTE_PROTO_ISIS]    = {ZPL_ROUTE_PROTO_ISIS,    115},
+  [ZPL_ROUTE_PROTO_BGP]     = {ZPL_ROUTE_PROTO_BGP,      20  /* IBGP is 200. */},
+  [ZPL_ROUTE_PROTO_BABEL]   = {ZPL_ROUTE_PROTO_BABEL,    95},
+  [ZPL_ROUTE_PROTO_NHRP]    = {ZPL_ROUTE_PROTO_NHRP,     10},
   /* no entry/default: 150 */
 };
 
@@ -338,7 +338,7 @@ rib_nexthop_blackhole_add(struct rib *rib)
 
 	nexthop = nexthop_new();
 	nexthop->type = NEXTHOP_TYPE_BLACKHOLE;
-	SET_FLAG(rib->flags, ZEBRA_FLAG_BLACKHOLE);
+	SET_FLAG(rib->flags, NSM_RIB_FLAG_BLACKHOLE);
 
 	rib_nexthop_add(rib, nexthop);
 
@@ -417,7 +417,7 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 
 		/* If there is no selected route or matched route is EGP, go up
 		 tree. */
-		if (!match || match->type == ZEBRA_ROUTE_BGP)
+		if (!match || match->type == ZPL_ROUTE_PROTO_BGP)
 		{
 			do
 			{
@@ -430,11 +430,11 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 		{
 			/* If the longest prefix match for the nexthop yields
 			 * a blackhole, mark it as inactive. */
-			if (CHECK_FLAG(match->flags, ZEBRA_FLAG_BLACKHOLE) ||
-					CHECK_FLAG (match->flags, ZEBRA_FLAG_REJECT))
+			if (CHECK_FLAG(match->flags, NSM_RIB_FLAG_BLACKHOLE) ||
+					CHECK_FLAG (match->flags, NSM_RIB_FLAG_REJECT))
 				return 0;
 
-			if (match->type == ZEBRA_ROUTE_CONNECT)
+			if (match->type == ZPL_ROUTE_PROTO_CONNECT)
 			{
 				/* Directly point connected route. */
 				newhop = match->nexthop;
@@ -443,7 +443,7 @@ static int nexthop_active_ipv4(struct rib *rib, struct nexthop *nexthop,
 
 				return 1;
 			}
-			else if (CHECK_FLAG(rib->flags, ZEBRA_FLAG_INTERNAL))
+			else if (CHECK_FLAG(rib->flags, NSM_RIB_FLAG_INTERNAL))
 			{
 				resolved = 0;
 				for (newhop = match->nexthop; newhop; newhop = newhop->next)
@@ -553,7 +553,7 @@ nexthop_active_ipv6 (struct rib *rib, struct nexthop *nexthop, int set,
 		/* If there is no selected route or matched route is EGP, go up
 		 tree. */
 		if (! match
-				|| match->type == ZEBRA_ROUTE_BGP)
+				|| match->type == ZPL_ROUTE_PROTO_BGP)
 		{
 			do
 			{
@@ -566,11 +566,11 @@ nexthop_active_ipv6 (struct rib *rib, struct nexthop *nexthop, int set,
 		{
 			/* If the longest prefix match for the nexthop yields
 			 * a blackhole, mark it as inactive. */
-			if (CHECK_FLAG (match->flags, ZEBRA_FLAG_BLACKHOLE)
-					|| CHECK_FLAG (match->flags, ZEBRA_FLAG_REJECT))
+			if (CHECK_FLAG (match->flags, NSM_RIB_FLAG_BLACKHOLE)
+					|| CHECK_FLAG (match->flags, NSM_RIB_FLAG_REJECT))
 			return 0;
 
-			if (match->type == ZEBRA_ROUTE_CONNECT)
+			if (match->type == ZPL_ROUTE_PROTO_CONNECT)
 			{
 				/* Directly point connected route. */
 				newhop = match->nexthop;
@@ -580,7 +580,7 @@ nexthop_active_ipv6 (struct rib *rib, struct nexthop *nexthop, int set,
 
 				return 1;
 			}
-			else if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_INTERNAL))
+			else if (CHECK_FLAG (rib->flags, NSM_RIB_FLAG_INTERNAL))
 			{
 				resolved = 0;
 				for (newhop = match->nexthop; newhop; newhop = newhop->next)
@@ -666,7 +666,7 @@ rib_match_ipv4_safi(struct ipstack_in_addr addr, safi_t safi, zpl_bool skip_bgp,
 
 		/* If there is no selected route or matched route is EGP, go up
 		 tree. */
-		if (!match || (skip_bgp && (match->type == ZEBRA_ROUTE_BGP)))
+		if (!match || (skip_bgp && (match->type == ZPL_ROUTE_PROTO_BGP)))
 		{
 			do
 			{
@@ -677,7 +677,7 @@ rib_match_ipv4_safi(struct ipstack_in_addr addr, safi_t safi, zpl_bool skip_bgp,
 		}
 		else
 		{
-			if (match->type != ZEBRA_ROUTE_CONNECT)
+			if (match->type != ZPL_ROUTE_PROTO_CONNECT)
 			{
 				int found = 0;
 				for (ALL_NEXTHOPS_RO(match->nexthop, newhop, tnewhop, recursing)
@@ -749,7 +749,7 @@ rib_match_ipv4_multicast(struct ipstack_in_addr addr, struct route_node **rn_out
 	if (rn_out)
 		*rn_out = (rib == mrib) ? m_rn : u_rn;
 
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 	{
 		zpl_char buf[BUFSIZ];
 		ipstack_inet_ntop(IPSTACK_AF_INET, &addr, buf, BUFSIZ);
@@ -765,7 +765,7 @@ rib_match_ipv4_multicast(struct ipstack_in_addr addr, struct route_node **rn_out
 
 void multicast_mode_ipv4_set(enum multicast_mode mode)
 {
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 		zlog_debug(MODULE_NSM, "%s: multicast lookup mode set (%d)", __func__,
 				mode);
 	ipv4_multicast_mode = mode;
@@ -807,10 +807,10 @@ rib_lookup_ipv4(struct prefix_ipv4 *p, vrf_id_t vrf_id)
 			break;
 	}
 
-	if (!match || match->type == ZEBRA_ROUTE_BGP)
+	if (!match || match->type == ZPL_ROUTE_PROTO_BGP)
 		return NULL;
 
-	if (match->type == ZEBRA_ROUTE_CONNECT)
+	if (match->type == ZPL_ROUTE_PROTO_CONNECT)
 		return match;
 
 	for (ALL_NEXTHOPS_RO(match->nexthop, nexthop, tnexthop, recursing))
@@ -823,7 +823,7 @@ rib_lookup_ipv4(struct prefix_ipv4 *p, vrf_id_t vrf_id)
 /*
  * This clone function, unlike its original rib_lookup_ipv4(), checks
  * if specified IPv4 route record (prefix/mask -> gate) exists in
- * the whole RIB and has ZEBRA_FLAG_SELECTED set.
+ * the whole RIB and has NSM_RIB_FLAG_SELECTED set.
  *
  * Return values:
  * -1: error
@@ -845,14 +845,14 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 	/* Lookup table.  */
 	table = nsm_vrf_table(AFI_IP, SAFI_UNICAST, vrf_id);
 	if (!table)
-		return ZEBRA_RIB_LOOKUP_ERROR;
+		return NSM_RIB_LOOKUP_ERROR;
 
 	/* Scan the RIB table for exactly matching RIB entry. */
 	rn = route_node_lookup(table, (struct prefix *) p);
 
 	/* No route for this prefix. */
 	if (!rn)
-		return ZEBRA_RIB_NOTFOUND;
+		return NSM_RIB_NOTFOUND;
 
 	/* Unlock node. */
 	route_unlock_node(rn);
@@ -868,10 +868,10 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 
 	/* None such found :( */
 	if (!match)
-		return ZEBRA_RIB_NOTFOUND;
+		return NSM_RIB_NOTFOUND;
 
-	if (match->type == ZEBRA_ROUTE_CONNECT)
-		return ZEBRA_RIB_FOUND_CONNECTED;
+	if (match->type == ZPL_ROUTE_PROTO_CONNECT)
+		return NSM_RIB_FOUND_CONNECTED;
 
 	/* Ok, we have a cood candidate, let's check it's nexthop list... */
 	nexthops_active = 0;
@@ -880,8 +880,8 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 		{
 			nexthops_active = 1;
 			if (nexthop->gate.ipv4.s_addr == sockunion2ip(qgate))
-				return ZEBRA_RIB_FOUND_EXACT;
-			if (IS_ZEBRA_DEBUG_RIB)
+				return NSM_RIB_FOUND_EXACT;
+			if (IS_NSM_DEBUG_RIB)
 			{
 				zpl_char gate_buf[IPSTACK_INET_ADDRSTRLEN], qgate_buf[IPSTACK_INET_ADDRSTRLEN];
 				ipstack_inet_ntop(IPSTACK_AF_INET, &nexthop->gate.ipv4.s_addr, gate_buf,
@@ -894,9 +894,9 @@ int rib_lookup_ipv4_route(struct prefix_ipv4 *p, union sockunion * qgate,
 		}
 
 	if (nexthops_active)
-		return ZEBRA_RIB_FOUND_NOGATE;
+		return NSM_RIB_FOUND_NOGATE;
 
-	return ZEBRA_RIB_NOTFOUND;
+	return NSM_RIB_NOTFOUND;
 }
 
 #ifdef ZPL_BUILD_IPV6
@@ -938,7 +938,7 @@ rib_match_ipv6 (struct ipstack_in6_addr *addr, vrf_id_t vrf_id)
 		/* If there is no selected route or matched route is EGP, go up
 		 tree. */
 		if (! match
-				|| match->type == ZEBRA_ROUTE_BGP)
+				|| match->type == ZPL_ROUTE_PROTO_BGP)
 		{
 			do
 			{
@@ -949,7 +949,7 @@ rib_match_ipv6 (struct ipstack_in6_addr *addr, vrf_id_t vrf_id)
 		}
 		else
 		{
-			if (match->type == ZEBRA_ROUTE_CONNECT)
+			if (match->type == ZPL_ROUTE_PROTO_CONNECT)
 			/* Directly point connected route. */
 			return match;
 			else
@@ -966,7 +966,7 @@ rib_match_ipv6 (struct ipstack_in6_addr *addr, vrf_id_t vrf_id)
 #endif
 
 #define RIB_SYSTEM_ROUTE(R) \
-        ((R)->type == ZEBRA_ROUTE_KERNEL || (R)->type == ZEBRA_ROUTE_CONNECT)
+        ((R)->type == ZPL_ROUTE_PROTO_KERNEL || (R)->type == ZPL_ROUTE_PROTO_CONNECT)
 
 /* This function verifies reachability of one given nexthop, which can be
  * numbered or unnumbered, IPv4 or IPv6. The result is unconditionally stored
@@ -1078,14 +1078,14 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 		family = info->afi;
 
 	/*  rmap = 0;
-	 if (rib->type >= 0 && rib->type < ZEBRA_ROUTE_MAX &&
+	 if (rib->type >= 0 && rib->type < ZPL_ROUTE_PROTO_MAX &&
 	 proto_rm[family][rib->type])
 	 rmap = route_map_lookup_by_name (proto_rm[family][rib->type]);
-	 if (!rmap && proto_rm[family][ZEBRA_ROUTE_MAX])
-	 rmap = route_map_lookup_by_name (proto_rm[family][ZEBRA_ROUTE_MAX]);
+	 if (!rmap && proto_rm[family][ZPL_ROUTE_PROTO_MAX])
+	 rmap = route_map_lookup_by_name (proto_rm[family][ZPL_ROUTE_PROTO_MAX]);
 	 if (rmap) {
 	 struct nexthop_vrfid nh_vrf = {nexthop, rib->vrf_id};
-	 ret = route_map_apply(rmap, &rn->p, RMAP_ZEBRA, &nh_vrf);
+	 ret = route_map_apply(rmap, &rn->p, RMAP_NSM, &nh_vrf);
 	 }*/
 #ifdef ZPL_NSM_MODULE
 	if (ret == RMAP_DENYMATCH)
@@ -1224,11 +1224,11 @@ static void rib_uninstall(struct route_node *rn, struct rib *rib)
 	if (CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 	{
 #ifdef ZPL_NSM_MODULE
-		redistribute_delete(&rn->p, rib);
+		nsm_route_redistribute_delete(&rn->p, rib);
 #endif
 		if (!RIB_SYSTEM_ROUTE(rib))
 			rib_update_forward_pm(rn, rib, NULL);
-		UNSET_FLAG(rib->flags, ZEBRA_FLAG_SELECTED);
+		UNSET_FLAG(rib->flags, NSM_RIB_FLAG_SELECTED);
 	}
 }
 
@@ -1276,7 +1276,7 @@ int rib_gc_dest(struct route_node *rn)
 	if (!rib_can_delete_dest(dest))
 		return 0;
 
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 		rnode_debug(rn, "removing dest from table");
 
 	dest->rnode = NULL;
@@ -1307,16 +1307,16 @@ rib_choose_best(struct rib *current, struct rib *alternate)
 	/* Connected routes. Pick the last connected
 	 * route of the set of lowest metric connected routes.
 	 */
-	if (alternate->type == ZEBRA_ROUTE_CONNECT)
+	if (alternate->type == ZPL_ROUTE_PROTO_CONNECT)
 	{
-		if (current->type != ZEBRA_ROUTE_CONNECT
+		if (current->type != ZPL_ROUTE_PROTO_CONNECT
 				|| alternate->metric <= current->metric)
 			return alternate;
 
 		return current;
 	}
 
-	if (current->type == ZEBRA_ROUTE_CONNECT)
+	if (current->type == ZPL_ROUTE_PROTO_CONNECT)
 		return current;
 
 	/* higher distance loses */
@@ -1355,7 +1355,7 @@ static void rib_process(struct route_node *rn)
 		UNSET_FLAG(rib->status, RIB_ENTRY_CHANGED);
 
 		/* Currently installed rib. */
-		if (CHECK_FLAG(rib->flags, ZEBRA_FLAG_SELECTED))
+		if (CHECK_FLAG(rib->flags, NSM_RIB_FLAG_SELECTED))
 		{
 			assert(old_selected == NULL);
 			old_selected = rib;
@@ -1378,7 +1378,7 @@ static void rib_process(struct route_node *rn)
 		if (rib->distance == DISTANCE_INFINITY)
 			continue;
 
-		if (CHECK_FLAG(rib->flags, ZEBRA_FLAG_FIB_OVERRIDE))
+		if (CHECK_FLAG(rib->flags, NSM_RIB_FLAG_FIB_OVERRIDE))
 			new_fib = rib_choose_best(new_fib, rib);
 		else
 			new_selected = rib_choose_best(new_selected, rib);
@@ -1449,18 +1449,18 @@ static void rib_process(struct route_node *rn)
         {
 			#ifdef ZPL_NSM_MODULE
           if (! new_selected)
-            redistribute_delete (&rn->p, old_selected);
+            nsm_route_redistribute_delete (&rn->p, old_selected);
 			#endif
           if (old_selected != new_selected)
-            UNSET_FLAG (old_selected->flags, ZEBRA_FLAG_SELECTED);
+            UNSET_FLAG (old_selected->flags, NSM_RIB_FLAG_SELECTED);
         }
 
       if (new_selected)
         {
           /* Install new or replace existing redistributed entry */
-          SET_FLAG (new_selected->flags, ZEBRA_FLAG_SELECTED);
+          SET_FLAG (new_selected->flags, NSM_RIB_FLAG_SELECTED);
 		  #ifdef ZPL_NSM_MODULE
-          redistribute_add (&rn->p, new_selected, old_selected);
+          nsm_route_redistribute_add (&rn->p, new_selected, old_selected);
 		  #endif
         }
      }
@@ -1470,14 +1470,14 @@ static void rib_process(struct route_node *rn)
 	{
 		if (CHECK_FLAG(rib->status, RIB_ENTRY_REMOVED))
 		{
-			if (IS_ZEBRA_DEBUG_RIB)
+			if (IS_NSM_DEBUG_RIB)
 				rnode_debug(rn, "rn %p, removing rib %p", (void * )rn,
 						(void * )rib);
 			rib_unlink(rn, rib);
 		}
 	}
 
-	if (IS_ZEBRA_DEBUG_RIB_Q)
+	if (IS_NSM_DEBUG_RIB_Q)
 		rnode_debug(rn, "rn %p dequeued", (void * )rn);
 
 	/*
@@ -1532,11 +1532,11 @@ static zpl_uint32  process_subq(struct list * subq, zpl_uchar qindex)
  */
 static void meta_queue_process_complete(struct work_queue *dummy)
 {
-	#ifdef ZPL_NSM_RNH
-	zebra_evaluate_rnh_table(0, IPSTACK_AF_INET);
+#ifdef ZPL_NSM_RNH
+	nsm_rnh_evaluate_table(0, IPSTACK_AF_INET);
 
 #ifdef ZPL_BUILD_IPV6
-	zebra_evaluate_rnh_table(0, IPSTACK_AF_INET6);
+	nsm_rnh_evaluate_table(0, IPSTACK_AF_INET6);
 #endif /* ZPL_BUILD_IPV6 */
 	#endif
 }
@@ -1562,20 +1562,20 @@ static wq_item_status meta_queue_process(struct work_queue *dummy, void *data)
 /*
  * Map from rib types to queue type (priority) in meta queue
  */
-static const zpl_uchar meta_queue_map[ZEBRA_ROUTE_MAX] = {
-  [ZEBRA_ROUTE_SYSTEM]  = 4,
-  [ZEBRA_ROUTE_KERNEL]  = 0,
-  [ZEBRA_ROUTE_CONNECT] = 0,
-  [ZEBRA_ROUTE_STATIC]  = 1,
-  [ZEBRA_ROUTE_RIP]     = 2,
-  [ZEBRA_ROUTE_RIPNG]   = 2,
-  [ZEBRA_ROUTE_OSPF]    = 2,
-  [ZEBRA_ROUTE_OSPF6]   = 2,
-  [ZEBRA_ROUTE_ISIS]    = 2,
-  [ZEBRA_ROUTE_BGP]     = 3,
-  [ZEBRA_ROUTE_HSLS]    = 4,
-  [ZEBRA_ROUTE_BABEL]   = 2,
-  [ZEBRA_ROUTE_NHRP]    = 2,
+static const zpl_uchar meta_queue_map[ZPL_ROUTE_PROTO_MAX] = {
+  [ZPL_ROUTE_PROTO_SYSTEM]  = 4,
+  [ZPL_ROUTE_PROTO_KERNEL]  = 0,
+  [ZPL_ROUTE_PROTO_CONNECT] = 0,
+  [ZPL_ROUTE_PROTO_STATIC]  = 1,
+  [ZPL_ROUTE_PROTO_RIP]     = 2,
+  [ZPL_ROUTE_PROTO_RIPNG]   = 2,
+  [ZPL_ROUTE_PROTO_OSPF]    = 2,
+  [ZPL_ROUTE_PROTO_OSPF6]   = 2,
+  [ZPL_ROUTE_PROTO_ISIS]    = 2,
+  [ZPL_ROUTE_PROTO_BGP]     = 3,
+  [ZPL_ROUTE_PROTO_HSLS]    = 4,
+  [ZPL_ROUTE_PROTO_BABEL]   = 2,
+  [ZPL_ROUTE_PROTO_NHRP]    = 2,
 };
 
 /* Look into the RN and queue it into one or more priority queues,
@@ -1593,7 +1593,7 @@ static void rib_meta_queue_add(struct meta_queue *mq, struct route_node *rn)
 		if (CHECK_FLAG(rib_dest_from_rnode(rn)->flags,
 				RIB_ROUTE_QUEUED (qindex)))
 		{
-			if (IS_ZEBRA_DEBUG_RIB_Q)
+			if (IS_NSM_DEBUG_RIB_Q)
 				rnode_debug(rn, "rn %p is already queued in sub-queue %u",
 						(void * )rn, qindex);
 			continue;
@@ -1604,7 +1604,7 @@ static void rib_meta_queue_add(struct meta_queue *mq, struct route_node *rn)
 		route_lock_node(rn);
 		mq->size++;
 
-		if (IS_ZEBRA_DEBUG_RIB_Q)
+		if (IS_NSM_DEBUG_RIB_Q)
 			rnode_debug(rn, "queued rn %p into sub-queue %u", (void * )rn,
 					qindex);
 	}
@@ -1624,7 +1624,7 @@ static void rib_queue_add(struct nsm_rib_t *nsmribd, struct route_node *rn)
 		return;
 	}
 
-	if (IS_ZEBRA_DEBUG_RIB_Q)
+	if (IS_NSM_DEBUG_RIB_Q)
 		rnode_info(rn, "work queue added");
 
 	assert(nsmribd);
@@ -1648,7 +1648,7 @@ static void rib_queue_add(struct nsm_rib_t *nsmribd, struct route_node *rn)
 
 	rib_meta_queue_add(nsmribd->mq, rn);
 
-	if (IS_ZEBRA_DEBUG_RIB_Q)
+	if (IS_NSM_DEBUG_RIB_Q)
 		rnode_debug(rn, "rn %p queued", (void * )rn);
 
 	return;
@@ -1751,13 +1751,13 @@ static void rib_link(struct route_node *rn, struct rib *rib)
 
 	assert(rib && rn);
 
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 		rnode_debug(rn, "rn %p, rib %p", (void * )rn, (void * )rib);
 
 	dest = rib_dest_from_rnode(rn);
 	if (!dest)
 	{
-		if (IS_ZEBRA_DEBUG_RIB)
+		if (IS_NSM_DEBUG_RIB)
 			rnode_debug(rn, "adding dest to table");
 
 		dest = XCALLOC(MTYPE_RIB_DEST, sizeof(rib_dest_t));
@@ -1783,7 +1783,7 @@ static void rib_addnode(struct route_node *rn, struct rib *rib)
 	 */
 	if (CHECK_FLAG(rib->status, RIB_ENTRY_REMOVED))
 	{
-		if (IS_ZEBRA_DEBUG_RIB)
+		if (IS_NSM_DEBUG_RIB)
 			rnode_debug(rn, "rn %p, un-removed rib %p", (void * )rn,
 					(void * )rib);
 
@@ -1808,7 +1808,7 @@ static void rib_unlink(struct route_node *rn, struct rib *rib)
 
 	assert(rn && rib);
 
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 		rnode_debug(rn, "rn %p, rib %p", (void * )rn, (void * )rib);
 
 	dest = rib_dest_from_rnode(rn);
@@ -1831,7 +1831,7 @@ static void rib_unlink(struct route_node *rn, struct rib *rib)
 
 static void rib_delnode(struct route_node *rn, struct rib *rib)
 {
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 		rnode_debug(rn, "rn %p, rib %p, removing", (void * )rn, (void * )rib);
 	SET_FLAG(rib->status, RIB_ENTRY_REMOVED);
 	rib_queue_add(&nsm_ribd, rn);
@@ -1866,7 +1866,7 @@ int rib_add_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 			distance = route_info[type].distance;
 
 		/* iBGP distance is 200. */
-		if (type == ZEBRA_ROUTE_BGP && CHECK_FLAG(flags, ZEBRA_FLAG_IBGP))
+		if (type == ZPL_ROUTE_PROTO_BGP && CHECK_FLAG(flags, NSM_RIB_FLAG_IBGP))
 			distance = 200;
 	}
 
@@ -1882,7 +1882,7 @@ int rib_add_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 
 		if (rib->type != type)
 			continue;
-		if (rib->type != ZEBRA_ROUTE_CONNECT)
+		if (rib->type != ZPL_ROUTE_PROTO_CONNECT)
 		{
 			same = rib;
 			break;
@@ -1924,12 +1924,12 @@ int rib_add_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 		rib_nexthop_ifindex_add(rib, ifindex);
 
 	/* If this route is kernel route, set FIB flag to the route. */
-	if (type == ZEBRA_ROUTE_KERNEL || type == ZEBRA_ROUTE_CONNECT)
+	if (type == ZPL_ROUTE_PROTO_KERNEL || type == ZPL_ROUTE_PROTO_CONNECT)
 		for (nexthop = rib->nexthop; nexthop; nexthop = nexthop->next)
 			SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
 
 	/* Link new rib to node.*/
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 		zlog_debug(MODULE_NSM, "%s: calling rib_addnode (%p, %p)", __func__,
 				(void *) rn, (void *) rib);
 	rib_addnode(rn, rib);
@@ -1937,7 +1937,7 @@ int rib_add_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 	/* Free implicit route.*/
 	if (same)
 	{
-		if (IS_ZEBRA_DEBUG_RIB)
+		if (IS_NSM_DEBUG_RIB)
 			zlog_debug(MODULE_NSM, "%s: calling rib_delnode (%p, %p)", __func__,
 					(void *) rn, (void *) rib);
 		rib_delnode(rn, same);
@@ -2034,7 +2034,7 @@ void rib_lookup_and_dump(struct prefix_ipv4 * p)
 				(void *) rib,
 				(CHECK_FLAG (rib->status, RIB_ENTRY_REMOVED) ?
 						"removed" : "NOT removed"),
-				(CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELECTED) ?
+				(CHECK_FLAG (rib->flags, NSM_RIB_FLAG_SELECTED) ?
 						"selected" : "NOT selected"));
 		rib_dump(up, rib);
 	}
@@ -2066,8 +2066,8 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 		rib->distance = route_info[rib->type].distance;
 
 		/* iBGP distance is 200. */
-		if (rib->type == ZEBRA_ROUTE_BGP
-				&& CHECK_FLAG(rib->flags, ZEBRA_FLAG_IBGP))
+		if (rib->type == ZPL_ROUTE_PROTO_BGP
+				&& CHECK_FLAG(rib->flags, NSM_RIB_FLAG_IBGP))
 			rib->distance = 200;
 	}
 
@@ -2082,19 +2082,19 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 			continue;
 
 		if (same->type == rib->type&& same->table == rib->table
-		&& same->type != ZEBRA_ROUTE_CONNECT)
+		&& same->type != ZPL_ROUTE_PROTO_CONNECT)
 			break;
 	}
 
 	/* If this route is kernel route, set FIB flag to the route. */
-	if (rib->type == ZEBRA_ROUTE_KERNEL || rib->type == ZEBRA_ROUTE_CONNECT)
+	if (rib->type == ZPL_ROUTE_PROTO_KERNEL || rib->type == ZPL_ROUTE_PROTO_CONNECT)
 		for (nexthop = rib->nexthop; nexthop; nexthop = nexthop->next)
 			SET_FLAG(nexthop->flags, NEXTHOP_FLAG_FIB);
 
 	/* Link new rib to node.*/
 	rib_addnode(rn, rib);
 	ret = 1;
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 	{
 		zlog_debug(MODULE_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
 				__func__, (void *) rn, (void *) rib);
@@ -2104,7 +2104,7 @@ int rib_add_ipv4_multipath(struct prefix_ipv4 *p, struct rib *rib, safi_t safi)
 	/* Free implicit route.*/
 	if (same)
 	{
-		if (IS_ZEBRA_DEBUG_RIB)
+		if (IS_NSM_DEBUG_RIB)
 		{
 			zlog_debug(MODULE_NSM,
 					"%s: calling rib_delnode (%p, %p) on existing RIB entry",
@@ -2145,7 +2145,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 	/* Apply mask. */
 	apply_mask_ipv4(p);
 
-	if (IS_ZEBRA_DEBUG_KERNEL)
+	if (IS_NSM_DEBUG_KERNEL)
 	{
 		if (gate)
 			zlog_debug(MODULE_NSM,
@@ -2162,7 +2162,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 	rn = route_node_lookup(table, (struct prefix *) p);
 	if (!rn)
 	{
-		if (IS_ZEBRA_DEBUG_KERNEL)
+		if (IS_NSM_DEBUG_KERNEL)
 		{
 			if (gate)
 				zlog_debug(MODULE_NSM,
@@ -2177,7 +2177,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 		}
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
-		return ZEBRA_ERR_RTNOEXIST;
+		return NSM_RIB_ERR_RTNOEXIST;
 	}
 
 	/* Lookup same type route. */
@@ -2191,7 +2191,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 
 		if (rib->type != type)
 			continue;
-		if (rib->type == ZEBRA_ROUTE_CONNECT && (nexthop = rib->nexthop)
+		if (rib->type == ZPL_ROUTE_PROTO_CONNECT && (nexthop = rib->nexthop)
 				&& nexthop->type == NEXTHOP_TYPE_IFINDEX)
 		{
 			if (nexthop->ifindex != ifindex)
@@ -2230,10 +2230,10 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 	 kernel. */
 	if (!same)
 	{
-		if (fib && type == ZEBRA_ROUTE_KERNEL
-				&& CHECK_FLAG(flags, ZEBRA_FLAG_SELFROUTE))
+		if (fib && type == ZPL_ROUTE_PROTO_KERNEL
+				&& CHECK_FLAG(flags, NSM_RIB_FLAG_SELFROUTE))
 		{
-			if (IS_ZEBRA_DEBUG_KERNEL)
+			if (IS_NSM_DEBUG_KERNEL)
 			{
 				zlog_debug(MODULE_NSM,
 						"Zebra route %s/%d was deleted by others from kernel",
@@ -2246,7 +2246,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 		}
 		else
 		{
-			if (IS_ZEBRA_DEBUG_KERNEL)
+			if (IS_NSM_DEBUG_KERNEL)
 			{
 				if (gate)
 					zlog_debug(MODULE_NSM,
@@ -2264,7 +2264,7 @@ int rib_delete_ipv4(zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv4 *p,
 			route_unlock_node(rn);
 			if(table->mutex)
 				os_mutex_unlock(table->mutex);
-			return ZEBRA_ERR_RTNOEXIST;
+			return NSM_RIB_ERR_RTNOEXIST;
 		}
 	}
 
@@ -2298,7 +2298,7 @@ static void static_install_route(afi_t afi, safi_t safi, struct prefix *p,
 		if (CHECK_FLAG(rib->status, RIB_ENTRY_REMOVED))
 			continue;
 
-		if (rib->type == ZEBRA_ROUTE_STATIC && rib->distance == si->distance)
+		if (rib->type == ZPL_ROUTE_PROTO_STATIC && rib->distance == si->distance)
 			break;
 	}
 
@@ -2341,7 +2341,7 @@ static void static_install_route(afi_t afi, safi_t safi, struct prefix *p,
 		/* This is new static route. */
 		rib = XCALLOC(MTYPE_RIB, sizeof(struct rib));
 
-		rib->type = ZEBRA_ROUTE_STATIC;
+		rib->type = ZPL_ROUTE_PROTO_STATIC;
 		rib->distance = si->distance;
 		rib->metric = 0;
 		rib->vrf_id = si->vrf_id;
@@ -2440,7 +2440,7 @@ static void static_uninstall_route(afi_t afi, safi_t safi, struct prefix *p,
 		if (CHECK_FLAG(rib->status, RIB_ENTRY_REMOVED))
 			continue;
 
-		if (rib->type == ZEBRA_ROUTE_STATIC && rib->distance == si->distance
+		if (rib->type == ZPL_ROUTE_PROTO_STATIC && rib->distance == si->distance
 				&& rib->tag == si->tag)
 			break;
 	}
@@ -2495,7 +2495,7 @@ static_add_ipv4_safi (safi_t safi, struct prefix *p, struct ipstack_in_addr *gat
 	struct static_route *pp;
 	struct static_route *cp;
 	struct static_route *update = NULL;
-	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(vrf_id);
+	struct nsm_ipvrf *zvrf = ip_vrf_info_lookup(vrf_id);
 	if (!zvrf)
 		return -1;
 	struct route_table *stable = zvrf->stable[AFI_IP][safi];
@@ -2684,7 +2684,7 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	if (!distance)
 	distance = route_info[type].distance;
 
-	if (type == ZEBRA_ROUTE_BGP && CHECK_FLAG (flags, ZEBRA_FLAG_IBGP))
+	if (type == ZPL_ROUTE_PROTO_BGP && CHECK_FLAG (flags, NSM_RIB_FLAG_IBGP))
 	distance = 200;
 
 	/* Lookup route node.*/
@@ -2699,7 +2699,7 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 
 		if (rib->type != type)
 		continue;
-		if (rib->type != ZEBRA_ROUTE_CONNECT)
+		if (rib->type != ZPL_ROUTE_PROTO_CONNECT)
 		{
 			same = rib;
 			break;
@@ -2740,13 +2740,13 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	rib_nexthop_ifindex_add (rib, ifindex);
 
 	/* If this route is kernel route, set FIB flag to the route. */
-	if (type == ZEBRA_ROUTE_KERNEL || type == ZEBRA_ROUTE_CONNECT)
+	if (type == ZPL_ROUTE_PROTO_KERNEL || type == ZPL_ROUTE_PROTO_CONNECT)
 	for (nexthop = rib->nexthop; nexthop; nexthop = nexthop->next)
 	SET_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB);
 
 	/* Link new rib to node.*/
 	rib_addnode (rn, rib);
-	if (IS_ZEBRA_DEBUG_RIB)
+	if (IS_NSM_DEBUG_RIB)
 	{
 		zlog_debug (MODULE_NSM, "%s: called rib_addnode (%p, %p) on new RIB entry",
 				__func__, (void *)rn, (void *)rib);
@@ -2756,7 +2756,7 @@ rib_add_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	/* Free implicit route.*/
 	if (same)
 	{
-		if (IS_ZEBRA_DEBUG_RIB)
+		if (IS_NSM_DEBUG_RIB)
 		{
 			zlog_debug (MODULE_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, (void *)rn, (void *)same);
@@ -2800,8 +2800,8 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 		rib->distance = route_info[rib->type].distance;
 
 		/* iBGP distance is 200. */
-		if (rib->type == ZEBRA_ROUTE_BGP
-				&& CHECK_FLAG (rib->flags, ZEBRA_FLAG_IBGP))
+		if (rib->type == ZPL_ROUTE_PROTO_BGP
+				&& CHECK_FLAG (rib->flags, NSM_RIB_FLAG_IBGP))
 		rib->distance = 200;
 	}
 
@@ -2825,14 +2825,14 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 		{
 			continue;
 		}
-		if (same->type != ZEBRA_ROUTE_CONNECT)
+		if (same->type != ZPL_ROUTE_PROTO_CONNECT)
 		{
 			break;
 		}
 	}
 
 	/* If this route is kernel route, set FIB flag to the route. */
-	if (rib->type == ZEBRA_ROUTE_KERNEL || rib->type == ZEBRA_ROUTE_CONNECT)
+	if (rib->type == ZPL_ROUTE_PROTO_KERNEL || rib->type == ZPL_ROUTE_PROTO_CONNECT)
 	{
 		for (nexthop = rib->nexthop; nexthop; nexthop = nexthop->next)
 		{
@@ -2846,7 +2846,7 @@ rib_add_ipv6_multipath (struct prefix_ipv6 *p, struct rib *rib, safi_t safi)
 	/* Free implicit route.*/
 	if (same)
 	{
-		if (IS_ZEBRA_DEBUG_RIB)
+		if (IS_NSM_DEBUG_RIB)
 		{
 			zlog_debug (MODULE_NSM, "%s: calling rib_delnode (%p, %p) on existing RIB entry",
 					__func__, rn, same);
@@ -2892,7 +2892,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	rn = route_node_lookup (table, (struct prefix *) p);
 	if (! rn)
 	{
-		if (IS_ZEBRA_DEBUG_KERNEL)
+		if (IS_NSM_DEBUG_KERNEL)
 		{
 			if (gate)
 			zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d doesn't exist in rib",
@@ -2906,7 +2906,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 		}
 		if(table->mutex)
 			os_mutex_unlock(table->mutex);
-		return ZEBRA_ERR_RTNOEXIST;
+		return NSM_RIB_ERR_RTNOEXIST;
 	}
 
 	/* Lookup same type route. */
@@ -2920,7 +2920,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 
 		if (rib->type != type)
 		continue;
-		if (rib->type == ZEBRA_ROUTE_CONNECT && (nexthop = rib->nexthop) &&
+		if (rib->type == ZPL_ROUTE_PROTO_CONNECT && (nexthop = rib->nexthop) &&
 				nexthop->type == NEXTHOP_TYPE_IFINDEX)
 		{
 			if (nexthop->ifindex != ifindex)
@@ -2960,10 +2960,10 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 	 kernel. */
 	if (! same)
 	{
-		if (fib && type == ZEBRA_ROUTE_KERNEL &&
-				CHECK_FLAG(flags, ZEBRA_FLAG_SELFROUTE))
+		if (fib && type == ZPL_ROUTE_PROTO_KERNEL &&
+				CHECK_FLAG(flags, NSM_RIB_FLAG_SELFROUTE))
 		{
-			if (IS_ZEBRA_DEBUG_KERNEL)
+			if (IS_NSM_DEBUG_KERNEL)
 			{
 				zlog_debug (MODULE_NSM, "Zebra route %s/%d was deleted by others from kernel",
 						ipstack_inet_ntop (IPSTACK_AF_INET, &p->prefix, buf1, IPSTACK_INET_ADDRSTRLEN),
@@ -2975,7 +2975,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 		}
 		else
 		{
-			if (IS_ZEBRA_DEBUG_KERNEL)
+			if (IS_NSM_DEBUG_KERNEL)
 			{
 				if (gate)
 				zlog_debug (MODULE_NSM, "route %s vrf %u via %s ifindex %d type %d "
@@ -2993,7 +2993,7 @@ rib_delete_ipv6 (zpl_uint32 type, zpl_uint32 flags, struct prefix_ipv6 *p,
 			route_unlock_node (rn);
 			if(table->mutex)
 				os_mutex_unlock(table->mutex);
-			return ZEBRA_ERR_RTNOEXIST;
+			return NSM_RIB_ERR_RTNOEXIST;
 		}
 	}
 
@@ -3017,7 +3017,7 @@ static_add_ipv6 (struct prefix *p, zpl_uchar type, struct ipstack_in6_addr *gate
 	struct static_route *pp;
 	struct static_route *cp;
 	struct static_route *update = NULL;
-	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (vrf_id);
+	struct nsm_ipvrf *zvrf = ip_vrf_info_lookup (vrf_id);
 	if(!zvrf)
 	return -1;
 	struct route_table *stable = zvrf->stable[AFI_IP6][SAFI_UNICAST];
@@ -3250,7 +3250,7 @@ static void rib_weed_table(struct route_table *table)
 /* Delete all routes from non main table. */
 static int rib_weed_tables_one(struct ip_vrf *vrf, void *p)
 {
-	struct nsm_ip_vrf *zvrf = vrf->info;
+	struct nsm_ipvrf *zvrf = vrf->info;
 	rib_weed_table(zvrf->table[AFI_IP][SAFI_UNICAST]);
 	rib_weed_table(zvrf->table[AFI_IP6][SAFI_UNICAST]);
 	return 0;
@@ -3277,8 +3277,8 @@ rib_sweep_table (struct route_table *table)
 		if (CHECK_FLAG (rib->status, RIB_ENTRY_REMOVED))
 		continue;
 
-		if (rib->type == ZEBRA_ROUTE_KERNEL &&
-				CHECK_FLAG (rib->flags, ZEBRA_FLAG_SELFROUTE))
+		if (rib->type == ZPL_ROUTE_PROTO_KERNEL &&
+				CHECK_FLAG (rib->flags, NSM_RIB_FLAG_SELFROUTE))
 		{
 			ret = rib_update_forward_pm (rn, rib, NULL);
 			if (! ret)
@@ -3292,7 +3292,7 @@ rib_sweep_table (struct route_table *table)
 
 static int rib_sweep_tables_one(struct ip_vrf *vrf, void *p)
 {
-	struct nsm_ip_vrf *zvrf = vrf->info;
+	struct nsm_ipvrf *zvrf = vrf->info;
 	rib_weed_table(zvrf->table[AFI_IP][SAFI_UNICAST]);
 	rib_weed_table(zvrf->table[AFI_IP6][SAFI_UNICAST]);
 	return 0;
@@ -3341,7 +3341,7 @@ static zpl_ulong rib_score_proto_table(zpl_uchar proto,
 static int rib_score_proto_one(struct ip_vrf *vrf, void *p)
 {
 	struct ip_vrf_temp *rib_test = (struct ip_vrf_temp *)p;
-	struct nsm_ip_vrf *zvrf = vrf->info;
+	struct nsm_ipvrf *zvrf = vrf->info;
 	rib_test->cnt += rib_score_proto_table(rib_test->proto, zvrf->table[AFI_IP][SAFI_UNICAST])
 					+ rib_score_proto_table(rib_test->proto, zvrf->table[AFI_IP6][SAFI_UNICAST]);
 	return 0;
@@ -3388,7 +3388,7 @@ void rib_close_table(struct route_table *table)
 /* Close all RIB tables.  */
 static int rib_close_one(struct ip_vrf *vrf, void *p)
 {
-	struct nsm_ip_vrf *zvrf = vrf->info;
+	struct nsm_ipvrf *zvrf = vrf->info;
 	rib_close_table(zvrf->table[AFI_IP][SAFI_UNICAST]);
 	rib_close_table(zvrf->table[AFI_IP6][SAFI_UNICAST]);
 	return 0;
@@ -3467,7 +3467,7 @@ rib_tables_iter_next(rib_tables_iter_t *iter)
 		while (1)
 		{
 
-			while (iter->afi_safi_ix < (int) ZEBRA_NUM_OF(afi_safis))
+			while (iter->afi_safi_ix < (int) array_size(afi_safis))
 			{
 				table = nsm_vrf_table(afi_safis[iter->afi_safi_ix].afi,
 						afi_safis[iter->afi_safi_ix].safi, iter->vrf_id);
@@ -3508,7 +3508,7 @@ rib_tables_iter_next(rib_tables_iter_t *iter)
 }
 
 /* Lookup VRF by identifier.  */
-struct nsm_ip_vrf * nsm_vrf_lookup(vrf_id_t vrf_id)
+struct nsm_ipvrf * nsm_vrf_lookup(vrf_id_t vrf_id)
 {
 	return ip_vrf_info_lookup(vrf_id);
 }
@@ -3516,7 +3516,7 @@ struct nsm_ip_vrf * nsm_vrf_lookup(vrf_id_t vrf_id)
 /*
  * Create a routing table for the specific AFI/SAFI in the given VRF.
  */
-static void nsm_vrf_table_create(struct nsm_ip_vrf *zvrf, afi_t afi, safi_t safi)
+static void nsm_vrf_table_create(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi)
 {
 	rib_table_info_t *info;
 	struct route_table *table;
@@ -3535,11 +3535,11 @@ static void nsm_vrf_table_create(struct nsm_ip_vrf *zvrf, afi_t afi, safi_t safi
 }
 
 /* Allocate new nsmribd VRF. */
-static struct nsm_ip_vrf * nsm_vrf_alloc(vrf_id_t vrf_id)
+static struct nsm_ipvrf * nsm_vrf_alloc(vrf_id_t vrf_id)
 {
-	struct nsm_ip_vrf *zvrf = NULL;
+	struct nsm_ipvrf *zvrf = NULL;
 
-	zvrf = XCALLOC(MTYPE_ZEBRA_VRF, sizeof(struct nsm_ip_vrf));
+	zvrf = XCALLOC(MTYPE_VRF, sizeof(struct nsm_ipvrf));
 	if(zvrf)
 	{
 		/* Allocate routing table and static table.  */
@@ -3574,7 +3574,7 @@ static struct nsm_ip_vrf * nsm_vrf_alloc(vrf_id_t vrf_id)
 /* Lookup the routing table in an enabled VRF. */
 struct route_table * nsm_vrf_table(afi_t afi, safi_t safi, vrf_id_t vrf_id)
 {
-	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(vrf_id);
+	struct nsm_ipvrf *zvrf = ip_vrf_info_lookup(vrf_id);
 
 	if (!zvrf)
 		return NULL;
@@ -3588,7 +3588,7 @@ struct route_table * nsm_vrf_table(afi_t afi, safi_t safi, vrf_id_t vrf_id)
 /* Lookup the static routing table in a VRF. */
 struct route_table * nsm_vrf_static_table(afi_t afi, safi_t safi, vrf_id_t vrf_id)
 {
-	struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup(vrf_id);
+	struct nsm_ipvrf *zvrf = ip_vrf_info_lookup(vrf_id);
 
 	if (!zvrf)
 		return NULL;
@@ -3600,29 +3600,27 @@ struct route_table * nsm_vrf_static_table(afi_t afi, safi_t safi, vrf_id_t vrf_i
 }
 
 /* Callback upon creating a new VRF. */
-static int nsm_vrf_create(vrf_id_t vrf_id, void **info)
+struct nsm_ipvrf * nsm_vrf_create(vrf_id_t vrf_id)
 {
-  if (*info == NULL)
-  {
-    *info = nsm_vrf_alloc(vrf_id);
-	if(*info)
+    struct nsm_ipvrf *info = nsm_vrf_alloc(vrf_id);
+	if(info)
 	{
-		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, *info);
-    	router_id_init(*info);
-		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, *info);
-		return OK;
+		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, info);
+    	router_id_init(info);
+		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, info);
+		return info;
 	}
-  }
-  return ERROR;
+	return NULL;
 }
 
-static int nsm_vrf_destroy(vrf_id_t vrf_id, void **info)
+int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf)
 {
-  	//struct nsm_ip_vrf *zvrf = NULL;
+  	//struct nsm_ipvrf *zvrf = NULL;
 
-  	assert(*info);
-  	if (*info)
+  	assert(ipvrf);
+  	if (ipvrf)
   	{
+		//nsm_halpal_delete_vrf(ip_vrf_lookup(vrf_id));
     	//zvrf = nsm_vrf_alloc(vrf_id);
     	//ip_vrf->info = (void *)zvrf;
     	//router_id_init(zvrf);
@@ -3631,12 +3629,12 @@ static int nsm_vrf_destroy(vrf_id_t vrf_id, void **info)
 }
 
 /* Callback upon enabling a VRF. */
-static int nsm_vrf_enable(vrf_id_t vrf_id, void **info)
+int nsm_vrf_enable(struct nsm_ipvrf *zvrf)
 {
-  	struct nsm_ip_vrf *zvrf = *info;
-  	assert(*info);
+  	assert(zvrf);
 
-
+	//nsm_halpal_create_vrf(struct ip_vrf *vrf);
+	//nsm_halpal_delete_vrf(struct ip_vrf *vrf);	
 #if defined(ZPL_NSM_RTADV)
 	nsm_rtadv_init(zvrf);
 #endif
@@ -3645,11 +3643,9 @@ static int nsm_vrf_enable(vrf_id_t vrf_id, void **info)
 }
 
 /* Callback upon disabling a VRF. */
-static int nsm_vrf_disable(vrf_id_t vrf_id, void **info)
+int nsm_vrf_disable(struct nsm_ipvrf *zvrf)
 {
-  	struct nsm_ip_vrf *zvrf = *info;
-  	assert(*info);
-
+  	assert(zvrf);
 
   	rib_close_table(zvrf->table[AFI_IP][SAFI_UNICAST]);
   	rib_close_table(zvrf->table[AFI_IP6][SAFI_UNICAST]);
@@ -3660,14 +3656,6 @@ static int nsm_vrf_disable(vrf_id_t vrf_id, void **info)
   	return 0;
 }
 
-static int nsm_vrf_update_vrfid(vrf_id_t vrf_id, void **info)
-{
-	struct nsm_ip_vrf *zvrf = *info;
-  	assert(zvrf);
-
-	zvrf->vrf_id = vrf_id;
-	return 0;
-}
 
 
 /* Routing information base initialize. */
@@ -3682,14 +3670,12 @@ void rib_init(void)
 		{
 			nsm_ribd.initialise = 1;
 			rib_queue_init(&nsm_ribd);
-			ip_vrf_add_hook(VRF_NEW_HOOK, nsm_vrf_create);
-			ip_vrf_add_hook(VRF_ENABLE_HOOK, nsm_vrf_enable);
-			ip_vrf_add_hook(VRF_DISABLE_HOOK, nsm_vrf_disable);
-			ip_vrf_add_hook(VRF_UPDATE_HOOK, nsm_vrf_update_vrfid);
-			ip_vrf_add_hook(VRF_DELETE_HOOK, nsm_vrf_destroy);
-			
-			//ip_vrf_new_one(VRF_DEFAULT, "Default-IP-Routing-Table");
-			ip_vrf_create("Default-IP-Routing-Table");
+			//ip_vrf_add_hook(VRF_NEW_HOOK, nsm_vrf_create);
+			//ip_vrf_add_hook(VRF_ENABLE_HOOK, nsm_vrf_enable);
+			//ip_vrf_add_hook(VRF_DISABLE_HOOK, nsm_vrf_disable);
+			//ip_vrf_add_hook(VRF_DELETE_HOOK, nsm_vrf_destroy);
+
+			//ip_vrf_create("Default-IP-Routing-Table");
 		}
 	}
 }

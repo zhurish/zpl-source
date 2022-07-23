@@ -20,8 +20,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_BUFFER_H
-#define _ZEBRA_BUFFER_H
+#ifndef _LIB_BUFFER_H
+#define _LIB_BUFFER_H
 
 
 #ifdef __cplusplus
@@ -139,4 +139,4 @@ extern buffer_status_t buffer_flush_window (struct buffer *, zpl_socket_t fd, zp
 }
 #endif
  
-#endif /* _ZEBRA_BUFFER_H */
+#endif /* _LIB_BUFFER_H */

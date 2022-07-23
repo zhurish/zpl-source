@@ -95,7 +95,7 @@ nexthop_type_to_str (enum nexthop_types_t nh_type)
     "Null0 nexthop",
   };
 
-  if (nh_type >= ZEBRA_NUM_OF (desc))
+  if (nh_type >= array_size (desc))
     return "<Invalid nh type>";
 
   return desc[nh_type];

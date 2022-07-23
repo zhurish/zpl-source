@@ -5,31 +5,31 @@
 #define _QUAGGA_ROUTE_TYPES_H
 
 /* Zebra route's types. */
-#define ZEBRA_ROUTE_SYSTEM               0
-#define ZEBRA_ROUTE_KERNEL               1
-#define ZEBRA_ROUTE_CONNECT              2
-#define ZEBRA_ROUTE_STATIC               3
-#define ZEBRA_ROUTE_RIP                  4
-#define ZEBRA_ROUTE_RIPNG                5
-#define ZEBRA_ROUTE_OSPF                 6
-#define ZEBRA_ROUTE_OSPF6                7
-#define ZEBRA_ROUTE_ISIS                 8
-#define ZEBRA_ROUTE_BGP                  9
-#define ZEBRA_ROUTE_PIM                  10
-#define ZEBRA_ROUTE_HSLS                 11
-#define ZEBRA_ROUTE_OLSR                 12
-#define ZEBRA_ROUTE_BABEL                13
-#define ZEBRA_ROUTE_NHRP                 14
-#define ZEBRA_ROUTE_VRRP                 15
-#define ZEBRA_ROUTE_FRP                  16
-#define ZEBRA_ROUTE_LLDP                 17
-#define ZEBRA_ROUTE_BFD                  18
-#define ZEBRA_ROUTE_LDP                  19
-#define ZEBRA_ROUTE_DHCP                 20
-#define ZEBRA_ROUTE_UTILS                21
-#define ZEBRA_ROUTE_MANAGE               22
-#define ZEBRA_ROUTE_SWITCH               23
-#define ZEBRA_ROUTE_MAX                  24
+#define ZPL_ROUTE_PROTO_SYSTEM               0
+#define ZPL_ROUTE_PROTO_KERNEL               1
+#define ZPL_ROUTE_PROTO_CONNECT              2
+#define ZPL_ROUTE_PROTO_STATIC               3
+#define ZPL_ROUTE_PROTO_RIP                  4
+#define ZPL_ROUTE_PROTO_RIPNG                5
+#define ZPL_ROUTE_PROTO_OSPF                 6
+#define ZPL_ROUTE_PROTO_OSPF6                7
+#define ZPL_ROUTE_PROTO_ISIS                 8
+#define ZPL_ROUTE_PROTO_BGP                  9
+#define ZPL_ROUTE_PROTO_PIM                  10
+#define ZPL_ROUTE_PROTO_HSLS                 11
+#define ZPL_ROUTE_PROTO_OLSR                 12
+#define ZPL_ROUTE_PROTO_BABEL                13
+#define ZPL_ROUTE_PROTO_NHRP                 14
+#define ZPL_ROUTE_PROTO_VRRP                 15
+#define ZPL_ROUTE_PROTO_FRP                  16
+#define ZPL_ROUTE_PROTO_LLDP                 17
+#define ZPL_ROUTE_PROTO_BFD                  18
+#define ZPL_ROUTE_PROTO_LDP                  19
+#define ZPL_ROUTE_PROTO_DHCP                 20
+#define ZPL_ROUTE_PROTO_UTILS                21
+#define ZPL_ROUTE_PROTO_MANAGE               22
+#define ZPL_ROUTE_PROTO_SWITCH               23
+#define ZPL_ROUTE_PROTO_MAX                  24
 
 #define SHOW_ROUTE_V4_HEADER \
   "Codes: K - kernel route, C - connected, S - static, R - RIP,%s" \
@@ -322,9 +322,9 @@
   "Next Hop Resolution Protocol (NHRP)\n"
 
 /* zebra */
-#define QUAGGA_REDIST_STR_ZEBRA \
+#define QUAGGA_REDIST_STR_NSM \
   "(kernel|connected|static|rip|ripng|ospf|ospf6|isis|bgp|pim|olsr|babel|nhrp|frp)"
-#define QUAGGA_REDIST_HELP_STR_ZEBRA \
+#define QUAGGA_REDIST_HELP_STR_NSM \
   "Kernel routes (not installed via the zebra RIB)\n" \
   "Connected routes (directly attached subnet or host)\n" \
   "Statically configured routes\n" \
@@ -339,9 +339,9 @@
   "Babel routing protocol (Babel)\n" \
   "Next Hop Resolution Protocol (NHRP)\n" \
   "Fast and Reliable Routing Protocol (FRP)\n"
-#define QUAGGA_IP_REDIST_STR_ZEBRA \
+#define QUAGGA_IP_REDIST_STR_NSM \
   "(kernel|connected|static|rip|ospf|isis|bgp|pim|olsr|babel|nhrp|frp)"
-#define QUAGGA_IP_REDIST_HELP_STR_ZEBRA \
+#define QUAGGA_IP_REDIST_HELP_STR_NSM \
   "Kernel routes (not installed via the zebra RIB)\n" \
   "Connected routes (directly attached subnet or host)\n" \
   "Statically configured routes\n" \
@@ -354,9 +354,9 @@
   "Babel routing protocol (Babel)\n" \
   "Next Hop Resolution Protocol (NHRP)\n" \
   "Fast and Reliable Routing Protocol (FRP)\n"
-#define QUAGGA_IP6_REDIST_STR_ZEBRA \
+#define QUAGGA_IP6_REDIST_STR_NSM \
   "(kernel|connected|static|ripng|ospf6|isis|bgp|babel|nhrp)"
-#define QUAGGA_IP6_REDIST_HELP_STR_ZEBRA \
+#define QUAGGA_IP6_REDIST_HELP_STR_NSM \
   "Kernel routes (not installed via the zebra RIB)\n" \
   "Connected routes (directly attached subnet or host)\n" \
   "Statically configured routes\n" \
@@ -370,7 +370,7 @@
 
 #ifdef QUAGGA_DEFINE_DESC_TABLE
 
-struct zebra_desc_table
+struct route_desc_table
 {
   unsigned int type;
   const char *string;
@@ -378,31 +378,31 @@ struct zebra_desc_table
 };
 
 #define DESC_ENTRY(T,S,C) [(T)] = { (T), (S), (C) }
-static const struct zebra_desc_table route_types[] = {
-  DESC_ENTRY	(ZEBRA_ROUTE_SYSTEM,	 "system",	'X' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_KERNEL,	 "kernel",	'K' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_CONNECT,	 "connected",	'C' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_STATIC,	 "static",	'S' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_RIP,	 "rip",	'R' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_RIPNG,	 "ripng",	'R' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_OSPF,	 "ospf",	'O' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_OSPF6,	 "ospf6",	'O' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_ISIS,	 "isis",	'I' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_BGP,	 "bgp",	'B' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_PIM,	 "pim",	'P' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_HSLS,	 "hsls",	'H' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_OLSR,	 "olsr",	'o' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_BABEL,	 "babel",	'A' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_NHRP,	 "nhrp",	'N' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_VRRP,	 "vrrp",	'v' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_FRP,	 "frp",	'F' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_LLDP,	 "lldp",	'L' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_BFD,	 "bfd",	'B' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_LDP,	 "ldp",	'l' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_DHCP,	 "dhcp",	'D' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_UTILS,	 "utils",	'u' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_MANAGE,	 "manage",	'm' ),
-  DESC_ENTRY	(ZEBRA_ROUTE_SWITCH,	 "switch",	's' ),
+static const struct route_desc_table route_types[] = {
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_SYSTEM,	 "system",	'X' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_KERNEL,	 "kernel",	'K' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_CONNECT,	 "connected",	'C' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_STATIC,	 "static",	'S' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_RIP,	 "rip",	'R' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_RIPNG,	 "ripng",	'R' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_OSPF,	 "ospf",	'O' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_OSPF6,	 "ospf6",	'O' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_ISIS,	 "isis",	'I' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_BGP,	 "bgp",	'B' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_PIM,	 "pim",	'P' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_HSLS,	 "hsls",	'H' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_OLSR,	 "olsr",	'o' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_BABEL,	 "babel",	'A' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_NHRP,	 "nhrp",	'N' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_VRRP,	 "vrrp",	'v' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_FRP,	 "frp",	'F' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_LLDP,	 "lldp",	'L' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_BFD,	 "bfd",	'B' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_LDP,	 "ldp",	'l' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_DHCP,	 "dhcp",	'D' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_UTILS,	 "utils",	'u' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_MANAGE,	 "manage",	'm' ),
+  DESC_ENTRY	(ZPL_ROUTE_PROTO_SWITCH,	 "switch",	's' ),
 };
 #undef DESC_ENTRY
 

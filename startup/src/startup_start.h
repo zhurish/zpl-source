@@ -14,7 +14,7 @@ extern "C" {
 
 #define OS_START_TEST
 
-#define ZEBRA_VTY_PORT 2610
+#define PLCLI_VTY_PORT 2610
 
 struct startup_option
 {

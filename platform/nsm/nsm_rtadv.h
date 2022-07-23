@@ -100,8 +100,8 @@ extern const char *rtadv_pref_strs[];
 
 #endif /* ZPL_NSM_RTADV */
 
-extern void nsm_rtadv_init (struct nsm_ip_vrf *);
-extern void nsm_rtadv_terminate (struct nsm_ip_vrf *);
+extern void nsm_rtadv_init (struct nsm_ipvrf *);
+extern void nsm_rtadv_terminate (struct nsm_ipvrf *);
 extern void nsm_rtadv_cmd_init (void);
 
 #endif /* __NSM_RTADV_H__ */

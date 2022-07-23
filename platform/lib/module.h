@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 #include "route_types.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "moduletypes.h"
 
 

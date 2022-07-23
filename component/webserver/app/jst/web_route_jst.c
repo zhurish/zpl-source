@@ -19,7 +19,7 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "nsm_ip_vrf.h"
+#include "nsm_ipvrf.h"
 #include "nsm_interface.h"
 #include "nexthop.h"
 #include "nsm_rib.h"
@@ -149,9 +149,9 @@ static int web_route_table_one(struct route_node *rn, struct rib *rib, ifindex_t
 	{
 		if (nexthop == rib->nexthop)
 		{
-			if ( CHECK_FLAG(rib->flags, ZEBRA_FLAG_SELECTED) &&
+			if ( CHECK_FLAG(rib->flags, NSM_RIB_FLAG_SELECTED) &&
 				 CHECK_FLAG (rib->flags, NEXTHOP_FLAG_FIB) /*&&
-				 rib->type == ZEBRA_ROUTE_DHCP*/)
+				 rib->type == ZPL_ROUTE_PROTO_DHCP*/)
 			{
 				if (nexthop->ifindex == ifindex /*&& rn->p.prefixlen == 0 */&&
 						nexthop->gate.ipv4.s_addr)
@@ -217,8 +217,8 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 		{
 			snprintf(dest, sizeof(dest), "%s",prefix2str(&rn->p, buf, sizeof buf));
 
-			if (rib->type != ZEBRA_ROUTE_CONNECT
-					&& rib->type != ZEBRA_ROUTE_KERNEL)
+			if (rib->type != ZPL_ROUTE_PROTO_CONNECT
+					&& rib->type != ZPL_ROUTE_PROTO_KERNEL)
 				snprintf(metric, sizeof(metric), "%d", rib->metric);
 			else
 				snprintf(metric, sizeof(metric), "%d", rib->metric);
@@ -382,43 +382,43 @@ static void web_route_one (Webs *wp, struct route_node *rn, struct rib *rib)
 			snprintf(state, sizeof(state), "%s", "active");
 
 		snprintf(proto, sizeof(proto), "%s", "inactive");
-		if (rib->type == ZEBRA_ROUTE_RIP)
+		if (rib->type == ZPL_ROUTE_PROTO_RIP)
 			snprintf(proto, sizeof(proto), "%s", "RIP");
-		else if (rib->type == ZEBRA_ROUTE_RIPNG)
+		else if (rib->type == ZPL_ROUTE_PROTO_RIPNG)
 			snprintf(proto, sizeof(proto), "%s", "RIPNG");
-		else if (rib->type == ZEBRA_ROUTE_OSPF)
+		else if (rib->type == ZPL_ROUTE_PROTO_OSPF)
 			snprintf(proto, sizeof(proto), "%s", "OSPF");
-		else if (rib->type == ZEBRA_ROUTE_OSPF6)
+		else if (rib->type == ZPL_ROUTE_PROTO_OSPF6)
 			snprintf(proto, sizeof(proto), "%s", "OSPF6");
-		else if (rib->type == ZEBRA_ROUTE_BABEL)
+		else if (rib->type == ZPL_ROUTE_PROTO_BABEL)
 			snprintf(proto, sizeof(proto), "%s", "BABEL");
-		else if (rib->type == ZEBRA_ROUTE_ISIS)
+		else if (rib->type == ZPL_ROUTE_PROTO_ISIS)
 			snprintf(proto, sizeof(proto), "%s", "ISIS");
-		else if (rib->type == ZEBRA_ROUTE_BGP)
+		else if (rib->type == ZPL_ROUTE_PROTO_BGP)
 			snprintf(proto, sizeof(proto), "%s", "BGP");
-		else if (rib->type == ZEBRA_ROUTE_KERNEL)
+		else if (rib->type == ZPL_ROUTE_PROTO_KERNEL)
 			snprintf(proto, sizeof(proto), "%s", "KERNEL");
-		else if (rib->type == ZEBRA_ROUTE_CONNECT)
+		else if (rib->type == ZPL_ROUTE_PROTO_CONNECT)
 			snprintf(proto, sizeof(proto), "%s", "CONNECT");
-		else if (rib->type == ZEBRA_ROUTE_STATIC)
+		else if (rib->type == ZPL_ROUTE_PROTO_STATIC)
 			snprintf(proto, sizeof(proto), "%s", "STATIC");
-		else if (rib->type == ZEBRA_ROUTE_PIM)
+		else if (rib->type == ZPL_ROUTE_PROTO_PIM)
 			snprintf(proto, sizeof(proto), "%s", "PIM");
-		else if (rib->type == ZEBRA_ROUTE_HSLS)
+		else if (rib->type == ZPL_ROUTE_PROTO_HSLS)
 			snprintf(proto, sizeof(proto), "%s", "HSLS");
-		else if (rib->type == ZEBRA_ROUTE_OLSR)
+		else if (rib->type == ZPL_ROUTE_PROTO_OLSR)
 			snprintf(proto, sizeof(proto), "%s", "OLSR");
-		else if (rib->type == ZEBRA_ROUTE_NHRP)
+		else if (rib->type == ZPL_ROUTE_PROTO_NHRP)
 			snprintf(proto, sizeof(proto), "%s", "NHRP");
-		else if (rib->type == ZEBRA_ROUTE_VRRP)
+		else if (rib->type == ZPL_ROUTE_PROTO_VRRP)
 			snprintf(proto, sizeof(proto), "%s", "VRRP");
-		else if (rib->type == ZEBRA_ROUTE_FRP)
+		else if (rib->type == ZPL_ROUTE_PROTO_FRP)
 			snprintf(proto, sizeof(proto), "%s", "FRP");
-		else if (rib->type == ZEBRA_ROUTE_LLDP)
+		else if (rib->type == ZPL_ROUTE_PROTO_LLDP)
 			snprintf(proto, sizeof(proto), "%s", "LLDP");
-		else if (rib->type == ZEBRA_ROUTE_LDP)
+		else if (rib->type == ZPL_ROUTE_PROTO_LDP)
 			snprintf(proto, sizeof(proto), "%s", "LDP");
-		else if (rib->type == ZEBRA_ROUTE_DHCP)
+		else if (rib->type == ZPL_ROUTE_PROTO_DHCP)
 			snprintf(proto, sizeof(proto), "%s", "DHCP");
 
 		if(wp->iValue)
@@ -520,7 +520,7 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
   if (distance_str)
     distance = atoi (distance_str);
   else
-    distance = ZEBRA_STATIC_DISTANCE_DEFAULT;
+    distance = NSM_RIB_STATIC_DISTANCE_DEFAULT;
 
   /* tag */
   if (tag_str)
@@ -544,7 +544,7 @@ int web_static_ipv4_safi (safi_t safi, int add_cmd,
           return CMD_WARNING;
         }
       if (add_cmd)
-        static_add_ipv4_safi (safi, &p, NULL, NULL, ZEBRA_FLAG_BLACKHOLE, tag, distance, vrf_id);
+        static_add_ipv4_safi (safi, &p, NULL, NULL, NSM_RIB_FLAG_BLACKHOLE, tag, distance, vrf_id);
       else
         static_delete_ipv4_safi (safi, &p, NULL, NULL, tag, distance, vrf_id);
       return CMD_SUCCESS;

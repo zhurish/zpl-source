@@ -28,9 +28,20 @@ int pal_delete_vrf(struct ip_vrf *vrf)
     return OK;
 }
 
-int pal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new)
+
+int pal_route_rib_add(zpl_uint8 processid, safi_t safi, struct prefix *p,
+						struct rib *rib, zpl_uint8 num)
 {
-	if(pal_stack.ip_stack_route_rib && p)
-		return pal_stack.ip_stack_route_rib(p, old, new);
+	if(pal_stack.ip_stack_route_rib_add && p)
+		return pal_stack.ip_stack_route_rib_add(processid, safi, p, rib, num);
     return OK;
 }
+
+int pal_route_rib_del(zpl_uint8 processid, safi_t safi, struct prefix *p,
+						struct rib *rib, zpl_uint8 num)
+{
+	if(pal_stack.ip_stack_route_rib_del && p)
+		return pal_stack.ip_stack_route_rib_del(processid, safi, p, rib, num);
+    return OK;
+}
+

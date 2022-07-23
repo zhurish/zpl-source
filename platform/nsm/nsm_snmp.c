@@ -78,7 +78,7 @@
 #define IPADDRESS ASN_IPADDRESS
 #define OBJECTIDENTIFIER ASN_OBJECT_ID
 
-extern struct zebra_t zebrad;
+extern struct nsm_srv_t m_nsm_srv;
 
 oid ipfw_oid [] = { IPFWMIB };
 
@@ -92,7 +92,7 @@ static zpl_uchar * ipCidrNumber (struct variable *, oid [], zpl_size_t *,
 static zpl_uchar * ipCidrTable (struct variable *, oid [], zpl_size_t *,
 			     int, zpl_size_t *, WriteMethod **);
 
-struct variable zebra_variables[] = 
+struct variable nsm_variables[] = 
   {
     {0, GAUGE32, RONLY, ipFwNumber, 1, {1}},
     {IPFORWARDDEST, IPADDRESS, RONLY, ipFwTable, 3, {2, 1, 1}},
@@ -142,7 +142,7 @@ ipFwNumber (struct variable *v, oid objid[], zpl_size_t *objid_len,
   if (smux_header_generic(v, objid, objid_len, exact, val_len, write_method) == MATCH_FAILED)
     return NULL;
 
-  table = zebra_vrf_table (AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
+  table = nsm_vrf_table (AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
   if (! table)
     return NULL;
 
@@ -167,7 +167,7 @@ ipCidrNumber (struct variable *v, oid objid[], zpl_size_t *objid_len,
   if (smux_header_generic(v, objid, objid_len, exact, val_len, write_method) == MATCH_FAILED)
     return NULL;
 
-  table = zebra_vrf_table (AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
+  table = nsm_vrf_table (AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
   if (! table)
     return 0;
 
@@ -226,23 +226,23 @@ proto_trans(zpl_uint32 type)
 {
   switch (type)
     {
-    case ZEBRA_ROUTE_SYSTEM:
+    case ZPL_ROUTE_PROTO_SYSTEM:
       return 1; /* other */
-    case ZEBRA_ROUTE_KERNEL:
+    case ZPL_ROUTE_PROTO_KERNEL:
       return 1; /* other */
-    case ZEBRA_ROUTE_CONNECT:
+    case ZPL_ROUTE_PROTO_CONNECT:
       return 2; /* local interface */
-    case ZEBRA_ROUTE_STATIC:
+    case ZPL_ROUTE_PROTO_STATIC:
       return 3; /* static route */
-    case ZEBRA_ROUTE_RIP:
+    case ZPL_ROUTE_PROTO_RIP:
       return 8; /* rip */
-    case ZEBRA_ROUTE_RIPNG:
+    case ZPL_ROUTE_PROTO_RIPNG:
       return 1; /* shouldn't happen */
-    case ZEBRA_ROUTE_OSPF:
+    case ZPL_ROUTE_PROTO_OSPF:
       return 13; /* ospf */
-    case ZEBRA_ROUTE_OSPF6:
+    case ZPL_ROUTE_PROTO_OSPF6:
       return 1; /* shouldn't happen */
-    case ZEBRA_ROUTE_BGP:
+    case ZPL_ROUTE_PROTO_BGP:
       return 14; /* bgp */
     default:
       return 1; /* other */
@@ -329,7 +329,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len,
   if (exact && (*objid_len != (unsigned) v->namelen + 10))
     return;
 
-  table = zebra_vrf_table (AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
+  table = nsm_vrf_table (AFI_IP, SAFI_UNICAST, VRF_DEFAULT);
   if (! table)
     return;
 
@@ -568,9 +568,9 @@ ipCidrTable (struct variable *v, oid objid[], zpl_size_t *objid_len,
 }
 
 void
-zebra_snmp_init ()
+nsm_snmp_init ()
 {
-  smux_init (zebrad.master);
-  REGISTER_MIB("mibII/ipforward", zebra_variables, variable, ipfw_oid);
+  smux_init (m_nsm_srv.master);
+  REGISTER_MIB("mibII/ipforward", nsm_variables, variable, ipfw_oid);
 }
 #endif /* HAVE_SNMP */

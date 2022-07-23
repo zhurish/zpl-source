@@ -52,7 +52,7 @@ typedef struct qos_access_filter_s
     {
       struct filter_cisco cfilter;
       struct filter_zebra zfilter;
-      #ifdef ZPL_FILTER_ZEBRA_EXT
+      #ifdef ZPL_FILTER_NORMAL_EXT
       struct filter_zebos_ext zextfilter;
       #endif
       #ifdef ZPL_FILTER_MAC

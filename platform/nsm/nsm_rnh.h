@@ -20,8 +20,8 @@
  * 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_RNH_H
-#define _ZEBRA_RNH_H
+#ifndef __NSM_RNH_H
+#define __NSM_RNH_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,22 +34,22 @@ extern "C" {
 struct rnh
 {
   zpl_uchar flags;
-#define ZEBRA_NHT_CONNECTED  	0x1
+#define NSM_NHT_CONNECTED  	0x1
   struct rib *state;
   struct list *client_list;
   struct route_node *node;
 };
 
-extern struct rnh *zebra_add_rnh(struct prefix *p, vrf_id_t vrfid);
-extern struct rnh *zebra_lookup_rnh(struct prefix *p, vrf_id_t vrfid);
-extern void zebra_delete_rnh(struct rnh *rnh);
-extern void zebra_add_rnh_client(struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id_t);
-extern void zebra_remove_rnh_client(struct rnh *rnh, struct zserv *client);
-extern int zebra_evaluate_rnh_table(vrf_id_t vrfid, zpl_family_t family);
-extern int zebra_dispatch_rnh_table(vrf_id_t vrfid, zpl_family_t family, struct zserv *cl);
-extern void zebra_print_rnh_table(vrf_id_t vrfid, zpl_family_t family, struct vty *vty);
-extern zpl_char *rnh_str(struct rnh *rnh, zpl_char *buf, zpl_size_t size);
-extern int zebra_cleanup_rnh_client(vrf_id_t vrf, zpl_family_t family, struct zserv *client);
+extern struct rnh *nsm_rnh_add(struct prefix *p, vrf_id_t vrfid);
+extern struct rnh *nsm_rnh_lookup(struct prefix *p, vrf_id_t vrfid);
+extern void nsm_rnh_delete(struct rnh *rnh);
+extern void nsm_rnh_client_add(struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id_t);
+extern void nsm_rnh_client_remove(struct rnh *rnh, struct zserv *client);
+extern int nsm_rnh_evaluate_table(vrf_id_t vrfid, zpl_family_t family);
+extern int nsm_rnh_dispatch_table(vrf_id_t vrfid, zpl_family_t family, struct zserv *cl);
+extern void nsm_rnh_print_table(vrf_id_t vrfid, zpl_family_t family, struct vty *vty);
+extern zpl_char *nsm_rnh_str(struct rnh *rnh, zpl_char *buf, zpl_size_t size);
+extern int nsm_rnh_client_cleanup(vrf_id_t vrf, zpl_family_t family, struct zserv *client);
 
 
  
@@ -57,4 +57,4 @@ extern int zebra_cleanup_rnh_client(vrf_id_t vrf, zpl_family_t family, struct zs
 }
 #endif
 
-#endif /*_ZEBRA_RNH_H */
+#endif /*__NSM_RNH_H */

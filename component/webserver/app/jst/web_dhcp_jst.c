@@ -15,7 +15,7 @@
 #include "command.h"
 #include "zmemory.h"
 #include "log.h"
-#include "nsm_ip_vrf.h"
+#include "nsm_ipvrf.h"
 #include "command.h"
 #include "nsm_interface.h"
 #include "if_name.h"

@@ -225,11 +225,6 @@ typedef struct sched_param zpl_sched_param_t;
 
 
 
-/* Zebra types. Used in Zserv message header. */
-typedef zpl_uint16 zebra_size_t;
-typedef zpl_uint16 zebra_command_t;
-
-
 
 //typedef int socklen_t;
 #define ZPL_ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))

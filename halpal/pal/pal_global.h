@@ -21,7 +21,10 @@ typedef struct pal_stack_s
 	//interface
 	int (*ip_stack_create)(struct interface *ifp);
 	int (*ip_stack_destroy)(struct interface *ifp);
-	int (*ip_stack_change)(struct interface *ifp);
+	int (*ip_stack_update)(struct interface *ifp);
+	int (*ip_stack_member_add)(struct interface *ifp, struct interface *sifp);
+	int (*ip_stack_member_del)(struct interface *ifp, struct interface *sifp);
+
 	int (*ip_stack_up)(struct interface *ifp);
 	int (*ip_stack_down)(struct interface *ifp);
 	int (*ip_stack_refresh_flag)(struct interface *ifp);
@@ -32,9 +35,9 @@ typedef struct pal_stack_s
 	int (*ip_stack_set_metric)(struct interface *ifp, zpl_uint32 metric);
 	int (*ip_stack_get_lladdr)(struct interface *ifp);
 	int (*ip_stack_set_lladdr)(struct interface *ifp, zpl_uint8 *mac, zpl_uint32 len);
+
 	int (*ip_stack_set_vlan)(struct interface *ifp, vlan_t vlan);
 	int (*ip_stack_set_vlanpri)(struct interface *ifp, zpl_uint32 pri);
-	int (*ip_stack_promisc)(struct interface *ifp, zpl_bool enable);
 
 	//ip address
 	int (*ip_stack_ipv4_add)(struct interface *ifp,struct connected *);
@@ -46,7 +49,10 @@ typedef struct pal_stack_s
 	int (*ip_stack_ipv6_add)(struct interface *ifp,struct connected *, zpl_bool secondry);
 	int (*ip_stack_ipv6_delete)(struct interface *ifp,struct connected *, zpl_bool secondry);
 
-	int (*ip_stack_route_rib)(struct prefix *p, struct rib *old, struct rib *new);
+	int (*ip_stack_route_rib_add)(zpl_uint8 processid, safi_t safi, struct prefix *p,
+						struct rib *rib, zpl_uint8 num);
+	int (*ip_stack_route_rib_del)(zpl_uint8 processid, safi_t safi, struct prefix *p,
+						struct rib *rib, zpl_uint8 num);
 
 #ifdef ZPL_NSM_ARP
 	//ip arp
@@ -64,7 +70,9 @@ typedef struct pal_stack_s
 	int (*ip_stack_vrf_create)(struct ip_vrf *vrf);
 	int (*ip_stack_vrf_delete)(struct ip_vrf *vrf);
 	int (*ip_stack_set_vrf)(struct interface *ifp, struct ip_vrf *vrf);
-	int (*ip_stack_update_statistics)(struct interface *ifp);
+	int (*ip_stack_unset_vrf)(struct interface *ifp, struct ip_vrf *vrf);
+
+	int (*ip_stack_socket_vrf)(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
 	/*firewall*/
 /*
@@ -96,16 +104,19 @@ extern int pal_module_init(void);
 /*
  * 端口映射
  */
-int apal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action);
+int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action);
 /*
  * 端口开放
  */
-int apal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action);
-int apal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action);
-int apal_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
-int apal_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
-int apal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
+int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action);
+int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action);
+int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action);
+int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action);
+int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action);
 #endif
+
+int pal_socket_vrf(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
+
 
 #ifdef __cplusplus
 }

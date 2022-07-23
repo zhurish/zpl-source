@@ -306,13 +306,13 @@ static int x5b_route_lookup_default_one(struct route_node *rn, struct rib *rib, 
 	{
 		if (nexthop == rib->nexthop)
 		{
-			if ( CHECK_FLAG(rib->flags, ZEBRA_FLAG_SELECTED) &&
+			if ( CHECK_FLAG(rib->flags, NSM_RIB_FLAG_SELECTED) &&
 				 CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB) &&
 				 CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE) &&
-				 (rib->type == ZEBRA_ROUTE_SYSTEM ||
-					rib->type == ZEBRA_ROUTE_KERNEL ||
-					rib->type == ZEBRA_ROUTE_DHCP ||
-					rib->type == ZEBRA_ROUTE_STATIC) )
+				 (rib->type == ZPL_ROUTE_PROTO_SYSTEM ||
+					rib->type == ZPL_ROUTE_PROTO_KERNEL ||
+					rib->type == ZPL_ROUTE_PROTO_DHCP ||
+					rib->type == ZPL_ROUTE_PROTO_STATIC) )
 			{
 				if (nexthop->ifindex == ifindex && rn->p.prefixlen == 0 &&
 						nexthop->gate.ipv4.s_addr)

@@ -7,7 +7,7 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "module.h"
 #include "zmemory.h"
 #include "thread.h"
@@ -42,7 +42,12 @@ struct module_list module_list_pal =
 	.flags = 0,
 };
 
-
+int pal_socket_vrf(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)
+{
+	if(pal_stack.ip_stack_socket_vrf)
+		return pal_stack.ip_stack_socket_vrf(domain, type, protocol, vrf_id);
+    return -1;
+}
 /***************************************************************/
 static int pal_main_task(void *argv)
 {
@@ -91,7 +96,7 @@ static int pal_module_task_init(void)
 /*
  * 端口映射
  */
-int apal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
+int pal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_portmap_rule_set)
 		return pal_stack.ip_stack_firewall_portmap_rule_set(rule, action);
@@ -100,35 +105,35 @@ int apal_firewall_portmap_rule_set(firewall_t *rule, zpl_action action)
 /*
  * 端口开放
  */
-int apal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
+int pal_firewall_port_filter_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_port_filter_rule_set)
 		return pal_stack.ip_stack_firewall_port_filter_rule_set(rule, action);
     return OK;
 }
 
-int apal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
+int pal_firewall_mangle_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_mangle_rule_set)
 		return pal_stack.ip_stack_firewall_mangle_rule_set(rule, action);
     return OK;
 }
 
-int apal_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
+int pal_firewall_raw_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_raw_rule_set)
 		return pal_stack.ip_stack_firewall_raw_rule_set(rule, action);
     return OK;
 }
 
-int apal_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
+int pal_firewall_snat_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_snat_rule_set)
 		return pal_stack.ip_stack_firewall_snat_rule_set(rule, action);
     return OK;
 }
 
-int apal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
+int pal_firewall_dnat_rule_set(firewall_t *rule, zpl_action action)
 {
 	if(pal_stack.ip_stack_firewall_dnat_rule_set)
 		return pal_stack.ip_stack_firewall_dnat_rule_set(rule, action);

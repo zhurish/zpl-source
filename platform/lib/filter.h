@@ -20,8 +20,8 @@
  * Boston, MA 02111-1307, USA. 
  */
 
-#ifndef _ZEBRA_FILTER_H
-#define _ZEBRA_FILTER_H
+#ifndef __LIB_FILTER_H
+#define __LIB_FILTER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,7 @@ extern "C" {
 命名的IPX访问
   与命名的IP访问控制列表一样，命名的IPX访问控制列表是使用列表名取代列表编号。从而方便定义和引用列表，同样有标准和扩展之分。
 */
-#define ZPL_FILTER_ZEBRA_EXT
+#define ZPL_FILTER_NORMAL_EXT
 #define ZPL_FILTER_MAC
 
 /* Filter direction.  */
@@ -101,7 +101,7 @@ struct filter_zebra
   struct prefix prefix;
 };
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 struct filter_zebos_ext
 {
   int16_t protocol;
@@ -174,7 +174,7 @@ struct filter_list
     {
       struct filter_cisco cfilter;
       struct filter_zebra zfilter;
-      #ifdef ZPL_FILTER_ZEBRA_EXT
+      #ifdef ZPL_FILTER_NORMAL_EXT
       struct filter_zebos_ext zextfilter;
       #endif
       #ifdef ZPL_FILTER_MAC
@@ -232,7 +232,7 @@ extern const char * filter_type_str(enum filter_type type);
 
 extern int filter_compare_cisco(struct filter_cisco *filter, struct filter_cisco *new);
 extern int filter_compare_zebra(struct filter_zebra *filter, struct filter_zebra *new);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 extern int filter_compare_zebos_extended(struct filter_zebos_ext *filter, struct filter_zebos_ext *new);
 #endif
 #ifdef ZPL_FILTER_MAC
@@ -242,8 +242,8 @@ extern int filter_cisco_format(struct vty *vty, const char *addr_str, const char
                  const char *mask_str, const char *mask_mask_str,
                  int extended, struct filter_cisco *filter);
 
-extern int filter_zebra_format(struct vty *vty, afi_t afi, const char *prefix_str, int exact, struct filter_zebra *filter);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+extern int filter_normal_format(struct vty *vty, afi_t afi, const char *prefix_str, int exact, struct filter_zebra *filter);
+#ifdef ZPL_FILTER_NORMAL_EXT
 extern int filter_zebos_ext_format(struct vty *vty, afi_t afi,
                                      const char *prot_str, const char *sprefix,
                                      const char *sport_op, const char *sport, const char *seport,
@@ -262,7 +262,7 @@ extern int filter_l2mac_format(struct vty *vty,
 
 extern void access_list_write_config_cisco(struct vty *vty, struct filter_cisco *filter);
 extern void access_list_write_config_zebra(struct vty *vty, struct filter_zebra *filter);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 extern void access_list_write_config_zebos_ext(struct vty *vty, struct filter_zebos_ext *filter);
 #endif
 #ifdef ZPL_FILTER_MAC
@@ -272,7 +272,7 @@ extern void access_list_write_config_mac(struct vty *vty, struct filter_l2 *filt
 extern int filter_match_cisco(struct filter_cisco *filter, struct prefix *p);
 /* If filter match to the prefix then return 1. */
 extern int filter_match_zebra(struct filter_zebra *filter, struct prefix *p);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 extern int filter_match_zebos_ext(struct filter_zebos_ext *filter, struct filter_zebos_ext *p);
 #endif
 #ifdef ZPL_FILTER_MAC
@@ -287,4 +287,4 @@ extern int access_list_reference (afi_t, const char *, zpl_bool enable);
 }
 #endif
 
-#endif /* _ZEBRA_FILTER_H */
+#endif /* __LIB_FILTER_H */

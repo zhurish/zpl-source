@@ -170,11 +170,11 @@ int startup_option_default(void)
 	os_memset(&startup_option, 0, sizeof(struct startup_option));
 	startup_option.progname = NULL;
 	startup_option.config_file = DEFAULT_CONFIG_FILE;
-	startup_option.pid_file = PATH_ZEBRA_PID;
+	startup_option.pid_file = OSPL_PATH_PID;
 	startup_option.vty_addr = NULL;
-	// startup_option.zserv_path = "/var/run/ProcessMU.sock";//ZEBRA_VTYSH_PATH;
-	startup_option.zserv_path = ZEBRA_VTYSH_PATH;
-	startup_option.vty_port = ZEBRA_VTY_PORT;
+	// startup_option.zserv_path = "/var/run/ProcessMU.sock";//NSM_VTYSH_PATH;
+	startup_option.zserv_path = NSM_VTYSH_PATH;
+	startup_option.vty_port = PLCLI_VTY_PORT;
 	startup_option.daemon_mode = 0;
 	startup_option.pid = 0;
 	startup_option.tty = NULL;

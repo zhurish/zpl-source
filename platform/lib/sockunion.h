@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_SOCKUNION_H
-#define _ZEBRA_SOCKUNION_H
+#ifndef __LIB_SOCKUNION_H
+#define __LIB_SOCKUNION_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,4 +134,4 @@ extern int ipstack_inet_aton (const char *cp, struct ipstack_in_addr *inaddr);
 }
 #endif
 
-#endif /* _ZEBRA_SOCKUNION_H */
+#endif /* __LIB_SOCKUNION_H */

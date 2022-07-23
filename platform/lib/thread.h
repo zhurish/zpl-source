@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_THREAD_H
-#define _ZEBRA_THREAD_H
+#ifndef __LIB_THREAD_H
+#define __LIB_THREAD_H
 
 
 #ifdef __cplusplus
@@ -270,4 +270,4 @@ extern int cmd_os_thread_init(void);
 }
 #endif
 
-#endif /* _ZEBRA_THREAD_H */
+#endif /* __LIB_THREAD_H */

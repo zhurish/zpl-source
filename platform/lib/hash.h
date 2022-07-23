@@ -18,8 +18,8 @@ along with GNU Zebra; see the file COPYING.  If not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef _ZEBRA_HASH_H
-#define _ZEBRA_HASH_H
+#ifndef __LIB_HASH_H
+#define __LIB_HASH_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,4 +84,4 @@ extern zpl_uint32  string_hash_make (const char *);
 }
 #endif
 
-#endif /* _ZEBRA_HASH_H */
+#endif /* __LIB_HASH_H */

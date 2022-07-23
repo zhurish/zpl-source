@@ -39,6 +39,9 @@ extern "C" {
 
 extern int nsm_halpal_interface_add(struct interface *ifp);
 extern int nsm_halpal_interface_delete (struct interface *ifp);
+extern int nsm_halpal_interface_update (struct interface *ifp);
+extern int nsm_halpal_interface_add_slave (struct interface *ifp, struct interface *sifp);
+extern int nsm_halpal_interface_del_slave (struct interface *ifp, struct interface *sifp);
 extern int nsm_halpal_interface_up (struct interface *ifp);
 extern int nsm_halpal_interface_down (struct interface *ifp);
 extern int nsm_halpal_interface_ifindex(char *k_name);
@@ -50,7 +53,7 @@ extern int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct con
 extern int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len);
 #endif
 extern int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu);
-extern int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf);
+
 extern int nsm_halpal_interface_multicast (struct interface *ifp, zpl_uint32 multicast);
 
 extern int nsm_halpal_interface_bandwidth (struct interface *ifp, zpl_uint32 bandwidth);
@@ -60,7 +63,6 @@ extern int nsm_halpal_interface_get_statistics (struct interface *ifp);
 
 extern int nsm_halpal_interface_vlan_set(struct interface *ifp, vlan_t vlan);
 extern int nsm_halpal_interface_vlanpri_set(struct interface *ifp, zpl_uint32 pri);
-extern int nsm_halpal_interface_promisc_link(struct interface *ifp, zpl_bool enable);
 
 extern int nsm_halpal_interface_enca (struct interface *ifp, zpl_uint32 mode, zpl_uint32 value);
 extern int nsm_halpal_interface_mode (struct interface *ifp, zpl_uint32 mode);
@@ -73,7 +75,7 @@ extern int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en );
 
 extern int nsm_halpal_create_vrf(struct ip_vrf *vrf);
 extern int nsm_halpal_delete_vrf(struct ip_vrf *vrf);
-
+extern int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf);
 
 
 

@@ -20,7 +20,7 @@
 #include "str.h"
 #include "table.h"
 #include "vector.h"
-#include "nsm_ip_vrf.h"
+#include "nsm_ipvrf.h"
 #include "nsm_interface.h"
 #ifdef ZPL_WIFI_MODULE
 #include "iw_config.h"

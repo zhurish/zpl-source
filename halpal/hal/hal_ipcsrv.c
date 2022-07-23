@@ -976,7 +976,7 @@ int zsend_router_id_update(struct zserv *client, struct prefix *p,
     stream_reset(s);
 
     /* Message type. */
-    zserv_create_header(s, HAL_IPCMSG_ROUTER_ID_UPDATE, vrf_id);
+    nsm_zserv_create_header(s, HAL_IPCMSG_ROUTER_ID_UPDATE, vrf_id);
 
     /* Prefix information. */
     stream_putc(s, p->family);
@@ -987,6 +987,6 @@ int zsend_router_id_update(struct zserv *client, struct prefix *p,
     /* Write packet size. */
     stream_putw_at(s, 0, stream_get_endp(s));
 
-    return zebra_server_send_message(client);
+    return nsm_server_send_message(client);
 }
 #endif

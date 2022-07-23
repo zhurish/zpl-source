@@ -308,7 +308,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		{
 			zlog_debug(MODULE_DHCP," dhcp set kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 		}
-		SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+		SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 		ret = nsm_halpal_interface_set_address (ifp, ifc, 0);
 		if(ret != OK)
 			return ERROR;
@@ -363,7 +363,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 		cp.prefixlen = 0;
 		cp.u.prefix4.s_addr = 0;
 		gate.s_addr = lease->lease_gateway;
-		rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+		rib_add_ipv4 (ZPL_ROUTE_PROTO_DHCP, 0, &cp,
 					 &gate, NULL,
 					 ifter->ifindex, ifp->vrf_id, 0,
 					 ifter->instance + 1000, 0, 0, SAFI_UNICAST);
@@ -376,7 +376,7 @@ static int dhcp_client_lease_set_kernel(client_interface_t *ifter, client_lease_
 	if(lease->lease_gateway2)
 	{
 		gate.s_addr = lease->lease_gateway2;
-		rib_add_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+		rib_add_ipv4 (ZPL_ROUTE_PROTO_DHCP, 0, &cp,
 					 &gate, NULL,
 					 ifter->ifindex, ifp->vrf_id, 0,
 					 ifter->instance + 1000, 0, 0, SAFI_UNICAST);
@@ -401,7 +401,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 		cp.prefixlen = 0;
 		cp.u.prefix4.s_addr = 0;
 		gate.s_addr = lease->lease_gateway;
-		rib_delete_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+		rib_delete_ipv4 (ZPL_ROUTE_PROTO_DHCP, 0, &cp,
 					 &gate,
 					 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
 		if (DHCPC_DEBUG_ISON(KERNEL))
@@ -412,7 +412,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 	if(lease->lease_gateway2)
 	{
 		gate.s_addr = lease->lease_gateway2;
-		rib_delete_ipv4 (ZEBRA_ROUTE_DHCP, 0, &cp,
+		rib_delete_ipv4 (ZPL_ROUTE_PROTO_DHCP, 0, &cp,
 					 &gate,
 					 ifter->ifindex, ifp->vrf_id, SAFI_UNICAST);
 	}
@@ -485,7 +485,7 @@ static int dhcp_client_lease_unset_kernel(client_interface_t *ifter, client_leas
 			{
 				zlog_debug(MODULE_DHCP," dhcp unset kernel ip address %s on interface %s", tmp, ifindex2ifname(ifter->ifindex));
 			}
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 			ret = nsm_halpal_interface_unset_address (ifp, ifc, 0);
 			if(ret != OK)
 				return ERROR;

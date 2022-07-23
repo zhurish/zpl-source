@@ -10,7 +10,7 @@
 #define QOS_CLASS_MAP_STR "Class Map List\n"
 #define QOS_POLICY_MAP_STR "POlicy Map List\n"
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 
 DEFUN(noseq_qos_access_list_ip_srcany,
       noseq_qos_access_list_ip_srcany_cmd,
@@ -2565,7 +2565,7 @@ ALIAS(noseq_qos_mac_access_list_src_mac_host_dsthost,
 /* Install vty related command. */
 static void noseq_qos_access_list_ipv4(void)
 {
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ip_srcany_cmd);
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ip_dstany_cmd);
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ip_proany_cmd);
@@ -2595,7 +2595,7 @@ static void noseq_qos_access_list_ipv4(void)
 #ifdef ZPL_BUILD_IPV6
 static void noseq_qos_access_list_ipv6(void)
 {
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ipv6_srcany_cmd);
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ipv6_dstany_cmd);
     install_element(QOS_ACCESS_NODE, CMD_CONFIG_LEVEL, &noseq_qos_access_list_ipv6_proany_cmd);

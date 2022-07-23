@@ -8,7 +8,7 @@
 #include "auto_include.h"
 #include <zplos_include.h>
 #include "route_types.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "zmemory.h"
 #include "if.h"
 #include "nsm_interface.h"
@@ -399,7 +399,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 */
 				for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
 				{
-					if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
+					if (CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
 					{
 						char buf[INET6_ADDRSTRLEN];
 						p = ifc->address;
@@ -446,7 +446,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 			}
 			if (if_data)
 			{
-				if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
+				if (if_data->shutdown == NSM_IF_SHUTDOWN_ON)
 					vty_out(vty, " shutdown%s", VTY_NEWLINE);
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);

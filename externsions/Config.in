@@ -52,4 +52,12 @@ config ZPL_READLINE_MODULE
 	select ZPL_EXTERNSIONS_MODULE
 	help
 	Build extern readline Module.
+
+config ZPL_LIBNL_MODULE
+	bool "extern libnl Module"
+	default n
+	select ZPL_EXTERNSIONS_MODULE
+	help
+	Build extern libnl Module.
+	
 endmenu

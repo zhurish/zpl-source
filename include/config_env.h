@@ -122,7 +122,7 @@ extern "C" {
 /* vrrpd vty socket */
 #define VRRP_VTYSH_PATH DAEMON_VTY_DIR "/vrrpd.sock"
 /* zebra vty socket */
-#define ZEBRA_VTYSH_PATH DAEMON_VTY_DIR "/zebra.sock"
+#define NSM_VTYSH_PATH DAEMON_VTY_DIR "/zebra.sock"
 
 
 
@@ -180,7 +180,7 @@ extern "C" {
 #define PATH_WATCHQUAGGA_PID DAEMON_VTY_DIR "/watchquagga.pid"
 
 /* zebra PID */
-#define PATH_ZEBRA_PID DAEMON_VTY_DIR "/zebra.pid"
+#define OSPL_PATH_PID DAEMON_VTY_DIR "/zebra.pid"
 
 
 
@@ -188,7 +188,7 @@ extern "C" {
 
 
 /* zebra api socket */
-#define ZEBRA_SERV_PATH DAEMON_VTY_DIR "/zserv.api"
+#define NSM_SERV_PATH DAEMON_VTY_DIR "/zserv.api"
 
 /* default oem file */
 #define HOST_DEFAULT_OEM_FILE SYSCONFDIR "/oem.bin"

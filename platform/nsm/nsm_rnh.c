@@ -22,7 +22,7 @@
 #include <auto_include.h>
 #include <zplos_include.h>
 #include "route_types.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "prefix.h"
 #include "table.h"
 #include "zmemory.h"
@@ -39,7 +39,7 @@
 #include "nexthop.h"
 
 #include "nsm_rib.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
@@ -48,7 +48,7 @@
 
 #define lookup_rnh_table(v, f)		         \
 ({						 \
-  struct nsm_ip_vrf *zvrf;                        \
+  struct nsm_ipvrf *zvrf;                        \
   struct route_table *t = NULL;                  \
   zvrf = nsm_vrf_lookup(v);                    \
   if (zvrf)                                      \
@@ -63,20 +63,20 @@ static int send_client(struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id);
 static void print_rnh(struct route_node *rn, struct vty *vty);
 
 zpl_char *
-rnh_str (struct rnh *rnh, zpl_char *buf, zpl_size_t size)
+nsm_rnh_str (struct rnh *rnh, zpl_char *buf, zpl_size_t size)
 {
   prefix2str(&(rnh->node->p), buf, size);
   return buf;
 }
 
 struct rnh *
-zebra_add_rnh (struct prefix *p, vrf_id_t vrfid)
+nsm_rnh_add (struct prefix *p, vrf_id_t vrfid)
 {
   struct route_table *table;
   struct route_node *rn;
   struct rnh *rnh = NULL;
 
-  if (IS_ZEBRA_DEBUG_NHT)
+  if (IS_NSM_DEBUG_NHT)
     {
       zpl_char buf[INET6_ADDRSTRLEN];
       prefix2str(p, buf, INET6_ADDRSTRLEN);
@@ -109,7 +109,7 @@ zebra_add_rnh (struct prefix *p, vrf_id_t vrfid)
 }
 
 struct rnh *
-zebra_lookup_rnh (struct prefix *p, vrf_id_t vrfid)
+nsm_rnh_lookup (struct prefix *p, vrf_id_t vrfid)
 {
   struct route_table *table;
   struct route_node *rn;
@@ -131,17 +131,17 @@ zebra_lookup_rnh (struct prefix *p, vrf_id_t vrfid)
 }
 
 void
-zebra_delete_rnh (struct rnh *rnh)
+nsm_rnh_delete (struct rnh *rnh)
 {
   struct route_node *rn;
 
   if (!rnh || !(rn = rnh->node))
     return;
 
-  if (IS_ZEBRA_DEBUG_NHT)
+  if (IS_NSM_DEBUG_NHT)
     {
       zpl_char buf[INET6_ADDRSTRLEN];
-      zlog_debug(MODULE_NSM,"delete rnh %s", rnh_str(rnh, buf, INET6_ADDRSTRLEN));
+      zlog_debug(MODULE_NSM,"delete rnh %s", nsm_rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
 
   list_free(rnh->client_list);
@@ -153,14 +153,14 @@ zebra_delete_rnh (struct rnh *rnh)
 }
 
 void
-zebra_add_rnh_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
+nsm_rnh_client_add (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 {
-  if (IS_ZEBRA_DEBUG_NHT)
+  if (IS_NSM_DEBUG_NHT)
     {
       zpl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM, "client %s registers rnh %s",
-		 zebra_route_string(client->proto),
-		 rnh_str(rnh, buf, INET6_ADDRSTRLEN));
+		 nsm_route_string(client->proto),
+		 nsm_rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
   if (!listnode_lookup(rnh->client_list, client))
     {
@@ -170,22 +170,22 @@ zebra_add_rnh_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 }
 
 void
-zebra_remove_rnh_client (struct rnh *rnh, struct zserv *client)
+nsm_rnh_client_remove (struct rnh *rnh, struct zserv *client)
 {
-  if (IS_ZEBRA_DEBUG_NHT)
+  if (IS_NSM_DEBUG_NHT)
     {
       zpl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM, "client %s unregisters rnh %s",
-		 zebra_route_string(client->proto),
-		 rnh_str(rnh, buf, INET6_ADDRSTRLEN));
+		 nsm_route_string(client->proto),
+		 nsm_rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
   listnode_delete(rnh->client_list, client);
   if (list_isempty(rnh->client_list))
-    zebra_delete_rnh(rnh);
+    nsm_rnh_delete(rnh);
 }
 
 int
-zebra_evaluate_rnh_table (vrf_id_t vrfid, zpl_family_t family)
+nsm_rnh_evaluate_table (vrf_id_t vrfid, zpl_family_t family)
 {
   struct route_table *ptable;
   struct route_table *ntable;
@@ -228,12 +228,12 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, zpl_family_t family)
 	      if (! CHECK_FLAG (rib->status, RIB_ENTRY_SELECTED_FIB))
 		continue;
 
-	      if (CHECK_FLAG(rnh->flags, ZEBRA_NHT_CONNECTED))
+	      if (CHECK_FLAG(rnh->flags, NSM_NHT_CONNECTED))
 		{
-		  if (rib->type == ZEBRA_ROUTE_CONNECT)
+		  if (rib->type == ZPL_ROUTE_PROTO_CONNECT)
 		    break;
 
-		  if (rib->type == ZEBRA_ROUTE_NHRP)
+		  if (rib->type == ZPL_ROUTE_PROTO_NHRP)
 		    {
 		      struct nexthop *nexthop;
 		      for (nexthop = rib->nexthop; nexthop; nexthop = nexthop->next)
@@ -251,7 +251,7 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, zpl_family_t family)
 
       if (compare_state(rib, rnh->state))
 	{
-	  if (IS_ZEBRA_DEBUG_NHT)
+	  if (IS_NSM_DEBUG_NHT)
 	    {
 	      zpl_char bufn[INET6_ADDRSTRLEN];
 	      zpl_char bufp[INET6_ADDRSTRLEN];
@@ -273,7 +273,7 @@ zebra_evaluate_rnh_table (vrf_id_t vrfid, zpl_family_t family)
 }
 
 int
-zebra_dispatch_rnh_table (vrf_id_t vrfid, zpl_family_t family, struct zserv *client)
+nsm_rnh_dispatch_table (vrf_id_t vrfid, zpl_family_t family, struct zserv *client)
 {
   struct route_table *ntable;
   struct route_node *nrn;
@@ -292,13 +292,13 @@ zebra_dispatch_rnh_table (vrf_id_t vrfid, zpl_family_t family, struct zserv *cli
 	  continue;
 
       rnh = nrn->info;
-      if (IS_ZEBRA_DEBUG_NHT)
+      if (IS_NSM_DEBUG_NHT)
 	{
 	  zpl_char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	  zlog_debug(MODULE_NSM, "rnh %s - sending nexthop %s event to client %s", bufn,
 		     rnh->state ? "reachable" : "unreachable",
-		     zebra_route_string(client->proto));
+		     nsm_route_string(client->proto));
 	}
       send_client(rnh, client, vrfid);
     }
@@ -306,7 +306,7 @@ zebra_dispatch_rnh_table (vrf_id_t vrfid, zpl_family_t family, struct zserv *cli
 }
 
 void
-zebra_print_rnh_table (vrf_id_t vrfid, zpl_family_t family, struct vty *vty)
+nsm_rnh_print_table (vrf_id_t vrfid, zpl_family_t family, struct vty *vty)
 {
   struct route_table *table;
   struct route_node *rn;
@@ -324,7 +324,7 @@ zebra_print_rnh_table (vrf_id_t vrfid, zpl_family_t family, struct vty *vty)
 }
 
 int
-zebra_cleanup_rnh_client (vrf_id_t vrfid, zpl_family_t family, struct zserv *client)
+nsm_rnh_client_cleanup (vrf_id_t vrfid, zpl_family_t family, struct zserv *client)
 {
   struct route_table *ntable;
   struct route_node *nrn;
@@ -343,14 +343,14 @@ zebra_cleanup_rnh_client (vrf_id_t vrfid, zpl_family_t family, struct zserv *cli
 	  continue;
 
       rnh = nrn->info;
-      if (IS_ZEBRA_DEBUG_NHT)
+      if (IS_NSM_DEBUG_NHT)
 	{
 	  zpl_char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	  zlog_debug(MODULE_NSM, "rnh %s - cleaning state for client %s", bufn,
-		     zebra_route_string(client->proto));
+		     nsm_route_string(client->proto));
 	}
-      zebra_remove_rnh_client(rnh, client);
+      nsm_rnh_client_remove(rnh, client);
     }
   return 1;
 }
@@ -499,7 +499,7 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
   s = client->obuf;
   stream_reset (s);
 
-  zserv_create_header (s, ZEBRA_NEXTHOP_UPDATE, vrf_id);
+  nsm_zserv_create_header (s, NSM_EVENT_NEXTHOP_UPDATE, vrf_id);
 
   stream_putw(s, rn->p.family);
   stream_put_prefix (s, &rn->p);
@@ -518,24 +518,24 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
 	    stream_putc (s, nexthop->type);
 	    switch (nexthop->type)
 	      {
-	      case ZEBRA_NEXTHOP_IPV4:
+	      case NSM_NEXTHOP_IPV4:
 		stream_put_in_addr (s, &nexthop->gate.ipv4);
 		break;
-	      case ZEBRA_NEXTHOP_IFINDEX:
-	      case ZEBRA_NEXTHOP_IFNAME:
+	      case NSM_NEXTHOP_IFINDEX:
+	      case NSM_NEXTHOP_IFNAME:
 		stream_putl (s, nexthop->ifindex);
 		break;
-	      case ZEBRA_NEXTHOP_IPV4_IFINDEX:
-	      case ZEBRA_NEXTHOP_IPV4_IFNAME:
+	      case NSM_NEXTHOP_IPV4_IFINDEX:
+	      case NSM_NEXTHOP_IPV4_IFNAME:
 		stream_put_in_addr (s, &nexthop->gate.ipv4);
 		stream_putl (s, nexthop->ifindex);
 		break;
 #ifdef ZPL_BUILD_IPV6
-	      case ZEBRA_NEXTHOP_IPV6:
+	      case NSM_NEXTHOP_IPV6:
 		stream_put (s, &nexthop->gate.ipv6, 16);
 		break;
-	      case ZEBRA_NEXTHOP_IPV6_IFINDEX:
-	      case ZEBRA_NEXTHOP_IPV6_IFNAME:
+	      case NSM_NEXTHOP_IPV6_IFINDEX:
+	      case NSM_NEXTHOP_IPV6_IFNAME:
 		stream_put (s, &nexthop->gate.ipv6, 16);
 		stream_putl (s, nexthop->ifindex);
 		break;
@@ -556,8 +556,8 @@ send_client (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
   stream_putw_at (s, 0, stream_get_endp (s));
   client->nh_last_upd_time = os_time(NULL);
 
-  client->last_write_cmd = ZEBRA_NEXTHOP_UPDATE;
-  return zebra_server_send_message(client);
+  client->last_write_cmd = NSM_EVENT_NEXTHOP_UPDATE;
+  return nsm_zserv_send_message(client);
 
 }
 
@@ -617,17 +617,17 @@ print_rnh (struct route_node *rn, struct vty *vty)
   if (rnh->state)
     {
       vty_out(vty, " resolved via %s%s",
-	      zebra_route_string(rnh->state->type), VTY_NEWLINE);
+	      nsm_route_string(rnh->state->type), VTY_NEWLINE);
       for (nexthop = rnh->state->nexthop; nexthop; nexthop = nexthop->next)
 	print_nh(nexthop, vty);
     }
   else
     vty_out(vty, " unresolved%s%s",
-	    CHECK_FLAG(rnh->flags, ZEBRA_NHT_CONNECTED) ? "(Connected)" : "",
+	    CHECK_FLAG(rnh->flags, NSM_NHT_CONNECTED) ? "(Connected)" : "",
 	    VTY_NEWLINE);
 
   vty_out(vty, " Client list:");
   for (ALL_LIST_ELEMENTS_RO(rnh->client_list, node, client))
-    vty_out(vty, " %s", zebra_route_string(client->proto));
+    vty_out(vty, " %s", nsm_route_string(client->proto));
   vty_out(vty, "%s", VTY_NEWLINE);
 }

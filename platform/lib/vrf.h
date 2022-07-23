@@ -75,12 +75,6 @@ struct ip_vrf_master
 {
   LIST *ip_vrf_list;
   void *vrf_mutex;  
-  int (*vrf_new_hook)(vrf_id_t, void **);
-  int (*vrf_delete_hook)(vrf_id_t, void **);
-  int (*vrf_enable_hook)(vrf_id_t, void **);
-  int (*vrf_disable_hook)(vrf_id_t, void **);
-  int (*vrf_set_vrfid_hook)(vrf_id_t, void **);
-  
 };
 
 
@@ -99,20 +93,6 @@ typedef int (*ip_vrf_call)(struct ip_vrf *, void *);
 
 
 extern struct ip_vrf_master _ip_vrf_master;
-/*
- * Add a specific hook to VRF module.
- * @param1: hook type
- * @param2: the callback function
- *          - param 1: the VRF ID
- *          - param 2: the address of the user data pointer (the user data
- *                     can be stored in or freed from there)
- */
-extern void ip_vrf_add_hook (zpl_uint32, int (*)(vrf_id_t, void **));
-
-
-/*
- * Utilities to obtain the user data
- */
 
 
 /* Look up the data pointer of the specified VRF. */
@@ -157,12 +137,6 @@ extern int ip_vrf_foreach(ip_vrf_call func, void *pVoid);
 extern void ip_vrf_terminate (void);
 
 extern void ip_vrf_init (void);
-/*
- * VRF utilities
- */
-extern void cmd_ip_vrf_init (void);
-/* Create a socket serving for the given VRF */
-
 
 
 #endif

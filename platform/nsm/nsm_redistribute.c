@@ -46,7 +46,7 @@
 
 
 int
-zebra_check_addr (struct prefix *p)
+nsm_check_addr (struct prefix *p)
 {
   if (p->family == IPSTACK_AF_INET)
     {
@@ -90,7 +90,7 @@ is_default (struct prefix *p)
 }
 
 static void
-zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
+nsm_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 {
   struct prefix_ipv4 p;
   struct route_table *table;
@@ -113,9 +113,9 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
       if (rn)
 	{
 	  RNODE_FOREACH_RIB (rn, newrib)
-	    if (CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED)
+	    if (CHECK_FLAG (newrib->flags, NSM_RIB_FLAG_SELECTED)
 		&& newrib->distance != DISTANCE_INFINITY)
-	      zsend_route_multipath (ZEBRA_IPV4_ROUTE_ADD, client, &rn->p, newrib);
+	      nsm_zserv_send_route_multipath (NSM_EVENT_IPV4_ROUTE_ADD, client, &rn->p, newrib);
 	  route_unlock_node (rn);
 	}
     }
@@ -133,9 +133,9 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
       if (rn)
 	{
 	  RNODE_FOREACH_RIB (rn, newrib)
-	    if (CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED)
+	    if (CHECK_FLAG (newrib->flags, NSM_RIB_FLAG_SELECTED)
 		&& newrib->distance != DISTANCE_INFINITY)
-	      zsend_route_multipath (ZEBRA_IPV6_ROUTE_ADD, client, &rn->p, newrib);
+	      nsm_zserv_send_route_multipath (NSM_EVENT_IPV6_ROUTE_ADD, client, &rn->p, newrib);
 	  route_unlock_node (rn);
 	}
     }
@@ -144,7 +144,7 @@ zebra_redistribute_default (struct zserv *client, vrf_id_t vrf_id)
 
 /* Redistribute routes. */
 static void
-zebra_redistribute (struct zserv *client, zpl_uint32 type, vrf_id_t vrf_id)
+nsm_redistribute (struct zserv *client, zpl_uint32 type, vrf_id_t vrf_id)
 {
   struct rib *newrib;
   struct route_table *table;
@@ -155,17 +155,17 @@ zebra_redistribute (struct zserv *client, zpl_uint32 type, vrf_id_t vrf_id)
     for (rn = route_top (table); rn; rn = route_next (rn))
       RNODE_FOREACH_RIB (rn, newrib)
         {
-          if (IS_ZEBRA_DEBUG_EVENT)
-            zlog_debug(MODULE_NSM, "%s: checking: selected=%d, type=%d, distance=%d, zebra_check_addr=%d",
-                       __func__, CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED),
-                       newrib->type, newrib->distance, zebra_check_addr (&rn->p));
-          if (CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED)
+          if (IS_NSM_DEBUG_EVENT)
+            zlog_debug(MODULE_NSM, "%s: checking: selected=%d, type=%d, distance=%d, nsm_check_addr=%d",
+                       __func__, CHECK_FLAG (newrib->flags, NSM_RIB_FLAG_SELECTED),
+                       newrib->type, newrib->distance, nsm_check_addr (&rn->p));
+          if (CHECK_FLAG (newrib->flags, NSM_RIB_FLAG_SELECTED)
               && newrib->type == type
               && newrib->distance != DISTANCE_INFINITY
-              && zebra_check_addr (&rn->p))
+              && nsm_check_addr (&rn->p))
 	    {
 	      client->redist_v4_add_cnt++;
-              zsend_route_multipath (ZEBRA_IPV4_ROUTE_ADD, client, &rn->p, newrib);
+              nsm_zserv_send_route_multipath (NSM_EVENT_IPV4_ROUTE_ADD, client, &rn->p, newrib);
             }
         }
 
@@ -174,19 +174,19 @@ zebra_redistribute (struct zserv *client, zpl_uint32 type, vrf_id_t vrf_id)
   if (table)
     for (rn = route_top (table); rn; rn = route_next (rn))
       RNODE_FOREACH_RIB (rn, newrib)
-	if (CHECK_FLAG (newrib->flags, ZEBRA_FLAG_SELECTED)
+	if (CHECK_FLAG (newrib->flags, NSM_RIB_FLAG_SELECTED)
 	    && newrib->type == type 
 	    && newrib->distance != DISTANCE_INFINITY
-	    && zebra_check_addr (&rn->p))
+	    && nsm_check_addr (&rn->p))
 	  {
 	    client->redist_v6_add_cnt++;
-	    zsend_route_multipath (ZEBRA_IPV6_ROUTE_ADD, client, &rn->p, newrib);
+	    nsm_zserv_send_route_multipath (NSM_EVENT_IPV6_ROUTE_ADD, client, &rn->p, newrib);
 	  }
 #endif /* ZPL_BUILD_IPV6 */
 }
 
 void
-redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
+nsm_route_redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
@@ -200,18 +200,18 @@ redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
           if (p->family == IPSTACK_AF_INET)
 	    {
 	      client->redist_v4_add_cnt++;
-	      zsend_route_multipath (ZEBRA_IPV4_ROUTE_ADD, client, p, rib);
+	      nsm_zserv_send_route_multipath (NSM_EVENT_IPV4_ROUTE_ADD, client, p, rib);
 	    }
           if (p->family == IPSTACK_AF_INET6)
 	    {
 	      client->redist_v6_add_cnt++;
-	      zsend_route_multipath (ZEBRA_IPV6_ROUTE_ADD, client, p, rib);
+	      nsm_zserv_send_route_multipath (NSM_EVENT_IPV6_ROUTE_ADD, client, p, rib);
 	    }
         }
       else if (rib_old && ip_vrf_bitmap_check (client->redist[rib_old->type], 
                                             rib_old->vrf_id))
         {
-          /* redistribute_add has implicit withdraw semantics, so there
+          /* nsm_route_redistribute_add has implicit withdraw semantics, so there
            * may be an old route already redistributed that is being updated.
            *
            * However, if the new route is of a type that is /not/ redistributed
@@ -219,15 +219,15 @@ redistribute_add (struct prefix *p, struct rib *rib, struct rib *rib_old)
            * withdrawn.
            */
           if (p->family == IPSTACK_AF_INET)
-            zsend_route_multipath (ZEBRA_IPV4_ROUTE_DELETE, client, p, rib_old);
+            nsm_zserv_send_route_multipath (NSM_EVENT_IPV4_ROUTE_DELETE, client, p, rib_old);
           if (p->family == IPSTACK_AF_INET6)
-            zsend_route_multipath (ZEBRA_IPV6_ROUTE_DELETE, client, p, rib_old);
+            nsm_zserv_send_route_multipath (NSM_EVENT_IPV6_ROUTE_DELETE, client, p, rib_old);
         }
     }
 }
 
 void
-redistribute_delete (struct prefix *p, struct rib *rib)
+nsm_route_redistribute_delete (struct prefix *p, struct rib *rib)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
@@ -243,57 +243,57 @@ redistribute_delete (struct prefix *p, struct rib *rib)
           || ip_vrf_bitmap_check (client->redist[rib->type], rib->vrf_id))
 	{
 	  if (p->family == IPSTACK_AF_INET)
-	    zsend_route_multipath (ZEBRA_IPV4_ROUTE_DELETE, client, p, rib);
+	    nsm_zserv_send_route_multipath (NSM_EVENT_IPV4_ROUTE_DELETE, client, p, rib);
 #ifdef ZPL_BUILD_IPV6
 	  if (p->family == IPSTACK_AF_INET6)
-	    zsend_route_multipath (ZEBRA_IPV6_ROUTE_DELETE, client, p, rib);
+	    nsm_zserv_send_route_multipath (NSM_EVENT_IPV6_ROUTE_DELETE, client, p, rib);
 #endif /* ZPL_BUILD_IPV6 */
 	}
     }
 }
 
 void
-zebra_redistribute_add (zpl_uint16 command, struct zserv *client, zpl_size_t length,
+nsm_redistribute_add (zpl_uint16 command, struct zserv *client, zpl_size_t length,
     vrf_id_t vrf_id)
 {
   zpl_uint32 type;
 
   type = stream_getc (client->ibuf);
 
-  if (type == 0 || type >= ZEBRA_ROUTE_MAX)
+  if (type == 0 || type >= ZPL_ROUTE_PROTO_MAX)
     return;
 
   if (! ip_vrf_bitmap_check (client->redist[type], vrf_id))
     {
       ip_vrf_bitmap_set (client->redist[type], vrf_id);
-      zebra_redistribute (client, type, vrf_id);
+      nsm_redistribute (client, type, vrf_id);
     }
 }
 
 void
-zebra_redistribute_delete (zpl_uint16 command, struct zserv *client, zpl_size_t length,
+nsm_redistribute_delete (zpl_uint16 command, struct zserv *client, zpl_size_t length,
     vrf_id_t vrf_id)
 {
   zpl_uint32 type;
 
   type = stream_getc (client->ibuf);
 
-  if (type == 0 || type >= ZEBRA_ROUTE_MAX)
+  if (type == 0 || type >= ZPL_ROUTE_PROTO_MAX)
     return;
 
   ip_vrf_bitmap_unset (client->redist[type], vrf_id);
 }
 
 void
-zebra_redistribute_default_add (zpl_uint16 command, struct zserv *client, zpl_size_t length,
+nsm_redistribute_default_add (zpl_uint16 command, struct zserv *client, zpl_size_t length,
     vrf_id_t vrf_id)
 {
   ip_vrf_bitmap_set (client->redist_default, vrf_id);
-  zebra_redistribute_default (client, vrf_id);
+  nsm_redistribute_default (client, vrf_id);
 }     
 
 void
-zebra_redistribute_default_delete (zpl_uint16 command, struct zserv *client,
+nsm_redistribute_default_delete (zpl_uint16 command, struct zserv *client,
     zpl_size_t length, vrf_id_t vrf_id)
 {
   ip_vrf_bitmap_unset (client->redist_default, vrf_id);
@@ -301,77 +301,77 @@ zebra_redistribute_default_delete (zpl_uint16 command, struct zserv *client,
 
 /* Interface up information. */
 void
-zebra_interface_up_update (struct interface *ifp)
+nsm_interface_up_update (struct interface *ifp)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
 
-  if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_UP %s", ifp->name);
+  if (IS_NSM_DEBUG_EVENT)
+    zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_UP %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     if (client->ifinfo)
       {
-    	zsend_interface_state (ZEBRA_INTERFACE_UP, client, ifp);
-        //zsend_interface_link_params (client, ifp);
+    	nsm_zserv_send_interface_state (NSM_EVENT_INTERFACE_UP, client, ifp);
+        //nsm_zserv_send_interface_link_params (client, ifp);
       }
 }
 
 /* Interface down information. */
 void
-zebra_interface_down_update (struct interface *ifp)
+nsm_interface_down_update (struct interface *ifp)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
 
-  if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_DOWN %s", ifp->name);
+  if (IS_NSM_DEBUG_EVENT)
+    zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_DOWN %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     {
-	  zsend_interface_state (ZEBRA_INTERFACE_DOWN, client, ifp);
+	  nsm_zserv_send_interface_state (NSM_EVENT_INTERFACE_DOWN, client, ifp);
     }
 }
 
 /* Interface information update. */
 void
-zebra_interface_add_update (struct interface *ifp)
+nsm_interface_add_update (struct interface *ifp)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
 
-  if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADD %s", ifp->name);
+  if (IS_NSM_DEBUG_EVENT)
+    zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_ADD %s", ifp->name);
     
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     if (client->ifinfo)
       {
 	client->ifadd_cnt++;
-	zsend_interface_add (client, ifp);
-        //zsend_interface_link_params (client, ifp);
+	nsm_zserv_send_interface_add (client, ifp);
+        //nsm_zserv_send_interface_link_params (client, ifp);
       }
 }
 
 void
-zebra_interface_delete_update (struct interface *ifp)
+nsm_interface_delete_update (struct interface *ifp)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
 
-  if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_DELETE %s", ifp->name);
+  if (IS_NSM_DEBUG_EVENT)
+    zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_DELETE %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     if (client->ifinfo)
       {
 	client->ifdel_cnt++;
-	zsend_interface_delete (client, ifp);
+	nsm_zserv_send_interface_delete (client, ifp);
       }
 }
 
 /* Interface address addition. */
 void
-zebra_interface_address_add_update (struct interface *ifp,
+nsm_interface_address_add_update (struct interface *ifp,
 				    struct connected *ifc)
 {
   struct listnode *node, *nnode;
@@ -379,34 +379,34 @@ zebra_interface_address_add_update (struct interface *ifp,
   struct prefix *p;
   union prefix46constptr up;
   up.p = p;
-  if (IS_ZEBRA_DEBUG_EVENT)
+  if (IS_NSM_DEBUG_EVENT)
     {
       zpl_char buf[PREFIX_STRLEN];
 
       p = ifc->address;
-      zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_ADD %s on %s",
+      zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_ADDRESS_ADD %s on %s",
 		  prefix2str (up, buf, sizeof(buf)),
 		  ifc->ifp->name);
     }
 
 /*
-  if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_REAL))
+  if (!CHECK_FLAG(ifc->conf, IF_IFC_REAL))
     zlog_warn("WARNING: advertising address to clients that is not yet usable.");
 */
 
   router_id_add_address(ifc);
 
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
-    if (client->ifinfo/* && CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL)*/)
+    if (client->ifinfo/* && CHECK_FLAG (ifc->conf, IF_IFC_REAL)*/)
       {
 	client->connected_rt_add_cnt++;
-	zsend_interface_address (ZEBRA_INTERFACE_ADDRESS_ADD, client, ifp, ifc);
+	nsm_zserv_send_interface_address (NSM_EVENT_INTERFACE_ADDRESS_ADD, client, ifp, ifc);
       }
 }
 
 /* Interface address deletion. */
 void
-zebra_interface_address_delete_update (struct interface *ifp,
+nsm_interface_address_delete_update (struct interface *ifp,
 				       struct connected *ifc)
 {
   struct listnode *node, *nnode;
@@ -414,12 +414,12 @@ zebra_interface_address_delete_update (struct interface *ifp,
   struct prefix *p;
   union prefix46constptr up;
   up.p = p;
-  if (IS_ZEBRA_DEBUG_EVENT)
+  if (IS_NSM_DEBUG_EVENT)
     {
       zpl_char buf[PREFIX_STRLEN];
 
       p = ifc->address;
-      zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_ADDRESS_DELETE %s on %s",
+      zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_ADDRESS_DELETE %s on %s",
 		  prefix2str (up, buf, sizeof(buf)),
 		  ifc->ifp->name);
     }
@@ -427,31 +427,31 @@ zebra_interface_address_delete_update (struct interface *ifp,
   router_id_del_address(ifc);
 
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
-    if (client->ifinfo/* && CHECK_FLAG (ifc->conf, ZEBRA_IFC_REAL)*/)
+    if (client->ifinfo/* && CHECK_FLAG (ifc->conf, IF_IFC_REAL)*/)
       {
 	client->connected_rt_del_cnt++;
-	zsend_interface_address (ZEBRA_INTERFACE_ADDRESS_DELETE, client, ifp, ifc);
+	nsm_zserv_send_interface_address (NSM_EVENT_INTERFACE_ADDRESS_DELETE, client, ifp, ifc);
       }
 }
 
 /* Interface mode update */
 void
-zebra_interface_mode_update (struct interface *ifp, zpl_uint32  mode)
+nsm_interface_mode_update (struct interface *ifp, zpl_uint32  mode)
 {
   struct listnode *node, *nnode;
   struct zserv *client;
 
-  if (IS_ZEBRA_DEBUG_EVENT)
-    zlog_debug (MODULE_NSM, "MESSAGE: ZEBRA_INTERFACE_MODE %s", ifp->name);
+  if (IS_NSM_DEBUG_EVENT)
+    zlog_debug (MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_MODE %s", ifp->name);
 
   for (ALL_LIST_ELEMENTS (nsm_srv->client_list, node, nnode, client))
     if (client->ifinfo)
-    	zsend_interface_mode (client, ifp, mode);
+    	nsm_zserv_send_interface_mode (client, ifp, mode);
 }
 
 
 
-void zebra_write_config_cb (struct vty *vty)
+void nsm_write_config_cb (struct vty *vty)
 {
 /*  struct listnode *node, *nnode;
   struct zserv *zserv;
@@ -467,7 +467,7 @@ void zebra_write_config_cb (struct vty *vty)
     }*/
 }
 
-void zebra_debug_write_config_cb (struct vty *vty)
+void nsm_debug_write_config_cb (struct vty *vty)
 {
 /*  struct listnode *node, *nnode;
   struct zserv *zserv;
@@ -483,7 +483,7 @@ void zebra_debug_write_config_cb (struct vty *vty)
     }*/
 }
 
-void zebra_interface_write_config_cb (struct vty *vty, struct interface *ifp)
+void nsm_interface_write_config_cb (struct vty *vty, struct interface *ifp)
 {
 #if 0
   struct listnode *node, *nnode;

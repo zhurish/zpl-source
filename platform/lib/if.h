@@ -18,8 +18,8 @@ along with GNU Zebra; see the file COPYING.  If not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef _ZEBRA_IF_H
-#define _ZEBRA_IF_H
+#ifndef __LIB_IF_H
+#define __LIB_IF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +96,7 @@ extern zpl_bool if_is_tunnel(struct interface *ifp);
 extern zpl_bool if_is_lag(struct interface *ifp);
 extern zpl_bool if_is_lag_member(struct interface *ifp);
 extern zpl_bool if_is_vlan(struct interface *ifp);
+extern zpl_bool if_is_subvlan(struct interface *ifp);
 extern zpl_bool if_is_brigde(struct interface *ifp);
 extern zpl_bool if_is_brigde_member(struct interface *ifp);
 extern zpl_bool if_is_loop(struct interface *ifp);
@@ -189,4 +190,4 @@ extern enum if_link_type netlink_to_if_link_type(zpl_uint32  hwt);
 }
 #endif
 
-#endif /* _ZEBRA_IF_H */
+#endif /* __LIB_IF_H */

@@ -18,8 +18,8 @@ along with GNU Zebra; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-#ifndef _ZEBRA_VTY_H
-#define _ZEBRA_VTY_H
+#ifndef __LIB_VTY_H
+#define __LIB_VTY_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -495,4 +495,4 @@ extern int vty_sshd_init(zpl_socket_t sock, struct vty *vty);
 #endif
 
 
-#endif /* _ZEBRA_VTY_H */
+#endif /* __LIB_VTY_H */

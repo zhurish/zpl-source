@@ -19,8 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_KEYCHAIN_H
-#define _ZEBRA_KEYCHAIN_H
+#ifndef __LIB_KEYCHAIN_H
+#define __LIB_KEYCHAIN_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,4 +61,4 @@ extern struct key *key_lookup_for_send (const struct keychain *);
 }
 #endif
 
-#endif /* _ZEBRA_KEYCHAIN_H */
+#endif /* __LIB_KEYCHAIN_H */

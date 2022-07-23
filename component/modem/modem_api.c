@@ -521,16 +521,9 @@ int modem_interface_add_api(char *name)
 	if(ifp && ifp->ll_type != IF_LLT_MODEM)
 		return ERROR;
 
-	//if_new_llc_type_mode(IF_LLT_MODEM, IF_MODE_L3);
-
 	ifp = if_create_dynamic (name, strlen(name));
 	if(ifp)
 	{
-		//ifp->ll_type = IF_LLT_MODEM;
-		//ifp->if_mode = IF_MODE_L3;
-		//ifp->dynamic = zpl_true;
-/*		if_manage_kernel_update(ifp);
-		zebra_interface_add_update(ifp);*/
 		return OK;
 	}
 	return ERROR;

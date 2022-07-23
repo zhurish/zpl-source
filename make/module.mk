@@ -171,8 +171,7 @@ _MODULELIST_ABSTRACT = \
 	ZPL_PAL_MODULE.true	 \
 	ZPL_IPCOM_MODULE.false	 \
 	ZPL_KERNEL_MODULE.true \
-	ZPL_KERNEL_NETLINK.true	\
-	ZPL_KERNEL_FORWARDING.false  
+	ZPL_KERNEL_NETLINK.true	
 #
 # Service Module Config
 #

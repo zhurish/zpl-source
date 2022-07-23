@@ -690,7 +690,7 @@ DEFUN(no_nsm_interface_mtu,
 
 	if (ifp)
 	{
-		ret = nsm_interface_mtu_set_api(ifp, IF_ZEBRA_MTU_DEFAULT);
+		ret = nsm_interface_mtu_set_api(ifp, NSM_IF_MTU_DEFAULT);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
 	else if (vty->index_range)
@@ -700,7 +700,7 @@ DEFUN(no_nsm_interface_mtu,
 		{
 			if (vty->vty_range_index[i])
 			{
-				ret = nsm_interface_mtu_set_api(vty->vty_range_index[i], IF_ZEBRA_MTU_DEFAULT);
+				ret = nsm_interface_mtu_set_api(vty->vty_range_index[i], NSM_IF_MTU_DEFAULT);
 				if (ret != OK)
 					return CMD_WARNING;
 			}
@@ -1379,13 +1379,13 @@ DEFUN_HIDDEN(nsm_interface_set_kernel,
 	{
 		/*
 		if_kname_set(ifp, argv[0]);
-		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 
 		pal_interface_update_flag(ifp);
 		ifp->k_ifindex = pal_interface_ifindex(ifp->k_name);
 		pal_interface_get_lladdr(ifp);*/
 		ret = nsm_interface_update_kernel(ifp, argv[0]);
-		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
@@ -1403,7 +1403,7 @@ DEFUN_HIDDEN(no_nsm_interface_set_kernel,
 	{
 
 		if_kname_set(ifp, NULL);
-		UNSET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+		UNSET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 		ifp->k_ifindex = 0;
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
@@ -1609,7 +1609,7 @@ static int nsm_interface_address_info_write(struct interface *ifp, struct vty *v
 	union prefix46constptr up;
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, addrnode, ifc))
 	{
-		if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
+		if (CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
 		{
 			char buf[INET6_ADDRSTRLEN];
 			p = ifc->address;
@@ -1698,7 +1698,7 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 
 				if (if_data)
 				{
-					if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
+					if (if_data->shutdown == NSM_IF_SHUTDOWN_ON)
 						vty_out(vty, " shutdown%s", VTY_NEWLINE);
 				}
 				vty_out(vty, "!%s", VTY_NEWLINE);
@@ -1754,7 +1754,7 @@ static int nsm_interface_config_write(struct vty *vty)
 			nsm_interface_write_hook_handler(NSM_INTF_SERIAL, vty, ifp);
 
 			nsm_interface_write_hook_handler(NSM_INTF_WIFI, vty, ifp);
-			nsm_interface_write_hook_handler(NSM_INTF_VETH, vty, ifp);
+			nsm_interface_write_hook_handler(NSM_INTF_VLANETH, vty, ifp);
 			nsm_interface_write_hook_handler(NSM_INTF_BRIDGE, vty, ifp);
 			
 			nsm_interface_write_hook_handler(NSM_INTF_MIRROR, vty, ifp);
@@ -1782,7 +1782,7 @@ static int nsm_interface_config_write(struct vty *vty)
 			// nsm_interface_write_hook_handler(-1, vty, ifp);
 			if (if_data)
 			{
-				if (if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON)
+				if (if_data->shutdown == NSM_IF_SHUTDOWN_ON)
 					vty_out(vty, " shutdown%s", VTY_NEWLINE);
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);

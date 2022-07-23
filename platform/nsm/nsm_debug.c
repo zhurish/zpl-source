@@ -29,16 +29,16 @@
 #include "command.h"
 
 /* For debug statement. */
-zpl_ulong zebra_debug_event;
-zpl_ulong zebra_debug_packet = 0xffffff;
-zpl_ulong zebra_debug_kernel = 0xffffff;
-zpl_ulong zebra_debug_rib = 0xffffff;
-zpl_ulong zebra_debug_nht;
+zpl_ulong nsm_debug_event;
+zpl_ulong nsm_debug_packet = 0xffffff;
+zpl_ulong nsm_debug_kernel = 0xffffff;
+zpl_ulong nsm_debug_rib = 0xffffff;
+zpl_ulong nsm_debug_nht;
 
 
 #ifdef ZPL_SHELL_MODULE
-DEFUN (show_debugging_zebra,
-       show_debugging_zebra_cmd,
+DEFUN (show_debugging_nsm,
+       show_debugging_nsm_cmd,
        "show debugging zebra",
        SHOW_STR
        "Debugging information\n"
@@ -46,81 +46,81 @@ DEFUN (show_debugging_zebra,
 {
   vty_out (vty, "Zebra debugging status:%s", VTY_NEWLINE);
 
-  if (IS_ZEBRA_DEBUG_EVENT)
+  if (IS_NSM_DEBUG_EVENT)
     vty_out (vty, "  Zebra event debugging is on%s", VTY_NEWLINE);
 
-  if (IS_ZEBRA_DEBUG_PACKET)
+  if (IS_NSM_DEBUG_PACKET)
     {
-      if (IS_ZEBRA_DEBUG_SEND && IS_ZEBRA_DEBUG_RECV)
+      if (IS_NSM_DEBUG_SEND && IS_NSM_DEBUG_RECV)
 	{
 	  vty_out (vty, "  Zebra packet%s debugging is on%s",
-		   IS_ZEBRA_DEBUG_DETAIL ? " detail" : "",
+		   IS_NSM_DEBUG_DETAIL ? " detail" : "",
 		   VTY_NEWLINE);
 	}
       else
 	{
-	  if (IS_ZEBRA_DEBUG_SEND)
+	  if (IS_NSM_DEBUG_SEND)
 	    vty_out (vty, "  Zebra packet send%s debugging is on%s",
-		     IS_ZEBRA_DEBUG_DETAIL ? " detail" : "",
+		     IS_NSM_DEBUG_DETAIL ? " detail" : "",
 		     VTY_NEWLINE);
 	  else
 	    vty_out (vty, "  Zebra packet receive%s debugging is on%s",
-		     IS_ZEBRA_DEBUG_DETAIL ? " detail" : "",
+		     IS_NSM_DEBUG_DETAIL ? " detail" : "",
 		     VTY_NEWLINE);
 	}
     }
 
-  if (IS_ZEBRA_DEBUG_KERNEL)
+  if (IS_NSM_DEBUG_KERNEL)
     vty_out (vty, "  Zebra kernel debugging is on%s", VTY_NEWLINE);
 
-  if (IS_ZEBRA_DEBUG_RIB)
+  if (IS_NSM_DEBUG_RIB)
     vty_out (vty, "  Zebra RIB debugging is on%s", VTY_NEWLINE);
-  if (IS_ZEBRA_DEBUG_RIB_Q)
+  if (IS_NSM_DEBUG_RIB_Q)
     vty_out (vty, "  Zebra RIB queue debugging is on%s", VTY_NEWLINE);
 
-  if (IS_ZEBRA_DEBUG_NHT)
+  if (IS_NSM_DEBUG_NHT)
     vty_out (vty, "  Zebra next-hop tracking debugging is on%s", VTY_NEWLINE);
 
   return CMD_SUCCESS;
 }
 
-DEFUN (debug_zebra_events,
-       debug_zebra_events_cmd,
+DEFUN (debug_nsm_events,
+       debug_nsm_events_cmd,
        "debug zebra events",
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra events\n")
 {
-  zebra_debug_event = ZEBRA_DEBUG_EVENT;
+  nsm_debug_event = NSM_DEBUG_EVENT;
   return CMD_WARNING;
 }
 
-DEFUN (debug_zebra_nht,
-       debug_zebra_nht_cmd,
+DEFUN (debug_nsm_nht,
+       debug_nsm_nht_cmd,
        "debug zebra nht",
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra next hop tracking\n")
 {
-  zebra_debug_nht = ZEBRA_DEBUG_NHT;
+  nsm_debug_nht = NSM_DEBUG_NHT;
   return CMD_WARNING;
 }
 
-DEFUN (debug_zebra_packet,
-       debug_zebra_packet_cmd,
+DEFUN (debug_nsm_packet,
+       debug_nsm_packet_cmd,
        "debug zebra packet",
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra packet\n")
 {
-  zebra_debug_packet = ZEBRA_DEBUG_PACKET;
-  SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_SEND);
-  SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_RECV);
+  nsm_debug_packet = NSM_DEBUG_PACKET;
+  SET_FLAG(nsm_debug_packet, NSM_DEBUG_SEND);
+  SET_FLAG(nsm_debug_packet, NSM_DEBUG_RECV);
   return CMD_SUCCESS;
 }
 
-DEFUN (debug_zebra_packet_direct,
-       debug_zebra_packet_direct_cmd,
+DEFUN (debug_nsm_packet_direct,
+       debug_nsm_packet_direct_cmd,
        "debug zebra packet (recv|send|detail)",
        DEBUG_STR
        "Zebra configuration\n"
@@ -128,18 +128,18 @@ DEFUN (debug_zebra_packet_direct,
        "Debug option set for receive packet\n"
        "Debug option set for send packet\n")
 {
-  zebra_debug_packet = ZEBRA_DEBUG_PACKET;
+  nsm_debug_packet = NSM_DEBUG_PACKET;
   if (strncmp ("send", argv[0], strlen (argv[0])) == 0)
-    SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_SEND);
+    SET_FLAG(nsm_debug_packet, NSM_DEBUG_SEND);
   if (strncmp ("recv", argv[0], strlen (argv[0])) == 0)
-    SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_RECV);
+    SET_FLAG(nsm_debug_packet, NSM_DEBUG_RECV);
   if (strncmp ("detail", argv[0], strlen (argv[0])) == 0)
-    SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_DETAIL);
+    SET_FLAG(nsm_debug_packet, NSM_DEBUG_DETAIL);
   return CMD_SUCCESS;
 }
 
-DEFUN (debug_zebra_packet_detail,
-       debug_zebra_packet_detail_cmd,
+DEFUN (debug_nsm_packet_detail,
+       debug_nsm_packet_detail_cmd,
        "debug zebra packet (recv|send) detail",
        DEBUG_STR
        "Zebra configuration\n"
@@ -148,88 +148,88 @@ DEFUN (debug_zebra_packet_detail,
        "Debug option set for send packet\n"
        "Debug option set detailed information\n")
 {
-  zebra_debug_packet = ZEBRA_DEBUG_PACKET;
+  nsm_debug_packet = NSM_DEBUG_PACKET;
   if (strncmp ("send", argv[0], strlen (argv[0])) == 0)
-    SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_SEND);
+    SET_FLAG(nsm_debug_packet, NSM_DEBUG_SEND);
   if (strncmp ("recv", argv[0], strlen (argv[0])) == 0)
-    SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_RECV);
-  SET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_DETAIL);
+    SET_FLAG(nsm_debug_packet, NSM_DEBUG_RECV);
+  SET_FLAG(nsm_debug_packet, NSM_DEBUG_DETAIL);
   return CMD_SUCCESS;
 }
 
-DEFUN (debug_zebra_kernel,
-       debug_zebra_kernel_cmd,
+DEFUN (debug_nsm_kernel,
+       debug_nsm_kernel_cmd,
        "debug zebra kernel",
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra between kernel interface\n")
 {
-  zebra_debug_kernel = ZEBRA_DEBUG_KERNEL;
+  nsm_debug_kernel = NSM_DEBUG_KERNEL;
   return CMD_SUCCESS;
 }
 
-DEFUN (debug_zebra_rib,
-       debug_zebra_rib_cmd,
+DEFUN (debug_nsm_rib,
+       debug_nsm_rib_cmd,
        "debug zebra rib",
        DEBUG_STR
        "Zebra configuration\n"
        "Debug RIB events\n")
 {
-  SET_FLAG (zebra_debug_rib, ZEBRA_DEBUG_RIB);
+  SET_FLAG (nsm_debug_rib, NSM_DEBUG_RIB);
   return CMD_SUCCESS;
 }
 
-DEFUN (debug_zebra_rib_q,
-       debug_zebra_rib_q_cmd,
+DEFUN (debug_nsm_rib_q,
+       debug_nsm_rib_q_cmd,
        "debug zebra rib queue",
        DEBUG_STR
        "Zebra configuration\n"
        "Debug RIB events\n"
        "Debug RIB queueing\n")
 {
-  SET_FLAG (zebra_debug_rib, ZEBRA_DEBUG_RIB_Q);
+  SET_FLAG (nsm_debug_rib, NSM_DEBUG_RIB_Q);
   return CMD_SUCCESS;
 }
 
 
-DEFUN (no_debug_zebra_events,
-       no_debug_zebra_events_cmd,
+DEFUN (no_debug_nsm_events,
+       no_debug_nsm_events_cmd,
        "no debug zebra events",
        NO_STR
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra events\n")
 {
-  zebra_debug_event = 0;
+  nsm_debug_event = 0;
   return CMD_SUCCESS;
 }
 
-DEFUN (no_debug_zebra_nht,
-       no_debug_zebra_nht_cmd,
+DEFUN (no_debug_nsm_nht,
+       no_debug_nsm_nht_cmd,
        "no debug zebra nht",
        NO_STR
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra next hop tracking\n")
 {
-  zebra_debug_nht = 0;
+  nsm_debug_nht = 0;
   return CMD_SUCCESS;
 }
 
-DEFUN (no_debug_zebra_packet,
-       no_debug_zebra_packet_cmd,
+DEFUN (no_debug_nsm_packet,
+       no_debug_nsm_packet_cmd,
        "no debug zebra packet",
        NO_STR
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra packet\n")
 {
-  zebra_debug_packet = 0;
+  nsm_debug_packet = 0;
   return CMD_SUCCESS;
 }
 
-DEFUN (no_debug_zebra_packet_direct,
-       no_debug_zebra_packet_direct_cmd,
+DEFUN (no_debug_nsm_packet_direct,
+       no_debug_nsm_packet_direct_cmd,
        "no debug zebra packet (recv|send)",
        NO_STR
        DEBUG_STR
@@ -239,38 +239,38 @@ DEFUN (no_debug_zebra_packet_direct,
        "Debug option set for send packet\n")
 {
   if (strncmp ("send", argv[0], strlen (argv[0])) == 0)
-    UNSET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_SEND);
+    UNSET_FLAG(nsm_debug_packet, NSM_DEBUG_SEND);
   if (strncmp ("recv", argv[0], strlen (argv[0])) == 0)
-    UNSET_FLAG(zebra_debug_packet, ZEBRA_DEBUG_RECV);
+    UNSET_FLAG(nsm_debug_packet, NSM_DEBUG_RECV);
   return CMD_SUCCESS;
 }
 
-DEFUN (no_debug_zebra_kernel,
-       no_debug_zebra_kernel_cmd,
+DEFUN (no_debug_nsm_kernel,
+       no_debug_nsm_kernel_cmd,
        "no debug zebra kernel",
        NO_STR
        DEBUG_STR
        "Zebra configuration\n"
        "Debug option set for zebra between kernel interface\n")
 {
-  zebra_debug_kernel = 0;
+  nsm_debug_kernel = 0;
   return CMD_SUCCESS;
 }
 
-DEFUN (no_debug_zebra_rib,
-       no_debug_zebra_rib_cmd,
+DEFUN (no_debug_nsm_rib,
+       no_debug_nsm_rib_cmd,
        "no debug zebra rib",
        NO_STR
        DEBUG_STR
        "Zebra configuration\n"
        "Debug zebra RIB\n")
 {
-  zebra_debug_rib = 0;
+  nsm_debug_rib = 0;
   return CMD_SUCCESS;
 }
 
-DEFUN (no_debug_zebra_rib_q,
-       no_debug_zebra_rib_q_cmd,
+DEFUN (no_debug_nsm_rib_q,
+       no_debug_nsm_rib_q_cmd,
        "no debug zebra rib queue",
        NO_STR
        DEBUG_STR
@@ -278,7 +278,7 @@ DEFUN (no_debug_zebra_rib_q,
        "Debug zebra RIB\n"
        "Debug RIB queueing\n")
 {
-  UNSET_FLAG (zebra_debug_rib, ZEBRA_DEBUG_RIB_Q);
+  UNSET_FLAG (nsm_debug_rib, NSM_DEBUG_RIB_Q);
   return CMD_SUCCESS;
 }
 
@@ -289,48 +289,48 @@ DEFUN (no_debug_zebra_rib_q,
 int
 nsm_debug_init (void)
 {
-  zebra_debug_event = 0;
-  zebra_debug_packet = 0;
-  zebra_debug_kernel = 0;
-  zebra_debug_rib = 0;
+  nsm_debug_event = 0;
+  nsm_debug_packet = 0;
+  nsm_debug_kernel = 0;
+  nsm_debug_rib = 0;
 
 #ifdef ZPL_SHELL_MODULE
   //install_node (&debug_node, config_write_debug);
 
-  install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_debugging_zebra_cmd);
+  install_element (VIEW_NODE, CMD_VIEW_LEVEL, &show_debugging_nsm_cmd);
 
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_events_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_nht_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_packet_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_packet_direct_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_packet_detail_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_kernel_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_rib_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_zebra_rib_q_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_events_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_nht_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_packet_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_packet_direct_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_packet_detail_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_kernel_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_rib_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &debug_nsm_rib_q_cmd);
 
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_events_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_nht_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_packet_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_kernel_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_rib_cmd);
-  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_rib_q_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_events_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_nht_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_packet_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_kernel_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_rib_cmd);
+  install_element(ENABLE_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_rib_q_cmd);
 
 
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_events_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_nht_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_packet_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_packet_direct_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_packet_detail_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_kernel_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_rib_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_zebra_rib_q_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_events_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_nht_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_packet_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_packet_direct_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_packet_detail_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_kernel_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_rib_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_nsm_rib_q_cmd);
 
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_events_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_nht_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_packet_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_kernel_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_rib_cmd);
-  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_zebra_rib_q_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_events_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_nht_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_packet_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_kernel_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_rib_cmd);
+  install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_nsm_rib_q_cmd);
 
 #endif  
   return OK;

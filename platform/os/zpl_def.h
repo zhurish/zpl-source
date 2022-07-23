@@ -14,7 +14,7 @@ extern "C" {
 
 
 #define array_size(ar) (sizeof(ar) / sizeof(ar[0]))
-#define ZEBRA_NUM_OF(x) (sizeof (x) / sizeof (x[0]))
+//#define array_size(x) (sizeof (x) / sizeof (x[0]))
 
 
 /* Define BYTE_ORDER, if not defined. Useful for compiler conditional

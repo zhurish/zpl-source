@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_PREFIX_H
-#define _ZEBRA_PREFIX_H
+#ifndef __LIB_PREFIX_H
+#define __LIB_PREFIX_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +36,7 @@ extern "C" {
 #  include <netinet/if_ether.h>
 # endif
 #endif
+#include <linux/mpls.h>
 #include "sockunion.h"
 
 #ifndef ETHER_ADDR_LEN
@@ -50,6 +51,34 @@ struct ipstack_ethaddr {
     zpl_uchar octet[ETHER_ADDR_LEN];
 } __packed;
 
+/* Reference: RFC 5462, RFC 3032
+ *
+ *  0                   1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                Label                  | TC  |S|       TTL     |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ *	Label:  Label Value, 20 bits
+ *	TC:     Traffic Class field, 3 bits
+ *	S:      Bottom of Stack, 1 bit
+ *	TTL:    Time to Live, 8 bits
+ */
+
+struct ipstack_mpls {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    zpl_uint32 ttl:8;            /* Time to Live, 8 bits */
+    zpl_uint32 tottom:1;            /* Bottom of Stack, 1 bit */
+    zpl_uint32 tc:3;            /* Traffic Class field, 3 bits */
+    zpl_uint32 label:20;             /* Label Value, 20 bits */
+#endif
+#if __BYTE_ORDER == __BIG_ENDIAN
+    zpl_uint32 label:20;             /* Label Value, 20 bits */
+    zpl_uint32 tc:3;            /* Traffic Class field, 3 bits */
+    zpl_uint32 tottom:1;            /* Bottom of Stack, 1 bit */
+    zpl_uint32 ttl:8;            /* Time to Live, 8 bits */
+#endif
+};
 
 /*
  * A struct prefix contains an address family, a prefix length, and an
@@ -87,6 +116,7 @@ struct prefix
       struct ipstack_in_addr adv_router;
     } lp;
     struct ipstack_ethaddr prefix_eth;	/* AF_ETHERNET */
+    struct ipstack_mpls mpls_label;
     zpl_uchar val[8];
     uintptr_t ptr;
   } u __attribute__ ((aligned (8)));
@@ -142,6 +172,13 @@ struct prefix_ptr
   uintptr_t prefix __attribute__ ((aligned (8)));
 };
 
+struct prefix_mpls
+{
+  zpl_family_t family;
+  zpl_uchar prefixlen;
+  struct ipstack_mpls prefix __attribute__ ((aligned (8)));
+};
+
 /* helper to get type safety/avoid casts on calls
  * (w/o this, functions accepting all prefix types need casts on the caller
  * side, which strips type safety since the cast will accept any pointer
@@ -152,6 +189,7 @@ union prefix46ptr
   struct prefix *p;
   struct prefix_ipv4 *p4;
   struct prefix_ipv6 *p6;
+  struct prefix_mpls *mpls;
 } __attribute__ ((transparent_union));
 
 union prefix46constptr
@@ -159,6 +197,7 @@ union prefix46constptr
   const struct prefix *p;
   const struct prefix_ipv4 *p4;
   const struct prefix_ipv6 *p6;
+  const struct prefix_mpls *mpls;
 } __attribute__ ((transparent_union));
 
 #ifndef IPSTACK_INET_ADDRSTRLEN
@@ -322,4 +361,4 @@ extern zpl_uint32 get_hostip_byname(zpl_char *hostname);
 }
 #endif
 
-#endif /* _ZEBRA_PREFIX_H */
+#endif /* __LIB_PREFIX_H */

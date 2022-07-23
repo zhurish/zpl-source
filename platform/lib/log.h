@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_LOG_H
-#define _ZEBRA_LOG_H
+#ifndef __LIB_LOG_H
+#define __LIB_LOG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -356,13 +356,13 @@ extern void time_print(FILE *fp, zlog_timestamp_t ctl);
 
 extern void zlog_hexdump(void *mem, zpl_uint32  len);
 
-/* Map a route type to a string.  For example, ZEBRA_ROUTE_RIPNG -> "ripng". */
-extern const char *zebra_route_string(zpl_uint32 route_type);
-/* Map a route type to a char.  For example, ZEBRA_ROUTE_RIPNG -> 'R'. */
-extern char zebra_route_char(zpl_uint32 route_type);
+/* Map a route type to a string.  For example, ZPL_ROUTE_PROTO_RIPNG -> "ripng". */
+extern const char *nsm_route_string(zpl_uint32 route_type);
+/* Map a route type to a char.  For example, ZPL_ROUTE_PROTO_RIPNG -> 'R'. */
+extern char nsm_route_char(zpl_uint32 route_type);
 /* Map a zserv command type to the same string, 
- * e.g. ZEBRA_INTERFACE_ADD -> "ZEBRA_INTERFACE_ADD" */
-/* Map a protocol name to its number. e.g. ZEBRA_ROUTE_BGP->9*/
+ * e.g. NSM_EVENT_INTERFACE_ADD -> "NSM_EVENT_INTERFACE_ADD" */
+/* Map a protocol name to its number. e.g. ZPL_ROUTE_PROTO_BGP->9*/
 extern zpl_proto_t proto_name2num(const char *s);
 /* Map redistribute X argument to protocol number.
  * unlike proto_name2num, this accepts zpl_int16hands and takes
@@ -415,4 +415,4 @@ extern const char *zserv_command_string (zpl_uint32 command);
 }
 #endif
 
-#endif /* _ZEBRA_LOG_H */
+#endif /* __LIB_LOG_H */

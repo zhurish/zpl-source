@@ -82,7 +82,6 @@ enum node_type
   MODEM_PROFILE_NODE,		/* Modem Profile node. */
   MODEM_CHANNEL_NODE,		/* Modem Channel node. */
 
-  ZEBRA_NODE,			/* zebra connection node. */
   TABLE_NODE,			/* rtm_table selection node. */
   RIP_NODE,			/* RIP protocol mode node. */ 
   RIPNG_NODE,			/* RIPng protocol mode node. */
@@ -132,8 +131,6 @@ enum node_type
   FORWARDING_NODE,		/* IP forwarding node. */
   PROTOCOL_NODE,                /* protocol filtering node */
   VTY_NODE,			/* Vty node. */
-  LINK_PARAMS_NODE,		/* Link-parameters node */
-  ZEBRA_IF_DEFAULTS_NODE,	/* If defaults dummy node */
   CMD_NODE_MAX
 };
 

@@ -24,13 +24,6 @@
 #include "zplos_include.h"
 #include "module.h"
 
-#ifdef HAVE_NETNS
-#undef _GNU_SOURCE
-#define _GNU_SOURCE
-
-#include <sched.h>
-#endif
-
 #include "if.h"
 #include "vrf.h"
 #include "prefix.h"
@@ -161,16 +154,6 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
   /* Initialize interfaces. */
   zlog_info(MODULE_NSM, "VRF %s %u is created.", ip_vrf->name, vrf_id);
 
-
-  if (_ip_vrf_master.vrf_new_hook)
-    ret = (_ip_vrf_master.vrf_new_hook)(vrf_id, &ip_vrf->info);
-
-  zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, ip_vrf->info);
-  if (_ip_vrf_master.vrf_enable_hook)
-    ret = (_ip_vrf_master.vrf_enable_hook)(vrf_id, &ip_vrf->info);
-
-    zlog_trap(MODULE_NSM, "===================1===%s %p\r\n", __func__, ip_vrf->info);
-
   if(ret == OK)
   {
     lstAdd(_ip_vrf_master.ip_vrf_list, (NODE *)ip_vrf);
@@ -193,17 +176,8 @@ static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
   if (_ip_vrf_master.vrf_mutex)
     os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
 
-  if (_ip_vrf_master.vrf_disable_hook)
-    ret = (_ip_vrf_master.vrf_disable_hook)(ip_vrf->vrf_id, &ip_vrf->info);
-
-  if (_ip_vrf_master.vrf_delete_hook)
-    ret = (_ip_vrf_master.vrf_delete_hook)(ip_vrf->vrf_id, &ip_vrf->info);
-
   if(ret == OK)
   {
-    //if (ip_vrf->name)
-    //  XFREE(MTYPE_VRF_NAME, ip_vrf->name);
-
     lstDelete(_ip_vrf_master.ip_vrf_list, (NODE *)ip_vrf);
 
     XFREE(MTYPE_VRF, ip_vrf);
@@ -265,34 +239,6 @@ vrf_id_t ip_vrf_name2vrfid(const char *name)
   if (ip_vrf)
     return ip_vrf->vrf_id;
   return 0;
-}
-
-
-
-/* Add a VRF hook. Please add hooks before calling vrf_init(). */
-void ip_vrf_add_hook(zpl_uint32 type, int (*func)(vrf_id_t, void **))
-{
-  switch (type)
-  {
-  case VRF_NEW_HOOK:
-    _ip_vrf_master.vrf_new_hook = func;
-    break;
-  case VRF_DELETE_HOOK:
-    _ip_vrf_master.vrf_delete_hook = func;
-    break;
-  case VRF_ENABLE_HOOK:
-    _ip_vrf_master.vrf_enable_hook = func;
-    break;
-  case VRF_DISABLE_HOOK:
-    _ip_vrf_master.vrf_disable_hook = func;
-    break;
-  case VRF_UPDATE_HOOK:
-    _ip_vrf_master.vrf_set_vrfid_hook = func;
-    break;
-    
-  default:
-    break;
-  }
 }
 
 
@@ -359,8 +305,6 @@ int ip_vrf_set_vrfid(struct ip_vrf *ip_vrf, vrf_id_t vrf_id)
     if (_ip_vrf_master.vrf_mutex)
       os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
     ip_vrf->vrf_id = vrf_id;
-    if (_ip_vrf_master.vrf_set_vrfid_hook)
-      (_ip_vrf_master.vrf_set_vrfid_hook)(vrf_id, &ip_vrf->info);
     if (_ip_vrf_master.vrf_mutex)
       os_mutex_unlock(_ip_vrf_master.vrf_mutex);
     return 0;

@@ -36,7 +36,7 @@ extern "C" {
 
 extern void router_id_add_address(struct connected *);
 extern void router_id_del_address(struct connected *);
-extern void router_id_init(struct nsm_ip_vrf *);
+extern void router_id_init(struct nsm_ipvrf *);
 
 extern void router_id_get(struct prefix *, vrf_id_t);
 extern void router_id_set (struct prefix *, vrf_id_t );

@@ -119,7 +119,7 @@ static qos_access_filter_t *_qos_access_filter_list_lookup_layer(qos_access_filt
                     return pstNode;
                 }
             }
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
             else if(node->nodetype == FILTER_ZEBOS_EXT)
             {
                 if(filter_compare_zebos_extended(&pstNode->u.zextfilter, &node->u.zextfilter))
@@ -188,7 +188,7 @@ enum filter_type qos_access_filter_list_apply(qos_access_filter_list_t *acllist,
 {
     struct prefix *p;
     p = (struct prefix *)object;
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
     struct filter_zebos_ext *exp = (struct filter_zebos_ext *)object;
 #endif
 #ifdef ZPL_FILTER_MAC
@@ -216,7 +216,7 @@ enum filter_type qos_access_filter_list_apply(qos_access_filter_list_t *acllist,
                 if (filter_match_zebra(&pstNode->u.zfilter, p))
                     return pstNode->type;
             }
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
             else if (pstNode->nodetype == FILTER_ZEBOS_EXT)
             {
                 if (filter_match_zebos_ext(&pstNode->u.zextfilter, exp))
@@ -704,7 +704,7 @@ static int _qos_access_filter_show_one(struct vty *vty, qos_access_filter_t *nod
     {
         access_list_write_config_zebra(vty, &node->u.zfilter);
     }
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
     else if (node->nodetype == FILTER_ZEBOS_EXT)
     {
         access_list_write_config_zebos_ext(vty, &node->u.zextfilter);

@@ -59,7 +59,7 @@ typedef enum
 
 	NSM_INTF_WIFI,
 
-	NSM_INTF_VETH,	// tun/tap interface
+	NSM_INTF_VLANETH,	// vlan interface
 	NSM_INTF_TUNNEL,	//tunnel interface
 	NSM_INTF_BRIDGE, //bridge interface
 
@@ -69,11 +69,11 @@ typedef enum
 
 
 /* For interface shutdown configuration. */
-#define IF_ZEBRA_SHUTDOWN_OFF    0
-#define IF_ZEBRA_SHUTDOWN_ON     1
+#define NSM_IF_SHUTDOWN_OFF    0
+#define NSM_IF_SHUTDOWN_ON     1
 
 
-#define IF_ZEBRA_MTU_DEFAULT	1500
+#define NSM_IF_MTU_DEFAULT	1500
 
 
 typedef enum {
@@ -306,8 +306,6 @@ extern int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp
 		zpl_bool secondary, zpl_uint32 value);
 extern int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 		zpl_bool secondary, zpl_uint32 value);
-
-extern int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *stats);
 
 extern int nsm_interface_bandwidth_set_api(struct interface *ifp, zpl_uint32  bandwidth);
 extern int nsm_interface_bandwidth_get_api(struct interface *ifp, zpl_uint32  *bandwidth);

@@ -63,7 +63,7 @@ typedef enum
   MODE_MONITOR = 0,
   MODE_GLOBAL_RESTART,
   MODE_SEPARATE_RESTART,
-  MODE_PHASED_ZEBRA_RESTART,
+  MODE_PHASED_NSM_RESTART,
   MODE_PHASED_ALL_RESTART
 } watch_mode_t;
 
@@ -81,8 +81,8 @@ typedef enum
   PHASE_NONE = 0,
   PHASE_STOPS_PENDING,
   PHASE_WAITING_DOWN,
-  PHASE_ZEBRA_RESTART_PENDING,
-  PHASE_WAITING_ZEBRA_UP
+  PHASE_NSM_RESTART_PENDING,
+  PHASE_WAITING_NSM_UP
 } restart_phase_t;
 
 static const char *phase_str[] =
@@ -171,7 +171,7 @@ static struct global_state
 } gs = {
     .mode = MODE_MONITOR,
     .phase = PHASE_NONE,
-    .vtydir = ZEBRA_VTYSH_PATH,
+    .vtydir = NSM_VTYSH_PATH,
     .period = 1000 * DEFAULT_PERIOD,
     .timeout = 1000 * DEFAULT_TIMEOUT,
     .restart_timeout = 1000 * DEFAULT_RESTART_TIMEOUT,
@@ -893,15 +893,15 @@ phase_check(void)
       break;
     fdprintf(STDOUT_FILENO, "Phased restart: all routing daemons now down.\r\n");
     run_job(&gs.special->restart, "restart", gs.restart_command, 1, 1);
-    set_phase(PHASE_ZEBRA_RESTART_PENDING);
+    set_phase(PHASE_NSM_RESTART_PENDING);
     /*FALLTHRU*/
-  case PHASE_ZEBRA_RESTART_PENDING:
+  case PHASE_NSM_RESTART_PENDING:
     if (gs.special->restart.pid)
       break;
     fdprintf(STDOUT_FILENO, "Phased restart: %s restart job completed.\r\n", gs.special->name);
-    set_phase(PHASE_WAITING_ZEBRA_UP);
+    set_phase(PHASE_WAITING_NSM_UP);
     /*FALLTHRU*/
-  case PHASE_WAITING_ZEBRA_UP:
+  case PHASE_WAITING_NSM_UP:
     if (!IS_UP(gs.special))
       break;
     fdprintf(STDOUT_FILENO, "Phased restart: %s is now up.\r\n", gs.special->name);
@@ -933,7 +933,7 @@ try_restart(struct daemon *dmn)
   case MODE_SEPARATE_RESTART:
     run_job(&dmn->restart, "restart", gs.restart_command, 0, 1);
     break;
-  case MODE_PHASED_ZEBRA_RESTART:
+  case MODE_PHASED_NSM_RESTART:
     if (dmn != gs.special)
     {
       if ((gs.special->state == DAEMON_UP) && (gs.phase == PHASE_NONE))
@@ -1122,7 +1122,7 @@ int main(int argc, char **argv)
         fputs("Ambiguous operating mode selected.\n", stderr);
         return usage(progname, 1);
       }
-      gs.mode = MODE_PHASED_ZEBRA_RESTART;
+      gs.mode = MODE_PHASED_NSM_RESTART;
       break;
     case 'A':
       if ((gs.mode != MODE_MONITOR) && (gs.mode != MODE_SEPARATE_RESTART))
@@ -1310,7 +1310,7 @@ int main(int argc, char **argv)
       return usage(progname, 1);
     }
     break;
-  case MODE_PHASED_ZEBRA_RESTART:
+  case MODE_PHASED_NSM_RESTART:
   case MODE_PHASED_ALL_RESTART:
     if (!gs.restart_command || !gs.start_command || !gs.stop_command)
     {
@@ -1371,7 +1371,7 @@ int main(int argc, char **argv)
         gs.daemons = dmn;
       tail = dmn;
 
-      if (((gs.mode == MODE_PHASED_ZEBRA_RESTART) ||
+      if (((gs.mode == MODE_PHASED_NSM_RESTART) ||
            (gs.mode == MODE_PHASED_ALL_RESTART)) &&
           !strcmp(dmn->name, special))
         gs.special = dmn;
@@ -1382,7 +1382,7 @@ int main(int argc, char **argv)
     fputs("Must specify one or more daemons to monitor.\n", stderr);
     return usage(progname, 1);
   }
-  if (((gs.mode == MODE_PHASED_ZEBRA_RESTART) ||
+  if (((gs.mode == MODE_PHASED_NSM_RESTART) ||
        (gs.mode == MODE_PHASED_ALL_RESTART)) &&
       !gs.special)
   {

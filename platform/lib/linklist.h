@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_LINKLIST_H
-#define _ZEBRA_LINKLIST_H
+#ifndef __LIB_LINKLIST_H
+#define __LIB_LINKLIST_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,4 +156,4 @@ extern void list_add_list (struct list *, struct list *);
 }
 #endif
 
-#endif /* _ZEBRA_LINKLIST_H */
+#endif /* __LIB_LINKLIST_H */

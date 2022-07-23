@@ -37,48 +37,48 @@ DEFUN (show_debuging_config,
 
 
 #ifdef ZPL_NSM_MODULE
-static int config_zebra_write_debug (struct vty *vty)
+static int config_nsm_write_debug (struct vty *vty)
 {
   int write = 0;
 
-  if (IS_ZEBRA_DEBUG_EVENT)
+  if (IS_NSM_DEBUG_EVENT)
     {
       vty_out (vty, "debug zebra events%s", VTY_NEWLINE);
       write++;
     }
-  if (IS_ZEBRA_DEBUG_PACKET)
+  if (IS_NSM_DEBUG_PACKET)
     {
-      if (IS_ZEBRA_DEBUG_SEND && IS_ZEBRA_DEBUG_RECV)
+      if (IS_NSM_DEBUG_SEND && IS_NSM_DEBUG_RECV)
 	{
 	  vty_out (vty, "debug zebra packet%s%s",
-		   IS_ZEBRA_DEBUG_DETAIL ? " detail" : "",
+		   IS_NSM_DEBUG_DETAIL ? " detail" : "",
 		   VTY_NEWLINE);
 	  write++;
 	}
       else
 	{
-	  if (IS_ZEBRA_DEBUG_SEND)
+	  if (IS_NSM_DEBUG_SEND)
 	    vty_out (vty, "debug zebra packet send%s%s",
-		     IS_ZEBRA_DEBUG_DETAIL ? " detail" : "",
+		     IS_NSM_DEBUG_DETAIL ? " detail" : "",
 		     VTY_NEWLINE);
 	  else
 	    vty_out (vty, "debug zebra packet recv%s%s",
-		     IS_ZEBRA_DEBUG_DETAIL ? " detail" : "",
+		     IS_NSM_DEBUG_DETAIL ? " detail" : "",
 		     VTY_NEWLINE);
 	  write++;
 	}
     }
-  if (IS_ZEBRA_DEBUG_KERNEL)
+  if (IS_NSM_DEBUG_KERNEL)
     {
       vty_out (vty, "debug zebra kernel%s", VTY_NEWLINE);
       write++;
     }
-  if (IS_ZEBRA_DEBUG_RIB)
+  if (IS_NSM_DEBUG_RIB)
     {
       vty_out (vty, "debug zebra rib%s", VTY_NEWLINE);
       write++;
     }
-  if (IS_ZEBRA_DEBUG_RIB_Q)
+  if (IS_NSM_DEBUG_RIB_Q)
     {
       vty_out (vty, "debug zebra rib queue%s", VTY_NEWLINE);
       write++;
@@ -96,7 +96,7 @@ static int config_zebra_write_debug (struct vty *vty)
 static int config_write_debug (struct vty *vty)
 {
   #ifdef ZPL_NSM_MODULE
-	config_zebra_write_debug (vty);
+	config_nsm_write_debug (vty);
   #endif
 	nsm_template_debug_write_config (vty);
 	return OK;

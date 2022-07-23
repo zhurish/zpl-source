@@ -91,7 +91,7 @@ static void if_addr_wakeup(struct interface *ifp)
 	{
 		p = ifc->address;
 
-		if (CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
+		if (CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
 		{
 			/* Address check. */
 			if (p->family == IPSTACK_AF_INET)
@@ -127,7 +127,7 @@ static void if_addr_wakeup(struct interface *ifp)
 					continue;
 				}
 
-				// SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
+				// SET_FLAG(ifc->conf, IF_IFC_QUEUED);
 				/* The address will be advertised to zebra clients when the notification
 				 * from the kernel has been received.
 				 * It will also be added to the interface's subnet list then. */
@@ -149,7 +149,7 @@ static void if_addr_wakeup(struct interface *ifp)
 					continue;
 				}
 
-				// SET_FLAG(ifc->conf, ZEBRA_IFC_QUEUED);
+				// SET_FLAG(ifc->conf, IF_IFC_QUEUED);
 				/* The address will be advertised to zebra clients when the notification
 				 * from the kernel has been received. */
 			}
@@ -371,14 +371,14 @@ int nsm_interface_create_hook(struct interface *ifp)
 		IF_DATA_UNLOCK();
 		return ERROR;
 	}
-	nsm_interface->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
+	nsm_interface->shutdown = NSM_IF_SHUTDOWN_OFF;
 	nsm_interface->duplex = NSM_IF_DUPLEX_AUTO;
 	nsm_interface->speed = NSM_IF_SPEED_AUTO;
 
 	nsm_interface->ifp = ifp;
 
-	// SET_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION);
-	UNSET_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION);
+	// SET_FLAG(ifp->status, IF_INTERFACE_LINKDETECTION);
+	UNSET_FLAG(ifp->status, IF_INTERFACE_LINKDETECTION);
 	ifp->info[MODULE_NSM] = nsm_interface;
 
 	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
@@ -395,7 +395,7 @@ int nsm_interface_create_hook(struct interface *ifp)
 
 	if (ret == OK && if_have_kernel(ifp) && os_strlen(ifp->k_name))
 	{
-		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 	}
 	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
@@ -411,7 +411,7 @@ int nsm_interface_update_kernel(struct interface *ifp, zpl_char *kname)
 	if (ifp /* && ifp->dynamic == zpl_false*/)
 	{
 		if_kname_set(ifp, kname);
-		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 
 		nsm_interface_hw_update_api(ifp);
 		return OK;
@@ -564,7 +564,7 @@ static int nsm_interface_delete(struct interface *ifp)
 	if (delete)
 	{
 #ifdef ZPL_NSM_MODULE
-		zebra_interface_delete_update(ifp);
+		nsm_interface_delete_update(ifp);
 #endif
 		// nsm_client_notify_interface_delete(ifp);
 		return OK;
@@ -593,7 +593,7 @@ int nsm_interface_create_api(const char *ifname)
 	{
 #ifdef ZPL_NSM_MODULE
 		if (ifp->dynamic == zpl_false)
-			zebra_interface_add_update(ifp);
+			nsm_interface_add_update(ifp);
 #endif
 		IF_DATA_UNLOCK();
 		return OK;
@@ -647,11 +647,11 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		return ERROR;
 	}
 	/* This address is configured from zebra. */
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-		SET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+	if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
+		SET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
 	/* In case of this route need to install kernel. */
-	if (CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE) && !(if_data && if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON))
+	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE) && !(if_data && if_data->shutdown == NSM_IF_SHUTDOWN_ON))
 	{
 
 		/* Some system need to up the interface to set IP address. */
@@ -661,7 +661,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		}
 #ifdef ZPL_DHCP_MODULE
 		if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 		else
 		{
 			if (nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
@@ -686,7 +686,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		connected_up_ipv4(ifp, ifc);
 // nsm_client_notify_interface_add_ip(ifp, ifc, 0);
 #ifdef ZPL_NSM_MODULE
-		zebra_interface_address_add_update(ifp, ifc);
+		nsm_interface_address_add_update(ifp, ifc);
 #endif
 		return OK;
 	}
@@ -710,11 +710,11 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 	}
 
 	/* This is not configured address. */
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+	if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
+		UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 		// return ERROR;
 #ifdef ZPL_NSM_MODULE
-	zebra_interface_address_delete_update(ifp, ifc);
+	nsm_interface_address_delete_update(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 	while (ifc->raw_status != 0)
@@ -727,7 +727,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 	{
 #ifdef ZPL_DHCP_MODULE
 		if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 		else
 		{
 			if (nsm_halpal_interface_unset_address(ifp, ifc, 0) != OK)
@@ -748,13 +748,13 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 		}
 #endif
 #ifdef ZPL_NSM_MODULE
-// zebra_interface_address_delete_update(ifp, ifc);
+// nsm_interface_address_delete_update(ifp, ifc);
 #endif
 		connected_down_ipv4(ifp, ifc);
 
-		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+		UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
-		if (CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE))
+		if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE))
 		{
 			listnode_delete(ifp->connected, ifc);
 			connected_free(ifc);
@@ -792,18 +792,18 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 
 		/* Secondary. */
 		if (secondary)
-			SET_FLAG(ifc->flags, ZEBRA_IFA_SECONDARY);
+			SET_FLAG(ifc->flags, IF_IFA_SECONDARY);
 
 		/* Add to linked list. */
 		listnode_add(ifp->connected, ifc);
 	}
 
 	/* This address is configured from zebra. */
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-		SET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+	if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
+		SET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
 	/* In case of this route need to install kernel. */
-	if (CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE) && !(if_data && if_data->shutdown == IF_ZEBRA_SHUTDOWN_ON))
+	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE) && !(if_data && if_data->shutdown == NSM_IF_SHUTDOWN_ON))
 	{
 		if (!if_is_up(ifp))
 		{
@@ -811,7 +811,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 		}
 #ifdef ZPL_DHCP_MODULE
 		if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 		else
 		{
 			ret = nsm_halpal_interface_set_address(ifp, ifc, secondary);
@@ -838,7 +838,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 		connected_up_ipv6(ifp, ifc);
 // nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
 #ifdef ZPL_NSM_MODULE
-		zebra_interface_address_add_update(ifp, ifc);
+		nsm_interface_address_add_update(ifp, ifc);
 #endif
 		return OK;
 	}
@@ -858,11 +858,11 @@ nsm_interface_ipv6_address_uninstall(struct interface *ifp,
 		return ERROR;
 	}
 	/* This is not configured address. */
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
+	if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
 		return ERROR;
 
 #ifdef ZPL_NSM_MODULE
-	zebra_interface_address_delete_update(ifp, ifc);
+	nsm_interface_address_delete_update(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, secondry);
 
@@ -875,7 +875,7 @@ nsm_interface_ipv6_address_uninstall(struct interface *ifp,
 	{
 #ifdef ZPL_DHCP_MODULE
 		if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 		else
 		{
 			if (nsm_halpal_interface_unset_address(ifp, ifc, secondry) != OK)
@@ -897,9 +897,9 @@ nsm_interface_ipv6_address_uninstall(struct interface *ifp,
 #endif
 		connected_down_ipv6(ifp, ifc);
 
-		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+		UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
-		if (CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE))
+		if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE))
 		{
 			listnode_delete(ifp->connected, ifc);
 			connected_free(ifc);
@@ -943,15 +943,15 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 				ifc->destination = (struct prefix *)p2;
 			}
 		}
-		if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-			SET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+		if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
+			SET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 #ifdef ZPL_DHCP_MODULE
 		if (nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
-			SET_FLAG(ifc->conf, ZEBRA_IFC_DHCPC);
+			SET_FLAG(ifc->conf, IF_IFC_DHCPC);
 #endif
 		/* Secondary. */
 		if (secondary)
-			SET_FLAG(ifc->flags, ZEBRA_IFA_SECONDARY);
+			SET_FLAG(ifc->flags, IF_IFA_SECONDARY);
 
 		if (cp->family == IPSTACK_AF_INET)
 			connected_up_ipv4(ifp, ifc);
@@ -961,7 +961,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 #endif
 // nsm_client_notify_interface_add_ip(ifp, ifc, 0);
 #ifdef ZPL_NSM_MODULE
-		zebra_interface_address_add_update(ifp, ifc);
+		nsm_interface_address_add_update(ifp, ifc);
 #endif
 		/* Add to linked list. */
 		listnode_add(ifp->connected, ifc);
@@ -989,10 +989,10 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 		return ERROR;
 	}
 	/* This is not configured address. */
-	if (!CHECK_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED))
-		UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+	if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
+		UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 #ifdef ZPL_NSM_MODULE
-	zebra_interface_address_delete_update(ifp, ifc);
+	nsm_interface_address_delete_update(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 
@@ -1002,9 +1002,9 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 	else
 		connected_down_ipv6(ifp, ifc);
 #endif
-	UNSET_FLAG(ifc->conf, ZEBRA_IFC_CONFIGURED);
+	UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
-	if (CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE))
+	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE))
 	{
 		listnode_delete(ifp->connected, ifc);
 		connected_free(ifc);
@@ -1039,32 +1039,11 @@ int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode)
 	{
 		ret = nsm_halpal_interface_mode(ifp, mode);
 		if (ret == OK)
-		{
-			/*if (IF_MODE_L3 == mode)
-			{
-				//创建对应的L3或者获取刷新对应的L3接口数据
-				// if_have_kernel(ifp);
-			}
-			if (IF_MODE_ACCESS_L2 == mode)
-			{
-
-			}
-			if (IF_MODE_TRUNK_L2 == mode)
-			{
-
-			}
-			if (IF_MODE_L3 == mode)
-			{
-
-			}
-			if (IF_MODE_BRIGDE == mode)
-			{
-			}
-			*/		
+		{	
 			nsm_interface_mode_hook_handler(NSM_INTF_ALL, ifp, ifp->if_mode, mode);
 			ifp->if_mode = mode;
 #ifdef ZPL_NSM_MODULE
-			zebra_interface_mode_update(ifp, mode);
+			nsm_interface_mode_update(ifp, mode);
 #endif
 		}
 	}
@@ -1128,7 +1107,7 @@ int nsm_interface_up_set_api(struct interface *ifp)
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
 	struct nsm_interface *zif = ifp->info[MODULE_NSM];
-	if (zif->shutdown != IF_ZEBRA_SHUTDOWN_OFF)
+	if (zif->shutdown != NSM_IF_SHUTDOWN_OFF)
 	{
 		ret = nsm_halpal_interface_up(ifp);
 		if (ret == OK)
@@ -1138,10 +1117,10 @@ int nsm_interface_up_set_api(struct interface *ifp)
 				if_addr_wakeup(ifp);
 			}
 			if_up(ifp);
-			zif->shutdown = IF_ZEBRA_SHUTDOWN_OFF;
+			zif->shutdown = NSM_IF_SHUTDOWN_OFF;
 // nsm_client_notify_interface_up(ifp);
 #ifdef ZPL_NSM_MODULE
-			zebra_interface_up_update(ifp);
+			nsm_interface_up_update(ifp);
 #endif
 		}
 	}
@@ -1158,15 +1137,15 @@ int nsm_interface_down_set_api(struct interface *ifp)
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
 	struct nsm_interface *zif = ifp->info[MODULE_NSM];
-	if (zif->shutdown != IF_ZEBRA_SHUTDOWN_ON)
+	if (zif->shutdown != NSM_IF_SHUTDOWN_ON)
 	{
 		ret = nsm_halpal_interface_down(ifp);
 		if (ret == OK)
 		{
 			if_down(ifp);
-			zif->shutdown = IF_ZEBRA_SHUTDOWN_ON;
+			zif->shutdown = NSM_IF_SHUTDOWN_ON;
 #ifdef ZPL_NSM_MODULE
-			zebra_interface_down_update(ifp);
+			nsm_interface_down_update(ifp);
 #endif
 			// nsm_client_notify_interface_down(ifp);
 		}
@@ -1188,6 +1167,7 @@ int nsm_interface_desc_set_api(struct interface *ifp, const char *desc)
 	return OK;
 }
 
+#if 0
 int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *stats)
 {
 	struct nsm_interface *nsm_interface = ifp->info[MODULE_NSM];
@@ -1201,6 +1181,7 @@ int nsm_interface_statistics_get_api(struct interface *ifp, struct if_stats *sta
 	// IF_DATA_UNLOCK();
 	return OK;
 }
+#endif
 
 int nsm_interface_address_set_api(struct interface *ifp, struct prefix *cp, zpl_bool secondry)
 {
@@ -1513,10 +1494,10 @@ static void connected_dump_vty(struct vty *vty, struct connected *connected)
 		prefix_vty_out(vty, connected->destination);
 	}
 
-	if (CHECK_FLAG(connected->flags, ZEBRA_IFA_SECONDARY))
+	if (CHECK_FLAG(connected->flags, IF_IFA_SECONDARY))
 		vty_out(vty, " secondary");
 
-	if (CHECK_FLAG(connected->flags, ZEBRA_IFA_UNNUMBERED))
+	if (CHECK_FLAG(connected->flags, IF_IFA_UNNUMBERED))
 		vty_out(vty, " unnumbered");
 	vty_out(vty, "%s", VTY_NEWLINE);
 }
@@ -1530,7 +1511,7 @@ static void nd_dump_vty (struct vty *vty, struct interface *ifp)
   struct nsm_rtadvconf *rtadv;
   int interval;
 
-  zif = (struct zebra_if *) ifp->info[MODULE_NSM];
+  zif = (struct nsm_interface *) ifp->info[MODULE_NSM];
   rtadv = &zif->rtadv;
 
   if (rtadv->AdvSendAdvertisements)
@@ -1612,7 +1593,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 		vty_out(vty, "  pseudo interface%s", VTY_NEWLINE);
 		return;
 	}
-	else if (!CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_ACTIVE))
+	else if (!CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE))
 	{
 		vty_out(vty, "  index 0x%08x inactive interface%s", ifp->ifindex, VTY_NEWLINE);
 		return;
@@ -1661,7 +1642,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	nd_dump_vty (vty, ifp);
 #endif
 	/* Statistics print out using proc file system. */
-	nsm_interface_statistics_get_api(ifp, NULL);
+	//nsm_interface_statistics_get_api(ifp, NULL);
 
 	vty_out(vty, "    %lu input packets (%lu multicast), %lu bytes, "
 				 "%lu dropped%s",

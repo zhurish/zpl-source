@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_SOCKOPT_H
-#define _ZEBRA_SOCKOPT_H
+#ifndef __LIB_SOCKOPT_H
+#define __LIB_SOCKOPT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -127,4 +127,4 @@ extern int sockopt_cork (zpl_socket_t sock, int onoff);
 }
 #endif
 
-#endif /*_ZEBRA_SOCKOPT_H */
+#endif /*__LIB_SOCKOPT_H */

@@ -15,7 +15,10 @@ extern "C" {
 //route
 extern int pal_create_vrf(struct ip_vrf *vrf);
 extern int pal_delete_vrf(struct ip_vrf *vrf);
-extern int pal_iproute_rib_action(struct prefix *p, struct rib *old, struct rib *new);
+extern int pal_route_rib_add(zpl_uint8 processid, safi_t safi, struct prefix *p,
+						struct rib *rib, zpl_uint8 num);
+extern int pal_route_rib_del(zpl_uint8 processid, safi_t safi, struct prefix *p,
+						struct rib *rib, zpl_uint8 num);
 
 
 #ifdef __cplusplus

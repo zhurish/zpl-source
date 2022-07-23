@@ -159,7 +159,7 @@ filter_match_zebra(struct filter_zebra *filter, struct prefix *p)
   else
     return 0;
 }
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 int
 filter_match_zebos_ext(struct filter_zebos_ext *filter, struct filter_zebos_ext *p)
 {
@@ -416,7 +416,7 @@ access_list_apply(struct access_list *access, void *object)
   struct prefix *p;
 
   p = (struct prefix *)object;
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
   struct filter_zebos_ext *exp = (struct filter_zebos_ext *)object;
 #endif
 #ifdef ZPL_FILTER_MAC
@@ -437,7 +437,7 @@ access_list_apply(struct access_list *access, void *object)
       if (filter_match_zebra(&filter->u.zfilter, p))
         return filter->type;
     }
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
     else if (filter->nodetype == FILTER_ZEBOS_EXT)
     {
       if (filter_match_zebos_ext(&filter->u.zextfilter, exp))
@@ -629,7 +629,7 @@ int filter_compare_zebra(struct filter_zebra *filter, struct filter_zebra *new)
 }
 
 static struct filter_list *
-filter_lookup_zebra_local(struct access_list *access, struct filter_list *mnew)
+filter_lookup_normal_local(struct access_list *access, struct filter_list *mnew)
 {
   struct filter_list *mfilter;
   struct filter_zebra *filter;
@@ -646,7 +646,7 @@ filter_lookup_zebra_local(struct access_list *access, struct filter_list *mnew)
   }
   return NULL;
 }
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 int filter_compare_zebos_extended(struct filter_zebos_ext *filter, struct filter_zebos_ext *new)
 {
     if (filter->protocol == new->protocol &&
@@ -1429,7 +1429,7 @@ DEFUN(no_access_list_extended_host_any,
                           "255.255.255.255", 1, 0);
 }
 
-int filter_zebra_format(struct vty *vty, afi_t afi, const char *prefix_str, int exact, struct filter_zebra *filter)
+int filter_normal_format(struct vty *vty, afi_t afi, const char *prefix_str, int exact, struct filter_zebra *filter)
 {
   int ret;
   struct prefix p;
@@ -1541,7 +1541,7 @@ filter_set_zebra(struct vty *vty, const char *name_str, const char *type_str,
 
   if (set)
   {
-    if (filter_lookup_zebra_local(access, mfilter))
+    if (filter_lookup_normal_local(access, mfilter))
       filter_free(mfilter);
     else
       access_list_filter_add(access, mfilter);
@@ -1550,7 +1550,7 @@ filter_set_zebra(struct vty *vty, const char *name_str, const char *type_str,
   {
     struct filter_list *delete_filter;
 
-    delete_filter = filter_lookup_zebra_local(access, mfilter);
+    delete_filter = filter_lookup_normal_local(access, mfilter);
     if (delete_filter)
       access_list_filter_delete(access, delete_filter);
 
@@ -1901,7 +1901,7 @@ ALIAS(no_ipv6_access_list_remark,
       "Comment up to 100 characters\n")
 #endif /* ZPL_BUILD_IPV6 */
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 int filter_zebos_ext_format(struct vty *vty, afi_t afi,
                                      const char *prot_str, const char *sprefix,
                                      const char *sport_op, const char *sport, const char *seport,
@@ -5234,7 +5234,7 @@ ALIAS(mac_access_list_src_mac_host_dsthost,
 static void config_write_access_zebra(struct vty *, struct filter_list *);
 static void config_write_access_cisco(struct vty *, struct filter_list *);
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 static void config_write_access_zebos_ext(struct vty *, struct filter_list *);
 #endif
 #ifdef ZPL_FILTER_MAC
@@ -5257,7 +5257,7 @@ static const char *get_filter_type_str(struct filter_list *mfilter)
   break;
   case FILTER_ZEBOS:
     return "ZebOS";
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
   case FILTER_ZEBOS_EXT:
     return "ZebOS extended";
 #endif
@@ -5314,7 +5314,7 @@ filter_show(struct vty *vty, const char *name, afi_t afi)
         config_write_access_zebra(vty, mfilter);
       else if (filter->extended)
         config_write_access_cisco(vty, mfilter);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
       if (mfilter->nodetype == FILTER_ZEBOS_EXT)
         config_write_access_zebos_ext(vty, mfilter);
 #endif
@@ -5363,7 +5363,7 @@ filter_show(struct vty *vty, const char *name, afi_t afi)
         config_write_access_zebra(vty, mfilter);
       else if (filter->extended)
         config_write_access_cisco(vty, mfilter);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
       else if (mfilter->nodetype == FILTER_ZEBOS_EXT)
         config_write_access_zebos_ext(vty, mfilter);
 #endif
@@ -5542,7 +5542,7 @@ static void config_write_access_zebra(struct vty *vty, struct filter_list *mfilt
   vty_out(vty, "%s", VTY_NEWLINE);
 }
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
 void access_list_write_config_zebos_ext(struct vty *vty, struct filter_zebos_ext *filter)
 {
   struct prefix *p;
@@ -5688,7 +5688,7 @@ config_write_access(struct vty *vty, afi_t afi)
         config_write_access_cisco(vty, mfilter);
       else if (mfilter->nodetype == FILTER_ZEBOS)
         config_write_access_zebra(vty, mfilter);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
       else if (mfilter->nodetype == FILTER_ZEBOS_EXT)
       {
         vty_out(vty, "%saccess-list %s %s",
@@ -5734,7 +5734,7 @@ config_write_access(struct vty *vty, afi_t afi)
         config_write_access_cisco(vty, mfilter);
       else if (mfilter->nodetype == FILTER_ZEBOS)
         config_write_access_zebra(vty, mfilter);
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
       else if (mfilter->nodetype == FILTER_ZEBOS_EXT)
       {
         vty_out(vty, "%saccess-list %s %s",
@@ -5853,7 +5853,7 @@ access_list_init_ipv4(void)
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_access_list_remark_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_access_list_remark_arg_cmd);
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_access_list_ip_tcpudp_cmd);
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_access_list_ip_tcpudp_name_cmd);
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &access_list_ip_protocol_cmd);
@@ -5939,7 +5939,7 @@ access_list_init_ipv6(void)
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ipv6_access_list_remark_cmd);
   install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_ipv6_access_list_remark_arg_cmd);
 
-#ifdef ZPL_FILTER_ZEBRA_EXT
+#ifdef ZPL_FILTER_NORMAL_EXT
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_access_list_ipv6_tcpudp_cmd);
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_access_list_ipv6_tcpudp_name_cmd);
       install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &access_list_ipv6_protocol_cmd);

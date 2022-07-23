@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_RIB_H
-#define _ZEBRA_RIB_H
+#ifndef __NSM_RIB_H
+#define __NSM_RIB_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,7 +112,7 @@ struct rib
   zpl_uchar distance;
 
   /* Flags of this route.
-   * This flag's definition is in lib/auto_include.h ZEBRA_FLAG_* and is exposed
+   * This flag's definition is in lib/auto_include.h NSM_RIB_FLAG_* and is exposed
    * to clients via Zserv
    */
   zpl_uchar flags;
@@ -160,19 +160,19 @@ typedef struct rib_dest_t_
 /*
  * The maximum qindex that can be used.
  */
-#define ZEBRA_MAX_QINDEX        (MQ_SIZE - 1)
+#define NSM_RIB_MAX_QINDEX        (MQ_SIZE - 1)
 
 /*
  * This flag indicates that a given prefix has been 'advertised' to
  * the FPM to be installed in the forwarding plane.
  */
-#define RIB_DEST_SENT_TO_FPM   (1 << (ZEBRA_MAX_QINDEX + 1))
+#define RIB_DEST_SENT_TO_FPM   (1 << (NSM_RIB_MAX_QINDEX + 1))
 
 /*
  * This flag is set when we need to ipstack_send an update to the FPM about a
  * dest.
  */
-#define RIB_DEST_UPDATE_FPM    (1 << (ZEBRA_MAX_QINDEX + 2))
+#define RIB_DEST_UPDATE_FPM    (1 << (NSM_RIB_MAX_QINDEX + 2))
 
 /*
  * Macro to iterate over each route for a destination (prefix).
@@ -226,8 +226,8 @@ struct static_route
   /* bit flags */
   zpl_uchar flags;
 /*
- see ZEBRA_FLAG_REJECT
-     ZEBRA_FLAG_BLACKHOLE
+ see NSM_RIB_FLAG_REJECT
+     NSM_RIB_FLAG_BLACKHOLE
  */
 };
 
@@ -317,7 +317,7 @@ extern struct nsm_rtadv_t nsm_rtadv;
 
 
 /* Routing table instance.  */
-struct nsm_ip_vrf
+struct nsm_ipvrf
 {
   /* Identifier. */
   vrf_id_t vrf_id;
@@ -365,9 +365,9 @@ typedef struct rib_table_info_t_
 {
 
   /*
-   * Back pointer to nsm_ip_vrf.
+   * Back pointer to nsm_ipvrf.
    */
-  struct nsm_ip_vrf *zvrf;
+  struct nsm_ipvrf *zvrf;
   afi_t afi;
   safi_t safi;
 
@@ -431,18 +431,18 @@ extern void _rib_dump (const char *,
 		       union prefix46constptr, const struct rib *);
 extern int rib_lookup_ipv4_route (struct prefix_ipv4 *, union sockunion *,
                                   vrf_id_t);
-#define ZEBRA_RIB_LOOKUP_ERROR -1
-#define ZEBRA_RIB_FOUND_EXACT 0
-#define ZEBRA_RIB_FOUND_NOGATE 1
-#define ZEBRA_RIB_FOUND_CONNECTED 2
-#define ZEBRA_RIB_NOTFOUND 3
+#define NSM_RIB_LOOKUP_ERROR -1
+#define NSM_RIB_FOUND_EXACT 0
+#define NSM_RIB_FOUND_NOGATE 1
+#define NSM_RIB_FOUND_CONNECTED 2
+#define NSM_RIB_NOTFOUND 3
 
 extern struct nexthop *rib_nexthop_ipv6_add (struct rib *, struct ipstack_in6_addr *);
 extern struct nexthop *rib_nexthop_ipv6_ifindex_add (struct rib *,
                                                      struct ipstack_in6_addr *,
                                                      ifindex_t);
 
-extern struct nsm_ip_vrf *nsm_vrf_lookup (vrf_id_t vrf_id);
+extern struct nsm_ipvrf *nsm_vrf_lookup (vrf_id_t vrf_id);
 extern struct route_table *nsm_vrf_table (afi_t, safi_t, vrf_id_t);
 extern struct route_table *nsm_vrf_static_table (afi_t, safi_t, vrf_id_t);
 
@@ -591,7 +591,7 @@ rib_dest_table (rib_dest_t *dest)
 /*
  * rib_dest_vrf
  */
-static inline struct nsm_ip_vrf *
+static inline struct nsm_ipvrf *
 rib_dest_vrf (rib_dest_t *dest)
 {
   return rib_table_info (rib_dest_table (dest))->zvrf;
@@ -630,10 +630,13 @@ rib_tables_iter_cleanup (rib_tables_iter_t *iter)
 }
  
 
-
+struct nsm_ipvrf * nsm_vrf_create(vrf_id_t vrf_id);
+int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf);
+int nsm_vrf_enable(struct nsm_ipvrf *zvrf);
+int nsm_vrf_disable(struct nsm_ipvrf *zvrf);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /*_ZEBRA_RIB_H */
+#endif /*__NSM_RIB_H */

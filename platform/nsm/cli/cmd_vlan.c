@@ -7,7 +7,7 @@
 #include "auto_include.h"
 #include <zplos_include.h>
 #include "route_types.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "zmemory.h"
 #include "if.h"
 #include "if_name.h"

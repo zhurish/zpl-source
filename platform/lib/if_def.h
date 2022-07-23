@@ -145,10 +145,12 @@ typedef enum if_type_s
    IF_XGIGABT_ETHERNET,
    IF_ETHERNET_SUB,
    IF_WIRELESS, //wireless interface
-   IF_TUNNEL,
-   IF_LAG,
+   IF_TUNNEL,  //隧道接口
+   IF_LAG,     //汇聚接口
    IF_BRIGDE, //brigde interface
-   IF_VLAN,
+   IF_VLAN,    //二层的VLAN接口
+   IF_SUBVLAN, //父接口下的vlan子接口  
+   IF_VXLAN,   //VXLAN接口
    IF_E1,
 #ifdef CUSTOM_INTERFACE
    IF_WIFI,  //wifi interface wireless
@@ -244,9 +246,9 @@ struct interface
    zpl_bool online;  //板卡在线状态
    /* Zebra internal interface status */
    zpl_uint32 status;
-#define ZEBRA_INTERFACE_ACTIVE (1 << 0)
-#define ZEBRA_INTERFACE_LINKDETECTION (1 << 2)
-#define ZEBRA_INTERFACE_ATTACH (1 << 3)
+#define IF_INTERFACE_ACTIVE (1 << 0)
+#define IF_INTERFACE_LINKDETECTION (1 << 2)
+#define IF_INTERFACE_ATTACH (1 << 3)
    /* Interface flags. */
    zpl_uint64 flags;
 
@@ -422,26 +424,26 @@ struct connected
 
    /* Flags for configuration. */
    zpl_uchar conf;
-#define ZEBRA_IFC_CONFIGURED (1 << 1)
-#define ZEBRA_IFC_DHCPC (1 << 2)
+#define IF_IFC_CONFIGURED (1 << 1)
+#define IF_IFC_DHCPC (1 << 2)
    /*
-     The ZEBRA_IFC_REAL flag should be set if and only if this address
+     The IF_IFC_REAL flag should be set if and only if this address
      exists in the kernel and is actually usable. (A case where it exists but
      is not yet usable would be IPv6 with DAD)
-     The ZEBRA_IFC_CONFIGURED flag should be set if and only if this address
+     The IF_IFC_CONFIGURED flag should be set if and only if this address
      was configured by the user from inside quagga.
-     The ZEBRA_IFC_QUEUED flag should be set if and only if the address exists
+     The IF_IFC_QUEUED flag should be set if and only if the address exists
      in the kernel. It may and should be set although the address might not be
-     usable yet. (compare with ZEBRA_IFC_REAL)
+     usable yet. (compare with IF_IFC_REAL)
    */
 
    /* Flags for connected address. */
    zpl_uchar flags;
-#define ZEBRA_IFA_SECONDARY (1 << 0)
-#define ZEBRA_IFA_PEER (1 << 1)
-#define ZEBRA_IFA_UNNUMBERED (1 << 2)
-#define ZEBRA_IFA_DHCPC (1 << 3)
-   /* N.B. the ZEBRA_IFA_PEER flag should be set if and only if
+#define IF_IFA_SECONDARY (1 << 0)
+#define IF_IFA_PEER (1 << 1)
+#define IF_IFA_UNNUMBERED (1 << 2)
+#define IF_IFA_DHCPC (1 << 3)
+   /* N.B. the IF_IFA_PEER flag should be set if and only if
      a peer address has been configured.  If this flag is set,
      the destination field must contain the peer address.  
      Otherwise, if this flag is not set, the destination address
@@ -451,8 +453,8 @@ struct connected
    /* Address of connected network. */
    struct prefix *address;
 
-   /* Peer or Broadcast address, depending on whether ZEBRA_IFA_PEER is set.
-     Note: destination may be NULL if ZEBRA_IFA_PEER is not set. */
+   /* Peer or Broadcast address, depending on whether IF_IFA_PEER is set.
+     Note: destination may be NULL if IF_IFA_PEER is not set. */
    struct prefix *destination;
 
    zpl_uint32 count;
@@ -460,7 +462,7 @@ struct connected
 };
 
 /* Does the destination field contain a peer address? */
-#define CONNECTED_PEER(C) CHECK_FLAG((C)->flags, ZEBRA_IFA_PEER)
+#define CONNECTED_PEER(C) CHECK_FLAG((C)->flags, IF_IFA_PEER)
 
 /* Prefix to insert into the RIB */
 #define CONNECTED_PREFIX(C) \

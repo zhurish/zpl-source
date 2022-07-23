@@ -455,7 +455,7 @@ sockunion_hash (const union sockunion *su)
       return jhash_1word(su->sin.sin_addr.s_addr, 0);
 #ifdef ZPL_BUILD_IPV6
     case IPSTACK_AF_INET6:
-      return jhash2(su->sin6.sin6_addr.s6_addr32, ZEBRA_NUM_OF(su->sin6.sin6_addr.s6_addr32), 0);
+      return jhash2(su->sin6.sin6_addr.s6_addr32, array_size(su->sin6.sin6_addr.s6_addr32), 0);
 #endif /* ZPL_BUILD_IPV6 */
     }
   return 0;

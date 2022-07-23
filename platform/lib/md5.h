@@ -39,8 +39,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _LIBZEBRA_MD5_H_
-#define _LIBZEBRA_MD5_H_
+#ifndef _LIBMD5_H_
+#define _LIBMD5_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,4 +108,4 @@ zpl_uchar *OS_MD5(const zpl_uchar *d, zpl_size_t n, zpl_uchar *md);
 }
 #endif
 
-#endif /* ! _LIBZEBRA_MD5_H_*/
+#endif /* ! _LIBMD5_H_*/

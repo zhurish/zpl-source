@@ -29,7 +29,7 @@
 //#include "platform/nsm/filter.h"
 //#include "platform/nsm/plist.h"
 
-// extern struct zebra_privs_t os_privs;
+// extern struct nsm_privs_t os_privs;
 // extern struct quagga_signal_t os_signals[];
 // handle SIGUSR2 nostop noprint
 /*
@@ -178,7 +178,7 @@ static int zplmain_getopt(int argc, char **argv)
 			}
 			startup_option.vty_port = atoi(optarg);
 			if (startup_option.vty_port <= 0 || startup_option.vty_port > 0xffff)
-				startup_option.vty_port = ZEBRA_VTY_PORT;
+				startup_option.vty_port = PLCLI_VTY_PORT;
 			break;
 		case 'u':
 			startup_option.user = optarg;
@@ -213,6 +213,9 @@ static int zplmain_getopt(int argc, char **argv)
 	return OK;
 }
 
+extern const char *nl_strerror_l(int err);
+extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
+extern int ip_main(int argc, char **argv);
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -227,7 +230,8 @@ int main(int argc, char **argv)
 
 	//ip_main( argc, argv);
 	//tc_main( argc, argv);
-
+	//nl_strerror_l(0);
+	//_nl_socket_used_ports_release_all(NULL);
 	startup_option_default();
 	startup_option.progname = ((p = strrchr(argv[0], '/')) ? ++p : argv[0]);
 

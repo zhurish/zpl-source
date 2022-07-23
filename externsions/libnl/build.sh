@@ -22,4 +22,5 @@ fi
 
 if test "xclean" == "x$1" ;then
     make clean
+    make distclean
 fi

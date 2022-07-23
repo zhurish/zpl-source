@@ -1256,7 +1256,7 @@ zpl_taskid_t os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
 		//int pthread_setname_np(zpl_pthread_t thread, const char *name);
 		//int pthread_getname_np(zpl_pthread_t thread,
 		//                              char *name, size_t len);
-		//extern struct zebra_privs_t os_privs;
+
 		int ret = 0;
 
 		ret = pthread_setname_np(task->td_thread, task->td_name);

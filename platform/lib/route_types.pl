@@ -47,7 +47,7 @@ while (<STDIN>) {
 	$_ =~ s/\s*$//;
 
 	# match help strings
-	if (/^(ZEBRA_ROUTE_[^\s]+)\s*,\s*"(.*)"$/) {
+	if (/^(ZPL_ROUTE_PROTO_[^\s]+)\s*,\s*"(.*)"$/) {
 		$protodetail{$1}->{'longhelp'} = $2;
 		next;
 	}
@@ -92,7 +92,7 @@ printf <<EOF, $ARGV[0];
 /* Zebra route's types. */
 EOF
 
-push @protos, "ZEBRA_ROUTE_MAX";
+push @protos, "ZPL_ROUTE_PROTO_MAX";
 my (@protosv4, @protosv6) = ((), ());
 for (my $c = 0; $c < @protos; $c++) {
 	my $p = $protos[$c];
@@ -171,7 +171,7 @@ print <<EOF;
 
 #ifdef QUAGGA_DEFINE_DESC_TABLE
 
-struct zebra_desc_table
+struct nsm_desc_table
 {
   unsigned int type;
   const char *string;
@@ -179,7 +179,7 @@ struct zebra_desc_table
 };
 
 #define DESC_ENTRY(T,S,C) [(T)] = { (T), (S), (C) }
-static const struct zebra_desc_table route_types[] = {
+static const struct nsm_desc_table route_types[] = {
 EOF
 
 for (my $c = 0; $c < @protos; $c++) {

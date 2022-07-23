@@ -19,8 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ZEBRA_DISTRIBUTE_H
-#define _ZEBRA_DISTRIBUTE_H
+#ifndef __DISTRIBUTE_H
+#define __DISTRIBUTE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,4 +85,4 @@ extern enum filter_type distribute_apply_out (struct interface *, struct prefix 
 }
 #endif
 
-#endif /* _ZEBRA_DISTRIBUTE_H */
+#endif /* __DISTRIBUTE_H */

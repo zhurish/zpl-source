@@ -19,8 +19,8 @@
  * Boston, MA 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_IPFORWARD_H
-#define _ZEBRA_IPFORWARD_H
+#ifndef __LIB_IPFORWARD_H
+#define __LIB_IPFORWARD_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,4 +40,4 @@ extern int ipforward_ipv6_off (void);
 }
 #endif
 
-#endif /* _ZEBRA_IPFORWARD_H */
+#endif /* __LIB_IPFORWARD_H */

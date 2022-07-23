@@ -23,5 +23,33 @@ config ZPL_PAL_MODULE
 	help
 	Build PAL Abstract Module.
 
+choice
+	prompt "PAL Abstract type"
+	depends on ZPL_PAL_MODULE
+	default ZPL_KERNEL_MODULE
+
+config ZPL_IPCOM_MODULE
+	bool "IPCOM IP/TCP Stack Module"
+
+config ZPL_KERNEL_MODULE
+	bool "Linux Kernel IP/TCP Stack Module"
+	
+endchoice
+
+config ZPL_KERNEL_NETLINK
+	bool "Linux Kernel Netlink IO"
+	default y
+	depends on ZPL_KERNEL_MODULE
+	help
+	Build Linux Kernel Netlink IO to control
+
+config ZPL_IPCOM_ROOT_PATH
+	string
+	prompt "IPCOM IP/TCP Stack Root Path"
+	default "/home/zhurish/workspace/ipnet2.6"
+	depends on ZPL_IPCOM_MODULE
+	help
+		Specify directories IPCOM IP/TCP Stack Source
+
 
 endmenu

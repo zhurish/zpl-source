@@ -1,6 +1,6 @@
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "module.h"
 #include "zmemory.h"
 #include "thread.h"

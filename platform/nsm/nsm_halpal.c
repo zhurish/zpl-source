@@ -41,6 +41,8 @@ int nsm_halpal_interface_add(struct interface *ifp)
 	int ret = 0;
 	if(os_strlen(ifp->k_name))
 	{
+		if(if_is_l3intf(ifp) && pal_interface_create(ifp) != OK)
+			return ERROR;
 		ret = hal_l3if_add(ifp->ifindex, ifp->k_name, NULL);
 		if(ret != OK)
 			return ret;
@@ -51,7 +53,39 @@ int nsm_halpal_interface_add(struct interface *ifp)
 int nsm_halpal_interface_delete (struct interface *ifp)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_destroy(ifp) != OK)
+		return ERROR;
 	ret = hal_l3if_del(ifp->ifindex);
+	if(ret != OK)
+		return ret;
+	return ret;
+}
+
+int nsm_halpal_interface_update (struct interface *ifp)
+{
+	int ret = OK;
+	if(if_is_l3intf(ifp))
+		ret = pal_interface_update(ifp);
+	if(ret != OK)
+		return ret;
+	return ret;
+}
+
+int nsm_halpal_interface_add_slave (struct interface *ifp, struct interface *sifp)
+{
+	int ret = OK;
+	if(if_is_l3intf(ifp))
+		ret = pal_interface_add_slave(ifp, sifp);
+	if(ret != OK)
+		return ret;
+	return ret;
+}
+
+int nsm_halpal_interface_del_slave (struct interface *ifp, struct interface *sifp)
+{
+	int ret = OK;
+	if(if_is_l3intf(ifp))
+		ret = pal_interface_del_slave(ifp, sifp);
 	if(ret != OK)
 		return ret;
 	return ret;
@@ -60,6 +94,8 @@ int nsm_halpal_interface_delete (struct interface *ifp)
 int nsm_halpal_interface_up (struct interface *ifp)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_up(ifp) != OK)
+		return ERROR;	
 #ifdef ZPL_HAL_MODULE
 	ret = hal_port_up(ifp->ifindex);
 	if(ret != OK)
@@ -71,6 +107,8 @@ int nsm_halpal_interface_up (struct interface *ifp)
 int nsm_halpal_interface_down (struct interface *ifp)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_down(ifp) != OK)
+		return ERROR;
 #ifdef ZPL_HAL_MODULE
 	ret = hal_port_down(ifp->ifindex);
 	if(ret != OK)
@@ -82,14 +120,17 @@ int nsm_halpal_interface_down (struct interface *ifp)
 
 int nsm_halpal_interface_ifindex(char *k_name)
 {
-	int ret = 0;
-	ret = if_nametoindex(k_name);
+	int ret = OK;
+	ret = pal_interface_ifindex(k_name);
+	//ret = if_nametoindex(k_name);
 	return ret;
 }
 
 int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_set_mtu(ifp, mtu) != OK)
+		return ERROR;
 	ret = hal_port_mtu_set(ifp->ifindex, mtu);
 	return ret;
 }
@@ -98,6 +139,8 @@ int nsm_halpal_interface_mtu (struct interface *ifp, zpl_uint32 mtu)
 int nsm_halpal_interface_vrf (struct interface *ifp, struct ip_vrf *vrf)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_set_vrf(ifp, vrf) != OK)
+		return ERROR;
 	ret = hal_port_vrf_set(ifp->ifindex, vrf->vrf_id);
 	return ret;
 }
@@ -125,6 +168,17 @@ int nsm_halpal_interface_bandwidth (struct interface *ifp, zpl_uint32 bandwidth)
 int nsm_halpal_interface_set_address (struct interface *ifp, struct connected *ifc, zpl_bool secondry)
 {
 	int ret = 0;
+	struct prefix *address = ifc->address;
+	if(address && PREFIX_FAMILY(address)== IPSTACK_AF_INET)
+	{
+		if(if_is_l3intf(ifp) && pal_interface_ipv4_add(ifp, ifc) != OK)
+			return ERROR;
+	}
+	if(address && PREFIX_FAMILY(address)== IPSTACK_AF_INET6)
+	{
+		if(if_is_l3intf(ifp) && pal_interface_ipv6_add(ifp, ifc, secondry) != OK)
+			return ERROR;
+	}
 	ret = hal_l3if_addr_add(ifp->ifindex, ifc->address, secondry);
 	if(ret != OK)
 		return ret;
@@ -134,6 +188,17 @@ int nsm_halpal_interface_set_address (struct interface *ifp, struct connected *i
 int nsm_halpal_interface_unset_address (struct interface *ifp, struct connected *ifc, zpl_bool secondry)
 {
 	int ret = 0;
+	struct prefix *address = ifc->address;
+	if(address && PREFIX_FAMILY(address)== IPSTACK_AF_INET)
+	{
+		if(if_is_l3intf(ifp) && pal_interface_ipv4_delete(ifp, ifc) != OK)
+			return ERROR;
+	}
+	if(address && PREFIX_FAMILY(address)== IPSTACK_AF_INET6)
+	{
+		if(if_is_l3intf(ifp) && pal_interface_ipv6_delete(ifp, ifc, secondry) != OK)
+			return ERROR;
+	}
 	ret = hal_l3if_addr_del(ifp->ifindex, ifc->address, secondry);
 	return ret;
 }
@@ -141,12 +206,24 @@ int nsm_halpal_interface_unset_address (struct interface *ifp, struct connected 
 int nsm_halpal_interface_set_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry)
 {
 	int ret = 0;
+	struct prefix *address = cp->address;
+	if(address && PREFIX_FAMILY(address)== IPSTACK_AF_INET)
+	{
+		if(if_is_l3intf(ifp) && pal_interface_ipv4_dstaddr_add(ifp, cp) != OK)
+			return ERROR;
+	}
 	ret = hal_l3if_dstaddr_add(ifp->ifindex, cp->address);
 	return ret;
 }
 int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected *cp, zpl_bool secondry)
 {
 	int ret = 0;
+	struct prefix *address = cp->address;
+	if(address && PREFIX_FAMILY(address)== IPSTACK_AF_INET)
+	{
+		if(if_is_l3intf(ifp) && pal_interface_ipv4_dstaddr_delete(ifp, cp) != OK)
+			return ERROR;
+	}
 	ret = hal_l3if_dstaddr_del(ifp->ifindex, cp->address);
 	return ret;
 }
@@ -156,19 +233,14 @@ int nsm_halpal_interface_unset_dstaddr (struct interface *ifp, struct connected 
 int nsm_halpal_interface_mac (struct interface *ifp, zpl_uchar *mac, zpl_uint32 len)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_set_lladdr(ifp, mac, len) != OK)
+		return ERROR;
 	ret = hal_l3if_mac_set(ifp->ifindex, mac);
 	return ret;
 }
 #endif
 
-int nsm_halpal_interface_get_statistics (struct interface *ifp)
-{
-	int ret = 0;
-	//ret = pal_interface_update_statistics(ifp);
-	if(ret != OK)
-		return ret;
-	return ret;
-}
+
 
 int nsm_halpal_interface_speed (struct interface *ifp,  nsm_speed_en speed )
 {
@@ -195,7 +267,7 @@ int nsm_halpal_interface_enca (struct interface *ifp, zpl_uint32 mode)
 {
 	int ret = 0;
 	#ifdef ZPL_NSM_SERIAL
-	if(if_is_serial(ifp))
+	if(if_is_l3intf(ifp) && if_is_serial(ifp))
 		ret = nsm_serial_interface_enca_set_api(ifp, mode);
 	#endif	
 	return ret;
@@ -226,10 +298,12 @@ int nsm_halpal_interface_duplex (struct interface *ifp, nsm_duplex_en duplex)
 
 
 
-#if 0
+
 int nsm_halpal_interface_vlan_set(struct interface *ifp, vlan_t vlan)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_vlan_set(ifp, vlan) != OK)
+		return ERROR;
 	ret = pal_interface_vlan_set(ifp, vlan);
 	return ret;
 }
@@ -237,18 +311,11 @@ int nsm_halpal_interface_vlan_set(struct interface *ifp, vlan_t vlan)
 int nsm_halpal_interface_vlanpri_set(struct interface *ifp, zpl_uint32 pri)
 {
 	int ret = 0;
+	if(if_is_l3intf(ifp) && pal_interface_vlanpri_set(ifp, pri) != OK)
+		return ERROR;
 	ret = pal_interface_vlanpri_set(ifp, pri);
 	return ret;
 }
-
-int nsm_halpal_interface_promisc_link(struct interface *ifp, zpl_bool enable)
-{
-	int ret = 0;
-	ret = pal_interface_promisc_link(ifp, enable);
-	return ret;
-}
-#endif
-
 
 int nsm_halpal_create_vrf(struct ip_vrf *vrf)
 {
@@ -267,22 +334,25 @@ int nsm_halpal_delete_vrf(struct ip_vrf *vrf)
 #ifdef ZPL_NSM_ARP
 int nsm_halpal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
-	int ret = 0;
-	ret = pal_interface_arp_add(ifp, address, mac);
+	int ret = OK;
+	if(if_is_l3intf(ifp))
+		ret = pal_interface_arp_add(ifp, address, mac);
 	return ret;
 }
 
 int nsm_halpal_interface_arp_delete(struct interface *ifp, struct prefix *address)
 {
-	int ret = 0;
-	ret = pal_interface_arp_delete(ifp, address);
+	int ret = OK;
+	if(if_is_l3intf(ifp))
+		ret = pal_interface_arp_delete(ifp, address);
 	return ret;
 }
 
 int nsm_halpal_interface_arp_request(struct interface *ifp, struct prefix *address)
 {
-	int ret = 0;
-	ret = pal_interface_arp_request(ifp, address);
+	int ret = OK;
+	if(if_is_l3intf(ifp))
+		ret = pal_interface_arp_request(ifp, address);
 	return ret;
 }
 
@@ -362,6 +432,8 @@ int nsm_halpal_route_multipath_add(safi_t safi, struct prefix *p,
                           struct rib *rib, zpl_uint8 num)
 {
 	int ret = 0;
+	if(pal_route_rib_add(0,  safi,p, rib,  num) != OK)
+		return ERROR;
 	ret = hal_route_multipath_add(0, safi, p, rib, num);
 	return ret;
 }
@@ -370,6 +442,8 @@ int nsm_halpal_route_multipath_del(safi_t safi, struct prefix *p,
                           struct rib *rib, zpl_uint8 num)
 {
 	int ret = 0;
+	if(pal_route_rib_del(0,  safi,p, rib,  num) != OK)
+		return ERROR;
 	ret = hal_route_multipath_del(0, safi, p, rib, num);
 	return ret;
 }

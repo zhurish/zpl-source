@@ -34,8 +34,11 @@ externsions/freetype-2.10.0
 externsions/gsoap-2.8
 externsions/SDL2-2.0.12
 externsions/readline
+externsions/libnl/*
+halpal/pal/linux/iproute2-5.9.0/*
+halpal/pal/linux/libiproute/*
 product/sdk-robo-5.9.2
-product/bsp/pal/linux/iproute2-5.9.0
+product/nsp/pal/linux/iproute2-5.9.0
 product/bsp/pal/linux/libiproute
 *.libs/*
 *.deps/*

@@ -9,16 +9,15 @@ OBJS	+= connected.o
 OBJS	+= nsm_debug.o
 OBJS	+= nsm_redistribute.o
 OBJS	+= nsm_rib.o
+OBJS	+= nsm_ipvrf.o
 
-OBJS	+= nsm_zebra_routemap.o
+OBJS	+= nsm_routemap.o
 OBJS	+= nsm_rnh.o
 OBJS	+= nsm_zserv.o
 
 OBJS	+= nsm_interface.o
 OBJS	+= nsm_halpal.o
-#OBJS	+= nsm_client.o
-#OBJS	+= nsm_hook.o
-#OBJS	+= nsm_rib.o
+
 OBJS	+= nsm_global.o
 OBJS	+= nsm_port.o
 

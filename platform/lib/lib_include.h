@@ -11,7 +11,7 @@ extern "C" {
 #include "zpl_type.h"
 
 #include "route_types.h"
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "hash.h"
 #include "jhash.h"
 #include "module.h"

@@ -41,7 +41,6 @@
 #if defined (ZPL_BUILD_IPV6) && defined (ZPL_NSM_RTADV)
 
 
-extern zpl_socket_t _kernel_vrf_socket (int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id);
 
 struct nsm_rtadv_t nsm_rtadv;
 
@@ -65,7 +64,7 @@ const char *rtadv_pref_strs[] = { "medium", "high", "INVALID", "low", 0 };
 enum nsm_rtadv_event_t {RTADV_EVENT_START, RTADV_EVENT_STOP, RTADV_EVENT_TIMER, 
 		  RTADV_EVENT_TIMER_MSEC, RTADV_EVENT_READ};
 
-static void nsm_rtadv_event (struct nsm_ip_vrf *, enum nsm_rtadv_event_t, zpl_socket_t, int);
+static void nsm_rtadv_event (struct nsm_ipvrf *, enum nsm_rtadv_event_t, zpl_socket_t, int);
 
 static int nsm_rtadv_join_all_router (zpl_socket_t, struct interface *);
 static int nsm_rtadv_leave_all_router (zpl_socket_t, struct interface *);
@@ -164,7 +163,7 @@ nsm_rtadv_send_packet (zpl_socket_t sock, struct interface *ifp)
     }
 
   /* Logging of packet. */
-  if (IS_ZEBRA_DEBUG_PACKET)
+  if (IS_NSM_DEBUG_PACKET)
     zlog_debug (MODULE_NSM, "Router advertisement send to %s", ifp->name);
 
   /* Fill in sockaddr_in6. */
@@ -353,7 +352,7 @@ nsm_rtadv_send_packet (zpl_socket_t sock, struct interface *ifp)
 static int
 nsm_rtadv_timer (struct thread *thread)
 {
-  struct nsm_ip_vrf *zvrf = ELOOP_ARG (thread);
+  struct nsm_ipvrf *zvrf = ELOOP_ARG (thread);
   struct listnode *node, *nnode;
   struct interface *ifp;
   struct nsm_interface *zif;
@@ -398,7 +397,7 @@ nsm_rtadv_timer (struct thread *thread)
 static void
 nsm_rtadv_process_solicit (struct interface *ifp)
 {
-  struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (ifp->vrf_id);
+  struct nsm_ipvrf *zvrf = ip_vrf_info_lookup (ifp->vrf_id);
 
   zlog_info (MODULE_NSM,"Router solicitation received on %s vrf %u", ifp->name, zvrf->vrf_id);
 
@@ -478,7 +477,7 @@ nsm_rtadv_read (struct thread *thread)
   struct ipstack_sockaddr_in6 from;
   ifindex_t ifindex = 0;
   int hoplimit = -1;
-  struct nsm_ip_vrf *zvrf = ELOOP_ARG (thread);
+  struct nsm_ipvrf *zvrf = ELOOP_ARG (thread);
 
   sock = ELOOP_FD (thread);
   zvrf->rtadv.ra_read = NULL;
@@ -506,8 +505,7 @@ nsm_rtadv_make_socket (vrf_id_t vrf_id)
   int ret;
   struct ipstack_icmp6_filter filter;
 
-        
-  sock = _kernel_vrf_socket (IPSTACK_AF_INET6, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMPV6, vrf_id);
+  sock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMPV6);
 
 
   /* When we can't make ICMPV6 socket simply back.  Router
@@ -644,7 +642,7 @@ DEFUN (ipv6_nd_suppress_ra,
 {
   struct interface *ifp;
   struct nsm_interface *zif;
-  struct nsm_ip_vrf *zvrf;
+  struct nsm_ipvrf *zvrf;
 
   ifp = vty->index;
   zif = ifp->info[MODULE_NSM];
@@ -681,7 +679,7 @@ DEFUN (no_ipv6_nd_suppress_ra,
 {
   struct interface *ifp;
   struct nsm_interface *zif;
-  struct nsm_ip_vrf *zvrf;
+  struct nsm_ipvrf *zvrf;
 
   ifp = vty->index;
   zif = ifp->info[MODULE_NSM];
@@ -719,7 +717,7 @@ DEFUN (ipv6_nd_ra_interval_msec,
   unsigned interval;
   struct interface *ifp = (struct interface *) vty->index;
   struct nsm_interface *zif = ifp->info[MODULE_NSM];
-  struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (ifp->vrf_id);
+  struct nsm_ipvrf *zvrf = ip_vrf_info_lookup (ifp->vrf_id);
 
   VTY_GET_INTEGER_RANGE ("router advertisement interval", interval, argv[0], 70, 1800000);
   if ((zif->rtadv.AdvDefaultLifetime != -1 && interval > (unsigned)zif->rtadv.AdvDefaultLifetime * 1000))
@@ -752,7 +750,7 @@ DEFUN (ipv6_nd_ra_interval,
   unsigned interval;
   struct interface *ifp = (struct interface *) vty->index;
   struct nsm_interface *zif = ifp->info[MODULE_NSM];
-  struct nsm_ip_vrf *zvrf = ip_vrf_info_lookup (ifp->vrf_id);
+  struct nsm_ipvrf *zvrf = ip_vrf_info_lookup (ifp->vrf_id);
 
   VTY_GET_INTEGER_RANGE ("router advertisement interval", interval, argv[0], 1, 1800);
   if ((zif->rtadv.AdvDefaultLifetime != -1 && interval > (unsigned)zif->rtadv.AdvDefaultLifetime))
@@ -784,7 +782,7 @@ DEFUN (no_ipv6_nd_ra_interval,
 {
   struct interface *ifp;
   struct nsm_interface *zif;
-  struct nsm_ip_vrf *zvrf;
+  struct nsm_ipvrf *zvrf;
 
   ifp = (struct interface *) vty->index;
   zif = ifp->info[MODULE_NSM];
@@ -1613,7 +1611,7 @@ nsm_rtadv_config_write (struct vty *vty, struct interface *ifp)
 
 
 static void
-nsm_rtadv_event (struct nsm_ip_vrf *zvrf, enum nsm_rtadv_event_t event, zpl_socket_t sock, int val)
+nsm_rtadv_event (struct nsm_ipvrf *zvrf, enum nsm_rtadv_event_t event, zpl_socket_t sock, int val)
 {
   struct rtadv *rtadv = &zvrf->rtadv;
 
@@ -1659,13 +1657,13 @@ nsm_rtadv_event (struct nsm_ip_vrf *zvrf, enum nsm_rtadv_event_t event, zpl_sock
 }
 
 void
-nsm_rtadv_init (struct nsm_ip_vrf *zvrf)
+nsm_rtadv_init (struct nsm_ipvrf *zvrf)
 {
   zvrf->rtadv.sock = nsm_rtadv_make_socket (zvrf->vrf_id);
 }
 
 void
-nsm_rtadv_terminate (struct nsm_ip_vrf *zvrf)
+nsm_rtadv_terminate (struct nsm_ipvrf *zvrf)
 {
   nsm_rtadv_event (zvrf, RTADV_EVENT_STOP, zvrf->rtadv.sock, 0);
 
@@ -1775,12 +1773,12 @@ nsm_rtadv_leave_all_router (zpl_socket_t sock, struct interface *ifp)
 
 #else
 void
-nsm_rtadv_init (struct nsm_ip_vrf *zvrf)
+nsm_rtadv_init (struct nsm_ipvrf *zvrf)
 {
   /* Empty.*/;
 }
 void
-nsm_rtadv_terminate (struct nsm_ip_vrf *zvrf)
+nsm_rtadv_terminate (struct nsm_ipvrf *zvrf)
 {
   /* Empty.*/;
 }

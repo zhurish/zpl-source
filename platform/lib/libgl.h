@@ -1,6 +1,6 @@
 
-#ifndef _ZEBRA_LIB_GLOBAL_H
-#define _ZEBRA_LIB_GLOBAL_H
+#ifndef __LIB_GLOBAL_H
+#define _LIB_GLOBAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,4 +45,4 @@ extern struct key *lib_global_lookup_module (zpl_uint32);
 }
 #endif
 
-#endif /* _ZEBRA_LIB_GLOBAL_H */
+#endif /* __LIB_GLOBAL_H */

@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_NETWORK_H
-#define _ZEBRA_NETWORK_H
+#ifndef __LIB_NETWORK_H
+#define __LIB_NETWORK_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,4 +40,4 @@ extern zpl_float ntohf (zpl_float);
 }
 #endif
 
-#endif /* _ZEBRA_NETWORK_H */
+#endif /* __LIB_NETWORK_H */

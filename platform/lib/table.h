@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_TABLE_H
-#define _ZEBRA_TABLE_H
+#ifndef __LIB_TABLE_H
+#define __LIB_TABLE_H
 
 /*
  * Forward declarations.
@@ -263,4 +263,4 @@ route_table_iter_started (route_table_iter_t *iter)
   return iter->state != RT_ITER_STATE_INIT;
 }
 
-#endif /* _ZEBRA_TABLE_H */
+#endif /* __LIB_TABLE_H */

@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_VECTOR_H
-#define _ZEBRA_VECTOR_H
+#ifndef __LIB_VECTOR_H
+#define __LIB_VECTOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,4 +68,4 @@ extern void *vector_lookup_ensure (vector, zpl_uint32 );
 }
 #endif
 
-#endif /* _ZEBRA_VECTOR_H */
+#endif /* __LIB_VECTOR_H */

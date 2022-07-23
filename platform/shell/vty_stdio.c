@@ -821,7 +821,7 @@ try_connect(struct daemon *dmn)
            gs.vtydir, dmn->name);
            */
   snprintf(addr.sun_path, sizeof(addr.sun_path), "%s",
-           ZEBRA_VTYSH_PATH);
+           NSM_VTYSH_PATH);
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
   len = addr.sun_len = SUN_LEN(&addr);
 #else

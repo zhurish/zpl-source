@@ -14,7 +14,7 @@ extern "C" {
 
 #include "auto_include.h"
 #include <zplos_include.h>
-#include "zebra_event.h"
+#include "nsm_event.h"
 #include "route_types.h"
 #include "zmemory.h"
 #include "vty.h"

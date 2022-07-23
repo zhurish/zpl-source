@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_REDISTRIBUTE_H
-#define _ZEBRA_REDISTRIBUTE_H
+#ifndef __NSM_REDISTRIBUTE_H
+#define __NSM_REDISTRIBUTE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,36 +30,36 @@ extern "C" {
 #include "table.h"
 #include "nsm_zserv.h"
 
-extern void zebra_redistribute_add (zpl_uint16, struct zserv *, zpl_size_t, vrf_id_t);
-extern void zebra_redistribute_delete (zpl_uint16, struct zserv *, zpl_size_t, vrf_id_t);
+extern void nsm_redistribute_add (zpl_uint16, struct zserv *, zpl_size_t, vrf_id_t);
+extern void nsm_redistribute_delete (zpl_uint16, struct zserv *, zpl_size_t, vrf_id_t);
 
-extern void zebra_redistribute_default_add (zpl_uint16, struct zserv *, zpl_size_t,
+extern void nsm_redistribute_default_add (zpl_uint16, struct zserv *, zpl_size_t,
     vrf_id_t);
-extern void zebra_redistribute_default_delete (zpl_uint16, struct zserv *, zpl_size_t,
+extern void nsm_redistribute_default_delete (zpl_uint16, struct zserv *, zpl_size_t,
     vrf_id_t);
 
-extern void redistribute_add (struct prefix *, struct rib *new, struct rib *old);
-extern void redistribute_delete (struct prefix *, struct rib *);
+extern void nsm_route_redistribute_add (struct prefix *, struct rib *new, struct rib *old);
+extern void nsm_route_redistribute_delete (struct prefix *, struct rib *);
 
-extern void zebra_interface_up_update (struct interface *);
-extern void zebra_interface_down_update (struct interface *);
+extern void nsm_interface_up_update (struct interface *);
+extern void nsm_interface_down_update (struct interface *);
 
-extern void zebra_interface_add_update (struct interface *);
-extern void zebra_interface_delete_update (struct interface *);
+extern void nsm_interface_add_update (struct interface *);
+extern void nsm_interface_delete_update (struct interface *);
 
-extern void zebra_interface_address_add_update (struct interface *,
+extern void nsm_interface_address_add_update (struct interface *,
 					 	struct connected *);
-extern void zebra_interface_address_delete_update (struct interface *,
+extern void nsm_interface_address_delete_update (struct interface *,
 						   struct connected *c);
 
-extern void zebra_interface_mode_update (struct interface *ifp, zpl_uint32  mode);
+extern void nsm_interface_mode_update (struct interface *ifp, zpl_uint32  mode);
 
-extern void zebra_write_config_cb (struct vty *vty);
-extern void zebra_debug_write_config_cb (struct vty *vty);
-extern void zebra_interface_write_config_cb (struct vty *vty, struct interface *ifp);
+extern void nsm_write_config_cb (struct vty *vty);
+extern void nsm_debug_write_config_cb (struct vty *vty);
+extern void nsm_interface_write_config_cb (struct vty *vty, struct interface *ifp);
 
 
-extern int zebra_check_addr (struct prefix *);
+extern int nsm_check_addr (struct prefix *);
 
 extern int is_default (struct prefix *);
  
@@ -67,5 +67,5 @@ extern int is_default (struct prefix *);
 }
 #endif
 
-#endif /* _ZEBRA_REDISTRIBUTE_H */
+#endif /* __NSM_REDISTRIBUTE_H */
 

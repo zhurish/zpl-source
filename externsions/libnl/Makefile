@@ -31,7 +31,6 @@ install: $(LIBS)
 
 clean: 
 	$(SHELL) build.sh clean
-	$(RM) libnl-3.6.0/Makefile
 
 all: lib
 

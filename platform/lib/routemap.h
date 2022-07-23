@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_ROUTEMAP_H
-#define _ZEBRA_ROUTEMAP_H
+#ifndef __LIB_ROUTEMAP_H
+#define __LIB_ROUTEMAP_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +53,7 @@ typedef enum
   RMAP_OSPF,
   RMAP_OSPF6,
   RMAP_BGP,
-  RMAP_ZEBRA,
+  RMAP_NSM,
   RMAP_ISIS,
 } route_map_object_t;
 
@@ -211,4 +211,4 @@ extern void route_map_rule_tag_free (void *rule);
 }
 #endif
 
-#endif /* _ZEBRA_ROUTEMAP_H */
+#endif /* __LIB_ROUTEMAP_H */

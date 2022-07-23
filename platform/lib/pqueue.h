@@ -18,8 +18,8 @@ along with GNU Zebra; see the file COPYING.  If not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef _ZEBRA_PQUEUE_H
-#define _ZEBRA_PQUEUE_H
+#ifndef __LIB_PQUEUE_H
+#define __LIB_PQUEUE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,4 +53,4 @@ extern zpl_bool pqueue_empty (struct pqueue *queue);
 }
 #endif
 
-#endif /* _ZEBRA_PQUEUE_H */
+#endif /* __LIB_PQUEUE_H */

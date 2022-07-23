@@ -47,7 +47,7 @@ static int nsm_port_channel_add(struct interface *ifp)
 		return OK;
 	NSM_ENTER_FUNC();
 
-zlog_warn(MODULE_NSM, " ===== carate port ifindex=%x trunkid %d ", ifp->ifindex, IF_IFINDEX_ID_GET(ifp->ifindex));
+	zlog_warn(MODULE_NSM, " ===== carate port ifindex=%x trunkid %d ", ifp->ifindex, IF_IFINDEX_ID_GET(ifp->ifindex));
 	nsm_trunk_create_api(IF_IFINDEX_ID_GET(ifp->ifindex), TRUNK_STATIC);
 
 	port_channel = l2trunk_group_lookup_node(IF_IFINDEX_ID_GET(ifp->ifindex));

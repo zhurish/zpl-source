@@ -33,10 +33,10 @@ extern "C" {
 #include "if.h"
 #include "route_types.h"
 /* For input/output buffer to zebra. */
-#define ZEBRA_MAX_PACKET_SIZ          4096
+#define ZCLIENT_MAX_PACKET_SIZ          4096
 
 /* Zebra header size. */
-#define ZEBRA_HEADER_SIZE             6
+#define ZCLIENT_HEADER_SIZE             6
 
 /* Structure for the zebra client. */
 struct zclient
@@ -69,7 +69,7 @@ struct zclient
 
   /* Redistribute information. */
   zpl_uchar redist_default;
-  zpl_uchar redist[ZEBRA_ROUTE_MAX];
+  zpl_uchar redist[ZPL_ROUTE_PROTO_MAX];
 
   /* Redistribute defauilt. */
   zpl_uchar default_information;
@@ -144,9 +144,9 @@ extern void zclient_serv_path_set  (zpl_char *path);
 extern const char *const zclient_serv_path_get (void);
 
 /* Send redistribute command to zebra daemon. Do not update zclient state. */
-extern int zebra_redistribute_send (zpl_uint16 command, struct zclient *, zpl_uint32 type);
+extern int zclient_redistribute_send (zpl_uint16 command, struct zclient *, zpl_uint32 type);
 
-/* If state has changed, update state and call zebra_redistribute_send. */
+/* If state has changed, update state and call zclient_redistribute_send. */
 extern void zclient_redistribute (zpl_uint16 command, struct zclient *, zpl_uint32 type);
 
 /* If state has changed, update state and send the command to zebra. */
@@ -159,11 +159,11 @@ extern int zclient_send_message(struct zclient *);
 /* create header for command, length to be filled in by user later */
 extern void zclient_create_header (struct stream *, zpl_uint16);
 
-extern struct interface *zebra_interface_add_read (struct stream *);
-extern struct interface *zebra_interface_state_read (struct stream *s);
-extern struct connected *zebra_interface_address_read (zpl_uint16, struct stream *);
-extern void zebra_interface_if_set_value (struct stream *, struct interface *);
-extern void zebra_router_id_update_read (struct stream *s, struct prefix *rid);
+extern struct interface *zclient_interface_add_read (struct stream *);
+extern struct interface *zclient_interface_state_read (struct stream *s);
+extern struct connected *zclient_interface_address_read (zpl_uint16, struct stream *);
+extern void zclient_interface_if_set_value (struct stream *, struct interface *);
+extern void zclient_router_id_update_read (struct stream *s, struct prefix *rid);
 extern int zapi_ipv4_route (zpl_uint16, struct zclient *, struct prefix_ipv4 *, 
                             struct zapi_ipv4 *);
 

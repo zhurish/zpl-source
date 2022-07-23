@@ -258,7 +258,7 @@ int nsm_bridge_interface_create_api(struct interface *ifp)
 	nsm_bridge_t * bridge = NULL;
 	if(if_is_brigde(ifp))
 	{
-		bridge = XMALLOC(MTYPE_IF, sizeof(nsm_bridge_t));
+		bridge = XMALLOC(MTYPE_IF_DATA, sizeof(nsm_bridge_t));
 		zassert(bridge);
 		os_memset(bridge, 0, sizeof(nsm_bridge_t));
 		bridge->ifp = ifp;
@@ -277,8 +277,8 @@ int nsm_bridge_interface_del_api(struct interface *ifp)
 		if(bridge)
 		{
 			nsm_bridge_member_del_all(bridge);
-			struct nsm_interface *nsm = ifp->info[MODULE_NSM];
-			XFREE(MTYPE_IF, bridge);
+			//struct nsm_interface *nsm = ifp->info[MODULE_NSM];
+			XFREE(MTYPE_IF_DATA, bridge);
 			nsm_intf_module_data_set(ifp, NSM_INTF_BRIDGE, NULL);
 		}
 	}

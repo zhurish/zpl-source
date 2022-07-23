@@ -148,7 +148,7 @@ int main(int argc, char **argv, char **env)
   vtysh_auth();
 
   /* Do not connect until we have passed authentication. */
-  if (vtysh_connect(ZEBRA_VTYSH_PATH) <= 0)
+  if (vtysh_connect(NSM_VTYSH_PATH) <= 0)
   {
     fprintf(stderr, "Exiting: failed to connect to any daemons.\n");
     //exit(1);

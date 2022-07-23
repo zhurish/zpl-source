@@ -1010,7 +1010,7 @@ static int iw_client_task(iw_client_t *iw_client)
 	if(ifp)
 	{
 		if_kname_set(ifp, "wlp3s0");
-		SET_FLAG(ifp->status, ZEBRA_INTERFACE_ATTACH);
+		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 
 		nsm_halpal_interface_update_flag(ifp);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);

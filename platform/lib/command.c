@@ -658,9 +658,11 @@ static int cmd_element_check(struct cmd_element *cmd)
   cmd_keystr_surplus_isspace(cmd->string, cmdstr);
   if(cmd_keystr_maxsize(cmdstr) != cmd_helpstr_maxsize(cmd->doc))
   {
+    /*
     fprintf(stderr, "\nError parsing command: \"%s\"\n", cmd->string);
     fprintf(stderr, "This is a programming error. Check your CLI helpstr.\n");
     return ERROR;
+    */
   }
   return OK;
 }
@@ -678,7 +680,7 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
     return;
   }
   if(cmd_element_check(cmd) == ERROR)
-    ;//exit(1);
+    exit(1);
 
   cnode = vector_slot(cli_cmdvec_list, ntype);
 

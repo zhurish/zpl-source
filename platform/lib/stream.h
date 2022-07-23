@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_STREAM_H
-#define _ZEBRA_STREAM_H
+#ifndef __LIB_STREAM_H
+#define __LIB_STREAM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -252,4 +252,4 @@ extern void stream_fifo_free (struct stream_fifo *fifo);
 }
 #endif
 
-#endif /* _ZEBRA_STREAM_H */
+#endif /* __LIB_STREAM_H */

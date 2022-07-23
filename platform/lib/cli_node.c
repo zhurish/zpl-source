@@ -23,9 +23,7 @@ static enum node_type vty_issubnode(enum node_type node)
 	case KEYCHAIN_KEY_NODE:
 		ret = KEYCHAIN_NODE;
 		break;
-	case LINK_PARAMS_NODE:
-		ret = INTERFACE_NODE;
-		break;
+
 	case QOS_POLICY_CLASS_MAP_NODE:
 		ret = QOS_POLICY_MAP_NODE;
 		break;
@@ -103,9 +101,7 @@ enum node_type node_parent(enum node_type node)
 	case KEYCHAIN_KEY_NODE:
 		ret = KEYCHAIN_NODE;
 		break;
-	case LINK_PARAMS_NODE:
-		ret = INTERFACE_NODE;
-		break;
+
 	case QOS_POLICY_CLASS_MAP_NODE:
 		ret = QOS_POLICY_MAP_NODE;
 		break;
@@ -141,7 +137,6 @@ enum node_type cmd_exit_node(struct vty *vty)
 	case MODEM_INTERFACE_NODE:
 #endif
 	case TRUNK_NODE:
-	case ZEBRA_NODE:
 	case BGP_NODE:
 	case RIP_NODE:
 	case RIPNG_NODE:
@@ -190,9 +185,7 @@ enum node_type cmd_exit_node(struct vty *vty)
 	case KEYCHAIN_KEY_NODE:
 		ret = KEYCHAIN_NODE;
 		break;
-	case LINK_PARAMS_NODE:
-		ret = INTERFACE_NODE;
-		break;
+
 #if defined(ZPL_SDK_MODULE)
 	case SDK_NODE:
 		ret = ENABLE_NODE;

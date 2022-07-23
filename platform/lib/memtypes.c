@@ -52,6 +52,7 @@ struct memory_list memory_list_lib[] =
   { MTYPE_IF_DESC,			"Interface destination"	},
   { MTYPE_IF_HOOK,			"Interface Hook"			},
   { MTYPE_IF_INFO,			"Interface Information"	},
+  { MTYPE_IF_DATA,			"Interface Data"	},
   { MTYPE_SECURITY,			"Security information"			},
   { MTYPE_CONNECTED,		"Connected" 			},
   { MTYPE_CONNECTED_LABEL,	"Connected interface label"	},
@@ -107,10 +108,10 @@ struct memory_list memory_list_lib[] =
   { -1, "" },
 };
 
-struct memory_list memory_list_zebra[] = 
+struct memory_list memory_list_nsm[] = 
 {
   { MTYPE_RTADV_PREFIX,		"Router Advertisement Prefix"	},
-  { MTYPE_ZEBRA_VRF,		"ZEBRA VRF"				},
+  { MTYPE_NSM_VRF,		"NSM VRF"				},
   { MTYPE_NEXTHOP,		"Nexthop"			},
   { MTYPE_RIB,			"RIB"				},
   { MTYPE_RIB_QUEUE,		"RIB process work queue"	},
@@ -335,7 +336,7 @@ struct memory_list memory_list_vtysh[] =
 };
 
 /* 2016��6��27�� 21:07:44 zhurish: ��չ·��Э�����ӵ��ڴ���Ϣ */
-#ifdef ZEBRA_ROUTE_OLSR 
+#ifdef ZPL_ROUTE_PROTO_OLSR 
 struct memory_list memory_list_olsr[] =
 {
   { MTYPE_OLSR_TOP,		"OLSR top",		},
@@ -358,7 +359,7 @@ struct memory_list memory_list_olsr[] =
   { -1, "" },
 }; 
 #endif
-#ifdef ZEBRA_ROUTE_LDP
+#ifdef ZPL_ROUTE_PROTO_LDP
 struct memory_list memory_list_ldp[] =
 {
   /* LDP Related Memory Types */
@@ -382,7 +383,7 @@ struct memory_list memory_list_ldp[] =
   { -1, "" },
 };
 #endif
-#ifdef ZEBRA_ROUTE_LLDP
+#ifdef ZPL_ROUTE_PROTO_LLDP
 struct memory_list memory_list_lldp[] =
 {
   /* LDP Related Memory Types */
@@ -598,7 +599,7 @@ struct memory_list memory_list_qosacl[] =
 
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
-  { memory_list_zebra,	"ZEBRA"	},
+  { memory_list_nsm,	"NSM"	},
   { memory_list_rip,	"RIP"	},
   { memory_list_ripng,	"RIPNG"	},
   { memory_list_ospf,	"OSPF"	},
@@ -608,15 +609,15 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_pim,	"PIM"	},
   { memory_list_nhrp,	"NHRP"	},
 
-#ifdef ZEBRA_ROUTE_OLSR 
+#ifdef ZPL_ROUTE_PROTO_OLSR 
   { memory_list_olsr,	"OLSR"	},
 #endif  
 
-#ifdef ZEBRA_ROUTE_LDP 
+#ifdef ZPL_ROUTE_PROTO_LDP 
   { memory_list_ldp,	"LDP"	},
 #endif 
 
-#ifdef ZEBRA_ROUTE_LLDP
+#ifdef ZPL_ROUTE_PROTO_LLDP
   { memory_list_lldp,	"LLDP"	},
 #endif
 #ifdef ZPL_MODEM_MODULE

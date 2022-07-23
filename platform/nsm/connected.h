@@ -20,8 +20,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_CONNECTED_H
-#define _ZEBRA_CONNECTED_H
+#ifndef _LIB_CONNECTED_H
+#define _LIB_CONNECTED_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,4 +67,4 @@ connected_delete_ipv6 (struct interface *ifp, struct ipstack_in6_addr *address,
 }
 #endif
 
-#endif /*_ZEBRA_CONNECTED_H */
+#endif /*_LIB_CONNECTED_H */

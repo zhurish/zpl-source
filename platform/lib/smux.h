@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _ZEBRA_SNMP_H
-#define _ZEBRA_SNMP_H
+#ifndef __LIB_SNMP_H
+#define __LIB_SNMP_H
 
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/agent/snmp_vars.h>
@@ -113,4 +113,4 @@ extern void oid2in_addr (oid [], int, struct in_addr *);
 extern void *oid_copy (void *, const void *, size_t);
 extern void oid_copy_addr (oid [], struct in_addr *, int);
 
-#endif /* _ZEBRA_SNMP_H */
+#endif /* __LIB_SNMP_H */
