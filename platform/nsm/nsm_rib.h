@@ -151,8 +151,9 @@ typedef struct rib_dest_t_
    * Flags, see below.
    */
   zpl_uint32 flags;
-
-
+#ifdef ZPL_NSM_FPM 
+  TAILQ_ENTRY(rib_dest_t_) fpm_q_entries;
+#endif  
 } rib_dest_t;
 
 #define RIB_ROUTE_QUEUED(x)	(1 << (x))

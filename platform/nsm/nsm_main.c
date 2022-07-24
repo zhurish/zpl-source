@@ -37,8 +37,10 @@
 #include "nsm_main.h"
 #include "nsm_zserv.h"
 #include "nsm_include.h"
-
-
+#ifdef ZPL_NSM_FPM
+#include "fpm.h"
+#include "nsm_fpm.h"
+#endif
 
 struct module_list module_list_nsm = {
 		.module = MODULE_NSM,
@@ -139,6 +141,12 @@ int nsm_module_init(void)
 #ifdef ZPL_NSM_VLANETH
 	nsm_vlaneth_init();
 #endif
+#ifdef ZPL_NSM_FPM
+  zfpm_init (nsm_rtadv.master, 1, 0, "FPM");
+#endif
+#ifdef ZPL_NSM_SNMP
+  nsm_snmp_init ();
+#endif /* ZPL_NSM_SNMP */
 
 	nsm_zserv_init();
 	extern void librtnl_open(vrf_id_t vrfid, zpl_uint32 msgsize);

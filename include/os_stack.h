@@ -839,8 +839,8 @@ extern "C" {
  *===========================================================================
  */
 
-#define if_index ni.if_index
-#define if_name  ni.if_name
+//#define if_index ni.if_index
+//#define if_name  ni.if_name
 
 /*
  *===========================================================================

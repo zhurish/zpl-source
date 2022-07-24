@@ -25,14 +25,23 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
+
 #include "lib_include.h"
 #include "nsm_include.h"
 
-#ifdef HAVE_SNMP
+
+#ifdef ZPL_NSM_SNMP
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
-
-
+#include <net-snmp/agent/net-snmp-agent-includes.h>
+#include "smux.h"
+//#include <net-snmp/agent/snmp_vars.h>
+    typedef int     (WriteMethod) (int action,
+                                   u_char * var_val,
+                                   u_char var_val_type,
+                                   size_t var_val_len,
+                                   u_char * statP,
+                                   oid * name, size_t length);
 
 #define IPFWMIB 1,3,6,1,2,1,4,24
 
@@ -78,7 +87,6 @@
 #define IPADDRESS ASN_IPADDRESS
 #define OBJECTIDENTIFIER ASN_OBJECT_ID
 
-extern struct nsm_srv_t m_nsm_srv;
 
 oid ipfw_oid [] = { IPFWMIB };
 
@@ -91,6 +99,7 @@ static zpl_uchar * ipCidrNumber (struct variable *, oid [], zpl_size_t *,
 			      int, zpl_size_t *, WriteMethod **);
 static zpl_uchar * ipCidrTable (struct variable *, oid [], zpl_size_t *,
 			     int, zpl_size_t *, WriteMethod **);
+
 
 struct variable nsm_variables[] = 
   {
@@ -183,7 +192,7 @@ ipCidrNumber (struct variable *v, oid objid[], zpl_size_t *objid_len,
 static int
 in_addr_cmp(zpl_uchar *p1, zpl_uchar *p2)
 {
-  zpl_uint32;
+  zpl_uint32 i;
 
   for (i=0; i<4; i++)
     {
@@ -199,7 +208,7 @@ in_addr_cmp(zpl_uchar *p1, zpl_uchar *p2)
 static int 
 in_addr_add(zpl_uchar *p, int num)
 {
-  zpl_uint32, ip0;
+  zpl_uint32 i, ip0;
 
   ip0 = *p;
   p += 4;
@@ -302,9 +311,9 @@ get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len,
   struct rib *rib2;
   zpl_proto_t proto;
   zpl_uint32 policy;
-  struct ipstack_in_addr nexthop;
+  struct ipstack_in_addr nexthop_addr;
   zpl_uchar *pnt;
-  zpl_uint32;
+  zpl_uint32 i;
 
   /* Init index variables */
 
@@ -312,7 +321,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len,
   for (i = 0; i < 4; i++)
     *pnt++ = 0;
 
-  pnt = (zpl_uchar *) &nexthop;
+  pnt = (zpl_uchar *) &nexthop_addr;
   for (i = 0; i < 4; i++)
     *pnt++ = 0;
 
@@ -348,13 +357,13 @@ get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len,
 
   if (*objid_len > (unsigned) v->namelen + 6)
     oid2in_addr (objid + v->namelen + 6, MIN(4, *objid_len - v->namelen - 6),
-		 &nexthop);
+		 &nexthop_addr);
 
   /* Apply GETNEXT on not exact search */
 
   if (!exact && (*objid_len >= (unsigned) v->namelen + 10))
     {
-      if (! in_addr_add((zpl_uchar *) &nexthop, 1)) 
+      if (! in_addr_add((zpl_uchar *) &nexthop_addr, 1)) 
         return;
     }
 
@@ -371,7 +380,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len,
 	      RNODE_FOREACH_RIB (*np, *rib)
 	        {
 		  if (!in_addr_cmp((zpl_uchar *)&(*rib)->nexthop->gate.ipv4,
-				   (zpl_uchar *)&nexthop))
+				   (zpl_uchar *)&nexthop_addr))
 		    if (proto == proto_trans((*rib)->type))
 		      return;
 		}
@@ -403,7 +412,7 @@ get_fwtable_route_node(struct variable *v, oid objid[], zpl_size_t *objid_len,
 		  || ((policy == policy2) && (proto < proto2))
 		  || ((policy == policy2) && (proto == proto2)
 		      && (in_addr_cmp((zpl_uchar *)&rib2->nexthop->gate.ipv4,
-				      (zpl_uchar *) &nexthop) >= 0)
+				      (zpl_uchar *) &nexthop_addr) >= 0)
 		      ))
 		check_replace(np2, rib2, np, rib);
 	    }
@@ -567,10 +576,15 @@ ipCidrTable (struct variable *v, oid objid[], zpl_size_t *objid_len,
   return NULL;
 }
 
-void
-nsm_snmp_init ()
+void nsm_snmp_init (void)
 {
-  smux_init (m_nsm_srv.master);
+  smux_init (nsm_srv->master);
   REGISTER_MIB("mibII/ipforward", nsm_variables, variable, ipfw_oid);
 }
-#endif /* HAVE_SNMP */
+#endif /* ZPL_NSM_SNMP */
+
+/*
+生成标量对象框架代码：mib2c.scalar.conf
+生成表对象框架代码：mib2c.iterate.conf 或 mib2c.mfd.conf
+mib2c -c mib2c.old-api.conf ipForward
+*/

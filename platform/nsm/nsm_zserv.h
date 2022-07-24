@@ -146,6 +146,7 @@ extern int nsm_zserv_send_message(struct zserv *client);
 
 
 extern void nsm_route_map_init (void);
+extern void nsm_snmp_init (void);
 
 #ifdef __cplusplus
 }

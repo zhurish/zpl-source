@@ -54,6 +54,10 @@
 #if defined (ZPL_NSM_RTADV)
 #include "nsm_rtadv.h"
 #endif
+#ifdef ZPL_NSM_FPM
+#include "fpm.h"
+#include "nsm_fpm.h"
+#endif
 #endif
 
 
@@ -983,9 +987,10 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 {
 	rib_table_info_t *info = rn->table->info;
 	struct interface *ifp;
-	#ifdef ZPL_NSM_MODULE
+
 	route_map_result_t ret = RMAP_MATCH;
-	#endif
+    extern char *proto_rm[AFI_MAX][ZPL_ROUTE_PROTO_MAX+1];
+    struct route_map *rmap;
 	zpl_family_t family;
 
 	family = 0;
@@ -1077,16 +1082,16 @@ static unsigned nexthop_active_check(struct route_node *rn, struct rib *rib,
 	if (!family)
 		family = info->afi;
 
-	/*  rmap = 0;
-	 if (rib->type >= 0 && rib->type < ZPL_ROUTE_PROTO_MAX &&
-	 proto_rm[family][rib->type])
-	 rmap = route_map_lookup_by_name (proto_rm[family][rib->type]);
+	 rmap = 0;
+	 if (rib->type >= 0 && rib->type < ZPL_ROUTE_PROTO_MAX && proto_rm[family][rib->type])
+	 	rmap = route_map_lookup_by_name (proto_rm[family][rib->type]);
 	 if (!rmap && proto_rm[family][ZPL_ROUTE_PROTO_MAX])
-	 rmap = route_map_lookup_by_name (proto_rm[family][ZPL_ROUTE_PROTO_MAX]);
-	 if (rmap) {
-	 struct nexthop_vrfid nh_vrf = {nexthop, rib->vrf_id};
-	 ret = route_map_apply(rmap, &rn->p, RMAP_NSM, &nh_vrf);
-	 }*/
+	 	rmap = route_map_lookup_by_name (proto_rm[family][ZPL_ROUTE_PROTO_MAX]);
+	 if (rmap) 
+	 {
+	 	struct nexthop_vrfid nh_vrf = {nexthop, rib->vrf_id};
+	 	ret = route_map_apply(rmap, &rn->p, RMAP_NSM, &nh_vrf);
+	 }
 #ifdef ZPL_NSM_MODULE
 	if (ret == RMAP_DENYMATCH)
 		UNSET_FLAG(nexthop->flags, NEXTHOP_FLAG_ACTIVE);
@@ -1199,6 +1204,13 @@ static int rib_update_forward_pm(struct route_node *rn, struct rib *old,
 		return 0;
 	}
 
+  /*
+   * Make sure we update the FPM any time we send new information to
+   * the kernel.
+   */
+#ifdef ZPL_NSM_FPM  
+  	zfpm_trigger_update (rn, "updating in kernel");
+#endif  
 	ret = rib_update_forward_pm_install(info->safi, &rn->p, old, new);
 
 	/* This condition is never met, if we are using rt_socket.c */
@@ -1219,13 +1231,17 @@ static int rib_update_forward_pm(struct route_node *rn, struct rib *old,
 /* Uninstall the route from kernel. */
 static void rib_uninstall(struct route_node *rn, struct rib *rib)
 {
-	//rib_table_info_t *info = rn->table->info;
-
+#ifdef ZPL_NSM_FPM 	
+  	rib_table_info_t *info = rn->table->info;
+#endif
 	if (CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 	{
-#ifdef ZPL_NSM_MODULE
-		nsm_route_redistribute_delete(&rn->p, rib);
-#endif
+#ifdef ZPL_NSM_FPM 		
+      if (info->safi == SAFI_UNICAST)
+        zfpm_trigger_update (rn, "rib_uninstall");
+#endif		
+		nsm_redistribute_route_delete(&rn->p, rib);
+
 		if (!RIB_SYSTEM_ROUTE(rib))
 			rib_update_forward_pm(rn, rib, NULL);
 		UNSET_FLAG(rib->flags, NSM_RIB_FLAG_SELECTED);
@@ -1424,6 +1440,10 @@ static void rib_process(struct route_node *rn)
 			if (!RIB_SYSTEM_ROUTE(new_fib))
 				rib_update_forward_pm(rn, old_fib, new_fib);
 		}
+#ifdef ZPL_NSM_FPM 		
+        if (info->safi == SAFI_UNICAST)
+          zfpm_trigger_update (rn, "updating existing route");
+#endif		  
 	}
 	else if (old_fib == new_fib && new_fib && !RIB_SYSTEM_ROUTE(new_fib))
 	{
@@ -1447,10 +1467,10 @@ static void rib_process(struct route_node *rn)
     {
       if (old_selected)
         {
-			#ifdef ZPL_NSM_MODULE
+		
           if (! new_selected)
-            nsm_route_redistribute_delete (&rn->p, old_selected);
-			#endif
+            nsm_redistribute_route_delete (&rn->p, old_selected);
+	
           if (old_selected != new_selected)
             UNSET_FLAG (old_selected->flags, NSM_RIB_FLAG_SELECTED);
         }
@@ -1459,9 +1479,9 @@ static void rib_process(struct route_node *rn)
         {
           /* Install new or replace existing redistributed entry */
           SET_FLAG (new_selected->flags, NSM_RIB_FLAG_SELECTED);
-		  #ifdef ZPL_NSM_MODULE
-          nsm_route_redistribute_add (&rn->p, new_selected, old_selected);
-		  #endif
+		  
+          nsm_redistribute_route_add (&rn->p, new_selected, old_selected);
+		  
         }
      }
 
@@ -3362,7 +3382,9 @@ void rib_close_table(struct route_table *table)
 	struct route_node *rn = NULL;
 	zassert(table != NULL);
 	zassert(table->info != NULL);
-	//rib_table_info_t *info = table->info;
+#ifdef ZPL_NSM_FPM 	
+	rib_table_info_t *info = table->info;
+#endif	
 	struct rib *rib = NULL;
 
 	if (table)
@@ -3375,7 +3397,10 @@ void rib_close_table(struct route_table *table)
 			{
 				if (!CHECK_FLAG(rib->status, RIB_ENTRY_SELECTED_FIB))
 					continue;
-
+#ifdef ZPL_NSM_FPM 
+          		if (info->safi == SAFI_UNICAST)
+            		zfpm_trigger_update (rn, NULL);
+#endif			
 				if (!RIB_SYSTEM_ROUTE(rib))
 					rib_update_forward_pm(rn, rib, NULL);
 			}

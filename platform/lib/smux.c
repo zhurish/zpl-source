@@ -31,7 +31,7 @@
 #include "thread.h"
 #include "linklist.h"
 #include "command.h"
-#include <lib/version.h>
+#include <version.h>
 #include "memory.h"
 #include "sockunion.h"
 #include "smux.h"
@@ -149,7 +149,7 @@ smux_oid_dump (const char *prefix, const oid *oid, size_t oid_len)
       sprintf (buf + strlen (buf), "%s%d", first ? "" : ".", (int) oid[i]);
       first = 0;
     }
-  zlog_debug ("%s: %s", prefix, buf);
+  zlog_debug (MODULE_LIB, "%s: %s", prefix, buf);
 }
 
 static int
@@ -179,7 +179,7 @@ smux_socket (void)
     }
   if (gai)
     {
-      zlog_warn("Cannot locate loopback service smux");
+      zlog_warn(MODULE_LIB, "Cannot locate loopback service smux");
       return -1;
     }
   for(res=res0; res; res=res->ai_next)
@@ -207,12 +207,12 @@ smux_socket (void)
     }
   freeaddrinfo(res0);
   if (sock < 0)
-    zlog_warn ("Can't connect to SNMP agent with SMUX");
+    zlog_warn (MODULE_LIB, "Can't connect to SNMP agent with SMUX");
 #else
   sock = socket (AF_INET, SOCK_STREAM, 0);
   if (sock < 0)
     {
-      zlog_warn ("Can't make socket for SNMP");
+      zlog_warn (MODULE_LIB, "Can't make socket for SNMP");
       return -1;
     }
 
@@ -238,7 +238,7 @@ smux_socket (void)
     {
       close (sock);
       smux_sock = -1;
-      zlog_warn ("Can't connect to SNMP agent with SMUX");
+      zlog_warn (MODULE_LIB, "Can't connect to SNMP agent with SMUX");
       return -1;
     }
 #endif
@@ -259,8 +259,8 @@ smux_getresp_send (oid objid[], size_t objid_len, long reqid, long errstat,
 
   if (debug_smux)
     {
-      zlog_debug ("SMUX GETRSP send");
-      zlog_debug ("SMUX GETRSP reqid: %ld", reqid);
+      zlog_debug (MODULE_LIB, "SMUX GETRSP send");
+      zlog_debug (MODULE_LIB, "SMUX GETRSP reqid: %ld", reqid);
     }
 
   h1 = ptr;
@@ -273,13 +273,13 @@ smux_getresp_send (oid objid[], size_t objid_len, long reqid, long errstat,
 		       &reqid, sizeof (reqid));
 
   if (debug_smux)
-    zlog_debug ("SMUX GETRSP errstat: %ld", errstat);
+    zlog_debug (MODULE_LIB, "SMUX GETRSP errstat: %ld", errstat);
 
   ptr = asn_build_int (ptr, &len,
 		       (u_char) (ASN_UNIVERSAL | ASN_PRIMITIVE | ASN_INTEGER),
 		       &errstat, sizeof (errstat));
   if (debug_smux)
-    zlog_debug ("SMUX GETRSP errindex: %ld", errindex);
+    zlog_debug (MODULE_LIB, "SMUX GETRSP errindex: %ld", errindex);
 
   ptr = asn_build_int (ptr, &len,
 		       (u_char) (ASN_UNIVERSAL | ASN_PRIMITIVE | ASN_INTEGER),
@@ -302,7 +302,7 @@ smux_getresp_send (oid objid[], size_t objid_len, long reqid, long errstat,
   asn_build_sequence(h1,&length,(u_char)SMUX_GETRSP,ptr-h1e);
 
   if (debug_smux)
-    zlog_debug ("SMUX getresp send: %td", (ptr - buf));
+    zlog_debug (MODULE_LIB, "SMUX getresp send: %td", (ptr - buf));
   
   send (smux_sock, buf, (ptr - buf), 0);
 }
@@ -319,15 +319,15 @@ smux_var (u_char *ptr, size_t len, oid objid[], size_t *objid_len,
   u_char *val;
 
   if (debug_smux)
-    zlog_debug ("SMUX var parse: len %zd", len);
+    zlog_debug (MODULE_LIB, "SMUX var parse: len %zd", len);
 
   /* Parse header. */
   ptr = asn_parse_header (ptr, &len, &type);
   
   if (debug_smux)
     {
-      zlog_debug ("SMUX var parse: type %d len %zd", type, len);
-      zlog_debug ("SMUX var parse: type must be %d", 
+      zlog_debug (MODULE_LIB, "SMUX var parse: type %d len %zd", type, len);
+      zlog_debug (MODULE_LIB, "SMUX var parse: type must be %d", 
 		 (ASN_SEQUENCE | ASN_CONSTRUCTOR));
     }
 
@@ -350,7 +350,7 @@ smux_var (u_char *ptr, size_t len, oid objid[], size_t *objid_len,
     smux_oid_dump ("Request OID", objid, *objid_len);
 
   if (debug_smux)
-    zlog_debug ("SMUX val_type: %d", val_type);
+    zlog_debug (MODULE_LIB, "SMUX val_type: %d", val_type);
 
   /* Check request value type. */
   if (debug_smux)
@@ -359,46 +359,46 @@ smux_var (u_char *ptr, size_t len, oid objid[], size_t *objid_len,
     case ASN_NULL:
       /* In case of SMUX_GET or SMUX_GET_NEXT val_type is set to
          ASN_NULL. */
-      zlog_debug ("ASN_NULL");
+      zlog_debug (MODULE_LIB, "ASN_NULL");
       break;
 
     case ASN_INTEGER:
-      zlog_debug ("ASN_INTEGER");
+      zlog_debug (MODULE_LIB, "ASN_INTEGER");
       break;
     case ASN_COUNTER:
     case ASN_GAUGE:
     case ASN_TIMETICKS:
     case ASN_UINTEGER:
-      zlog_debug ("ASN_COUNTER");
+      zlog_debug (MODULE_LIB, "ASN_COUNTER");
       break;
     case ASN_COUNTER64:
-      zlog_debug ("ASN_COUNTER64");
+      zlog_debug (MODULE_LIB, "ASN_COUNTER64");
       break;
     case ASN_IPADDRESS:
-      zlog_debug ("ASN_IPADDRESS");
+      zlog_debug (MODULE_LIB, "ASN_IPADDRESS");
       break;
     case ASN_OCTET_STR:
-      zlog_debug ("ASN_OCTET_STR");
+      zlog_debug (MODULE_LIB, "ASN_OCTET_STR");
       break;
     case ASN_OPAQUE:
     case ASN_NSAP:
     case ASN_OBJECT_ID:
-      zlog_debug ("ASN_OPAQUE");
+      zlog_debug (MODULE_LIB, "ASN_OPAQUE");
       break;
     case SNMP_NOSUCHOBJECT:
-      zlog_debug ("SNMP_NOSUCHOBJECT");
+      zlog_debug (MODULE_LIB, "SNMP_NOSUCHOBJECT");
       break;
     case SNMP_NOSUCHINSTANCE:
-      zlog_debug ("SNMP_NOSUCHINSTANCE");
+      zlog_debug (MODULE_LIB, "SNMP_NOSUCHINSTANCE");
       break;
     case SNMP_ENDOFMIBVIEW:
-      zlog_debug ("SNMP_ENDOFMIBVIEW");
+      zlog_debug (MODULE_LIB, "SNMP_ENDOFMIBVIEW");
       break;
     case ASN_BIT_STR:
-      zlog_debug ("ASN_BIT_STR");
+      zlog_debug (MODULE_LIB, "ASN_BIT_STR");
       break;
     default:
-      zlog_debug ("Unknown type");
+      zlog_debug (MODULE_LIB, "Unknown type");
       break;
     }
   return ptr;
@@ -450,7 +450,7 @@ smux_set (oid *reqid, size_t *reqid_len,
               if (result == 0)
                 {
                   if (debug_smux)
-                    zlog_debug ("SMUX function call index is %d", v->magic);
+                    zlog_debug (MODULE_LIB, "SMUX function call index is %d", v->magic);
 		  
                   statP = (*v->findVar) (v, suffix, &suffix_len, 1,
 					 &val_len, &write_method);
@@ -517,7 +517,7 @@ smux_get (oid *reqid, size_t *reqid_len, int exact,
 	      if (result == 0)
 		{
 		  if (debug_smux)
-		    zlog_debug ("SMUX function call index is %d", v->magic);
+		    zlog_debug (MODULE_LIB, "SMUX function call index is %d", v->magic);
 
 		  *val = (*v->findVar) (v, suffix, &suffix_len, exact,
 					val_len, &write_method);
@@ -603,7 +603,7 @@ smux_getnext (oid *reqid, size_t *reqid_len, int exact,
 	      if (result <= 0)
 		{
 		  if (debug_smux)
-		    zlog_debug ("SMUX function call index is %d", v->magic);
+		    zlog_debug (MODULE_LIB, "SMUX function call index is %d", v->magic);
 		  if(result<0)
 		    {
 		      oid_copy(suffix, v->name, v->namelen);
@@ -639,19 +639,19 @@ smux_parse_get_header (u_char *ptr, size_t *len, long *reqid)
   ptr = asn_parse_int (ptr, len, &type, reqid, sizeof (*reqid));
 
   if (debug_smux)
-    zlog_debug ("SMUX GET reqid: %d len: %d", (int) *reqid, (int) *len);
+    zlog_debug (MODULE_LIB, "SMUX GET reqid: %d len: %d", (int) *reqid, (int) *len);
 
   /* Error status. */
   ptr = asn_parse_int (ptr, len, &type, &errstat, sizeof (errstat));
 
   if (debug_smux)
-    zlog_debug ("SMUX GET errstat %ld len: %zd", errstat, *len);
+    zlog_debug (MODULE_LIB, "SMUX GET errstat %ld len: %zd", errstat, *len);
 
   /* Error index. */
   ptr = asn_parse_int (ptr, len, &type, &errindex, sizeof (errindex));
 
   if (debug_smux)
-    zlog_debug ("SMUX GET errindex %ld len: %zd", errindex, *len);
+    zlog_debug (MODULE_LIB, "SMUX GET errindex %ld len: %zd", errindex, *len);
 
   return ptr;
 }
@@ -668,7 +668,7 @@ smux_parse_set (u_char *ptr, size_t len, int action)
   int ret;
 
   if (debug_smux)
-    zlog_debug ("SMUX SET(%s) message parse: len %zd",
+    zlog_debug (MODULE_LIB, "SMUX SET(%s) message parse: len %zd",
                (RESERVE1 == action) ? "RESERVE1" : ((FREE == action) ? "FREE" : "COMMIT"),
                len);
 
@@ -680,7 +680,7 @@ smux_parse_set (u_char *ptr, size_t len, int action)
 
   ret = smux_set (oid, &oid_len, val_type, val, val_len, action);
   if (debug_smux)
-    zlog_debug ("SMUX SET ret %d", ret);
+    zlog_debug (MODULE_LIB, "SMUX SET ret %d", ret);
 
   /* Return result. */
   if (RESERVE1 == action)
@@ -699,7 +699,7 @@ smux_parse_get (u_char *ptr, size_t len, int exact)
   int ret;
 
   if (debug_smux)
-    zlog_debug ("SMUX GET message parse: len %zd", len);
+    zlog_debug (MODULE_LIB, "SMUX GET message parse: len %zd", len);
   
   /* Parse GET message header. */
   ptr = smux_parse_get_header (ptr, &len, &reqid);
@@ -731,7 +731,7 @@ smux_parse_close (u_char *ptr, int len)
       reason = (reason << 8) | (long) *ptr;
       ptr++;
     }
-  zlog_info ("SMUX_CLOSE with reason: %ld", reason);
+  zlog_info (MODULE_LIB, "SMUX_CLOSE with reason: %ld", reason);
 }
 
 /* SMUX_RRSP message. */
@@ -744,7 +744,7 @@ smux_parse_rrsp (u_char *ptr, size_t len)
   ptr = asn_parse_int (ptr, &len, &val, &errstat, sizeof (errstat));
 
   if (debug_smux)
-    zlog_debug ("SMUX_RRSP value: %d errstat: %ld", val, errstat);
+    zlog_debug (MODULE_LIB, "SMUX_RRSP value: %d errstat: %ld", val, errstat);
 }
 
 /* Parse SMUX message. */
@@ -769,24 +769,24 @@ process_rest: /* see note below: YYY */
   ptr = asn_parse_header (ptr, &len, &type);
 
   if (debug_smux)
-    zlog_debug ("SMUX message received type: %d rest len: %zd", type, len);
+    zlog_debug (MODULE_LIB, "SMUX message received type: %d rest len: %zd", type, len);
 
   switch (type)
     {
     case SMUX_OPEN:
       /* Open must be not send from SNMP agent. */
-      zlog_warn ("SMUX_OPEN received: resetting connection.");
+      zlog_warn (MODULE_LIB, "SMUX_OPEN received: resetting connection.");
       return -1;
       break;
     case SMUX_RREQ:
       /* SMUX_RREQ message is invalid for us. */
-      zlog_warn ("SMUX_RREQ received: resetting connection.");
+      zlog_warn (MODULE_LIB, "SMUX_RREQ received: resetting connection.");
       return -1;
       break;
     case SMUX_SOUT:
       /* SMUX_SOUT message is now valied for us. */
       if (debug_smux)
-        zlog_debug ("SMUX_SOUT(%s)", rollback ? "rollback" : "commit");
+        zlog_debug (MODULE_LIB, "SMUX_SOUT(%s)", rollback ? "rollback" : "commit");
 
       if (sout_save_len > 0)
         {
@@ -794,7 +794,7 @@ process_rest: /* see note below: YYY */
           sout_save_len = 0;
         }
       else
-        zlog_warn ("SMUX_SOUT sout_save_len=%d - invalid", (int) sout_save_len);
+        zlog_warn (MODULE_LIB, "SMUX_SOUT sout_save_len=%d - invalid", (int) sout_save_len);
 
       if (len_income > 3) 
         {
@@ -815,38 +815,38 @@ process_rest: /* see note below: YYY */
       break;
     case SMUX_GETRSP:
       /* SMUX_GETRSP message is invalid for us. */
-      zlog_warn ("SMUX_GETRSP received: resetting connection.");
+      zlog_warn (MODULE_LIB, "SMUX_GETRSP received: resetting connection.");
       return -1;
       break;
     case SMUX_CLOSE:
       /* Close SMUX connection. */
       if (debug_smux)
-	zlog_debug ("SMUX_CLOSE");
+	zlog_debug (MODULE_LIB, "SMUX_CLOSE");
       smux_parse_close (ptr, len);
       return -1;
       break;
     case SMUX_RRSP:
       /* This is response for register message. */
       if (debug_smux)
-	zlog_debug ("SMUX_RRSP");
+	zlog_debug (MODULE_LIB, "SMUX_RRSP");
       smux_parse_rrsp (ptr, len);
       break;
     case SMUX_GET:
       /* Exact request for object id. */
       if (debug_smux)
-	zlog_debug ("SMUX_GET");
+	zlog_debug (MODULE_LIB, "SMUX_GET");
       smux_parse_get (ptr, len, 1);
       break;
     case SMUX_GETNEXT:
       /* Next request for object id. */
       if (debug_smux)
-	zlog_debug ("SMUX_GETNEXT");
+	zlog_debug (MODULE_LIB, "SMUX_GETNEXT");
       smux_parse_get (ptr, len, 0);
       break;
     case SMUX_SET:
       /* SMUX_SET is supported with some limitations. */
       if (debug_smux)
-	zlog_debug ("SMUX_SET");
+	zlog_debug (MODULE_LIB, "SMUX_SET");
 
       /* save the data for future SMUX_SOUT */
       memcpy (sout_save_buff, ptr, len);
@@ -854,7 +854,7 @@ process_rest: /* see note below: YYY */
       smux_parse_set (ptr, len, RESERVE1);
       break;
     default:
-      zlog_info ("Unknown type: %d", type);
+      zlog_info (MODULE_LIB, "Unknown type: %d", type);
       break;
     }
   return 0;
@@ -874,14 +874,14 @@ smux_read (struct thread *t)
   smux_read_thread = NULL;
 
   if (debug_smux)
-    zlog_debug ("SMUX read start");
+    zlog_debug (MODULE_LIB, "SMUX read start");
 
   /* Read message from SMUX socket. */
   len = recv (sock, buf, SMUXMAXPKTSIZE, 0);
 
   if (len < 0)
     {
-      zlog_warn ("Can't read all SMUX packet: %s", safe_strerror (errno));
+      zlog_warn (MODULE_LIB, "Can't read all SMUX packet: %s", safe_strerror (errno));
       close (sock);
       smux_sock = -1;
       smux_event (SMUX_CONNECT, 0);
@@ -890,7 +890,7 @@ smux_read (struct thread *t)
 
   if (len == 0)
     {
-      zlog_warn ("SMUX connection closed: %d", sock);
+      zlog_warn (MODULE_LIB, "SMUX connection closed: %d", sock);
       close (sock);
       smux_sock = -1;
       smux_event (SMUX_CONNECT, 0);
@@ -898,7 +898,7 @@ smux_read (struct thread *t)
     }
 
   if (debug_smux)
-    zlog_debug ("SMUX read len: %d", len);
+    zlog_debug (MODULE_LIB, "SMUX read len: %d", len);
 
   /* Parse the message. */
   ret = smux_parse (buf, len);
@@ -924,13 +924,13 @@ smux_open (int sock)
   u_char *ptr;
   size_t len;
   long version;
-  const char progname[] = QUAGGA_PROGNAME "-" QUAGGA_VERSION;
+  const char progname[] =  "SNMP SMUX";
 
   if (debug_smux)
     {
       smux_oid_dump ("SMUX open oid", smux_oid, smux_oid_len);
-      zlog_debug ("SMUX open progname: %s", progname);
-      zlog_debug ("SMUX open password: %s", smux_passwd);
+      zlog_debug (MODULE_LIB, "SMUX open progname: %s", progname);
+      zlog_debug (MODULE_LIB, "SMUX open password: %s", smux_passwd);
     }
 
   ptr = buf;
@@ -1078,13 +1078,13 @@ smux_trap (struct variable *vp, size_t vp_len,
               smux_oid_dump ("Trap", iname, inamelen);
             }
           smux_oid_dump ("Trap", oid, oid_len);
-          zlog_info ("BUFSIZ: %d // oid_len: %lu", BUFSIZ, (u_long)oid_len);
+          zlog_info (MODULE_LIB, "BUFSIZ: %d // oid_len: %lu", BUFSIZ, (u_long)oid_len);
       }
 
       ret = smux_get (oid, &oid_len, 1, &val_type, &val, &val_len);
 
       if (debug_smux)
-	zlog_debug ("smux_get result %d", ret);
+	zlog_debug (MODULE_LIB, "smux_get result %d", ret);
 
       if (ret == 0)
 	ptr = snmp_build_var_op (ptr, oid, &oid_len,
@@ -1146,8 +1146,8 @@ smux_register (int sock)
       if (debug_smux)
         {
           smux_oid_dump ("SMUX register oid", subtree->name, subtree->name_len);
-          zlog_debug ("SMUX register priority: %ld", priority);
-          zlog_debug ("SMUX register operation: %ld", operation);
+          zlog_debug (MODULE_LIB, "SMUX register priority: %ld", priority);
+          zlog_debug (MODULE_LIB, "SMUX register operation: %ld", operation);
         }
 
       len = BUFSIZ;
@@ -1166,7 +1166,7 @@ smux_connect (struct thread *t)
   int ret;
 
   if (debug_smux)
-    zlog_debug ("SMUX connect try %d", fail + 1);
+    zlog_debug (MODULE_LIB, "SMUX connect try %d", fail + 1);
 
   /* Clear thread poner of myself. */
   smux_connect_thread = NULL;
@@ -1184,7 +1184,7 @@ smux_connect (struct thread *t)
   ret = smux_open (smux_sock);
   if (ret < 0)
     {
-      zlog_warn ("SMUX open message send failed: %s", safe_strerror (errno));
+      zlog_warn (MODULE_LIB, "SMUX open message send failed: %s", safe_strerror (errno));
       close (smux_sock);
       smux_sock = -1;
       if (++fail < SMUX_MAX_FAILURE)
@@ -1196,7 +1196,7 @@ smux_connect (struct thread *t)
   ret = smux_register (smux_sock);
   if (ret < 0)
     {
-      zlog_warn ("SMUX register message send failed: %s", safe_strerror (errno));
+      zlog_warn (MODULE_LIB, "SMUX register message send failed: %s", safe_strerror (errno));
       close (smux_sock);
       smux_sock = -1;
       if (++fail < SMUX_MAX_FAILURE)

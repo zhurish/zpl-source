@@ -22,6 +22,14 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "module.h"
+#include "prefix.h"
+#include "command.h"
+#include "filter.h"
+#include "zmemory.h"
+#include "sockunion.h"
+#include "buffer.h"
+#include "log.h"
+#include "if.h"
 
 #if defined ZPL_NSM_SNMP && defined SNMP_AGENTX
 #include <net-snmp/net-snmp-config.h>
@@ -60,7 +68,7 @@ agentx_read(struct thread *t)
   list_delete_node (events, ln);
 
   FD_ZERO (&fds);
-  FD_SET (THREAD_FD (t), &fds);
+  FD_SET (THREAD_FD (t)._fd, &fds);
   snmp_read (&fds);
 
   netsnmp_check_outstanding_agent_requests ();
@@ -89,7 +97,7 @@ agentx_events_update(void)
 
   ln = listhead (events);
   thr = ln ? listgetdata (ln) : NULL;
-  thr_fd = thr ? THREAD_FD (thr) : -1;
+  thr_fd = thr ? THREAD_FD (thr)._fd : -1;
 
   /* "two-pointer" / two-list simultaneous iteration
    * ln/thr/thr_fd point to the next existing event listener to hit while
@@ -107,13 +115,13 @@ agentx_events_update(void)
             }
           ln = nextln;
           thr = ln ? listgetdata (ln) : NULL;
-          thr_fd = thr ? THREAD_FD (thr) : -1;
+          thr_fd = thr ? THREAD_FD (thr)._fd : -1;
         }
       /* need listener, but haven't hit one where it would be */
       else if (FD_ISSET (fd, &fds))
         {
           struct listnode *newln;
-          thr = thread_add_read (agentx_tm, agentx_read, NULL, fd);
+          thr = thread_add_read (agentx_tm, agentx_read, NULL, THREAD_FD (thr));
           newln = listnode_add_before (events, ln, thr);
           thr->arg = newln;
         }
@@ -146,14 +154,14 @@ agentx_log_callback(int major, int minor,
   if (msg) msg[strlen(msg)-1] = '\0';
   switch (slm->priority)
     {
-    case LOG_EMERG:   zlog_err   ("snmp[emerg]: %s",   msg?msg:slm->msg); break;
-    case LOG_ALERT:   zlog_err   ("snmp[alert]: %s",   msg?msg:slm->msg); break;
-    case LOG_CRIT:    zlog_err   ("snmp[crit]: %s",    msg?msg:slm->msg); break;
-    case LOG_ERR:     zlog_err   ("snmp[err]: %s",     msg?msg:slm->msg); break;
-    case LOG_WARNING: zlog_warn  ("snmp[warning]: %s", msg?msg:slm->msg); break;
-    case LOG_NOTICE:  zlog_notice("snmp[notice]: %s",  msg?msg:slm->msg); break;
-    case LOG_INFO:    zlog_info  ("snmp[info]: %s",    msg?msg:slm->msg); break;
-    case LOG_DEBUG:   zlog_debug ("snmp[debug]: %s",   msg?msg:slm->msg); break;
+    case LOG_EMERG:   zlog_err   (MODULE_LIB, "snmp[emerg]: %s",   msg?msg:slm->msg); break;
+    case LOG_ALERT:   zlog_err   (MODULE_LIB, "snmp[alert]: %s",   msg?msg:slm->msg); break;
+    case LOG_CRIT:    zlog_err   (MODULE_LIB, "snmp[crit]: %s",    msg?msg:slm->msg); break;
+    case LOG_ERR:     zlog_err   (MODULE_LIB, "snmp[err]: %s",     msg?msg:slm->msg); break;
+    case LOG_WARNING: zlog_warn  (MODULE_LIB, "snmp[warning]: %s", msg?msg:slm->msg); break;
+    case LOG_NOTICE:  zlog_notice(MODULE_LIB, "snmp[notice]: %s",  msg?msg:slm->msg); break;
+    case LOG_INFO:    zlog_info  (MODULE_LIB, "snmp[info]: %s",    msg?msg:slm->msg); break;
+    case LOG_DEBUG:   zlog_debug (MODULE_LIB, "snmp[debug]: %s",   msg?msg:slm->msg); break;
     }
   free(msg);
   return SNMP_ERR_NOERROR;
@@ -212,8 +220,8 @@ smux_init (struct thread_master *tm)
   init_agent ("quagga");
 
   install_node (&agentx_node, config_write_agentx);
-  install_element (CONFIG_NODE, &agentx_enable_cmd);
-  install_element (CONFIG_NODE, &no_agentx_cmd);
+  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &agentx_enable_cmd);
+  install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_agentx_cmd);
 }
 
 void

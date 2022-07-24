@@ -80,6 +80,7 @@ extern int smux_header_generic (struct variable *, oid [], size_t *,
 extern int smux_header_table (struct variable *, oid *, size_t *, 
 			      int, size_t *, WriteMethod **);
 
+extern void smux_start(void);
 /* For traps, three OID are provided:
 
  1. The enterprise OID to use (the last argument will be appended to

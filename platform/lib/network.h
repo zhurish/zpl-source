@@ -36,6 +36,9 @@ extern int writen (zpl_socket_t, const zpl_uchar *, zpl_uint32);
 extern zpl_float htonf (zpl_float);
 extern zpl_float ntohf (zpl_float);
  
+#define ERRNO_IO_RETRY(EN) \
+	(((EN) == EAGAIN) || ((EN) == EWOULDBLOCK) || ((EN) == EINTR))
+
 #ifdef __cplusplus
 }
 #endif

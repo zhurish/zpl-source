@@ -93,6 +93,11 @@ ifeq ($(strip $(ZPL_NSM_ROUTEMAP)),true)
 ZPL_DEFINE	+= -DZPL_NSM_ROUTEMAP
 endif
 
+ifeq ($(strip $(ZPL_NSM_SNMP)),true)
+ZPL_DEFINE	+= -DZPL_NSM_SNMP -DSNMP_AGENTX
+ZPL_LDLIBS += -lnetsnmpmibs -lnetsnmpagent -lnetsnmp
+endif
+
 endif
 
 #

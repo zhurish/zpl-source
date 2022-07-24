@@ -83,7 +83,7 @@ OBJS	+= cmd_host.o
 OBJS	+= cmd_memory.o
 endif
 
-ifeq ($(strip $(ZPL_SNMP_MODULE)),true)
+ifeq ($(strip $(ZPL_NSM_SNMP)),true)
 OBJS	+= agentx.o
 OBJS	+= snmp.o
 OBJS	+= smux.o

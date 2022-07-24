@@ -564,7 +564,7 @@ static int nsm_interface_delete(struct interface *ifp)
 	if (delete)
 	{
 #ifdef ZPL_NSM_MODULE
-		nsm_interface_delete_update(ifp);
+		nsm_redistribute_interface_destroy(ifp);
 #endif
 		// nsm_client_notify_interface_delete(ifp);
 		return OK;
@@ -593,7 +593,7 @@ int nsm_interface_create_api(const char *ifname)
 	{
 #ifdef ZPL_NSM_MODULE
 		if (ifp->dynamic == zpl_false)
-			nsm_interface_add_update(ifp);
+			nsm_redistribute_interface_create(ifp);
 #endif
 		IF_DATA_UNLOCK();
 		return OK;
@@ -686,7 +686,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		connected_up_ipv4(ifp, ifc);
 // nsm_client_notify_interface_add_ip(ifp, ifc, 0);
 #ifdef ZPL_NSM_MODULE
-		nsm_interface_address_add_update(ifp, ifc);
+		nsm_redistribute_interface_address_add(ifp, ifc);
 #endif
 		return OK;
 	}
@@ -714,7 +714,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 		UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 		// return ERROR;
 #ifdef ZPL_NSM_MODULE
-	nsm_interface_address_delete_update(ifp, ifc);
+	nsm_redistribute_interface_address_delete(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 	while (ifc->raw_status != 0)
@@ -748,7 +748,7 @@ static int nsm_interface_ip_address_uninstall(struct interface *ifp, struct pref
 		}
 #endif
 #ifdef ZPL_NSM_MODULE
-// nsm_interface_address_delete_update(ifp, ifc);
+// nsm_redistribute_interface_address_delete(ifp, ifc);
 #endif
 		connected_down_ipv4(ifp, ifc);
 
@@ -838,7 +838,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 		connected_up_ipv6(ifp, ifc);
 // nsm_client_notify_interface_add_ip(ifp, ifc, secondary);
 #ifdef ZPL_NSM_MODULE
-		nsm_interface_address_add_update(ifp, ifc);
+		nsm_redistribute_interface_address_add(ifp, ifc);
 #endif
 		return OK;
 	}
@@ -862,7 +862,7 @@ nsm_interface_ipv6_address_uninstall(struct interface *ifp,
 		return ERROR;
 
 #ifdef ZPL_NSM_MODULE
-	nsm_interface_address_delete_update(ifp, ifc);
+	nsm_redistribute_interface_address_delete(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, secondry);
 
@@ -961,7 +961,7 @@ int nsm_interface_ip_address_add(struct interface *ifp, struct prefix *cp,
 #endif
 // nsm_client_notify_interface_add_ip(ifp, ifc, 0);
 #ifdef ZPL_NSM_MODULE
-		nsm_interface_address_add_update(ifp, ifc);
+		nsm_redistribute_interface_address_add(ifp, ifc);
 #endif
 		/* Add to linked list. */
 		listnode_add(ifp->connected, ifc);
@@ -992,7 +992,7 @@ int nsm_interface_ip_address_del(struct interface *ifp, struct prefix *cp,
 	if (!CHECK_FLAG(ifc->conf, IF_IFC_CONFIGURED))
 		UNSET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 #ifdef ZPL_NSM_MODULE
-	nsm_interface_address_delete_update(ifp, ifc);
+	nsm_redistribute_interface_address_delete(ifp, ifc);
 #endif
 	// nsm_client_notify_interface_del_ip(ifp, ifc, 0);
 
@@ -1043,7 +1043,7 @@ int nsm_interface_mode_set_api(struct interface *ifp, if_mode_t mode)
 			nsm_interface_mode_hook_handler(NSM_INTF_ALL, ifp, ifp->if_mode, mode);
 			ifp->if_mode = mode;
 #ifdef ZPL_NSM_MODULE
-			nsm_interface_mode_update(ifp, mode);
+			nsm_redistribute_interface_mode_update(ifp, mode);
 #endif
 		}
 	}
@@ -1120,7 +1120,7 @@ int nsm_interface_up_set_api(struct interface *ifp)
 			zif->shutdown = NSM_IF_SHUTDOWN_OFF;
 // nsm_client_notify_interface_up(ifp);
 #ifdef ZPL_NSM_MODULE
-			nsm_interface_up_update(ifp);
+			nsm_redistribute_interface_updown(ifp, zpl_true);
 #endif
 		}
 	}
@@ -1145,7 +1145,7 @@ int nsm_interface_down_set_api(struct interface *ifp)
 			if_down(ifp);
 			zif->shutdown = NSM_IF_SHUTDOWN_ON;
 #ifdef ZPL_NSM_MODULE
-			nsm_interface_down_update(ifp);
+			nsm_redistribute_interface_updown(ifp, zpl_false);
 #endif
 			// nsm_client_notify_interface_down(ifp);
 		}

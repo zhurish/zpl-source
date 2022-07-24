@@ -91,6 +91,15 @@ ifeq ($(strip $(ZPL_NSM_VLANETH)),true)
 OBJS	+= nsm_vlaneth.o	
 endif
 
+ifeq ($(strip $(ZPL_NSM_FPM)),true)
+OBJS	+= nsm_fpm.o		
+OBJS	+= nsm_fpm_netlink.o
+endif
+
+ifeq ($(strip $(ZPL_NSM_SNMP)),true)
+OBJS	+= nsm_snmp.o		
+endif
+
 ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 OBJS	+= cmd_debug.o
 OBJS	+= cmd_interface.o

@@ -38,25 +38,22 @@ extern void nsm_redistribute_default_add (zpl_uint16, struct zserv *, zpl_size_t
 extern void nsm_redistribute_default_delete (zpl_uint16, struct zserv *, zpl_size_t,
     vrf_id_t);
 
-extern void nsm_route_redistribute_add (struct prefix *, struct rib *new, struct rib *old);
-extern void nsm_route_redistribute_delete (struct prefix *, struct rib *);
+extern void nsm_redistribute_route_add (struct prefix *, struct rib *new, struct rib *old);
+extern void nsm_redistribute_route_delete (struct prefix *, struct rib *);
 
-extern void nsm_interface_up_update (struct interface *);
-extern void nsm_interface_down_update (struct interface *);
+extern void nsm_redistribute_interface_updown (struct interface *, zpl_bool updown);
 
-extern void nsm_interface_add_update (struct interface *);
-extern void nsm_interface_delete_update (struct interface *);
 
-extern void nsm_interface_address_add_update (struct interface *,
+extern void nsm_redistribute_interface_create (struct interface *);
+extern void nsm_redistribute_interface_destroy (struct interface *);
+
+extern void nsm_redistribute_interface_address_add (struct interface *,
 					 	struct connected *);
-extern void nsm_interface_address_delete_update (struct interface *,
+extern void nsm_redistribute_interface_address_delete (struct interface *,
 						   struct connected *c);
 
-extern void nsm_interface_mode_update (struct interface *ifp, zpl_uint32  mode);
+extern void nsm_redistribute_interface_mode_update (struct interface *ifp, zpl_uint32  mode);
 
-extern void nsm_write_config_cb (struct vty *vty);
-extern void nsm_debug_write_config_cb (struct vty *vty);
-extern void nsm_interface_write_config_cb (struct vty *vty, struct interface *ifp);
 
 
 extern int nsm_check_addr (struct prefix *);

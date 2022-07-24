@@ -41,7 +41,7 @@ OBJS	+= linux_firewalld.o
 endif
 OBJS	+= linux_driver.o
 
-LIB_IPROUTE_ENABLE=true
+LIB_IPROUTE_ENABLE=false
 ifeq ($(strip $(LIB_IPROUTE_ENABLE)),true)
 IPOBJS	+= ll_types.o
 IPOBJS	+= ll_proto.o
