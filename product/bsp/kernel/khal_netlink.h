@@ -6,7 +6,7 @@ extern "C"
 {
 #endif
 
-#include "bsp_types.h"
+#include "kbsp_types.h"
 #include "khal_ipccmd.h"
 #include "khal_ipcmsg.h"
 
@@ -18,7 +18,7 @@ extern "C"
 #define HAL_DATA_NETLINK_PROTO (29)
 #define HAL_KLOG_NETLINK_PROTO (28)
 
-struct hal_netlink
+struct khal_netlink
 {
     struct sock *nlsock;
     zpl_uint32 proto;
@@ -30,12 +30,12 @@ struct hal_netlink
     zpl_uint32 group;   
 };
 
-struct hal_netlink *hal_netlink_create(char *name, int proto, int group, struct netlink_kernel_cfg *cfg);
-void hal_netlink_destroy(struct hal_netlink *hal_netlink);
+struct khal_netlink *khal_netlink_create(char *name, int proto, int group, struct netlink_kernel_cfg *cfg);
+void khal_netlink_destroy(struct khal_netlink *khal_netlink);
 
-void hal_netlink_group_dstpid(struct hal_netlink *hal_netlink, zpl_uint32 group, zpl_uint32 pid);
-int hal_netlink_unicast(struct hal_netlink *hal_client, zpl_uint32 pid, struct sk_buff *skb);
-int hal_netlink_multicast(struct hal_netlink *hal_client, zpl_uint32 group, struct sk_buff *skb);
+void khal_netlink_group_dstpid(struct khal_netlink *khal_netlink, zpl_uint32 group, zpl_uint32 pid);
+int khal_netlink_unicast(struct khal_netlink *hal_client, zpl_uint32 pid, struct sk_buff *skb);
+int khal_netlink_multicast(struct khal_netlink *hal_client, zpl_uint32 group, struct sk_buff *skb);
 
 
 #ifdef __cplusplus

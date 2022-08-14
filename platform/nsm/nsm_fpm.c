@@ -313,8 +313,8 @@ zfpm_get_time (void)
 {
   struct timeval tv;
 
-  if (quagga_gettime (OS_CLK_MONOTONIC, &tv) < 0)
-    zlog_warn (MODULE_NSM, "FPM: quagga_gettime failed!!");
+  if (os_gettime (OS_CLK_MONOTONIC, &tv) < 0)
+    zlog_warn (MODULE_NSM, "FPM: os_gettime failed!!");
 
   return tv.tv_sec;
 }
@@ -505,7 +505,7 @@ static inline void
 zfpm_read_on (void)
 {
   assert (!zfpm_g->t_read);
-  assert (zfpm_g->sock._fd >= 0);
+  assert (ipstack_fd(zfpm_g->sock) >= 0);
 
   THREAD_READ_ON (zfpm_g->master, zfpm_g->t_read, zfpm_read_cb, 0,
 		  zfpm_g->sock);
@@ -518,7 +518,7 @@ static inline void
 zfpm_write_on (void)
 {
   assert (!zfpm_g->t_write);
-  assert (zfpm_g->sock._fd >= 0);
+  assert (ipstack_fd(zfpm_g->sock) >= 0);
 
   THREAD_WRITE_ON (zfpm_g->master, zfpm_g->t_write, zfpm_write_cb, 0,
 		   zfpm_g->sock);
@@ -606,7 +606,7 @@ zfpm_conn_up_thread_cb (struct thread *thread)
 static void
 zfpm_connection_up (const char *detail)
 {
-  assert (zfpm_g->sock._fd >= 0);
+  assert (ipstack_fd(zfpm_g->sock) >= 0);
   zfpm_read_on ();
   zfpm_write_on ();
   zfpm_set_state (ZFPM_STATE_ESTABLISHED, detail);
@@ -746,7 +746,7 @@ zfpm_connection_down (const char *detail)
   stream_reset (zfpm_g->ibuf);
   stream_reset (zfpm_g->obuf);
 
-  if (zfpm_g->sock._fd >= 0) {
+  if (ipstack_fd(zfpm_g->sock) >= 0) {
     ipstack_close (zfpm_g->sock);
   }
 
@@ -788,7 +788,7 @@ zfpm_read_cb (struct thread *thread)
     }
 
   assert (zfpm_g->state == ZFPM_STATE_ESTABLISHED);
-  assert (zfpm_g->sock._fd >= 0);
+  assert (ipstack_fd(zfpm_g->sock) >= 0);
 
   ibuf = zfpm_g->ibuf;
 
@@ -1075,7 +1075,7 @@ zfpm_write_cb (struct thread *thread)
     }
 
   assert (zfpm_g->state == ZFPM_STATE_ESTABLISHED);
-  assert (zfpm_g->sock._fd >= 0);
+  assert (ipstack_fd(zfpm_g->sock) >= 0);
 
   num_writes = 0;
 
@@ -1160,7 +1160,7 @@ zfpm_connect_cb (struct thread *t)
   assert (zfpm_g->state == ZFPM_STATE_ACTIVE);
 
   sock = ipstack_socket (OS_STACK, AF_INET, SOCK_STREAM, 0);
-  if (sock._fd < 0)
+  if (ipstack_invalid(sock))
     {
       zfpm_debug ("Failed to create socket for connect(): %s", strerror(errno));
       zfpm_g->stats.connect_no_sock++;
@@ -1248,7 +1248,7 @@ zfpm_set_state (zfpm_state_t state, const char *reason)
     break;
 
   case ZFPM_STATE_CONNECTING:
-    assert (zfpm_g->sock._fd);
+    assert (ipstack_fd(zfpm_g->sock));
     assert (cur_state == ZFPM_STATE_ACTIVE);
     assert (zfpm_g->t_read);
     assert (zfpm_g->t_write);
@@ -1257,7 +1257,7 @@ zfpm_set_state (zfpm_state_t state, const char *reason)
   case ZFPM_STATE_ESTABLISHED:
     assert (cur_state == ZFPM_STATE_ACTIVE ||
 	    cur_state == ZFPM_STATE_CONNECTING);
-    assert (zfpm_g->sock._fd);
+    assert (ipstack_fd(zfpm_g->sock));
     assert (zfpm_g->t_read);
     assert (zfpm_g->t_write);
     break;
@@ -1303,7 +1303,7 @@ zfpm_start_connect_timer (const char *reason)
   long delay_secs;
 
   assert (!zfpm_g->t_connect);
-  assert (zfpm_g->sock._fd < 0);
+  assert (ipstack_fd(zfpm_g->sock) < 0);
 
   assert(zfpm_g->state == ZFPM_STATE_IDLE ||
 	 zfpm_g->state == ZFPM_STATE_ACTIVE ||
@@ -1339,7 +1339,7 @@ zfpm_conn_is_up (void)
   if (zfpm_g->state != ZFPM_STATE_ESTABLISHED)
     return 0;
 
-  assert (zfpm_g->sock._fd >= 0);
+  assert (ipstack_fd(zfpm_g->sock) >= 0);
 
   return 1;
 }
@@ -1724,7 +1724,7 @@ zfpm_init (struct thread_master *master, int enable, uint16_t port,
   memset (zfpm_g, 0, sizeof (*zfpm_g));
   zfpm_g->master = master;
   TAILQ_INIT(&zfpm_g->dest_q);
-  zfpm_g->sock._fd = -1;
+  ipstack_fd(zfpm_g->sock) = -1;
   zfpm_g->state = ZFPM_STATE_IDLE;
 
   zfpm_stats_init (&zfpm_g->stats);

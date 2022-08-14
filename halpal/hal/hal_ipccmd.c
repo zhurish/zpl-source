@@ -9,7 +9,7 @@
 #include "hal_ipcsrv.h"
 #include "hal_ipcmsg.h"
 #include "hal_ipccmd.h"
-#include "bmgt.h"
+#include "if_utsp.h"
 
 
 #define DESC_ENTRY(T) [(T)] = {(T), (#T)}

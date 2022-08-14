@@ -4,13 +4,13 @@
 extern "C" {
 #endif
 
-struct message
+struct kmessage
 {
   zpl_uint32 key;
   const char *str;
 };
 
-enum hal_module_id
+enum khal_module_id
 {
     HAL_MODULE_NONE,
 	HAL_MODULE_MGT,
@@ -46,7 +46,7 @@ enum hal_module_id
     HAL_MODULE_MAX,
 };
 
-enum hal_module_cmd 
+enum khal_module_cmd 
 {
     HAL_MODULE_CMD_NONE,
     HAL_MODULE_CMD_DATA,        //数据
@@ -70,21 +70,21 @@ typedef struct
     int module;
     int (*module_handle)(void*, zpl_uint32, zpl_uint32, void *);
     const char *name;
-}hal_ipccmd_callback_t;
+}khal_ipccmd_callback_t;
 
 typedef struct 
 {
     int subcmd;
     int (*cmd_handle)(void *, void *, void *);
     const char *name;
-}hal_ipcsubcmd_callback_t;
+}khal_ipcsubcmd_callback_t;
 
 #define IPCCMD_SET(m,s,c)               (((m)&0xff) << 24)|(((s)&0xFF)<<16)|((c)&0xFFFF)
 #define IPCCMD_MODULE_GET(C)            (((C) >> 24)&0xFF)
 #define IPCCMD_CMD_GET(C)             (((C) >> 16)&0xFF)
 #define IPCCMD_SUBCMD_GET(C)               ((C)&0xffFF)
 
-extern const char * hal_module_cmd_name(zpl_uint32 cmd);
+extern const char * khal_module_cmd_name(zpl_uint32 cmd);
 
 #include "khal_cmddef.h"
 

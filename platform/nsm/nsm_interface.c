@@ -24,17 +24,14 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "linklist.h"
-//#include "vector.h"
 #include "zmemory.h"
 #include "vrf.h"
 #include "if.h"
-//#include "hash.h"
 #include "str.h"
 #include "vty.h"
 #include "prefix.h"
 #include "table.h"
 #include "lib_event.h"
-//#include "command.h"
 #include "connected.h"
 #include "log.h"
 #include "nsm_interface.h"
@@ -46,7 +43,6 @@
 static zpl_bool _nsm_intf_init = 0;
 static struct nsm_interface_cb nsm_intf_cb[NSM_INTF_MAX + 1];
 
-//static int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct interface *ifp);
 static int nsm_interface_mode_hook_handler(nsm_submodule_t module, struct interface *ifp, if_mode_t oldmode, if_mode_t newmode);
 
 void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid)
@@ -115,8 +111,7 @@ static void if_addr_wakeup(struct interface *ifp)
 					 * XXX: RUNNING is not a settable flag on any system
 					 * I (paulj) am aware of.
 					 */
-					// if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
-					// if_refresh(ifp);
+
 					nsm_halpal_interface_up(ifp);
 
 				}
@@ -127,7 +122,6 @@ static void if_addr_wakeup(struct interface *ifp)
 					continue;
 				}
 
-				// SET_FLAG(ifc->conf, IF_IFC_QUEUED);
 				/* The address will be advertised to zebra clients when the notification
 				 * from the kernel has been received.
 				 * It will also be added to the interface's subnet list then. */
@@ -138,8 +132,6 @@ static void if_addr_wakeup(struct interface *ifp)
 				if (!if_is_up(ifp))
 				{
 					/* See long comment above */
-					// if_set_flags(ifp, IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING);
-					// if_refresh(ifp);
 					nsm_halpal_interface_up(ifp);
 				}
 				if (nsm_halpal_interface_set_address(ifp, ifc, 0) != OK)
@@ -148,8 +140,6 @@ static void if_addr_wakeup(struct interface *ifp)
 							  ipstack_strerror(ipstack_errno));
 					continue;
 				}
-
-				// SET_FLAG(ifc->conf, IF_IFC_QUEUED);
 				/* The address will be advertised to zebra clients when the notification
 				 * from the kernel has been received. */
 			}
@@ -159,49 +149,6 @@ static void if_addr_wakeup(struct interface *ifp)
 }
 
 #ifdef ZPL_IPCOM_MODULE
-static int nsm_interface_kname_set(struct interface *ifp)
-{
-	switch (ifp->if_type)
-	{
-	case IF_SERIAL:
-	case IF_ETHERNET:
-	case IF_GIGABT_ETHERNET:
-	case IF_TUNNEL:
-	case IF_BRIGDE:
-	case IF_WIRELESS:
-#ifdef CUSTOM_INTERFACE
-	case IF_WIFI:
-	case IF_MODEM:
-#endif
-		if (IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(ifp->k_name, "%s%d/%d/%d.%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_UNIT_GET(ifp->ifindex),
-					IF_IFINDEX_SLOT_GET(ifp->ifindex),
-					IF_IFINDEX_PORT_GET(ifp->ifindex),
-					IF_IFINDEX_ID_GET(ifp->ifindex));
-		else
-			sprintf(ifp->k_name, "%s%d/%d/%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_UNIT_GET(ifp->ifindex),
-					IF_IFINDEX_SLOT_GET(ifp->ifindex),
-					IF_IFINDEX_PORT_GET(ifp->ifindex));
-		break;
-	case IF_LOOPBACK:
-	case IF_VLAN:
-	case IF_LAG:
-		if (IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(ifp->k_name, "%s%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_ID_GET(ifp->ifindex));
-		else
-			sprintf(ifp->k_name, "%s%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_PORT_GET(ifp->ifindex));
-		break;
-	default:
-		break;
-	}
-	ifp->k_name_hash = if_name_hash_make(ifp->k_name);
-	return OK;
-}
-
 static int nsm_interface_kmac_set(struct interface *ifp)
 {
 	zpl_char kmac[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
@@ -210,6 +157,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 	case IF_SERIAL:
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
 	case IF_TUNNEL:
 	case IF_BRIGDE:
 	case IF_WIRELESS:
@@ -239,64 +187,6 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 	return OK;
 }
 #else
-static int nsm_interface_kname_set(struct interface *ifp)
-{
-	zpl_char k_name[64];
-	os_memset(k_name, 0, sizeof(k_name));
-	switch (ifp->if_type)
-	{
-#if defined(ZPL_NSM_TUNNEL)||defined(ZPL_NSM_SERIAL)||defined(ZPL_NSM_BRIGDE)		
-	case IF_SERIAL:
-	case IF_TUNNEL:
-	case IF_BRIGDE:	
-		sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
-				IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
-		break;
-#endif		
-	case IF_ETHERNET:
-	case IF_GIGABT_ETHERNET:
-	case IF_WIRELESS:
-#ifdef CUSTOM_INTERFACE
-	case IF_WIFI:
-	case IF_MODEM:
-#endif
-		if (!IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
-		else
-		{
-			ifindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
-			const char *root_kname = ifkernelindex2kernelifname(root_kifindex);
-			if (root_kname)
-				sprintf(k_name, "%s.%d", root_kname,
-						IF_IFINDEX_VLAN_GET(ifp->ifindex));
-			else
-				sprintf(k_name, "%s%d%d.%d", getkernelname(ifp->if_type),
-						IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex),
-						IF_IFINDEX_VLAN_GET(ifp->ifindex));
-		}
-		// nsm_interface.hw_update_api(ifp);
-		break;
-	case IF_LOOPBACK:
-	case IF_VLAN:	
-	case IF_LAG:
-#if defined(ZPL_NSM_TRUNK)||defined(ZPL_NSM_VLAN)
-		if (IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_ID_GET(ifp->ifindex));
-		else
-			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
-					IF_IFINDEX_PORT_GET(ifp->ifindex));
-		break;
-#endif
-	default:
-		break;
-	}
-	if (os_strlen(k_name))
-		if_kname_set(ifp, k_name);
-	return OK;
-}
-
 static int nsm_interface_kmac_set(struct interface *ifp)
 {
 	zpl_uchar kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
@@ -324,6 +214,7 @@ static int nsm_interface_kmac_set(struct interface *ifp)
 #endif
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
 	case IF_BRIGDE:
 	case IF_WIRELESS:
 #ifdef CUSTOM_INTERFACE
@@ -363,8 +254,6 @@ int nsm_interface_create_hook(struct interface *ifp)
 	struct nsm_interface *nsm_interface = NULL;
 	NSM_ENTER_FUNC();
 
-	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 	nsm_interface = XCALLOC(MTYPE_IF_INFO, sizeof(struct nsm_interface));
 	if (nsm_interface == NULL)
 	{
@@ -377,20 +266,17 @@ int nsm_interface_create_hook(struct interface *ifp)
 
 	nsm_interface->ifp = ifp;
 
-	// SET_FLAG(ifp->status, IF_INTERFACE_LINKDETECTION);
 	UNSET_FLAG(ifp->status, IF_INTERFACE_LINKDETECTION);
 	ifp->info[MODULE_NSM] = nsm_interface;
 
-	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
 
 	if (if_have_kernel(ifp))
 	{
-		if (nsm_interface_kname_set(ifp) == OK)
+		if (if_kernelname_set(ifp) == OK)
 			nsm_interface_kmac_set(ifp);
 	}
-	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
+	nsm_interface_hook_handler(1, -1, ifp);
+
 	ret = nsm_halpal_interface_add(ifp);
 
 	if (ret == OK && if_have_kernel(ifp) && os_strlen(ifp->k_name))
@@ -398,9 +284,6 @@ int nsm_interface_create_hook(struct interface *ifp)
 		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
 	}
-	//zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
-	//	ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
-	nsm_interface_hook_handler(1, -1, ifp);
 
 	return OK;
 }
@@ -424,8 +307,8 @@ static int nsm_interface_delete_hook(struct interface *ifp)
 {
 	struct nsm_interface *nsm_interface;
 	NSM_ENTER_FUNC();
-	nsm_interface_hook_handler(0, -1, ifp);
 	nsm_halpal_interface_delete(ifp);
+	nsm_interface_hook_handler(0, -1, ifp);
 	if (ifp->info[MODULE_NSM])
 	{
 		nsm_interface = ifp->info[MODULE_NSM];
@@ -444,7 +327,7 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 	{
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
-	case IF_ETHERNET_SUB:
+	case IF_XGIGABT_ETHERNET:
 	case IF_WIRELESS:
 		if (IF_ID_GET(ifindex))
 		{
@@ -533,7 +416,11 @@ zpl_bool nsm_interface_create_check_api(struct vty *vty, const char *ifname, con
 static int nsm_interface_delete(struct interface *ifp)
 {
 	zpl_uint32 delete = 0;
-	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_SERIAL || ifp->if_type == IF_WIRELESS)
+	if (ifp->if_type == IF_ETHERNET || 
+		ifp->if_type == IF_GIGABT_ETHERNET || 
+		ifp->if_type == IF_XGIGABT_ETHERNET ||
+		ifp->if_type == IF_SERIAL || 
+		ifp->if_type == IF_WIRELESS)
 	{
 		if (IF_ID_GET(ifp->uspv))
 			delete = 1;
@@ -684,7 +571,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		}
 #endif
 		connected_up_ipv4(ifp, ifc);
-// nsm_client_notify_interface_add_ip(ifp, ifc, 0);
+
 #ifdef ZPL_NSM_MODULE
 		nsm_redistribute_interface_address_add(ifp, ifc);
 #endif

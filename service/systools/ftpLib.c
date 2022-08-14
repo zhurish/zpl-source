@@ -713,9 +713,9 @@ int ftpXfer
 		      cmdResult, dataSock, ctrlSock);
 
             IPSTACK_FD_ZERO (&readFds);
-            IPSTACK_FD_SET  (ctrlSock._fd, &readFds);
-            IPSTACK_FD_SET  (dataSock._fd, &readFds);
-            width = (dataSock._fd > ctrlSock._fd) ? dataSock._fd : ctrlSock._fd;
+            IPSTACK_FD_SET  (ipstack_fd(ctrlSock), &readFds);
+            IPSTACK_FD_SET  (ipstack_fd(dataSock), &readFds);
+            width = (ipstack_fd(dataSock) > ipstack_fd(ctrlSock)) ? ipstack_fd(dataSock) : ipstack_fd(ctrlSock);
             width++;
 
             if (ipstack_select (IPCOM_STACK, width, &readFds, NULL, NULL, NULL) == ERROR)
@@ -731,7 +731,7 @@ int ftpXfer
              * ftpDataConnGet next.
              */
 
-            if (IPSTACK_FD_ISSET (ctrlSock._fd, &readFds) && ! IPSTACK_FD_ISSET (dataSock._fd, &readFds))
+            if (IPSTACK_FD_ISSET (ipstack_fd(ctrlSock), &readFds) && ! IPSTACK_FD_ISSET (ipstack_fd(dataSock), &readFds))
                 {
                 ipstack_close (dataSock);
 
@@ -881,7 +881,7 @@ int ftpReplyGetEnhanced
     replyTimeOut.tv_sec = ftpc_config.ftpReplyTimeout;
 
     IPSTACK_FD_ZERO (&readFds);
-    IPSTACK_FD_SET  (ctrlSock._fd, &readFds);
+    IPSTACK_FD_SET  (ipstack_fd(ctrlSock), &readFds);
 
     do
         {
@@ -892,7 +892,7 @@ int ftpReplyGetEnhanced
         stringIndex = 0;
         continuation = zpl_false;
 
-        if ((num = ipstack_select (IPCOM_STACK, ctrlSock._fd +1, &readFds, (fd_set *) NULL,
+        if ((num = ipstack_select (IPCOM_STACK, ipstack_fd(ctrlSock) +1, &readFds, (fd_set *) NULL,
                                 (fd_set *) NULL, &replyTimeOut)) == ERROR)
             return (ERROR);
 
@@ -1488,9 +1488,9 @@ zpl_socket_t ftpDataConnGet
     replyTime.tv_sec = ftpc_config.ftpReplyTimeout;
 
     IPSTACK_FD_ZERO (&readFds);
-    IPSTACK_FD_SET  (dataSock._fd, &readFds);
+    IPSTACK_FD_SET  (ipstack_fd(dataSock), &readFds);
     
-    if ((rc = ipstack_select (IPCOM_STACK, dataSock._fd+1, &readFds, (fd_set *) NULL,
+    if ((rc = ipstack_select (IPCOM_STACK, ipstack_fd(dataSock)+1, &readFds, (fd_set *) NULL,
                       (fd_set *) NULL, &replyTime)) <= 0)
         {
         if (rc  ==  0)                /* select timed out */

@@ -6,7 +6,7 @@ extern "C"
 {
 #endif
 
-#include "bsp_types.h"
+#include "kbsp_types.h"
 
 #define NETPKT_TOCPU        1
 #define NETPKT_FROMDEV      2

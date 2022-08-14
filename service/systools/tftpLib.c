@@ -1217,10 +1217,10 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 		while (1) /* receive loop */
 		{
 			IPSTACK_FD_ZERO(&readFds);
-			IPSTACK_FD_SET(pTftpDesc->sock._fd, &readFds);
+			IPSTACK_FD_SET(ipstack_fd(pTftpDesc->sock), &readFds);
 			/* wait for reply message */
 
-			if ((num = ipstack_select(IPCOM_STACK, pTftpDesc->sock._fd+1, &readFds, (fd_set *) NULL,
+			if ((num = ipstack_select(IPCOM_STACK, ipstack_fd(pTftpDesc->sock)+1, &readFds, (fd_set *) NULL,
 					(fd_set *) NULL, &reXmitTimer)) == ERROR)
 				return (ERROR);
 

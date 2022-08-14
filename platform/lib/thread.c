@@ -288,7 +288,7 @@ thread_master_create()
 		}
 #else
 		memset(&_master_thread_list, 0, sizeof(_master_thread_list));
-		_master_mutex = os_mutex_init();
+		_master_mutex = os_mutex_name_init("thremmutex");
 #endif
 		os_mt_init = 1;
 	}
@@ -322,7 +322,7 @@ thread_master_create()
 	rv->background = pqueue_create();
 	rv->timer->cmp = rv->background->cmp = thread_timer_cmp;
 	rv->timer->update = rv->background->update = thread_timer_update;
-	rv->mutex = os_mutex_init();
+	rv->mutex = os_mutex_name_init("threadmutex");
 #ifdef THREAD_MASTER_LIST
 	thread_master_add_list(rv);
 #endif
@@ -608,7 +608,7 @@ funcname_thread_add_read_write(zpl_uint32 dir, struct thread_master *m,
 	else
 		fdset = &m->writefd;
 
-	if (FD_ISSET(fd._fd, fdset))
+	if (FD_ISSET(ipstack_fd(fd), fdset))
 	{
 		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", fd);
 		if (m->mutex)
@@ -616,9 +616,9 @@ funcname_thread_add_read_write(zpl_uint32 dir, struct thread_master *m,
 		return NULL;
 	}
 
-	FD_SET(fd._fd, fdset);
+	FD_SET(ipstack_fd(fd), fdset);
 
-	thread_max_fd_update(m, fd._fd);
+	thread_max_fd_update(m, ipstack_fd(fd));
 
 	thread = thread_get(m, dir, func, arg, debugargpass);
 	thread->u.fd = fd;
@@ -788,11 +788,11 @@ void thread_cancel(struct thread *thread)
 	switch (thread->type)
 	{
 	case THREAD_READ:
-		assert(fd_clear_read_write(thread->u.fd._fd, &thread->master->readfd));
+		assert(fd_clear_read_write(ipstack_fd(thread->u.fd), &thread->master->readfd));
 		list = &thread->master->read;
 		break;
 	case THREAD_WRITE:
-		assert(fd_clear_read_write(thread->u.fd._fd, &thread->master->writefd));
+		assert(fd_clear_read_write(ipstack_fd(thread->u.fd), &thread->master->writefd));
 		list = &thread->master->write;
 		break;
 	case THREAD_TIMER:
@@ -914,7 +914,7 @@ static zpl_uint32 thread_process_fds_helper(struct thread_master *m,
 	for (thread = list->head; thread; thread = next)
 	{
 		next = thread->next;
-		if (fd_is_set(THREAD_FD(thread)._fd, fdset))
+		if (fd_is_set(ipstack_fd(THREAD_FD(thread)), fdset))
 		{
 			/*if(m->debug && thread->type == THREAD_READ)
 			{
@@ -925,7 +925,7 @@ static zpl_uint32 thread_process_fds_helper(struct thread_master *m,
 			else
 				mfdset = &m->writefd;
 
-			fd_clear_read_write(THREAD_FD(thread)._fd, mfdset);
+			fd_clear_read_write(ipstack_fd(THREAD_FD(thread)), mfdset);
 			thread_list_delete(list, thread);
 			thread->type = THREAD_READY;
 			thread_list_add(&thread->master->ready, thread);

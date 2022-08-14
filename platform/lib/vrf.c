@@ -62,17 +62,17 @@ struct vrf_bitmap_table
 
 
 
-vrf_bitmap_t ip_vrf_bitmap_init(void)
+ip_vrf_bitmap_t ip_vrf_bitmap_init(void)
 {
-  return (vrf_bitmap_t)XCALLOC(MTYPE_VRF_BITMAP, sizeof(struct vrf_bitmap_table));
+  return (ip_vrf_bitmap_t)XCALLOC(MTYPE_VRF_BITMAP, sizeof(struct vrf_bitmap_table));
 }
 
-void ip_vrf_bitmap_free(vrf_bitmap_t bmap)
+void ip_vrf_bitmap_free(ip_vrf_bitmap_t bmap)
 {
   struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uint32 i;
 
-  if (bmap == VRF_BITMAP_NULL)
+  if (bmap == IP_VRF_BITMAP_NULL)
     return;
 
   for (i = 0; i < VRF_BITMAP_NUM_OF_GROUPS; i++)
@@ -82,13 +82,13 @@ void ip_vrf_bitmap_free(vrf_bitmap_t bmap)
   XFREE(MTYPE_VRF_BITMAP, bm);
 }
 
-void ip_vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+void ip_vrf_bitmap_set(ip_vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
   zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
-  if (bmap == VRF_BITMAP_NULL)
+  if (bmap == IP_VRF_BITMAP_NULL)
     return;
 
   if (bm->groups[group] == NULL)
@@ -99,26 +99,26 @@ void ip_vrf_bitmap_set(vrf_bitmap_t bmap, vrf_id_t vrf_id)
            VRF_BITMAP_FLAG(offset));
 }
 
-void ip_vrf_bitmap_unset(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+void ip_vrf_bitmap_unset(ip_vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
   zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
-  if (bmap == VRF_BITMAP_NULL || bm->groups[group] == NULL)
+  if (bmap == IP_VRF_BITMAP_NULL || bm->groups[group] == NULL)
     return;
 
   UNSET_FLAG(bm->groups[group][VRF_BITMAP_INDEX_IN_GROUP(offset)],
              VRF_BITMAP_FLAG(offset));
 }
 
-zpl_bool ip_vrf_bitmap_check(vrf_bitmap_t bmap, vrf_id_t vrf_id)
+zpl_bool ip_vrf_bitmap_check(ip_vrf_bitmap_t bmap, vrf_id_t vrf_id)
 {
   struct vrf_bitmap_table *bm = (struct vrf_bitmap_table *)bmap;
   zpl_uchar group = VRF_BITMAP_GROUP(vrf_id);
   zpl_uchar offset = VRF_BITMAP_BIT_OFFSET(vrf_id);
 
-  if (bmap == VRF_BITMAP_NULL || bm->groups[group] == NULL)
+  if (bmap == IP_VRF_BITMAP_NULL || bm->groups[group] == NULL)
     return 0;
 
   return CHECK_FLAG(bm->groups[group][VRF_BITMAP_INDEX_IN_GROUP(offset)],
@@ -322,7 +322,7 @@ void ip_vrf_init(void)
   if(_ip_vrf_master.ip_vrf_list)
   {
     lstInit(_ip_vrf_master.ip_vrf_list);
-    _ip_vrf_master.vrf_mutex = os_mutex_init();
+    _ip_vrf_master.vrf_mutex = os_mutex_name_init("vrfmutex");
   }
 }
 

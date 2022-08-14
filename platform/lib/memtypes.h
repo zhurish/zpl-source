@@ -1,8 +1,8 @@
 /* Auto-generated from memtypes.c by gawk. */
 /* Do not edit! */
 
-#ifndef _QUAGGA_MEMTYPES_H
-#define _QUAGGA_MEMTYPES_H
+#ifndef __LIB_MEMTYPES_H
+#define __LIB_MEMTYPES_H
 
 enum
 {
@@ -39,6 +39,7 @@ enum
   MTYPE_VTY_HIST,
   MTYPE_VTY_HOOK,
   MTYPE_IF,
+  MTYPE_IF_NAME,
   MTYPE_IF_DESC,
   MTYPE_IF_HOOK,
   MTYPE_IF_INFO,
@@ -339,15 +340,6 @@ enum
   MTYPE_QOS,
   MTYPE_DOT1X,
   MTYPE_MIRROR,
-  MTYPE_HALIPCSRV,
-  MTYPE_HALIPCCLIENT,
-  MTYPE_HALIPCMSG,
-  MTYPE_IPCBC,
-  MTYPE_IPCBCCLIENT,
-  MTYPE_IPCBCMSG,
-  MTYPE_IPCBUS,
-  MTYPE_IPCBUSCLIENT,
-  MTYPE_IPCBUSMSG,
   MTYPE_BSP,
   MTYPE_BSP_CLIENT,
   MTYPE_BSP_NETLINK,
@@ -416,6 +408,20 @@ enum
   MTYPE_QOS_CLASS_MAP,
   MTYPE_QOS_POLICY,
   MTYPE_QOS_POLICY_MAP,
+  MTYPE_HALIPCSRV,
+  MTYPE_HALIPCCLIENT,
+  MTYPE_HALIPCMSG,
+  MTYPE_HALEVENT,
+  MTYPE_IPCBC,
+  MTYPE_IPCBCCLIENT,
+  MTYPE_IPCBCMSG,
+  MTYPE_IPCBUS,
+  MTYPE_IPCBUSCLIENT,
+  MTYPE_IPCBUSMSG,
+  MTYPE_STANDBY,
+  MTYPE_STANDBY_CLIENT,
+  MTYPE_STANDBY_SERV,
+  MTYPE_STANDBY_SERV_CLIENT,
   MTYPE_MAX,
 };
 
@@ -446,6 +452,7 @@ extern struct memory_list memory_list_web[];
 extern struct memory_list memory_list_video[];
 extern struct memory_list memory_list_mqtt[];
 extern struct memory_list memory_list_qosacl[];
+extern struct memory_list memory_list_ipcbus[];
 
-#endif /* _QUAGGA_MEMTYPES_H */
+#endif /* __LIB_MEMTYPES_H */
 

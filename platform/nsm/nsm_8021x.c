@@ -25,14 +25,14 @@ int nsm_dot1x_init(void)
 	gDot1x_t.mutex = os_mutex_init();
 	lstInit(gDot1x_t.dot1xList);
 	nsm_interface_write_hook_add(NSM_INTF_DOT1X, build_dot1x_interface);
-	temp = nsm_template_new(zpl_true);
+	temp = lib_template_new(zpl_true);
 	if (temp)
 	{
 		temp->module = 0;
 		strcpy(temp->name, "dot1x");
 		temp->write_template = build_dot1x_config;
 		temp->pVoid = NULL;
-		nsm_config_list_install(temp, 0);
+		lib_template_config_list_install(temp, 0);
 	}
 	return OK;
 }

@@ -60,8 +60,6 @@ make_prepare: route_types.h
 
 lib: $(LIBS)
 
-lib: $(LIBS)
-
 
 obj: $(DEPEND_HEADER) $(MODULE_OBJS)
 

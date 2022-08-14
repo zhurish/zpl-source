@@ -49,6 +49,7 @@ struct memory_list memory_list_lib[] =
   { MTYPE_VTY_HIST,		"VTY history"			},
   { MTYPE_VTY_HOOK,			"VTY show hook"			},
   { MTYPE_IF,			"Interface"			},
+  { MTYPE_IF_NAME,			"Interface Name"	},
   { MTYPE_IF_DESC,			"Interface destination"	},
   { MTYPE_IF_HOOK,			"Interface Hook"			},
   { MTYPE_IF_INFO,			"Interface Information"	},
@@ -468,15 +469,6 @@ struct memory_list memory_list_port[] =
 	{ MTYPE_QOS,			"QOS information"			},
 	{ MTYPE_DOT1X,			"DOT1X information"			},
 	{ MTYPE_MIRROR,			"MIRROR information"		},
-	{ MTYPE_HALIPCSRV,			"HAL IPCSrv information"			},
-	{ MTYPE_HALIPCCLIENT,			"HAL IPC Client information"			},
-	{ MTYPE_HALIPCMSG,			"HAL IPC Msg information"			},
-	{ MTYPE_IPCBC,			"IPCBC information"			},
-	{ MTYPE_IPCBCCLIENT,			"IPCBC Client information"		},
-  { MTYPE_IPCBCMSG,			"IPCBC IPC Msg information"			},
-	{ MTYPE_IPCBUS,			"IPCBUS information"			},
-	{ MTYPE_IPCBUSCLIENT,			"IPCBUS Client information"		},
-  { MTYPE_IPCBUSMSG,			"IPCBUS IPC Msg information"			},
 	{ -1, "" },
 };
 
@@ -597,6 +589,26 @@ struct memory_list memory_list_qosacl[] =
   { -1, "" },
 };
 
+struct memory_list memory_list_ipcbus[] =
+{
+	{ MTYPE_HALIPCSRV,			"HAL IPCSrv information"			},
+	{ MTYPE_HALIPCCLIENT,			"HAL IPC Client information"			},
+	{ MTYPE_HALIPCMSG,			"HAL IPC Msg information"			},
+  { MTYPE_HALEVENT,			"HAL Event information"			},
+	{ MTYPE_IPCBC,			"IPCBC information"			},
+	{ MTYPE_IPCBCCLIENT,			"IPCBC Client information"		},
+  { MTYPE_IPCBCMSG,			"IPCBC IPC Msg information"			},
+	{ MTYPE_IPCBUS,			"IPCBUS information"			},
+	{ MTYPE_IPCBUSCLIENT,			"IPCBUS Client information"		},
+  { MTYPE_IPCBUSMSG,			"IPCBUS IPC Msg information"			},
+  { MTYPE_STANDBY,			"Standby information"	},
+  { MTYPE_STANDBY_CLIENT,		"Standby Client information"	},
+  { MTYPE_STANDBY_SERV,			"Standby Server information"	},
+  { MTYPE_STANDBY_SERV_CLIENT,"Standby Server Client information"	},
+  { -1, "" },
+};
+
+
 struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_lib,	"LIB"	},
   { memory_list_nsm,	"NSM"	},
@@ -652,6 +664,7 @@ struct mlist mlists[] __attribute__ ((unused)) = {
   { memory_list_mqtt,	"MQTT"	},
 #endif
   { memory_list_qosacl,	"Class Map"	},
-
+  { memory_list_ipcbus,	"IPC Type"	},
+  
   { NULL, NULL},
 };

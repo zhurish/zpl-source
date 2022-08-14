@@ -2178,7 +2178,7 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
       vty_out (vty, "Routing entry for %s%s%s",
                prefix2str (up, buf, sizeof(buf)), mcast_info,
               VTY_NEWLINE);
-      vty_out (vty, "  Known via \"%s\"", nsm_route_string (rib->type));
+      vty_out (vty, "  Known via \"%s\"", zroute_string (rib->type));
       vty_out (vty, ", distance %u, metric %u", rib->distance, rib->metric);
       if (rib->mtu)
         vty_out (vty, ", mtu %u", rib->mtu);
@@ -2329,7 +2329,7 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
     up.p = &rn->p;
 	  /* Prefix information. */
 	  len = vty_out (vty, "%c%c%c %s",
-			 nsm_route_char (rib->type),
+			 zroute_keychar (rib->type),
 			 CHECK_FLAG (rib->flags, NSM_RIB_FLAG_SELECTED)
 			 ? '>' : ' ',
 			 CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB)
@@ -2759,11 +2759,11 @@ ALIAS (show_ip_route_supernets,
 
 DEFUN (show_ip_route_protocol,
        show_ip_route_protocol_cmd,
-       "show ip route " QUAGGA_IP_REDIST_STR_NSM,
+       "show ip route " ROUTE_IP_REDIST_STR_NSM,
        SHOW_STR
        IP_STR
        "IP routing table\n"
-       QUAGGA_IP_REDIST_HELP_STR_NSM)
+       ROUTE_IP_REDIST_HELP_STR_NSM)
 {
   zpl_uint32 type;
   struct route_table *table;
@@ -2823,12 +2823,12 @@ DEFUN (show_ip_route_protocol,
 
 ALIAS (show_ip_route_protocol,
        show_ip_route_protocol_vrf_cmd,
-       "show ip route " VRF_CMD_STR" "QUAGGA_IP_REDIST_STR_NSM,
+       "show ip route " VRF_CMD_STR" "ROUTE_IP_REDIST_STR_NSM,
        SHOW_STR
        IP_STR
        "IP routing table\n"
 	   VRF_CMD_HELP_STR
-       QUAGGA_IP_REDIST_HELP_STR_NSM)
+       ROUTE_IP_REDIST_HELP_STR_NSM)
 
 DEFUN (show_ip_route_addr,
        show_ip_route_addr_cmd,
@@ -3030,7 +3030,7 @@ vty_show_ip_route_summary (struct vty *vty, struct route_table *table)
 		       VTY_NEWLINE);
 	    }
 	  else 
-	    vty_out (vty, "%-20s %-20d %-20d %s", nsm_route_string(i), 
+	    vty_out (vty, "%-20s %-20d %-20d %s", zroute_string(i), 
 		     rib_cnt[i], fib_cnt[i], VTY_NEWLINE);
 	}
     }
@@ -3111,7 +3111,7 @@ vty_show_ip_route_summary_prefix (struct vty *vty, struct route_table *table)
 		       VTY_NEWLINE);
 	    }
 	  else
-	    vty_out (vty, "%-20s %-20d %-20d %s", nsm_route_string(i),
+	    vty_out (vty, "%-20s %-20d %-20d %s", zroute_string(i),
 		     rib_cnt[i], fib_cnt[i], VTY_NEWLINE);
 	}
     }
@@ -3380,11 +3380,11 @@ DEFUN (show_ip_route_supernets_vrf_all,
 
 DEFUN (show_ip_route_protocol_vrf_all,
        show_ip_route_protocol_vrf_all_cmd,
-       "show ip route " QUAGGA_IP_REDIST_STR_NSM " " VRF_ALL_CMD_STR,
+       "show ip route " ROUTE_IP_REDIST_STR_NSM " " VRF_ALL_CMD_STR,
        SHOW_STR
        IP_STR
        "IP routing table\n"
-       QUAGGA_IP_REDIST_HELP_STR_NSM
+       ROUTE_IP_REDIST_HELP_STR_NSM
        VRF_ALL_CMD_HELP_STR)
 {
   zpl_uint32 type;
@@ -3698,11 +3698,11 @@ DEFUN (show_ip_protocol,
     for (i=0;i<ZPL_ROUTE_PROTO_MAX;i++)
     {
         if (proto_rm[AFI_IP][i])
-          vty_out (vty, "%-10s  : %-10s%s", nsm_route_string(i),
+          vty_out (vty, "%-10s  : %-10s%s", zroute_string(i),
 					proto_rm[AFI_IP][i],
 					VTY_NEWLINE);
         else
-          vty_out (vty, "%-10s  : none%s", nsm_route_string(i), VTY_NEWLINE);
+          vty_out (vty, "%-10s  : none%s", zroute_string(i), VTY_NEWLINE);
     }
     if (proto_rm[AFI_IP][i])
       vty_out (vty, "%-10s  : %-10s%s", "any", proto_rm[AFI_IP][i],
@@ -5026,11 +5026,11 @@ ALIAS (show_ipv6_route_prefix_longer,
 
 DEFUN (show_ipv6_route_protocol,
        show_ipv6_route_protocol_cmd,
-       "show ipv6 route " QUAGGA_IP6_REDIST_STR_NSM,
+       "show ipv6 route " ROUTE_IP6_REDIST_STR_NSM,
        SHOW_STR
        IP_STR
        "IP routing table\n"
-	QUAGGA_IP6_REDIST_HELP_STR_NSM)
+	ROUTE_IP6_REDIST_HELP_STR_NSM)
 {
   zpl_uint32 type;
   struct route_table *table;
@@ -5090,12 +5090,12 @@ DEFUN (show_ipv6_route_protocol,
 
 ALIAS (show_ipv6_route_protocol,
        show_ipv6_route_protocol_vrf_cmd,
-       "show ipv6 route " VRF_CMD_STR " "QUAGGA_IP6_REDIST_STR_NSM,
+       "show ipv6 route " VRF_CMD_STR " "ROUTE_IP6_REDIST_STR_NSM,
        SHOW_STR
        IP_STR
        "IP routing table\n"
 	   VRF_CMD_HELP_STR
-       QUAGGA_IP6_REDIST_HELP_STR_NSM
+       ROUTE_IP6_REDIST_HELP_STR_NSM
        )
 
 DEFUN (show_ipv6_route_addr,
@@ -5514,11 +5514,11 @@ DEFUN (show_ipv6_route_prefix_longer_vrf_all,
 
 DEFUN (show_ipv6_route_protocol_vrf_all,
        show_ipv6_route_protocol_vrf_all_cmd,
-       "show ipv6 route " QUAGGA_IP6_REDIST_STR_NSM " " VRF_ALL_CMD_STR,
+       "show ipv6 route " ROUTE_IP6_REDIST_STR_NSM " " VRF_ALL_CMD_STR,
        SHOW_STR
        IP_STR
        "IP routing table\n"
-       QUAGGA_IP6_REDIST_HELP_STR_NSM
+       ROUTE_IP6_REDIST_HELP_STR_NSM
        VRF_ALL_CMD_HELP_STR)
 {
   zpl_uint32 type;
@@ -5907,7 +5907,7 @@ static int nsm_ip_protocol_config_write(struct vty *vty)
   for (i=0;i<ZPL_ROUTE_PROTO_MAX;i++)
     {
       if (proto_rm[AFI_IP][i])
-        vty_out (vty, "ip protocol %s route-map %s%s", nsm_route_string(i),
+        vty_out (vty, "ip protocol %s route-map %s%s", zroute_string(i),
                  proto_rm[AFI_IP][i], VTY_NEWLINE);
     }
   if (proto_rm[AFI_IP][ZPL_ROUTE_PROTO_MAX])

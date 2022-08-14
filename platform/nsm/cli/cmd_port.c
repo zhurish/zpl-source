@@ -13,7 +13,7 @@
 #include "vty.h"
 #include "nsm_include.h"
 #include "hal_include.h"
-#include "bmgt.h"
+#include "if_utsp.h"
 
 DEFUN(nsm_interface_switchport,
 	  nsm_interface_switchport_cmd,
@@ -26,6 +26,7 @@ DEFUN(nsm_interface_switchport,
 	{
 		if (ifp->if_type == IF_ETHERNET || 
 			ifp->if_type == IF_GIGABT_ETHERNET || 
+			ifp->if_type == IF_XGIGABT_ETHERNET || 
 			ifp->if_type == IF_LAG)
 		{
 			ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
@@ -48,7 +49,7 @@ DEFUN(nsm_interface_switchport,
 		{
 			ifp = vty->vty_range_index[i];
 			if (ifp->if_type == IF_ETHERNET || 
-				ifp->if_type == IF_GIGABT_ETHERNET || 
+				ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET ||
 				ifp->if_type == IF_LAG)
 			{
 				ret = nsm_interface_mode_set_api(ifp, IF_MODE_ACCESS_L2);
@@ -79,7 +80,7 @@ DEFUN(no_nsm_interface_switchport,
 	if (ifp)
 	{
 		if (ifp->if_type == IF_ETHERNET || 
-			ifp->if_type == IF_GIGABT_ETHERNET || 
+			ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET || 
 			ifp->if_type == IF_LAG)
 		{
 			ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);
@@ -102,7 +103,7 @@ DEFUN(no_nsm_interface_switchport,
 		{
 			ifp = vty->vty_range_index[i];
 			if (ifp->if_type == IF_ETHERNET || 
-				ifp->if_type == IF_GIGABT_ETHERNET || 
+				ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET || 
 				ifp->if_type == IF_LAG)
 			{
 				ret = nsm_interface_mode_set_api(ifp, IF_MODE_L3);

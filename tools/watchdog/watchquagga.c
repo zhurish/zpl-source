@@ -186,7 +186,7 @@ static struct global_state
 
 #define SET_READ_HANDLER(DMN) \
   if ((DMN)->t_read == NULL)  \
-  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, watchdog_read, (DMN), (DMN)->fd._fd)
+  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, watchdog_read, (DMN), ipstack_fd((DMN)->fd))
 
 #define SET_WAKEUP_DOWN(DMN)                                                        \
   (DMN)->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_down, (DMN), \
@@ -843,7 +843,7 @@ try_connect(struct daemon *dmn)
       fdprintf(STDOUT_FILENO, "%s: connection in progress\r\n", dmn->name);
     dmn->state = DAEMON_CONNECTING;
     dmn->fd = sock;
-    dmn->t_write = os_ansync_add(master, OS_ANSYNC_OUTPUT, check_connect, dmn, dmn->fd._fd);
+    dmn->t_write = os_ansync_add(master, OS_ANSYNC_OUTPUT, check_connect, dmn, ipstack_fd(dmn->fd));
     dmn->t_wakeup = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_connect_hanging, dmn,
                                   gs.timeout);
     return 0;

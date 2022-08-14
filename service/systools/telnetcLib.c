@@ -375,9 +375,9 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 			return telnetExit(session);
 		IPSTACK_FD_ZERO(&readFds);
 		//if (session->echoIsDone && session->sgaIsDone)
-		IPSTACK_FD_SET(session->linfd._fd, &readFds);
-		IPSTACK_FD_SET(session->hostFd._fd, &readFds);
-		width = max(session->linfd._fd, session->hostFd._fd) + 1;
+		IPSTACK_FD_SET(ipstack_fd(session->linfd), &readFds);
+		IPSTACK_FD_SET(ipstack_fd(session->hostFd), &readFds);
+		width = max(ipstack_fd(session->linfd), ipstack_fd(session->hostFd)) + 1;
 		/* wait for input */
 		//fprintf(stdout, "%s wait for input\r\n", __func__);
 		if (ipstack_select(IPCOM_STACK, width, &readFds, NULL, NULL, NULL) == ERROR)
@@ -388,7 +388,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 
 		/* process stdin stream */
 
-		if (IPSTACK_FD_ISSET(session->linfd._fd, &readFds))
+		if (IPSTACK_FD_ISSET(ipstack_fd(session->linfd), &readFds))
 		{
 			/* process stdin stream and get bytes from stdin */
 			if (session->echoIsDone && session->sgaIsDone)
@@ -434,7 +434,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 
 		/* process host stream */
 
-		if (IPSTACK_FD_ISSET(session->hostFd._fd, &readFds))
+		if (IPSTACK_FD_ISSET(ipstack_fd(session->hostFd), &readFds))
 		{
 			/* get bytes from the host */
 			memset(session->pBuf, 0, sizeof(session->pBuf));

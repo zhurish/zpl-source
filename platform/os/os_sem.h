@@ -68,7 +68,7 @@ extern os_mutex_t * os_mutex_init(zpl_uint32 key);
 *	   -1: 永远等待，直到资源可用
 *	   >0: 等待 时间 (s)
 */
-extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait);
+extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait_ms);
 extern int os_mutex_unlock(os_mutex_t *);
 extern int os_mutex_exit(os_mutex_t *);
 /*
@@ -82,7 +82,7 @@ extern os_sem_t * os_sem_init(int key);
 *	   >0: 等待 时间 (s)
 */
 extern int os_sem_give(os_sem_t *);
-extern int os_sem_take(os_sem_t *, zpl_int32 wait);
+extern int os_sem_take(os_sem_t *, zpl_int32 wait_ms);
 extern int os_sem_exit(os_sem_t *);
 
 
@@ -90,40 +90,57 @@ extern int os_sem_exit(os_sem_t *);
 typedef struct os_sem_s
 {
 	sem_t  sem;
+	zpl_uint32 lock;
+	char *name;
 }os_sem_t;
 
 typedef struct os_mutex_s
 {
 	pthread_mutex_t mutex;
+	zpl_bool lock;
+	char *name;
 }os_mutex_t;
 
 typedef struct os_spin_s
 {
-	pthread_spinlock_t lock;
+	pthread_spinlock_t spinlock;
+	zpl_bool lock;
+	char *name;
 }os_spin_t;
 
 
 #define OS_WAIT_NO 			0
 #define OS_WAIT_FOREVER 	-1
 
+#define OS_SEM_DEBUG 	0x01
+#define OS_MUTEX_DEBUG 	0x02
+#define OS_SPIN_DEBUG 	0x04
+
+extern int os_sem_module_debug(int val);
+
 extern os_sem_t * os_sem_init(void);
+extern os_sem_t * os_sem_name_init(const char *name);
 extern int os_sem_give(os_sem_t *);
-extern int os_sem_take(os_sem_t *, zpl_int32 wait);
+extern int os_sem_take(os_sem_t *, zpl_int32 wait_ms);
 extern int os_sem_exit(os_sem_t *);
 
 
 extern os_mutex_t * os_mutex_init(void);
-extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait);
+extern os_mutex_t * os_mutex_name_init(const char *name);
+extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait_ms);
 extern int os_mutex_unlock(os_mutex_t *);
 extern int os_mutex_exit(os_mutex_t *);
 
 
 extern os_spin_t * os_spin_init(void);
+extern os_spin_t * os_spin_name_init(const char *name);
 extern int os_spin_lock(os_spin_t *);
 extern int os_spin_unlock(os_spin_t *);
 extern int os_spin_exit(os_spin_t *);
 #endif
 
+#define _OS_SEM_DEBUG_DETAIL(fmt,...)	os_vslog("DETAIL", __func__, __LINE__,fmt, ##__VA_ARGS__)
+//#define _OS_SEM_DEBUG_DETAIL(fmt,...)	
 
 #ifdef __cplusplus
 }

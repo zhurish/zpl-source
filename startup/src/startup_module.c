@@ -8,6 +8,7 @@
 #include <zplos_include.h>
 #include "module.h"
 #include "if.h"
+#include "if_utsp.h"
 #include "zmemory.h"
 #include "log.h"
 #include "host.h"
@@ -17,7 +18,6 @@
 #include "vty_user.h"
 #include "command.h"
 #include "workqueue.h"
-#include "bmgt.h"
 #include "daemon.h"
 #include "nsm_include.h"
 #include "nsm_main.h"
@@ -112,20 +112,19 @@ int startup_module_init(int console_enable)
 	_global_host.console_enable = console_enable;
 	//设置准备初始化标志
 	host_loadconfig_state(LOAD_INIT);
-	#ifdef ZPL_HAL_MODULE
-	zplib_module_init(MODULE_HAL);
-	#endif
 	#ifdef ZPL_PAL_MODULE
 	zplib_module_init(MODULE_PAL);
 	#endif
-	os_msleep(50);
 	#ifdef ZPL_HAL_MODULE
-	zplib_module_task_init(MODULE_HAL);
+	zplib_module_init(MODULE_HAL);
 	#endif
+	os_msleep(50);
 	#ifdef ZPL_PAL_MODULE
 	zplib_module_task_init(MODULE_PAL);
 	#endif
-
+	#ifdef ZPL_HAL_MODULE
+	zplib_module_task_init(MODULE_HAL);
+	#endif
 	//等待BSP初始化，最长等待15s时间
 	#ifdef ZPL_BSP_MODULE
 	zplib_module_init(MODULE_SDK);
@@ -171,18 +170,19 @@ int startup_module_waitting(void)
 #ifdef ZPL_NSM_MODULE
 	nsm_module_start();
 #endif
-#ifdef ZPL_IPCBCBSP_MODULE
-	bsp_usp_module_init();
-#endif
+
+#ifdef ZPL_ACTIVE_STANDBY
+	ipcstandby_done(5);
+#endif	
 
 #ifdef ZPL_KERNEL_MODULE
 	//_netlink_load_all();
 #endif
 	//eth_drv_init(0);
 	//eth_drv_start(0);
-#ifdef ZPL_ACTIVE_STANDBY
-	ipcstandby_done(5);
-#endif	
+
+	unit_board_startup();
+
 	return OK;
 }
 
@@ -226,7 +226,6 @@ int zpl_base_shell_start(char *shell_path, char *shell_addr, int shell_port, con
 	//vty_task_exit (void);
 	zplib_module_task_init(MODULE_CONSOLE);
 	zplib_module_task_init(MODULE_TELNET);
-	zlog_notice(MODULE_DEFAULT, "zpl_base_shell_start %s starting: vty@%d", OEM_VERSION, shell_port);
 	return OK;
 }
 

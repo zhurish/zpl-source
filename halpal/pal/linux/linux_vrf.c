@@ -124,9 +124,9 @@ static char *_netns_pathname(const char *name)
 static int netns_is_enabled(struct ip_vrf *vrf)
 {
 	if (have_netns())
-		return vrf && vrf->fd._fd >= 0;
+		return vrf && ipstack_fd(vrf->fd) >= 0;
 	else
-		return vrf && vrf->fd._fd == -2 && vrf->vrf_id == VRF_DEFAULT;
+		return vrf && ipstack_fd(vrf->fd) == -2 && vrf->vrf_id == VRF_DEFAULT;
 }
 
 static int netns_enable(struct ip_vrf *vrf)
@@ -180,7 +180,7 @@ static int netns_disable(struct ip_vrf *vrf)
 		if (have_netns())
 			ipstack_close(vrf->fd);
 
-		vrf->fd._fd = -1;
+		ipstack_fd(vrf->fd) = -1;
 		return 0;
 	}
 	return -1;
@@ -192,7 +192,7 @@ static zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 p
 	struct ip_vrf *vrf = ip_vrf_lookup(vrf_id);
 	int ret = -1;
 	zpl_socket_t tmp;
-	ipstack_init(OS_STACK, tmp);
+	tmp = ipstack_init(OS_STACK, -1);
 	if (!vrf)
 		return tmp;
 	if (!netns_is_enabled(vrf))
@@ -203,16 +203,16 @@ static zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 p
 
 	if (have_netns())
 	{
-		ret = (vrf_id != VRF_DEFAULT) ? setns(vrf->fd._fd, CLONE_NEWNET) : 0;
+		ret = (vrf_id != VRF_DEFAULT) ? setns(ipstack_fd(vrf->fd), CLONE_NEWNET) : 0;
 		if (ret >= 0)
 		{
-			tmp._fd = socket(domain, type, protocol);
+			ipstack_fd(tmp) = socket(domain, type, protocol);
 			if (vrf_id != VRF_DEFAULT)
-				setns(ip_vrf_lookup(VRF_DEFAULT)->fd._fd, CLONE_NEWNET);
+				setns(ipstack_fd(ip_vrf_lookup(VRF_DEFAULT)->fd), CLONE_NEWNET);
 		}
 	}
 	else
-		tmp._fd = socket(domain, type, protocol);
+		ipstack_fd(tmp) = socket(domain, type, protocol);
 	return tmp;
 }
 
@@ -328,7 +328,6 @@ int rtnl_ipvrf_add_dev(char *dev, char *name)
 
 	return libnl_netlink_link_add(&netlink_cmd, link, RTM_NEWLINK);
 }
-//extern void     rtnl_link_set_master(struct rtnl_link *, int);
 #endif
 
 int linux_ioctl_vrf_enable(struct ip_vrf *vrf)
@@ -343,7 +342,10 @@ int linux_ioctl_vrf_enable(struct ip_vrf *vrf)
 	}
 #endif	
 	if(librtnl_ipvrf_create(vrf->name, vrf->vrf_id) == OK)
+	{
+		vrf->kvrfid = librtnl_link_name2index(vrf->name, 0);
 		return librtnl_link_updown(vrf->name, 1);
+	}
 	return ERROR;	
 }
 
@@ -373,7 +375,9 @@ zpl_socket_t linux_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, 
 #ifdef ZPL_NETNS_ENABLE	
 	return _kernel_vrf_socket(domain, type, protocol, vrf_id);
 #else
-	return socket(domain, type, protocol);
+	zpl_socket_t tmpsock = ipstack_init(OS_STACK, -1);
+	ipstack_fd(tmpsock) = socket(domain, type, protocol);
+	return tmpsock;
 #endif /* ZPL_NETNS_ENABLE */	
 }
 

@@ -369,7 +369,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
 
     /* Add a file descriptor to the set */
     IPSTACK_FD_ZERO(&rset);
-    IPSTACK_FD_SET(ctx->s._fd, &rset);
+    IPSTACK_FD_SET(ipstack_fd(ctx->s), &rset);
 
     /* We need to analyse the message step by step.  At the first step, we want
      * to reach the function code because all packets contain this

@@ -1,14 +1,14 @@
 /*
- * bmgt.h
+ * if_utsp.h
  *
  *  Created on: May 1, 2017
  *      Author: zhurish
  */
 
-#ifndef __Board_management_H__
-#define __Board_management_H__
+#ifndef __IF_UTSP_H__
+#define __IF_UTSP_H__
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -73,7 +73,7 @@ extern int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool e
 
 
 /* 初始化 */
-extern int bsp_usp_module_init(void);
+extern int unit_board_startup(void);
 
 
 #ifdef ZPL_KERNEL_MODULE
@@ -81,9 +81,9 @@ extern int if_ktest_init(void);
 #endif
 
 
+
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif /* __Board_management_H__ */
+#endif /* __IF_UTSP_H__ */

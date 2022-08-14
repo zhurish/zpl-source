@@ -92,7 +92,7 @@ int icmp_echo_request(zpl_uint32  test_nip,
 		int r;
 		unsigned prevTime = os_get_monotonic_msec();
 
-		r = safe_poll(pfd, pfd._fd+1, timeout_ms);
+		r = safe_poll(pfd, ipstack_fd(pfd)+1, timeout_ms);
 		if (r < 0)
 			break;
 		if (r) {

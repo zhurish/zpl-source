@@ -242,7 +242,7 @@ eloop_master_create()
 		}
 #else
 		memset(&_master_eloop_list, 0, sizeof(_master_eloop_list));
-		_master_mutex = os_mutex_init();		
+		_master_mutex = os_mutex_name_init("eloopmutex");		
 #endif
 		os_mt_init = 1;
 	}
@@ -275,7 +275,7 @@ eloop_master_create()
 	//rv->background = pqueue_create();
 	//rv->timer->cmp = rv->background->cmp = eloop_timer_cmp;
 	//rv->timer->update = rv->background->update = eloop_timer_update;
-	rv->mutex = os_mutex_init();
+	rv->mutex = os_mutex_name_init("eloopmutex");
 #ifdef ELOOP_MASTER_LIST
 	eloop_master_add_list(rv);
 #endif
@@ -518,7 +518,7 @@ funcname_eloop_add_read_write(zpl_uint32 dir, struct eloop_master *m,
 	else
 		fdset = &m->writefd;
 
-	if (IPSTACK_FD_ISSET(fd._fd, fdset))
+	if (IPSTACK_FD_ISSET(ipstack_fd(fd), fdset))
 	{
 		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNINGWARNING, "There is already %s fd [%d]", (dir =
 				ELOOP_READ) ? "read" : "write", fd);
@@ -527,9 +527,9 @@ funcname_eloop_add_read_write(zpl_uint32 dir, struct eloop_master *m,
 		return NULL;
 	}
 
-	IPSTACK_FD_SET(fd._fd, fdset);
+	IPSTACK_FD_SET(ipstack_fd(fd), fdset);
 
-	eloop_max_fd_update(m, fd._fd);
+	eloop_max_fd_update(m, ipstack_fd(fd));
 
 	eloop = eloop_get(m, dir, func, arg, debugargpass);
 	eloop->u.fd = fd;
@@ -721,11 +721,11 @@ void eloop_cancel(struct eloop *eloop)
 	switch (eloop->type)
 	{
 	case ELOOP_READ:
-		assert(fd_clear_read_write(eloop->u.fd._fd, &eloop->master->readfd));
+		assert(fd_clear_read_write(ipstack_fd(eloop->u.fd), &eloop->master->readfd));
 		list = &eloop->master->read;
 		break;
 	case ELOOP_WRITE:
-		assert(fd_clear_read_write(eloop->u.fd._fd, &eloop->master->writefd));
+		assert(fd_clear_read_write(ipstack_fd(eloop->u.fd), &eloop->master->writefd));
 		list = &eloop->master->write;
 		break;
 	case ELOOP_TIMER:
@@ -878,13 +878,13 @@ static zpl_uint32 eloop_process_fds_helper(struct eloop_master *m, struct eloop_
 	for (eloop = list->head; eloop; eloop = next)
 	{
 		next = eloop->next;
-		if (fd_is_set(ELOOP_FD(eloop)._fd, fdset))
+		if (fd_is_set(ipstack_fd(ELOOP_FD(eloop)), fdset))
 		{
 			if (eloop->type == ELOOP_READ)
 				mfdset = &m->readfd;
 			else
 				mfdset = &m->writefd;
-			fd_clear_read_write(ELOOP_FD(eloop)._fd, mfdset);
+			fd_clear_read_write(ipstack_fd(ELOOP_FD(eloop)), mfdset);
 			eloop_list_delete(list, eloop);
 			eloop_list_add(&m->ready, eloop);
 			eloop->type = ELOOP_READY;

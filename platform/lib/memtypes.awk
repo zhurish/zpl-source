@@ -53,9 +53,9 @@ BEGIN {
 	mtyperegex = "^(MTYPE_[[:upper:]_[:digit:]]+).*";
 	header = "/* Auto-generated from memtypes.c by " ARGV[0] ". */\n";
 	header = header "/* Do not edit! */\n";
-	header = header "\n#ifndef _QUAGGA_MEMTYPES_H\n";
-	header = header "#define _QUAGGA_MEMTYPES_H\n";
-	footer = "\n#endif /* _QUAGGA_MEMTYPES_H */\n\n";
+	header = header "\n#ifndef __LIB_MEMTYPES_H\n";
+	header = header "#define __LIB_MEMTYPES_H\n";
+	footer = "\n#endif /* __LIB_MEMTYPES_H */\n\n";
 	mlistformat = "extern struct memory_list memory_list_%s[];";
 	printf ("%s\n", header);
 }

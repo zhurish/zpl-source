@@ -27,7 +27,7 @@ int nsm_mirror_init(void)
 	os_memset(&gMirror, 0, sizeof(Gmirror_t));
 	gMirror.mutex = os_mutex_init();
 
-	temp = nsm_template_new (zpl_true);
+	temp = lib_template_new (zpl_true);
 	if(temp)
 	{
 		temp->module = 0;
@@ -35,7 +35,7 @@ int nsm_mirror_init(void)
 		//strcpy(temp->prompt, "service-mqtt"); /* (config-app-esp)# */
 		temp->write_template = bulid_mirror_config;
 		temp->pVoid = NULL;
-		nsm_config_list_install(temp, 0);
+		lib_template_config_list_install(temp, 0);
 	}
 
 	return OK;

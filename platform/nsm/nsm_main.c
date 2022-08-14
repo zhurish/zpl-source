@@ -41,6 +41,9 @@
 #include "fpm.h"
 #include "nsm_fpm.h"
 #endif
+#ifdef ZPL_IPCBC_MODULE
+#include "ipcbc_serv.h"
+#endif
 
 struct module_list module_list_nsm = {
 		.module = MODULE_NSM,
@@ -74,6 +77,7 @@ int nsm_module_init(void)
 	if(nsm_rtadv.master)
 		nsm_rtadv.initialise = 1;	
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
+
 #ifdef ZPL_VRF_MODULE
 	ipvrf_init();
 #endif
@@ -86,9 +90,12 @@ int nsm_module_init(void)
 	prefix_list_init ();
 	keychain_init ();
 
-	nsm_template_init();
+	lib_template_init();
 
 
+#ifdef ZPL_IPCBC_MODULE
+	//ipcbc_serv_init(nsm_srv->master);
+#endif
 	nsm_global_init();
 	nsm_port_init();
 
@@ -296,6 +303,7 @@ int nsm_module_start(void)
 #ifdef ZPL_NSM_VLAN	
 	nsm_vlan_default();
 #endif
+	ipvrf_create("Default-IP-Routing-Table");
 	return OK;
 }
 
@@ -318,6 +326,7 @@ static int nsm_rtadv_task(void *argv)
 	return 0;
 }
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
+
 int nsm_task_init(void)
 {
 #if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)

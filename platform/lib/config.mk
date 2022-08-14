@@ -34,7 +34,7 @@ OBJS	+= stream.o
 
 OBJS	+= lib_event.o
 OBJS	+= lib_pqueue.o
-OBJS	+= sigevent.o
+
 
 ifeq ($(strip $(ZPL_IP_FILTER)),true)
 OBJS	+= filter.o		
@@ -60,11 +60,11 @@ OBJS	+= if_name.o
 ifeq ($(strip $(ZPL_VRF_MODULE)),true)
 OBJS	+= vrf.o	
 endif
+OBJS	+= if_utsp.o
 OBJS	+= nexthop.o
 OBJS	+= table.o
 OBJS	+= if_rmap.o
 OBJS	+= routemap.o
-OBJS	+= router-id.o
 OBJS	+= zclient.o
 
 
@@ -84,9 +84,8 @@ OBJS	+= cmd_memory.o
 endif
 
 ifeq ($(strip $(ZPL_NSM_SNMP)),true)
-OBJS	+= agentx.o
 OBJS	+= snmp.o
-OBJS	+= smux.o
+OBJS	+= agentx.o
 endif
 #############################################################################
 # LIB

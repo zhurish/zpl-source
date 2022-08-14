@@ -33,8 +33,7 @@
 #ifdef ZPL_VRF_MODULE
 #include "vrf.h"
 #endif
-#include "nsm_halpal.h"
-#include "nsm_rib.h"
+
 
 
 
@@ -164,12 +163,12 @@ int if_cmp_func(struct interface *ifp1, struct interface *ifp2)
 }
 
 /* Create new interface structure. */
-
-static int if_create_make_ifname(struct interface *ifp, const char *name, zpl_uint32 namelen)
+static int if_ifname_setup(struct interface *ifp, const char *name, zpl_uint32 namelen)
 {
 	if (ifp->if_type == IF_SERIAL ||
 		ifp->if_type == IF_ETHERNET ||
 		ifp->if_type == IF_GIGABT_ETHERNET ||
+		ifp->if_type == IF_XGIGABT_ETHERNET ||
 		ifp->if_type == IF_TUNNEL ||
 		ifp->if_type == IF_WIRELESS ||
 #ifdef CUSTOM_INTERFACE
@@ -206,42 +205,34 @@ int if_make_llc_type(struct interface *ifp)
 		ifp->ll_type = IF_LLT_ETHER;
 		break;
 	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
 		ifp->ll_type = IF_LLT_GIETHER;
 		break;
 	case IF_WIRELESS:
 		ifp->ll_type = IF_LLT_WIRELESS;
-		ifp->if_mode = IF_MODE_L3;
 		break;
-
 	case IF_TUNNEL:
 		ifp->ll_type = IF_LLT_TUNNEL;
-		ifp->if_mode = IF_MODE_L3;
 		break;
 	case IF_VLAN:
 		ifp->ll_type = IF_LLT_VLAN;
-		ifp->if_mode = IF_MODE_L3;
 		break;
 	case IF_LAG:
 		ifp->ll_type = IF_LLT_LAG;
 		break;
 	case IF_LOOPBACK:
 		ifp->ll_type = IF_LLT_LOOPBACK;
-		ifp->if_mode = IF_MODE_L3;
-		ifp->flags |= IPSTACK_IFF_LOOPBACK;
 		break;
 
 	case IF_BRIGDE:
 		ifp->ll_type = IF_LLT_BRIGDE;
-		ifp->if_mode = IF_MODE_L3;
 		break;
 #ifdef CUSTOM_INTERFACE
 	case IF_WIFI:
 		ifp->ll_type = IF_LLT_WIFI;
-		ifp->if_mode = IF_MODE_L3;
 		break;
 	case IF_MODEM:
 		ifp->ll_type = IF_LLT_MODEM;
-		ifp->if_mode = IF_MODE_L3;
 		break;
 #endif
 	default:
@@ -260,7 +251,63 @@ int if_make_llc_type(struct interface *ifp)
 	return OK;
 }
 
-static int if_make_ifindex_type(struct interface *ifp)
+
+static int if_mode_default(struct interface *ifp)
+{
+	switch (ifp->if_type)
+	{
+	case IF_SERIAL:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->have_kernel = zpl_true; 
+		break;
+	case IF_ETHERNET:
+		ifp->if_mode = IF_MODE_ACCESS_L2;
+		break;
+	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
+		ifp->if_mode = IF_MODE_ACCESS_L2;
+		break;
+	case IF_WIRELESS:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->have_kernel = zpl_true; 
+		break;
+	case IF_TUNNEL:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->have_kernel = zpl_true; 
+		break;
+	case IF_VLAN:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->have_kernel = zpl_true; 
+		break;
+	case IF_LAG:
+		ifp->if_mode = IF_MODE_ACCESS_L2;
+		break;
+	case IF_LOOPBACK:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->flags |= IPSTACK_IFF_LOOPBACK;
+		ifp->have_kernel = zpl_true; 
+		break;
+
+	case IF_BRIGDE:
+		ifp->if_mode = IF_MODE_ACCESS_L2;
+		break;
+#ifdef CUSTOM_INTERFACE
+	case IF_WIFI:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->have_kernel = zpl_true; 
+		break;
+	case IF_MODEM:
+		ifp->if_mode = IF_MODE_L3;
+		ifp->have_kernel = zpl_true; 
+		break;
+#endif
+	default:
+		break;
+	}
+	return OK;
+}
+
+static int if_ifindex_setup(struct interface *ifp)
 {
 	ifp->name_hash = if_name_hash_make(ifp->name);
 
@@ -271,18 +318,114 @@ static int if_make_ifindex_type(struct interface *ifp)
 	if (ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG || ifp->if_type == IF_LOOPBACK)
 	{
 		ifp->ifindex |= if_loopback_ifindex_create(ifp->if_type, ifp->name);
-		//fprintf(stderr, "%s (%s):ifindex=0x%x", __func__,ifp->name, ifp->ifindex);
 	}
 	
-	if (ifp->if_type == IF_VLAN || ifp->if_type == IF_WIRELESS || 
-		ifp->if_type == IF_LOOPBACK || ifp->if_type == IF_SERIAL ||
-		ifp->if_type == IF_TUNNEL )
-	{
-		ifp->have_kernel = zpl_true; 
-	}
-
 	return OK;
 }
+#ifdef ZPL_IPCOM_MODULE
+int if_kernelname_set(struct interface *ifp)
+{
+	switch (ifp->if_type)
+	{
+	case IF_SERIAL:
+	case IF_ETHERNET:
+	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
+	case IF_TUNNEL:
+	case IF_BRIGDE:
+	case IF_WIRELESS:
+#ifdef CUSTOM_INTERFACE
+	case IF_WIFI:
+	case IF_MODEM:
+#endif
+		if (IF_IFINDEX_ID_GET(ifp->ifindex))
+			sprintf(ifp->k_name, "%s%d/%d/%d.%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_UNIT_GET(ifp->ifindex),
+					IF_IFINDEX_SLOT_GET(ifp->ifindex),
+					IF_IFINDEX_PORT_GET(ifp->ifindex),
+					IF_IFINDEX_ID_GET(ifp->ifindex));
+		else
+			sprintf(ifp->k_name, "%s%d/%d/%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_UNIT_GET(ifp->ifindex),
+					IF_IFINDEX_SLOT_GET(ifp->ifindex),
+					IF_IFINDEX_PORT_GET(ifp->ifindex));
+		break;
+	case IF_LOOPBACK:
+	case IF_VLAN:
+	case IF_LAG:
+		if (IF_IFINDEX_ID_GET(ifp->ifindex))
+			sprintf(ifp->k_name, "%s%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_ID_GET(ifp->ifindex));
+		else
+			sprintf(ifp->k_name, "%s%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_PORT_GET(ifp->ifindex));
+		break;
+	default:
+		break;
+	}
+	ifp->k_name_hash = if_name_hash_make(ifp->k_name);
+	return OK;
+}
+#else
+int if_kernelname_set(struct interface *ifp)
+{
+	zpl_char k_name[64];
+	os_memset(k_name, 0, sizeof(k_name));
+	switch (ifp->if_type)
+	{
+#if defined(ZPL_NSM_TUNNEL)||defined(ZPL_NSM_SERIAL)||defined(ZPL_NSM_BRIGDE)		
+	case IF_SERIAL:
+	case IF_TUNNEL:
+	case IF_BRIGDE:	
+		sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
+				IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
+		break;
+#endif		
+	case IF_ETHERNET:
+	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
+	case IF_WIRELESS:
+#ifdef CUSTOM_INTERFACE
+	case IF_WIFI:
+	case IF_MODEM:
+#endif
+		if (!IF_IFINDEX_ID_GET(ifp->ifindex))
+			sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
+		else
+		{
+			ifindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
+			const char *root_kname = ifkernelindex2kernelifname(root_kifindex);
+			if (root_kname)
+				sprintf(k_name, "%s.%d", root_kname,
+						IF_IFINDEX_VLAN_GET(ifp->ifindex));
+			else
+				sprintf(k_name, "%s%d%d.%d", getkernelname(ifp->if_type),
+						IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex),
+						IF_IFINDEX_VLAN_GET(ifp->ifindex));
+		}
+
+		break;
+	case IF_LOOPBACK:
+	case IF_VLAN:	
+	case IF_LAG:
+#if defined(ZPL_NSM_TRUNK)||defined(ZPL_NSM_VLAN)
+		if (IF_IFINDEX_ID_GET(ifp->ifindex))
+			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_ID_GET(ifp->ifindex));
+		else
+			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
+					IF_IFINDEX_PORT_GET(ifp->ifindex));
+		break;
+#endif
+	default:
+		break;
+	}
+	if (os_strlen(k_name))
+		if_kname_set(ifp, k_name);
+	return OK;
+}
+#endif
 
 struct interface *
 if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
@@ -304,7 +447,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	ifp->dynamic = zpl_true;
 
-	if (if_create_make_ifname(ifp, name, namelen) != OK)
+	if (if_ifname_setup(ifp, name, namelen) != OK)
 	{
 		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected  %u!", name, namelen);
 
@@ -322,18 +465,16 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->connected = list_new();
 	ifp->connected->del = (void (*)(void *))connected_free;
 
-	if_make_ifindex_type(ifp);
+	if_ifindex_setup(ifp);
 
 	SET_FLAG(ifp->status, IF_INTERFACE_ACTIVE);
 
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
 
-	ifp->if_mode = IF_MODE_DEFAULT;
-
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
-
 	if_make_llc_type(ifp);
+	if_mode_default(ifp);
 
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
@@ -371,7 +512,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	ifp->dynamic = zpl_false;
 
-	if (if_create_make_ifname(ifp, name, namelen) != OK)
+	if (if_ifname_setup(ifp, name, namelen) != OK)
 	{
 		XFREE(MTYPE_IF, ifp);
 		IF_DATA_UNLOCK();
@@ -386,18 +527,16 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->connected = list_new();
 	ifp->connected->del = (void (*)(void *))connected_free;
 
-	if_make_ifindex_type(ifp);
+	if_ifindex_setup(ifp);
 
 	SET_FLAG(ifp->status, IF_INTERFACE_ACTIVE);
 
 	ifp->mtu = IF_MTU_DEFAULT;
 	ifp->mtu6 = IF_MTU_DEFAULT;
 
-	ifp->if_mode = IF_MODE_DEFAULT;
-
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
-
 	if_make_llc_type(ifp);
+	if_mode_default(ifp);
 
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
@@ -408,6 +547,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	zlog_debug(MODULE_DEFAULT, "if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
+
 	if (_zif_master.if_master_add_cb)
 		_zif_master.if_master_add_cb(ifp);
 	IF_DATA_UNLOCK();
@@ -900,8 +1040,8 @@ zpl_bool if_is_multicast(struct interface *ifp)
 
 zpl_bool if_is_serial(struct interface *ifp)
 {
-	if (os_strstr(ifp->name, "serial"))
-		return zpl_true;
+	/*if (os_strstr(ifp->name, "serial"))
+		return zpl_true;*/
 	if (ifp->if_type == IF_SERIAL)
 		return zpl_true;
 	return zpl_false;
@@ -909,17 +1049,17 @@ zpl_bool if_is_serial(struct interface *ifp)
 
 zpl_bool if_is_ethernet(struct interface *ifp)
 {
-	if (os_strstr(ifp->name, "ethernet"))
-		return zpl_true;
-	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+	/*if (os_strstr(ifp->name, "ethernet"))
+		return zpl_true;*/
+	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET)
 		return zpl_true;
 	return zpl_false;
 }
 
 zpl_bool if_is_tunnel(struct interface *ifp)
 {
-	if (os_strstr(ifp->name, "tunnel"))
-		return zpl_true;
+	/*if (os_strstr(ifp->name, "tunnel"))
+		return zpl_true;*/
 	if (ifp->if_type == IF_TUNNEL)
 		return zpl_true;
 	return zpl_false;
@@ -927,8 +1067,8 @@ zpl_bool if_is_tunnel(struct interface *ifp)
 
 zpl_bool if_is_lag(struct interface *ifp)
 {
-	if (os_strstr(ifp->name, "port-channel"))
-		return zpl_true;
+	/*if (os_strstr(ifp->name, "port-channel"))
+		return zpl_true;*/
 	if (ifp->if_type == IF_LAG)
 		return zpl_true;
 	return zpl_false;
@@ -942,13 +1082,6 @@ zpl_bool if_is_lag_member(struct interface *ifp)
 zpl_bool if_is_vlan(struct interface *ifp)
 {
 	if (ifp->if_type == IF_VLAN)
-		return zpl_true;
-	return zpl_false;
-}
-
-zpl_bool if_is_subvlan(struct interface *ifp)
-{
-	if (ifp->if_type == IF_SUBVLAN)
 		return zpl_true;
 	return zpl_false;
 }
@@ -974,8 +1107,8 @@ zpl_bool if_is_loop(struct interface *ifp)
 
 zpl_bool if_is_wireless(struct interface *ifp)
 {
-	if (os_strstr(ifp->name, "wireless"))
-		return zpl_true;
+	/*if (os_strstr(ifp->name, "wireless"))
+		return zpl_true;*/
 	if (ifp->if_type == IF_WIRELESS)
 		return zpl_true;
 	return zpl_false;
@@ -1380,7 +1513,7 @@ void if_init(void)
 	{
 		_zif_master.intfList = list_new();
 		if (_zif_master.ifMutex == NULL)
-			_zif_master.ifMutex = os_mutex_init();
+			_zif_master.ifMutex = os_mutex_name_init("ifMutex");
 		(_zif_master.intfList)->cmp = (zpl_int (*)(void *, void *))if_cmp_func;
 	}
 }

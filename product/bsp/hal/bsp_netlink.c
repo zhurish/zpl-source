@@ -50,12 +50,12 @@ static int _bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock, struct ipstack_msghdr
                 continue;
             if (ipstack_errno == IPSTACK_ERRNO_EWOULDBLOCK || ipstack_errno == IPSTACK_ERRNO_EAGAIN)
                 continue;
-            zlog_err(MODULE_PAL, "ipstack_recvmsg from [%d] overrun: %s", nsock->sock._fd,
+            zlog_err(MODULE_PAL, "ipstack_recvmsg from [%d] overrun: %s", ipstack_fd(nsock->sock),
                      ipstack_strerror(ipstack_errno));
             return ERROR;
         }
         if (status == 0) {
-            zlog_err(MODULE_PAL, "ipstack_recvmsg from [%d] overrun: %s", nsock->sock._fd,
+            zlog_err(MODULE_PAL, "ipstack_recvmsg from [%d] overrun: %s", ipstack_fd(nsock->sock),
                      ipstack_strerror(ipstack_errno));
             return -ENODATA;
         }  
@@ -93,7 +93,7 @@ static int bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock)
         if (msg.msg_namelen != sizeof snl)
         {
             zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] sender address length error: length %d",
-                     nsock->sock._fd, msg.msg_namelen);
+                     ipstack_fd(nsock->sock), msg.msg_namelen);
             return ERROR;
         }
         return ret;
@@ -107,20 +107,20 @@ static int bsp_netlink_sock_flush(bsp_netlink_t *nsock)
     int ret = 0;
     fd_set readfds;
     FD_ZERO(&readfds);
-    FD_SET(nsock->sock._fd, &readfds);
+    FD_SET(ipstack_fd(nsock->sock), &readfds);
     while (1)
     {
-        ret = os_select_wait(nsock->sock._fd + 1, &readfds, NULL, 5);
+        ret = os_select_wait(ipstack_fd(nsock->sock) + 1, &readfds, NULL, 5);
         if (ret == OS_TIMEOUT)
         {
             return OS_TIMEOUT;
         }
         if (ret == ERROR)
         {
-            _OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
+            _OS_ERROR("os_select_wait to read(%d) %s\n", ipstack_fd(nsock->sock), strerror(ipstack_errno));
             return ERROR;
         }
-        if (FD_ISSET(nsock->sock._fd, &readfds))
+        if (FD_ISSET(ipstack_fd(nsock->sock), &readfds))
         {
             ret = bsp_netlink_sock_recvmsg(nsock);
         }
@@ -141,7 +141,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
         /* Finish of reading. */
         if (h->nlmsg_type == IPSTACK_NLMSG_DONE)
         {
-            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] IPSTACK_NLMSG_DONE", nsock->sock._fd);
+            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] IPSTACK_NLMSG_DONE", ipstack_fd(nsock->sock));
             return OK;
         }
 
@@ -159,7 +159,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
                 {
                     zlog_debug(MODULE_BSP,
                                "%s: ipstack_recvmsg [%d] ACK: type=%u, seq=%u, pid=%u",
-                               __FUNCTION__, nsock->sock._fd,
+                               __FUNCTION__, ipstack_fd(nsock->sock),
                                err->msg.nlmsg_type, err->msg.nlmsg_seq,
                                err->msg.nlmsg_pid);
                 }
@@ -167,7 +167,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
                 /* return if not a multipart message, otherwise continue */
                 if (!(h->nlmsg_flags & IPSTACK_NLM_F_MULTI))
                 {
-                    zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] IPSTACK_NLM_F_MULTI", nsock->sock._fd);
+                    zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] IPSTACK_NLM_F_MULTI", ipstack_fd(nsock->sock));
                     return ERROR;
                 }
                 return ERROR;
@@ -175,12 +175,12 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
 
             if (h->nlmsg_len < IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_nlmsgerr)))
             {
-                zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] error: message truncated", nsock->sock._fd);
+                zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] error: message truncated", ipstack_fd(nsock->sock));
                 return ERROR;
             }
 
             zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] error: %s, type=%u, seq=%u, pid=%u",
-                     nsock->sock._fd, ipstack_strerror(-errnum),
+                     ipstack_fd(nsock->sock), ipstack_strerror(-errnum),
                      msg_type,
                      err->msg.nlmsg_seq, err->msg.nlmsg_pid);
             return ERROR;
@@ -191,7 +191,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
             error = (*filter)(nsock, h->nlmsg_type, IPSTACK_NLMSG_DATA(h), IPSTACK_NLMSG_PAYLOAD(h, 0), p);
             if (error < 0)
             {
-                zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] filter function error", nsock->sock._fd);
+                zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] filter function error", ipstack_fd(nsock->sock));
                 ret = error;
             }
             ret = error;
@@ -202,7 +202,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
             h = IPSTACK_NLMSG_NEXT(h, status);
         else
         {
-            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] END", nsock->sock._fd);
+            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] END", ipstack_fd(nsock->sock));
             return ret;
         }
     }
@@ -215,22 +215,22 @@ static int bsp_netlink_sock_parse_info(bsp_netlink_t *nsock,
     int ret = 0;
     fd_set readfds;
     FD_ZERO(&readfds);
-    FD_SET(nsock->sock._fd, &readfds);
+    FD_SET(ipstack_fd(nsock->sock), &readfds);
     while (1)
     {
-        ret = os_select_wait(nsock->sock._fd + 1, &readfds, NULL, 1000);
+        ret = os_select_wait(ipstack_fd(nsock->sock) + 1, &readfds, NULL, 1000);
         if (ret == OS_TIMEOUT)
         {
             return OS_TIMEOUT;
         }
         if (ret == ERROR)
         {
-            _OS_ERROR("os_select_wait to read(%d) %s\n", fd, strerror(ipstack_errno));
+            _OS_ERROR("os_select_wait to read(%d) %s\n", ipstack_fd(nsock->sock), strerror(ipstack_errno));
             return ERROR;
         }
-        if (!FD_ISSET(nsock->sock._fd, &readfds))
+        if (!FD_ISSET(ipstack_fd(nsock->sock), &readfds))
         {
-            _OS_ERROR("no events on sockfd(%d) found\n", fd);
+            _OS_ERROR("no events on sockfd(%d) found\n", ipstack_fd(nsock->sock));
             return ERROR;
         }
         ret = bsp_netlink_sock_recvmsg(nsock);

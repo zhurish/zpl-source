@@ -17,8 +17,8 @@
  * any bugs present are surely my fault.  -DaveM
  */
 
-#ifndef _QUAGGA_JHASH_H
-#define _QUAGGA_JHASH_H
+#ifndef __LIB_JHASH_H
+#define __LIB_JHASH_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,4 +49,4 @@ extern zpl_uint32 jhash_1word(zpl_uint32 a, zpl_uint32 initval);
 }
 #endif
 
-#endif /* _QUAGGA_JHASH_H */
+#endif /* __LIB_JHASH_H */

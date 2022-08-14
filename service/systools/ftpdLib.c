@@ -2011,7 +2011,7 @@ static void ftpdDataStreamSend
 
 		/* get a buffered I/O stream for this output data ipstack_socket */
 
-		if ((outStream = fdopen(pSlot->dataSock._fd, "w")) == NULL)
+		if ((outStream = fdopen(ipstack_fd(pSlot->dataSock), "w")) == NULL)
 		{
 			dataError(pSlot);
 			return;
@@ -2184,7 +2184,7 @@ static void ftpdDataStreamReceive
 
 		/* get a buffer I/O stream for the input data ipstack_socket connection */
 
-		if ((inStream = fdopen(pSlot->dataSock._fd, "r")) == NULL)
+		if ((inStream = fdopen(ipstack_fd(pSlot->dataSock), "r")) == NULL)
 		{
 			dataError(pSlot);
 			return;
@@ -2409,7 +2409,7 @@ static int ftpdDirListGet
 
 	if ((pDir = opendir(dirName)) == NULL)
 	{
-		fdprintf(sd._fd, "Can't open \"%s\".\n", dirName);
+		fdprintf(ipstack_fd(sd), "Can't open \"%s\".\n", dirName);
 		return (ERROR);
 	}
 
@@ -2430,12 +2430,12 @@ static int ftpdDirListGet
 			{
 				if (firstFile)
 				{
-					if (fdprintf(sd._fd,
+					if (fdprintf(ipstack_fd(sd),
 							"  size          date       time       name\n")
 							== ERROR)
 						return (ERROR | closedir(pDir));
 
-					if (fdprintf(sd._fd,
+					if (fdprintf(ipstack_fd(sd),
 							"--------       ------     ------    --------\n")
 							== ERROR)
 						return (ERROR | closedir(pDir));
@@ -2464,7 +2464,7 @@ static int ftpdDirListGet
 				else
 					pDirComment = "";
 
-				if (fdprintf(sd._fd,
+				if (fdprintf(ipstack_fd(sd),
 						"%8d    %s-%02d-%04d  %02d:%02d:%02d   %-16s  %s\n",
 						fileStat.st_size, /* size in bytes */
 						monthNames[fileDate.tm_mon + 1],/* month */
@@ -2480,7 +2480,7 @@ static int ftpdDirListGet
 			}
 			else /* just listing file names */
 			{
-				if (fdprintf(sd._fd, "%s\n", pDirEnt->d_name) == ERROR)
+				if (fdprintf(ipstack_fd(sd), "%s\n", pDirEnt->d_name) == ERROR)
 					return (ERROR | closedir(pDir));
 			}
 		}
@@ -2488,7 +2488,7 @@ static int ftpdDirListGet
 		{
 			if (ipstack_errno != OK) /* if real error, not dir end */
 			{
-				if (fdprintf(sd._fd, "error reading entry: %x\n", ipstack_errno) == ERROR)
+				if (fdprintf(ipstack_fd(sd), "error reading entry: %x\n", ipstack_errno) == ERROR)
 					return (ERROR | closedir(pDir));
 				status = ERROR;
 			}
@@ -2496,7 +2496,7 @@ static int ftpdDirListGet
 
 	} while (pDirEnt != NULL); /* until end of dir */
 
-	fdprintf(sd._fd, "\n");
+	fdprintf(ipstack_fd(sd), "\n");
 
 	/* Close dir */
 	status |= closedir(pDir);

@@ -31,7 +31,7 @@ extern "C"
     /* Socket to zebra daemon. */
     zpl_socket_t sock;
     zpl_uint16 port;  // sock 端口
-    zpl_bool  b_event;
+    enum hal_ipctype_e ipctype;
 
     module_t module; //模块ID
     zpl_int8 unit;
@@ -64,10 +64,11 @@ extern "C"
    *
    */
   /* Prototypes of zebra client service functions. */
-  extern struct hal_client *hal_client_create(module_t module, zpl_bool event);
+  extern struct hal_client *hal_client_create(module_t module, enum hal_ipctype_e ipctype);
   extern int hal_client_destroy(struct hal_client *hal_client);
   extern int hal_client_start(struct hal_client *hal_client);
-  extern int hal_client_send_message(struct hal_client *hal_client, enum hal_ipcmsg_type type);
+  extern int hal_client_send_message(struct hal_client *hal_client);
+  extern int hal_client_send_report(struct hal_client *hal_client, char *data, int len);
   extern int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...);
   extern int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue);
   extern int hal_client_send_result_msg(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue, 
@@ -80,6 +81,7 @@ extern "C"
                                   zpl_int8 unit, zpl_int8 slot, zpl_int8 portnum, zpl_char *version);
 
   extern int hal_client_bsp_hwport_register(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_hwport *tbl);
+
 
 
 #ifdef __cplusplus

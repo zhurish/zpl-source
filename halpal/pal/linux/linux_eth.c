@@ -32,15 +32,15 @@
 #ifdef ZPL_KERNEL_NETLINK
 
 #define IPKERNEL_TUN_NAME	"/dev/net/tun"
-#define IPKERNEL_TAP_NAME	"/dev/tap"
-
+//#define IPKERNEL_TAP_NAME	"/dev/tap"
+#define IPKERNEL_TAP_NAME	"/dev/net/tun"
 static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 {
 	struct ipstack_ifreq ifr;
 	struct interface *ifp;
     zpl_uchar macadd[6] = {0x20,0x5f,0x87,0x65,0x66,0x00};
 	if (!kifp || !kifp->ifp)
-		return -1;
+		return ERROR;
 	ifp = kifp->ifp;
 	memset(&ifr, 0, sizeof(ifr));
 	/*
@@ -65,7 +65,7 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 		if (ipstack_invalid(kifp->fd))
 		{
 			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",
-					IPKERNEL_TUN_NAME, ipstack_strerror(ipstack_errno));
+					IPKERNEL_TAP_NAME, ipstack_strerror(ipstack_errno));
 			return ERROR;
 		}
 	}
@@ -94,8 +94,6 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 		ipstack_close(kifp->fd);
 		return ERROR;
 	}
-    /*TODO:MAC��ȡ */
-
 
     macadd[5] = ifp->ifindex & 0xff;
     if(pal_interface_set_lladdr(ifp, macadd, 6) != OK)
@@ -106,31 +104,25 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 		return ERROR;
 	}
 	ipstack_set_nonblocking(kifp->fd);
-	//ipkernel_register(kifp);
-
+	ifp->k_ifindex = if_nametoindex(ifp->k_name);
+	linux_ioctl_if_set_up(ifp);
 	return OK;
 }
 
 static int _linux_kernel_eth_destroy (nsm_vlaneth_t *kifp)
 {
-
-	//struct ipstack_ifreq ifr;
 	struct interface *ifp;
 	if(!kifp)
 		return -1;
 	ifp = kifp->ifp;
 
-	//TODO unregister this fd
-	//ipkernel_unregister(kifp);
 	pal_interface_down (ifp);
 	ipstack_close (kifp->fd);
-	//TODO to update if kernel index
+
 	ifp->k_ifindex = 0;
 	return OK;
 
 }
-
-
 
 
 

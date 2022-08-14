@@ -98,6 +98,7 @@ static int librtnl_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct i
 	case IF_ETHERNET:
 		break;
 	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
 		break;
 	case IF_TUNNEL:
 		librtnl_addattr_l(&req.n, sizeof(req), IFLA_INFO_KIND, "tunnel", strlen("tunnel"));
@@ -142,6 +143,7 @@ int librtnl_destroy_interface(struct interface *ifp)
 {
 	return librtnl_ioctl_interface(IPSTACK_RTM_DELLINK, IPSTACK_AF_UNSPEC, ifp);
 }
+
 
 #if 0
 //ip link add test type vrf table 200
@@ -448,6 +450,7 @@ int linux_netlink_create_interface(struct interface *ifp)
 	case IF_ETHERNET:
 		break;
 	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
 		break;
 	case IF_TUNNEL:
 		ret = rtnl_tunnel_interface_create(NULL, ifp->k_name, IPSTACK_IPPROTO_GRE, 64, "1.1.1.1", "1.1.1.2");

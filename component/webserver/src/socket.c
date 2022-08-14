@@ -127,7 +127,7 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
         socketFree(sid);
         return -1;
     }
-    socketHighestFd._fd = max(socketHighestFd._fd, sp->sock._fd);
+    ipstack_fd(socketHighestFd) = max(ipstack_fd(socketHighestFd), ipstack_fd(sp->sock));
 
 #if ME_COMPILER_HAS_FCNTL
     //fcntl(sp->sock, F_SETFD, FD_CLOEXEC);
@@ -210,7 +210,7 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
         socketFree(sid);
         return -1;
     }
-    socketHighestFd._fd = max(socketHighestFd._fd, sp->sock._fd);
+    ipstack_fd(socketHighestFd) = max(ipstack_fd(socketHighestFd), ipstack_fd(sp->sock));
 
 #if ME_COMPILER_HAS_FCNTL
     //ipstack_fcntl(sp->sock, F_SETFD, FD_CLOEXEC);
@@ -328,7 +328,7 @@ static void socketAccept(WebsSocket *sp)
         web_error("Cannot set SO_SNDTIMEO, ipstack_errno %s", strerror(ipstack_errno));
     }
 #endif
-    socketHighestFd._fd = max(socketHighestFd._fd, newSock._fd);
+    ipstack_fd(socketHighestFd) = max(ipstack_fd(socketHighestFd), ipstack_fd(newSock));
 
     /*
         Create a socket structure and insert into the socket list
@@ -532,7 +532,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Allocate and zero the select masks
      */
-    nwords = (socketHighestFd._fd + NFDBITS) / NFDBITS;
+    nwords = (ipstack_fd(socketHighestFd) + NFDBITS) / NFDBITS;
     len = nwords * sizeof(fd_mask);
 
     readFds = walloc(len);
@@ -567,8 +567,8 @@ PUBLIC int socketSelect(int sid, int timeout)
         /*
             Initialize the ready masks and compute the mask offsets.
          */
-        index = sp->sock._fd / (NBBY * sizeof(fd_mask));
-        bit = 1 << (sp->sock._fd % (NBBY * sizeof(fd_mask)));
+        index = ipstack_fd(sp->sock) / (NBBY * sizeof(fd_mask));
+        bit = 1 << (ipstack_fd(sp->sock) % (NBBY * sizeof(fd_mask)));
         /*
             Set the appropriate bit in the ready masks for the sp->sock.
          */
@@ -592,7 +592,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Wait for the event or a timeout
      */
-    nEvents = ipstack_select(IPCOM_STACK, socketHighestFd._fd + 1, (ipstack_fd_set *) readFds, (ipstack_fd_set *) writeFds, (ipstack_fd_set *) exceptFds, &tv);
+    nEvents = ipstack_select(IPCOM_STACK, ipstack_fd(socketHighestFd) + 1, (ipstack_fd_set *) readFds, (ipstack_fd_set *) writeFds, (ipstack_fd_set *) exceptFds, &tv);
     if (all) {
         sid = 0;
     }
@@ -604,8 +604,8 @@ PUBLIC int socketSelect(int sid, int timeout)
                 continue;
             }
         }
-        index = sp->sock._fd / (NBBY * sizeof(fd_mask));
-        bit = 1 << (sp->sock._fd % (NBBY * sizeof(fd_mask)));
+        index = ipstack_fd(sp->sock) / (NBBY * sizeof(fd_mask));
+        bit = 1 << (ipstack_fd(sp->sock) % (NBBY * sizeof(fd_mask)));
 
         if (sp->flags & SOCKET_RESERVICE) {
             if (sp->handlerMask & SOCKET_READABLE) {
@@ -961,7 +961,7 @@ PUBLIC void socketFree(int sid)
         other end causing problems.
      */
     socketRegisterInterest(sid, 0);
-    if (sp->sock._fd >= 0) {
+    if (ipstack_fd(sp->sock) >= 0) {
         socketSetBlock(sid, 0);
         while (ipstack_recv(sp->sock, buf, sizeof(buf), 0) > 0) {}
         if (ipstack_shutdown(sp->sock, IPSTACK_SHUT_RDWR) >= 0) {
@@ -975,12 +975,12 @@ PUBLIC void socketFree(int sid)
     /*
         Calculate the new highest socket number
      */
-    socketHighestFd._fd = -1;
+    ipstack_fd(socketHighestFd) = -1;
     for (i = 0; i < socketMax; i++) {
         if ((sp = socketList[i]) == NULL) {
             continue;
         }
-        socketHighestFd._fd = max(socketHighestFd._fd, sp->sock._fd);
+        ipstack_fd(socketHighestFd) = max(ipstack_fd(socketHighestFd), ipstack_fd(sp->sock));
     }
 }
 

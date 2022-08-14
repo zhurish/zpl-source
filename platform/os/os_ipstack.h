@@ -138,7 +138,12 @@ extern zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
      SHUT_RDWR = No more receptions or transmissions.
    Returns 0 on success, -1 for errors.  */
 extern int ipstack_shutdown (zpl_socket_t _sock, int __how);
+#ifdef ZPL_SOCKET_T_POINT
 extern int ipstack_close (zpl_socket_t _sock);
+#else
+extern int ipstack_close_pst (zpl_socket_t *_sock);
+#define ipstack_close(n)   ipstack_close_pst(&(n))
+#endif
 extern int ipstack_ioctl (zpl_socket_t _sock, unsigned long request, void *argp);
 extern int ipstack_write (zpl_socket_t _sock, void *buf, int nbytes);
 extern int ipstack_writev (zpl_socket_t _sock, struct ipstack_iovec *iov, int iovlen);
@@ -146,15 +151,23 @@ extern int ipstack_read (zpl_socket_t _sock, void *buf, int nbytes);
 extern int ipstack_socketselect (zpl_ipstack stack, int width, ipstack_fd_set *rfds, ipstack_fd_set *wfds, ipstack_fd_set *exfds, struct zpl_timeval *tmo);
 
 extern zpl_socket_t ipstack_open (zpl_ipstack stack, const char *__path, int __oflag);
-//extern int ip_stack_writev (int fd, void *buf, int nbytes);
-//extern int ip_stack_read (int fd, void *buf, int nbytes);
 
-extern int ipstack_invalid(zpl_socket_t _sock);
-extern int ipstack_bzero(zpl_socket_t _sock);
-extern int ipstack_init(zpl_ipstack stack, zpl_socket_t _sock);
-extern int ipstack_same(zpl_socket_t src, zpl_socket_t dst);
-extern int ipstack_copy(zpl_socket_t src, zpl_socket_t dst);
+extern zpl_bool ipstack_invalid(zpl_socket_t _sock);
+
+extern zpl_socket_t ipstack_create(zpl_ipstack stack);
+extern int ipstack_drstroy(zpl_socket_t _sock);
+extern zpl_socket_t ipstack_init(zpl_ipstack stack, int fd);
+extern zpl_bool ipstack_same(zpl_socket_t src, zpl_socket_t dst);
 extern zpl_socket_t ipstack_max(zpl_socket_t src, zpl_socket_t dst);
+#ifdef ZPL_SOCKET_T_POINT
+extern int ipstack_bzero(zpl_socket_t _sock);
+extern int ipstack_copy(zpl_socket_t src, zpl_socket_t dst);
+#else
+extern int ipstack_bzero_pst(zpl_socket_t *_sock);
+extern int ipstack_copy_pst(zpl_socket_t *src, zpl_socket_t *dst);
+#define ipstack_bzero(n)   ipstack_bzero_pst(&(n))
+#define ipstack_copy(s,d)   ipstack_copy_pst(&(s), &(d))
+#endif
 
 extern int ipstack_get_blocking(zpl_socket_t _sock);
 extern int ipstack_set_nonblocking(zpl_socket_t _sock);
@@ -164,16 +177,20 @@ extern char * ipstack_sockstr(zpl_socket_t _sock);
 
 
 
-
-#define ipstack_fd(n) ((n)._fd)
-#define ipstack_type(n) ((n)._fd)
-
+#ifdef ZPL_SOCKET_T_POINT
+#define ipstack_fd(n)         (((n)->_fd))
+#define ipstack_type(n)       (((n)->stack))
+#define is_os_stack(n)	      ((n)->stack == OS_STACK)
+#define is_ipcom_stack(n)	   ((n)->stack == IPCOM_STACK)
+#else
+#define ipstack_fd(n)         ((n)._fd)
+#define ipstack_type(n)       ((n).stack)
+#define is_os_stack(n)	      ((n).stack == OS_STACK)
+#define is_ipcom_stack(n)	   ((n).stack == IPCOM_STACK)
+#endif
 #define ipstack_closesocket	ipstack_close
 #define ipstack_select	ipstack_socketselect
 
-
-#define is_os_stack(n)	      ((n).stack == OS_STACK)
-#define is_ipcom_stack(n)	   ((n).stack == IPCOM_STACK)
 
 #ifdef GNU_LINUX
 #define WANT_OSPF_WRITE_FRAGMENT

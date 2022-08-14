@@ -63,7 +63,7 @@ DEFUN (ip_sip_service,
 		"Service configure\n"
 		"SIP Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_true, "service pjsip");
+	template_t * temp = lib_template_lookup_name (zpl_true, "service pjsip");
 	if(temp)
 	{
 		if(!pl_pjsip_global_isenable())
@@ -75,7 +75,7 @@ DEFUN (ip_sip_service,
 	}
 	else
 	{
-		temp = nsm_template_new (zpl_true);
+		temp = lib_template_new (zpl_true);
 		if(temp)
 		{
 			temp->module = 0;
@@ -83,7 +83,7 @@ DEFUN (ip_sip_service,
 			strcpy(temp->prompt, "service-sip"); /* (config-app-esp)# */
 			temp->write_template = pjsip_write_config;
 			//temp->pVoid = v9_video_app_tmp();
-			nsm_template_install(temp, 0);
+			lib_template_install(temp, 0);
 			if(!pl_pjsip_global_isenable())
 				pl_pjsip_global_set_api(zpl_true);
 			vty->node = ALL_SERVICE_NODE;
@@ -111,12 +111,12 @@ DEFUN (no_ip_sip_service,
 		"Service configure\n"
 		"SIP Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_true, "service pjsip");
+	template_t * temp = lib_template_lookup_name (zpl_true, "service pjsip");
 	if(temp)
 	{
 		if(pl_pjsip_global_isenable())
 			pl_pjsip_global_set_api(zpl_false);
-		nsm_template_free(temp);
+		lib_template_free(temp);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -3793,7 +3793,7 @@ void cmd_voip_init(void)
 	//install_default_basic(SIP_SERVICE_NODE);
 	//reinstall_node(SIP_SERVICE_NODE, pl_pjsip_write_config);
 
-	template_t * temp = nsm_template_new (zpl_true);
+	template_t * temp = lib_template_new (zpl_true);
 	if(temp)
 	{
 		temp->module = 0;
@@ -3804,7 +3804,7 @@ void cmd_voip_init(void)
 		//temp->pVoid;
 		temp->pVoid = NULL;
 		temp->write_template = pjsip_write_config;
-		nsm_template_install(temp, 0);
+		lib_template_install(temp, 0);
 
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_sip_enable_cmd);
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &ip_sip_service_cmd);

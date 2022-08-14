@@ -1,5 +1,5 @@
 /*
- * nsm_queue.c
+ * lib_queue.c
  *
  *  Created on: May 12, 2018
  *      Author: zhurish
@@ -73,7 +73,7 @@ struct lib_pqueue * lib_pqueue_create (zpl_uint32 num)
   struct lib_pqueue *queue;
 
   queue = XCALLOC (MTYPE_PQUEUE, sizeof (struct lib_pqueue));
-  queue->mutex = os_mutex_init();
+  queue->mutex = os_mutex_name_init("pqueuemutex");
 
   lstInit(&queue->stream_list);
   queue->array_max = num;

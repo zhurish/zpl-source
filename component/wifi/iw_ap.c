@@ -1453,7 +1453,7 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	os_memset(iw_ap, 0, sizeof(iw_ap_t));
 
 	iw_ap->ap_list = malloc(sizeof(LIST));
-	iw_ap->ap_mutex = os_mutex_init();
+	iw_ap->ap_mutex = os_mutex_name_init("ap-mutex");
 	lstInit(iw_ap->ap_list);
 
 	iw_ap->mac_list = malloc(sizeof(LIST));
@@ -1461,7 +1461,7 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	iw_ap->dmac_list = malloc(sizeof(LIST));
 	lstInit(iw_ap->dmac_list);
 
-	iw_ap->mutex = os_mutex_init();
+	iw_ap->mutex = os_mutex_name_init("iw-mutex");
 
 	iw_ap_default_init(iw_ap, ifindex);
 	iw_ap_task_start(iw_ap);

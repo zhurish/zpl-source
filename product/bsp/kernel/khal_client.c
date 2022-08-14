@@ -1,4 +1,4 @@
-#include "bsp_types.h"
+#include "kbsp_types.h"
 #include "khal_client.h"
 #ifdef ZPL_SDK_KERNEL
 #include "bsp_include.h"
@@ -6,17 +6,17 @@
 #include "khal_netpkt.h"
 #include "keth_drv.h"
 
-static struct hal_client *halclient = NULL;
-static int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *driver);
-static void hal_client_sock_input(struct sk_buff *__skb);
+static struct khal_client *khalclient = NULL;
+static int kbsp_driver_msg_handle(struct khal_client *client, zpl_uint32 cmd, void *driver);
+static void khal_client_sock_input(struct sk_buff *__skb);
 
 
-static int hal_client_ioctl_callback(struct hal_client *client, zpl_uint32 cmd, void *data);
+static int khal_client_ioctl_callback(struct khal_client *client, zpl_uint32 cmd, void *data, int len);
 
-static struct netlink_kernel_cfg _hal_client_sock_nkc = {
+static struct netlink_kernel_cfg _khal_client_sock_nkc = {
     .groups = 0,
     .flags = 0,
-    .input = hal_client_sock_input,
+    .input = khal_client_sock_input,
     .cb_mutex = NULL,
     .bind = NULL,
     .unbind = NULL,
@@ -25,13 +25,13 @@ static struct netlink_kernel_cfg _hal_client_sock_nkc = {
 
 
 
-static int hal_client_open(struct inode *inode, struct file *file)
+static int khal_client_open(struct inode *inode, struct file *file)
 {
-	file->private_data = halclient;
+	file->private_data = khalclient;
 	return nonseekable_open(inode, file);
 }
 
-static int hal_client_release(struct inode *inode, struct file *file)
+static int khal_client_release(struct inode *inode, struct file *file)
 {
 	file->private_data = NULL;
 	return 0;
@@ -40,128 +40,115 @@ static int hal_client_release(struct inode *inode, struct file *file)
 
 
 
-static long hal_client_ioctl(struct file *file, unsigned int command,
+static long khal_client_ioctl(struct file *file, unsigned int command,
 			     unsigned long u)
 {
 	int ret = -EINVAL;
 	void __user *argp = (void __user *)u;
-  ret = hal_client_ioctl_callback(file->private_data, command, argp);
-/*
-	if (copy_from_user(&cmd, argp, sizeof(struct midodev_cmd)))
-		return -EFAULT;
+  char udata[512];
+  struct khal_client *client = file->private_data;
+  if(client)
+  {
+    if (copy_from_user(udata, argp, 256))
+      return -EFAULT;
 
-	if (command == B53_IO_W)
-	{
-
-	}
-	else if (command == B53_IO_R)
-	{
-		cmd.val = mdiobus_read_nested(hal_client.bus, cmd.addr, cmd.regnum);
-		if (copy_to_user((void __user *)u, &cmd, sizeof(struct midodev_cmd))) {
-			printk(KERN_ERR " read mdio bus copy_to_user\n");
-			return -EFAULT;
-		}
-		ret = 0;
-	}
-  */
+    ret = khal_client_ioctl_callback(client, command, udata, 256);
+  }
 	return ret;
 }
 
 
-static const struct file_operations hal_client_dev_fops = {
+static const struct file_operations khal_client_dev_fops = {
 	.owner = THIS_MODULE,
-	.unlocked_ioctl = hal_client_ioctl,
+	.unlocked_ioctl = khal_client_ioctl,
 	.read = NULL,
 	.write = NULL,
-	.open = hal_client_open,
-	.release = hal_client_release,
+	.open = khal_client_open,
+	.release = khal_client_release,
 	.llseek = no_llseek,
 };
 
 
-static int hal_client_register(struct hal_client *hal_client)
+static int khal_client_register(struct khal_client *khal_client)
 {
-	hal_client->dev_num = register_chrdev(0, KHAL_CLIENT_DEVICE_NAME, &hal_client_dev_fops);
-	if (hal_client->dev_num < 0) 
+	khal_client->dev_num = register_chrdev(0, KHAL_CLIENT_DEVICE_NAME, &khal_client_dev_fops);
+	if (khal_client->dev_num < 0) 
 	{
-		printk(KERN_ERR "%s[%d] register_chrdev() error.\n", __FILE__,
-		       __LINE__);
+		printk(KERN_ERR "%s[%d] register_chrdev() error.\n", __FILE__,__LINE__);
 		return -1;
 	}
-	if ((hal_client->class = class_create(THIS_MODULE, KHAL_CLIENT_MODULE_NAME)) == NULL) 
+	if ((khal_client->class = class_create(THIS_MODULE, KHAL_CLIENT_MODULE_NAME)) == NULL) 
 	{
-		unregister_chrdev(hal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
-		printk(KERN_ERR "%s[%d] class_create() error.\n", __FILE__,
-		       __LINE__);
+		unregister_chrdev(khal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
+		printk(KERN_ERR "%s[%d] class_create() error.\n", __FILE__,__LINE__);
 		return -1;
 	}
-	hal_client->dev = device_create(hal_client->class, NULL, MKDEV(hal_client->dev_num, 0),
+	khal_client->dev = device_create(khal_client->class, NULL, MKDEV(khal_client->dev_num, 0),
 			  NULL, "%s%d", KHAL_CLIENT_DEVICE_NAME, 0);
-	if (hal_client->dev == NULL) 
+	if (khal_client->dev == NULL) 
 	{
-		unregister_chrdev(hal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
-		printk(KERN_ERR "%s[%d] device_create() error.\n", __FILE__,
-		       __LINE__);
+		unregister_chrdev(khal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
+		printk(KERN_ERR "%s[%d] device_create() error.\n", __FILE__,__LINE__);
 		return -1;
 	}
-	pr_info("mdio driver module load(%d)\n", hal_client->dev_num);
+	pr_info("mdio driver module load(%d)\n", khal_client->dev_num);
 	return 0;
 }
 
-static void hal_client_unregister(struct hal_client *hal_client)
+static void khal_client_unregister(struct khal_client *khal_client)
 {
-	unregister_chrdev(hal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
-	device_destroy(hal_client->class, hal_client->dev_num);
+	unregister_chrdev(khal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
+	device_destroy(khal_client->class, khal_client->dev_num);
 }
 
-static int hal_client_read_handle(struct hal_client *client)
+static int khal_client_read_handle(struct khal_client *client)
 {
   int ret = 0;
-  struct hal_ipcmsg_header hdr;
-  hal_ipcmsg_get_header(&client->ipcmsg, &hdr);
+  struct khal_ipcmsg_header hdr;
+  khal_ipcmsg_get_header(&client->ipcmsg, &hdr);
 
   if (ZPL_TST_BIT(client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(client->debug, KLOG_DEBUG_RECV))
     zlog_debug(MODULE_HAL, "Client Recv message received [%s] %d ",
-               hal_module_cmd_name(hdr.command), hdr.length);
+               khal_module_cmd_name(hdr.command), hdr.length);
 
   if (IPCCMD_MODULE_GET(hdr.command) >= HAL_MODULE_MGT &&
       IPCCMD_MODULE_GET(hdr.command) <= HAL_MODULE_MAX)
   {
-    ret = bsp_driver_msg_handle(client, hdr.command, client->bsp_driver);
+    ret = kbsp_driver_msg_handle(client, hdr.command, client->kbsp_driver);
     if (ret == OS_NO_CALLBACK)
     {
-      hal_client_send_return(client, OS_NO_CALLBACK, "%s","NO Callback Func");
+      khal_client_send_return(client, OS_NO_CALLBACK, "%s","NO Callback Func");
     }
     else
     {
       if (IPCCMD_CMD_GET(hdr.command) != HAL_MODULE_CMD_GET)
-        hal_client_send_return(client, ret, "cmd:%s", hal_module_cmd_name(hdr.command));
+        khal_client_send_return(client, ret, "cmd:%s", khal_module_cmd_name(hdr.command));
     }
   }
   else
   {
     ret = OS_NO_SDKSPUUORT;
-    hal_client_send_return(client, -1, "Client Recv unknown command %d", hdr.command);
+    khal_client_send_return(client, -1, "Client Recv unknown command %d", hdr.command);
     zlog_warn(MODULE_HAL, "Client Recv unknown command %d", hdr.command);
   }
   return 0;
 }
 
-static int hal_client_putdata(struct hal_client *client, int cmd, int seqno, int dstpid, char *data, int len)
+static int khal_client_putdata(struct khal_client *client, int cmd, int seqno, int dstpid, char *data, int len)
 {
   if (client && client->netlink)
   {
     client->netlink->cmd = cmd;
     client->netlink->seqno = seqno;
     client->netlink->dstpid = dstpid;
-    hal_ipcmsg_reset(&client->ipcmsg);
-    hal_ipcmsg_put(&client->ipcmsg, data, len);
-    return hal_client_read_handle(client);
+    khal_ipcmsg_reset(&client->ipcmsg);
+    khal_ipcmsg_put(&client->ipcmsg, data, len);
+    return khal_client_read_handle(client);
   }
   return 0;
 }
 
-static void hal_client_sock_input(struct sk_buff *__skb)
+static void khal_client_sock_input(struct sk_buff *__skb)
 {
   struct nlmsghdr *nlh = nlmsg_hdr(__skb);
   const char *nlmsg = NULL;
@@ -169,221 +156,239 @@ static void hal_client_sock_input(struct sk_buff *__skb)
   nlmsg = (const char *)nlmsg_data(nlh);
   from_pid = (int *)nlmsg;
 
-  if (halclient && nlh->nlmsg_type == HAL_CFG_REQUEST_CMD)
+  if (khalclient && nlh->nlmsg_type == HAL_CFG_REQUEST_CMD)
   {
-    hal_client_putdata(halclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
+    khal_client_putdata(khalclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
   }
     
-  else if (halclient && nlh->nlmsg_type == HAL_DATA_REQUEST_CMD)
+  else if (khalclient && nlh->nlmsg_type == HAL_DATA_REQUEST_CMD)
   {
-    hal_client_putdata(halclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
+    khal_client_putdata(khalclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
   }
-  else if (halclient && nlh->nlmsg_type == HAL_KLOG_REQUEST_CMD)
+  else if (khalclient && nlh->nlmsg_type == HAL_KLOG_REQUEST_CMD)
   {
   }
 }
 
-/* Allocate hal_client structure. */
-static struct hal_client *hal_client_new(void)
+/* Allocate khal_client structure. */
+static struct khal_client *khal_client_new(void)
 {
-  struct hal_client *hal_client;
-  hal_client = XMALLOC(MTYPE_HALIPCCLIENT, sizeof(struct hal_client)); // kmalloc(, GFP_KERNEL);
-  if (hal_client)
+  struct khal_client *khal_client;
+  khal_client = XMALLOC(MTYPE_HALIPCCLIENT, sizeof(struct khal_client)); // kmalloc(, GFP_KERNEL);
+  if (khal_client)
   {
 #ifdef ZPL_SDK_KERNEL    
-    hal_client->bsp_driver = XMALLOC(MTYPE_BSP, sizeof(bsp_driver_t)); // kmalloc(, GFP_KERNEL);
-    if(hal_client->bsp_driver == NULL)
+    khal_client->kbsp_driver = XMALLOC(MTYPE_BSP, sizeof(bsp_driver_t)); // kmalloc(, GFP_KERNEL);
+    if(khal_client->kbsp_driver == NULL)
     {
-      XFREE(MTYPE_HALIPCCLIENT, hal_client);
-      halclient = NULL;
-      return hal_client;
+      XFREE(MTYPE_HALIPCCLIENT, khal_client);
+      khalclient = NULL;
+      return khal_client;
     }
 #endif    
-    memset(hal_client, 0, sizeof(struct hal_client));
-    hal_client->ipcmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
-    hal_client->outmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ / 2;
-    if (hal_ipcmsg_create(&hal_client->ipcmsg) != OK)
+    memset(khal_client, 0, sizeof(struct khal_client));
+    khal_client->ipcmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
+    khal_client->outmsg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ / 2;
+    if (khal_ipcmsg_create(&khal_client->ipcmsg) != OK)
     {
 #ifdef ZPL_SDK_KERNEL      
-      XFREE(MTYPE_BSP, hal_client->bsp_driver);
+      XFREE(MTYPE_BSP, khal_client->kbsp_driver);
 #endif      
-      XFREE(MTYPE_HALIPCCLIENT, hal_client);
-      halclient = NULL;
-      return hal_client;
+      XFREE(MTYPE_HALIPCCLIENT, khal_client);
+      khalclient = NULL;
+      return khal_client;
     }
-    if (hal_ipcmsg_create(&hal_client->outmsg) != OK)
+    if (khal_ipcmsg_create(&khal_client->outmsg) != OK)
     {
-      hal_ipcmsg_destroy(&hal_client->ipcmsg);
+      khal_ipcmsg_destroy(&khal_client->ipcmsg);
 #ifdef ZPL_SDK_KERNEL      
-      XFREE(MTYPE_BSP, hal_client->bsp_driver);
+      XFREE(MTYPE_BSP, khal_client->kbsp_driver);
 #endif 
-      XFREE(MTYPE_HALIPCCLIENT, hal_client);
-      halclient = NULL;
-      return hal_client;
+      XFREE(MTYPE_HALIPCCLIENT, khal_client);
+      khalclient = NULL;
+      return khal_client;
     }
-    hal_client->debug = 0;
+    khal_client->debug = 0;
   }
-  return hal_client;
+  return khal_client;
 }
 
 /* This function is only called when exiting, because
    many parts of the code do not check for I/O errors, so they could
    reference an invalid pointer if the structure was ever freed.
 
-   Free hal_client structure. */
-static void hal_client_free(struct hal_client *hal_client)
+   Free khal_client structure. */
+static void khal_client_free(struct khal_client *khal_client)
 {
-  if (hal_client)
+  if (khal_client)
   {
-    hal_ipcmsg_destroy(&hal_client->ipcmsg);
-    hal_ipcmsg_destroy(&hal_client->outmsg);
-    if (hal_client->netlink)
+    khal_ipcmsg_destroy(&khal_client->ipcmsg);
+    khal_ipcmsg_destroy(&khal_client->outmsg);
+    if (khal_client->netlink)
     {
-      hal_netlink_destroy(hal_client->netlink);
-      hal_client->netlink = NULL;
+      khal_netlink_destroy(khal_client->netlink);
+      khal_client->netlink = NULL;
     }
-    hal_client_unregister(hal_client);
+    khal_client_unregister(khal_client);
 #ifdef ZPL_SDK_KERNEL    
-    XFREE(MTYPE_BSP, hal_client->bsp_driver);
+    XFREE(MTYPE_BSP, khal_client->kbsp_driver);
 #endif    
-    XFREE(MTYPE_HALIPCCLIENT, hal_client);
-    halclient = NULL;
+    XFREE(MTYPE_HALIPCCLIENT, khal_client);
+    khalclient = NULL;
   }
 }
 
 /* Initialize zebra client.  Argument redist_default is unwanted
    redistribute route type. */
-struct hal_client *hal_client_create(void *sdk_driver)
+struct khal_client *khal_client_create(void *sdk_driver)
 {
   /* Enable zebra client connection by default. */
 #ifdef ZPL_SDK_KERNEL
   bsp_driver_t *bspdev = NULL;
 #endif
-  struct hal_client *hal_client = hal_client_new();
-  if (hal_client)
+  struct khal_client *khal_client = khal_client_new();
+  if (khal_client)
   {
-    hal_client_register(hal_client);
+    khal_client_register(khal_client);
     //初始化netlink
-    hal_client->netlink = hal_netlink_create("cfg", HAL_CFG_NETLINK_PROTO, 0, &_hal_client_sock_nkc);
-    if (!hal_client->netlink)
+    khal_client->netlink = khal_netlink_create("cfg", HAL_CFG_NETLINK_PROTO, 0, &_khal_client_sock_nkc);
+    if (!khal_client->netlink)
     {
       zlog_err(MODULE_SDK, "[netlink] create netlink socket error!");
-      hal_client_free(hal_client);
-      hal_client = NULL;
-      return hal_client;
+      khal_client_free(khal_client);
+      khal_client = NULL;
+      return khal_client;
     }
 #ifdef ZPL_SDK_KERNEL
-    bspdev = (bsp_driver_t*)hal_client->bsp_driver;
+    bspdev = (bsp_driver_t*)khal_client->kbsp_driver;
     if(bspdev)
       bspdev->sdk_driver = sdk_driver;
 #endif
-    halclient = hal_client;
+    khalclient = khal_client;
   }
-  return hal_client;
+  return khal_client;
 }
 
-int hal_client_destroy(struct hal_client *hal_client)
+int khal_client_destroy(struct khal_client *khal_client)
 {
-  hal_client_free(hal_client);
+  khal_client_free(khal_client);
   return OK;
 }
 
-static int hal_client_send_message(struct hal_client *hal_client, enum hal_ipcmsg_type type)
+static int khal_client_send_message(struct khal_client *khal_client)
 {
   char *nldata = NULL;
   //int *result = NULL;
   struct nlmsghdr *nlh = NULL;
   struct sk_buff *skb = NULL;
-  hal_ipcmsg_hdrlen_set(&hal_client->outmsg);
-  skb = XNLMSG_NEW(MTYPE_SDK_DATA, hal_client->outmsg.setp+4);
-  if (skb && hal_client->netlink)
+  khal_ipcmsg_hdrlen_set(&khal_client->outmsg);
+  skb = XNLMSG_NEW(MTYPE_SDK_DATA, khal_client->outmsg.setp+4);
+  if (skb && khal_client->netlink)
   {
     int ret = 0;
-    nlh = nlmsg_put(skb, 0, hal_client->netlink->seqno, hal_client->netlink->cmd, hal_client->outmsg.setp, 0);
+    nlh = nlmsg_put(skb, 0, khal_client->netlink->seqno, khal_client->netlink->cmd, khal_client->outmsg.setp, 0);
     nldata = nlmsg_data(nlh);
-    if (hal_client->outmsg.setp)
-      memcpy(nldata, hal_client->outmsg.buf, hal_client->outmsg.setp);
-    ret = hal_netlink_unicast(hal_client->netlink, hal_client->netlink->dstpid, skb);
+    if (khal_client->outmsg.setp)
+      memcpy(nldata, khal_client->outmsg.buf, khal_client->outmsg.setp);
+    ret = khal_netlink_unicast(khal_client->netlink, khal_client->netlink->dstpid, skb);
     return ret;
   }
   return 0;
 }
 
-int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...)
+int khal_client_send_report(struct khal_client *khal_client, char *data, int len)
+{
+  khal_ipcmsg_reset(&khal_client->outmsg);
+  khal_ipcmsg_create_header(&khal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_REPORT, 0));
+  if (data && len)
+  {
+      khal_ipcmsg_put(&khal_client->outmsg, data, len);
+  }
+  if (ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_SEND))
+    zlog_debug(MODULE_HAL, "Client Send Report msg [%d] seqno %d dstpid %d led %d ",
+               khal_client->netlink->cmd, khal_client->netlink->seqno, khal_client->netlink->dstpid, len);
+  return khal_client_send_message(khal_client);
+}
+
+int khal_client_send_return(struct khal_client *khal_client, int ret, char *fmt, ...)
 {
   int len = 0;
   va_list args;
   char logbuf[1024];
-  struct hal_ipcmsg_result getvalue;
-  //struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
+  struct khal_ipcmsg_result getvalue;
+  //struct khal_ipcmsg_result *result = (struct khal_ipcmsg_result *)(khal_client->outmsg.buf + sizeof(struct khal_ipcmsg_header));
   memset(logbuf, 0, sizeof(logbuf));
   memset(&getvalue, 0, sizeof(getvalue));
-  hal_ipcmsg_reset(&hal_client->outmsg);
-  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
+  khal_ipcmsg_reset(&khal_client->outmsg);
+  khal_ipcmsg_create_header(&khal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
   getvalue.result = ret;
-  hal_ipcmsg_result_set(&hal_client->outmsg, &getvalue);
+  khal_ipcmsg_result_set(&khal_client->outmsg, &getvalue);
   if (ret != OK)
   {
     va_start(args, fmt);
     len = vsnprintf(logbuf, sizeof(logbuf), fmt, args);
     va_end(args);
     if (len > 0 && len < sizeof(logbuf))
-      hal_ipcmsg_put(&hal_client->outmsg, logbuf, len);
+      khal_ipcmsg_put(&khal_client->outmsg, logbuf, len);
   }
-  if (ZPL_TST_BIT(hal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(hal_client->debug, KLOG_DEBUG_SEND))
+  if (ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_SEND))
     zlog_debug(MODULE_HAL, "Client Send result msg [%d] seqno %d dstpid %d result %d %s",
-               hal_client->netlink->cmd, hal_client->netlink->seqno, hal_client->netlink->dstpid, ret, (ret != OK) ? logbuf : "OK");
-  return hal_client_send_message(hal_client, 0);
+               khal_client->netlink->cmd, khal_client->netlink->seqno, khal_client->netlink->dstpid, ret, (ret != OK) ? logbuf : "OK");
+  return khal_client_send_message(khal_client);
 }
 
-int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue)
+int khal_client_send_result(struct khal_client *khal_client, int ret, struct khal_ipcmsg_result *getvalue)
 {
   //va_list args;
-  //struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
-  hal_ipcmsg_reset(&hal_client->outmsg);
-  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
+  //struct khal_ipcmsg_result *result = (struct khal_ipcmsg_result *)(khal_client->outmsg.buf + sizeof(struct khal_ipcmsg_header));
+  khal_ipcmsg_reset(&khal_client->outmsg);
+  khal_ipcmsg_create_header(&khal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, 0));
   getvalue->result = ret;
-  hal_ipcmsg_result_set(&hal_client->outmsg, getvalue);
-  if (ZPL_TST_BIT(hal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(hal_client->debug, KLOG_DEBUG_SEND))
+  khal_ipcmsg_result_set(&khal_client->outmsg, getvalue);
+  if (ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_SEND))
     zlog_debug(MODULE_HAL, "Client Send result msg [%d] seqno %d dstpid %d result %d",
-               hal_client->netlink->cmd, hal_client->netlink->seqno, hal_client->netlink->dstpid, ret);
-  return hal_client_send_message(hal_client, 0);
+               khal_client->netlink->cmd, khal_client->netlink->seqno, khal_client->netlink->dstpid, ret);
+  return khal_client_send_message(khal_client);
 }
 
-int hal_client_send_result_msg(struct hal_client *hal_client, int ret,
-                               struct hal_ipcmsg_result *getvalue, int subcmd, char *msg, int msglen)
+int khal_client_send_result_msg(struct khal_client *khal_client, int ret,
+                               struct khal_ipcmsg_result *getvalue, int subcmd, char *msg, int msglen)
 {
   //int len = 0;
   //va_list args;
-  //struct hal_ipcmsg_result *result = (struct hal_ipcmsg_result *)(hal_client->outmsg.buf + sizeof(struct hal_ipcmsg_header));
-  hal_ipcmsg_reset(&hal_client->outmsg);
-  hal_ipcmsg_create_header(&hal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, subcmd));
+  //struct khal_ipcmsg_result *result = (struct khal_ipcmsg_result *)(khal_client->outmsg.buf + sizeof(struct khal_ipcmsg_header));
+  khal_ipcmsg_reset(&khal_client->outmsg);
+  khal_ipcmsg_create_header(&khal_client->outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_ACK, subcmd));
   getvalue->result = ret;
-  hal_ipcmsg_result_set(&hal_client->outmsg, getvalue);
+  khal_ipcmsg_result_set(&khal_client->outmsg, getvalue);
 
   if (msglen && msg)
-    hal_ipcmsg_put(&hal_client->outmsg, msg, msglen);
-  if (ZPL_TST_BIT(hal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(hal_client->debug, KLOG_DEBUG_SEND))
+    khal_ipcmsg_put(&khal_client->outmsg, msg, msglen);
+  if (ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_SEND))
     zlog_debug(MODULE_HAL, "Client Send result msg [%d] seqno %d dstpid %d result %d",
-               hal_client->netlink->cmd, hal_client->netlink->seqno, hal_client->netlink->dstpid, ret);
-  return hal_client_send_message(hal_client, 0);
+               khal_client->netlink->cmd, khal_client->netlink->seqno, khal_client->netlink->dstpid, ret);
+  return khal_client_send_message(khal_client);
 }
 
 
-static int hal_client_ioctl_callback(struct hal_client *client, zpl_uint32 cmd, void *data)
+static int khal_client_ioctl_callback(struct khal_client *client, zpl_uint32 cmd, void *data, int len)
 {
-  return 0;
+  struct khal_ipcmsg_header hdr;
+  khal_ipcmsg_reset(&client->ipcmsg);
+  khal_ipcmsg_put(&client->ipcmsg, data, 256);
+  khal_ipcmsg_get_header(&client->ipcmsg, &hdr);
+  return kbsp_driver_msg_handle(client, hdr.command, client->kbsp_driver);
 }
 
-static int bsp_debug_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
+static int kbsp_debug_module_handle(struct khal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
   int ret = OK;
   int moudle = 0, enable = 0, value = 0;
 
   BSP_ENTER_FUNC();
-	hal_ipcmsg_getl(&client->ipcmsg, &moudle);
-  hal_ipcmsg_getl(&client->ipcmsg, &enable);
-	hal_ipcmsg_getl(&client->ipcmsg, &value);
+	khal_ipcmsg_getl(&client->ipcmsg, &moudle);
+  khal_ipcmsg_getl(&client->ipcmsg, &enable);
+	khal_ipcmsg_getl(&client->ipcmsg, &value);
   if (moudle == HAL_KLOG_MODULE)
     klog_level(value);
   else if (moudle == HAL_KNETPKT_MODULE)
@@ -399,15 +404,15 @@ static int bsp_debug_module_handle(struct hal_client *client, zpl_uint32 cmd, zp
   return ret;
 }
 
-static int bsp_global_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
+static int kbsp_global_module_handle(struct khal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver)
 {
   BSP_ENTER_FUNC();
   if (subcmd == HAL_GLOBAL_START)
   {
       int dstpid = 0;
       int ifindex = 0;
-	    hal_ipcmsg_getl(&client->ipcmsg, &dstpid);
-	    hal_ipcmsg_getl(&client->ipcmsg, &ifindex);
+	    khal_ipcmsg_getl(&client->ipcmsg, &dstpid);
+	    khal_ipcmsg_getl(&client->ipcmsg, &ifindex);
       klog_dstpid(dstpid);
       netpkt_netlink_dstpid(dstpid);
       netpkt_netlink_bind(ifindex, dstpid?1:0);
@@ -416,63 +421,63 @@ static int bsp_global_module_handle(struct hal_client *client, zpl_uint32 cmd, z
   return 0;
 }
 
-static const hal_ipccmd_callback_t const moduletable[] = {
+static const khal_ipccmd_callback_t  kmoduletable[] = {
 #ifdef ZPL_SDK_KERNEL
     HAL_CALLBACK_ENTRY(HAL_MODULE_NONE, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_MGT, NULL),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, bsp_global_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, kbsp_global_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_SWITCH, NULL),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_CPU, bsp_cpu_module_handle),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_PORT, bsp_port_module_handle),
-    // HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, bsp_l3if_module_handle),
-    // HAL_CALLBACK_ENTRY(HAL_MODULE_ROUTE, bsp_route_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_CPU, kbsp_cpu_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_PORT, kbsp_port_module_handle),
+    // HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, kbsp_l3if_module_handle),
+    // HAL_CALLBACK_ENTRY(HAL_MODULE_ROUTE, kbsp_route_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_STP, NULL),
 #ifdef ZPL_NSM_MSTP
-    HAL_CALLBACK_ENTRY(HAL_MODULE_MSTP, bsp_mstp_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_MSTP, kbsp_mstp_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_MSTP, NULL),
 #endif
 #ifdef ZPL_NSM_8021X
-    HAL_CALLBACK_ENTRY(HAL_MODULE_8021X, bsp_8021x_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_8021X, kbsp_8021x_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_8021X, NULL),
 #endif
 #ifdef ZPL_NSM_IGMP
-    HAL_CALLBACK_ENTRY(HAL_MODULE_IGMP, bsp_snooping_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_IGMP, kbsp_snooping_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_IGMP, NULL),
 #endif
 #ifdef ZPL_NSM_DOS
-    HAL_CALLBACK_ENTRY(HAL_MODULE_DOS, bsp_dos_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_DOS, kbsp_dos_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_DOS, NULL),
 #endif
 #ifdef ZPL_NSM_MAC
-    HAL_CALLBACK_ENTRY(HAL_MODULE_MAC, bsp_mac_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_MAC, kbsp_mac_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_MAC, NULL),
 #endif
 #ifdef ZPL_NSM_MIRROR
-    HAL_CALLBACK_ENTRY(HAL_MODULE_MIRROR, bsp_mirror_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_MIRROR, kbsp_mirror_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_MIRROR, NULL),
 #endif
 
 #ifdef ZPL_NSM_VLAN
-    HAL_CALLBACK_ENTRY(HAL_MODULE_QINQ, bsp_qinq_module_handle),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_VLAN, bsp_vlan_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_QINQ, kbsp_qinq_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_VLAN, kbsp_vlan_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_QINQ, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_VLAN, NULL),
 #endif
 #ifdef ZPL_NSM_QOS
-    HAL_CALLBACK_ENTRY(HAL_MODULE_QOS, bsp_qos_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_QOS, kbsp_qos_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_QOS, NULL),
 #endif
     HAL_CALLBACK_ENTRY(HAL_MODULE_ACL, NULL),
 #ifdef ZPL_NSM_TRUNK
-    HAL_CALLBACK_ENTRY(HAL_MODULE_TRUNK, bsp_trunk_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_TRUNK, kbsp_trunk_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_TRUNK, NULL),
 #endif
@@ -486,11 +491,11 @@ static const hal_ipccmd_callback_t const moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_STATISTICS, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_EVENT, NULL),
     HAL_CALLBACK_ENTRY(HAL_MODULE_STATUS, NULL),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_DEBUG, bsp_debug_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_DEBUG, kbsp_debug_module_handle),
 #else
-    HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, bsp_global_module_handle),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, bsp_l3if_module_handle),
-    HAL_CALLBACK_ENTRY(HAL_MODULE_DEBUG, bsp_debug_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, kbsp_global_module_handle),
+    //HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, kbsp_l3if_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_DEBUG, kbsp_debug_module_handle),
 #endif  
 };
 
@@ -498,20 +503,20 @@ static const hal_ipccmd_callback_t const moduletable[] = {
 
 
 
-static int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void *driver)
+static int kbsp_driver_msg_handle(struct khal_client *client, zpl_uint32 cmd, void *driver)
 {
   int ret = OS_NO_CALLBACK;
   int module = IPCCMD_MODULE_GET(cmd);
-  hal_ipccmd_callback_t *callback = NULL;
+  khal_ipccmd_callback_t *callback = NULL;
   BSP_ENTER_FUNC();
   if (module > HAL_MODULE_NONE && module < HAL_MODULE_MAX)
   {
     int i = 0;
-    for (i = 0; i < ARRAY_SIZE(moduletable); i++)
+    for (i = 0; i < ARRAY_SIZE(kmoduletable); i++)
     {
-      if (moduletable[i].module == module && moduletable[i].module_handle)
+      if (kmoduletable[i].module == module && kmoduletable[i].module_handle)
       {
-        callback = &moduletable[i];
+        callback = &kmoduletable[i];
         break;
       }
     }
@@ -531,24 +536,16 @@ static int bsp_driver_msg_handle(struct hal_client *client, zpl_uint32 cmd, void
 #ifndef ZPL_SDK_KERNEL
 static __init int linux_kbe_init(void)
 {
-		halclient = hal_client_create(NULL);
-		if(halclient)
+		khalclient = khal_client_create(NULL);
+		if(khalclient)
 		{
 			netpkt_netlink_init();
 			klog_init();
-			printk("b53125_device_probe ERROR\r\n");
-			if(halclient)
-			{
-				netpkt_netlink_exit();
-				klog_exit();
-				hal_client_destroy(halclient);
-				halclient = NULL;
-				return ERROR;
-			}
+			return OK;
 		}
 		else
 		{
-			printk("hal_client_create ERROR\r\n");
+			printk("khal_client_create ERROR\r\n");
 			return ERROR;
 		}	
 	  return OK;	
@@ -556,10 +553,10 @@ static __init int linux_kbe_init(void)
 
 static __exit void linux_kbe_exit(void)
 {
-		if(halclient)
+		if(khalclient)
 		{
-			hal_client_destroy(halclient);
-			halclient = NULL;
+			khal_client_destroy(khalclient);
+			khalclient = NULL;
 		}
 		netpkt_netlink_exit();
 		klog_exit();

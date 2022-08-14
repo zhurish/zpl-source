@@ -56,7 +56,7 @@ extern zpl_bool is_hex (zpl_char c);
 //#define __OS_DEBUG_ENABLE  
 
 
-#ifdef __OS_DEBUG_ENABLE
+#if 1//def __OS_DEBUG_ENABLE
 #define _OS_DEBUG_DETAIL(fmt,...)	os_vslog("DETAIL", __func__, __LINE__,fmt, ##__VA_ARGS__)
 #define _OS_DEBUG(fmt,...)	os_vslog("DEBUG", __func__, __LINE__,fmt, ##__VA_ARGS__)
 #define _OS_ERROR(fmt,...)	os_vslog("ERROR", __func__, __LINE__,fmt, ##__VA_ARGS__)

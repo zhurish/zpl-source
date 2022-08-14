@@ -274,7 +274,7 @@ extern "C" {
 #ifndef __UCLIBC__
 /* Have netns */
 //ZPL_VRF_MODULE
-#define ZPL_NETNS_ENABLE /**/
+//#define ZPL_NETNS_ENABLE /**/
 #endif
 /* Define to 1 if you have the <net/if_dl.h> header file. */
 /* #undef HAVE_NET_IF_DL_H */
@@ -699,7 +699,7 @@ extern "C" {
 /* #undef PAM_CONV_FUNC */
 
 /* Hide deprecated interfaces */
-#define QUAGGA_NO_DEPRECATED_INTERFACES 1
+#define _LIB_NO_DEPRECATED_INTERFACES 1
 
 /* Define to the type of arg 1 for `select'. */
 #define SELECT_TYPE_ARG1 int

@@ -37,7 +37,7 @@ DEFUN (cli_mqtt_service,
 		"Service Configure\n"
 		"Mqtt Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_true, "service mqtt");
+	template_t * temp = lib_template_lookup_name (zpl_true, "service mqtt");
 	if(temp && temp->pVoid)
 	{
 		if(!mqtt_isenable_api(temp->pVoid))
@@ -50,7 +50,7 @@ DEFUN (cli_mqtt_service,
 	}
 	else
 	{
-		temp = nsm_template_new (zpl_true);
+		temp = lib_template_new (zpl_true);
 		if(temp)
 		{
 			temp->module = 0;
@@ -58,7 +58,7 @@ DEFUN (cli_mqtt_service,
 			strcpy(temp->prompt, "service-mqtt"); /* (config-app-esp)# */
 			temp->write_template = mqtt_write_config;
 			vty->index = temp->pVoid = mqtt_config;
-			nsm_template_install(temp, 0);
+			lib_template_install(temp, 0);
 			if(!mqtt_isenable_api(temp->pVoid))
 				mqtt_enable_api(temp->pVoid, zpl_true);
 			vty->node = ALL_SERVICE_NODE;
@@ -77,13 +77,13 @@ DEFUN (no_cli_mqtt_service,
 		"Service Configure\n"
 		"Mqtt Protocol\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_true, "service mqtt");
+	template_t * temp = lib_template_lookup_name (zpl_true, "service mqtt");
 	if(temp)
 	{
 		if(!mqtt_isenable_api(temp->pVoid))
 			mqtt_enable_api(temp->pVoid, zpl_false);
 		vty->index = NULL;
-		nsm_template_free(temp);
+		lib_template_free(temp);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -1074,7 +1074,7 @@ static void cmd_show_mqtt_init(int node)
 
 void cmd_mqtt_init(void)
 {
-	template_t * temp = nsm_template_new (zpl_true);
+	template_t * temp = lib_template_new (zpl_true);
 	if(temp)
 	{
 		temp->module = 0;
@@ -1083,7 +1083,7 @@ void cmd_mqtt_init(void)
 		temp->pVoid = mqtt_config;
 		temp->write_template = mqtt_write_config;
 
-		nsm_template_install(temp, 0);
+		lib_template_install(temp, 0);
 
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &cli_mqtt_service_cmd);
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_cli_mqtt_service_cmd);

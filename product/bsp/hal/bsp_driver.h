@@ -36,6 +36,8 @@ typedef struct bsp_driver
     zpl_uint32 taskid;
     zpl_void *hal_client;
 
+    zpl_void *event_client;
+
     bsp_netlink_t   *netlink_cfg;
     bsp_netlink_t   *netlink_klog;
 
@@ -67,6 +69,7 @@ extern int bsp_driver_mac_cache_update(bsp_driver_t *, zpl_uint8 *mac, zpl_uint8
 
 extern int bsp_driver_start(bsp_driver_t *bspdriver, zpl_uint32 pid, zpl_uint32 ifindex);
 extern int bsp_driver_debug(bsp_driver_t *bspdriver, zpl_uint32 module, zpl_uint32 enable, zpl_uint32 value);
+extern int bsp_driver_report(bsp_driver_t *bspdriver, char *data, int len);
 
 #if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_NONE)
 typedef struct sdk_driver {

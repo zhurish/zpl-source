@@ -12,11 +12,11 @@ extern "C" {
 #include "ipcstandby.h"
 
 
+struct ipcstandby_server_t;
 
 /* standby server structure. */
 struct ipcstandby_serv
 {
-
   /* file descriptor. */
   zpl_socket_t sock;
   /* Input/output buffer to the client. */
@@ -33,6 +33,8 @@ struct ipcstandby_serv
   char version[64];
   struct prefix remote;
   int debug;
+
+  struct ipcstandby_server_t  *ipcserver;
 
   zpl_time_t connect_time;
   zpl_time_t last_read_time;
@@ -60,14 +62,12 @@ struct ipcstandby_server_t
   struct vty *vty;
 };
 
-extern struct ipcstandby_server_t ipcstandby_server;
+extern struct ipcstandby_server_t *ipcstandby_serv_init(void * m);
+extern void ipcstandby_serv_exit(struct ipcstandby_server_t *);
 
-extern void ipcstandby_serv_init(void * m);
-extern void ipcstandby_serv_exit(void);
+extern int ipcstandby_serv_callback(struct ipcstandby_server_t *, struct ipcstandby_callback cli, struct ipcstandby_callback msg, struct ipcstandby_callback res);
 
-extern int ipcstandby_serv_callback(struct ipcstandby_callback cli, struct ipcstandby_callback msg, struct ipcstandby_callback res);
-
-extern int  ipcstandby_serv_result(struct ipcstandby_serv *client, int module, int process, int ret, char *data, int len);
+extern int  ipcstandby_serv_result(struct ipcstandby_serv *client, int process, int ret, char *data, int len);
 
  
 #ifdef __cplusplus

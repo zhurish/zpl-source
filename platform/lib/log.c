@@ -20,7 +20,7 @@
  * 02111-1307, USA.  
  */
 
-#define QUAGGA_DEFINE_DESC_TABLE
+#define ROUTE_DEFINE_DESC_TABLE
 
 #include "auto_include.h"
 #include "zplos_include.h"
@@ -29,7 +29,6 @@
 #include "log.h"
 #include "host.h"
 #include "route_types.h"
-#include "nsm_event.h"
 #include "vty.h"
 #ifndef SUNOS_5
 #include <sys/un.h>
@@ -126,7 +125,7 @@ const char * zlog_proto_names(zlog_proto_t module) {
 
 /* For time string format. */
 
-zpl_size_t quagga_timestamp(zlog_timestamp_t timestamp, zpl_char *buf, zpl_size_t buflen)
+zpl_size_t os_timestamp(zlog_timestamp_t timestamp, zpl_char *buf, zpl_size_t buflen)
 {
 	zpl_uint32 len = 0;
 	zpl_char data[128];
@@ -181,7 +180,7 @@ void time_print(FILE *fp, zlog_timestamp_t ctl)
 {
 	zpl_char data[128];
 	os_memset(data, 0, sizeof(data));
-	if(quagga_timestamp(ctl, data, sizeof(data)))
+	if(os_timestamp(ctl, data, sizeof(data)))
 		fprintf(fp, "%s ", data);
 }
 
@@ -1174,7 +1173,7 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 
 	zl = XCALLOC(MTYPE_ZLOG, sizeof(struct zlog));
 
-	zl->mutex = os_mutex_init();
+	zl->mutex = os_mutex_name_init("logmutex");
 	zl->ident = progname;
 	zl->protocol = protocol;
 	zl->facility = syslog_facility;
@@ -1848,7 +1847,7 @@ static int zlog_buffer_format(struct zlog *zl, zlog_buffer_t *buffer,
 		index = 0;
 
 	os_memset(buffer->buffer[index].log, 0, LOG_MSG_SIZE);
-	len = quagga_timestamp(zl->timestamp, buffer->buffer[index].log, sizeof(buffer->buffer[index].log));
+	len = os_timestamp(zl->timestamp, buffer->buffer[index].log, sizeof(buffer->buffer[index].log));
 
 	buffer->buffer[index].log[len++] = ' ';
 	buffer->buffer[index].log[len++] = '\0';
@@ -2078,7 +2077,7 @@ lookup(const struct message *mes, zpl_uint32 key) {
  * provided otherwise.
  */
 const char *
-mes_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, const char *none,
+message_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, const char *none,
 		const char *mesname) {
 	zpl_uint32 pos = index - meslist[0].key;
 
@@ -2113,38 +2112,11 @@ mes_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, cons
 
 
 
-#define DESC_ENTRY(T) [(T)] = { (T), (#T), '\0' }
-static const struct route_desc_table command_types[] = {
-DESC_ENTRY (NSM_EVENT_INTERFACE_ADD),
-DESC_ENTRY (NSM_EVENT_INTERFACE_DELETE),
-DESC_ENTRY (NSM_EVENT_INTERFACE_ADDRESS_ADD),
-DESC_ENTRY (NSM_EVENT_INTERFACE_ADDRESS_DELETE),
-DESC_ENTRY (NSM_EVENT_INTERFACE_UP),
-DESC_ENTRY (NSM_EVENT_INTERFACE_DOWN),
-DESC_ENTRY (NSM_EVENT_IPV4_ROUTE_ADD),
-DESC_ENTRY (NSM_EVENT_IPV4_ROUTE_DELETE),
-DESC_ENTRY (NSM_EVENT_IPV6_ROUTE_ADD),
-DESC_ENTRY (NSM_EVENT_IPV6_ROUTE_DELETE),
-DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_ADD),
-DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_DELETE),
-DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_DEFAULT_ADD),
-DESC_ENTRY (NSM_EVENT_REDISTRIBUTE_DEFAULT_DELETE),
-DESC_ENTRY (NSM_EVENT_IPV4_NEXTHOP_LOOKUP),
-DESC_ENTRY (NSM_EVENT_IPV6_NEXTHOP_LOOKUP),
-DESC_ENTRY (NSM_EVENT_IPV4_IMPORT_LOOKUP),
-DESC_ENTRY (NSM_EVENT_IPV6_IMPORT_LOOKUP),
-DESC_ENTRY (NSM_EVENT_INTERFACE_RENAME),
-DESC_ENTRY (NSM_EVENT_ROUTER_ID_ADD),
-DESC_ENTRY (NSM_EVENT_ROUTER_ID_DELETE),
-DESC_ENTRY (NSM_EVENT_ROUTER_ID_UPDATE),
-DESC_ENTRY (NSM_EVENT_NEXTHOP_REGISTER),
-DESC_ENTRY (NSM_EVENT_NEXTHOP_UNREGISTER),
-DESC_ENTRY (NSM_EVENT_NEXTHOP_UPDATE), };
-#undef DESC_ENTRY
 
-static const struct route_desc_table unknown = { 0, "unknown", '?' };
 
-static const struct route_desc_table *
+static const struct rttype_desc_table unknown = { 0, "unknown", '?' };
+
+static const struct rttype_desc_table *
 zroute_lookup(zpl_uint32 zroute) {
 	zpl_uint32 i;
 
@@ -2169,22 +2141,14 @@ zroute_lookup(zpl_uint32 zroute) {
 }
 
 const char *
-nsm_route_string(zpl_uint32 zroute) {
+zroute_string(zpl_uint32 zroute) {
 	return zroute_lookup(zroute)->string;
 }
 
-zpl_char nsm_route_char(zpl_uint32 zroute) {
+zpl_char zroute_keychar(zpl_uint32 zroute) {
 	return zroute_lookup(zroute)->chr;
 }
 
-const char *
-zserv_command_string(zpl_uint32  command) {
-	if (command >= array_size(command_types)) {
-		zlog_err(MODULE_DEFAULT, "unknown zserv command type: %u", command);
-		return unknown.string;
-	}
-	return command_types[command].string;
-}
 
 zpl_proto_t proto_name2num(const char *s) {
 	unsigned i;

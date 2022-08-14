@@ -16,7 +16,7 @@ extern "C" {
 
 #define OS_SIGNAL_FILE SYSLOGDIR"/signal.log"
 
-//#define OS_SIGNAL_PIPE
+#define OS_SIGNAL_PIPE
 
 typedef void (*os_signal_handler)(int signo, void *info);
 
@@ -42,17 +42,19 @@ extern void os_signal_default(os_signal_abort_cb abort_func, os_signal_exit_cb e
 extern void os_signal_init(struct os_signal_t *tbl, int num);
 extern int os_signal_add(zpl_int sig, os_signal_handler hander);
 
-extern int os_signal_send(zpl_uint signo);
+extern int os_signal_send(zpl_int signo);
 extern int os_signal_process(zpl_uint timeout);
 
+#ifdef OS_SIGNAL_PIPE 
+extern int os_signal_fd(void);
+extern int os_signal_try_process(void);
+#endif
 
 #ifdef SA_SIGINFO
 extern int os_register_signal(zpl_int , void (*handler)(zpl_int, siginfo_t *, void *));
 #else
 extern int os_register_signal(zpl_int , void (*handler)(zpl_int));                                            
 #endif
-
-extern int os_signal_reload_test(void);
 
 #ifdef __cplusplus
 }

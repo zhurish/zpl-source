@@ -42,6 +42,14 @@
 
 struct ipcstandby  _host_standby;
 
+void ipcstandby_create_header(struct stream *s, zpl_uint16 command)
+{
+  stream_reset(s);
+  stream_putw(s, ZPL_IPCMSG_HEADER_SIZE);
+  stream_putc(s, ZPL_IPCMSG_HEADER_MARKER);
+  stream_putc(s, ZPL_IPCMSG_VERSION);
+  stream_putw(s, command);
+}
 
 static int ipcstandby_switch_callback(zpl_bool standby)
 {
@@ -97,8 +105,6 @@ static int ipcstandby_callback_msg(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
   int ret = 0;
   if(host_isactive())
     return OK;  
-  /*if(vty)
-    ret = vty_command(vty, data);*/
   return ret;
 }
 
@@ -107,9 +113,9 @@ static int ipcstandby_callback_res(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
   int ret = 0;
   struct ipcstanby_reskey reskey;
   if(ret == OK)
-    ipcstandby_serv_result(pVoid, 0, 0, OK, &reskey, sizeof(struct ipcstanby_reskey));
+    ipcstandby_serv_result(pVoid, 0, OK, &reskey, sizeof(struct ipcstanby_reskey));
    else 
-    ipcstandby_serv_result(pVoid, 0, 0, ret, zpl_strerror(ret), strlen(zpl_strerror(ret)));
+    ipcstandby_serv_result(pVoid, 0, ret, zpl_strerror(ret), strlen(zpl_strerror(ret)));
   return OK;
 }
 
@@ -118,15 +124,15 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
 {
   int ret = 0;
   struct ipcstanby_result ack;
-  if(!ipcstandby_client)
+  if(!_host_standby.ipcstandby_client)
   {
     return OK;
   }
-  if(host_isstandby() && ipcstandby_client)//备用
+  if(host_isstandby() && _host_standby.ipcstandby_client)//备用
   {
     if(strstr(cmd, "switch master"))
     {
-      ret = ipcstandby_client_sendmsg(ipcstandby_client, &ack,
+      ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
                                       NULL, ZPL_IPCSTANBY_CLI, cmd, len);
       if(ret == OK) 
       {
@@ -137,11 +143,11 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
     }
     return OK;
   }
-  if(host_isactive() && ipcstandby_client)//
+  if(host_isactive() && _host_standby.ipcstandby_client)//
   {
     if(strstr(cmd, "switch standby"))
     {
-      ret = ipcstandby_client_sendmsg(ipcstandby_client, &ack,
+      ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
                                       NULL, ZPL_IPCSTANBY_CLI, cmd, len);
       if(ret == OK) 
       {
@@ -164,7 +170,7 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
 			{ 
         return OK;
 			}
-  ret = ipcstandby_client_sendmsg(ipcstandby_client, &ack,
+  ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
                                    NULL, ZPL_IPCSTANBY_CLI, cmd, len);
 
   if(ret == OK) 
@@ -178,7 +184,7 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
 int ipcstandby_sendto_msg(char *msg, int len)
 {
   struct ipcstanby_result ack;
-  int ret = ipcstandby_client_sendmsg(ipcstandby_client, &ack,
+  int ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
                                    NULL, ZPL_IPCSTANBY_MSG, msg, len);
 
   if(ret == OK) 
@@ -218,7 +224,7 @@ int ipcstandby_request_res(int type, struct ipcstanby_reskey *reskey)
   res.ipcstandby_callback = ipcstandby_callback_resources;
   res.pVoid = reskey;  
 
-  ret = ipcstandby_client_sendmsg(ipcstandby_client, &ack,
+  ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
                                    &res, ZPL_IPCSTANBY_RES, &req_type, 4);
 
   if(ret == OK) 
@@ -261,8 +267,9 @@ void ipcstandby_init(void *m, zpl_uint32 slot)
   memset(&_host_standby, 0, sizeof(struct ipcstandby));
 	_host_standby.slot = slot;
 	_host_standby.master = m; 
-  ipcstandby_client = ipcstandby_client_new(m);
-  if(ipcstandby_client)
+  _host_standby.ipcstandby_client = ipcstandby_client_new(m);
+  _host_standby.ipcstandby_server = ipcstandby_serv_init(m);
+  if(_host_standby.ipcstandby_client && _host_standby.ipcstandby_server)
   {
     struct ipcstandby_callback cli;
     struct ipcstandby_callback msg;
@@ -270,28 +277,28 @@ void ipcstandby_init(void *m, zpl_uint32 slot)
     ipcstandby_serv_init(m);
 
     cli.ipcstandby_callback = ipcstandby_callback_cli;
-    cli.pVoid = ipcstandby_server.vty;
+    cli.pVoid = _host_standby.ipcstandby_server->vty;
     msg.ipcstandby_callback = ipcstandby_callback_msg;
     msg.pVoid = NULL;
     res.ipcstandby_callback = ipcstandby_callback_res;
     res.pVoid = NULL;
 
-    ipcstandby_serv_callback(cli, msg, res);
+    ipcstandby_serv_callback(_host_standby.ipcstandby_server, cli, msg, res);
     _host_standby.ipcstandby_switch_callback = ipcstandby_switch_callback;
-    ipcstandby_client_init(ipcstandby_client, 0);
-    ipcstandby_client_start (ipcstandby_client);
+    ipcstandby_client_init(_host_standby.ipcstandby_client, 0);
+    ipcstandby_client_start (_host_standby.ipcstandby_client);
   }
 }
 
 void ipcstandby_exit(void)
 {
-  if(ipcstandby_client)
+  if(_host_standby.ipcstandby_client)
   {
-    ipcstandby_client_stop(ipcstandby_client);
-    ipcstandby_client_free (ipcstandby_client);
-    ipcstandby_client = NULL;
+    ipcstandby_client_stop(_host_standby.ipcstandby_client);
+    ipcstandby_client_free (_host_standby.ipcstandby_client);
+    _host_standby.ipcstandby_client = NULL;
   }  
-  ipcstandby_serv_exit();
+  ipcstandby_serv_exit(_host_standby.ipcstandby_server);
 }
 
 
@@ -307,7 +314,7 @@ static void ipcstandby_client_statistics_show(struct vty *vty, struct ipcstandby
   memset(cbuf, 0, sizeof(cbuf));
   vty_out(vty, "Server           : %s %s", prefix2str(pu, cbuf, sizeof(cbuf)), VTY_NEWLINE);
   // vty_out(vty, " Version         : %s %s", client->version, VTY_NEWLINE);
-  vty_out(vty, " FD              : %d %s", client->sock._fd, VTY_NEWLINE);
+  vty_out(vty, " FD              : %d %s", ipstack_fd(client->sock), VTY_NEWLINE);
   vty_out(vty, " Connect Time    : %s %s", os_time_fmt("/", client->connect_time), VTY_NEWLINE);
   vty_out(vty, " Last Msg Rx Time: %s %s", os_time_fmt("/", client->last_read_time), VTY_NEWLINE);
   vty_out(vty, " Last Msg Tx Time: %s %s", os_time_fmt("/", client->last_write_time), VTY_NEWLINE);
@@ -334,7 +341,7 @@ static void show_ipcstandby_serv_statistics_info(struct vty *vty, struct ipcstan
   memset(cbuf, 0, sizeof(cbuf));
   vty_out(vty, "Client           : %s %s", prefix2str(pu, cbuf, sizeof(cbuf)), VTY_NEWLINE);
   vty_out(vty, " Version         : %s %s", client->version, VTY_NEWLINE);
-  vty_out(vty, " FD              : %d %s", client->sock._fd, VTY_NEWLINE);
+  vty_out(vty, " FD              : %d %s", ipstack_fd(client->sock), VTY_NEWLINE);
   vty_out(vty, " Connect Time    : %s %s", os_time_fmt("/", client->connect_time), VTY_NEWLINE);
   vty_out(vty, " Last Msg Rx Time: %s %s", os_time_fmt("/", client->last_read_time), VTY_NEWLINE);
   vty_out(vty, " Last Msg Tx Time: %s %s", os_time_fmt("/", client->last_write_time), VTY_NEWLINE);
@@ -363,7 +370,7 @@ DEFUN(show_ipcstandby_serv_statistics,
   struct listnode *node;
   struct ipcstandby_serv *client;
 
-  for (ALL_LIST_ELEMENTS_RO(ipcstandby_server.client_list, node, client))
+  for (ALL_LIST_ELEMENTS_RO(_host_standby.ipcstandby_server->client_list, node, client))
     show_ipcstandby_serv_statistics_info(vty, client);
   return CMD_SUCCESS;
 }
@@ -379,7 +386,7 @@ DEFUN(ipcstandby_serv_statistics_clear,
   struct listnode *node;
   struct ipcstandby_serv *client;
 
-  for (ALL_LIST_ELEMENTS_RO(ipcstandby_server.client_list, node, client))
+  for (ALL_LIST_ELEMENTS_RO(_host_standby.ipcstandby_server->client_list, node, client))
   {
     client->recv_cnt = 0;
     client->recv_faild_cnt = 0;
@@ -404,8 +411,8 @@ DEFUN(show_ipcstandby_client_statistics,
       "Client information\n"
       "Statistics information\n")
 {
-  if (ipcstandby_client)
-    ipcstandby_client_statistics_show(vty, ipcstandby_client);
+  if (_host_standby.ipcstandby_client)
+    ipcstandby_client_statistics_show(vty, _host_standby.ipcstandby_client);
   return CMD_SUCCESS;
 }
 
@@ -417,14 +424,14 @@ DEFUN(ipcstandby_client_statistics_clear,
       "Client information\n"
       "Statistics information\n")
 {
-  if (ipcstandby_client)
+  if (_host_standby.ipcstandby_client)
   {
-    ipcstandby_client->recv_cnt = 0;
-    ipcstandby_client->recv_faild_cnt = 0;
-    ipcstandby_client->pkt_err_cnt = 0;
-    ipcstandby_client->send_cnt = 0;
-    ipcstandby_client->send_faild_cnt = 0;
-    ipcstandby_client->connect_cnt = 0;
+    _host_standby.ipcstandby_client->recv_cnt = 0;
+    _host_standby.ipcstandby_client->recv_faild_cnt = 0;
+    _host_standby.ipcstandby_client->pkt_err_cnt = 0;
+    _host_standby.ipcstandby_client->send_cnt = 0;
+    _host_standby.ipcstandby_client->send_faild_cnt = 0;
+    _host_standby.ipcstandby_client->connect_cnt = 0;
   }
   return CMD_SUCCESS;
 }

@@ -1,4 +1,4 @@
-#include "bsp_types.h"
+#include "kbsp_types.h"
 #include "khal_ipcmsg.h"
 #include "khal_ipccmd.h"
 
@@ -6,7 +6,7 @@
 
 
 #define DESC_ENTRY(T) [(T)] = {(T), (#T)}
-static const struct message hal_module_types[] = {
+static const struct kmessage khal_module_types[] = {
     DESC_ENTRY(HAL_MODULE_NONE),
     DESC_ENTRY(HAL_MODULE_MGT),
     DESC_ENTRY(HAL_MODULE_GLOBAL),
@@ -41,7 +41,7 @@ static const struct message hal_module_types[] = {
 #undef DESC_ENTRY
 
 
-static const char * _hal_cmd_namestr(int cmd)
+static const char * _khal_cmd_namestr(int cmd)
 {
     switch(cmd)
     {
@@ -76,28 +76,28 @@ static const char * _hal_cmd_namestr(int cmd)
 }
 
 
-static const char * _hal_module_namestr(int cmd)
+static const char * _khal_module_namestr(int cmd)
 {
-    if (cmd >= ZPL_ARRAY_SIZE(hal_module_types)) {
+    if (cmd >= ZPL_ARRAY_SIZE(khal_module_types)) {
 		return NULL;
 	}
-	return hal_module_types[cmd].str;
+	return khal_module_types[cmd].str;
 }
 
 
 
-const char * hal_module_cmd_name(zpl_uint32 cmd)
+const char * khal_module_cmd_name(zpl_uint32 cmd)
 {
     int n = 0;
     static char bustmp[256];
     memset(bustmp, 0, sizeof(bustmp));//unknown
-    if(_hal_module_namestr(IPCCMD_MODULE_GET(cmd)))
-        n = snprintf(bustmp, sizeof(bustmp), "%s ", _hal_module_namestr(IPCCMD_MODULE_GET(cmd)));
+    if(_khal_module_namestr(IPCCMD_MODULE_GET(cmd)))
+        n = snprintf(bustmp, sizeof(bustmp), "%s ", _khal_module_namestr(IPCCMD_MODULE_GET(cmd)));
     else  
         n = snprintf(bustmp, sizeof(bustmp), "unknown:0x%x ", (IPCCMD_MODULE_GET(cmd)));  
     
-    if(_hal_cmd_namestr(IPCCMD_CMD_GET(cmd)))
-        n = snprintf(bustmp + n, sizeof(bustmp) - n, "%s", _hal_cmd_namestr(IPCCMD_CMD_GET(cmd)));
+    if(_khal_cmd_namestr(IPCCMD_CMD_GET(cmd)))
+        n = snprintf(bustmp + n, sizeof(bustmp) - n, "%s", _khal_cmd_namestr(IPCCMD_CMD_GET(cmd)));
     else  
         n = snprintf(bustmp + n, sizeof(bustmp) - n, "unknown:0x%x", (IPCCMD_CMD_GET(cmd)));  
     return bustmp;

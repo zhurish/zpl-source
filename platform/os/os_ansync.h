@@ -167,6 +167,9 @@ extern os_ansync_lst * os_ansync_global_lookup(zpl_uint32 taskid, zpl_uint32 mod
 extern int os_ansync_global_foreach(int (*func)(os_ansync_lst *, void *), void *pVoid);
 #endif
 
+extern int os_ansync_empty_timer(int (*timer_func)(void *), void *userdata, int ms_timeout);
+extern int os_ansync_empty_running(void);
+
 
 #ifdef __OS_ANSYNC_DEBUG
 extern void os_ansync_debug_printf(void *fp, zpl_char *func, zpl_uint32 line,  const char *format, ...);

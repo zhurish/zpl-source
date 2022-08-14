@@ -20,15 +20,15 @@ extern "C"
 //printk("Leave %s line %d", __func__, __LINE__)
 
 
-enum hal_ipcmsg_type
+enum khal_ipctype_e
 {
-    HAL_IPCMSG_NONE,
-    HAL_IPCMSG_EVENT,
-    HAL_IPCMSG_CMD,
+    HAL_IPCTYPE_NONE,
+    HAL_IPCTYPE_EVENT,
+    HAL_IPCTYPE_CMD,
 };
 
 #pragma pack(1)
-struct hal_ipcmsg_header
+struct khal_ipcmsg_header
 {
     zpl_uint16 length;
     zpl_uint8 marker;
@@ -37,15 +37,15 @@ struct hal_ipcmsg_header
     zpl_uint32 unit;
 };
  
-#define HAL_IPCMSG_HEADER_SIZE sizeof(struct hal_ipcmsg_header)
-struct hal_ipcmsg_callback
+#define HAL_IPCMSG_HEADER_SIZE sizeof(struct khal_ipcmsg_header)
+struct khal_ipcmsg_callback
 {
     int (*ipcmsg_callback)(zpl_uint8 *, zpl_uint32, void *);
     void  *pVoid;
 };
 
 //应答消息
-struct hal_ipcmsg_result
+struct khal_ipcmsg_result
 {
     zpl_int32 result;
     zpl_uint32 vrfid;
@@ -58,7 +58,7 @@ struct hal_ipcmsg_result
 };
 
 //hello 消息
-struct hal_ipcmsg_hello
+struct khal_ipcmsg_hello
 {
     zpl_uint8 stype;
     zpl_uint8 module;
@@ -69,7 +69,7 @@ struct hal_ipcmsg_hello
 };
   
 //交换芯片物理接口表信息
-struct hal_ipcmsg_hwport
+struct khal_ipcmsg_hwport
 {
     zpl_uint8 unit;
     zpl_uint8 slot;
@@ -79,22 +79,22 @@ struct hal_ipcmsg_hwport
 };
     
 //注册信息
-struct hal_ipcmsg_register
+struct khal_ipcmsg_register
 {
     zpl_int32 value;
 };
   
 //全局信息
-typedef struct hal_global_header_s
+typedef struct khal_global_header_s
 {
     zpl_uint32 vrfid;
     zpl_uint32 value;
     zpl_uint32 value1;
     zpl_uint32 value2;
-} hal_global_header_t;
+} khal_global_header_t;
 
 //L2接口信息
-typedef struct hal_port_header_s
+typedef struct khal_port_header_s
 {
     zpl_uint8     unit;
     zpl_uint8     slot;
@@ -106,7 +106,7 @@ typedef struct hal_port_header_s
       zpl_uint32    l3ifindex;
     //} uport;
     zpl_uint32    vrfid;  
-} hal_port_header_t;
+} khal_port_header_t;
 
 #define IF_TYPE_SET(n) (((n)&0x3F) << 26)
 #define IF_TYPE_CLR(n) (((n)) & 0x03FFFFFF)
@@ -135,7 +135,7 @@ typedef struct hal_port_header_s
 #define IS_HAL_IPCMSG_DEBUG_DETAIL(n) ((n)&HAL_IPCMSG_DEBUG_DETAIL)
 #define IS_HAL_IPCMSG_DEBUG_HEX(n) ((n)&HAL_IPCMSG_DEBUG_HEX)
 
-enum hal_client_state
+enum khal_client_state
 {
     HAL_CLIENT_NONE,
     HAL_CLIENT_CLOSE,
@@ -144,7 +144,7 @@ enum hal_client_state
     HAL_CLIENT_REGISTER,
 };
 
-struct hal_ipcmsg
+struct khal_ipcmsg
 {
     char *buf;
     zpl_uint16 length_max;
@@ -152,56 +152,56 @@ struct hal_ipcmsg
     zpl_uint16 setp;
 };
 
-extern int hal_ipcmsg_put(struct hal_ipcmsg *ipcmsg, void *buf, int len);
-extern int hal_ipcmsg_putc(struct hal_ipcmsg *ipcmsg, zpl_uint8);
-extern int hal_ipcmsg_putw(struct hal_ipcmsg *ipcmsg, zpl_uint16);
-extern int hal_ipcmsg_putl(struct hal_ipcmsg *ipcmsg, zpl_uint32);
-extern int hal_ipcmsg_put_reset(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_putnull(struct hal_ipcmsg *ipcmsg, zpl_uint32);
-extern int hal_ipcmsg_putc_at(struct hal_ipcmsg *ipcmsg, zpl_uint32 s, zpl_uint8 c);
-extern int hal_ipcmsg_putw_at(struct hal_ipcmsg *ipcmsg, zpl_uint32 s, zpl_uint16 w);
+extern int khal_ipcmsg_put(struct khal_ipcmsg *ipcmsg, void *buf, int len);
+extern int khal_ipcmsg_putc(struct khal_ipcmsg *ipcmsg, zpl_uint8);
+extern int khal_ipcmsg_putw(struct khal_ipcmsg *ipcmsg, zpl_uint16);
+extern int khal_ipcmsg_putl(struct khal_ipcmsg *ipcmsg, zpl_uint32);
+extern int khal_ipcmsg_put_reset(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_putnull(struct khal_ipcmsg *ipcmsg, zpl_uint32);
+extern int khal_ipcmsg_putc_at(struct khal_ipcmsg *ipcmsg, zpl_uint32 s, zpl_uint8 c);
+extern int khal_ipcmsg_putw_at(struct khal_ipcmsg *ipcmsg, zpl_uint32 s, zpl_uint16 w);
 
-extern int hal_ipcmsg_get(struct hal_ipcmsg *ipcmsg, void *buf, int len);
-extern int hal_ipcmsg_getc(struct hal_ipcmsg *ipcmsg, zpl_uint8 *);
-extern int hal_ipcmsg_getw(struct hal_ipcmsg *ipcmsg, zpl_uint16 *);
-extern int hal_ipcmsg_getl(struct hal_ipcmsg *ipcmsg, zpl_uint32 *);
-extern int hal_ipcmsg_get_reset(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_getnull(struct hal_ipcmsg *ipcmsg, zpl_uint32 len);
+extern int khal_ipcmsg_get(struct khal_ipcmsg *ipcmsg, void *buf, int len);
+extern int khal_ipcmsg_getc(struct khal_ipcmsg *ipcmsg, zpl_uint8 *);
+extern int khal_ipcmsg_getw(struct khal_ipcmsg *ipcmsg, zpl_uint16 *);
+extern int khal_ipcmsg_getl(struct khal_ipcmsg *ipcmsg, zpl_uint32 *);
+extern int khal_ipcmsg_get_reset(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_getnull(struct khal_ipcmsg *ipcmsg, zpl_uint32 len);
 
-extern int hal_ipcmsg_create(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_destroy(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_reset(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_msg_init(struct hal_ipcmsg *ipcmsg, char *buf, int len);
-extern int hal_ipcmsg_create_header(struct hal_ipcmsg *ipcmsg, zpl_uint32 command);
-extern int hal_ipcmsg_get_header(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_header *header);
-extern int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint32 unit);
-extern int hal_ipcmsg_hdr_unit_get(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_msg_copy(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);
-extern int hal_ipcmsg_msg_clone(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);
-extern int hal_ipcmsg_hdrlen_set(struct hal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_create(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_destroy(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_reset(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_msg_init(struct khal_ipcmsg *ipcmsg, char *buf, int len);
+extern int khal_ipcmsg_create_header(struct khal_ipcmsg *ipcmsg, zpl_uint32 command);
+extern int khal_ipcmsg_get_header(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_header *header);
+extern int khal_ipcmsg_hdr_unit_set(struct khal_ipcmsg *ipcmsg, zpl_uint32 unit);
+extern int khal_ipcmsg_hdr_unit_get(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_msg_copy(struct khal_ipcmsg *dst_ipcmsg, struct khal_ipcmsg *src_ipcmsg);
+extern int khal_ipcmsg_msg_clone(struct khal_ipcmsg *dst_ipcmsg, struct khal_ipcmsg *src_ipcmsg);
+extern int khal_ipcmsg_hdrlen_set(struct khal_ipcmsg *ipcmsg);
 
-extern int hal_ipcmsg_msglen_get(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_get_setp(struct hal_ipcmsg *ipcmsg);
-extern int hal_ipcmsg_get_getp(struct hal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_msglen_get(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_get_setp(struct khal_ipcmsg *ipcmsg);
+extern int khal_ipcmsg_get_getp(struct khal_ipcmsg *ipcmsg);
 
-extern int hal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len);
-extern int hal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct hal_ipcmsg *src_ipcmsg);
-extern int hal_ipcmsg_send(int unit, struct hal_ipcmsg *src_ipcmsg);
-extern int hal_ipcmsg_send_andget_message(int unit, zpl_uint32 command, 
-  void *ipcmsg, int len,  struct hal_ipcmsg_result *getvalue);
-extern int hal_ipcmsg_getmsg_callback(int unit, zpl_uint32 command, void *ipcmsg, int len, 
-  struct hal_ipcmsg_result *getvalue, struct hal_ipcmsg_callback *callback);
+extern int khal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len);
+extern int khal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct khal_ipcmsg *src_ipcmsg);
+extern int khal_ipcmsg_send(int unit, struct khal_ipcmsg *src_ipcmsg);
+extern int khal_ipcmsg_send_andget_message(int unit, zpl_uint32 command, 
+  void *ipcmsg, int len,  struct khal_ipcmsg_result *getvalue);
+extern int khal_ipcmsg_getmsg_callback(int unit, zpl_uint32 command, void *ipcmsg, int len, 
+  struct khal_ipcmsg_result *getvalue, struct khal_ipcmsg_callback *callback);
 
-extern int hal_ipcmsg_hexmsg(struct hal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr);
+extern int khal_ipcmsg_hexmsg(struct khal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr);
 
-extern int hal_ipcmsg_global_set(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo);
-extern int hal_ipcmsg_global_get(struct hal_ipcmsg *ipcmsg, hal_global_header_t *glo);
+extern int khal_ipcmsg_global_set(struct khal_ipcmsg *ipcmsg, khal_global_header_t *glo);
+extern int khal_ipcmsg_global_get(struct khal_ipcmsg *ipcmsg, khal_global_header_t *glo);
 
-extern int hal_ipcmsg_port_set(struct hal_ipcmsg *ipcmsg, ifindex_t ifindex);
-extern int hal_ipcmsg_port_get(struct hal_ipcmsg *ipcmsg, hal_port_header_t *bspport);
+extern int khal_ipcmsg_port_set(struct khal_ipcmsg *ipcmsg, ifindex_t ifindex);
+extern int khal_ipcmsg_port_get(struct khal_ipcmsg *ipcmsg, khal_port_header_t *bspport);
 
-extern int hal_ipcmsg_result_set(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_result *val);
-extern int hal_ipcmsg_result_get(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_result *val);
+extern int khal_ipcmsg_result_set(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_result *val);
+extern int khal_ipcmsg_result_get(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_result *val);
 
 #ifdef __cplusplus
 }

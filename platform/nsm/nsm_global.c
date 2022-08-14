@@ -107,14 +107,14 @@ int nsm_global_init(void)
   template_t * temp = NULL;
   os_memset(&nsm_global, 0, sizeof(nsm_global_t));
 	nsm_global.mutex = os_mutex_init();
-	temp = nsm_template_new (zpl_true);
+	temp = lib_template_new (zpl_true);
 	if(temp)
 	{
 		temp->module = 0;
 		strcpy(temp->name, "global");
 		temp->write_template = bulid_global_config;
 		temp->pVoid = NULL;
-		nsm_config_list_install(temp, 0);
+		lib_template_config_list_install(temp, 0);
 	}
 
 	return OK;

@@ -31,7 +31,7 @@ DEFUN (show_debuging_config,
 		SHOW_STR
 		 "Debugging information\n")
 {
-	nsm_template_debug_show_config (vty, zpl_true);
+	lib_template_debug_show_config (vty, zpl_true);
 	return CMD_SUCCESS;
 }
 
@@ -98,7 +98,7 @@ static int config_write_debug (struct vty *vty)
   #ifdef ZPL_NSM_MODULE
 	config_nsm_write_debug (vty);
   #endif
-	nsm_template_debug_write_config (vty);
+	lib_template_debug_write_config (vty);
 	return OK;
 }
 

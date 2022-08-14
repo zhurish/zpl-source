@@ -220,11 +220,7 @@ extern int ip_main(int argc, char **argv);
 int main(int argc, char **argv)
 {
 	char *p = NULL;
-	// extern int console_enable;
-#ifdef OS_SIGNAL_SIGWAIT
-	int signo[] = {SIGUSR2};
-	sigset_t mask;
-#endif
+
 	/* Set umask before anything for security */
 	umask(0027);
 
@@ -237,12 +233,6 @@ int main(int argc, char **argv)
 
 	zplmain_getopt(argc, argv);
 
-
-#ifdef OS_SIGNAL_SIGWAIT
-	//os_task_sigmaskall();
-#endif
-	//dhcpv6_main(1, NULL);
-	//do_iplink(argc, argv);
 	os_signal_default(zlog_signal, zlog_signal);
 	zpl_base_signal_init(startup_option.daemon_mode);
 
@@ -262,21 +252,19 @@ int main(int argc, char **argv)
 	 * os shell start
 	 */
 	zpl_base_shell_start(startup_option.zserv_path, startup_option.vty_addr, startup_option.vty_port, startup_option.tty);
-	//zpl_base_signal_reload();
+
 	/*
 	 * load config file
 	 */
 	openzlog_start(NULL);
 	host_config_loading(startup_option.config_file);
-	//zpl_base_signal_reload();
+
 	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
-
-  	//os_signal_reload_test();
-
-
+	os_task_sigexecute(0, NULL);
 	while (1)
 	{
-		os_signal_process(2000);
+		//os_ansync_empty_running(NULL, NULL, 1000);
+		os_signal_process(200);
 	}
 #ifdef ZPL_TOOLS_PROCESS
 	os_process_stop();

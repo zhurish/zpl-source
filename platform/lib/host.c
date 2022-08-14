@@ -77,7 +77,7 @@ int host_waitting_bspinit(int sec)
 {
 	if(_global_host.bspinit_sem)
 	{
-		os_sem_take(_global_host.bspinit_sem, sec);
+		os_sem_take(_global_host.bspinit_sem, sec*1000);
 	}
 	return OK;
 }
@@ -141,8 +141,8 @@ int host_config_init(zpl_char *motd)
 	_global_host.vty_config = 0;
 	/* Login password check. */
 	_global_host.no_password_check = 0;
-	_global_host.mutex = os_mutex_init();
-	_global_host.bspinit_sem = os_sem_init();
+	_global_host.mutex = os_mutex_name_init("hostmutex");
+	_global_host.bspinit_sem = os_sem_name_init("hostsem");
 	if(access("/etc/.serial_no", F_OK) == 0)
 	{
 		memset(_global_host.serial, '\0', sizeof(_global_host.serial));

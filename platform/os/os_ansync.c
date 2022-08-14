@@ -14,6 +14,19 @@ static LIST	*ansyncList = NULL;
 static zpl_uint8	g_ansync_init = 0;
 static os_ansync_t *_m_os_ansync_current = NULL;
 
+struct os_ansync_empty
+{
+	os_ansync_lst *_empty_ansync;
+	int _empty_ansync_init;
+	int		(*timer_callback)(void *);
+	void	*userdata;
+	int		timer_invalue;
+};
+
+struct os_ansync_empty _ansync_empty;
+
+
+
 static int os_ansync_global_init(void)
 {
 	if(g_ansync_init == 0)
@@ -1080,7 +1093,6 @@ int os_ansync_show(os_ansync_lst *lst, int (*show)(void *, zpl_char *fmt,...), v
 int os_ansync_main(os_ansync_lst *lst, os_ansync_exe exe)
 {
 	os_ansync_t *node = NULL;
-	//host_waitting_loadconfig();
 	while(lst)
 	{
 		while((node = os_ansync_fetch(lst)))
@@ -1091,6 +1103,71 @@ int os_ansync_main(os_ansync_lst *lst, os_ansync_exe exe)
 
 
 
+#ifdef OS_SIGNAL_PIPE 
+static int os_ansync_signal_handler(os_ansync_t *t_read)
+{
+  os_signal_try_process();
+  os_ansync_add(OS_ANSYNC_MASTER(t_read), OS_ANSYNC_INPUT, os_ansync_signal_handler, NULL, os_signal_fd());
+  return 0;
+}
+#endif
+
+static int os_ansync_empty_init(void)
+{
+	if(_ansync_empty._empty_ansync_init)
+		return OK;
+	_ansync_empty._empty_ansync = os_ansync_lst_create(0, 10);
+	if(_ansync_empty._empty_ansync)
+	{
+		#ifdef OS_SIGNAL_PIPE 
+		os_ansync_add(_ansync_empty._empty_ansync, OS_ANSYNC_INPUT, os_ansync_signal_handler, NULL, os_signal_fd());
+		#endif 
+	}
+	_ansync_empty._empty_ansync_init = 1;
+	return OK;
+}
+
+int os_ansync_empty_timer(int (*timer_func)(void *), void *userdata, int ms_timeout)
+{
+	if(_ansync_empty._empty_ansync_init == 0)
+	{
+		os_ansync_empty_init();
+	}
+	if(_ansync_empty._empty_ansync_init)
+	{
+		_ansync_empty.timer_callback = timer_func;
+		_ansync_empty.userdata = userdata;
+		_ansync_empty.timer_invalue = ms_timeout;
+		return OK;
+	}
+	return ERROR;
+}
+
+int os_ansync_empty_running(void)
+{
+	os_ansync_t *node = NULL;
+	os_ansync_empty_init();
+	if(_ansync_empty._empty_ansync == NULL)
+	{
+		int val = _ansync_empty.timer_invalue;
+		while(1)
+		{
+			if(_ansync_empty.timer_callback && val == 0)
+			{
+				val = _ansync_empty.timer_invalue;
+				(_ansync_empty.timer_callback)(_ansync_empty.userdata);
+			}
+			val--;
+			os_msleep(1);
+		}
+	}
+	else
+	{	
+		while ((node = os_ansync_fetch(_ansync_empty._empty_ansync)))
+			os_ansync_execute(_ansync_empty._empty_ansync, node, OS_ANSYNC_EXECUTE_NONE);
+	}
+	return OK;
+}
 /*
 
 int os_ansync_test()

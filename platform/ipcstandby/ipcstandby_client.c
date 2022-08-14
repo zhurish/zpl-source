@@ -36,8 +36,7 @@
 #include "vty_include.h"
 #include "ipcstandby_client.h"
 
-/* ipcstandby client events. */
-struct ipcstandby_client *ipcstandby_client = NULL;
+
 /* Prototype for event manager. */
 static void ipcstandby_client_event(enum ipcmsg_event, struct ipcstandby_client *);
 static zpl_socket_t ipcstandby_client_socket_connect(struct ipcstandby_client *client);
@@ -48,7 +47,7 @@ struct ipcstandby_client *
 ipcstandby_client_new(void *m)
 {
   struct ipcstandby_client *client;
-  client = XCALLOC(MTYPE_ZCLIENT, sizeof(struct ipcstandby_client));
+  client = XCALLOC(MTYPE_STANDBY_CLIENT, sizeof(struct ipcstandby_client));
 
   client->ibuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
   client->obuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
@@ -68,15 +67,13 @@ void ipcstandby_client_free(struct ipcstandby_client *client)
   if (client->obuf)
     stream_free(client->obuf);
 
-  XFREE(MTYPE_ZCLIENT, client);
+  XFREE(MTYPE_STANDBY_CLIENT, client);
 }
 
 /* Initialize ipcstandby client.  Argument module is unwanted
    redistribute route type. */
 void ipcstandby_client_init(struct ipcstandby_client *client, zpl_uint32 slot)
 {
-  //zpl_uint32 i = 0;
-
   /* Schedule first client connection. */
   if (client->debug)
     zlog_debug(MODULE_DEFAULT, "client start scheduled");
@@ -177,21 +174,11 @@ ipcstandby_client_failed(struct ipcstandby_client *client)
   return OK;
 }
 
-static void ipcstandby_client_create_header(struct stream *s, zpl_uint16 module, zpl_uint16 command)
-{
-  stream_reset(s);
-  /* length placeholder, caller can update */
-  stream_putw(s, ZPL_IPCMSG_HEADER_SIZE);
-  stream_putc(s, ZPL_IPCMSG_HEADER_MARKER);
-  stream_putc(s, ZPL_IPCMSG_VERSION);
-  stream_putw(s, module);
-  stream_putw(s, command);
-}
 
 static int ipcstandby_client_register_send(struct ipcstandby_client *client)
 {
   struct ipcstanby_result ack;
-  ipcstandby_client_create_header(client->obuf, 0, ZPL_IPCSTANBY_REGISTER);
+  ipcstandby_create_header(client->obuf, ZPL_IPCSTANBY_REGISTER);
   stream_putl(client->obuf, client->slot);
   stream_put(client->obuf, "", 64);
   // stream_putw_at(s, 0, stream_get_endp(s));
@@ -202,7 +189,7 @@ static int ipcstandby_client_register_send(struct ipcstandby_client *client)
 static int ipcstandby_client_hello_send(struct ipcstandby_client *client)
 {
   struct ipcstanby_result ack;
-  ipcstandby_client_create_header(client->obuf, 0, ZPL_IPCSTANBY_HELLO);
+  ipcstandby_create_header(client->obuf, ZPL_IPCSTANBY_HELLO);
   stream_putl(client->obuf, client->slot);
   // stream_putw_at(s, 0, stream_get_endp(s));
   return ipcstandby_client_send_message(client, &ack, NULL, 500);
@@ -244,12 +231,12 @@ int ipcstandby_client_start(struct ipcstandby_client *client)
   }
 
   if (ipstack_set_nonblocking(client->sock) < 0)
-    zlog_warn(MODULE_DEFAULT, "%s: set_nonblocking(%d) failed", __func__, client->sock._fd);
+    zlog_warn(MODULE_DEFAULT, "%s: set_nonblocking(%d) failed", __func__, ipstack_fd(client->sock));
 
   /* Clear fail count. */
   client->fail = 0;
   if (client->debug)
-    zlog_debug(MODULE_DEFAULT, "client ipstack_connect success with ipstack_socket [%d]", client->sock._fd);
+    zlog_debug(MODULE_DEFAULT, "client ipstack_connect success with ipstack_socket [%d]", ipstack_fd(client->sock));
 
   ipcstandby_client_register_send(client);
   ipcstandby_client_event(ZPL_IPCMSG_TIMEOUT, client);
@@ -297,14 +284,14 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
     if (nbyte == OS_TIMEOUT)
     {
       stream_reset(client->ibuf);
-      zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", client->sock._fd, prefix2str(pu, cbuf, sizeof(cbuf)));
+      zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
       return OS_TIMEOUT;
     }
     else if (nbyte == ERROR)
     {
       client->recv_faild_cnt++;
       stream_reset(client->ibuf);
-      zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", client->sock._fd, prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
+      zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
       return OS_CLOSE;
     }
     if (nbyte != (ssize_t)(ZPL_IPCMSG_HEADER_SIZE - client->ibuf->endp))
@@ -315,7 +302,7 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
       if (timeoutval <= 0)
       {
         stream_reset(client->ibuf);
-        zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", client->sock._fd, prefix2str(pu, cbuf, sizeof(cbuf)));
+        zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
         return OS_TIMEOUT;
       }
       continue;
@@ -341,7 +328,7 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
       client->pkt_err_cnt++;
       stream_reset(client->ibuf);
       zlog_err(MODULE_DEFAULT, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
-               __func__, client->sock._fd, marker, version);
+               __func__, ipstack_fd(client->sock), marker, version);
       return ERROR;
     }
 
@@ -350,7 +337,7 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
       client->pkt_err_cnt++;
       stream_reset(client->ibuf);
       zlog_err(MODULE_DEFAULT, "%s: ipstack_socket %d message length %u is less than %d ",
-               __func__, client->sock._fd, length, ZPL_IPCMSG_HEADER_SIZE);
+               __func__, ipstack_fd(client->sock), length, ZPL_IPCMSG_HEADER_SIZE);
       return ERROR;
     }
 
@@ -375,14 +362,14 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
         if (nbyte == OS_TIMEOUT)
         {
           stream_reset(client->ibuf);
-          zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", client->sock._fd, prefix2str(pu, cbuf, sizeof(cbuf)));
+          zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
           return OS_TIMEOUT;
         }
         else if (nbyte == ERROR)
         {
           stream_reset(client->ibuf);
           client->recv_faild_cnt++;
-          zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", client->sock._fd, prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
+          zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
           return OS_CLOSE;
         }
         if (nbyte != (ssize_t)(length - already))
@@ -393,7 +380,7 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
           if (timeoutval <= 0)
           {
             stream_reset(client->ibuf);
-            zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", client->sock._fd, prefix2str(pu, cbuf, sizeof(cbuf)));
+            zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
             return OS_TIMEOUT;
           }
           continue;
@@ -408,7 +395,7 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
     {
       client->recv_cnt++;
       length -= ZPL_IPCMSG_HEADER_SIZE;
-      client->last_read_time = quagga_time(NULL);
+      client->last_read_time = os_time(NULL);
       if (ack)
       {
         ack->precoss = stream_getl(client->ibuf);
@@ -458,7 +445,7 @@ int ipcstandby_client_send_message(struct ipcstandby_client *client, struct ipcs
     if (len == 0)
     {
       client->send_cnt++;
-      client->last_write_time = quagga_time(NULL);
+      client->last_write_time = os_time(NULL);
       ret = ipcstandby_client_recv_message(client, ack, callback, timeout);
       if (ret == ERROR)
         return ERROR;
@@ -476,7 +463,7 @@ int ipcstandby_client_send_message(struct ipcstandby_client *client, struct ipcs
 int ipcstandby_client_sendmsg(struct ipcstandby_client *client, struct ipcstanby_result *ack,
                                    struct ipcstandby_callback *callback, int cmd, char *msg, int len)
 {
-  ipcstandby_client_create_header(client->obuf, 0, cmd);
+  ipcstandby_create_header(client->obuf, cmd);
   stream_put(client->obuf, msg, len);
   // stream_putw_at(s, 0, stream_get_endp(s));
   return ipcstandby_client_send_message(client, ack, NULL, 500);

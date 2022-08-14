@@ -294,6 +294,28 @@ void nsm_redistribute_interface_updown(struct interface *ifp, zpl_bool updown)
     }
 }
 
+void nsm_redistribute_interface_vrfbind (struct interface *ifp, vrf_id_t vrfid, zpl_bool bind)
+{
+  struct listnode *node, *nnode;
+  struct zserv *client;
+  struct stream *s;
+
+  if (IS_NSM_DEBUG_EVENT)
+    zlog_debug(MODULE_NSM, "MESSAGE: NSM_EVENT_INTERFACE_%s %s", bind ? "BIND" : "UNBIND", ifp->name);
+  s = client->obuf;
+  stream_reset(s);
+
+  nsm_zserv_create_header(s, bind ? NSM_EVENT_INTERFACE_VRF_BIND : NSM_EVENT_INTERFACE_VRF_UNBIND, ifp->vrf_id);
+
+  nsm_zserv_encode_interface(s, ifp);
+  stream_putw(s, vrfid);
+  nsm_zserv_encode_interface_end(s);
+  for (ALL_LIST_ELEMENTS(nsm_srv->client_list, node, nnode, client))
+    {
+      nsm_zserv_send_message(client);
+    }
+}
+
 /* Interface information update. */
 void nsm_redistribute_interface_create(struct interface *ifp)
 {

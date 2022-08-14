@@ -40,6 +40,58 @@
 //#define ZPL_SDK_USER
 #endif
 
+#define ZPL_ETHDEV_NAME "/dev/halclient0"
+
+#ifdef ZPL_ETHDEV_NAME
+static int linux_ethdev_ioctl(int cmd, char *data)
+{
+  int ret = 0;
+  int fd = open(ZPL_ETHDEV_NAME, O_RDWR);
+  if(fd)
+  {
+    ret = ioctl(fd, cmd, data);
+    close(fd);
+  }
+  return ret;
+}
+
+
+static int linux_ioctl_eth_add(struct interface *ifp)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+  zpl_uchar macadd[6] = {0x20,0x5f,0x87,0x65,0x66,0x00};
+	char buf[512];
+	char    ifname[IF_NAME_MAX];
+	HAL_ENTER_FUNC();
+	os_memset(ifname, 0, sizeof(ifname));
+	os_strcpy(ifname, ifp->k_name);
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+  command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_CREATE); 
+  hal_ipcmsg_create_header(&ipcmsg, command);
+	hal_ipcmsg_port_set(&ipcmsg, ifp->ifindex);
+	hal_ipcmsg_put(&ipcmsg, ifname, IF_NAME_MAX);
+	hal_ipcmsg_put(&ipcmsg, macadd, 6);
+  return linux_ethdev_ioctl(command, buf);
+}
+
+static int linux_ioctl_eth_delete(struct interface *ifp)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	char    ifname[IF_NAME_MAX];
+	HAL_ENTER_FUNC();
+	os_memset(ifname, 0, sizeof(ifname));
+	os_strcpy(ifname, ifp->k_name);
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+  command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_DELETE); 
+  hal_ipcmsg_create_header(&ipcmsg, command);
+	hal_ipcmsg_port_set(&ipcmsg, ifp->ifindex);
+  return linux_ethdev_ioctl(command, buf);
+}
+#endif
+
 static int linux_interface_create(struct interface *ifp)
 {
   int ret = 0;
@@ -56,7 +108,13 @@ static int linux_interface_create(struct interface *ifp)
 #endif
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
+  case IF_XGIGABT_ETHERNET:
+  case IF_VLAN:
+  #ifdef ZPL_ETHDEV_NAME
+    ret = linux_ioctl_eth_add(ifp);
+  #else
     ret = linux_ioctl_eth_create(ifp);
+  #endif
     break;
   case IF_WIRELESS:
     break;
@@ -73,7 +131,7 @@ static int linux_interface_create(struct interface *ifp)
     ret = linux_ioctl_bond_create(ifp);
     break;
 #endif
-#if defined(ZPL_NSM_VLAN)
+#if 0//defined(ZPL_NSM_VLAN)
   case IF_SUBVLAN:
     ret = linux_ioctl_vlan_create(ifp);
     break;
@@ -100,7 +158,13 @@ static int linux_interface_delete(struct interface *ifp)
 #endif
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
+  case IF_XGIGABT_ETHERNET:
+  case IF_VLAN:
+  #ifdef ZPL_ETHDEV_NAME
+    ret = linux_ioctl_eth_delete(ifp);
+  #else
     ret = linux_ioctl_eth_destroy(ifp);
+  #endif
     break;
   case IF_WIRELESS:
     break;
@@ -117,7 +181,7 @@ static int linux_interface_delete(struct interface *ifp)
     ret = linux_ioctl_bond_delete(ifp);
     break;
 #endif
-#if defined(ZPL_NSM_VLAN)
+#if 0//defined(ZPL_NSM_VLAN)
   case IF_SUBVLAN:
     ret = linux_ioctl_vlan_destroy(ifp);
     break;
@@ -143,6 +207,7 @@ static int linux_interface_add_slave(struct interface *ifp, struct interface *sl
 #endif
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
+  case IF_XGIGABT_ETHERNET:
     break;
   case IF_WIRELESS:
     break;
@@ -159,7 +224,7 @@ static int linux_interface_add_slave(struct interface *ifp, struct interface *sl
     ret = _if_bond_add_slave(ifp, slave);
     break;
 #endif
-#if defined(ZPL_NSM_VLAN)
+#if 0//defined(ZPL_NSM_VLAN)
   case IF_SUBVLAN:
     break;
 #endif
@@ -184,6 +249,7 @@ static int linux_interface_delete_slave(struct interface *ifp, struct interface 
 #endif
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
+  case IF_XGIGABT_ETHERNET:
     break;
   case IF_WIRELESS:
     break;
@@ -200,7 +266,7 @@ static int linux_interface_delete_slave(struct interface *ifp, struct interface 
     ret = _if_bond_delete_slave(ifp, slave);
     break;
 #endif
-#if defined(ZPL_NSM_VLAN)
+#if 0//defined(ZPL_NSM_VLAN)
   case IF_SUBVLAN:
     break;
 #endif
@@ -226,6 +292,7 @@ static int linux_interface_update(struct interface *ifp)
 #endif
   case IF_ETHERNET:
   case IF_GIGABT_ETHERNET:
+  case IF_XGIGABT_ETHERNET:
   case IF_WIRELESS:
     break;
 #ifdef ZPL_NSM_BRIDGE
@@ -239,7 +306,7 @@ static int linux_interface_update(struct interface *ifp)
   case IF_LAG:
     break;
 #endif
-#if defined(ZPL_NSM_VLAN)
+#if 0//defined(ZPL_NSM_VLAN)
   case IF_VLAN:
     ret = linux_ioctl_vlan_change(ifp, 0);
     break;

@@ -62,14 +62,17 @@ struct ipcstandby
 	zpl_taskid_t taskid;
 	zpl_uint32    state;
 	zpl_uint32    start_state;
-	//struct ipcstandby_server_t ipcstandby_server;
-	//struct ipcstandby_client  ipcstandby_client;
+
+	struct ipcstandby_server_t *ipcstandby_server;
+	struct ipcstandby_client  *ipcstandby_client;
 
 	/*主备倒换回调函数*/
     int (*ipcstandby_switch_callback)(zpl_bool);
 };
 
 extern struct ipcstandby  _host_standby;
+
+extern void ipcstandby_create_header(struct stream *s, zpl_uint16 command);
 
 extern int ipcstandby_execue_clicmd(char *cmd, int len);
 extern int ipcstandby_sendto_msg(char *msg, int len);

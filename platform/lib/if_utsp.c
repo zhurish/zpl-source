@@ -1,5 +1,5 @@
 /*
- * bmgt.c
+ * if_utsp.c
  *
  *  Created on: May 1, 2017
  *      Author: zhurish
@@ -8,45 +8,52 @@
 #include <zplos_include.h>
 #include "zmemory.h"
 #include "if.h"
-#include "bmgt.h"
+#include "if_utsp.h"
 #include "vty.h"
 #include "host.h"
 #include "linklist.h"
 
 
-static LIST *unit_board_mgt_list = NULL;
-static os_mutex_t *unit_board_mgt_mutex = NULL;
-zpl_uint32 _bmgt_debug = 0;
+struct utsp_manage
+{
+	LIST *unit_board_mgt_list;
+	os_mutex_t *mgt_mutex;
+	zpl_uint32 bmgt_debug;
+};
+
+struct utsp_manage _utsp_manage;
+
 
 int unit_board_init(void)
 {
-	if (unit_board_mgt_list == NULL)
+	memset(&_utsp_manage, 0, sizeof(struct utsp_manage));
+	if (_utsp_manage.unit_board_mgt_list == NULL)
 	{
-		unit_board_mgt_list = os_malloc(sizeof(LIST));
-		if (unit_board_mgt_list)
+		_utsp_manage.unit_board_mgt_list = os_malloc(sizeof(LIST));
+		if (_utsp_manage.unit_board_mgt_list)
 		{
-			lstInit(unit_board_mgt_list);
+			lstInit(_utsp_manage.unit_board_mgt_list);
 		}
 	}
-	if (unit_board_mgt_mutex == NULL)
+	if (_utsp_manage.mgt_mutex == NULL)
 	{
-		unit_board_mgt_mutex = os_mutex_init();
+		_utsp_manage.mgt_mutex = os_mutex_name_init("mgtmutex");
 	}
-	_bmgt_debug = BMGT_DEBUG_EVENT|BMGT_DEBUG_DETAIL;
+	_utsp_manage.bmgt_debug = BMGT_DEBUG_EVENT|BMGT_DEBUG_DETAIL;
 	return OK;
 }
 
 int unit_board_exit(void)
 {
-	if (unit_board_mgt_mutex)
+	if (_utsp_manage.mgt_mutex)
 	{
-		if (os_mutex_exit(unit_board_mgt_mutex) == OK)
-			unit_board_mgt_mutex = NULL;
+		if (os_mutex_exit(_utsp_manage.mgt_mutex) == OK)
+			_utsp_manage.mgt_mutex = NULL;
 	}
-	if (unit_board_mgt_list)
+	if (_utsp_manage.unit_board_mgt_list)
 	{
-		lstFree(unit_board_mgt_list);
-		unit_board_mgt_list = NULL;
+		lstFree(_utsp_manage.unit_board_mgt_list);
+		_utsp_manage.unit_board_mgt_list = NULL;
 	}
 	return OK;
 }
@@ -61,7 +68,7 @@ unit_board_mgt_t *unit_board_add(zpl_uint8 unit, zpl_uint8 slot)
 		// t->type = (zpl_uint32)type;
 		t->unit = unit;
 		t->slot = slot;
-		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+		if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 			zlog_debug(MODULE_NSM, "Unit Board Add unit %d slot %d ", unit, slot);
 		// t->port = port;
 		// t->phyid = phyid;
@@ -70,14 +77,14 @@ unit_board_mgt_t *unit_board_add(zpl_uint8 unit, zpl_uint8 slot)
 		{
 			lstInitFree(t->port_list, free);
 		}
-		t->mutex = os_mutex_init();
+		t->mutex = os_mutex_name_init("utspmutex");
 		t->state = UBMG_STAT_INIT;
-		if (unit_board_mgt_mutex)
-			os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
-		if (unit_board_mgt_list)
-			lstAdd(unit_board_mgt_list, (NODE *)t);
-		if (unit_board_mgt_mutex)
-			os_mutex_unlock(unit_board_mgt_mutex);
+		if (_utsp_manage.mgt_mutex)
+			os_mutex_lock(_utsp_manage.mgt_mutex, OS_WAIT_FOREVER);
+		if (_utsp_manage.unit_board_mgt_list)
+			lstAdd(_utsp_manage.unit_board_mgt_list, (NODE *)t);
+		if (_utsp_manage.mgt_mutex)
+			os_mutex_unlock(_utsp_manage.mgt_mutex);
 		return t;
 	}
 	return NULL;
@@ -87,18 +94,18 @@ int unit_board_del(zpl_uint8 unit, zpl_uint8 slot)
 {
 	NODE node;
 	unit_board_mgt_t *t;
-	if (unit_board_mgt_mutex)
-		os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_lock(_utsp_manage.mgt_mutex, OS_WAIT_FOREVER);
 
-	for (t = (unit_board_mgt_t *)lstFirst(unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
+	for (t = (unit_board_mgt_t *)lstFirst(_utsp_manage.unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
 	{
 		node = t->node;
 		if (t && t->unit == unit && t->slot == slot)
 		{
-			if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 				zlog_debug(MODULE_NSM, "Unit Board Del unit %d slot %d ", unit, slot);			
 	
-			lstDelete(unit_board_mgt_list, (NODE *)t);
+			lstDelete(_utsp_manage.unit_board_mgt_list, (NODE *)t);
 			if (t->mutex)
 				os_mutex_lock(t->mutex, OS_WAIT_FOREVER);
 			if (t->port_list)
@@ -113,8 +120,8 @@ int unit_board_del(zpl_uint8 unit, zpl_uint8 slot)
 			break;
 		}
 	}
-	if (unit_board_mgt_mutex)
-		os_mutex_unlock(unit_board_mgt_mutex);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_unlock(_utsp_manage.mgt_mutex);
 	return OK;
 }
 
@@ -122,10 +129,10 @@ unit_board_mgt_t * unit_board_lookup(zpl_uint8 unit, zpl_uint8 slot)
 {
 	NODE node;
 	unit_board_mgt_t *t = NULL;
-	if (unit_board_mgt_mutex)
-		os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_lock(_utsp_manage.mgt_mutex, OS_WAIT_FOREVER);
 
-	for (t = (unit_board_mgt_t *)lstFirst(unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
+	for (t = (unit_board_mgt_t *)lstFirst(_utsp_manage.unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
 	{
 		node = t->node;
 		if (t && t->unit == unit && t->slot == slot)
@@ -133,8 +140,8 @@ unit_board_mgt_t * unit_board_lookup(zpl_uint8 unit, zpl_uint8 slot)
 			break;
 		}
 	}
-	if (unit_board_mgt_mutex)
-		os_mutex_unlock(unit_board_mgt_mutex);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_unlock(_utsp_manage.mgt_mutex);
 	return t;
 }
 
@@ -142,10 +149,10 @@ int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p)
 {
 	NODE node;
 	unit_board_mgt_t *t;
-	if (unit_board_mgt_mutex)
-		os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_lock(_utsp_manage.mgt_mutex, OS_WAIT_FOREVER);
 
-	for (t = (unit_board_mgt_t *)lstFirst(unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
+	for (t = (unit_board_mgt_t *)lstFirst(_utsp_manage.unit_board_mgt_list); t != NULL; t = (unit_board_mgt_t *)lstNext(&node))
 	{
 		node = t->node;
 		if (t && func)
@@ -153,8 +160,8 @@ int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p)
 			(func)(t, p);
 		}
 	}
-	if (unit_board_mgt_mutex)
-		os_mutex_unlock(unit_board_mgt_mutex);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_unlock(_utsp_manage.mgt_mutex);
 	return OK;
 }
 
@@ -168,7 +175,7 @@ unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zp
 		t->type = (zpl_uint32)type;
 		t->port = port;
 		t->phyid = phyid;
-		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+		if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 			zlog_debug(MODULE_NSM, "Unit Board Add Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
 		if (board->mutex)
 			os_mutex_lock(board->mutex, OS_WAIT_FOREVER);
@@ -192,7 +199,7 @@ int unit_board_port_del(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port,
 		node = t->node;
 		if (t && t->type == type && t->port == port && t->phyid == phyid)
 		{
-			if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+			if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 				zlog_debug(MODULE_NSM, "Unit Board Del Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
 			lstDelete(board->port_list, (NODE *)t);
 			break;
@@ -272,17 +279,17 @@ int unit_board_show(void *pvoid)
 #ifdef ZPL_SHELL_MODULE
 	struct vty *vty = (struct vty *)pvoid;
 #endif
-	if (unit_board_mgt_mutex)
-		os_mutex_lock(unit_board_mgt_mutex, OS_WAIT_FOREVER);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_lock(_utsp_manage.mgt_mutex, OS_WAIT_FOREVER);
 #ifdef ZPL_SHELL_MODULE
-	if (lstCount(unit_board_mgt_list))
+	if (lstCount(_utsp_manage.unit_board_mgt_list))
 	{
 		vty_out(vty, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----", "----", "----",VTY_NEWLINE);
 		vty_out(vty, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "TYPE", "UNIT", "SLOT", "PORT", "STAT", "PHY", "STUS", VTY_NEWLINE);
 		vty_out(vty, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----", "----", "----",VTY_NEWLINE);
 		datil = 1;
 	}
-	for (node = lstFirst(unit_board_mgt_list); node != NULL; node = lstNext(node))
+	for (node = lstFirst(_utsp_manage.unit_board_mgt_list); node != NULL; node = lstNext(node))
 	{
 		t = (unit_board_mgt_t *)node;
 		if (node)
@@ -301,14 +308,14 @@ int unit_board_show(void *pvoid)
 		vty_out(vty, " STUS: online:U offline:D; install:I Uninstall:N%s", VTY_NEWLINE);
 	}
 #else
-	if (lstCount(unit_board_mgt_list) || lstCount(job_unused_list))
+	if (lstCount(_utsp_manage.unit_board_mgt_list) || lstCount(job_unused_list))
 	{
 		fprintf(stdout, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----", "----", "----", VTY_NEWLINE);
 		fprintf(stdout, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "TYPE", "UNIT", "SLOT", "PORT", "STAT", "PHY", "STUS", VTY_NEWLINE);
 		fprintf(stdout, "%-8s %-4s %-4s %-4s %-4s %-4s %-4s%s", "--------", "----", "----", "----", "----" "----", "----", VTY_NEWLINE);
 		datil = 1;
 	}
-	for (node = lstFirst(unit_board_mgt_list); node != NULL; node = lstNext(node))
+	for (node = lstFirst(_utsp_manage.unit_board_mgt_list); node != NULL; node = lstNext(node))
 	{
 		t = (unit_board_mgt_t *)node;
 		if (node)
@@ -326,8 +333,8 @@ int unit_board_show(void *pvoid)
 		fprintf(stdout, " STUS: online:U offline:D; install:I Uninstall:N%s", "\r\n");
 	}
 #endif
-	if (unit_board_mgt_mutex)
-		os_mutex_unlock(unit_board_mgt_mutex);
+	if (_utsp_manage.mgt_mutex)
+		os_mutex_unlock(_utsp_manage.mgt_mutex);
 	return OK;
 }
 
@@ -338,9 +345,7 @@ int unit_board_waitting(void)
 }
 
 
-/* if manage */
-
-static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_uint8 s, zpl_uint8 p, zpl_phyport_t phyid)
+static int unit_board_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_uint8 s, zpl_uint8 p, zpl_phyport_t phyid)
 {
 	struct interface *ifp = NULL;
 	zpl_uint32 i = p;
@@ -354,6 +359,8 @@ static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_u
 		sprintf(name, "ethernet %d/%d/%d", u, s, i);
 	else if (type == IF_GIGABT_ETHERNET)
 		sprintf(name, "gigabitethernet %d/%d/%d", u, s, i);
+	else if (type == IF_XGIGABT_ETHERNET)
+		sprintf(name, "xgigabitethernet %d/%d/%d", u, s, i);
 	else if (type == IF_WIRELESS)
 		sprintf(name, "wireless %d/%d/%d", u, s, i);
 	else if (type == IF_TUNNEL)
@@ -375,7 +382,7 @@ static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_u
 
 	if(!online)
 	{
-		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+		if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 			zlog_debug(MODULE_NSM, " if_online %s", name);
 		ifp = if_lookup_by_name(name);
 		if(ifp)
@@ -385,7 +392,7 @@ static int if_unit_slot_port(zpl_bool online, if_type_t type, zpl_uint8 u, zpl_u
 	}
 	else// if(online)
 	{
-		if(IS_BMGT_DEBUG_EVENT(_bmgt_debug))
+		if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 			zlog_debug(MODULE_NSM, " if_create %s", name);
 		if (os_strlen(name) && !if_lookup_by_name(name))
 			ifp = if_create(name, strlen(name));
@@ -402,12 +409,12 @@ static int unit_board_port_installfunc(unit_port_mgt_t *mgt, void *p)
 		board->online, mgt->type, board->unit, board->slot, mgt->port);
 	if (board->state != UBMG_STAT_ACTIVE && board->online)
 	{
-		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+		if (unit_board_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
 			;//board->state = UBMG_STAT_ACTIVE;
 	}
 	else if (board->state == UBMG_STAT_ACTIVE && !board->online)
 	{
-		if (if_unit_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+		if (unit_board_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
 			;//board->state = UBMG_STAT_UNACTIVE;
 	}
 	return OK;
@@ -458,7 +465,7 @@ int unit_board_dynamic_install(zpl_uint8 unit, zpl_uint8 slot, zpl_bool enable)
 	return OK;
 }
 
-int bsp_usp_module_init(void)
+int unit_board_startup(void)
 {
 	zpl_bool online = zpl_true;
 #ifdef ZPL_KERNEL_MODULE
@@ -468,4 +475,76 @@ int bsp_usp_module_init(void)
 
 	return OK;
 }
+
+
+#ifdef ZPL_KERNEL_MODULE
+
+static int if_slot_kernel_read(void)
+{
+	struct interface * ifp = NULL;
+	char buf[512];
+	ifindex_t ifindex;
+	unit_board_mgt_t *board = NULL;
+	char kname[64], name[128];
+	FILE *fp = fopen(SLOT_PORT_CONF, "r");
+	if (fp)
+	{
+		char *s = NULL;
+		int n = 0;//, *p;
+		//printf("========================%s========================open %s\r\n", __func__, SLOT_PORT_CONF);
+		os_memset(buf, 0, sizeof(buf));
+		board = unit_board_add(0, 0);
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			os_memset(kname, 0, sizeof(kname));
+			os_memset(name, 0, sizeof(name));
+			s = strstr(buf, ":");
+			if(s)
+			{
+				os_memcpy(name, buf, s - buf);
+				s++;
+				n = strspn(s, "qwertyuiopasdfghjklzxcvbnm.1234567890");
+				if(strstr(s, "-"))
+					os_strcpy(kname, "br-lan");
+				else
+					os_strncpy(kname, s, n);
+				//kname[strlen(kname)-1] = '\0';
+
+				ifp = if_create (name, strlen(name));
+				//os_msleep(1);
+				ifindex = if_ifindex_make(name, NULL);
+				//printf("========================%s========================%s(%d)-->%s\r\n", __func__, name, ifindex, kname);
+				if(ifp && ifindex != 0)
+				{
+					if_kname_set(ifp, kname);
+
+					if(strstr(name,"eth"))
+						unit_board_port_add(board,IF_ETHERNET, 1, if_nametoindex(kname));
+					else if(strstr(name,"wireless"))
+						unit_board_port_add(board,IF_WIRELESS, 1, if_nametoindex(kname));						
+				}
+			}
+		}
+		fclose(fp);
+	}
+	else
+	{
+		//printf("========================%s========================can not open %s\r\n", __func__, SLOT_PORT_CONF);
+	}
+	return 0;
+}
+
+
+#endif
+
+#ifdef ZPL_KERNEL_MODULE
+int if_ktest_init(void)
+{
+	if_slot_kernel_read();
+	return OK;
+}
+#endif
+
+
+
 

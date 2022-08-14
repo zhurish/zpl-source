@@ -8,7 +8,7 @@ extern "C" {
 #include "khal_util.h"
 
 /* HAL_MODULE_8021X */
-enum hal_8021x_cmd 
+enum khal_8021x_cmd 
 {
     HAL_8021X_NONE,
 	HAL_8021X,
@@ -16,15 +16,15 @@ enum hal_8021x_cmd
 	HAL_8021X_PORT_MAC,
 	HAL_8021X_PORT_STATE,
 };
-typedef struct hal_8021x_param_s
+typedef struct khal_8021x_param_s
 {
 	zpl_uint32 value;
 	mac_t mac[NSM_MAC_MAX];
-}hal_8021x_param_t;
+}khal_8021x_param_t;
 
 
 /*HAL_MODULE_PORT,//L2 */
-enum hal_port_cmd 
+enum khal_port_cmd 
 {
     HAL_PORT_NONE,
 	HAL_PORT,
@@ -78,17 +78,17 @@ struct if_stats
    zpl_ulong tx_compressed;
 };
 
-typedef struct hal_port_param_s
+typedef struct khal_port_param_s
 {
 	zpl_uint32 value;
 	mac_t mac[NSM_MAC_MAX];
     zpl_uint32 value1;
     zpl_uint32 value2;
-}hal_port_param_t;
+}khal_port_param_t;
 
 
 /* HAL_MODULE_L3IF //L3 */
-enum hal_l3if_cmd 
+enum khal_l3if_cmd 
 {
     HAL_L3IF_NONE,
 	HAL_L3IF_CREATE,
@@ -100,41 +100,41 @@ enum hal_l3if_cmd
     HAL_L3IF_VRF,
 	HAL_L3IF_MAC,
 };
-typedef struct hal_l3if_param_s
+typedef struct khal_l3if_param_s
 {
-  	hal_port_header_t  port;
+  	khal_port_header_t  port;
   	char    ifname[64];
 	zpl_uint8 l2if_type;
   	vrf_id_t vrfid;
 	mac_t mac[NSM_MAC_MAX];
-}hal_l3if_param_t;
+}khal_l3if_param_t;
 
-typedef struct hal_l3if_addr_param_s
+typedef struct khal_l3if_addr_param_s
 {
-	hal_port_header_t  port;
+	khal_port_header_t  port;
 	zpl_uint8 family;
 	zpl_uint8 prefixlen;
 	union g_addr address;  
 	zpl_uint8 sec;
-}hal_l3if_addr_param_t;
+}khal_l3if_addr_param_t;
 
 
 /*HAL_MODULE_ROUTE,//Route Table */
-enum hal_route_cmd 
+enum khal_route_cmd 
 {
     HAL_ROUTE_NONE,
 	HAL_ROUTE_ADD,
 	HAL_ROUTE_DEL,
 };
-typedef struct hal_nexthop
+typedef struct khal_nexthop
 {
   	ifindex_t kifindex;
-	hal_port_header_t  port;
+	khal_port_header_t  port;
   	union g_addr gateway;
-} 	hal_nexthop_t;
+} 	khal_nexthop_t;
 
 
-typedef struct hal_route_param_s
+typedef struct khal_route_param_s
 {
   safi_t safi;
   vrf_id_t vrf_id;
@@ -144,7 +144,7 @@ typedef struct hal_route_param_s
   union g_addr destination;
   union g_addr source;
   zpl_uint8 nexthop_num;
-  hal_nexthop_t nexthop[16];
+  khal_nexthop_t nexthop[16];
   zpl_uint8 processid;
   zpl_uint8 type;
   zpl_uint8 flags;
@@ -152,10 +152,10 @@ typedef struct hal_route_param_s
   zpl_uint32 metric;
   zpl_uint32 tag;
   zpl_uint32 mtu;
-}hal_route_param_t;
+}khal_route_param_t;
 
 /*HAL_MODULE_MSTP HAL_MODULE_STP*/
-enum hal_mstp_cmd 
+enum khal_mstp_cmd 
 {
     HAL_MSTP_NONE,
 	HAL_MSTP_ENABLE,
@@ -174,25 +174,25 @@ typedef enum stp_state_s
 	STP_BLOCKING,
 }stp_state_t;
 
-typedef enum hal_port_stp_state_e {
+typedef enum khal_port_stp_state_e {
     HAL_PORT_STP_DISABLE = 1,
     HAL_PORT_STP_BLOCK,
     HAL_PORT_STP_LISTEN,
     HAL_PORT_STP_LEARN,
     HAL_PORT_STP_FORWARD
-} hal_port_stp_state_t;
+} khal_port_stp_state_t;
 
-typedef struct hal_mstp_param_s
+typedef struct khal_mstp_param_s
 {
     zpl_bool enable;
 	zpl_uint32 value;
 	zpl_uint32 type;
-	hal_port_stp_state_t state;
-}hal_mstp_param_t;
+	khal_port_stp_state_t state;
+}khal_mstp_param_t;
 
 
 /*HAL_MODULE_IGMP*/
-enum hal_igmp_cmd 
+enum khal_igmp_cmd 
 {
     HAL_IGMP_NONE,
     HAL_IGMP_IPCHECK,
@@ -207,7 +207,7 @@ enum hal_igmp_cmd
 };
 
 /* HAL_MODULE_GLOBAL */
-enum hal_global_cmd 
+enum khal_global_cmd 
 {
     HAL_GLOBAL_NONE,
 	HAL_GLOBAL_START,
@@ -223,17 +223,17 @@ enum hal_global_cmd
 };
 
 /* HAL_MODULE_SWITCH */
-typedef enum hal_core_cmd
+typedef enum khal_core_cmd
 {
 	HAL_CORE_NONE,
   	HAL_CORE_COPY_TO_CPU,
 	HAL_CORE_REDIRECT_TO_CPU,
   	HAL_CORE_FORWARED,
 	HAL_CORE_DROP,
-}hal_core_cmd_t;
+}khal_core_cmd_t;
 
 /* HAL_MODULE_CPU */
-enum hal_cpu_cmd 
+enum khal_cpu_cmd 
 {
     HAL_CPU_NONE,
 	HAL_CPU_MODE,
@@ -246,7 +246,7 @@ enum hal_cpu_cmd
 
 
 /*HAL_MODULE_DOS*/
-enum hal_dos_cmd 
+enum khal_dos_cmd 
 {
     HAL_DOS_CMD_NONE,
 	HAL_DOS_CMD_IP_LAN_DRIP,
@@ -269,13 +269,13 @@ enum hal_dos_cmd
 	HAL_DOS_CMD_ICMPv4_SIZE,
 	HAL_DOS_CMD_ICMPv6_SIZE,
 };
-typedef struct hal_dos_param_s
+typedef struct khal_dos_param_s
 {
 	zpl_uint32 value;
-}hal_dos_param_t;
+}khal_dos_param_t;
 
 /*HAL_MODULE_MAC*/
-enum hal_mac_cmd 
+enum khal_mac_cmd 
 {
     HAL_MAC_CMD_NONE,
 	HAL_MAC_CMD_AGE,
@@ -287,18 +287,18 @@ enum hal_mac_cmd
 	HAL_MAC_CMD_DUMP,
     HAL_MAC_CMD_MAX,
 };
-typedef struct hal_mac_param_s
+typedef struct khal_mac_param_s
 {
 	vlan_t vlan;
 	zpl_uint32 value;
 	mac_t mac[NSM_MAC_MAX];
 	zpl_uint32 macnum;
-	hal_mac_cache_t *mactbl;
-}hal_mac_param_t;
+	khal_mac_cache_t *mactbl;
+}khal_mac_param_t;
 
 
 /*HAL_MODULE_MIRROR*/
-enum hal_mirror_cmd 
+enum khal_mirror_cmd 
 {
     HAL_MIRROR_CMD_NONE,
 	HAL_MIRROR_CMD_DST_PORT,
@@ -306,13 +306,13 @@ enum hal_mirror_cmd
 	HAL_MIRROR_CMD_SRC_MAC,
     HAL_MIRROR_CMD_MAX,
 };
-typedef struct hal_mirror_param_s
+typedef struct khal_mirror_param_s
 {
 	zpl_uint32 value;
 	zpl_uint8 dir;
 	zpl_uint8 filter;
 	mac_t mac[NSM_MAC_MAX];
-}hal_mirror_param_t;
+}khal_mirror_param_t;
 
 typedef enum
 {
@@ -331,7 +331,7 @@ typedef enum mirror_filter_e {
 
 
 /*HAL_MODULE_QINQ*/
-enum hal_qinq_cmd 
+enum khal_qinq_cmd 
 {
     HAL_QINQ_CMD_NONE,
 	HAL_QINQ_CMD_ENABLE,
@@ -339,14 +339,14 @@ enum hal_qinq_cmd
 	HAL_QINQ_CMD_IF_ENABLE,
     HAL_QINQ_CMD_MAX,
 };
-typedef struct hal_qinq_param_s
+typedef struct khal_qinq_param_s
 {
 	zpl_uint32 value;
-}hal_qinq_param_t;
+}khal_qinq_param_t;
 
 
 /*HAL_MODULE_VLAN*/
-enum hal_vlan_cmd 
+enum khal_vlan_cmd 
 {
     HAL_VLAN_NONE,
 	HAL_VLAN,
@@ -363,17 +363,17 @@ enum hal_vlan_cmd
     HAL_VLAN_TEST,
     HAL_VLAN_MAX,
 };
-typedef struct hal_vlan_param_s
+typedef struct khal_vlan_param_s
 {
 	zpl_bool enable;
 	vlan_t vlan;
 	vlan_t vlan_end;
     zpl_vlan_bitmap_t vlanbitmap;
-}hal_vlan_param_t;
+}khal_vlan_param_t;
 
 
 /*HAL_MODULE_QOS*/
-enum hal_qos_cmd 
+enum khal_qos_cmd 
 {
     HAL_QOS_NONE,
 	HAL_QOS_EN,
@@ -407,7 +407,7 @@ enum hal_qos_cmd
 	HAL_QOS_PORT_OUTRATELIMIT,
 };
 
-typedef struct hal_qos_param_s
+typedef struct khal_qos_param_s
 {
 	zpl_bool enable;
 	zpl_uint32 value;
@@ -420,7 +420,7 @@ typedef struct hal_qos_param_s
 	zpl_uint32 class;
 	zpl_uint32 type;
 	zpl_uint32 weight;
-}hal_qos_param_t;
+}khal_qos_param_t;
 
 typedef enum
 {
@@ -435,7 +435,7 @@ typedef enum
 
 
 /*HAL_MODULE_TRUNK*/
-enum hal_trunk_cmd 
+enum khal_trunk_cmd 
 {
     HAL_TRUNK_CMD_NONE,
 	HAL_TRUNK_CMD_ENABLE,
@@ -445,14 +445,14 @@ enum hal_trunk_cmd
 	HAL_TRUNK_CMD_MODE,
     HAL_TRUNK_CMD_MAX,
 };
-typedef struct hal_trunk_param_s
+typedef struct khal_trunk_param_s
 {
 	zpl_bool enable;
 	zpl_uint32 trunkid;
 	zpl_uint32 mode;
-}hal_trunk_param_t;
+}khal_trunk_param_t;
 
-enum hal_misc_cmd 
+enum khal_misc_cmd 
 {
     HAL_MISC_NONE,
 	HAL_MISC_JUMBO,

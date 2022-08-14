@@ -116,7 +116,7 @@ static int lib_event_read(struct thread *arg)
 			}
 			zlog_warn(MODULE_LIB,
 					"%s: read error on event fd %d, closing: %s", __func__,
-					fd._fd, ipstack_strerror(ipstack_errno));
+					ipstack_fd(fd), ipstack_strerror(ipstack_errno));
             ipstack_close(_lib_event.w_evfd); 
             ipstack_close(_lib_event.r_evfd);        
             lib_event_base_create();  

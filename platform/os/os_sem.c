@@ -8,7 +8,7 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 
-
+#define OS_SEMM_LOG_FILE	RSYSLOGDIR"/mutex.log"
 #ifdef OS_SEM_PROCESS
 #include <sys/ipc.h>
 #include <sys/sem.h>
@@ -206,7 +206,7 @@ static int os_mutex_sem_exit(os_mutex_t * mutex)
 }
 
 
-static int os_mutex_sem_lock(os_mutex_t * mutex, zpl_int32 wait)
+static int os_mutex_sem_lock(os_mutex_t * mutex, zpl_int32 wait_ms)
 {
 	if(!os_local_shm || !os_local_mutex || !mutex)
 		return ERROR;
@@ -214,15 +214,16 @@ static int os_mutex_sem_lock(os_mutex_t * mutex, zpl_int32 wait)
 	{
 		if(mutex->type == OS_MUTEX_TYPE)
 		{
-			if(wait == OS_WAIT_NO)
+			if(wait_ms == OS_WAIT_NO)
 				return pthread_mutex_trylock(&mutex->value.mutex);
-			else if(wait == OS_WAIT_FOREVER)
+			else if(wait_ms == OS_WAIT_FOREVER)
 				return pthread_mutex_lock(&mutex->value.mutex);
 			else
 			{
 				int ret = 0;
 				struct timespec value;
-				value.tv_sec=time(NULL) + wait;
+				value.tv_sec=time(NULL) + (wait_ms/1000);
+				value.tv_nsec=(wait_ms%1000)*10000000;
 				while ((ret = pthread_mutex_timedlock(&mutex->value.mutex, &value)) == -1 && ipstack_errno == EINTR)
 					continue;
 				/* Restart if interrupted by handler */
@@ -235,15 +236,16 @@ static int os_mutex_sem_lock(os_mutex_t * mutex, zpl_int32 wait)
 		}
 		else
 		{
-			if(wait == OS_WAIT_NO)
+			if(wait_ms == OS_WAIT_NO)
 				return sem_trywait(&mutex->value.sem);
-			else if(wait == OS_WAIT_FOREVER)
+			else if(wait_ms == OS_WAIT_FOREVER)
 				return sem_wait(&mutex->value.sem);
 			else
 			{
 				int ret = 0;
 				struct timespec value;
-				value.tv_sec=time(NULL) + wait;
+				value.tv_sec=time(NULL) + (wait_ms/1000);
+				value.tv_nsec=(wait_ms%1000)*10000000;
 				while ((ret = sem_timedwait(&mutex->value.sem, &value)) == -1 && ipstack_errno == EINTR)
 					continue;
 				if(ret == 0)
@@ -287,9 +289,9 @@ int os_mutex_exit(os_mutex_t * mutex)
 	return os_mutex_sem_exit(mutex);
 }
 
-int os_mutex_lock(os_mutex_t * mutex, zpl_int32 wait)
+int os_mutex_lock(os_mutex_t * mutex, zpl_int32 wait_ms)
 {
-	return os_mutex_sem_lock(mutex, wait);
+	return os_mutex_sem_lock(mutex, wait_ms);
 }
 
 int os_mutex_unlock(os_mutex_t * mutex)
@@ -308,9 +310,9 @@ int os_sem_exit(os_sem_t * sem)
 	return os_mutex_sem_exit(sem);
 }
 
-int os_sem_take(os_sem_t * sem, zpl_int32 wait)
+int os_sem_take(os_sem_t * sem, zpl_int32 wait_ms)
 {
-	return os_mutex_sem_lock(sem, wait);
+	return os_mutex_sem_lock(sem, wait_ms);
 }
 
 int os_sem_give(os_sem_t * sem)
@@ -320,13 +322,37 @@ int os_sem_give(os_sem_t * sem)
 
 #else
 
-os_sem_t * os_sem_init(void)
+#define OS_SEM_DEBUG 	0x01
+#define OS_MUTEX_DEBUG 	0x02
+static int _sem_debug = 0;
+
+int os_sem_module_debug(int val)
+{
+	_sem_debug = val;
+	return OK;
+}
+
+static char *os_semmutex_name(char *hdr)
+{
+	static int sem_count = 0;
+	static char nametmp[64];
+	os_memset(nametmp, 0, sizeof(nametmp));
+	os_sprintf(nametmp, "%s-%d", hdr, sem_count++);
+	return nametmp;
+}
+
+os_sem_t * os_sem_name_init(const char *name)
 {
 	os_sem_t *ossem = os_malloc(sizeof(os_sem_t));
 	if(ossem)
 	{
 		if(sem_init(&ossem->sem, 0, 0) == 0)
+		{
+			if(name)
+				ossem->name = strdup(name);
+			ossem->lock = zpl_false;
 			return ossem;
+		}
 		else
 		{
 			os_free(ossem);
@@ -336,32 +362,43 @@ os_sem_t * os_sem_init(void)
 	return NULL;
 }
 
+os_sem_t * os_sem_init(void)
+{
+	os_sem_t * nsem = os_sem_name_init(os_semmutex_name("sem"));
+	return nsem;
+}
+
 int os_sem_give(os_sem_t *ossem)
 {
 	if(ossem)
+	{
+		if(ossem->lock)
+			ossem->lock--;
 		return sem_post(&ossem->sem);
+	}
 	return ERROR;
 }
 
-int os_sem_take(os_sem_t *ossem, zpl_int32 wait)
+int os_sem_take(os_sem_t *ossem, zpl_int32 wait_ms)
 {
 	if(ossem == NULL)
 		return ERROR;
-	if(wait == OS_WAIT_NO)
+	ossem->lock++;	
+	if(wait_ms == OS_WAIT_NO)
 		return sem_trywait(&ossem->sem);
-	else if(wait == OS_WAIT_FOREVER)
+	else if(wait_ms == OS_WAIT_FOREVER)
 		return sem_wait(&ossem->sem);
 	else
 	{
 		int ret = 0;
 		struct timespec value;
-		value.tv_sec=time(NULL) + wait;
+		value.tv_sec=time(NULL) + (wait_ms/1000);
+		value.tv_nsec=(wait_ms%1000)*10000000;
 
-		while ((ret = sem_timedwait(&ossem->sem, &value)) == -1 && ipstack_errno == EINTR)
+		while ((ret = sem_timedwait(&ossem->sem, &value)) == -1 && 
+			(ipstack_errno == EINTR || ipstack_errno == EAGAIN))
 			continue;
-		/* Restart if interrupted by handler */
-		//if(sem_timedwait (&sem->sem, &value)==0)
-		///	return OK;
+
 		if(ret == 0)
 			return OK;
 		else if(ipstack_errno == ETIMEDOUT)
@@ -374,7 +411,13 @@ int os_sem_exit(os_sem_t *ossem)
 {
 	if(ossem)
 	{
+		ossem->lock = zpl_false;
 		sem_destroy(&ossem->sem);
+		if(ossem->name)
+		{
+			os_free(ossem->name);
+			ossem->name = NULL;
+		}
 		os_free(ossem);
 		ossem = NULL;
 		return OK;
@@ -383,15 +426,28 @@ int os_sem_exit(os_sem_t *ossem)
 }
 
 
-os_mutex_t * os_mutex_init(void)
+os_mutex_t * os_mutex_name_init(const char *name)
 {
 	os_mutex_t *osmutex = os_malloc(sizeof(os_mutex_t));
 	if(osmutex)
 	{
-		if(pthread_mutex_init(&osmutex->mutex, NULL) == 0)
+		pthread_mutexattr_t _mutexattr;
+		pthread_mutexattr_init(&_mutexattr);
+		pthread_mutexattr_setpshared(&_mutexattr, PTHREAD_PROCESS_PRIVATE);
+		//PTHREAD_MUTEX_NORMAL 不检测死锁
+		//PTHREAD_MUTEX_RECURSIVE 嵌套锁
+		pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_ERRORCHECK);
+		if(pthread_mutex_init(&osmutex->mutex, &_mutexattr) == 0)
+		{
+			pthread_mutexattr_destroy(&_mutexattr);
+			if(name)
+				osmutex->name = strdup(name);			
+			osmutex->lock = zpl_false;
 			return osmutex;
+		}
 		else
 		{
+			pthread_mutexattr_destroy(&_mutexattr);
 			os_free(osmutex);
 			return NULL;
 		}
@@ -400,28 +456,50 @@ os_mutex_t * os_mutex_init(void)
 }
 
 
+os_mutex_t * os_mutex_init(void)
+{
+	os_mutex_t * osmutex = os_mutex_name_init(os_semmutex_name("mutex"));
+	return osmutex;
+}
+
 int os_mutex_unlock(os_mutex_t *osmutex)
 {
 	if(osmutex)
+	{
+		if(osmutex->lock == zpl_true)
+			osmutex->lock = zpl_false;
+		if(_sem_debug & OS_MUTEX_DEBUG)
+		{
+			os_log(OS_SEMM_LOG_FILE, "unlock mutex '%s'", osmutex->name);
+		}		
 		return pthread_mutex_unlock(&osmutex->mutex);
+	}
 	return ERROR;
 }
 
-int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait)
+int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait_ms)
 {
 	if(osmutex == NULL)
 		return ERROR;
-	if(wait == OS_WAIT_NO)
+	if(osmutex->lock == zpl_false)
+		osmutex->lock = zpl_true;
+	if(_sem_debug & OS_MUTEX_DEBUG)
+	{
+		os_log(OS_SEMM_LOG_FILE, "lock mutex '%s'", osmutex->name);
+	}
+	if(wait_ms == OS_WAIT_NO)
 		return pthread_mutex_trylock(&osmutex->mutex);
-	else if(wait == OS_WAIT_FOREVER)
+	else if(wait_ms == OS_WAIT_FOREVER)
 		return pthread_mutex_lock(&osmutex->mutex);
 	else
 	{
 		int ret = 0;
 		struct timespec value;
-		value.tv_sec=time(NULL) + wait;
+		value.tv_sec=time(NULL) + (wait_ms/1000);
+		value.tv_nsec=(wait_ms%1000)*10000000;
 
-		while ((ret = pthread_mutex_timedlock(&osmutex->mutex, &value)) == -1 && ipstack_errno == EINTR)
+		while ((ret = pthread_mutex_timedlock(&osmutex->mutex, &value)) == -1 && 
+			(ipstack_errno == EINTR || ipstack_errno == EAGAIN))
 			continue;
 		/* Restart if interrupted by handler */
 		//if(sem_timedwait (&sem->sem, &value)==0)
@@ -438,7 +516,13 @@ int os_mutex_exit(os_mutex_t *osmutex)
 {
 	if(osmutex)
 	{
+		osmutex->lock = zpl_false;
 		pthread_mutex_destroy(&osmutex->mutex);
+		if(osmutex->name)
+		{
+			os_free(osmutex->name);
+			osmutex->name = NULL;
+		}
 		os_free(osmutex);
 		osmutex = NULL;
 		return OK;
@@ -447,13 +531,18 @@ int os_mutex_exit(os_mutex_t *osmutex)
 }
 
 
-os_spin_t * os_spin_init(void)
+os_spin_t * os_spin_name_init(const char *name)
 {
 	os_spin_t *spin = os_malloc(sizeof(os_spin_t));
 	if(spin)
 	{
-		if(pthread_spin_init(&spin->lock, 0) == 0)
+		if(pthread_spin_init(&spin->spinlock, 0) == 0)
+		{
+			if(name)
+				spin->name = strdup(name);
+			spin->lock = zpl_false;
 			return spin;
+		}
 		else
 		{
 			os_free(spin);
@@ -463,10 +552,24 @@ os_spin_t * os_spin_init(void)
 	return NULL;
 }
 
+os_spin_t * os_spin_init(void)
+{
+	os_spin_t * spin = os_spin_name_init(os_semmutex_name("spin"));
+	return spin;
+}
+
 int os_spin_unlock(os_spin_t *spin)
 {
 	if(spin)
-		return pthread_spin_unlock(&spin->lock);
+	{
+		if(spin->lock == zpl_true)
+			spin->lock = zpl_false;
+		if(_sem_debug & OS_SPIN_DEBUG)
+		{
+			os_log(OS_SEMM_LOG_FILE, "unlock spin '%s'", spin->name);
+		}			
+		return pthread_spin_unlock(&spin->spinlock);
+	}
 	return ERROR;
 }
 
@@ -474,14 +577,26 @@ int os_spin_lock(os_spin_t *spin)
 {
 	if(spin == NULL)
 		return ERROR;
-	return pthread_spin_lock(&spin->lock);
+	if(spin->lock == zpl_false)
+		spin->lock = zpl_true;
+	if(_sem_debug & OS_SPIN_DEBUG)
+	{
+		os_log(OS_SEMM_LOG_FILE, "lock spin '%s'", spin->name);
+	}
+	return pthread_spin_lock(&spin->spinlock);
 }
 
 int os_spin_exit(os_spin_t *spin)
 {
 	if(spin)
 	{
-		pthread_spin_destroy(&spin->lock);
+		spin->lock = zpl_false;
+		pthread_spin_destroy(&spin->spinlock);
+		if(spin->name)
+		{
+			os_free(spin->name);
+			spin->name = NULL;
+		}
 		os_free(spin);
 		spin = NULL;
 		return OK;

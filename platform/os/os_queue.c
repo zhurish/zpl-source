@@ -129,14 +129,14 @@ int os_queue_send(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 
 }
 
 
-int os_queue_recv(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 timeout)
+int os_queue_recv(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 timeout_ms)
 {
 	int rlen = 0;
 	os_queue_data_t *queue_add = NULL;
 	if(!queue || ((zpl_uint32)len > queue->size) || !data)
 		return ERROR;
 	if(queue->sem)
-		os_sem_take(queue->sem, timeout);
+		os_sem_take(queue->sem, timeout_ms);
 
 	if(queue->mutex)
 		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);

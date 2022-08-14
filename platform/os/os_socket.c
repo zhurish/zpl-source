@@ -13,9 +13,6 @@
 int os_sock_create(zpl_bool tcp)
 {
 	int rc = 0; //, ret;
-	// struct sockaddr_in serv;
-	// int flag = 1;
-
 	/* socket creation */
 	rc = socket(AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP);
 	if (rc < 0)
@@ -24,12 +21,6 @@ int os_sock_create(zpl_bool tcp)
 		return ERROR;
 	}
 
-	/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
-		{
-			_OS_ERROR( "cannot SO_REUSEADDR socket\n");
-			close(rc);
-			return ERROR;
-		}*/
 	return rc;
 }
 
@@ -57,14 +48,12 @@ int os_sock_bind(int sock, char *ipaddress, zpl_uint16 port)
 
 int os_sock_listen(int sock, zpl_uint32 listennum)
 {
-	// struct sockaddr_in serv;
 	int ret = 0;
 	ret = listen(sock, listennum);
 	if (ret < 0)
 	{
 		_OS_ERROR( "cannot listen(%d) %s \n",sock,strerror(ipstack_errno));
 		return ERROR;
-		;
 	}
 	return OK;
 }
@@ -103,7 +92,6 @@ int os_tcp_sock_state(int sock)
 int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct sockaddr_in serv;
@@ -125,7 +113,6 @@ int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 int os_sock_connect_nonblock(int sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct sockaddr_in serv;
@@ -264,7 +251,7 @@ int os_sock_raw_create(zpl_int style, zpl_uint16 protocol)
 	if ((fd = socket(AF_PACKET, style, htons(protocol))) < 0)
 	{
 		_OS_ERROR( "failed to open raw socket (%s)", strerror(ipstack_errno));
-		return (-1);
+		return (ERROR);
 	}
 	return fd;
 }
@@ -293,7 +280,7 @@ int os_sock_raw_sendto(int fd, zpl_int family, zpl_uint16 protocol, zpl_int ifin
 {
 	struct sockaddr_ll dest_sll;
 
-	int result = -1;
+	int result = ERROR;
 
 	memset(&dest_sll, 0, sizeof(dest_sll));
 
@@ -313,7 +300,7 @@ int os_sock_raw_sendto(int fd, zpl_int family, zpl_uint16 protocol, zpl_int ifin
 int os_unix_sockpair_create(zpl_bool tcp, int *rfd, int *wfd)
 {
 	int fd[2];
-	if (socketpair(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP, fd) == 0)
+	if (socketpair(AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0, fd) == 0)
 	{
 		if (rfd)
 			*rfd = fd[0];
@@ -497,26 +484,26 @@ int os_sock_unix_client_write(int fd, char *name, char *buf, zpl_uint32 len)
 int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout_ms)
 {
 	zpl_int32 num = 0;
+	struct timeval timer_tmp1,timer_tmp2;
 	struct timeval timer_wait = {.tv_sec = 1, .tv_usec = 0};
 	timer_wait.tv_sec = timeout_ms / 1000;
 	timer_wait.tv_usec = (timeout_ms % 1000) * 1000;
+	os_gettime (OS_CLK_REALTIME, &timer_tmp1);
 	while (1)
 	{
 		num = select(maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
 		if (num < 0)
 		{
-			// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 			{
+				os_gettime (OS_CLK_REALTIME, &timer_tmp2);
+				timer_tmp1 = os_timeval_subtract(timer_tmp2, timer_tmp1);
+				timer_wait = os_timeval_subtract(timer_wait, timer_tmp1);
 				fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 				continue;
 			}
-			/*if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
-			{
-				return RES_CLOSE;
-			}*/
 			zlog_err(MODULE_LIB, "===========os_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));
-			return -1;
+			return ERROR;
 		}
 		else if (num == 0)
 		{
@@ -524,7 +511,7 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout
 		}
 		return num;
 	}
-	return -1;
+	return ERROR;
 }
 
 int os_write_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms)
@@ -561,7 +548,6 @@ int os_read_timeout(int fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms
 	ret = os_select_wait(fd + 1, &readfds, NULL, timeout_ms);
 	if (ret == OS_TIMEOUT)
 	{
-		//_OS_WARN("os_select_wait timeout on read\n");
 		return OS_TIMEOUT;
 	}
 	if (ret == ERROR)
@@ -599,8 +585,6 @@ int os_write_iov(int fd, int type, struct iovec *iov, int iovcnt)
 zpl_socket_t ipstack_sock_create(zpl_ipstack stack, zpl_bool tcp)
 {
 	zpl_socket_t rc; //, ret;
-	// struct sockaddr_in serv;
-	// int flag = 1;
 
 	/* socket creation */
 	rc = ipstack_socket(stack, AF_INET, tcp ? SOCK_STREAM : SOCK_DGRAM, tcp ? IPPROTO_TCP : IPPROTO_UDP);
@@ -609,13 +593,6 @@ zpl_socket_t ipstack_sock_create(zpl_ipstack stack, zpl_bool tcp)
 		_OS_ERROR( "cannot open ipstack socket\n");
 		return rc;
 	}
-
-	/*	if (setsockopt(rc, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
-		{
-			_OS_ERROR( "cannot SO_REUSEADDR socket\n");
-			close(rc);
-			return ERROR;
-		}*/
 	return rc;
 }
 
@@ -634,7 +611,7 @@ int ipstack_sock_bind(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 	ret = ipstack_bind(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
 	if (ret < 0)
 	{
-		_OS_ERROR( "ipstack sock(%d) cannot bind port number %d(%s) \n",sock._fd, port,
+		_OS_ERROR( "ipstack sock(%d) cannot bind port number %d(%s) \n",ipstack_fd(sock), port,
 				strerror(ipstack_errno));
 		return ERROR;
 		;
@@ -644,12 +621,11 @@ int ipstack_sock_bind(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 
 int ipstack_sock_listen(zpl_socket_t sock, zpl_uint32 listennum)
 {
-	// struct sockaddr_in serv;
 	int ret = 0;
 	ret = ipstack_listen(sock, listennum);
 	if (ret < 0)
 	{
-		_OS_ERROR( "ipstack sock(%d) cannot listen %s \n",sock._fd,
+		_OS_ERROR( "ipstack sock(%d) cannot listen %s \n",ipstack_fd(sock),
 				strerror(ipstack_errno));
 		return ERROR;
 		;
@@ -692,7 +668,6 @@ int ipstack_tcp_sock_state(zpl_socket_t sock)
 int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct ipstack_sockaddr_in serv;
@@ -704,7 +679,7 @@ int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 		ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",sock._fd, ipaddress, port,
+			_OS_ERROR( "ipstack sock(%d) cannot connect to %s:%d(%s) \n",ipstack_fd(sock), ipaddress, port,
 					strerror(ipstack_errno));
 			return ERROR;
 		}
@@ -716,7 +691,6 @@ int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 int ipstack_sock_connect_nonblock(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	// _OS_ERROR("----------%s-----------------host=%s\r\n",__func__,ipaddress);
 	if (ipaddress)
 	{
 		struct ipstack_sockaddr_in serv;
@@ -733,17 +707,17 @@ int ipstack_sock_connect_nonblock(zpl_socket_t sock, char *ipaddress, zpl_uint16
 			socklen_t length = sizeof(sockerror);
 			if (ipstack_errno != EINPROGRESS)
 			{
-				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (sockerror != 0)
 			{
-				_OS_ERROR("ipstack sock(%d) connection failed %d with the error: %d \n",sock._fd, sockerror);
+				_OS_ERROR("ipstack sock(%d) connection failed %d with the error: %d \n",ipstack_fd(sock), sockerror);
 				return ERROR;
 			}
 		}
@@ -773,17 +747,17 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 			// unblock mode --> connect return immediately! ret = -1 & ipstack_errno=EINPROGRESS
 			if (ipstack_errno != EINPROGRESS)
 			{
-				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (sockerror != 0)
 			{
-				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",sock._fd, sockerror);
+				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
 				return ERROR;
 			}
 		}
@@ -791,33 +765,33 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 		{
 			fd_set writefds;
 			FD_ZERO(&writefds);
-			FD_SET(sock._fd, &writefds);
-			ret = ipstack_select_wait(sock._fd + 1, NULL, &writefds, timeout_ms);
+			FD_SET(ipstack_fd(sock), &writefds);
+			ret = ipstack_select_wait(ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
 			// use select to check write event, if the socket is writable, then
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
 			{
-				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",sock._fd, ipaddress);
+				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",ipstack_fd(sock), ipaddress);
 				return OS_TIMEOUT;
 			}
 			if (ret == ERROR)
 			{
-				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(ipstack_errno));
+				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",ipstack_fd(sock), ipaddress, strerror(ipstack_errno));
 				return ERROR;
 			}
-			if (!FD_ISSET(sock._fd, &writefds))
+			if (!FD_ISSET(ipstack_fd(sock), &writefds))
 			{
-				_OS_ERROR("no events on sockfd(%d) found\n",sock._fd);
+				_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (sockerror != 0)
 			{
-				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",sock._fd, sockerror);
+				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
 				return ERROR;
 			}
 		}
@@ -825,33 +799,33 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 		{
 			ipstack_fd_set writefds;
 			IPSTACK_FD_ZERO(&writefds);
-			IPSTACK_FD_SET(sock._fd, &writefds);
-			ret = ipstack_select_wait(sock._fd + 1, NULL, &writefds, timeout_ms);
+			IPSTACK_FD_SET(ipstack_fd(sock), &writefds);
+			ret = ipstack_select_wait(ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
 			// use select to check write event, if the socket is writable, then
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
 			{
-				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",sock._fd, ipaddress);
+				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",ipstack_fd(sock), ipaddress);
 				return OS_TIMEOUT;
 			}
 			if (ret == ERROR)
 			{
-				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",sock._fd, ipaddress, strerror(ipstack_errno));
+				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",ipstack_fd(sock), ipaddress, strerror(ipstack_errno));
 				return ERROR;
 			}
-			if (!IPSTACK_FD_ISSET(sock._fd, &writefds))
+			if (!IPSTACK_FD_ISSET(ipstack_fd(sock), &writefds))
 			{
-				_OS_ERROR("no events on sockfd(%d) found\n",sock._fd);
+				_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
 			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",sock._fd);
+				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
 				return ERROR;
 			}
 			if (sockerror != 0)
 			{
-				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",sock._fd, sockerror);
+				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
 				return ERROR;
 			}
 		}
@@ -874,7 +848,7 @@ int ipstack_sock_client_write(zpl_socket_t fd, char *ipaddress, zpl_uint16 port,
 		ret = ipstack_sendto(fd, buf, len, 0, (struct ipstack_sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			_OS_ERROR( "ipstack sock(%d) cannot sendto to %s:%d(%s) \n",fd._fd, ipaddress, port,
+			_OS_ERROR( "ipstack sock(%d) cannot sendto to %s:%d(%s) \n",ipstack_fd(fd), ipaddress, port,
 					strerror(ipstack_errno));
 			return ERROR;
 			;
@@ -890,7 +864,7 @@ zpl_socket_t ipstack_sock_raw_create(zpl_ipstack stack, zpl_int style, zpl_uint1
 	fd = ipstack_socket(stack, AF_PACKET, style, htons(protocol));
 	if (ipstack_invalid(fd))
 	{
-		_OS_ERROR( "ipstack sock failed to open raw socket(%d) (%s)",fd._fd, strerror(ipstack_errno));
+		_OS_ERROR( "ipstack sock failed to open raw socket(%d) (%s)",ipstack_fd(fd), strerror(ipstack_errno));
 		return (fd);
 	}
 	return fd;
@@ -920,7 +894,7 @@ int ipstack_sock_raw_sendto(zpl_socket_t fd, zpl_int family, zpl_uint16 protocol
 {
 	struct ipstack_sockaddr_ll dest_sll;
 
-	int result = -1;
+	int result = ERROR;
 
 	memset(&dest_sll, 0, sizeof(dest_sll));
 
@@ -1001,7 +975,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 		ret = ipstack_listen(sock, 5);
 		if (ret < 0)
 		{
-			_OS_ERROR( "ipstack sock listen(fd %d) failed: %s", sock._fd, strerror(ipstack_errno));
+			_OS_ERROR( "ipstack sock listen(fd %d) failed: %s", ipstack_fd(sock), strerror(ipstack_errno));
 			ipstack_close(sock); /* Avoid sd leak. */
 			return sock;
 		}
@@ -1063,7 +1037,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	sock = ipstack_socket(stack, AF_UNIX, tcp ? SOCK_STREAM : SOCK_DGRAM, 0 /*tcp ? IPPROTO_TCP:IPPROTO_UDP*/);
 	if (ipstack_invalid(sock))
 	{
-		_OS_ERROR( "ipstack sock(%d) (%s): socket = %s\n",sock._fd, path, strerror(ipstack_errno));
+		_OS_ERROR( "ipstack sock(%d) (%s): socket = %s\n",ipstack_fd(sock), path, strerror(ipstack_errno));
 		return sock;
 	}
 
@@ -1079,7 +1053,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&addr, len);
 	if (ret < 0)
 	{
-		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n",sock._fd, path,
+		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n",ipstack_fd(sock), path,
 				strerror(ipstack_errno));
 		ipstack_close(sock);
 		return sock;
@@ -1114,7 +1088,7 @@ int ipstack_sock_unix_client_write(zpl_socket_t fd, char *name, char *buf, zpl_u
 		ret = ipstack_sendto(fd, buf, len, 0, (struct sockaddr *)&serv, sizeof(serv));
 		if (ret < 0)
 		{
-			_OS_ERROR( "ipstack sock cannot(%d) sendto to %s(%s) \n",fd._fd, path,
+			_OS_ERROR( "ipstack sock cannot(%d) sendto to %s(%s) \n",ipstack_fd(fd), path,
 					strerror(ipstack_errno));
 			return ERROR;
 		}
@@ -1128,26 +1102,25 @@ int ipstack_sock_unix_client_write(zpl_socket_t fd, char *name, char *buf, zpl_u
 int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms)
 {
 	zpl_int32 num = 0;
+	struct ipstack_timeval timer_tmp1,timer_tmp2;
 	struct ipstack_timeval timer_wait = {.tv_sec = 1, .tv_usec = 0};
 	timer_wait.tv_sec = timeout_ms / 1000;
 	timer_wait.tv_usec = (timeout_ms % 1000) * 1000;
+	os_gettime (OS_CLK_REALTIME, &timer_tmp1);
 	while (1)
 	{
 		num = ipstack_select(IPCOM_STACK, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
 		if (num < 0)
 		{
-			// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
 			{
-				// fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
+				os_gettime (OS_CLK_REALTIME, &timer_tmp2);
+				timer_tmp1 = os_timeval_subtract(timer_tmp2, timer_tmp1);
+				timer_wait = os_timeval_subtract(timer_wait, timer_tmp1);
 				continue;
 			}
-			/*			if (ipstack_errno == EPIPE || ipstack_errno == EBADF || ipstack_errno == EIO ECONNRESET ECONNABORTED ENETRESET ECONNREFUSED)
-						{
-							return RES_CLOSE;
-						}*/
 			zlog_err(MODULE_LIB, "===========ipstack_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));			
-			return -1;
+			return ERROR;
 		}
 		else if (num == 0)
 		{
@@ -1155,7 +1128,7 @@ int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdse
 		}
 		return num;
 	}
-	return -1;
+	return ERROR;
 }
 
 int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uint32 timeout_ms)
@@ -1165,21 +1138,21 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 	{
 		fd_set writefds;
 		FD_ZERO(&writefds);
-		FD_SET(fd._fd, &writefds);
-		ret = os_select_wait(fd._fd + 1, NULL, &writefds, timeout_ms);
+		FD_SET(ipstack_fd(fd), &writefds);
+		ret = os_select_wait(ipstack_fd(fd) + 1, NULL, &writefds, timeout_ms);
 		if (ret == OS_TIMEOUT)
 		{
-			_OS_ERROR("os_select_wait timeout on write(%d)\n",fd._fd);
+			_OS_ERROR("os_select_wait timeout on write(%d)\n",ipstack_fd(fd));
 			return OS_TIMEOUT;
 		}
 		if (ret == ERROR)
 		{
-			_OS_ERROR("os_select_wait to write(%d) error %s\n", fd._fd,strerror(ipstack_errno));
+			_OS_ERROR("os_select_wait to write(%d) error %s\n", ipstack_fd(fd),strerror(ipstack_errno));
 			return ERROR;
 		}
-		if (!FD_ISSET(fd._fd, &writefds))
+		if (!FD_ISSET(ipstack_fd(fd), &writefds))
 		{
-			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(fd));
 			return ERROR;
 		}
 	}
@@ -1187,21 +1160,21 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 	{
 		ipstack_fd_set writefds;
 		IPSTACK_FD_ZERO(&writefds);
-		IPSTACK_FD_SET(fd._fd, &writefds);
-		ret = ipstack_select_wait(fd._fd + 1, NULL, &writefds, timeout_ms);
+		IPSTACK_FD_SET(ipstack_fd(fd), &writefds);
+		ret = ipstack_select_wait(ipstack_fd(fd) + 1, NULL, &writefds, timeout_ms);
 		if (ret == OS_TIMEOUT)
 		{
-			_OS_ERROR("ipstack_select_wait timeout on write(%d)\n",fd._fd);
+			_OS_ERROR("ipstack_select_wait timeout on write(%d)\n",ipstack_fd(fd));
 			return OS_TIMEOUT;
 		}
 		if (ret == ERROR)
 		{
-			_OS_ERROR("ipstack_select_wait write(%d) error %s\n",fd._fd, strerror(ipstack_errno));
+			_OS_ERROR("ipstack_select_wait write(%d) error %s\n",ipstack_fd(fd), strerror(ipstack_errno));
 			return ERROR;
 		}
-		if (!IPSTACK_FD_ISSET(fd._fd, &writefds))
+		if (!IPSTACK_FD_ISSET(ipstack_fd(fd), &writefds))
 		{
-			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(fd));
 			return ERROR;
 		}
 	}
@@ -1215,21 +1188,20 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 	{
 		fd_set readfds;
 		FD_ZERO(&readfds);
-		FD_SET(fd._fd, &readfds);
-		ret = os_select_wait(fd._fd + 1, &readfds, NULL, timeout_ms);
+		FD_SET(ipstack_fd(fd), &readfds);
+		ret = os_select_wait(ipstack_fd(fd) + 1, &readfds, NULL, timeout_ms);
 		if (ret == OS_TIMEOUT)
 		{
-			//_OS_ERROR("os_select_wait timeout on read\n");
 			return OS_TIMEOUT;
 		}
 		if (ret == ERROR)
 		{
-			_OS_ERROR("os_select_wait read(%d) error %s\n",fd._fd, strerror(ipstack_errno));
+			_OS_ERROR("os_select_wait read(%d) error %s\n",ipstack_fd(fd), strerror(ipstack_errno));
 			return ERROR;
 		}
-		if (!FD_ISSET(fd._fd, &readfds))
+		if (!FD_ISSET(ipstack_fd(fd), &readfds))
 		{
-			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(fd));
 			return ERROR;
 		}
 	}
@@ -1237,21 +1209,20 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 	{
 		ipstack_fd_set readfds;
 		IPSTACK_FD_ZERO(&readfds);
-		IPSTACK_FD_SET(fd._fd, &readfds);
-		ret = ipstack_select_wait(fd._fd + 1, &readfds, NULL, timeout_ms);
+		IPSTACK_FD_SET(ipstack_fd(fd), &readfds);
+		ret = ipstack_select_wait(ipstack_fd(fd) + 1, &readfds, NULL, timeout_ms);
 		if (ret == OS_TIMEOUT)
 		{
-			//_OS_ERROR("os_select_wait timeout on read\n");
 			return OS_TIMEOUT;
 		}
 		if (ret == ERROR)
 		{
-			_OS_ERROR("ipstack_select_wait read(%d) error %s\n",fd._fd, strerror(ipstack_errno));
+			_OS_ERROR("ipstack_select_wait read(%d) error %s\n",ipstack_fd(fd), strerror(ipstack_errno));
 			return ERROR;
 		}
-		if (!IPSTACK_FD_ISSET(fd._fd, &readfds))
+		if (!IPSTACK_FD_ISSET(ipstack_fd(fd), &readfds))
 		{
-			_OS_ERROR("no events on sockfd(%d) found\n",fd._fd);
+			_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(fd));
 			return ERROR;
 		}
 	}

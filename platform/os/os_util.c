@@ -85,13 +85,13 @@ int os_set_nonblocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-nonblocking: %s\r\n", fd,
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d os-get-nonblocking: %s\r\n", fd,
 				strerror(ipstack_errno));
 		return -1;
 	}
 	if (fcntl(fd, F_SETFL, (flags | O_NONBLOCK)) < 0)
 	{
-		fprintf(stdout, "fcntl failed setting fd %d set-nonblocking: %s\r\n", fd,
+		fprintf(stdout, "fcntl failed setting fd %d os-set-nonblocking: %s\r\n", fd,
 				strerror(ipstack_errno));
 		return -1;
 	}
@@ -112,14 +112,14 @@ int os_set_blocking(int fd)
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
 	{
-		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d set-blocking: %s\r\n", fd,
+		fprintf(stdout, "fcntl(F_GETFL) failed for fd %d os-set-blocking: %s\r\n", fd,
 				strerror(ipstack_errno));
 		return -1;
 	}
 	flags &= ~O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, (flags)) < 0)
 	{
-		fprintf(stdout, "fcntl failed setting fd %d non-blocking: %s\r\n", fd,
+		fprintf(stdout, "fcntl failed setting fd %d os-set-nonblocking: %s\r\n", fd,
 				strerror(ipstack_errno));
 		return -1;
 	}
@@ -159,34 +159,39 @@ void os_log(zpl_char *file, const zpl_char *format, ...)
 
 void os_vslog(zpl_char *herd, zpl_char *file, int line, const zpl_char *format, ...)
 {
+	int len = 0;
+	char buftmp[2048];
 	va_list args;
+	memset(buftmp, 0, sizeof(buftmp));
 	va_start(args, format);
 	if(herd && strstr(herd,"ERROR"))
 	{
 		if(herd)
-			fprintf(stderr, "%s", herd);
+			len = sprintf(buftmp, "%s", herd);
 		if(file)
 		{
-			fprintf(stderr, "(%s:%d)", file, line);
+			len += sprintf(buftmp + len, "(%s:%d)", file, line);
 		}
-		fprintf(stderr, "(%s)", os_task_self_name_alisa());
-		vfprintf(stderr, format, args);
+		len += sprintf(buftmp + len, "(%s)", os_task_self_name_alisa());
+		len += vsprintf(buftmp + len, format, args);
 		va_end(args);
-		fprintf(stderr, "\n");
+
+		fprintf(stderr, "%s\r\n",buftmp);
 		fflush(stderr);
 	}
 	else
 	{
 		if(herd)
-			fprintf(stdout, "%s", herd);
+			len += sprintf(buftmp + len, "%s", herd);
 		if(file)
 		{
-			fprintf(stdout, "(%s:%d)", file, line);
+			len += sprintf(buftmp + len, "(%s:%d)", file, line);
 		}
-		fprintf(stdout, "(%s)", os_task_self_name_alisa());
-		vfprintf(stdout, format, args);
+		len += sprintf(buftmp + len, "(%s)", os_task_self_name_alisa());
+		len += vsprintf(buftmp + len, format, args);
 		va_end(args);
-		fprintf(stdout, "\n");
+
+		fprintf(stdout, "%s\r\n",buftmp);
 		fflush(stdout);
 	}
 }

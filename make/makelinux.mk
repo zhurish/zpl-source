@@ -163,7 +163,7 @@ ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra \
 		
 
 ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args \
-			  -Werror=unreachable-code \
+			  -Werror=unreachable-code -Werror=chkp \
 			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type \
 			  -Werror=parentheses -Werror=char-subscripts \
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \

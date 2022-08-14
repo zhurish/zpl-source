@@ -267,9 +267,9 @@ send_next:
 
 check_fd_again: /* Wait for ICMP reply */
 			IPSTACK_FD_ZERO(&readFd);
-			IPSTACK_FD_SET(pPS->tracerouteFd._fd, &readFd);
-			IPSTACK_FD_SET(vty->fd._fd, &readFd);
-			sel = ipstack_select(IPCOM_STACK, max(pPS->tracerouteFd._fd, vty->fd._fd) + 1, &readFd, NULL,
+			IPSTACK_FD_SET(ipstack_fd(pPS->tracerouteFd), &readFd);
+			IPSTACK_FD_SET(ipstack_fd(vty->fd), &readFd);
+			sel = ipstack_select(IPCOM_STACK, max(ipstack_fd(pPS->tracerouteFd), ipstack_fd(vty->fd)) + 1, &readFd, NULL,
 					NULL, &tracerouteTmo);
 			if (sel == ERROR)
 			{
@@ -292,7 +292,7 @@ check_fd_again: /* Wait for ICMP reply */
 				continue;
 			}
 
-			if (IPSTACK_FD_ISSET(vty->fd._fd, &readFd))
+			if (IPSTACK_FD_ISSET(ipstack_fd(vty->fd), &readFd))
 			{
 #ifndef CONTROL
 #define CONTROL(X)  ((X) - '@')
@@ -305,7 +305,7 @@ check_fd_again: /* Wait for ICMP reply */
 				else
 					vty_out(vty, "%s", VTY_NEWLINE);
 			}
-			if (!IPSTACK_FD_ISSET(pPS->tracerouteFd._fd, &readFd))
+			if (!IPSTACK_FD_ISSET(ipstack_fd(pPS->tracerouteFd), &readFd))
 				goto check_fd_again;
 
 			/* the fd is ready - FD_ISSET isn't needed */

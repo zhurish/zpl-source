@@ -20,8 +20,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _QUAGGA_PLIST_H
-#define _QUAGGA_PLIST_H
+#ifndef __LIB_PLIST_H
+#define __LIB_PLIST_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,4 +66,4 @@ extern int prefix_bgp_show_prefix_list (struct vty *, afi_t, zpl_char *);
 }
 #endif
 
-#endif /* _QUAGGA_PLIST_H */
+#endif /* __LIB_PLIST_H */

@@ -938,7 +938,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 			{
 				zlog_debug(MODULE_DHCP,
 						"udhcpc_state_mode_change DHCP_RAW_MODE open raw socket=%d\r\n",
-						ifter->sock._fd);
+						ipstack_fd(ifter->sock));
 				if (ifter->r_thread == NULL && !ipstack_invalid(ifter->sock))
 					ifter->r_thread = eloop_add_read(
 							dhcp_global_config.eloop_master, udhcpc_raw_read_thread,
@@ -952,7 +952,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 		{
 			zlog_debug(MODULE_DHCP,
 					"udhcpc_state_mode_change DHCP_UDP_MODE close raw socket=%d\r\n",
-					ifter->sock._fd);
+					ipstack_fd(ifter->sock));
 			if (DHCPC_DEBUG_ISON(STATE))
 			{
 				zlog_debug(MODULE_DHCP, "DHCP Client change to UDP MODE");
@@ -975,7 +975,7 @@ static int udhcpc_state_mode_change(client_interface_t * ifter, int mode)
 
 		zlog_debug(MODULE_DHCP,
 				"udhcpc_state_mode_change DHCP_UDP_MODE open udp socket=%d\r\n",
-				ifter->udp_sock._fd);
+				ipstack_fd(ifter->udp_sock));
 
 		if (ifter->r_thread == NULL && !ipstack_invalid(ifter->udp_sock))
 			ifter->r_thread = eloop_add_read(dhcp_global_config.eloop_master,

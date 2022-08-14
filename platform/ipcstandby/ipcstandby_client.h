@@ -18,10 +18,6 @@ struct ipcstandby_client
   /* Socket to ipcstandby daemon. */
   zpl_socket_t sock;
 
-  /* Flag of communication to ipcstandby is enabled or not.  Default is on.
-     This flag is disabled by `no router ipcstandby' statement. */
-  zpl_bool enable;
-
   /* Connection failure count. */
   zpl_uint32 fail;
 
@@ -56,7 +52,6 @@ struct ipcstandby_client
   zpl_uint32  pkt_err_cnt;
 };
 
-extern struct ipcstandby_client *ipcstandby_client;
 
 
 /* Prototypes of ipcstandby client service functions. */

@@ -30,21 +30,24 @@ struct if_name_mgt if_name_mgt[] =
 	{IF_SERIAL, 		"SERIAL", "serial", 	"serial"},
 	{IF_ETHERNET, 		"ETH", 	"eth", 		"ethernet"},
 	{IF_GIGABT_ETHERNET, "GETH","geth", 	"gigabitethernet"},
+	{IF_XGIGABT_ETHERNET, "XGETH","xgeth", 	"xgigabitethernet"},
 	{IF_LOOPBACK, 		"LOOP", "loopback",		"loopback"},
 	{IF_TUNNEL, 		"TUN", 	"tunnel",		"tunnel"},
 	{IF_VLAN, 			"VLAN", "vlan", 	"vlan"},
 	{IF_LAG, 			"LAG", 	"lag", 		"port-channel"},
 	{IF_WIRELESS, 		"WIRE", 	"wireless", 	"wireless"},
-
 	{IF_BRIGDE, 		"BRIGDE","br-lan", 	"brigde"},
 #ifdef CUSTOM_INTERFACE
 	{IF_WIFI, 			"WIFI",  "wan", 	"wifi"},
 	{IF_MODEM, 			"MODEM", "modem",	"modem"},
 #endif
+	{IF_VXLAN, 			"XVLAN", "xvlan", 	"xvlan"},
+	{IF_E1, 			"E1", 	"e1", 		"e1"},
+	{IF_EPON, 			"EPON", 	"epon", 	"epon"},
+	{IF_GPON, 			"GEPON","gpon", 	"gpon"},
 	{IF_MAX, 			"NONE",  "NONE", 	"NONE"},
 };
-
-
+ 
 static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *slot, zpl_uint32 *port, zpl_uint32 *id, zpl_uint32 *rend);
 static const char * if_ifname_make_by_ifindex(zpl_bool abstract, ifindex_t ifindex);
 
@@ -143,10 +146,14 @@ static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 	if( type == IF_SERIAL
 			|| type == IF_ETHERNET
 			|| type == IF_GIGABT_ETHERNET
+			|| type == IF_XGIGABT_ETHERNET
 			|| type == IF_TUNNEL
 			|| type == IF_BRIGDE
 			|| type == IF_WIRELESS
-
+			|| type == IF_VXLAN
+			|| type == IF_E1
+			|| type == IF_EPON
+			|| type == IF_GPON
 #ifdef CUSTOM_INTERFACE
 			|| type == IF_WIFI
 			|| type == IF_MODEM
@@ -161,7 +168,6 @@ static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 		sprintf(buf, "%s%s", ifname, uspv);
 		return buf;
 	}
-
 	zlog_err(MODULE_DEFAULT,"if type ERRPR when make ifname:type=%s uspv=%s",
 	           ifname ? ifname:"null", uspv ? uspv:"null");
 	return NULL;
@@ -179,9 +185,14 @@ ifindex_t if_uspv2ifindex(if_type_t type, zpl_uint32 unit, zpl_uint32 slot, zpl_
 	if( type == IF_SERIAL
 			|| type == IF_ETHERNET
 			|| type == IF_GIGABT_ETHERNET
+			|| type == IF_XGIGABT_ETHERNET
 			|| type == IF_TUNNEL
 			|| type == IF_BRIGDE
 			|| type == IF_WIRELESS
+			|| type == IF_VXLAN
+			|| type == IF_E1
+			|| type == IF_EPON
+			|| type == IF_GPON
 #ifdef CUSTOM_INTERFACE
 			|| type == IF_WIFI
 			|| type == IF_MODEM
@@ -266,9 +277,14 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 	if( type == IF_SERIAL
 			|| type == IF_ETHERNET
 			|| type == IF_GIGABT_ETHERNET
+			|| type == IF_XGIGABT_ETHERNET
 			|| type == IF_TUNNEL
 			|| type == IF_BRIGDE
 			|| type == IF_WIRELESS
+			|| type == IF_VXLAN
+			|| type == IF_E1
+			|| type == IF_EPON
+			|| type == IF_GPON
 #ifdef CUSTOM_INTERFACE
 			|| type == IF_WIFI
 			|| type == IF_MODEM
@@ -287,7 +303,6 @@ ifindex_t if_ifindex_make(const char *ifname, const char *uspv)
 		{
 			id = os_atoi(uspvstring);
 			ifindex = if_uspv2ifindex( type,  unit,  slot,  port,  id);
-			//printf("========================%s========================type=%d-->%d ifindex=0x%08x\r\n", __func__, type, id, ifindex);
 		}
 		return ifindex;
 	}
@@ -314,6 +329,11 @@ static const char * if_ifname_make_by_ifindex(zpl_bool abstract, ifindex_t ifind
 			IF_TYPE_GET(ifindex) == IF_WIFI ||
 			IF_TYPE_GET(ifindex) == IF_MODEM ||
 #endif
+			IF_TYPE_GET(ifindex) == IF_XGIGABT_ETHERNET ||
+			IF_TYPE_GET(ifindex) == IF_VXLAN ||
+			IF_TYPE_GET(ifindex) == IF_E1 ||
+			IF_TYPE_GET(ifindex) == IF_EPON ||
+			IF_TYPE_GET(ifindex) == IF_GPON ||
 			IF_TYPE_GET(ifindex) == IF_BRIGDE )
 	{
 		if(IF_ID_GET(ifindex))
@@ -401,6 +421,9 @@ int if_uspv_type_setting(struct interface *ifp)
 #ifdef CUSTOM_INTERFACE
 			|| ifp->if_type == IF_WIFI || ifp->if_type == IF_MODEM
 #endif
+			|| ifp->if_type == IF_XGIGABT_ETHERNET || ifp->if_type == IF_VXLAN
+			|| ifp->if_type == IF_E1 || ifp->if_type == IF_EPON
+			|| ifp->if_type == IF_GPON
 			)
 	{
 		str++;
@@ -523,6 +546,9 @@ int vty_iusp_get (const char *str, zpl_uint32 *uspv, zpl_uint32 *end)
 #ifdef CUSTOM_INTERFACE
 			|| type == IF_WIFI || type == IF_MODEM
 #endif
+			|| type == IF_XGIGABT_ETHERNET || type == IF_VXLAN
+			|| type == IF_E1 || type == IF_EPON
+			|| type == IF_GPON
 			)
 	{
 		if(uspv_str)

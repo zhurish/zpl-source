@@ -666,9 +666,9 @@ extern "C" {
 #define ipstack_fd_set fd_set
 
 #define IPSTACK_IPFD_ZERO(dsetp)         IPSTACK_FD_ZERO(dsetp) 
-#define IPSTACK_IPFD_CLR(IFD, fdsetp)    IPSTACK_FD_CLR(IFD._fd, dsetp) 
-#define IPSTACK_IPFD_SET(IFD, fdsetp)    IPSTACK_FD_SET(IFD._fd, dsetp) 
-#define IPSTACK_IPFD_ISSET(IFD, fdsetp)  IPSTACK_FD_ISSET(IFD._fd, dsetp) 
+#define IPSTACK_IPFD_CLR(IFD, fdsetp)    IPSTACK_FD_CLR(IFD, dsetp) 
+#define IPSTACK_IPFD_SET(IFD, fdsetp)    IPSTACK_FD_SET(IFD, dsetp) 
+#define IPSTACK_IPFD_ISSET(IFD, fdsetp)  IPSTACK_FD_ISSET(IFD, dsetp) 
 
 #define ipstack_ipfd_set ipstack_fd_set
 

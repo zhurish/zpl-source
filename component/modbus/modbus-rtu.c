@@ -588,17 +588,17 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     flags |= O_CLOEXEC;
 #endif
 
-    ctx->s._fd = open(ctx_rtu->device, flags);
-    if (ctx->s._fd == -1) {
+    ipstack_fd(ctx->s) = open(ctx_rtu->device, flags);
+    if (ipstack_invalid(ctx->s)) {
         if (ctx->debug) {
             fprintf(stderr, "ERROR Can't open the device %s (%s)\n",
                     ctx_rtu->device, strerror(ipstack_errno));
         }
         return -1;
     }
-    ctx->s.stack = OS_STACK;
+    ipstack_type(ctx->s) = OS_STACK;
     /* Save */
-    tcgetattr(ctx->s._fd, &ctx_rtu->old_tios);
+    tcgetattr(ipstack_fd(ctx->s), &ctx_rtu->old_tios);
 
     memset(&tios, 0, sizeof(struct termios));
 
@@ -716,7 +716,7 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     if ((cfsetispeed(&tios, speed) < 0) ||
         (cfsetospeed(&tios, speed) < 0)) {
         ipstack_close(ctx->s);
-        //ctx->s._fd = -1;
+        //ipstack_fd(ctx->s) = -1;
         return -1;
     }
 
@@ -888,9 +888,9 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     tios.c_cc[VMIN] = 0;
     tios.c_cc[VTIME] = 0;
 
-    if (tcsetattr(ctx->s._fd, TCSANOW, &tios) < 0) {
+    if (tcsetattr(ipstack_fd(ctx->s), TCSANOW, &tios) < 0) {
         ipstack_close(ctx->s);
-        //ctx->s._fd = -1;
+        //ipstack_fd(ctx->s) = -1;
         return -1;
     }
 #endif
@@ -912,12 +912,12 @@ int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
 
         if (mode == MODBUS_RTU_RS485) {
             // Get
-            if (ioctl(ctx->s._fd, TIOCGRS485, &rs485conf) < 0) {
+            if (ioctl(ipstack_fd(ctx->s), TIOCGRS485, &rs485conf) < 0) {
                 return -1;
             }
             // Set
             rs485conf.flags |= SER_RS485_ENABLED;
-            if (ioctl(ctx->s._fd, TIOCSRS485, &rs485conf) < 0) {
+            if (ioctl(ipstack_fd(ctx->s), TIOCSRS485, &rs485conf) < 0) {
                 return -1;
             }
 
@@ -927,11 +927,11 @@ int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
             /* Turn off RS485 mode only if required */
             if (ctx_rtu->serial_mode == MODBUS_RTU_RS485) {
                 /* The ioctl call is avoided because it can fail on some RS232 ports */
-                if (ioctl(ctx->s._fd, TIOCGRS485, &rs485conf) < 0) {
+                if (ioctl(ipstack_fd(ctx->s), TIOCGRS485, &rs485conf) < 0) {
                     return -1;
                 }
                 rs485conf.flags &= ~SER_RS485_ENABLED;
-                if (ioctl(ctx->s._fd, TIOCSRS485, &rs485conf) < 0) {
+                if (ioctl(ipstack_fd(ctx->s), TIOCSRS485, &rs485conf) < 0) {
                     return -1;
                 }
             }
@@ -1129,10 +1129,10 @@ static void _modbus_rtu_close(modbus_t *ctx)
                 (int)GetLastError());
     }
 #else
-    if (ctx->s._fd != -1) {
-        tcsetattr(ctx->s._fd, TCSANOW, &ctx_rtu->old_tios);
+    if (ipstack_fd(ctx->s) != -1) {
+        tcsetattr(ipstack_fd(ctx->s), TCSANOW, &ctx_rtu->old_tios);
         ipstack_close(ctx->s);
-        //ctx->s._fd = -1;
+        //ipstack_fd(ctx->s) = -1;
     }
 #endif
 }
@@ -1144,7 +1144,7 @@ static int _modbus_rtu_flush(modbus_t *ctx)
     ctx_rtu->w_ser.n_bytes = 0;
     return (PurgeComm(ctx_rtu->w_ser.fd, PURGE_RXCLEAR) == FALSE);
 #else
-    return tcflush(ctx->s._fd, TCIOFLUSH);
+    return tcflush(ipstack_fd(ctx->s), TCIOFLUSH);
 #endif
 }
 
@@ -1164,14 +1164,14 @@ static int _modbus_rtu_select(modbus_t *ctx, fd_set *rset,
         return -1;
     }
 #else
-    while ((s_rc = select(ctx->s._fd+1, rset, NULL, NULL, tv)) == -1) {
+    while ((s_rc = select(ipstack_fd(ctx->s)+1, rset, NULL, NULL, tv)) == -1) {
         if (ipstack_errno == EINTR) {
             if (ctx->debug) {
                 fprintf(stderr, "A non blocked signal was caught\n");
             }
             /* Necessary after an error */
             FD_ZERO(rset);
-            FD_SET(ctx->s._fd, rset);
+            FD_SET(ipstack_fd(ctx->s), rset);
         } else {
             return -1;
         }

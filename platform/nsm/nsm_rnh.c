@@ -159,7 +159,7 @@ nsm_rnh_client_add (struct rnh *rnh, struct zserv *client, vrf_id_t vrf_id)
     {
       zpl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM, "client %s registers rnh %s",
-		 nsm_route_string(client->proto),
+		 zroute_string(client->proto),
 		 nsm_rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
   if (!listnode_lookup(rnh->client_list, client))
@@ -176,7 +176,7 @@ nsm_rnh_client_remove (struct rnh *rnh, struct zserv *client)
     {
       zpl_char buf[INET6_ADDRSTRLEN];
       zlog_debug(MODULE_NSM, "client %s unregisters rnh %s",
-		 nsm_route_string(client->proto),
+		 zroute_string(client->proto),
 		 nsm_rnh_str(rnh, buf, INET6_ADDRSTRLEN));
     }
   listnode_delete(rnh->client_list, client);
@@ -298,7 +298,7 @@ nsm_rnh_dispatch_table (vrf_id_t vrfid, zpl_family_t family, struct zserv *clien
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	  zlog_debug(MODULE_NSM, "rnh %s - sending nexthop %s event to client %s", bufn,
 		     rnh->state ? "reachable" : "unreachable",
-		     nsm_route_string(client->proto));
+		     zroute_string(client->proto));
 	}
       send_client(rnh, client, vrfid);
     }
@@ -348,7 +348,7 @@ nsm_rnh_client_cleanup (vrf_id_t vrfid, zpl_family_t family, struct zserv *clien
 	  zpl_char bufn[INET6_ADDRSTRLEN];
 	  prefix2str(&nrn->p, bufn, INET6_ADDRSTRLEN);
 	  zlog_debug(MODULE_NSM, "rnh %s - cleaning state for client %s", bufn,
-		     nsm_route_string(client->proto));
+		     zroute_string(client->proto));
 	}
       nsm_rnh_client_remove(rnh, client);
     }
@@ -388,7 +388,7 @@ rib_copy_nexthop (struct rib *state, struct nexthop *nh)
   nexthop->type = nh->type;
   nexthop->ifindex = nh->ifindex;
   if (nh->ifname)
-    nexthop->ifname = XSTRDUP(0, nh->ifname);
+    nexthop->ifname = XSTRDUP(MTYPE_IF_NAME, nh->ifname);
   memcpy(&(nexthop->gate), &(nh->gate), sizeof(union g_addr));
   memcpy(&(nexthop->src), &(nh->src), sizeof(union g_addr));
 
@@ -617,7 +617,7 @@ print_rnh (struct route_node *rn, struct vty *vty)
   if (rnh->state)
     {
       vty_out(vty, " resolved via %s%s",
-	      nsm_route_string(rnh->state->type), VTY_NEWLINE);
+	      zroute_string(rnh->state->type), VTY_NEWLINE);
       for (nexthop = rnh->state->nexthop; nexthop; nexthop = nexthop->next)
 	print_nh(nexthop, vty);
     }
@@ -628,6 +628,6 @@ print_rnh (struct route_node *rn, struct vty *vty)
 
   vty_out(vty, " Client list:");
   for (ALL_LIST_ELEMENTS_RO(rnh->client_list, node, client))
-    vty_out(vty, " %s", nsm_route_string(client->proto));
+    vty_out(vty, " %s", zroute_string(client->proto));
   vty_out(vty, "%s", VTY_NEWLINE);
 }

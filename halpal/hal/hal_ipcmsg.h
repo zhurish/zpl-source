@@ -19,13 +19,13 @@ extern "C"
 #define HAL_LEAVE_FUNC() 
 //zlog_debug(MODULE_HAL, "Leave %s line %d", __func__, __LINE__)
 
-
-enum hal_ipcmsg_type
+enum hal_ipctype_e
 {
-    HAL_IPCMSG_NONE,
-    HAL_IPCMSG_EVENT,
-    HAL_IPCMSG_CMD,
+    HAL_IPCTYPE_NONE,
+    HAL_IPCTYPE_EVENT,
+    HAL_IPCTYPE_CMD,
 };
+
 
 #pragma pack(1)
 struct hal_ipcmsg_header
@@ -144,6 +144,9 @@ struct hal_ipcmsg
     zpl_uint16 getp;
     zpl_uint16 setp;
 };
+
+#define HAP_IPCMSG_PNT(n)   ((n)->buf + (n)->getp)
+
 
 extern int hal_ipcmsg_put(struct hal_ipcmsg *ipcmsg, void *buf, int len);
 extern int hal_ipcmsg_putc(struct hal_ipcmsg *ipcmsg, zpl_uint8);

@@ -366,8 +366,8 @@ int zpl_vidhal_vpss_channel_update_fd(zpl_video_vpss_channel_t *vpss)
 #ifdef ZPL_HISIMPP_MODULE
     if (vpss->vpss_channel >= 0)
     {
-        vpss->vpssfd.stack = OS_STACK;
-        vpss->vpssfd._fd = HI_MPI_VPSS_GetChnFd(vpss->vpssgrp->vpss_group, vpss->vpss_channel);
+        ipstack_type(vpss->vpssfd) = OS_STACK;
+        ipstack_fd(vpss->vpssfd) = HI_MPI_VPSS_GetChnFd(vpss->vpssgrp->vpss_group, vpss->vpss_channel);
 		if(ZPL_MEDIA_DEBUG(VPSS, EVENT) && ZPL_MEDIA_DEBUG(VPSS, DETAIL))
 			zpl_media_debugmsg_debug(" video VPSS channel %d/%d fd %d\n", vpss->vpssgrp->vpss_group, vpss->vpss_channel, vpss->vpssfd);
         return HI_SUCCESS;

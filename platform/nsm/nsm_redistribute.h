@@ -38,11 +38,14 @@ extern void nsm_redistribute_default_add (zpl_uint16, struct zserv *, zpl_size_t
 extern void nsm_redistribute_default_delete (zpl_uint16, struct zserv *, zpl_size_t,
     vrf_id_t);
 
+
+
 extern void nsm_redistribute_route_add (struct prefix *, struct rib *new, struct rib *old);
 extern void nsm_redistribute_route_delete (struct prefix *, struct rib *);
 
 extern void nsm_redistribute_interface_updown (struct interface *, zpl_bool updown);
 
+extern void nsm_redistribute_interface_vrfbind (struct interface *, vrf_id_t vrfid, zpl_bool bind);
 
 extern void nsm_redistribute_interface_create (struct interface *);
 extern void nsm_redistribute_interface_destroy (struct interface *);

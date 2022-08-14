@@ -2,9 +2,17 @@ include $(ZPL_MAKE_DIR)/makelinux.mk
 
 
 MKBUILD_OUTPUT = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)/sdk/kernel
-KERN_DIR = /home/zhurish/workspace/working/sunxi/linux-5.15.14  
 
-ZPLKCFLAGS=$(ZPLDEFINE) $(ZPLDEBUG)
+KERN_DIR = /home/zhurish/workspace/working/sunxi/linux-5.15.14 
+
+ifeq ($(ZPL_ARCH_X86),true)
+KERN_DIR = /home/zhurish/workspace/working/sunxi/centos/linux-5.15.14 
+endif
+ifeq ($(ZPL_ARCH_X86_64),true)
+KERN_DIR = /usr/src/kernels/4.18.0-348.7.1.el8_5.x86_64 
+endif
+
+ZPLKCFLAGS=$(ZPLDEFINE) $(ZPLDEBUG) -Wno-error=incompatible-pointer-types
 MODULEDIR = product
 
 KO_DIR = $(ZPL_INSTALL_KO_DIR)
@@ -22,6 +30,8 @@ endif
 
 LINUX_MDIODEV_NAME := linux-mdio-dev
 
+LINUX_ETHDEV_NAME := linux-eth-dev
+
 # obj file
 MDIO_OBJ += mdiodev.o
 
@@ -30,7 +40,7 @@ KBSP_OBJ += khal_ipccmd.o
 KBSP_OBJ += khal_util.o
 KBSP_OBJ += khal_client.o
 KBSP_OBJ += khal_netlink.o
-KBSP_OBJ += keth_drv.o
+KETH_OBJ += keth_drv.o
 KBSP_OBJ += khal_netpkt.o
 KBSP_OBJ += klog.o
 
@@ -79,7 +89,7 @@ $(LINUX_KBE_NAME)-objs += $(SDK_OBJ)
 endif
 
 $(LINUX_MDIODEV_NAME)-objs += $(MDIO_OBJ)
-
+$(LINUX_ETHDEV_NAME)-objs += $(KETH_OBJ)
 
 EXTRA_CFLAGS += -I$(BASE_ROOT)/include \
 				-I$(BASE_ROOT)/$(MODULEDIR)/bsp/hal \
@@ -93,7 +103,7 @@ endif
 ccflags-y += $(ZPLKCFLAGS) $(EXTRA_CFLAGS)
 obj-m += $(LINUX_KBE_NAME).o  
 obj-m += $(LINUX_MDIODEV_NAME).o 
-
+obj-m += $(LINUX_ETHDEV_NAME).o 
 
 make_prepare:
 	@echo ""
@@ -120,6 +130,7 @@ install:
 	@install -d $(KO_DIR)
 	@install -m 755 $(LINUX_KBE_NAME).ko $(KO_DIR)
 	@install -m 755 $(LINUX_MDIODEV_NAME).ko $(KO_DIR)
+	@install -m 755 $(LINUX_ETHDEV_NAME).ko $(KO_DIR)
 	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd 

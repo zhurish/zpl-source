@@ -31,7 +31,7 @@ extern "C" {
 
 /* For struct interface and struct connected. */
 #include "if.h"
-#include "route_types.h"
+#include "vrf.h"
 /* For input/output buffer to zebra. */
 #define ZCLIENT_MAX_PACKET_SIZ          4096
 
@@ -69,23 +69,26 @@ struct zclient
 
   /* Redistribute information. */
   zpl_uchar redist_default;
-  zpl_uchar redist[ZPL_ROUTE_PROTO_MAX];
+  ip_vrf_bitmap_t redist[ZPL_ROUTE_PROTO_MAX];
 
   /* Redistribute defauilt. */
-  zpl_uchar default_information;
+  ip_vrf_bitmap_t default_information;
 
   /* Pointer to the callback functions. */
-  int (*router_id_update) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*interface_add) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*interface_delete) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*interface_up) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*interface_down) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*interface_address_add) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*interface_address_delete) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*ipv4_route_add) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*ipv4_route_delete) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*ipv6_route_add) (zpl_uint16, struct zclient *, zpl_uint16);
-  int (*ipv6_route_delete) (zpl_uint16, struct zclient *, zpl_uint16);
+  int (*router_id_update) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_add) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_delete) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_up) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_down) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_address_add) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_address_delete) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*ipv4_route_add) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*ipv4_route_delete) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*ipv6_route_add) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*ipv6_route_delete) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*nexthop_update) (zpl_uint16, struct zclient *, uint16_t, vrf_id_t);
+  int (*interface_vrf_bind) (zpl_uint16, struct zclient *, zpl_uint16, vrf_id_t);
+  int (*interface_vrf_unbind) (zpl_uint16, struct zclient *, uint16_t, vrf_id_t);
 };
 
 /* Zebra API message flag. */
@@ -127,7 +130,7 @@ struct zapi_ipv4
   zpl_uchar distance;
 
   zpl_uint32 metric;
-
+  zpl_uint32 mtu;
   zpl_uint32 tag;
 };
 
@@ -143,21 +146,23 @@ extern zpl_socket_t  zclient_socket_connect (struct zclient *);
 extern void zclient_serv_path_set  (zpl_char *path);
 extern const char *const zclient_serv_path_get (void);
 
+extern void zclient_send_requests (struct zclient *, vrf_id_t);
+
 /* Send redistribute command to zebra daemon. Do not update zclient state. */
-extern int zclient_redistribute_send (zpl_uint16 command, struct zclient *, zpl_uint32 type);
+extern int zclient_redistribute_send (zpl_uint16 command, struct zclient *, zpl_uint32 type, vrf_id_t);
 
 /* If state has changed, update state and call zclient_redistribute_send. */
-extern void zclient_redistribute (zpl_uint16 command, struct zclient *, zpl_uint32 type);
+extern void zclient_redistribute (zpl_uint16 command, struct zclient *, zpl_uint32 type, vrf_id_t);
 
 /* If state has changed, update state and send the command to zebra. */
-extern void zclient_redistribute_default (zpl_uint16 command, struct zclient *);
+extern void zclient_redistribute_default (zpl_uint16 command, struct zclient *, vrf_id_t);
 
 /* Send the message in zclient->obuf to the zebra daemon (or enqueue it).
    Returns 0 for success or -1 on an I/O error. */
 extern int zclient_send_message(struct zclient *);
 
 /* create header for command, length to be filled in by user later */
-extern void zclient_create_header (struct stream *, zpl_uint16);
+extern void zclient_create_header (struct stream *, zpl_uint16, vrf_id_t);
 
 extern struct interface *zclient_interface_add_read (struct stream *);
 extern struct interface *zclient_interface_state_read (struct stream *s);
@@ -165,7 +170,7 @@ extern struct connected *zclient_interface_address_read (zpl_uint16, struct stre
 extern void zclient_interface_if_set_value (struct stream *, struct interface *);
 extern void zclient_router_id_update_read (struct stream *s, struct prefix *rid);
 extern int zapi_ipv4_route (zpl_uint16, struct zclient *, struct prefix_ipv4 *, 
-                            struct zapi_ipv4 *);
+                            struct zapi_ipv4 *, vrf_id_t);
 
 #ifdef ZPL_BUILD_IPV6
 /* IPv6 prefix add and delete function prototype. */
@@ -189,12 +194,12 @@ struct zapi_ipv6
   zpl_uchar distance;
 
   zpl_uint32 metric;
-
+  zpl_uint32 mtu;
   zpl_uint32 tag;
 };
 
 extern int zapi_ipv6_route (zpl_uint16 cmd, struct zclient *zclient, 
-                     struct prefix_ipv6 *p, struct zapi_ipv6 *api);
+                     struct prefix_ipv6 *p, struct zapi_ipv6 *api, vrf_id_t);
 #endif /* ZPL_BUILD_IPV6 */
  
 #ifdef __cplusplus

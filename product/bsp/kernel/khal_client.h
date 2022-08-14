@@ -6,7 +6,7 @@ extern "C"
 {
 #endif
 
-#include "bsp_types.h"
+#include "kbsp_types.h"
 #include "khal_ipccmd.h"
 #include "khal_ipcmsg.h"
 #include "khal_util.h"
@@ -17,37 +17,37 @@ extern "C"
 
 #ifdef ZPL_SDK_KERNEL
 
-typedef struct bsp_driver
+typedef struct kbsp_driver
 {
-    zpl_void *hal_client;
+    zpl_void *khal_client;
     //bsp private data
     zpl_phyport_t 	cpu_port;
 	struct sdk_driver_port	phyports[PHY_PORT_MAX];
 	zpl_uint32	mac_cache_max;
 	zpl_uint32	mac_cache_num;
-	hal_mac_cache_t *mac_cache_entry;
+	khal_mac_cache_t *mac_cache_entry;
     void *sdk_driver;
-} bsp_driver_t;
+} kbsp_driver_t;
 #endif
 
 /* Structure for the zebra client. */
-struct hal_client
+struct khal_client
 {
     dev_t dev_num;
 	struct class *class;
 	struct device *dev;
 
-    struct hal_ipcmsg ipcmsg;
-    struct hal_ipcmsg outmsg;
+    struct khal_ipcmsg ipcmsg;
+    struct khal_ipcmsg outmsg;
     zpl_uint32 debug;
 
-    void *bsp_driver;
+    void *kbsp_driver;
 
-    struct hal_netlink *netlink;
+    struct khal_netlink *netlink;
 };
 
 #ifdef ZPL_SDK_KERNEL
-#define BSP_DRIVER(bspdev, bsp)    hal_client *bspdev =  (bsp_driver_t*)(bsp)
+#define BSP_DRIVER(bspdev, bsp)    khal_client *bspdev =  (kbsp_driver_t*)(bsp)
 #else
 #define BSP_DRIVER(bspdev, bsp)
 #endif
@@ -60,13 +60,13 @@ struct hal_client
    */
 
   /* Prototypes of zebra client service functions. */
-  extern struct hal_client *hal_client_create(void *sdk_driver);
-  extern int hal_client_destroy(struct hal_client *hal_client);
-  extern int hal_client_send_return(struct hal_client *hal_client, int ret, char *fmt, ...);
-  extern int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue);
-  extern int hal_client_send_result_msg(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue, 
+extern struct khal_client *khal_client_create(void *sdk_driver);
+extern int khal_client_destroy(struct khal_client *khal_client);
+extern int khal_client_send_return(struct khal_client *khal_client, int ret, char *fmt, ...);
+extern int khal_client_send_result(struct khal_client *khal_client, int ret, struct khal_ipcmsg_result *getvalue);
+extern int khal_client_send_result_msg(struct khal_client *khal_client, int ret, struct khal_ipcmsg_result *getvalue, 
     int subcmd, char *msg, int len);
-
+extern int khal_client_send_report(struct khal_client *khal_client, char *data, int len);
 
 #ifdef __cplusplus
 }

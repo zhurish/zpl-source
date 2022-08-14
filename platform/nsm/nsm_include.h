@@ -18,6 +18,7 @@ extern "C" {
 #ifdef ZPL_NSM_MODULE
 #include "nsm_rib.h"
 #include "nsm_ipvrf.h"
+#include "nsm_event.h"
 #include "router-id.h"
 #include "routemap.h"
 #endif

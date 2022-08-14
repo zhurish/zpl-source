@@ -374,6 +374,8 @@ ZPLPRODS += $(PRODUCT_ROOT)/bsp/hal
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/hal
 ZPL_DEFINE += -DZPL_BSP_MODULE
 
+ZPLPRODS += $(PRODUCT_ROOT)/bsp/kernel
+
 ifeq ($(strip $(ZPL_SDK_MODULE)),true)
 ZPL_DEFINE += -DZPL_SDK_MODULE
 ifeq ($(strip $(ZPL_SDK_NONE)),true) 
@@ -383,7 +385,7 @@ ifeq ($(strip $(ZPL_SDK_USER)),true)
 ZPL_DEFINE += -DZPL_SDK_USER
 ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
 ZPLPRODS += $(PRODUCT_ROOT)/sdk/user
-ZPLPRODS += $(PRODUCT_ROOT)/bsp/kernel
+
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/sdk/user
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)

@@ -142,7 +142,7 @@ extern void list_add_list (struct list *, struct list *);
   } while (0)
 
 /* Deprecated: 20050406 */
-#if !defined(QUAGGA_NO_DEPRECATED_INTERFACES)
+#if !defined(_LIB_NO_DEPRECATED_INTERFACES)
 #warning "Using deprecated libzebra interfaces"
 #define LISTNODE_ADD(L,N) LISTNODE_ATTACH(L,N)
 #define LISTNODE_DELETE(L,N) LISTNODE_DETACH(L,N)
@@ -150,7 +150,7 @@ extern void list_add_list (struct list *, struct list *);
 #define getdata(X) listgetdata(X)
 #define LIST_LOOP(L,V,N) \
   for (ALL_LIST_ELEMENTS_RO (L,N,V))
-#endif /* QUAGGA_NO_DEPRECATED_INTERFACES */
+#endif /* _LIB_NO_DEPRECATED_INTERFACES */
  
 #ifdef __cplusplus
 }

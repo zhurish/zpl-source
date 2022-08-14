@@ -30,6 +30,8 @@ extern "C" {
 #ifdef ZPL_VRF_MODULE
 
 #include "os_list.h"
+
+
 /* The default VRF ID */
 #define VRF_DEFAULT 0
 
@@ -63,6 +65,7 @@ struct ip_vrf
   NODE node;
   /* Identifier, same as the vector index */
   vrf_id_t vrf_id;
+  vrf_id_t  kvrfid;
   /* File descriptor */
   zpl_socket_t fd;
   /* Name */
@@ -114,20 +117,19 @@ extern void *ip_vrf_list (void);
  * VRF bit-map: maintaining flags, one bit per VRF ID
  */
 
-typedef void *              vrf_bitmap_t;
-#define VRF_BITMAP_NULL     NULL
+typedef void *              ip_vrf_bitmap_t;
+#define IP_VRF_BITMAP_NULL     NULL
 
-extern vrf_bitmap_t ip_vrf_bitmap_init (void);
-extern void ip_vrf_bitmap_free (vrf_bitmap_t);
-extern void ip_vrf_bitmap_set (vrf_bitmap_t, vrf_id_t);
-extern void ip_vrf_bitmap_unset (vrf_bitmap_t, vrf_id_t);
-extern zpl_bool ip_vrf_bitmap_check (vrf_bitmap_t, vrf_id_t);
+extern ip_vrf_bitmap_t ip_vrf_bitmap_init (void);
+extern void ip_vrf_bitmap_free (ip_vrf_bitmap_t);
+extern void ip_vrf_bitmap_set (ip_vrf_bitmap_t, vrf_id_t);
+extern void ip_vrf_bitmap_unset (ip_vrf_bitmap_t, vrf_id_t);
+extern zpl_bool ip_vrf_bitmap_check (ip_vrf_bitmap_t, vrf_id_t);
 
 /*
  * VRF initializer/destructor
  */
-/* Please add hooks before calling vrf_init(). */
-//extern void vrf_init (void);
+
 
 extern struct ip_vrf * ip_vrf_create (const char *name);
 extern int ip_vrf_delete (const char *name);

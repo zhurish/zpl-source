@@ -3,6 +3,7 @@
 ###########################################################################
 MODULEDIR = halpal/hal
 ifeq ($(strip $(ZPL_HAL_MODULE)),true)
+OBJS	+= hal_event.o
 OBJS	+= hal_ipcsrv.o
 OBJS	+= hal_ipccmd.o
 OBJS	+= hal_ipcmsg.o

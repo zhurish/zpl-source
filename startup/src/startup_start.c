@@ -17,7 +17,7 @@
 #include "vty_user.h"
 #include "command.h"
 #include "workqueue.h"
-#include "bmgt.h"
+#include "if_utsp.h"
 #include "daemon.h"
 #include "nsm_include.h"
 #include "nsm_main.h"
@@ -34,13 +34,10 @@ struct startup_option startup_option;
 /* SIGHUP handler. */
 static void os_sighup(int signo, void *p)
 {
-#ifdef APP_V9_MODULE
-	//v9_app_module_exit();
-#endif
-	//vty_terminate();
-	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
-	fprintf(stdout, "%s\r\n",__func__);
+	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
+	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
+	vty_terminate();
 	//zlog_notice(MODULE_DEFAULT, "%s: SIGHUP received\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();
@@ -51,26 +48,20 @@ static void os_sighup(int signo, void *p)
 /* SIGINT handler. */
 static void os_sigint(int signo, void *p)
 {
-#ifdef APP_V9_MODULE
-	//v9_app_module_exit();
-#endif
-	vty_terminate();
-	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
-	fprintf(stdout, "%s\r\n",__func__);
+	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
+	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
+	vty_terminate();
 	//zlog_notice(MODULE_DEFAULT, "%s: Terminating on signal\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();
-	//_exit(0);
+	_exit(0);
 }
 
 /* SIGKILL handler. */
 /*
 static void os_sigkill(int signo, void *p)
 {
-#ifdef APP_V9_MODULE
-	//v9_app_module_exit();
-#endif
 	fprintf(stdout, "%s\r\n",__func__);
 	fflush(stdout);
 	vty_terminate();
@@ -80,28 +71,26 @@ static void os_sigkill(int signo, void *p)
 /* SIGUSR1 handler. */
 static void os_sigusr1(int signo, void *p)
 {
-	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
-	fprintf(stdout, "%s\r\n",__func__);
+	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
+	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
 }
 
 /* SIGCHLD handler. */
 static void os_sighld(int signo, void *p)
 {
-	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
-	fprintf(stdout, "%s\r\n",__func__);
-	exit(0);
+	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
+	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
+	fflush(stdout);
+	//exit(0);
 }
 /* SIGTERM handler. */
 static void os_sigterm(int signo, void *p)
 {
-#ifdef APP_V9_MODULE
-	//v9_app_module_exit();
-#endif
-	vty_terminate();
-	os_log(SYSCONFDIR"/signo.log", "%s:%d",__func__, os_task_gettid());
-	fprintf(stdout, "%s\r\n",__func__);
+	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
+	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
+	vty_terminate();
 	//zlog_notice(MODULE_DEFAULT, "%s: Terminating on signal\r\n",__func__);
 	//os_msgq_exit();
 	//os_exit_all_module();

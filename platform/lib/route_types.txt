@@ -42,9 +42,9 @@
 
 ##  type                cname      daemon  C    4  6  short help
 ZPL_ROUTE_PROTO_SYSTEM,     system,    NULL,   'X', 0, 0, "Reserved"
-ZPL_ROUTE_PROTO_KERNEL,     kernel,    zebra,  'K', 1, 1, "kernel route"
-ZPL_ROUTE_PROTO_CONNECT,    connected, zebra,  'C', 1, 1, "connected"
-ZPL_ROUTE_PROTO_STATIC,     static,    zebra,  'S', 1, 1, "static"
+ZPL_ROUTE_PROTO_KERNEL,     kernel,    nsm,  'K', 1, 1, "kernel route"
+ZPL_ROUTE_PROTO_CONNECT,    connected, nsm,  'C', 1, 1, "connected"
+ZPL_ROUTE_PROTO_STATIC,     static,    nsm,  'S', 1, 1, "static"
 ZPL_ROUTE_PROTO_RIP,        rip,       ripd,   'R', 1, 0, "RIP"
 ZPL_ROUTE_PROTO_RIPNG,      ripng,     ripngd, 'R', 0, 1, "RIPng"
 ZPL_ROUTE_PROTO_OSPF,       ospf,      ospfd,  'O', 1, 0, "OSPF"
@@ -74,7 +74,7 @@ ZPL_ROUTE_PROTO_SWITCH,	 switch,	switchd,	's', 0, 0, "switch"
 
 ## help strings
 ZPL_ROUTE_PROTO_SYSTEM, "Reserved route type, for internal use only"
-ZPL_ROUTE_PROTO_KERNEL, "Kernel routes (not installed via the zebra RIB)"
+ZPL_ROUTE_PROTO_KERNEL, "Kernel routes (not installed via the nsm RIB)"
 ZPL_ROUTE_PROTO_CONNECT,"Connected routes (directly attached subnet or host)"
 ZPL_ROUTE_PROTO_STATIC, "Statically configured routes"
 ZPL_ROUTE_PROTO_RIP,    "Routing Information Protocol (RIP)"

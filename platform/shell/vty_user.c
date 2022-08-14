@@ -861,7 +861,7 @@ int vty_user_init(void)
 {
 	struct vty_user * user = NULL;
 	if(_global_host.mutex == NULL)
-		_global_host.mutex = os_mutex_init();
+		_global_host.mutex = os_mutex_name_init("hostmutex");
 	if(_global_host.userlist == NULL)
 		_global_host.userlist = list_new ();
 	user = user_new (VTY_USERNAME_DEFAULT);

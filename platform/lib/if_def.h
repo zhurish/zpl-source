@@ -143,13 +143,12 @@ typedef enum if_type_s
    IF_ETHERNET,
    IF_GIGABT_ETHERNET,
    IF_XGIGABT_ETHERNET,
-   IF_ETHERNET_SUB,
+   //IF_ETHERNET_SUB,     //子接口
    IF_WIRELESS, //wireless interface
    IF_TUNNEL,  //隧道接口
    IF_LAG,     //汇聚接口
    IF_BRIGDE, //brigde interface
    IF_VLAN,    //二层的VLAN接口
-   IF_SUBVLAN, //父接口下的vlan子接口  
    IF_VXLAN,   //VXLAN接口
    IF_E1,
 #ifdef CUSTOM_INTERFACE
@@ -172,6 +171,7 @@ typedef enum if_mode_s
 } if_mode_t;
 
 #define IF_MODE_DEFAULT IF_MODE_ACCESS_L2
+
 #ifdef IF_ENCAPSULATION_ENABLE
 typedef enum if_enca_s
 {

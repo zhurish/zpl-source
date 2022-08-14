@@ -621,7 +621,7 @@ int os_time_init(void)
 	}
 	if(time_mutex == NULL)
 	{
-		time_mutex = os_mutex_init();
+		time_mutex = os_mutex_name_init("timemutex");
 	}
 	time_task_id = os_task_create("timeTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, os_time_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -1090,13 +1090,15 @@ static int os_time_task(void *p)
 	zpl_uint32 interrupt_timestamp = 0;
 #ifdef OS_SIGNAL_SIGWAIT
 	zpl_uint32 signum = 0, err = 0;
-	sigset_t	set;
+#else
+	zpl_uint32 signo_tbl[] = {SIGUSR2};
+	os_task_sigexecute(1, signo_tbl);
 #endif
-	os_sleep(10);
+	os_sleep(5);
 	///host_waitting_loadconfig();
 #ifdef OS_SIGNAL_SIGWAIT
 	zpl_uint32 signo_tbl[] = {SIGUSR2};
-	os_task_sigexecute(1, signo_tbl, &set);
+	os_task_sigexecute(1, signo_tbl);
 	timer_connect(0, NULL);
 #endif
 	while(1)

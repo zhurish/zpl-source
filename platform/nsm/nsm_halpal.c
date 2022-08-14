@@ -320,14 +320,16 @@ int nsm_halpal_interface_vlanpri_set(struct interface *ifp, zpl_uint32 pri)
 int nsm_halpal_create_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_create_vrf(vrf);
+	if(vrf->vrf_id != VRF_DEFAULT)
+		ret = pal_create_vrf(vrf);
 	return ret;
 }
 
 int nsm_halpal_delete_vrf(struct ip_vrf *vrf)
 {
 	int ret = 0;
-	ret = pal_delete_vrf(vrf);
+	if(vrf->vrf_id != VRF_DEFAULT)
+		ret = pal_delete_vrf(vrf);
 	return ret;
 }
 

@@ -188,13 +188,23 @@ typedef enum {
 
 
 
-typedef struct
+struct zpl_socket_s
 {
 	int		_fd;
 	zpl_ipstack stack;    
-}zpl_socket_t;
+};
+
+#define ZPL_SOCKET_T_POINT
+
+#ifdef ZPL_SOCKET_T_POINT
+typedef struct zpl_socket_s * zpl_socket_t;
+#else
+typedef struct zpl_socket_s zpl_socket_t;
+#endif
 
 typedef zpl_socket_t zpl_fd_t;
+
+#define ZPL_SOCK_FD(s)  (s)?(s)->_fd:-1
 
 typedef time_t zpl_time_t;
 typedef void zpl_void;

@@ -11,11 +11,11 @@
 #undef  ZPL_SDK_NONE
 #undef  ZPL_SDK_USER
 #endif
-#include "bsp_types.h"
+#include "kbsp_types.h"
 #include "khal_netlink.h"
 
 
-static struct hal_netlink *klog = NULL;
+static struct khal_netlink *klog = NULL;
 
 
 static const char *sdklog_priority[] = { "emerg", "alert", "crit", "err",
@@ -33,7 +33,7 @@ static struct netlink_kernel_cfg _klog_sock_nkc = {
 
 int klog_init(void)
 {
-	klog = hal_netlink_create("klog", HAL_KLOG_NETLINK_PROTO, 0, &_klog_sock_nkc);
+	klog = khal_netlink_create("klog", HAL_KLOG_NETLINK_PROTO, 0, &_klog_sock_nkc);
 	if (!klog) 
     {
 		zlog_err(MODULE_SDK, "[netlink] create netlink socket error!");
@@ -47,7 +47,7 @@ void klog_exit(void)
 {
   if(klog)
   {
-    hal_netlink_destroy(klog);
+    khal_netlink_destroy(klog);
     klog = NULL;
   }
 }
@@ -88,7 +88,7 @@ void klog_printk(int module, int priority, const char *fmt, ...)
 int klog_dstpid(int pid)
 {
   if(klog)
-    hal_netlink_group_dstpid(klog, 0,  pid);
+    khal_netlink_group_dstpid(klog, 0,  pid);
   return OK;  
 }
 

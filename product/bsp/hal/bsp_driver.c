@@ -311,6 +311,12 @@ int bsp_module_func(bsp_driver_t *bspdriver, bsp_sdk_func init_func, bsp_sdk_fun
 	return OK;
 }
 
+int bsp_driver_report(bsp_driver_t *bspdriver, char *data, int len)
+{
+	if(bspdriver && bspdriver->event_client)
+		return hal_client_send_report(bspdriver->event_client, data, len);
+	return ERROR;	
+}
 
 static int bsp_driver_task(void *p)
 {
@@ -323,19 +329,20 @@ static int bsp_driver_task(void *p)
 
 int bsp_driver_init(bsp_driver_t *bspdriver)
 {
-  struct hal_client *bsp = hal_client_create(MODULE_BSP, zpl_false);
-  if (bsp)
+  struct hal_client *bsp = hal_client_create(MODULE_BSP, HAL_IPCTYPE_CMD);
+  struct hal_client *event_bsp = hal_client_create(MODULE_BSP, HAL_IPCTYPE_EVENT);
+  if (bsp && event_bsp)
   {
-
 	bspdriver->mac_cache_max = ETH_MAC_CACHE_MAX;
 	bspdriver->mac_cache_num = 0;
 	bspdriver->mac_cache_entry = XMALLOC(MTYPE_MAC, sizeof(hal_mac_cache_t)*bspdriver->mac_cache_max);
 	if(bspdriver->mac_cache_entry == NULL)
 	{
 		hal_client_destroy(bsp);
+		hal_client_destroy(event_bsp);
 		return ERROR;
 	}
-
+/*
 	bspdriver->netlink_cfg = bsp_netlink_create(4096, 0);
 	if(bspdriver->netlink_cfg == NULL)
 	{
@@ -344,6 +351,7 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 		bspdriver->mac_cache_max = 0;
 		bspdriver->mac_cache_num = 0;
 		hal_client_destroy(bsp);
+		hal_client_destroy(event_bsp);
 		return ERROR;
 	}
 
@@ -352,12 +360,13 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 		bsp_driver_exit(bspdriver);
 		return ERROR;
 	}
-
+*/
     bsp->debug = 0xffff;
+    event_bsp->master = bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
     bspdriver->hal_client = bsp;
-    bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
-  
+	bspdriver->event_client = event_bsp;
     hal_client_start(bsp);
+	hal_client_start(event_bsp);
 	bsp_driver_start(bspdriver, getpid(), if_nametoindex("eth0"));
     return OK;
   }
@@ -389,6 +398,9 @@ int bsp_driver_exit(bsp_driver_t *bspdriver)
 	}		
 	if(bspdriver->hal_client)
 		hal_client_destroy(bspdriver->hal_client);
+	if(bspdriver->event_client)
+		hal_client_destroy(bspdriver->event_client);
+
 	if (bspdriver->master)
 	{
     	thread_master_free(bspdriver->master);

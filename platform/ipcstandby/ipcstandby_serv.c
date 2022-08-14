@@ -38,21 +38,20 @@
 
 /* Event list of ipcstandby. */
 
-struct ipcstandby_server_t ipcstandby_server;
 
-static void ipcstandby_serv_event(enum ipcmsg_event event, zpl_socket_t sock, struct ipcstandby_serv *client);
+static void ipcstandby_serv_event(struct ipcstandby_server_t *_server, enum ipcmsg_event event, zpl_socket_t sock, struct ipcstandby_serv *client);
 
 static void ipcstandby_serv_client_close(struct ipcstandby_serv *client);
 
 
-int ipcstandby_serv_callback(struct ipcstandby_callback cli, struct ipcstandby_callback msg, struct ipcstandby_callback res)
+int ipcstandby_serv_callback(struct ipcstandby_server_t *_server, struct ipcstandby_callback cli, struct ipcstandby_callback msg, struct ipcstandby_callback res)
 {
-  ipcstandby_server.cli_callback.ipcstandby_callback = cli.ipcstandby_callback;
-  ipcstandby_server.cli_callback.pVoid = cli.pVoid;
-  ipcstandby_server.msg_callback.ipcstandby_callback = msg.ipcstandby_callback;
-  ipcstandby_server.msg_callback.pVoid = msg.pVoid;
-  ipcstandby_server.res_callback.ipcstandby_callback = res.ipcstandby_callback;
-  ipcstandby_server.res_callback.pVoid = res.pVoid;
+  _server->cli_callback.ipcstandby_callback = cli.ipcstandby_callback;
+  _server->cli_callback.pVoid = cli.pVoid;
+  _server->msg_callback.ipcstandby_callback = msg.ipcstandby_callback;
+  _server->msg_callback.pVoid = msg.pVoid;
+  _server->res_callback.ipcstandby_callback = res.ipcstandby_callback;
+  _server->res_callback.pVoid = res.pVoid;
   return OK;
 }
 
@@ -83,27 +82,17 @@ static int ipcstandby_serv_server_send_message(struct ipcstandby_serv *client)
     if (len == 0)
     {
       client->send_cnt++;
-      client->last_write_time = quagga_time(NULL);
+      client->last_write_time = os_time(NULL);
       return OK;
     }
   }
   return ERROR;
 }
 
-static void ipcstandby_serv_create_header(struct stream *s, zpl_uint16 module, zpl_uint16 cmd)
-{
-  stream_reset(s);
-  /* length placeholder, caller can update */
-  stream_putw(s, ZPL_IPCMSG_HEADER_SIZE);
-  stream_putc(s, ZPL_IPCMSG_HEADER_MARKER);
-  stream_putc(s, ZPL_IPCMSG_VERSION);
-  stream_putw(s, module);
-  stream_putw(s, cmd);
-}
 
-int ipcstandby_serv_result(struct ipcstandby_serv *client, int module, int process, int ret, char *data, int len)
+int ipcstandby_serv_result(struct ipcstandby_serv *client, int process, int ret, char *data, int len)
 {
-  ipcstandby_serv_create_header(client->obuf, module, ZPL_IPCSTANBY_ACK);
+  ipcstandby_create_header(client->obuf, ZPL_IPCSTANBY_ACK);
   stream_putl(client->obuf, process);
   stream_putl(client->obuf, ret);
   if (data)
@@ -150,28 +139,31 @@ ipcstandby_serv_client_close(struct ipcstandby_serv *client)
   /* Release threads. */
   if (client->t_read)
     thread_cancel(client->t_read);
-  listnode_delete(ipcstandby_server.client_list, client);
-  XFREE(0, client);
+  listnode_delete(client->ipcserver->client_list, client);
+  XFREE(MTYPE_STANDBY_SERV_CLIENT, client);
 }
+
+
 
 /* Make new client. */
 static void
-ipcstandby_serv_client_create(zpl_socket_t sock, struct ipstack_sockaddr_in *remote)
+ipcstandby_serv_client_create(struct ipcstandby_server_t *_server, zpl_socket_t sock, struct ipstack_sockaddr_in *remote)
 {
   struct ipcstandby_serv *client;
   //zpl_uint32 i = 0;
 
-  client = XCALLOC(MTYPE_TMP, sizeof(struct ipcstandby_serv));
+  client = XCALLOC(MTYPE_STANDBY_SERV_CLIENT, sizeof(struct ipcstandby_serv));
 
   /* Make client input/output buffer. */
   client->sock = sock;
   client->ibuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
   client->obuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
 
-  client->connect_time = quagga_time(NULL);
-  listnode_add(ipcstandby_server.client_list, client);
+  client->connect_time = os_time(NULL);
+  client->ipcserver = _server;
+  listnode_add(_server->client_list, client);
   /* Make new read thread. */
-  ipcstandby_serv_event(ZPL_IPCMSG_READ, sock, client);
+  ipcstandby_serv_event(_server, ZPL_IPCMSG_READ, sock, client);
 }
 
 static int
@@ -184,10 +176,10 @@ ipcstandby_serv_client_timeout(struct thread *thread)
   {
     client->state = zpl_false;
     ipcstandby_serv_client_close(client);
-    //host_standby(zpl_bool val);
+
     return OK;
   }
-  client->t_timeout = thread_add_timer(ipcstandby_server.master, ipcstandby_serv_client_timeout, client, ZPL_IPCSTANBY_TIMEOUT);  
+  client->t_timeout = thread_add_timer(client->ipcserver->master, ipcstandby_serv_client_timeout, client, ZPL_IPCSTANBY_TIMEOUT);  
   client->hello--; 
   return OK; 
 }
@@ -201,7 +193,7 @@ ipcstandby_serv_client_read(struct thread *thread)
   zpl_size_t already;
   zpl_uint16 length, command;
   zpl_uint8 marker, version;
-  zpl_uint16 module;
+
   int ret = 0;
   /* Get thread data.  Reset reading thread because I'm running. */
   sock = THREAD_FD(thread);
@@ -225,7 +217,7 @@ ipcstandby_serv_client_read(struct thread *thread)
     if (nbyte != (ssize_t)(ZPL_IPCMSG_HEADER_SIZE - already))
     {
       /* Try again later. */
-      ipcstandby_serv_event(ZPL_IPCMSG_READ, sock, client);
+      ipcstandby_serv_event(client->ipcserver, ZPL_IPCMSG_READ, sock, client);
       return 0;
     }
     already = ZPL_IPCMSG_HEADER_SIZE;
@@ -238,7 +230,6 @@ ipcstandby_serv_client_read(struct thread *thread)
   length = stream_getw(client->ibuf);
   marker = stream_getc(client->ibuf);
   version = stream_getc(client->ibuf);
-  module = stream_getw(client->ibuf);
   command = stream_getw(client->ibuf);
 
   if (marker != ZPL_IPCMSG_HEADER_MARKER || version != ZPL_IPCMSG_VERSION)
@@ -283,7 +274,7 @@ ipcstandby_serv_client_read(struct thread *thread)
     if (nbyte != (ssize_t)(length - already))
     {
       /* Try again later. */
-      ipcstandby_serv_event(ZPL_IPCMSG_READ, sock, client);
+      ipcstandby_serv_event(client->ipcserver, ZPL_IPCMSG_READ, sock, client);
       return 0;
     }
   }
@@ -295,10 +286,10 @@ ipcstandby_serv_client_read(struct thread *thread)
     zlog_debug(MODULE_NSM, "ipcstandby message comes from ipstack_socket [%d]", sock);
 
   if (IS_ZPL_IPCMSG_DEBUG_PACKET(client->debug) && IS_ZPL_IPCMSG_DEBUG_RECV(client->debug))
-    zlog_debug(MODULE_NSM, "ipcstandby message received [%d] %d in VRF %u",
-               (command), length, module);
+    zlog_debug(MODULE_NSM, "ipcstandby message received [%d] %d",
+               (command), length);
 
-  client->last_read_time = quagga_time(NULL);
+  client->last_read_time = os_time(NULL);
 
   switch (command)
   {
@@ -312,20 +303,20 @@ ipcstandby_serv_client_read(struct thread *thread)
     break;    
     
   case ZPL_IPCSTANBY_CLI:
-    if(ipcstandby_server.cli_callback.ipcstandby_callback)
-      ret = (ipcstandby_server.cli_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, ipcstandby_server.cli_callback.pVoid);
+    if(client->ipcserver->cli_callback.ipcstandby_callback)
+      ret = (client->ipcserver->cli_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client->ipcserver->cli_callback.pVoid);
     else
       ret = OS_NO_CALLBACK;  
     break;
   case ZPL_IPCSTANBY_MSG:
-    if(ipcstandby_server.msg_callback.ipcstandby_callback)
-      ret = (ipcstandby_server.msg_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, ipcstandby_server.msg_callback.pVoid);
+    if(client->ipcserver->msg_callback.ipcstandby_callback)
+      ret = (client->ipcserver->msg_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client->ipcserver->msg_callback.pVoid);
     else
       ret = OS_NO_CALLBACK;  
     break;
   case ZPL_IPCSTANBY_RES:
-    if(ipcstandby_server.res_callback.ipcstandby_callback)
-      ret = (ipcstandby_server.res_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client);
+    if(client->ipcserver->res_callback.ipcstandby_callback)
+      ret = (client->ipcserver->res_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client);
     else
       ret = OS_NO_CALLBACK;  
     break;
@@ -338,12 +329,12 @@ ipcstandby_serv_client_read(struct thread *thread)
   if(command != ZPL_IPCSTANBY_RES)
   {
     if (ret == OK)
-      ipcstandby_serv_result(client, module, 0, ret, NULL, 0);
+      ipcstandby_serv_result(client, 0, ret, NULL, 0);
     else
-      ipcstandby_serv_result(client, module, 0, ret, zpl_strerror(ret), strlen(zpl_strerror(ret)));
+      ipcstandby_serv_result(client, 0, ret, zpl_strerror(ret), strlen(zpl_strerror(ret)));
   }
   stream_reset(client->ibuf);
-  ipcstandby_serv_event(ZPL_IPCMSG_READ, sock, client);
+  ipcstandby_serv_event(client->ipcserver, ZPL_IPCMSG_READ, sock, client);
   return 0;
 }
 
@@ -353,13 +344,14 @@ ipcstandby_serv_accept(struct thread *thread)
 {
   zpl_socket_t accept_sock;
   zpl_socket_t client_sock;
+  struct ipcstandby_server_t *_server;
   struct ipstack_sockaddr_in client;
   socklen_t len;
-
+  _server = THREAD_ARG(thread);
   accept_sock = THREAD_FD(thread);
-
+  
   /* Reregister myself. */
-  ipcstandby_serv_event(ZPL_IPCMSG_ACCEPT, accept_sock, NULL);
+  ipcstandby_serv_event(_server, ZPL_IPCMSG_ACCEPT, accept_sock, NULL);
 
   len = sizeof(struct ipstack_sockaddr_in);
   client_sock = ipstack_accept(accept_sock, (struct ipstack_sockaddr *)&client, &len);
@@ -374,7 +366,7 @@ ipcstandby_serv_accept(struct thread *thread)
   ipstack_set_nonblocking(client_sock);
 
   /* Create new ipcstandby client. */
-  ipcstandby_serv_client_create(client_sock, &client);
+  ipcstandby_serv_client_create(_server, client_sock, &client);
 
   return 0;
 }
@@ -429,23 +421,23 @@ static zpl_socket_t ipcstandby_serv_tcp(char *ip, int port)
     return accept_sock;
   }
 
-  // ipcstandby_serv_event(ZPL_IPCMSG_ACCEPT, accept_sock, NULL);
+  // ipcstandby_serv_event(_server, ZPL_IPCMSG_ACCEPT, accept_sock, NULL);
   return accept_sock;
 }
 
 static void
-ipcstandby_serv_event(enum ipcmsg_event event, zpl_socket_t sock, struct ipcstandby_serv *client)
+ipcstandby_serv_event(struct ipcstandby_server_t *_server, enum ipcmsg_event event, zpl_socket_t sock, struct ipcstandby_serv *client)
 {
   switch (event)
   {
   case ZPL_IPCMSG_ACCEPT:
-    ipcstandby_server.t_accept = thread_add_read(ipcstandby_server.master, ipcstandby_serv_accept, client, sock);
+    _server->t_accept = thread_add_read(_server->master, ipcstandby_serv_accept, _server, sock);
     break;
   case ZPL_IPCMSG_READ:
-    client->t_read = thread_add_read(ipcstandby_server.master, ipcstandby_serv_client_read, client, sock);
+    client->t_read = thread_add_read(_server->master, ipcstandby_serv_client_read, client, sock);
     break;
   case ZPL_IPCMSG_TIMEOUT:
-    client->t_timeout = thread_add_timer(ipcstandby_server.master, ipcstandby_serv_client_timeout, client, ZPL_IPCSTANBY_TIMEOUT);
+    client->t_timeout = thread_add_timer(_server->master, ipcstandby_serv_client_timeout, client, ZPL_IPCSTANBY_TIMEOUT);
     break;
     
   case ZPL_IPCMSG_WRITE:
@@ -455,34 +447,41 @@ ipcstandby_serv_event(enum ipcmsg_event event, zpl_socket_t sock, struct ipcstan
 }
 
 /* Make ipcstandby server ipstack_socket, wiping any existing one (see bug #403). */
-void ipcstandby_serv_init(void *m)
+struct ipcstandby_server_t * ipcstandby_serv_init(void *m)
 {
-  memset(&ipcstandby_server, 0, sizeof(ipcstandby_server));
-  ipcstandby_server.master = m;
-  ipcstandby_server.client_list = list_new();
-  ipcstandby_server.serv_sock = ipcstandby_serv_tcp(NULL, 0);
-	ipcstandby_server.vty = vty_new();
-	ipstack_init(OS_STACK, ipcstandby_server.vty->fd);
-	ipstack_init(OS_STACK, ipcstandby_server.vty->fd);
-	ipcstandby_server.vty->wfd._fd = STDOUT_FILENO;
-	ipcstandby_server.vty->fd._fd = STDIN_FILENO;
-	ipcstandby_server.vty->type = VTY_STABDVY;
-	ipcstandby_server.vty->node = ENABLE_NODE;
-	memset(ipcstandby_server.vty->buf, 0, (VTY_BUFSIZ));  
-  ipcstandby_serv_event(ZPL_IPCMSG_ACCEPT, ipcstandby_server.serv_sock, NULL);
+  struct ipcstandby_server_t * _server =  XCALLOC(MTYPE_STANDBY_SERV, sizeof(struct ipcstandby_server_t));
+  if(_server)
+  {
+    memset(_server, 0, sizeof(struct ipcstandby_server_t));
+    _server->master = m;
+    _server->client_list = list_new();
+    _server->serv_sock = ipcstandby_serv_tcp(NULL, 0);
+    _server->vty = vty_new();
+    _server->vty->wfd = ipstack_init(OS_STACK, STDOUT_FILENO);
+    _server->vty->fd = ipstack_init(OS_STACK, STDIN_FILENO);
+    //ipstack_fd(_server->vty->wfd) = STDOUT_FILENO;
+    //ipstack_fd(_server->vty->fd) = STDIN_FILENO;
+    _server->vty->type = VTY_STABDVY;
+    _server->vty->node = ENABLE_NODE;
+    memset(_server->vty->buf, 0, (VTY_BUFSIZ));  
+    ipcstandby_serv_event(_server, ZPL_IPCMSG_ACCEPT, _server->serv_sock, NULL);
+  }
+  return _server;
 }
 
-void ipcstandby_serv_exit(void)
+void ipcstandby_serv_exit(struct ipcstandby_server_t *_server)
 {
   struct listnode *node;
   struct ipcstandby_serv *client;
 
-  for (ALL_LIST_ELEMENTS_RO(ipcstandby_server.client_list, node, client))
+  for (ALL_LIST_ELEMENTS_RO(_server->client_list, node, client))
     ipcstandby_serv_client_close(client);
-  if (ipcstandby_server.t_accept)
-    thread_cancel(ipcstandby_server.t_accept);
-  if (!ipstack_invalid(ipcstandby_server.serv_sock))
+  if (_server->t_accept)
+    thread_cancel(_server->t_accept);
+  if (!ipstack_invalid(_server->serv_sock))
   {
-    ipstack_close(ipcstandby_server.serv_sock);
+    ipstack_close(_server->serv_sock);
   }
+  XFREE(MTYPE_STANDBY_SERV, _server);
+  _server = NULL;
 }

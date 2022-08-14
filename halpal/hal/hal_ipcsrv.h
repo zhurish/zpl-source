@@ -8,10 +8,11 @@ extern "C" {
 #include "auto_include.h"
 #include "hal_ipcmsg.h"
 
-//#define HAL_IPCSRV_SEM_ACK
 
 
+//#define HAL_IPCSRV_SYNC_ACK
 #define HAL_IPCSRV_ACK_TIMEOUT  5000//MS
+
 
 struct hal_ipcsrv
 {
@@ -29,8 +30,9 @@ struct hal_ipcsrv
     struct hal_ipcmsg input_msg;
     zpl_uint32  debug;
     os_mutex_t *mutex;
-#ifdef HAL_IPCSRV_SEM_ACK
-    os_sem_t *wait_sem;
+    zpl_bool    b_init;
+#ifdef HAL_IPCSRV_SYNC_ACK
+    zpl_socket_t waitfd[2];
     struct timeval  wait_timeval;
     struct hal_ipcmsg ack_msg;
 #endif 
@@ -43,7 +45,7 @@ struct hal_ipcclient
     struct thread *t_read;
     struct ipstack_sockaddr_in clientaddr;
     enum hal_client_state state;
-    zpl_bool event_client;
+    enum hal_ipctype_e ipctype;
 
     zpl_bool dynamic;       //动态上线
     zpl_int8 module;

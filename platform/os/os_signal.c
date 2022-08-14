@@ -8,7 +8,7 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 
-#if 1
+
 
 #ifdef SA_SIGINFO
 #ifdef HAVE_UCONTEXT_H
@@ -24,8 +24,10 @@
 
 struct os_signal_process_t
 {
+#ifdef OS_SIGNAL_PIPE  
   int signal_rfd;
   int signal_wfd;
+#endif  
 #ifdef SA_SIGINFO
   void (*os_core_abort)(zpl_int signo, const char *action,
     siginfo_t *siginfo, void *context);
@@ -48,6 +50,7 @@ struct sigmap_tbl
 #endif
 };
 
+struct sigmap_tbl  sigmap_old_tbl[__SIGRTMAX];
 struct os_signal_process_t os_sigproc_tbl;
 
 static void os_signal_handler_action(zpl_int sig, void *info);
@@ -157,25 +160,45 @@ static void os_signal_default_interrupt(zpl_int signo, siginfo_t *siginfo, void 
 static void os_signal_default_interrupt(zpl_int signo)                                     
 #endif
 {
-  fprintf(stdout, "======================os_signal_default_interrupt %d\r\n", signo);
-  fflush(stdout);
-  os_log(OS_SIGNAL_FILE, "%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
 #ifdef OS_SIGNAL_PIPE  
   zpl_int wsigno = signo;
   if (os_sigproc_tbl.signal_wfd)
+  {
+        fprintf(stderr, "============= write signal signal:%d\n", signo);
+    fflush(stderr);
     write(os_sigproc_tbl.signal_wfd, &wsigno, 4);
+  }
 #else
   os_signal_handler_action(signo, NULL);
 #endif
   return;
 }
 
-int os_signal_send(zpl_uint signo)
+#ifdef OS_SIGNAL_PIPE 
+int os_signal_fd(void)
+{
+  return os_sigproc_tbl.signal_rfd;
+}
+
+int os_signal_try_process(void)
+{
+  zpl_int rsigno = 0;
+  if (os_read_timeout(os_sigproc_tbl.signal_rfd, &rsigno, 4, 20) == 4)
+  {
+    os_signal_handler_action(rsigno, NULL);
+  }
+  return 0;
+}
+#endif
+
+int os_signal_send(zpl_int signo)
 {
 #ifdef OS_SIGNAL_PIPE  
   zpl_int wsigno = signo;
   if (os_sigproc_tbl.signal_wfd)
+  {
     write(os_sigproc_tbl.signal_wfd, &wsigno, 4);
+  }
 #else
   kill(getpid(), signo);    
 #endif
@@ -186,10 +209,11 @@ int os_signal_process(zpl_uint timeout)
 {
 #ifdef OS_SIGNAL_PIPE 
   zpl_int rsigno = 0;
-  if (os_read_timeout(os_sigproc_tbl.signal_rfd, &rsigno, 4, timeout) == 4)
+  if (read(os_sigproc_tbl.signal_rfd, &rsigno, 4) == 4)
   {
     os_signal_handler_action(rsigno, NULL);
   }
+  os_msleep(timeout);
 #else
   os_msleep(timeout);
 #endif  
@@ -215,7 +239,11 @@ void os_signal_default(os_signal_abort_cb abort_func, os_signal_exit_cb exit_fun
   os_sigproc_tbl.os_core_abort = abort_func;
   os_sigproc_tbl.os_core_exit = exit_func;
 #ifdef OS_SIGNAL_PIPE 
-  os_unix_sockpair_create(zpl_false, &os_sigproc_tbl.signal_rfd, &os_sigproc_tbl.signal_wfd);
+  if(os_unix_sockpair_create(zpl_true, &os_sigproc_tbl.signal_rfd, &os_sigproc_tbl.signal_wfd)!= OK)
+  {
+    fprintf(stderr, "Unable to create pipe for signal handler:%s\n", strerror(errno));
+    fflush(stderr);
+  }
   if (os_sigproc_tbl.signal_wfd)
     os_set_nonblocking(os_sigproc_tbl.signal_wfd);
   if (os_sigproc_tbl.signal_rfd)
@@ -239,10 +267,12 @@ int os_register_signal(zpl_int sig, void (*handler)(zpl_int))
 	ret = sigaction(sig, NULL, &osa);
   if(ret == 0)
   {
-    /*if(osa.sa_handler != SIG_DFL)
-    {
-      return (0);
-    }*/
+    sigmap_old_tbl[sig].signo = sig;
+#ifdef SA_SIGINFO
+  sigmap_old_tbl[sig].handler = osa.sa_sigaction;
+#else
+  sigmap_old_tbl[sig].handler = osa.sa_handler; 
+#endif     
   }
   else
   {
@@ -279,7 +309,8 @@ int os_register_signal(zpl_int sig, void (*handler)(zpl_int))
   sigfillset(&sa.sa_mask);
   if (sigaction(sig, &sa, NULL) < 0)
   {
-    fprintf(stdout, "Unable to set up signal handler for %d", sig);
+    fprintf(stderr, "Unable to set up signal handler for %d\n", sig);
+    fflush(stderr);
     return (-1);
   }
   return (0);
@@ -335,9 +366,6 @@ static void __attribute__((noreturn)) os_core_exit_handler(int signo, siginfo_t 
 static void __attribute__((noreturn)) os_core_exit_handler(int signo)        
 #endif
 {
-  fprintf(stdout,"%s:============+++++++++++++++++++++===========signo=%d\r\n", __func__, signo);
-  fflush(stdout);
-  os_log(OS_SIGNAL_FILE, "%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
   if (os_sigproc_tbl.os_core_exit)
     (os_sigproc_tbl.os_core_exit)(signo, "exiting..."
 #ifdef SA_SIGINFO
@@ -354,9 +382,6 @@ static void __attribute__((noreturn)) os_core_abort_handler(int signo, siginfo_t
 static void __attribute__((noreturn)) os_core_abort_handler(int signo)        
 #endif
 {
-  fprintf(stdout,"%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
-  fflush(stdout);
-  os_log(OS_SIGNAL_FILE, "%s:==========+++++++++++++++++++++++++=========signo=%d\r\n", __func__, signo);
   if (os_sigproc_tbl.os_core_abort)
     (os_sigproc_tbl.os_core_abort)(signo, "aborting..."
 #ifdef SA_SIGINFO
@@ -369,13 +394,3 @@ static void __attribute__((noreturn)) os_core_abort_handler(int signo)
 
 #endif
 
-int os_signal_reload_test(void)
-{
-  #ifndef ZPL_COREDUMP_ENABLE
-  os_register_signal(SIGSEGV, os_core_abort_handler);
-  os_register_signal(SIGBUS, os_core_abort_handler);
-  #endif
-  return OK;
-}
-
-#endif 

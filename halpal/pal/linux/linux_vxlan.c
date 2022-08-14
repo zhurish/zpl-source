@@ -61,11 +61,11 @@ int vxlan_parse_opt(int v6, struct vxlan_param *param,
 	{
 		if (param->inherit)
 		{
-			librtnl_addattr(n, 1024, IFLA_VXLAN_TTL_INHERIT);
+			librtnl_addattr(n, 1024, 28/*IFLA_VXLAN_TTL_INHERIT*/);
 		}
 		else
 		{
-			librtnl_addattr8(n, 1024, IFLA_VXLAN_TTL, param->ttl);
+			librtnl_addattr8(n, 1024, 5/*IFLA_VXLAN_TTL*/, param->ttl);
 		}
 	}
 	else if (param->tos)
@@ -74,7 +74,7 @@ int vxlan_parse_opt(int v6, struct vxlan_param *param,
 	}
 	else if (param->df >= 0)
 	{
-		librtnl_addattr8(n, 1024, IFLA_VXLAN_DF, param->df);
+		librtnl_addattr8(n, 1024, 29/*IFLA_VXLAN_DF*/, param->df);
 	}
 	else if (param->label)
 	{

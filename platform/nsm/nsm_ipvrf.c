@@ -82,7 +82,6 @@ int ipvrf_delete(const char *name)
 void ipvrf_init(void)
 {
   ip_vrf_init();
-  ipvrf_create("Default-IP-Routing-Table");
 }
 
 /* Terminate VRF module. */

@@ -282,8 +282,8 @@ static int _connect(zpl_socket_t sockfd, const struct ipstack_sockaddr *addr, so
 
         /* Wait to be available in writing */
         IPSTACK_FD_ZERO(&wset);
-        IPSTACK_FD_SET(sockfd._fd, &wset);
-        rc = ipstack_select(IPCOM_STACK, sockfd._fd + 1, NULL, &wset, NULL, &tv);
+        IPSTACK_FD_SET(ipstack_fd(sockfd), &wset);
+        rc = ipstack_select(IPCOM_STACK, ipstack_fd(sockfd) + 1, NULL, &wset, NULL, &tv);
         if (rc <= 0) {
             /* Timeout or fail */
             return -1;
@@ -720,14 +720,14 @@ zpl_socket_t modbus_tcp_pi_accept(modbus_t *ctx, zpl_socket_t *s)
 static int _modbus_tcp_select(modbus_t *ctx, ipstack_fd_set *rset, struct timeval *tv, int length_to_read)
 {
     int s_rc;
-    while ((s_rc = ipstack_select(IPCOM_STACK, ctx->s._fd+1, rset, NULL, NULL, tv)) == -1) {
+    while ((s_rc = ipstack_select(IPCOM_STACK, ipstack_fd(ctx->s)+1, rset, NULL, NULL, tv)) == -1) {
         if (ipstack_errno == EINTR) {
             if (ctx->debug) {
                 fprintf(stderr, "A non blocked signal was caught\n");
             }
             /* Necessary after an error */
             IPSTACK_FD_ZERO(rset);
-            IPSTACK_FD_SET(ctx->s._fd, rset);
+            IPSTACK_FD_SET(ipstack_fd(ctx->s), rset);
         } else {
             return -1;
         }

@@ -25,8 +25,7 @@ static int dhcpd_config_init(dhcp_global_t *config)
 	lstInit(&config->client_list);
 	lstInit(&config->relay_list);
 	if (master_eloop_dhcp == NULL)
-		config->eloop_master = master_eloop_dhcp =
-		eloop_master_module_create(MODULE_DHCP);
+		config->eloop_master = master_eloop_dhcp = eloop_master_module_create(MODULE_DHCP);
 
 	config->server_port = DHCP_SERVER_PORT;
 	config->client_port = DHCP_CLIENT_PORT;
@@ -34,8 +33,8 @@ static int dhcpd_config_init(dhcp_global_t *config)
 	config->server_port_v6 = DHCP_SERVER_PORT6;
 	config->client_port_v6 = DHCP_CLIENT_PORT6;
 	config->r_thread = NULL;
-	ipstack_init(IPCOM_STACK, config->sock);
-	ipstack_init(IPCOM_STACK, config->rawsock);
+	config->sock = ipstack_init(IPCOM_STACK, -1);
+	config->rawsock = ipstack_init(IPCOM_STACK, -1);
 	return OK;
 }
 

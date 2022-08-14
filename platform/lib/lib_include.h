@@ -11,7 +11,6 @@ extern "C" {
 #include "zpl_type.h"
 
 #include "route_types.h"
-#include "nsm_event.h"
 #include "hash.h"
 #include "jhash.h"
 #include "module.h"
@@ -44,7 +43,6 @@ extern "C" {
 #include "lib_event.h"
 #include "md5.h"
 #include "nexthop.h"
-#include "router-id.h"
 #include "routemap.h"
 #include "keychain.h"
 

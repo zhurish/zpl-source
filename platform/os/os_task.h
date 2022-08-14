@@ -13,6 +13,7 @@ extern "C" {
 #endif
 #include "zpl_type.h"
 #include "os_list.h"
+
 //#define OS_SIGNAL_SIGWAIT
 
 
@@ -103,19 +104,21 @@ typedef struct os_task_s
 	zpl_void 		*priv;
 }os_task_t;
 
-//typedef os_task_t * os_task_pt;
-
 
 
 extern int os_limit_stack_size(zpl_int32 size);
 extern int os_limit_core_size(zpl_int32 size);
-extern int os_task_give_broadcast(void);
 
 extern int os_task_init(void);
 extern int os_task_exit(void);
-extern int os_task_sigmask(zpl_taskid_t sigc, zpl_int32 signo[], sigset_t *mask);
-extern int os_task_sigexecute(zpl_taskid_t sigc, zpl_int32 signo[], sigset_t *mask);
+/* 设置线程不需要处理的信号集 */
+extern int os_task_sigmask(zpl_taskid_t sigc, zpl_int32 signo[]);
+/* 设置线程不屏蔽所有信号集 */
+extern int os_task_sigexecute(zpl_taskid_t sigc, zpl_int32 signo[]);
+/* 设置线程屏蔽所有信号集 */
 extern int os_task_sigmaskall(void);
+/* 向线程发信号 */
+extern int os_task_killsignal(zpl_taskid_t task_id, int signno);
 
 extern int os_task_add_start_hook(os_task_hook *cb);
 extern int os_task_add_create_hook(os_task_hook *cb);

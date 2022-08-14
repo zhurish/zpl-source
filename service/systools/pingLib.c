@@ -263,9 +263,9 @@ static int ping_thread(PING_STAT * pPS)
 
 check_fd_again: /* Wait for ICMP reply */
 		IPSTACK_FD_ZERO(&readFd);
-		IPSTACK_FD_SET(pPS->pingFd._fd, &readFd);
-		IPSTACK_FD_SET(vty->fd._fd, &readFd);
-		sel = ipstack_select(IPCOM_STACK, max(pPS->pingFd._fd, vty->fd._fd) + 1, &readFd, NULL, NULL, &pingTmo);
+		IPSTACK_FD_SET(ipstack_fd(pPS->pingFd), &readFd);
+		IPSTACK_FD_SET(ipstack_fd(vty->fd), &readFd);
+		sel = ipstack_select(IPCOM_STACK, max(ipstack_fd(pPS->pingFd), ipstack_fd(vty->fd)) + 1, &readFd, NULL, NULL, &pingTmo);
 		if (sel == ERROR)
 		{
 			if (!(pPS->flags & PING_OPT_SILENT))
@@ -278,7 +278,7 @@ check_fd_again: /* Wait for ICMP reply */
 				vty_out(vty,"ping: timeout%s",VTY_NEWLINE);
 			break; /* goto release */
 		}
-		if (IPSTACK_FD_ISSET(vty->fd._fd, &readFd))
+		if (IPSTACK_FD_ISSET(ipstack_fd(vty->fd), &readFd))
 		{
 #ifndef CONTROL
 #define CONTROL(X)  ((X) - '@')
@@ -291,7 +291,7 @@ check_fd_again: /* Wait for ICMP reply */
 			else
 				vty_out(vty,"%s",VTY_NEWLINE);
 		}
-		if (!IPSTACK_FD_ISSET(pPS->pingFd._fd, &readFd))
+		if (!IPSTACK_FD_ISSET(ipstack_fd(pPS->pingFd), &readFd))
 			goto check_fd_again;
 
 		/* the fd is ready - FD_ISSET isn't needed */

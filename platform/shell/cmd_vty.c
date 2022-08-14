@@ -281,10 +281,7 @@ DEFUN_HIDDEN (exit_platform,
 		"exit-platform",
 		"exit platform\n")
 {
-	/*	vty_terminate ();
-	 ip_vrf_terminate ();
-	 //	cmd_terminate ();
-	 exit(0);*/
+	vty_out(vty, "os_signal_send(SIGTERM)%s", VTY_NEWLINE);
 	os_signal_send(SIGTERM);
 	return CMD_SUCCESS;
 }

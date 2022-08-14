@@ -14,51 +14,62 @@ extern "C" {
 
 
 
-/* default zebra TCP port for zclient */
+
 #define NSM_ZSERV_PORT			2600
 
-/* Zebra message types. */
-#define NSM_EVENT_HELLO			               0
-#define NSM_EVENT_INTERFACE_ADD                1
-#define NSM_EVENT_INTERFACE_DELETE             2
-#define NSM_EVENT_INTERFACE_ADDRESS_ADD        3
-#define NSM_EVENT_INTERFACE_ADDRESS_DELETE     4
-#define NSM_EVENT_INTERFACE_UP                 5
-#define NSM_EVENT_INTERFACE_DOWN               6
-#define NSM_EVENT_INTERFACE_MODE               7
-#define NSM_EVENT_INTERFACE_RENAME             8
+
+struct nsm_event_desc_table
+{
+  unsigned int event;
+  const char *string;
+};
 
 
-#define NSM_EVENT_ROUTER_ID_ADD               20
-#define NSM_EVENT_ROUTER_ID_DELETE            21
-#define NSM_EVENT_ROUTER_ID_UPDATE            22
+/* nen event types. */
+typedef enum 
+{
+  NSM_EVENT_HELLO = 0,
+  NSM_EVENT_INTERFACE_ADD,
+  NSM_EVENT_INTERFACE_DELETE,
+  NSM_EVENT_INTERFACE_ADDRESS_ADD,
+  NSM_EVENT_INTERFACE_ADDRESS_DELETE,
+  NSM_EVENT_INTERFACE_UP,
+  NSM_EVENT_INTERFACE_DOWN,
+  NSM_EVENT_INTERFACE_MODE,
+  NSM_EVENT_INTERFACE_RENAME,
 
-#define NSM_EVENT_IPV4_ROUTE_ADD              30
-#define NSM_EVENT_IPV4_ROUTE_DELETE           31
-#define NSM_EVENT_IPV6_ROUTE_ADD              32
-#define NSM_EVENT_IPV6_ROUTE_DELETE           33
+  NSM_EVENT_INTERFACE_VRF_BIND,
+  NSM_EVENT_INTERFACE_VRF_UNBIND,
 
-#define NSM_EVENT_REDISTRIBUTE_ADD            40
-#define NSM_EVENT_REDISTRIBUTE_DELETE         41
-#define NSM_EVENT_REDISTRIBUTE_DEFAULT_ADD    42
-#define NSM_EVENT_REDISTRIBUTE_DEFAULT_DELETE 43
+  NSM_EVENT_ROUTER_ID_ADD,
+  NSM_EVENT_ROUTER_ID_DELETE,
+  NSM_EVENT_ROUTER_ID_UPDATE,
 
-#define NSM_EVENT_IPV4_NEXTHOP_LOOKUP         50
-#define NSM_EVENT_IPV6_NEXTHOP_LOOKUP         51
-#define NSM_EVENT_IPV4_IMPORT_LOOKUP          52
-#define NSM_EVENT_IPV6_IMPORT_LOOKUP          53
-#define NSM_EVENT_IPV4_NEXTHOP_LOOKUP_MRIB    54
+  NSM_EVENT_IPV4_ROUTE_ADD,
+  NSM_EVENT_IPV4_ROUTE_DELETE,
+  NSM_EVENT_IPV6_ROUTE_ADD,
+  NSM_EVENT_IPV6_ROUTE_DELETE,
 
-#define NSM_EVENT_NEXTHOP_REGISTER            60
-#define NSM_EVENT_NEXTHOP_UNREGISTER          61
-#define NSM_EVENT_NEXTHOP_UPDATE              62
+  NSM_EVENT_REDISTRIBUTE_ADD,
+  NSM_EVENT_REDISTRIBUTE_DELETE,
+  NSM_EVENT_REDISTRIBUTE_DEFAULT_ADD,
+  NSM_EVENT_REDISTRIBUTE_DEFAULT_DELETE,
 
-#define NSM_EVENT_VRF_REGISTER                70
-#define NSM_EVENT_VRF_UNREGISTER              71
+  NSM_EVENT_IPV4_NEXTHOP_LOOKUP,
+  NSM_EVENT_IPV6_NEXTHOP_LOOKUP,
+  NSM_EVENT_IPV4_IMPORT_LOOKUP,
+  NSM_EVENT_IPV6_IMPORT_LOOKUP,
+  NSM_EVENT_IPV4_NEXTHOP_LOOKUP_MRIB,
 
+  NSM_EVENT_NEXTHOP_REGISTER,
+  NSM_EVENT_NEXTHOP_UNREGISTER,
+  NSM_EVENT_NEXTHOP_UPDATE,
 
-#define NSM_EVENT_MESSAGE_MAX                 90
+  NSM_EVENT_VRF_REGISTER,
+  NSM_EVENT_VRF_UNREGISTER,
 
+  NSM_EVENT_MESSAGE_MAX,
+};
 /* Marker value used in new Zserv, in the byte location corresponding
  * the command value in the old nsm_zserv.header. To allow old and new
  * Zserv headers to be distinguished from each other.
@@ -118,6 +129,8 @@ extern "C" {
 #endif /* IPSTACK_IN6_ARE_ADDR_EQUAL */
 
 
+
+extern const char *zserv_command_string (zpl_uint32 command);
 
 
 #ifdef __cplusplus

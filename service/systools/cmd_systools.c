@@ -537,7 +537,7 @@ DEFUN_HIDDEN (load_image_xyz_modem,
 	xyz.sequm = 0;
 	xyz.vty = vty;
 	if(argc == 1)
-		xyz.fd = vty->fd._fd;
+		xyz.fd = ipstack_fd(vty->fd);
 	else
 	{
 		xyz.show_debug = vty_sync_out;

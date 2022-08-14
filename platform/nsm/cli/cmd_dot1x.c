@@ -726,6 +726,7 @@ int build_dot1x_interface(struct vty *vty, struct interface *ifp)
 {
 	if(ifp->if_type == IF_ETHERNET ||
 			ifp->if_type == IF_GIGABT_ETHERNET ||
+			ifp->if_type == IF_XGIGABT_ETHERNET || 
 			ifp->if_type == IF_SERIAL ||
 			ifp->if_type == IF_LAG ||
 			ifp->if_type == IF_VLAN)

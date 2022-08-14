@@ -21,8 +21,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _QUAGGA_WORK_QUEUE_H
-#define _QUAGGA_WORK_QUEUE_H
+#ifndef __LIB_WORK_QUEUE_H
+#define __LIB_WORK_QUEUE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,4 +137,4 @@ extern struct cmd_element show_work_queues_cmd;
 }
 #endif
 
-#endif /* _QUAGGA_WORK_QUEUE_H */
+#endif /* __LIB_WORK_QUEUE_H */

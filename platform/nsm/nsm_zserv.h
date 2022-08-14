@@ -62,16 +62,16 @@ struct zserv
   zpl_uint32 rtm_table;
 #ifdef ZPL_VRF_MODULE
   /* This client's redistribute flag. */
-  vrf_bitmap_t redist[ZPL_ROUTE_PROTO_MAX];
+  ip_vrf_bitmap_t redist[ZPL_ROUTE_PROTO_MAX];
 #endif
   /* Redistribute default route flag. */
-  vrf_bitmap_t redist_default;
+  ip_vrf_bitmap_t redist_default;
 
   /* Interface information. */
-  vrf_bitmap_t ifinfo;
+  ip_vrf_bitmap_t ifinfo;
 
   /* Router-id information. */
-  vrf_bitmap_t ridinfo;
+  ip_vrf_bitmap_t ridinfo;
 
   /* client's protocol */
   zpl_uchar proto;
@@ -124,7 +124,8 @@ extern struct nsm_srv_t *nsm_srv;
 extern void nsm_zserv_init (void);
 extern void cmd_nsm_zserv_init(void);
 
-
+extern void nsm_zserv_encode_interface(struct stream *s, struct interface *ifp);
+extern void nsm_zserv_encode_interface_end(struct stream *s);
 
 extern int nsm_zserv_send_interface_add (struct zserv *, struct interface *);
 extern int nsm_zserv_send_interface_delete (struct zserv *, struct interface *);

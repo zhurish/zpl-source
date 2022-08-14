@@ -14,9 +14,7 @@
 #include "hal_include.h"
 
 
-/*
- * ip_iface.c
- */
+
 
 nsm_vlaneth_t * nsm_vlaneth_get(struct interface *ifp)
 {
@@ -35,10 +33,7 @@ int nsm_vlaneth_interface_create_api(struct interface *ifp)
 		zassert(vlaneth);
 		os_memset(vlaneth, 0, sizeof(nsm_vlaneth_t));
 		vlaneth->ifp = ifp;
-		/*if(IF_IS_SUBIF_GET(ifp->ifindex))
-		{
-			vlaneth->root = if_lookup_by_index(IF_IFINDEX_ROOT_GET(ifp->ifindex));
-		}*/
+
 		nsm_intf_module_data_set(ifp, NSM_INTF_VLANETH, vlaneth);
 #ifdef ZPL_HAL_MODULE
 		if(nsm_halpal_interface_add(ifp) == OK)

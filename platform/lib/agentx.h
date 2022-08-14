@@ -22,8 +22,12 @@
 #ifndef __LIB_SNMP_H
 #define __LIB_SNMP_H
 
+#if defined ZPL_NSM_SNMP && defined SNMP_AGENTX
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/agent/snmp_vars.h>
+
 
 #include "thread.h"
 
@@ -43,7 +47,7 @@
 
 #undef REGISTER_MIB
 #define REGISTER_MIB(descr, var, vartype, theoid)		\
-    smux_register_mib(descr, (struct variable *)var, sizeof(struct vartype), \
+    snmp_register_mib(descr, (struct variable *)var, sizeof(struct vartype), \
     sizeof(var)/sizeof(struct vartype),			\
     theoid, sizeof(theoid)/sizeof(oid))
 
@@ -72,15 +76,15 @@ struct trap_object
     (u_char *) &snmp_in_addr_val \
   )
 
-extern void smux_init (struct thread_master *tm);
-extern void smux_register_mib(const char *, struct variable *, 
+extern void snmp_agentx_init (struct thread_master *tm);
+extern void snmp_register_mib(const char *, struct variable *, 
                               size_t, int, oid [], size_t);
-extern int smux_header_generic (struct variable *, oid [], size_t *, 
+extern int snmp_header_generic (struct variable *, oid [], size_t *, 
                                 int, size_t *, WriteMethod **);
-extern int smux_header_table (struct variable *, oid *, size_t *, 
+extern int snmp_header_table (struct variable *, oid *, size_t *, 
 			      int, size_t *, WriteMethod **);
 
-extern void smux_start(void);
+
 /* For traps, three OID are provided:
 
  1. The enterprise OID to use (the last argument will be appended to
@@ -102,7 +106,7 @@ extern void smux_start(void);
  The use of the arguments may differ depending on the implementation
  used.
 */
-extern int smux_trap (struct variable *, size_t,
+extern int snmp_trap (struct variable *, size_t,
 		      const oid *, size_t,
 		      const oid *, size_t,
 		      const oid *, size_t,
@@ -113,5 +117,32 @@ extern int oid_compare (const oid *, int, const oid *, int);
 extern void oid2in_addr (oid [], int, struct in_addr *);
 extern void *oid_copy (void *, const void *, size_t);
 extern void oid_copy_addr (oid [], struct in_addr *, int);
+
+
+#define SNMP_AGENTX_RONLY   HANDLER_CAN_RONLY
+#define SNMP_AGENTX_RWRITE  HANDLER_CAN_RWRITE
+#define SNMP_AGENTX_WONLY   HANDLER_CAN_SET_ONLY
+
+struct snmp_agentx_callback
+{
+  int wrflag;
+  Netsnmp_Node_Handler *snmp_handler;
+  Netsnmp_First_Data_Point  *get_first_handler;
+  Netsnmp_Next_Data_Point   *get_next_handler;
+
+  int min_column;
+  int max_column; 
+  int index_max;
+  int index_type[16];
+};
+
+
+extern int snmp_agentx_register_mib(const char *name, const oid *oidtbl, int oidlen, struct snmp_agentx_callback *agentxcb);
+
+#define SNMP_AGENTX_REGISTER_MIB(descr, var, oidtbl)		\
+    snmp_agentx_register_mib(descr, oidtbl, sizeof(oidtbl)/sizeof(oid), callback)
+
+
+#endif /* defined ZPL_NSM_SNMP && defined SNMP_AGENTX */
 
 #endif /* __LIB_SNMP_H */

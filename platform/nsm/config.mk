@@ -7,7 +7,9 @@ ifeq ($(strip $(ZPL_NSM_MODULE)),true)
 
 OBJS	+= connected.o
 OBJS	+= nsm_debug.o
+OBJS	+= nsm_event.o
 OBJS	+= nsm_redistribute.o
+OBJS	+= router-id.o
 OBJS	+= nsm_rib.o
 OBJS	+= nsm_ipvrf.o
 

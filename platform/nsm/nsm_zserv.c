@@ -98,7 +98,7 @@ nsm_zserv_flush_data(struct thread *thread)
   case BUFFER_ERROR:
     zlog_warn(MODULE_NSM, "%s: buffer_flush_available failed on zserv client fd %d, "
                           "closing",
-              __func__, client->sock._fd);
+              __func__, ipstack_fd(client->sock));
     nsm_zserv_client_close(client);
     break;
   case BUFFER_PENDING:
@@ -109,7 +109,7 @@ nsm_zserv_flush_data(struct thread *thread)
     break;
   }
 
-  client->last_write_time = quagga_time(NULL);
+  client->last_write_time = os_time(NULL);
   return 0;
 }
 
@@ -125,7 +125,7 @@ int nsm_zserv_send_message(struct zserv *client)
   {
   case BUFFER_ERROR:
     zlog_warn(MODULE_NSM, "%s: buffer_write failed to zserv client fd %d, closing",
-              __func__, client->sock._fd);
+              __func__, ipstack_fd(client->sock));
     /* Schedule a delayed close since many of the functions that call this
        one do not check the return code.  They do not allow for the
  possibility that an I/O error may have caused the client to be
@@ -142,7 +142,7 @@ int nsm_zserv_send_message(struct zserv *client)
     break;
   }
 
-  client->last_write_time = quagga_time(NULL);
+  client->last_write_time = os_time(NULL);
   return 0;
 }
 
@@ -156,12 +156,12 @@ void nsm_zserv_create_header(struct stream *s, zpl_uint16 cmd, vrf_id_t vrf_id)
   stream_putw(s, cmd);
 }
 
-static void
-nsm_zserv_encode_interface(struct stream *s, struct interface *ifp)
+void nsm_zserv_encode_interface(struct stream *s, struct interface *ifp)
 {
   /* Interface information. */
   stream_put(s, ifp->name, IF_NAME_MAX);
   stream_putl(s, ifp->ifindex);
+  /*
   stream_putc(s, ifp->status);
   stream_putq(s, ifp->flags);
   stream_putl(s, ifp->metric);
@@ -172,21 +172,13 @@ nsm_zserv_encode_interface(struct stream *s, struct interface *ifp)
   stream_putl(s, ifp->hw_addr_len);
   if (ifp->hw_addr_len)
     stream_put(s, ifp->hw_addr, ifp->hw_addr_len);
-
-  zlog_info(MODULE_NSM, "Try to set TE Link Param");
-  /* Then, Traffic Engineering parameters if any */
-  /*  if (HAS_LINK_PARAMS(ifp) && IS_LINK_PARAMS_SET(ifp->link_params))
-      {
-        stream_putc (s, 1);
-        nsm_zserv_interface_link_params_write (s, ifp);
-      }
-    else*/
-  stream_putc(s, 0);
-
-  /* Write packet size. */
-  stream_putw_at(s, 0, stream_get_endp(s));
+  */
 }
 
+void nsm_zserv_encode_interface_end(struct stream *s)
+{
+  stream_putw_at(s, 0, stream_get_endp(s));
+}
 /* Interface is added. Send NSM_EVENT_INTERFACE_ADD to client. */
 /*
  * This function is called in the following situations:
@@ -211,6 +203,7 @@ int nsm_zserv_send_interface_add(struct zserv *client, struct interface *ifp)
 
   nsm_zserv_create_header(s, NSM_EVENT_INTERFACE_ADD, ifp->vrf_id);
   nsm_zserv_encode_interface(s, ifp);
+  nsm_zserv_encode_interface_end(s);
 
   client->ifadd_cnt++;
   return nsm_zserv_send_message(client);
@@ -230,6 +223,7 @@ int nsm_zserv_send_interface_delete(struct zserv *client, struct interface *ifp)
 
   nsm_zserv_create_header(s, NSM_EVENT_INTERFACE_DELETE, ifp->vrf_id);
   nsm_zserv_encode_interface(s, ifp);
+  nsm_zserv_encode_interface_end(s);
 
   client->ifdel_cnt++;
   return nsm_zserv_send_message(client);
@@ -372,6 +366,19 @@ int nsm_zserv_send_interface_state(zpl_uint16 cmd, struct zserv *client, struct 
 
   nsm_zserv_create_header(s, cmd, ifp->vrf_id);
   nsm_zserv_encode_interface(s, ifp);
+  
+  stream_putc(s, ifp->status);
+  stream_putq(s, ifp->flags);
+  stream_putl(s, ifp->metric);
+  stream_putl(s, ifp->mtu);
+  stream_putl(s, ifp->mtu6);
+  stream_putl(s, ifp->bandwidth);
+  stream_putl(s, ifp->ll_type);
+  stream_putl(s, ifp->hw_addr_len);
+  if (ifp->hw_addr_len)
+    stream_put(s, ifp->hw_addr, ifp->hw_addr_len);
+
+  nsm_zserv_encode_interface_end(s);
 
   if (cmd == NSM_EVENT_INTERFACE_UP)
     client->ifup_cnt++;
@@ -394,6 +401,11 @@ int nsm_zserv_send_interface_mode(struct zserv *client, struct interface *ifp, z
 
   nsm_zserv_create_header(s, NSM_EVENT_INTERFACE_MODE, ifp->vrf_id);
   nsm_zserv_encode_interface(s, ifp);
+
+  stream_putl(s, mode);
+
+  nsm_zserv_encode_interface_end(s);
+
   return nsm_zserv_send_message(client);
 }
 /*
@@ -713,7 +725,7 @@ nsm_zserv_nexthop_register(struct zserv *client, zpl_socket_t sock, zpl_ushort l
 
   if (IS_NSM_DEBUG_NHT)
     zlog_debug(MODULE_NSM, "nexthop_register msg from client %s: length=%d\n",
-               nsm_route_string(client->proto), length);
+               zroute_string(client->proto), length);
 
   s = client->ibuf;
 
@@ -727,7 +739,7 @@ nsm_zserv_nexthop_register(struct zserv *client, zpl_socket_t sock, zpl_ushort l
     l += PSIZE(p.prefixlen);
     rnh = nsm_rnh_add(&p, 0);
 
-    client->nh_reg_time = quagga_time(NULL);
+    client->nh_reg_time = os_time(NULL);
 
     if (connected)
       SET_FLAG(rnh->flags, NSM_NHT_CONNECTED);
@@ -750,7 +762,7 @@ nsm_zserv_nexthop_unregister(struct zserv *client, zpl_socket_t sock, zpl_ushort
 
   if (IS_NSM_DEBUG_NHT)
     zlog_debug(MODULE_NSM, "nexthop_unregister msg from client %s: length=%d\n",
-               nsm_route_string(client->proto), length);
+               zroute_string(client->proto), length);
 
   s = client->ibuf;
 
@@ -765,7 +777,7 @@ nsm_zserv_nexthop_unregister(struct zserv *client, zpl_socket_t sock, zpl_ushort
     rnh = nsm_rnh_lookup(&p, 0);
     if (rnh)
     {
-      client->nh_dereg_time = quagga_time(NULL);
+      client->nh_dereg_time = os_time(NULL);
       nsm_rnh_client_remove(rnh, client);
     }
   }
@@ -1382,15 +1394,15 @@ zread_hello(struct zserv *client)
   if ((proto < ZPL_ROUTE_PROTO_MAX) && (proto > ZPL_ROUTE_PROTO_STATIC))
   {
     zlog_notice(MODULE_NSM, "client %d says hello and bids fair to announce only %s routes",
-                client->sock._fd, nsm_route_string(proto));
+                ipstack_fd(client->sock), zroute_string(proto));
 
     /* if route-type was binded by other client */
     if (route_type_oaths[proto])
       zlog_warn(MODULE_NSM, "sender of %s routes changed %c->%c",
-                nsm_route_string(proto), route_type_oaths[proto],
-                client->sock._fd);
+                zroute_string(proto), route_type_oaths[proto],
+                ipstack_fd(client->sock));
 
-    route_type_oaths[proto] = client->sock._fd;
+    route_type_oaths[proto] = ipstack_fd(client->sock);
     client->proto = proto;
   }
 }
@@ -1419,10 +1431,10 @@ nsm_zserv_score_rib(zpl_socket_t client_sock)
   zpl_uint32 i = 0;
 
   for (i = ZPL_ROUTE_PROTO_RIP; i < ZPL_ROUTE_PROTO_MAX; i++)
-    if (client_sock._fd == route_type_oaths[i])
+    if (ipstack_fd(client_sock) == route_type_oaths[i])
     {
       zlog_notice(MODULE_NSM, "client %d disconnected. %lu %s routes removed from the rib",
-                  client_sock._fd, rib_score_proto(i), nsm_route_string(i));
+                  ipstack_fd(client_sock), rib_score_proto(i), zroute_string(i));
       route_type_oaths[i] = 0;
       break;
     }
@@ -1489,7 +1501,7 @@ nsm_zserv_client_create(zpl_socket_t sock)
   client->redist_default = ip_vrf_bitmap_init();
   client->ifinfo = ip_vrf_bitmap_init();
   client->ridinfo = ip_vrf_bitmap_init();
-  client->connect_time = quagga_time(NULL);
+  client->connect_time = os_time(NULL);
 
   /* Add this client to linked list. */
   listnode_add(nsm_srv->client_list, client);
@@ -1529,7 +1541,7 @@ nsm_zserv_client_read(struct thread *thread)
         (nbyte == -1))
     {
       if (IS_NSM_DEBUG_EVENT)
-        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", sock._fd);
+        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", ipstack_fd(sock));
       nsm_zserv_client_close(client);
       return -1;
     }
@@ -1555,21 +1567,21 @@ nsm_zserv_client_read(struct thread *thread)
   if (marker != MSG_HEADER_MARKER || version != ZSERV_VERSION)
   {
     zlog_err(MODULE_NSM, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
-             __func__, sock._fd, marker, version);
+             __func__, ipstack_fd(sock), marker, version);
     nsm_zserv_client_close(client);
     return -1;
   }
   if (length < ZCLIENT_HEADER_SIZE)
   {
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u is less than header size %d",
-              __func__, sock._fd, length, ZCLIENT_HEADER_SIZE);
+              __func__, ipstack_fd(sock), length, ZCLIENT_HEADER_SIZE);
     nsm_zserv_client_close(client);
     return -1;
   }
   if (length > STREAM_SIZE(client->ibuf))
   {
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
-              __func__, sock._fd, length, (u_long)STREAM_SIZE(client->ibuf));
+              __func__, ipstack_fd(sock), length, (u_long)STREAM_SIZE(client->ibuf));
     nsm_zserv_client_close(client);
     return -1;
   }
@@ -1583,7 +1595,7 @@ nsm_zserv_client_read(struct thread *thread)
         (nbyte == -1))
     {
       if (IS_NSM_DEBUG_EVENT)
-        zlog_debug(MODULE_NSM, "connection closed [%d] when reading zebra data", sock._fd);
+        zlog_debug(MODULE_NSM, "connection closed [%d] when reading zebra data", ipstack_fd(sock));
       nsm_zserv_client_close(client);
       return -1;
     }
@@ -1599,13 +1611,13 @@ nsm_zserv_client_read(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_NSM_DEBUG_EVENT)
-    zlog_debug(MODULE_NSM, "zebra message comes from ipstack_socket [%d]", sock._fd);
+    zlog_debug(MODULE_NSM, "zebra message comes from ipstack_socket [%d]", ipstack_fd(sock));
 
   if (IS_NSM_DEBUG_PACKET && IS_NSM_DEBUG_RECV)
     zlog_debug(MODULE_NSM, "zebra message received [%s] %d in VRF %u",
                zserv_command_string(command), length, vrf_id);
 
-  client->last_read_time = quagga_time(NULL);
+  client->last_read_time = os_time(NULL);
   client->last_read_cmd = command;
 
   switch (command)
@@ -1881,7 +1893,7 @@ nsm_zserv_time_buf(zpl_time_t *time1, zpl_char *buf, int buflen)
       return (buf);
     }
 
-  now = quagga_time(NULL);
+  now = os_time(NULL);
   now -= *time1;
   tm = gmtime(&now);
 
@@ -1908,7 +1920,7 @@ nsm_zserv_show_client_detail (struct vty *vty, struct zserv *client)
   zpl_char wbuf[NSM_ZSERV_TIME_BUF], nhbuf[NSM_ZSERV_TIME_BUF], mbuf[NSM_ZSERV_TIME_BUF];
 
   vty_out (vty, "Client: %s %s",
-	   nsm_route_string(client->proto), VTY_NEWLINE);
+	   zroute_string(client->proto), VTY_NEWLINE);
   vty_out (vty, "------------------------ %s", VTY_NEWLINE);
   vty_out (vty, "FD: %d %s", client->sock, VTY_NEWLINE);
   vty_out (vty, "Route Table ID: %d %s", client->rtm_table, VTY_NEWLINE);
@@ -1973,7 +1985,7 @@ nsm_zserv_show_client_brief (struct vty *vty, struct zserv *client)
   zpl_char wbuf[NSM_ZSERV_TIME_BUF];
 
   vty_out (vty, "%-8s%12s %12s%12s%8d/%-8d%8d/%-8d%s",
-	   nsm_route_string(client->proto),
+	   zroute_string(client->proto),
 	   nsm_zserv_time_buf(&client->connect_time, cbuf, NSM_ZSERV_TIME_BUF),
 	   nsm_zserv_time_buf(&client->last_read_time, rbuf, NSM_ZSERV_TIME_BUF),
 	   nsm_zserv_time_buf(&client->last_write_time, wbuf, NSM_ZSERV_TIME_BUF),

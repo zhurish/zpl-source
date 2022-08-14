@@ -568,7 +568,7 @@ int dhcprelay_main(int argc, char **argv)
 
 		IPSTACK_FD_ZERO(&rfds);
 		for (i = 0; i < num_sockets; i++)
-			IPSTACK_FD_SET(fds[i]._fd, &rfds);
+			IPSTACK_FD_SET(ipstack_fd(fds[i]), &rfds);
 		tv.tv_sec = DHCP_RELAY_SELECT_TIMEOUT;
 		tv.tv_usec = 0;
 		if (ipstack_socketselect(IPCOM_STACK, max_socket + 1, &rfds, NULL, NULL, &tv) > 0) {
@@ -576,7 +576,7 @@ int dhcprelay_main(int argc, char **argv)
 			struct dhcp_packet dhcp_msg;
 
 			/* server */
-			if (IPSTACK_FD_ISSET(fds[0]._fd, &rfds)) {
+			if (IPSTACK_FD_ISSET(ipstack_fd(fds[0]), &rfds)) {
 				packlen = udhcp_recv_packet(&dhcp_msg, fds[0], NULL);//udhcp_recv_kernel_packet(&dhcp_msg, fds[0]);
 				if (packlen > 0) {
 					dhcp_relay_pass_to_client(&dhcp_msg, packlen, fds);
@@ -588,7 +588,7 @@ int dhcprelay_main(int argc, char **argv)
 				struct ipstack_sockaddr_in client_addr;
 				socklen_t addr_size;
 
-				if (!IPSTACK_FD_ISSET(fds[i]._fd, &rfds))
+				if (!IPSTACK_FD_ISSET(ipstack_fd(fds[i]), &rfds))
 					continue;
 
 				addr_size = sizeof(client_addr);

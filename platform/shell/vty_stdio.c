@@ -627,7 +627,7 @@ static os_ansync_lst *master;
 
 #define SET_READ_HANDLER(DMN) \
   if((DMN)->t_read == NULL) \
-  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, handle_read, (DMN), (DMN)->fd._fd)
+  (DMN)->t_read = os_ansync_add(master, OS_ANSYNC_INPUT, handle_read, (DMN), ipstack_fd((DMN)->fd))
 
 #define SET_WAKEUP_ECHO(DMN)                                                             \
   (DMN)->t_write = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_send_echo, (DMN), \
@@ -862,7 +862,7 @@ try_connect(struct daemon *dmn)
     }
 
     dmn->fd = sock;
-    dmn->t_write = os_ansync_add(master, OS_ANSYNC_OUTPUT, check_connect, dmn, dmn->fd._fd);
+    dmn->t_write = os_ansync_add(master, OS_ANSYNC_OUTPUT, check_connect, dmn, ipstack_fd(dmn->fd));
     dmn->t_timeout = os_ansync_add(master, OS_ANSYNC_TIMER_ONCE, wakeup_connect_hanging, dmn,
                                   15000);
     //SET_READ_HANDLER(dmn);

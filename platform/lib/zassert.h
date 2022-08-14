@@ -19,8 +19,8 @@
  * 02111-1307, USA.  
  */
 
-#ifndef _QUAGGA_ASSERT_H
-#define _QUAGGA_ASSERT_H
+#ifndef __LIB_ASSERT_H
+#define __LIB_ASSERT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,4 +58,4 @@ extern void _zlog_assert_failed (const char *assertion, const char *file,
 }
 #endif
 
-#endif /* _QUAGGA_ASSERT_H */
+#endif /* __LIB_ASSERT_H */

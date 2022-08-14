@@ -20,7 +20,6 @@ static LIST *os_task_list = NULL;
 static os_mutex_t *task_mutex = NULL;
 static zpl_uint32 os_moniter_id = 0;
 struct os_task_history total_cpu;
-static zpl_bool os_entry_running = zpl_false;
 
 typedef struct os_task_hook_tbl
 {
@@ -78,24 +77,6 @@ int os_limit_core_size(int size)
 	return OK;
 }
 
-/*
-static int os_task_waitting_signal(void)
-{
-	while(os_entry_running != zpl_true)
-	{
-		os_msleep(1000);
-	}
-	return OK;
-}
-*/
-
-int os_task_give_broadcast(void)
-{
-	os_entry_running = zpl_true;
-	return OK;
-}
-
-
 int os_task_init(void)
 {
 #ifdef OS_TASK_DEBUG_LOG
@@ -104,7 +85,7 @@ int os_task_init(void)
 #endif
 	if (task_mutex == NULL)
 	{
-		task_mutex = os_mutex_init();
+		task_mutex = os_mutex_name_init("taskmutex");
 	}
 	if (os_task_list == NULL)
 	{
@@ -139,32 +120,34 @@ int os_task_exit(void)
 	return OK;
 }
 
-int os_task_sigmask(int sigc, int signo[], sigset_t *mask)
+int os_task_sigmask(int sigc, int signo[])
 {
 	int i = 0;
+	sigset_t mask;
+	sigemptyset(&mask);
 	if(sigc)
 	{
-		sigemptyset(mask);
 		for(i = 0; i < sigc; i++)
 		{
-			sigaddset(mask, signo[i]);
+			sigaddset(&mask, signo[i]);
 		}
 	}
-	return pthread_sigmask(SIG_SETMASK, mask, NULL);
+	return pthread_sigmask(SIG_SETMASK, &mask, NULL);
 }
 
-int os_task_sigexecute(int sigc, int signo[], sigset_t *mask)
+int os_task_sigexecute(int sigc, int signo[])
 {
 	int i = 0;
+	sigset_t mask;
+	sigfillset(&mask);
 	if(sigc)
 	{
-		sigfillset(mask);
 		for(i = 0; i < sigc; i++)
 		{
-			sigdelset(mask, signo[i]);
+			sigdelset(&mask, signo[i]);
 		}
 	}
-	return pthread_sigmask(SIG_SETMASK, mask, NULL);
+	return pthread_sigmask(SIG_SETMASK, &mask, NULL);
 }
 
 int os_task_sigmaskall(void)
@@ -172,6 +155,22 @@ int os_task_sigmaskall(void)
 	sigset_t mask;
 	sigfillset(&mask);
 	return pthread_sigmask(SIG_SETMASK, &mask, NULL);
+}
+
+int os_task_killsignal(zpl_taskid_t task_id, int signno)
+{
+	os_task_t *task = (os_task_t *) task_id;
+	if(task_id == (zpl_taskid_t)ERROR)
+		return ERROR;	
+	if (task)
+	{
+		if (task_mutex)
+			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+		pthread_kill(task->td_thread, signno);
+		if (task_mutex)
+			os_mutex_unlock(task_mutex);
+	}
+	return OK;
 }
 
 static int _os_task_create_callback(os_task_t *task)
@@ -652,7 +651,7 @@ int os_task_delay(int ticks)
 	struct timespec timereq, timerem;
 	int usec;
 	/* don't really need to check for "interrupt context" */
-	usec = ticks * OS_TASK_TICK_MSEC; //OS_TASK_TICK_USEC
+	usec = ticks * OS_TASK_TICK_MSEC;
 	timereq.tv_sec = ((usec >= 1000000) ? (usec / 1000000) : 0);
 	timereq.tv_nsec = (
 			(usec >= 1000000) ? ((usec % 1000000) * 1000) : (usec * 1000));
@@ -768,11 +767,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 					+ stealstolen + guest);
 			hist->total_realy = (user + nice + system + idle + iowait + irq
 					+ softirq + stealstolen + guest) - hist->total_realy;
-//			OS_DEBUG("total cpu(%f)\r\n",100*(zpl_float)(hist->total-idle)/hist->total);
 		}
-		//else
-		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
-		//			strerror(ipstack_errno));
 		fclose(fp);
 	}
 	else
@@ -810,11 +805,6 @@ static int os_task_refresh_cpu(os_task_t *task)
 			sscanf(buf, "%*d %*s %s %*d %*d %*d %*d %*d %*d %*d %*d %*d "
 					"%d %d %d %d %d %d %*d %*d %d", sta, &utime, &stime,
 					&cutime, &cstime, &priority, &nice, &start_time);
-
-//			OS_DEBUG("%s:%s=%s %d %d %d %d %d %d %d %d\r\n",__func__,task->td_name,sta,utime,stime,cutime,
-//					cstime,priority,nice,start_time);
-//			OS_DEBUG("thread total cpu(%d)\r\n",utime + stime + cutime + cstime);
-
 			os_task_string_to_state(sta, &task->state);
 			task->hist.total_realy = (utime + stime + cutime + cstime)
 					- task->hist.total_realy;
@@ -822,9 +812,6 @@ static int os_task_refresh_cpu(os_task_t *task)
 					- task->hist.total;
 
 		}
-		//else
-		//	zlog_err(MODULE_DEFAULT, "can't read path:%s(%s)\r\n", path,
-		//			strerror(ipstack_errno));
 		fclose(fp);
 	}
 	else
@@ -978,18 +965,14 @@ static int os_task_finsh_job(void)
 
 static int os_task_tcb_entry_destroy(os_task_t *task)
 {
-	//sem_destroy(&(task->td_sem));
 	if(task->active)
 	{
 		pthread_mutex_destroy(&(task->td_mutex));
 		pthread_cond_destroy(&(task->td_control));
 		pthread_attr_destroy(&(task->td_attr));
 	}
-	//pthread_spin_destroy(&(task->td_spinlock));
-	//pthread_spin_destroy(&(task->td_param));
 	if(task->priv)
 	{
-		//free(task->priv);
 		task->priv = NULL;
 	}
 	os_free(task);
@@ -998,8 +981,6 @@ static int os_task_tcb_entry_destroy(os_task_t *task)
 
 int os_task_entry_destroy(os_task_t *task)
 {
-	//fprintf(stdout, "=======>%s: name=%s tid=%d td_thread=%d self=%d\r\n",
-	//		__func__, task->td_name, task->td_tid, task->td_thread, pthread_self());
 	if (task->td_thread == pthread_self())
 	{
 		zpl_bool	active = task->active;
@@ -1124,11 +1105,11 @@ static void os_task_entry_start(os_task_t *task)
 #endif
 	printf("\r\ncreate task:%s(%lu->LWP=%u)\r\n", task->td_name, task->td_thread,
 			(pid_t) syscall(SYS_gettid));
-	//os_task_sigmaskall();
+	os_task_sigmaskall();
 	task->td_tid = os_task_gettid();
 	_os_task_start_callback(task);
 
-    prctl(PR_SET_NAME, task->td_name, 0,0,0);
+    prctl(PR_SET_NAME, task->td_name, 0);
 	//os_task_waitting_signal();
 
 	task->td_entry(task->pVoid);
@@ -1145,8 +1126,6 @@ static void os_task_entry_start(os_task_t *task)
 	}
 	if (task_mutex)
 		os_mutex_unlock(task_mutex);
-
-	//pthread_exit(0);
 	return ;
 }
 

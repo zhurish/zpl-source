@@ -36,7 +36,7 @@ struct sdk_driver_port
 };
 
 #pragma pack(1)
-typedef struct hal_mac_cache_s
+typedef struct khal_mac_cache_s
 {
 	zpl_uint8 port;
 	zpl_uint8 mac[ETH_ALEN];
@@ -46,7 +46,7 @@ typedef struct hal_mac_cache_s
 	zpl_uint8 is_age:1;
 	zpl_uint8 is_static:1;
 	zpl_uint8 res:4;
-}hal_mac_cache_t;
+}khal_mac_cache_t;
 #pragma pack(0)
 
 

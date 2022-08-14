@@ -318,11 +318,11 @@ extern const char * zlog_proto_names(zlog_proto_t module);
 extern int cmd_log_init(void);
 
 /* For hackey message lookup and check */
-#define LOOKUP_DEF(x, y, def) mes_lookup(x, x ## _max, y, def, #x)
+#define LOOKUP_DEF(x, y, def) message_lookup(x, x ## _max, y, def, #x)
 #define LOOKUP(x, y) LOOKUP_DEF(x, y, "(no item found)")
 
 extern const char *lookup (const struct message *, zpl_uint32);
-extern const char *mes_lookup (const struct message *meslist, 
+extern const char *message_lookup (const struct message *meslist, 
                                zpl_uint32 max, zpl_uint32 index,
                                const char *no_item, const char *mesname);
 
@@ -348,8 +348,8 @@ extern void zlog_backtrace_sigsafe(zlog_level_t priority, void *program_counter)
    It caches the most recent localtime result and can therefore
    avoid multiple calls within the same second.  If buflen is too small,
    *buf will be set to '\0', and 0 will be returned. */
-#define QUAGGA_TIMESTAMP_LEN 40
-extern zpl_size_t quagga_timestamp(zlog_timestamp_t timestamp /* # subsecond digits */,
+#define LOG_TIMESTAMP_LEN 40
+extern zpl_size_t os_timestamp(zlog_timestamp_t timestamp /* # subsecond digits */,
 			       zpl_char *buf, zpl_size_t buflen);
 
 extern void time_print(FILE *fp, zlog_timestamp_t ctl);
@@ -357,9 +357,9 @@ extern void time_print(FILE *fp, zlog_timestamp_t ctl);
 extern void zlog_hexdump(void *mem, zpl_uint32  len);
 
 /* Map a route type to a string.  For example, ZPL_ROUTE_PROTO_RIPNG -> "ripng". */
-extern const char *nsm_route_string(zpl_uint32 route_type);
+extern const char *zroute_string(zpl_uint32 route_type);
 /* Map a route type to a char.  For example, ZPL_ROUTE_PROTO_RIPNG -> 'R'. */
-extern char nsm_route_char(zpl_uint32 route_type);
+extern char zroute_keychar(zpl_uint32 route_type);
 /* Map a zserv command type to the same string, 
  * e.g. NSM_EVENT_INTERFACE_ADD -> "NSM_EVENT_INTERFACE_ADD" */
 /* Map a protocol name to its number. e.g. ZPL_ROUTE_PROTO_BGP->9*/
@@ -368,8 +368,6 @@ extern zpl_proto_t proto_name2num(const char *s);
  * unlike proto_name2num, this accepts zpl_int16hands and takes
  * an AFI value to restrict input */
 extern zpl_proto_t proto_redistnum(zpl_uint16 afi, const char *s);
-
-extern const char *zserv_command_string (zpl_uint32 command);
 
 
 /* Defines for use in command construction: */

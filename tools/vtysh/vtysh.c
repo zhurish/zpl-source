@@ -233,7 +233,7 @@ static int vtysh_read_result(struct vtysh_client *vclient)
   zpl_uchar *buf = NULL;
   vtysh_result_t msg;
   sock.stack = OS_STACK;
-  sock._fd = vclient->fd;
+  ipstack_fd(sock) = vclient->fd;
   zpl_osmsg_reset(vclient->vty->vtysh_msg);
   while (1)
   {

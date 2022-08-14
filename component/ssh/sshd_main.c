@@ -191,9 +191,9 @@ static struct vty * sshd_shell_new(int vty_sock)
 	struct vty *vty = NULL;
 	zpl_socket_t tmp;
 	vty = vty_new_init(tmp);
-	vty->fd._fd = vty_sock;
-	vty->wfd._fd = vty_sock;
-	vty->fd.stack = vty->wfd.stack = IPCOM_STACK;
+	ipstack_fd(vty->fd) = vty_sock;
+	ipstack_fd(vty->wfd) = vty_sock;
+	ipstack_type(vty->fd) = ipstack_type(vty->wfd) = IPCOM_STACK;
 
 	vty->type = VTY_TERM;
 	vty->node = ENABLE_NODE;

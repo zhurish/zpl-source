@@ -24,7 +24,7 @@ DEFUN (webserver_template,
 		"Template configure\n"
 		"Webserver configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_false, "webserver");
+	template_t * temp = lib_template_lookup_name (zpl_false, "webserver");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -35,7 +35,7 @@ DEFUN (webserver_template,
 	}
 	else
 	{
-		temp = nsm_template_new (zpl_false);
+		temp = lib_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -43,7 +43,7 @@ DEFUN (webserver_template,
 			strcpy(temp->prompt, "webserver"); /* (config-app-esp)# */
 			temp->write_template = webserver_write_config;
 			temp->pVoid = NULL;
-			nsm_template_install(temp, 0);
+			lib_template_install(temp, 0);
 
 			vty->node = TEMPLATE_NODE;
 			memset(vty->prompt, 0, sizeof(vty->prompt));
@@ -62,11 +62,11 @@ DEFUN (no_webserver_template,
 		"Template configure\n"
 		"Webserver configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_false, "webserver");
+	template_t * temp = lib_template_lookup_name (zpl_false, "webserver");
 	if(temp)
 	{
 		web_app_enable_set_api(zpl_false);
-		nsm_template_free(temp);
+		lib_template_free(temp);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -298,7 +298,7 @@ static int webserver_write_config(struct vty *vty, void *pVoid)
 void cmd_webserver_init(void)
 {
 	{
-		template_t * temp = nsm_template_new (zpl_false);
+		template_t * temp = lib_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 1;
@@ -307,7 +307,7 @@ void cmd_webserver_init(void)
 			temp->pVoid = NULL;
 			temp->write_template = webserver_write_config;
 			temp->show_debug = webserver_debug_write_config;
-			nsm_template_install(temp, 1);
+			lib_template_install(temp, 1);
 		}
 
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &webserver_template_cmd);

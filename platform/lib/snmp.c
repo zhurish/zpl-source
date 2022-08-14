@@ -24,10 +24,7 @@
 #include "module.h"
 
 #ifdef ZPL_NSM_SNMP
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
-
-#include "smux.h"
+#include "agentx.h"
 
 #define min(A,B) ((A) < (B) ? (A) : (B))
 
@@ -88,7 +85,7 @@ oid_copy_addr (oid oid[], struct in_addr *addr, int len)
 }
 
 int
-smux_header_generic (struct variable *v, oid *name, size_t *length, int exact,
+snmp_header_generic (struct variable *v, oid *name, size_t *length, int exact,
 		     size_t *var_len, WriteMethod **write_method)
 {
   oid fulloid[MAX_OID_LEN];
@@ -114,7 +111,7 @@ smux_header_generic (struct variable *v, oid *name, size_t *length, int exact,
 }
 
 int
-smux_header_table (struct variable *v, oid *name, size_t *length, int exact,
+snmp_header_table (struct variable *v, oid *name, size_t *length, int exact,
 		   size_t *var_len, WriteMethod **write_method)
 {
   /* If the requested OID name is less than OID prefix we

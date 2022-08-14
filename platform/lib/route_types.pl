@@ -86,10 +86,13 @@ printf <<EOF, $ARGV[0];
 /* Auto-generated from route_types.txt by %s. */
 /* Do not edit! */
 
-#ifndef _QUAGGA_ROUTE_TYPES_H
-#define _QUAGGA_ROUTE_TYPES_H
+#ifndef _ZPL_ROUTE_TYPES_H
+#define _ZPL_ROUTE_TYPES_H
 
-/* Zebra route's types. */
+
+#define ROUTE_DEFINE_DESC_TABLE
+
+/* ZPL route's types. */
 EOF
 
 push @protos, "ZPL_ROUTE_PROTO_MAX";
@@ -136,7 +139,7 @@ sub collect {
 	my ($daemon, $ipv4, $ipv6) = @_;
 	my (@names, @help) = ((), ());
 	for my $p (@protos) {
-		next if ($protodetail{$p}->{"daemon"} eq $daemon && $daemon ne "zebra");
+		next if ($protodetail{$p}->{"daemon"} eq $daemon && $daemon ne "nsm");
 		next unless (($ipv4 && $protodetail{$p}->{"ipv4"})
 				|| ($ipv6 && $protodetail{$p}->{"ipv6"}));
 		push @names, $protodetail{$p}->{"cname"};
@@ -150,28 +153,28 @@ for my $daemon (sort keys %daemons) {
 	printf "/* %s */\n", $daemon;
 	if ($daemons{$daemon}->{"ipv4"} && $daemons{$daemon}->{"ipv6"}) {
 		my ($names, $help) = collect($daemon, 1, 1);
-		printf "#define QUAGGA_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
-		printf "#define QUAGGA_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
+		printf "#define ROUTE_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
+		printf "#define ROUTE_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
 		($names, $help) = collect($daemon, 1, 0);
-		printf "#define QUAGGA_IP_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
-		printf "#define QUAGGA_IP_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
+		printf "#define ROUTE_IP_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
+		printf "#define ROUTE_IP_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
 		($names, $help) = collect($daemon, 0, 1);
-		printf "#define QUAGGA_IP6_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
-		printf "#define QUAGGA_IP6_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
+		printf "#define ROUTE_IP6_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
+		printf "#define ROUTE_IP6_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
 	} else {
 		my ($names, $help) = collect($daemon,
 			$daemons{$daemon}->{"ipv4"}, $daemons{$daemon}->{"ipv6"});
-		printf "#define QUAGGA_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
-		printf "#define QUAGGA_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
+		printf "#define ROUTE_REDIST_STR_%s \\\n  %s\n", uc $daemon, $names;
+		printf "#define ROUTE_REDIST_HELP_STR_%s \\\n%s\n", uc $daemon, $help;
 	}
 	print "\n";
 }
 
 print <<EOF;
 
-#ifdef QUAGGA_DEFINE_DESC_TABLE
+#ifdef ROUTE_DEFINE_DESC_TABLE
 
-struct nsm_desc_table
+struct lib_desc_table
 {
   unsigned int type;
   const char *string;
@@ -192,8 +195,8 @@ print <<EOF;
 };
 #undef DESC_ENTRY
 
-#endif /* QUAGGA_DEFINE_DESC_TABLE */
+#endif /* ROUTE_DEFINE_DESC_TABLE */
 
-#endif /* _QUAGGA_ROUTE_TYPES_H */
+#endif /* _ZPL_ROUTE_TYPES_H */
 EOF
 

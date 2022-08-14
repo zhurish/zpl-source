@@ -141,8 +141,6 @@ extern zpl_uint32 os_time_create_entry(os_time_type type, int (*time_entry)(void
 #define os_time_create(f,p,v)		os_time_create_entry(OS_TIMER_DEFAULE,f,p,v,#f)
 #define os_time_create_once(f,p,v)	os_time_create_entry(OS_TIMER_ONCE,f,p,v,#f)
 
-#define quagga_time os_time
-#define quagga_gettime os_gettime
 
 #ifdef OS_TIMER_TEST
 extern int timer_test(int time, zpl_uint32 type);

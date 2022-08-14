@@ -39,6 +39,7 @@ static int nsm_interface_cmd_node_get(struct interface *ifp, int range)
 		break;
 	case IF_ETHERNET:
 	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
 		if (ifp->if_mode == IF_MODE_L3)
 			node = range ? INTERFACE_L3_RANGE_NODE : INTERFACE_L3_NODE;
 		else
@@ -1064,12 +1065,12 @@ DEFUN(nsm_interface_enca_dot1q,
 	struct interface *ifp = vty->index;
 	if (ifp)
 	{
-		if (ifp->if_type != IF_ETHERNET && ifp->if_type != IF_GIGABT_ETHERNET)
+		if (ifp->if_type != IF_ETHERNET && ifp->if_type != IF_GIGABT_ETHERNET && ifp->if_type != IF_XGIGABT_ETHERNET)
 		{
 			vty_out(vty, "%% This is not ethernet interface,Can not set encapsulation info %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+		if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET)
 		{
 			if (!IF_IFINDEX_ID_GET(ifp->ifindex))
 			{
@@ -1145,7 +1146,7 @@ DEFUN(nsm_interface_enca_pppoe,
 	struct interface *ifp = vty->index;
 	if (ifp)
 	{
-		if (ifp->if_type != IF_ETHERNET && ifp->if_type != IF_GIGABT_ETHERNET
+		if (ifp->if_type != IF_ETHERNET && ifp->if_type != IF_GIGABT_ETHERNET && ifp->if_type != IF_XGIGABT_ETHERNET
 #ifdef CUSTOM_INTERFACE
 			&& ifp->if_type != IF_MODEM
 #endif
@@ -1154,7 +1155,7 @@ DEFUN(nsm_interface_enca_pppoe,
 			vty_out(vty, "%% This is not ethernet interface,Can not set encapsulation info %s", VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+		if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET)
 		{
 			enca = IF_ENCA_PPPOE;
 			if (enca && value)
@@ -1177,7 +1178,7 @@ DEFUN(no_nsm_interface_enca,
 	struct interface *ifp = vty->index;
 	if (ifp)
 	{
-		// if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+		// if(ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET  || ifp->if_type == IF_XGIGABT_ETHERNET)
 		{
 			ret = nsm_interface_enca_set_api(ifp, IF_ENCA_NONE, 0);
 			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
@@ -1628,6 +1629,7 @@ static int nsm_interface_encapsulation_info_write(struct interface *ifp, struct 
 {
 	if (ifp->if_type == IF_ETHERNET ||
 		ifp->if_type == IF_GIGABT_ETHERNET ||
+		ifp->if_type == IF_XGIGABT_ETHERNET ||
 		ifp->if_type == IF_SERIAL)
 	{
 		if (ifp->if_enca != IF_ENCA_NONE)
@@ -1638,7 +1640,7 @@ static int nsm_interface_encapsulation_info_write(struct interface *ifp, struct 
 #endif
 static int nsm_interface_bandwidth_info_write(struct interface *ifp, struct vty *vty)
 {
-	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET)
+	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET)
 	{
 		if (ifp->bandwidth != 0)
 			vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);

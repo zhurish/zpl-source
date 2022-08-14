@@ -330,7 +330,7 @@ DEFUN (mediaservice_template,
 		"Template configure\n"
 		"Mediaservice configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_false, "mediaservice");
+	template_t * temp = lib_template_lookup_name (zpl_false, "mediaservice");
 	if(temp)
 	{
 		vty->node = TEMPLATE_NODE;
@@ -341,7 +341,7 @@ DEFUN (mediaservice_template,
 	}
 	else
 	{
-		temp = nsm_template_new (zpl_false);
+		temp = lib_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 0;
@@ -349,7 +349,7 @@ DEFUN (mediaservice_template,
 			strcpy(temp->prompt, "mediaservice"); /* (config-app-esp)# */
 			temp->write_template = mediaservice_write_config;
 			temp->pVoid = NULL;
-			nsm_template_install(temp, 0);
+			lib_template_install(temp, 0);
 
 			vty->node = TEMPLATE_NODE;
 			memset(vty->prompt, 0, sizeof(vty->prompt));
@@ -368,11 +368,11 @@ DEFUN (no_mediaservice_template,
 		"Template configure\n"
 		"Mediaservice configure\n")
 {
-	template_t * temp = nsm_template_lookup_name (zpl_false, "mediaservice");
+	template_t * temp = lib_template_lookup_name (zpl_false, "mediaservice");
 	if(temp)
 	{
 		//web_app_enable_set_api(zpl_false);
-		nsm_template_free(temp);
+		lib_template_free(temp);
 		return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -418,7 +418,7 @@ static int mediaservice_write_config(struct vty *vty, void *pVoid)
 static void cmd_mediaservice_init(void)
 {
 	{
-		template_t * temp = nsm_template_new (zpl_false);
+		template_t * temp = lib_template_new (zpl_false);
 		if(temp)
 		{
 			temp->module = 2;
@@ -427,7 +427,7 @@ static void cmd_mediaservice_init(void)
 			temp->pVoid = NULL;
 			temp->write_template = mediaservice_write_config;
 			//temp->show_debug = webserver_debug_write_config;
-			nsm_template_install(temp, 2);
+			lib_template_install(temp, 2);
 		}
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mediaservice_template_cmd);
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mediaservice_template_cmd);

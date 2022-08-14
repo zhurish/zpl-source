@@ -490,12 +490,12 @@ int vty_sync_out(struct vty *vty, const char *format, ...)
 				{
 					if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 					{
-						 tcflush(vty->wfd._fd, TCIOFLUSH);
+						 tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
 					}
 					ipstack_write(vty->wfd, p, len);
 					if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 					{
-						 tcdrain(vty->wfd._fd);
+						 tcdrain(ipstack_fd(vty->wfd));
 					}
 				}
 			}
@@ -517,7 +517,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 	if(vty->type == VTY_STABDVY)
 		return 0;
 	os_memset(buf, 0, sizeof(buf));
-	len += quagga_timestamp(ctl, buf, sizeof(buf));
+	len += os_timestamp(ctl, buf, sizeof(buf));
 
 	if ((uint)(len + 1) >= sizeof(buf))
 		return -1;
@@ -583,12 +583,12 @@ static int vty_log_out(struct vty *vty, const char *level,
 	{
 		if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 		{
-			 tcflush(vty->wfd._fd, TCIOFLUSH);
+			 tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
 		}
 		ret = ipstack_write(vty->wfd, buf, len);
 		if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 		{
-			 tcdrain(vty->wfd._fd);
+			 tcdrain(ipstack_fd(vty->wfd));
 		}
 	}
 	if (ret < 0)
@@ -615,12 +615,12 @@ static int vty_log_out(struct vty *vty, const char *level,
 /* Output current time to the vty. */
 void vty_time_print(struct vty *vty, zpl_bool cr)
 {
-	zpl_char buf[QUAGGA_TIMESTAMP_LEN];
+	zpl_char buf[LOG_TIMESTAMP_LEN];
 	if(vty->type == VTY_STABDVY)
 		return ;
-	if (quagga_timestamp(ZLOG_TIMESTAMP_DATE, buf, sizeof(buf)) == 0)
+	if (os_timestamp(ZLOG_TIMESTAMP_DATE, buf, sizeof(buf)) == 0)
 	{
-		zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "quagga_timestamp error");
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_INFO, "os_timestamp error");
 		return;
 	}
 	if (cr)
@@ -1804,8 +1804,6 @@ static void vty_ctrl_default(zpl_uint32 ctrl, struct vty *vty)
 		if (vty->node <= AUTH_NODE)
 		{
 			kill(getpid(), SIGTERM);
-			// vty_terminate ();
-			// exit(1);
 		}
 		if (vty->pthd)
 		{
@@ -1891,7 +1889,7 @@ int vty_getc_input(struct vty *vty)
 		while (1)
 		{
 			if (is_os_stack(vty->fd) || os_memcmp(vty->address, "console", os_strlen("console")))
-				nbytes = read(vty->fd._fd, buf, VTY_READ_BUFSIZ);
+				nbytes = read(ipstack_fd(vty->fd), buf, VTY_READ_BUFSIZ);
 			else
 				nbytes = ipstack_read(vty->fd, buf, VTY_READ_BUFSIZ);
 			if (nbytes <= 0)
@@ -2143,7 +2141,7 @@ static int vty_read(struct eloop *thread)
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vty client fd %d, closing: %s", __func__,
-					  vty->fd._fd, ipstack_strerror(ipstack_errno));
+					  ipstack_fd(vty->fd), ipstack_strerror(ipstack_errno));
 			buffer_reset(vty->obuf);
 		}
 		vty->status = VTY_CLOSE;
@@ -2262,16 +2260,15 @@ vty_new_init(zpl_socket_t vty_sock)
 	memset(vty->hist, 0, sizeof(vty->hist));
 	vty->hp = 0;
 	vty->hindex = 0;
-	vector_set_index(cli_shell.vtyvec, vty_sock._fd, vty);
+	vector_set_index(cli_shell.vtyvec, ipstack_fd(vty_sock), vty);
 	vty->status = VTY_NORMAL;
 	vty->lines = -1;
 	vty->iac = 0;
 	vty->iac_sb_in_progress = 0;
 	vty->sb_len = 0;
-	// ipstack_init(OS_STACK, vty->fd);
-	// ipstack_init(OS_STACK, vty->wfd);
+
 	vty->trapping = zpl_true;
-	if (vty_sock._fd == STDIN_FILENO)
+	if (ipstack_fd(vty_sock) == STDIN_FILENO)
 		vty->ansync = zpl_true;
 	return vty;
 }
@@ -2396,13 +2393,13 @@ static int vty_console_flush(struct thread *thread)
 	struct vty *vty = THREAD_ARG(thread);
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	{
-		 tcflush(vty->wfd._fd, TCIOFLUSH);
+		 tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
 	}
 	vty->t_write = NULL;
 	vty_flush_handle(vty, vty->wfd);
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	{
-		 tcdrain(vty->wfd._fd);
+		 tcdrain(ipstack_fd(vty->wfd));
 	}
 	return 0;
 }
@@ -2413,7 +2410,7 @@ static int vty_console_read(struct thread *thread)
 	zpl_uchar buf[VTY_READ_BUFSIZ];
 	struct vty *vty = THREAD_ARG(thread);
 	vty->t_read = NULL;
-	nbytes = read(vty->fd._fd, buf, VTY_READ_BUFSIZ);
+	nbytes = read(ipstack_fd(vty->fd), buf, VTY_READ_BUFSIZ);
 	/* Read raw data from ipstack_socket */
 	if (nbytes <= 0)
 	{
@@ -2427,7 +2424,7 @@ static int vty_console_read(struct thread *thread)
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vty client fd %d, closing: %s", __func__,
-					  vty->fd._fd, ipstack_strerror(ipstack_errno));
+					  ipstack_fd(vty->fd), ipstack_strerror(ipstack_errno));
 			buffer_reset(vty->obuf);
 		}
 		vty->status = VTY_CLOSE;
@@ -2454,12 +2451,12 @@ static struct vty *vty_console_new(const char *tty, zpl_socket_t vty_sock)
 	vty = vty_new_init(vty_sock);
 	if (vty == NULL)
 		return vty;
-	vty->fd.stack = OS_STACK;
-	vty->wfd.stack = OS_STACK;
+	ipstack_type(vty->fd) = OS_STACK;
+	ipstack_type(vty->wfd) = OS_STACK;
 	vty->login_type = tty ? VTY_LOGIN_CONSOLE : VTY_LOGIN_STDIO;
-	if (vty->fd._fd == STDIN_FILENO)
+	if (ipstack_fd(vty->fd) == STDIN_FILENO)
 	{
-		vty->wfd._fd = STDOUT_FILENO;
+		ipstack_fd(vty->wfd) = STDOUT_FILENO;
 	}
 	return vty;
 }
@@ -2541,7 +2538,7 @@ static void vty_console_close_cache(struct vty *vty)
 
 		if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 		{
-			 tcflush(vty->wfd._fd, TCIOFLUSH);
+			 tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
 		}
 		/* Flush buffer. */
 		if (vty->obuf)
@@ -2549,7 +2546,7 @@ static void vty_console_close_cache(struct vty *vty)
 
 		if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 		{
-			 tcdrain(vty->wfd._fd);
+			 tcdrain(ipstack_fd(vty->wfd));
 		}
 		/* Free command history. */
 		for (i = 0; i < VTY_MAXHIST; i++)
@@ -2572,7 +2569,7 @@ static void vty_console_close(struct vty *vty)
 	if (vty->obuf)
 		buffer_free(vty->obuf);
 	/* Unset vector. */
-	vector_unset(cli_shell.vtyvec, vty->fd._fd);
+	vector_unset(cli_shell.vtyvec, ipstack_fd(vty->fd));
 
 	if (vty->buf)
 		XFREE(MTYPE_VTY, vty->buf);
@@ -2588,8 +2585,8 @@ static void vty_console_close(struct vty *vty)
 	{
 			fprintf(stdout, "%s vty_login_type(vty)=%d  old_termios\r\n",__func__, vty_login_type(vty));
 	fflush(stdout);
-		//tcflush(vty->wfd._fd, TCIOFLUSH);
-		tcsetattr(vty->fd._fd, TCSANOW, &cli_shell.ttycom.old_termios);
+		//tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
+		tcsetattr(ipstack_fd(vty->fd), TCSANOW, &cli_shell.ttycom.old_termios);
 		cli_shell.ttycom.fd = -1;
 	}
 	/* OK free vty. */
@@ -2637,9 +2634,9 @@ static int vty_stdio_attribute(void)
 {
 	if (cli_shell.vty == NULL)
 		return -1;
-	if (FD_IS_STDOUT(cli_shell.vty->fd._fd))
+	if (FD_IS_STDOUT(ipstack_fd(cli_shell.vty->fd)))
 	{
-		if (!tcgetattr(cli_shell.vty->fd._fd, &cli_shell.ttycom.old_termios))
+		if (!tcgetattr(ipstack_fd(cli_shell.vty->fd), &cli_shell.ttycom.old_termios))
 		{
 			memcpy(&cli_shell.ttycom.termios, &cli_shell.ttycom.old_termios, sizeof(struct termios));
 			// cfmakeraw(&cli_shell.ttycom.termios);
@@ -2673,7 +2670,7 @@ static int vty_stdio_attribute(void)
 			termios_p->c_cflag &= ~(CSIZE|PARENB);
 			termios_p->c_cflag |= CS8;
 			*/
-			tcsetattr(cli_shell.vty->fd._fd, TCSANOW, &cli_shell.ttycom.termios);
+			tcsetattr(ipstack_fd(cli_shell.vty->fd), TCSANOW, &cli_shell.ttycom.termios);
 		}
 	}
 	return 0;
@@ -2709,7 +2706,7 @@ static int vty_console_init(const char *tty)
 void vty_tty_init(zpl_char *tty)
 {
 	zpl_socket_t ttyfd;
-	ipstack_init(OS_STACK, ttyfd);
+	ttyfd = ipstack_init(OS_STACK, -1);
 #ifdef ZPL_SHRL_MODULE
 	if(tty && strstr(tty, "readline"))
 	{
@@ -2732,19 +2729,19 @@ void vty_tty_init(zpl_char *tty)
 			cli_shell.ttycom.flow_control = cli_tty_com.flow_control; // flow control
 
 			if (tty_com_open(&cli_shell.ttycom) == OK)
-				ipstack_init(OS_STACK, ttyfd);
+				ttyfd = ipstack_init(OS_STACK, -1);
 			else
 			{
 				zlog_err(MODULE_LIB,"vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
 				return ERROR;
 			}
 		}
-		ttyfd._fd = cli_shell.ttycom.fd;
+		ipstack_fd(ttyfd) = cli_shell.ttycom.fd;
 	}
 	else
 	{
-		ipstack_init(OS_STACK, ttyfd);
-		ttyfd._fd = STDIN_FILENO;
+		ttyfd = ipstack_init(OS_STACK, STDIN_FILENO);
+		ipstack_fd(ttyfd) = STDIN_FILENO;
 	}
 	if (cli_shell.init == 1)
 	{
@@ -2756,8 +2753,8 @@ void vty_tty_init(zpl_char *tty)
 			if (VTY_LOGIN_CONSOLE == vty_login_type(cli_shell.vty))
 			{
 				cli_shell.vty->type = VTY_TERM;
-				dup2(ttyfd._fd, STDERR_FILENO);
-				dup2(ttyfd._fd, STDOUT_FILENO);
+				dup2(ipstack_fd(ttyfd), STDERR_FILENO);
+				dup2(ipstack_fd(ttyfd), STDOUT_FILENO);
 			}
 			else if (VTY_LOGIN_STDIO == vty_login_type(cli_shell.vty))
 			{
@@ -2794,7 +2791,7 @@ static int vty_accept(struct eloop *thread)
 
 	/* We can handle IPv4 or IPv6 ipstack_socket. */
 	vty_sock = sockunion_accept(accept_sock, &su);
-	if (vty_sock._fd < 0)
+	if (ipstack_invalid(vty_sock))
 	{
 		zlog_warn(MODULE_DEFAULT, "can't ipstack_accept vty ipstack_socket : %s",
 				  ipstack_strerror(ipstack_errno));
@@ -2900,7 +2897,7 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 	}
 	/* Make new ipstack_socket. */
 	accept_sock = sockunion_stream_socket(&su);
-	if (accept_sock._fd < 0)
+	if (ipstack_invalid(accept_sock) < 0)
 		return;
 
 	/* This is server, so reuse address. */
@@ -2952,7 +2949,7 @@ vty_serv_un(const char *path)
 
 	/* Make UNIX domain ipstack_socket. */
 	sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
-	if (sock._fd < 0)
+	if (ipstack_invalid(sock) < 0)
 	{
 		zlog_err(MODULE_DEFAULT, "Cannot create unix stream ipstack_socket: %s", ipstack_strerror(ipstack_errno));
 		return;
@@ -2979,7 +2976,7 @@ vty_serv_un(const char *path)
 	ret = ipstack_listen(sock, 5);
 	if (ret < 0)
 	{
-		zlog_err(MODULE_DEFAULT, "ipstack_listen(fd %d) failed: %s", sock._fd, ipstack_strerror(ipstack_errno));
+		zlog_err(MODULE_DEFAULT, "ipstack_listen(fd %d) failed: %s", ipstack_fd(sock), ipstack_strerror(ipstack_errno));
 		ipstack_close(sock); /* Avoid sd leak. */
 		return;
 	}
@@ -3010,7 +3007,7 @@ vtysh_accept(struct thread *thread)
 	sock = ipstack_accept(accept_sock, (struct ipstack_sockaddr *)&client,
 						  (socklen_t *)&client_len);
 
-	if (sock._fd < 0)
+	if (ipstack_fd(sock) < 0)
 	{
 		zlog_warn(MODULE_DEFAULT, "can't ipstack_accept vty ipstack_socket : %s", ipstack_strerror(ipstack_errno));
 		return -1;
@@ -3020,7 +3017,7 @@ vtysh_accept(struct thread *thread)
 	{
 		zlog_warn(MODULE_DEFAULT, "vtysh_accept: could not set vty ipstack_socket %d to non-blocking,"
 								  " %s, closing",
-				  sock._fd, ipstack_strerror(ipstack_errno));
+				  ipstack_fd(sock), ipstack_strerror(ipstack_errno));
 		ipstack_close(sock);
 		return -1;
 	}
@@ -3048,7 +3045,7 @@ vtysh_flush(struct vty *vty)
 		break;
 	case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
-		zlog_warn(MODULE_DEFAULT, "%s: write error to fd %d, closing", __func__, vty->wfd._fd);
+		zlog_warn(MODULE_DEFAULT, "%s: write error to fd %d, closing", __func__, ipstack_fd(vty->wfd));
 		buffer_reset(vty->obuf);
 		vty_close(vty);
 		return -1;
@@ -3071,7 +3068,7 @@ static int vtysh_write_msg(struct vty *vty, zpl_socket_t fd, char *data, int len
 			{
 				zlog_warn(MODULE_DEFAULT,
 						"%s: read error on vtysh client fd %d, closing: %s", __func__,
-						fd._fd, ipstack_strerror(ipstack_errno));
+						ipstack_fd(fd), ipstack_strerror(ipstack_errno));
 				vty->trapping = vty->monitor = 0;
 				buffer_reset(vty->obuf);
 				zpl_osmsg_reset(vty->vtysh_msg);
@@ -3114,7 +3111,7 @@ static int vtysh_read(struct thread *thread)
 			}
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vtysh client fd %d, closing: %s", __func__,
-					  sock._fd, ipstack_strerror(ipstack_errno));
+					  ipstack_fd(sock), ipstack_strerror(ipstack_errno));
 			vty->trapping = vty->monitor = 0;
 			buffer_reset(vty->obuf);
 			zpl_osmsg_reset(vty->vtysh_msg);
@@ -3141,7 +3138,7 @@ static int vtysh_read(struct thread *thread)
 	if (msg.msglen > zpl_osmsg_get_size(vty->vtysh_msg))
 	{
 		zlog_warn(MODULE_DEFAULT, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
-				  __func__, sock._fd, msg.msglen, zpl_osmsg_get_size(vty->vtysh_msg));
+				  __func__, ipstack_fd(sock), msg.msglen, zpl_osmsg_get_size(vty->vtysh_msg));
 		vty->trapping = vty->monitor = 0;
 		buffer_reset(vty->obuf);
 		zpl_osmsg_reset(vty->vtysh_msg);
@@ -3163,7 +3160,7 @@ static int vtysh_read(struct thread *thread)
 			}
 			zlog_warn(MODULE_DEFAULT,
 					  "%s: read error on vtysh client fd %d, closing: %s", __func__,
-					  sock._fd, ipstack_strerror(ipstack_errno));	
+					  ipstack_fd(sock), ipstack_strerror(ipstack_errno));	
 			vty->trapping = vty->monitor = 0;		  		
 			buffer_reset(vty->obuf);
 			zpl_osmsg_reset(vty->vtysh_msg);
@@ -3324,7 +3321,7 @@ static int vty_sshd_read(struct thread *thread)
 			}
 			vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 			zlog_warn(MODULE_DEFAULT, "%s: read failed on vtysh client fd %d, closing: %s",
-					  __func__, sock._fd, ipstack_strerror(ipstack_errno));
+					  __func__, ipstack_fd(sock), ipstack_strerror(ipstack_errno));
 		}
 		buffer_reset(vty->obuf);
 		vty_close(vty);
@@ -3398,7 +3395,7 @@ vty_serv_sock_addrinfo (const char *hostname, unsigned short port)
 			continue;
 
       	sock = ipstack_socket (IPCOM_STACK, ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol);
-      	if (sock._fd < 0)
+      	if (ipstack_fd(sock) < 0)
 			continue;
 
       	sockopt_v6only (ainfo->ai_family, sock);
@@ -3511,7 +3508,7 @@ void vty_close(struct vty *vty)
 		if (vty->hist[i])
 			XFREE(MTYPE_VTY_HIST, vty->hist[i]);
 	/* Unset vector. */
-	vector_unset(cli_shell.vtyvec, vty->fd._fd);
+	vector_unset(cli_shell.vtyvec, ipstack_fd(vty->fd));
 
 	if (vty->buf)
 		XFREE(MTYPE_VTY, vty->buf);
@@ -3560,10 +3557,10 @@ static void vty_read_file(FILE *confp)
 	struct vty *vty;
 	zpl_uint32 line_num = 0;
 	vty = vty_new();
-	ipstack_init(OS_STACK, vty->fd);
-	ipstack_init(OS_STACK, vty->wfd);
-	vty->wfd._fd = STDOUT_FILENO;
-	vty->fd._fd = STDIN_FILENO;
+	vty->fd = ipstack_init(OS_STACK, STDOUT_FILENO);
+	vty->wfd = ipstack_init(OS_STACK, STDIN_FILENO);
+	ipstack_fd(vty->wfd) = STDOUT_FILENO;
+	ipstack_fd(vty->fd) = STDIN_FILENO;
 	vty->type = VTY_FILE;
 	vty->node = CONFIG_NODE;
 
@@ -3764,12 +3761,12 @@ static void ip_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 		return 0;	
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	{
-		 tcflush(vty->wfd._fd, TCIOFLUSH);//串口清空缓存
+		 tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);//串口清空缓存
 	}
 	ipstack_writev(vty->wfd, iov, 2);
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	{
-		 tcdrain(vty->wfd._fd);//等待所有输出完毕
+		 tcdrain(ipstack_fd(vty->wfd));//等待所有输出完毕
 	}
 }
 
@@ -3785,12 +3782,12 @@ static void os_vty_log_fixed(struct vty *vty, zpl_char *buf, zpl_size_t len)
 		return 0;	
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	{
-		 tcflush(vty->wfd._fd, TCIOFLUSH);
+		 tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
 	}
-	writev(vty->wfd._fd, iov, 2);
+	writev(ipstack_fd(vty->wfd), iov, 2);
 	if (vty_login_type(vty) == VTY_LOGIN_CONSOLE)
 	{
-		 tcdrain(vty->wfd._fd);
+		 tcdrain(ipstack_fd(vty->wfd));
 	}
 }
 
@@ -3853,12 +3850,12 @@ static void vty_event(enum vtyevent event, zpl_socket_t sock, struct vty *vty)
 	{
 	case VTY_SERV:
 		vty_serv_thread = eloop_add_read(cli_shell.m_eloop_master, vty_accept, vty, sock);
-		vector_set_index(cli_shell.serv_thread, sock._fd, vty_serv_thread);
+		vector_set_index(cli_shell.serv_thread, ipstack_fd(sock), vty_serv_thread);
 		break;
 #ifdef VTYSH
 	case VTYSH_SERV:
 		vty_serv_thread = thread_add_read(cli_shell.m_thread_master, vtysh_accept, vty, sock);
-		vector_set_index(cli_shell.serv_thread, sock._fd, vty_serv_thread);
+		vector_set_index(cli_shell.serv_thread, ipstack_fd(sock), vty_serv_thread);
 		break;
 	case VTYSH_READ:
 		vty->t_read = thread_add_read(cli_shell.m_thread_master, vtysh_read, vty, sock);
@@ -3953,8 +3950,8 @@ int vty_exec_timeout(struct vty *vty, const char *min_str, const char *sec_str)
 {
 	zpl_socket_t tmp;
 	zpl_ulong timeout = 0;
-	if (cli_shell.mutex)
-		os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
+	//if (cli_shell.mutex)
+	//	os_mutex_lock(cli_shell.mutex, OS_WAIT_FOREVER);
 	/* min_str and sec_str are already checked by parser.  So it must be
 	 all digit string. */
 	if (min_str)
@@ -3967,9 +3964,8 @@ int vty_exec_timeout(struct vty *vty, const char *min_str, const char *sec_str)
 
 	vty->v_timeout = timeout;
 	vty_event(VTY_TIMEOUT_RESET, tmp, vty);
-	if (cli_shell.mutex)
-		os_mutex_unlock(cli_shell.mutex);
-
+	//if (cli_shell.mutex)
+	//	os_mutex_unlock(cli_shell.mutex);
 	return CMD_SUCCESS;
 }
 /* Reset all VTY status. */
@@ -4081,7 +4077,7 @@ struct vty *vty_lookup(zpl_socket_t sock)
 	{
 		if ((vty = vector_slot(cli_shell.vtyvec, i)) != NULL)
 		{
-			if (vty->fd._fd == sock._fd)
+			if (ipstack_fd(vty->fd) == ipstack_fd(sock))
 				return vty;
 		}
 	}
@@ -4149,7 +4145,7 @@ void vty_init(void)
 	{
 		memset(&cli_shell, 0, sizeof(cli_shell_t));
 		cli_shell.init = 1;
-		cli_shell.mutex = os_mutex_init();
+		cli_shell.mutex = os_mutex_name_init("climutex");
 #ifdef ZPL_IPCOM_MODULE
 		if (cli_shell.m_eloop_master == NULL)
 			cli_shell.m_eloop_master = eloop_master_module_create(MODULE_TELNET);
@@ -4202,10 +4198,10 @@ int vty_execute_shell(void *cli, const char *cmd)
 	if (vty == NULL)
 	{
 		vty = vty_new();
-		ipstack_init(OS_STACK, vty->fd);
-		ipstack_init(OS_STACK, vty->fd);
-		vty->wfd._fd = STDOUT_FILENO;
-		vty->fd._fd = STDIN_FILENO;
+		vty->fd = ipstack_init(OS_STACK, STDOUT_FILENO);
+		vty->wfd = ipstack_init(OS_STACK, STDIN_FILENO);
+		ipstack_fd(vty->wfd) = STDOUT_FILENO;
+		ipstack_fd(vty->fd) = STDIN_FILENO;
 		vty->type = VTY_TERM;
 		vty->node = ENABLE_NODE;
 		vty_cflags = 1;

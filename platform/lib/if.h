@@ -96,7 +96,6 @@ extern zpl_bool if_is_tunnel(struct interface *ifp);
 extern zpl_bool if_is_lag(struct interface *ifp);
 extern zpl_bool if_is_lag_member(struct interface *ifp);
 extern zpl_bool if_is_vlan(struct interface *ifp);
-extern zpl_bool if_is_subvlan(struct interface *ifp);
 extern zpl_bool if_is_brigde(struct interface *ifp);
 extern zpl_bool if_is_brigde_member(struct interface *ifp);
 extern zpl_bool if_is_loop(struct interface *ifp);
@@ -159,6 +158,7 @@ extern int if_update_l3intfid2(struct interface *ifp, zpl_phyport_t phyid);
 extern void *if_module_data(struct interface *ifp, module_t mid);
 
 extern zpl_bool if_have_kernel(struct interface *ifp);
+extern int if_kernelname_set(struct interface *ifp);
 
 extern int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid);
 
