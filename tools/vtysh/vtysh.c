@@ -168,7 +168,8 @@ static char **new_completion(char *text, int start, int end)
 static int vtysh_connect_node(struct vtysh_client *vclient)
 {
   int ret;
-  int sock, len;
+  int len;
+  zpl_socket_t sock;
   struct sockaddr_un addr;
   struct stat s_stat;
 
@@ -191,7 +192,7 @@ static int vtysh_connect_node(struct vtysh_client *vclient)
     }
   }
 
-  sock = socket(AF_UNIX, SOCK_STREAM, 0);
+  sock = ipstack_socket(OS_STACK, AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0)
   {
 #ifdef DEBUG
@@ -210,14 +211,14 @@ static int vtysh_connect_node(struct vtysh_client *vclient)
   len = sizeof(addr.sun_family) + strlen(addr.sun_path);
 #endif /* HAVE_STRUCT_SOCKADDR_UN_SUN_LEN */
 
-  ret = connect(sock, (struct sockaddr *)&addr, len);
+  ret = ipstack_connect(sock, (struct sockaddr *)&addr, len);
   if (ret < 0)
   {
 #ifdef DEBUG
     fprintf(stderr, "vtysh_connect(%s): connect = %s\n", vclient->path,
             strerror(errno));
 #endif /* DEBUG */
-    close(sock);
+    ipstack_close(sock);
     return -1;
   }
   vclient->fd = sock;
@@ -227,18 +228,14 @@ static int vtysh_connect_node(struct vtysh_client *vclient)
 
 static int vtysh_read_result(struct vtysh_client *vclient)
 {
-  // int ret;
-  zpl_socket_t sock;
   zpl_uint32 nbytes = 0, already = 0;
   zpl_uchar *buf = NULL;
   vtysh_result_t msg;
-  sock.stack = OS_STACK;
-  ipstack_fd(sock) = vclient->fd;
   zpl_osmsg_reset(vclient->vty->vtysh_msg);
   while (1)
   {
     already = zpl_osmsg_get_endp(vclient->vty->vtysh_msg);
-    nbytes = zpl_osmsg_read_try(vclient->vty->vtysh_msg, sock, sizeof(vtysh_result_t) - already);
+    nbytes = zpl_osmsg_read_try(vclient->vty->vtysh_msg, vclient->fd, sizeof(vtysh_result_t) - already);
     if (nbytes == -1)
     {
       zpl_osmsg_reset(vclient->vty->vtysh_msg);
@@ -271,7 +268,7 @@ static int vtysh_read_result(struct vtysh_client *vclient)
     while (1)
     {
       ssize_t nbyte;
-      if (((nbyte = zpl_osmsg_read_try(vclient->vty->vtysh_msg, sock,
+      if (((nbyte = zpl_osmsg_read_try(vclient->vty->vtysh_msg, vclient->fd,
                                        msg.retlen - already)) == 0) ||
           (nbyte == -1))
       {

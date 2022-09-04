@@ -32,7 +32,7 @@ int
 readn (zpl_socket_t fd, zpl_uchar *ptr, zpl_uint32 nbytes)
 {
   zpl_uint32 nleft;
-  zpl_uint32 nread;
+  zpl_int32 nread;
 
   nleft = nbytes;
 

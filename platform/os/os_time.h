@@ -82,7 +82,7 @@ extern void os_usleep_interrupt (zpl_uint32 useconds);
 
 extern int os_tmtime_get (enum os_tmtime_id type, zpl_time_t t, struct tm *ptm);
 
-extern zpl_char *os_time_fmt (zpl_char *fmt, zpl_time_t t);
+extern zpl_char *os_time_fmt (const zpl_char *fmt, zpl_time_t t);
 extern zpl_char *os_time_string(zpl_time_t tInput);
 
 extern const zpl_char *os_build_time2date(zpl_char *str);
@@ -90,7 +90,7 @@ extern const zpl_char *os_date2build_time(zpl_char *str);
 
 extern int os_time_set_api(zpl_uint32 timesp);
 extern int os_timezone_offset_api(zpl_char * res);
-extern int os_timezone_set_api(zpl_uint32 tizone, zpl_char *timzstr);
+extern int os_timezone_set_api(zpl_int32 tizone, zpl_char *timzstr);
 
 #define OS_TIMER_FOREVER 0X0FFFFFFF
 

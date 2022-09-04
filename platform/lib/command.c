@@ -548,125 +548,6 @@ struct cmd_element * new_element(const char *string, const char *doc, zpl_uint32
   return cmd;
 }
 
-
-/* 获取helpstr 个数 */
-static int cmd_helpstr_maxsize(const char *string)
-{
-  int num = 0;
-  const char *cp = string;
-  while (*cp != '\0')
-  {
-    if(*cp == '\n')
-      num++;
-     cp++; 
-  }
-  return num;
-}
-
-static int cmd_keystr_maxsize(const char *string)
-{
-  int j = 0, k = 0;
-  const char *cp = string;
-  while (isspace(*cp))
-    cp++;
-  while (1)
-  {
-    switch (*cp)
-    {
-    case '\0':
-      return (j + 1 + k);
-    case '(':
-    case ')':
-    case '{':
-    case '}':
-    case '[':
-    case ']':
-    case '-':
-      break;
-    case ' ':
-      k++;
-      break;
-    case '|':
-      j++;
-      break;
-    default:
-      break;
-    }
-    cp++;
-  }
-  return (j + 1 + k);
-}
-/*删除多余空格*/
-static int cmd_keystr_surplus_isspace(const char *string, char *cmd)
-{
-  int i = 0, k = 0;
-  const char *cp = string;
-  while (isspace(*cp))
-    cp++;
-  while (1)
-  {
-    switch (*cp)
-    {
-    case '\0':
-      return 0;
-    case '(':
-    case ')':
-    case '|':
-    case '{':
-    case '}':
-    case '[':
-    case ']':
-    case '-':
-      k = 1;
-      cmd[i++] = *cp;
-      break;
-    case ' ':
-      switch (*(cp + 1))
-      {
-      case ')':
-      case '|':
-      case '}':
-      case ']':
-      case '-':
-        k = 1;
-        break;
-      case '(':
-      case '{':
-      case '[':
-        break;
-      }
-      if (k == 0)
-      {
-        cmd[i++] = *cp;
-        k = 1;
-      }
-      break;
-    default:
-      k = 0;
-      cmd[i++] = *cp;
-      break;
-    }
-    cp++;
-  }
-  return 0;
-}
-
-static int cmd_element_check(struct cmd_element *cmd)
-{
-  char cmdstr[1024];
-  memset(cmdstr, 0, sizeof(cmdstr));
-  cmd_keystr_surplus_isspace(cmd->string, cmdstr);
-  if(cmd_keystr_maxsize(cmdstr) != cmd_helpstr_maxsize(cmd->doc))
-  {
-    /*
-    fprintf(stderr, "\nError parsing command: \"%s\"\n", cmd->string);
-    fprintf(stderr, "This is a programming error. Check your CLI helpstr.\n");
-    return ERROR;
-    */
-  }
-  return OK;
-}
-
 /* Install a command into a node. */
 void install_element(enum node_type ntype, enum cmd_privilege privilege, struct cmd_element *cmd)
 {
@@ -679,8 +560,6 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
             __func__);
     return;
   }
-  if(cmd_element_check(cmd) == ERROR)
-    exit(1);
 
   cnode = vector_slot(cli_cmdvec_list, ntype);
 
@@ -2437,7 +2316,7 @@ cmd_lcd(zpl_char **matched)
 {
   zpl_uint32 i;
   zpl_uint32 j;
-  zpl_uint32 lcd = -1;
+  zpl_int32 lcd = -1;
   zpl_char *s1 = NULL, *s2 = NULL;
   zpl_char c1, c2;
 

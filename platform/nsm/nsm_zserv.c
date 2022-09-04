@@ -1922,7 +1922,7 @@ nsm_zserv_show_client_detail (struct vty *vty, struct zserv *client)
   vty_out (vty, "Client: %s %s",
 	   zroute_string(client->proto), VTY_NEWLINE);
   vty_out (vty, "------------------------ %s", VTY_NEWLINE);
-  vty_out (vty, "FD: %d %s", client->sock, VTY_NEWLINE);
+  vty_out (vty, "FD: %d %s", ipstack_fd(client->sock), VTY_NEWLINE);
   vty_out (vty, "Route Table ID: %d %s", client->rtm_table, VTY_NEWLINE);
 
   vty_out (vty, "Connect Time: %s %s",
@@ -2025,8 +2025,8 @@ DEFUN (show_nsm_zserv_client,
        show_nsm_zserv_client_cmd,
        "show zebra client",
        SHOW_STR
-       "Zebra information"
-       "Client information")
+       "Zebra information\n"
+       "Client information\n")
 {
   struct listnode *node;
   struct zserv *client;
@@ -2042,8 +2042,9 @@ DEFUN (show_nsm_zserv_client_summary,
        show_nsm_zserv_client_summary_cmd,
        "show zebra client summary",
        SHOW_STR
-       "Zebra information brief"
-       "Client information brief")
+       "Zebra information\n"
+       "Client information\n"
+       "Client information summary\n")
 {
   struct listnode *node;
   struct zserv *client;
@@ -2097,20 +2098,15 @@ static struct cmd_node forwarding_node =
   "",				/* This node has no interface. */
   1
 };
-
-
 #endif
 
 /* Initialisation of zebra and installation of commands. */
 void cmd_nsm_zserv_init(void)
 {
   /* Client list init. */
-#if 1
   /* Install configuration write function. */
   install_node (&table_node, config_write_table);
   install_node (&forwarding_node, config_write_forwarding);
-
-
 
   install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_nsm_zserv_client_cmd);
   install_element (ENABLE_NODE, CMD_VIEW_LEVEL, &show_nsm_zserv_client_summary_cmd);
@@ -2120,10 +2116,7 @@ void cmd_nsm_zserv_init(void)
   install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &config_table_cmd);
 #endif /* HAVE_NETLINK */
 
-
-#endif
   /* Route-map */
-  // nsm_zserv_route_map_init ();
   nsm_route_map_init();
 }
 

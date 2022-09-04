@@ -35,10 +35,10 @@ static hal_driver_t hal_driver;
 
 static int hal_main_task(void *p)
 {
-    //int rc = 0;
+
 	struct thread_master *master = (struct thread_master *)p;
 	module_setup_task(master->module, os_task_id_self());
-	//host_waitting_loadconfig();
+
 	while(thread_mainloop(master))
 		;
 	return OK;
@@ -50,7 +50,7 @@ int hal_module_init(void)
 {
 	memset(&hal_driver, 0, sizeof(hal_driver_t));
 	hal_driver.master = thread_master_module_create(MODULE_HAL);
-	hal_ipcsrv_init(hal_driver.master, -1, HAL_IPCMSG_CMD_PATH, -1, HAL_IPCMSG_EVENT_PATH);
+	hal_ipcsrv_init(hal_driver.master, -1, HAL_IPCMSG_CMD_PATH);
 	return OK;
 }
 

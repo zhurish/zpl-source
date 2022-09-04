@@ -30,19 +30,18 @@ endif
 
 LINUX_MDIODEV_NAME := linux-mdio-dev
 
-LINUX_ETHDEV_NAME := linux-eth-dev
 
 # obj file
 MDIO_OBJ += mdiodev.o
 
 KBSP_OBJ += khal_ipcmsg.o
 KBSP_OBJ += khal_ipccmd.o
+KBSP_OBJ += khal_netlink.o
+KBSP_OBJ += khal_netpkt.o
+KBSP_OBJ += keth_drv.o
+KBSP_OBJ += kloopback.o
 KBSP_OBJ += khal_util.o
 KBSP_OBJ += khal_client.o
-KBSP_OBJ += khal_netlink.o
-KETH_OBJ += keth_drv.o
-KBSP_OBJ += khal_netpkt.o
-KBSP_OBJ += klog.o
 
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 BSP_OBJ += ../../bsp/hal/bsp_global.o
@@ -89,7 +88,7 @@ $(LINUX_KBE_NAME)-objs += $(SDK_OBJ)
 endif
 
 $(LINUX_MDIODEV_NAME)-objs += $(MDIO_OBJ)
-$(LINUX_ETHDEV_NAME)-objs += $(KETH_OBJ)
+
 
 EXTRA_CFLAGS += -I$(BASE_ROOT)/include \
 				-I$(BASE_ROOT)/$(MODULEDIR)/bsp/hal \
@@ -103,7 +102,7 @@ endif
 ccflags-y += $(ZPLKCFLAGS) $(EXTRA_CFLAGS)
 obj-m += $(LINUX_KBE_NAME).o  
 obj-m += $(LINUX_MDIODEV_NAME).o 
-obj-m += $(LINUX_ETHDEV_NAME).o 
+ 
 
 make_prepare:
 	@echo ""
@@ -130,19 +129,25 @@ install:
 	@install -d $(KO_DIR)
 	@install -m 755 $(LINUX_KBE_NAME).ko $(KO_DIR)
 	@install -m 755 $(LINUX_MDIODEV_NAME).ko $(KO_DIR)
-	@install -m 755 $(LINUX_ETHDEV_NAME).ko $(KO_DIR)
-	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers
+	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers .tmp*
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd 
 	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd
 endif
 
-clean:  objclean                                   
-	@$(RM) $(KO_DIR)/$(LINUX_KBE_NAME).ko
-	@$(RM) $(KO_DIR)/$(LINUX_MDIODEV_NAME).ko
+clean:  objclean   
+	@if test -f $(KO_DIR)/$(LINUX_KBE_NAME).ko ; \
+		then \
+		@$(RM) $(KO_DIR)/$(LINUX_KBE_NAME).ko ; \
+	fi
+	@if test -f $(KO_DIR)/$(LINUX_MDIODEV_NAME).ko ; \
+		then \
+		@$(RM) $(KO_DIR)/$(LINUX_MDIODEV_NAME).ko ; \
+	fi                                
+
 
 objclean: 
-	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers
+	@$(RM) -rf *.ko *.o *.mod *.mod.* .*.cmd *.order *.symvers .tmp*
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 	@$(RM) -rf ../user/*.ko ../user/*.o ../user/.*.cmd 
 	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd 

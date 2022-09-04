@@ -265,7 +265,7 @@ zclient_flush_data(struct thread *thread)
   {
   case BUFFER_ERROR:
     zlog_warn(MODULE_DEFAULT, "%s: buffer_flush_available failed on zclient fd %d, closing",
-              __func__, zclient->sock);
+              __func__, ipstack_fd(zclient->sock));
     return zclient_failed(zclient);
     break;
   case BUFFER_PENDING:
@@ -287,7 +287,7 @@ int zclient_send_message(struct zclient *zclient)
   {
   case BUFFER_ERROR:
     zlog_warn(MODULE_DEFAULT, "%s: buffer_write failed to zclient fd %d, closing",
-              __func__, zclient->sock);
+              __func__, ipstack_fd(zclient->sock));
     return zclient_failed(zclient);
     break;
   case BUFFER_EMPTY:
@@ -411,12 +411,12 @@ int zclient_start(struct zclient *zclient)
   }
 
   if (ipstack_set_nonblocking(zclient->sock) < 0)
-    zlog_warn(MODULE_DEFAULT, "%s: set_nonblocking(%d) failed", __func__, zclient->sock);
+    zlog_warn(MODULE_DEFAULT, "%s: set_nonblocking(%d) failed", __func__, ipstack_fd(zclient->sock));
 
   /* Clear fail count. */
   zclient->fail = 0;
   if (zclient_debug)
-    zlog_debug(MODULE_DEFAULT, "zclient connect success with socket [%d]", zclient->sock);
+    zlog_debug(MODULE_DEFAULT, "zclient connect success with socket [%d]", ipstack_fd(zclient->sock));
 
   /* Create read thread. */
   zclient_event(ZCLIENT_READ, zclient);
@@ -931,14 +931,14 @@ zclient_read(struct thread *thread)
   if (marker != MSG_HEADER_MARKER || version != ZSERV_VERSION)
   {
     zlog_err(MODULE_DEFAULT, "%s: socket %d version mismatch, marker %d, version %d",
-             __func__, zclient->sock, marker, version);
+             __func__, ipstack_fd(zclient->sock), marker, version);
     return zclient_failed(zclient);
   }
 
   if (length < ZCLIENT_HEADER_SIZE)
   {
     zlog_err(MODULE_DEFAULT, "%s: socket %d message length %u is less than %d ",
-             __func__, zclient->sock, length, ZCLIENT_HEADER_SIZE);
+             __func__, ipstack_fd(zclient->sock), length, ZCLIENT_HEADER_SIZE);
     return zclient_failed(zclient);
   }
 
@@ -963,7 +963,7 @@ zclient_read(struct thread *thread)
         (nbyte == -1))
     {
       if (zclient_debug)
-        zlog_debug(MODULE_DEFAULT, "zclient connection closed socket [%d].", zclient->sock);
+        zlog_debug(MODULE_DEFAULT, "zclient connection closed socket [%d].", ipstack_fd(zclient->sock));
       return zclient_failed(zclient);
     }
     if (nbyte != (ssize_t)(length - already))
@@ -1120,7 +1120,7 @@ zclient_event(enum event event, struct zclient *zclient)
   }
 }
 
-const char *const zclient_serv_path_get()
+const char * zclient_serv_path_get()
 {
   return (const char *)zclient_serv_path ? zclient_serv_path : NSM_SERV_PATH;
 }

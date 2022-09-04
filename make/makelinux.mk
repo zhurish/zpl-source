@@ -150,36 +150,53 @@ ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 # WANRING
 #	
 ZPLOS_CFLAGS += -MMD -MP -Wfatal-errors -Wall -Wextra -Wnested-externs -Wmissing-prototypes \
-			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
-			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused \
-			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts \
-			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wpointer-arith -Wbad-function-cast
-			 
+			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	-Wmissing-braces \
+			 -Wimplicit-function-declaration -Wimplicit	-Wreturn-type -Wunused -Warray-bounds \
+			 -Wswitch -Wuninitialized -Wchar-subscripts -Waddress -Wdiv-by-zero \
+			 -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wpointer-arith -Wbad-function-cast \
+			 -Wenum-compare -Wignored-qualifiers -Wtype-limits
+
+ZPLOS_FLAGS_WFORMAT += -Wformat
+ZPLOS_FLAGS_WFORMAT += -Wformat-contains-nul #当格式字符串包含 NUL 字节时给出警告  
+ZPLOS_FLAGS_WFORMAT += -Wformat-extra-args #当传递给格式字符串的参数太多时给出警告  
+#ZPLOS_FLAGS_WFORMAT += -Wformat-nonliteral #当格式字符串不是字面值时给出警告  
+ZPLOS_FLAGS_WFORMAT += -Wformat-security #当使用格式字符串的函数可能导致安全问题时给出警告   
+ZPLOS_FLAGS_WFORMAT += -Wformat-zero-length #对长度为 0 的格式字符串给出警告 
+
+ZPLOS_FLAGS_EFORMAT += -Werror=format
+ZPLOS_FLAGS_EFORMAT += -Werror=format-contains-nul #当格式字符串包含 NUL 字节时给出警告  
+ZPLOS_FLAGS_EFORMAT += -Werror=format-extra-args #当传递给格式字符串的参数太多时给出警告  
+#ZPLOS_FLAGS_EFORMAT += -Werror=format-nonliteral #当格式字符串不是字面值时给出警告  
+ZPLOS_FLAGS_EFORMAT += -Werror=format-security #当使用格式字符串的函数可能导致安全问题时给出警告   
+ZPLOS_FLAGS_EFORMAT += -Werror=format-zero-length #对长度为 0 的格式字符串给出警告 	
+
 ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra \
 			 -Wredundant-decls -Wcast-align -Wunreachable-code -Wshadow	\
-			 -Wreturn-type -Wunused \
-			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts \
-			 -Wpointer-arith -Wwrite-strings 
+			 -Wreturn-type -Wunused -Waddress -Wenum-compare -Wtype-limits \
+			 -Wswitch -Wformat -Wuninitialized -Wchar-subscripts -Wsign-promo \
+			 -Wpointer-arith -Wwrite-strings -Warray-bounds -Wdiv-by-zero -Wignored-qualifiers
 		
-
-ZPLOS_CFLAGS += -Werror=return-type -Werror=format-extra-args \
-			  -Werror=unreachable-code -Werror=chkp \
+#-Werror=missing-braces
+ZPLOS_CFLAGS += $(ZPLOS_FLAGS_WFORMAT) -Werror=return-type -Werror=format-extra-args -Werror=address\
+			  -Werror=unreachable-code -Werror=chkp  \
 			  -Werror=unused-value -Werror=implicit-int -Werror=missing-parameter-type \
-			  -Werror=parentheses -Werror=char-subscripts \
+			  -Werror=parentheses -Werror=char-subscripts -Werror=pointer-arith\
 			  -Werror=invalid-memory-model -Werror=sizeof-pointer-memaccess \
-			  -Werror=overflow -Werror=format-security -Werror=shadow \
-			  -Werror=unsafe-loop-optimizations -Werror=init-self \
+			  -Werror=overflow -Werror=format-security -Werror=shadow -Werror=array-bounds \
+			  -Werror=unsafe-loop-optimizations -Werror=init-self  \
 			  -Werror=unused-function -Werror=redundant-decls -Werror=unused-variable \
 			  -Werror=missing-prototypes -Werror=sequence-point -Werror=float-equal \
 			  -Werror=strict-prototypes -Werror=overlength-strings -Werror=unused-label \
 			  -Werror=shift-count-overflow  -Werror=int-conversion -Werror=unsafe-loop-optimizations \
-			  -Werror=memset-transposed-args  -Werror=implicit-function-declaration
-			  
-			  
+			  -Werror=memset-transposed-args  -Werror=implicit-function-declaration  \
+			  -Werror=enum-compare -Werror=ignored-qualifiers -Werror=type-limits $(ZPLOS_FLAGS_EFORMAT) 
+ 
+	  
 #			  
 #
-ZPLOS_CPPFLAGS +=  -Werror=return-type -Werror=unreachable-code -Werror=unused-function \
-				 -Werror=ctor-dtor-privacy  
+ZPLOS_CPPFLAGS += $(ZPLOS_FLAGS_WFORMAT)  -Werror=return-type -Werror=unreachable-code -Werror=unused-function \
+				-Werror=ctor-dtor-privacy  -Werror=sign-promo -Werror=ignored-qualifiers \
+				-Werror=type-limits $(ZPLOS_FLAGS_EFORMAT) 
 #			 
 ZPLOS_CFLAGS += -fmessage-length=0 -Wcast-align
 #

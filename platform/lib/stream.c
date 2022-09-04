@@ -841,7 +841,7 @@ stream_read_try(struct stream *s, zpl_socket_t fd, zpl_size_t size)
   /* Error: was it transient (return -2) or fatal (return -1)? */
   if (IPSTACK_ERRNO_RETRY(ipstack_errno))
     return -2;
-  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, fd, ipstack_strerror(ipstack_errno));
+  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
   return -1;
 }
 
@@ -873,7 +873,7 @@ stream_recvfrom (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 
   /* Error: was it transient (return -2) or fatal (return -1)? */
   if (IPSTACK_ERRNO_RETRY(ipstack_errno))
     return -2;
-  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, fd, ipstack_strerror(ipstack_errno));
+  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
   return -1;
 }
 

@@ -245,7 +245,7 @@ static int bsp_netlink_sock_parse_info(bsp_netlink_t *nsock,
 
 static int bsp_netlink_sock_talk(bsp_netlink_t *nsock, struct ipstack_nlmsghdr *n, int (*filter)(void *, int, char *, int, void *), void *p)
 {
-    zpl_uint32 status;
+    zpl_int32 status;
     struct ipstack_sockaddr_nl snl;
     struct ipstack_iovec iov = {.iov_base = (void *)n, .iov_len = n->nlmsg_len};
     struct ipstack_msghdr msg = {

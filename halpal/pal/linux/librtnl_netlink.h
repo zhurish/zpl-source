@@ -80,7 +80,7 @@ typedef int (*librtnl_filter_callback)(struct ipstack_sockaddr_nl *, struct ipst
 #define NL_DEFAULT_ROUTE_METRIC 20
 
 #define NLMSG_TAIL(nmsg) \
-	((struct ipstack_rtattr *) (((void *) (nmsg)) + IPSTACK_NLMSG_ALIGN((nmsg)->nlmsg_len)))
+	((struct ipstack_rtattr *) (((char *) (nmsg)) + IPSTACK_NLMSG_ALIGN((nmsg)->nlmsg_len)))
 
 /*
  * librtnl.c

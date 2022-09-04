@@ -69,7 +69,7 @@ typedef enum
   NSM_EVENT_VRF_UNREGISTER,
 
   NSM_EVENT_MESSAGE_MAX,
-};
+}nsm_event_type;
 /* Marker value used in new Zserv, in the byte location corresponding
  * the command value in the old nsm_zserv.header. To allow old and new
  * Zserv headers to be distinguished from each other.

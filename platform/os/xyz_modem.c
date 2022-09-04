@@ -516,7 +516,7 @@ xyz_modem_stream_open (xyz_modem_t *xyz, zpl_uint32 *err)
 static int
 xyz_modem_stream_read (xyz_modem_t *xyz, zpl_uchar *buf, zpl_uint32 size, zpl_uint32 *err)
 {
-	zpl_uint32 stat, total, len;
+	zpl_int32 stat, total, len;
 	zpl_uint32 retries;
 
 	total = 0;
@@ -649,7 +649,7 @@ xyz_modem_stream_close (xyz_modem_t *xyz, zpl_uint32 *err)
 static void
 xyz_modem_stream_terminate (xyz_modem_t *xyz, zpl_bool abort, int (*xyz_getc) (xyz_modem_t *))
 {
-	zpl_uchar c;
+	zpl_char c;
 
 	if (abort)
 	{

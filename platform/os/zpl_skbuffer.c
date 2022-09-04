@@ -303,7 +303,7 @@ int zpl_skb_data_append(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len)
 		}
 	}
 
-	if (bufdata->skb_data != NULL && bufdata->skb_len >= 0)
+	if (bufdata->skb_data != NULL && bufdata->skb_len > 0)
 	{
 		memcpy(bufdata->skb_data + bufdata->skb_len, data, len);
 		bufdata->skb_len += len;

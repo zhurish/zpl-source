@@ -255,13 +255,6 @@ static inline void *XREALLOC(int type, void *r, int size)
 #include "khal_client.h"
 
 
-/* LOG MODULE */
-int klog_init(void);
-void klog_exit(void);
-int klog_dstpid(int pid);
-int klog_level(int level);
-void klog_printk(int module, int priority, const char *fmt, ...);
-
 /*
 #define zlog_emerg(m, fmt, ...) 	klog_printk(m, 1, fmt, ##__VA_ARGS__)
 #define zlog_err(m, fmt, ...) 		klog_printk(m, 3, fmt, ##__VA_ARGS__)

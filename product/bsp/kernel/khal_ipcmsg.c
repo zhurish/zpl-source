@@ -227,37 +227,6 @@ int khal_ipcmsg_msg_clone(struct khal_ipcmsg *dst_ipcmsg, struct khal_ipcmsg *sr
     return OK;
 }
 
-int khal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len)
-{
-    HAL_ENTER_FUNC();
-    return 0;//hal_ipcsrv_send_message(unit, command, ipcmsg, len);
-}
-
-int khal_ipcmsg_send_andget_message(int unit, zpl_uint32 command, void *ipcmsg, int len,  struct khal_ipcmsg_result *getvalue)
-{
-    HAL_ENTER_FUNC();
-    return 0;//hal_ipcsrv_send_and_get_message(unit, command, ipcmsg, len, getvalue);
-}
-
-
-int khal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct khal_ipcmsg *src_ipcmsg)
-{
-    HAL_ENTER_FUNC();
-    return 0;//hal_ipcsrv_copy_send_ipcmsg(unit, command, src_ipcmsg);
-}
-
-int khal_ipcmsg_send(int unit, struct khal_ipcmsg *src_ipcmsg)
-{
-    HAL_ENTER_FUNC();
-    return 0;//hal_ipcsrv_send_ipcmsg(unit, src_ipcmsg);
-}
-
-int khal_ipcmsg_getmsg_callback(int unit, zpl_uint32 command, void *ipcmsg, int len, 
-    struct khal_ipcmsg_result *getvalue, struct khal_ipcmsg_callback *callback)
-{
-    HAL_ENTER_FUNC();
-    return 0;//hal_ipcsrv_getmsg_callback(unit, command, ipcmsg, len, getvalue, callback);
-}
 
 int khal_ipcmsg_result_set(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_result *val)
 {
@@ -286,20 +255,6 @@ int khal_ipcmsg_result_get(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_result
 }
 
 
-int khal_ipcmsg_port_set(struct khal_ipcmsg *ipcmsg, ifindex_t ifindex)
-{ 
-    /*
-    khal_ipcmsg_putc(ipcmsg, IF_IFINDEX_UNIT_GET(ifindex)); 
-    khal_ipcmsg_putc(ipcmsg, IF_IFINDEX_SLOT_GET(ifindex));
-    khal_ipcmsg_putc(ipcmsg, IF_IFINDEX_TYPE_GET(ifindex));
-    khal_ipcmsg_putl(ipcmsg, IF_IFINDEX_ID_GET(ifindex));
-    khal_ipcmsg_putl(ipcmsg, IF_IFINDEX_PHYID_GET(ifindex));
-    //khal_ipcmsg_putl(ipcmsg, (ifindex));
-    khal_ipcmsg_putl(ipcmsg, if_ifindex2l3intfid(ifindex));
-    khal_ipcmsg_putl(ipcmsg, IF_IFINDEX_VRFID_GET(ifindex));
-    */
-    return OK;
-}
 
 int khal_ipcmsg_port_get(struct khal_ipcmsg *ipcmsg, khal_port_header_t *bspport)
 {
@@ -333,12 +288,6 @@ int khal_ipcmsg_global_get(struct khal_ipcmsg *ipcmsg, khal_global_header_t *glo
 }
 
 
-
-
-int khal_ipcmsg_hexmsg(struct khal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr)
-{
-    return OK;
-}
 
 
 

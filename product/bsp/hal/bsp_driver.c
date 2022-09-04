@@ -44,7 +44,7 @@ struct module_list module_list_sdk =
 
 int bsp_driver_mac_cache_add(bsp_driver_t *sdkdriver, zpl_uint8 port, zpl_uint8 *mac, vlan_t vid, zpl_uint8 isstatic, zpl_uint8 isage, zpl_uint8 vaild)
 {
-	int i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < sdkdriver->mac_cache_max; i++)
 	{
 		if(sdkdriver->mac_cache_entry[i].use == 1 && 
@@ -81,7 +81,7 @@ int bsp_driver_mac_cache_add(bsp_driver_t *sdkdriver, zpl_uint8 port, zpl_uint8 
 
 int bsp_driver_mac_cache_update(bsp_driver_t *sdkdriver, zpl_uint8 *mac, zpl_uint8 isage)
 {
-	int i = 0;
+	zpl_uint32 i = 0;
 	for(i = 0; i < sdkdriver->mac_cache_max; i++)
 	{
 		if(sdkdriver->mac_cache_entry[i].use == 1 && (memcmp(sdkdriver->mac_cache_entry[i].mac, mac, ETH_ALEN) == 0))
@@ -95,11 +95,11 @@ int bsp_driver_mac_cache_update(bsp_driver_t *sdkdriver, zpl_uint8 *mac, zpl_uin
 	return OK;
 }
 
-static int bsp_driver_kernel_netlink_request(bsp_driver_t *bspdriver, char *data, int len, int (*filter)(bsp_driver_t *, char *, int, int, void *), void *p)
+static int bsp_driver_kernel_netlink_request(bsp_driver_t *bspdriver, char *data, int len, int (*filter)(bsp_driver_t *, int, char *, int, void *), void *p)
 {
 	int	*from_pid = NULL;
 	struct ipstack_nlmsghdr *nlh = NULL;
-	struct hal_ipcmsg_header *header = NULL;
+	//struct hal_ipcmsg_header *header = NULL;
   	struct 
   	{
     	struct ipstack_nlmsghdr nlh;
@@ -118,7 +118,7 @@ static int bsp_driver_kernel_netlink_request(bsp_driver_t *bspdriver, char *data
 	*from_pid = htonl(getpid());
 	if(len)
 		memcpy (&req.buf[4], data, len); 
-	header = (struct hal_ipcmsg_header *)data;
+	//header = (struct hal_ipcmsg_header *)data;
 	return bsp_netlink_talk(bspdriver->netlink_cfg, nlh, filter, p);
 }
 #if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
@@ -185,7 +185,7 @@ int bsp_driver_debug(bsp_driver_t *bspdriver, zpl_uint32 module, zpl_uint32 enab
 }
 
 #if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
-static const hal_ipccmd_callback_t const moduletable[] = {
+static const hal_ipccmd_callback_t moduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_NONE, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_MGT, NULL),
 	HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, bsp_global_module_handle),
@@ -313,8 +313,8 @@ int bsp_module_func(bsp_driver_t *bspdriver, bsp_sdk_func init_func, bsp_sdk_fun
 
 int bsp_driver_report(bsp_driver_t *bspdriver, char *data, int len)
 {
-	if(bspdriver && bspdriver->event_client)
-		return hal_client_send_report(bspdriver->event_client, data, len);
+	if(bspdriver && bspdriver->hal_client)
+		return hal_client_send_report(bspdriver->hal_client, data, len);
 	return ERROR;	
 }
 
@@ -329,9 +329,8 @@ static int bsp_driver_task(void *p)
 
 int bsp_driver_init(bsp_driver_t *bspdriver)
 {
-  struct hal_client *bsp = hal_client_create(MODULE_BSP, HAL_IPCTYPE_CMD);
-  struct hal_client *event_bsp = hal_client_create(MODULE_BSP, HAL_IPCTYPE_EVENT);
-  if (bsp && event_bsp)
+  struct hal_client *bsp = hal_client_create(MODULE_BSP, 0, 0);
+  if (bsp)
   {
 	bspdriver->mac_cache_max = ETH_MAC_CACHE_MAX;
 	bspdriver->mac_cache_num = 0;
@@ -339,7 +338,6 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 	if(bspdriver->mac_cache_entry == NULL)
 	{
 		hal_client_destroy(bsp);
-		hal_client_destroy(event_bsp);
 		return ERROR;
 	}
 /*
@@ -362,11 +360,9 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 	}
 */
     bsp->debug = 0xffff;
-    event_bsp->master = bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
+    bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
     bspdriver->hal_client = bsp;
-	bspdriver->event_client = event_bsp;
-    hal_client_start(bsp);
-	hal_client_start(event_bsp);
+    hal_client_start(bsp, HAL_IPCMSG_CMD_PATH, -1/*HAL_IPCMSG_CMD_PORT*/);
 	bsp_driver_start(bspdriver, getpid(), if_nametoindex("eth0"));
     return OK;
   }
@@ -398,9 +394,6 @@ int bsp_driver_exit(bsp_driver_t *bspdriver)
 	}		
 	if(bspdriver->hal_client)
 		hal_client_destroy(bspdriver->hal_client);
-	if(bspdriver->event_client)
-		hal_client_destroy(bspdriver->event_client);
-
 	if (bspdriver->master)
 	{
     	thread_master_free(bspdriver->master);

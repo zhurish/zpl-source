@@ -269,7 +269,7 @@ int rngFreeBytes
     FAST RING_ID ringId         /* ring buffer to examine */
     )
     {
-    FAST zpl_uint32 n = ringId->pFromBuf - ringId->pToBuf - 1;
+    FAST zpl_int32 n = ringId->pFromBuf - ringId->pToBuf - 1;
 
     if (n < 0)
 	n += ringId->bufSize;
@@ -291,7 +291,7 @@ int rngNBytes
     FAST RING_ID ringId         /* ring buffer to be enumerated */
     )
     {
-    FAST zpl_uint32 n = ringId->pToBuf - ringId->pFromBuf;
+    FAST zpl_int32 n = ringId->pToBuf - ringId->pFromBuf;
 
     if (n < 0)
 	n += ringId->bufSize;
@@ -325,7 +325,7 @@ void rngPutAhead
     zpl_uint32 offset             /* offset beyond next input byte where to put byte */
     )
     {
-    FAST zpl_uint32 n = ringId->pToBuf + offset;
+    FAST zpl_int32 n = ringId->pToBuf + offset;
 
     if (n >= ringId->bufSize)
 	n -= ringId->bufSize;

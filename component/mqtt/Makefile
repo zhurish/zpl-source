@@ -93,17 +93,29 @@ endif
 
 ifeq ($(ZPL_MQTT_SRV),true)
 clean: objclean
-	@$(RM) $(LIB_DIR)/$(LIBS)
-	@$(RM) $(LIBS)
+	@if test -f $(LIB_DIR)/$(LIBS) ; \
+		then \
+		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+	fi
+	@if test -f $(LIBS) ; \
+		then \
+		@$(RM) $(LIBS) ; \
+	fi
 	@${MAKE} -C  src clean DEST_BIN_DIR=$(ZPL_INSTALL_SBIN_DIR)
 else
 clean: objclean
-	@$(RM) $(LIB_DIR)/$(LIBS)
-	@$(RM) $(LIBS)
+	@if test -f $(LIB_DIR)/$(LIBS) ; \
+		then \
+		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+	fi
+	@if test -f $(LIBS) ; \
+		then \
+		@$(RM) $(LIBS) ; \
+	fi
 endif
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/* -rf
+	@$(RM) -rf $(OBJS_DIR)/*
 
 all: lib install
 

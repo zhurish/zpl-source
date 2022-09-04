@@ -288,13 +288,19 @@ int os_mutex_exit(os_mutex_t * mutex)
 {
 	return os_mutex_sem_exit(mutex);
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_mutex_lock_entry(os_mutex_t * mutex, zpl_int32 wait_ms, zpl_char *file, int line)
+#else
 int os_mutex_lock(os_mutex_t * mutex, zpl_int32 wait_ms)
+#endif
 {
 	return os_mutex_sem_lock(mutex, wait_ms);
 }
-
-int os_mutex_unlock(os_mutex_t * mutex)
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_mutex_unlock_entry(os_mutex_t * mutex, zpl_char *file, int line)
+#else
+int os_mutex_unlock(os_mutex_t *mutex)
+#endif
 {
 	return os_mutex_sem_unlock(mutex);
 }
@@ -309,13 +315,19 @@ int os_sem_exit(os_sem_t * sem)
 {
 	return os_mutex_sem_exit(sem);
 }
-
-int os_sem_take(os_sem_t * sem, zpl_int32 wait_ms)
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_sem_take_entry(os_sem_t * sem, zpl_int32 wait_ms, zpl_char *file, int line)
+#else
+int os_sem_take(os_sem_t *ossem)
+#endif
 {
 	return os_mutex_sem_lock(sem, wait_ms);
 }
-
-int os_sem_give(os_sem_t * sem)
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_sem_give_entry(os_sem_t * sem, zpl_char *file, int line)
+#else
+int os_sem_give(os_sem_t *ossem)
+#endif
 {
 	return os_mutex_sem_unlock(sem);
 }
@@ -367,22 +379,34 @@ os_sem_t * os_sem_init(void)
 	os_sem_t * nsem = os_sem_name_init(os_semmutex_name("sem"));
 	return nsem;
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_sem_give_entry(os_sem_t *ossem, zpl_char *file, int line)
+#else
 int os_sem_give(os_sem_t *ossem)
+#endif
 {
 	if(ossem)
 	{
+		#ifdef OS_LOCK_DETAIL_DEBUG
+		os_log_info("sem '%s' give on %s[%d]", ossem->name, file, line);
+		#endif
 		if(ossem->lock)
 			ossem->lock--;
 		return sem_post(&ossem->sem);
 	}
 	return ERROR;
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_sem_take_entry(os_sem_t *ossem, zpl_int32 wait_ms, zpl_char *file, int line)
+#else
 int os_sem_take(os_sem_t *ossem, zpl_int32 wait_ms)
+#endif
 {
 	if(ossem == NULL)
 		return ERROR;
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("sem '%s' take on %s[%d]", ossem->name, file, line);
+	#endif		
 	ossem->lock++;	
 	if(wait_ms == OS_WAIT_NO)
 		return sem_trywait(&ossem->sem);
@@ -461,11 +485,17 @@ os_mutex_t * os_mutex_init(void)
 	os_mutex_t * osmutex = os_mutex_name_init(os_semmutex_name("mutex"));
 	return osmutex;
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_mutex_unlock_entry(os_mutex_t *osmutex, zpl_char *file, int line)
+#else
 int os_mutex_unlock(os_mutex_t *osmutex)
+#endif
 {
 	if(osmutex)
 	{
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("mutex '%s' unlock on %s[%d]", osmutex->name, file, line);
+	#endif			
 		if(osmutex->lock == zpl_true)
 			osmutex->lock = zpl_false;
 		if(_sem_debug & OS_MUTEX_DEBUG)
@@ -476,11 +506,17 @@ int os_mutex_unlock(os_mutex_t *osmutex)
 	}
 	return ERROR;
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_mutex_lock_entry(os_mutex_t *osmutex, zpl_int32 wait_ms, zpl_char *file, int line)
+#else
 int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait_ms)
+#endif
 {
 	if(osmutex == NULL)
 		return ERROR;
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("mutex '%s' lock on %s[%d]", osmutex->name, file, line);
+	#endif			
 	if(osmutex->lock == zpl_false)
 		osmutex->lock = zpl_true;
 	if(_sem_debug & OS_MUTEX_DEBUG)
@@ -557,11 +593,17 @@ os_spin_t * os_spin_init(void)
 	os_spin_t * spin = os_spin_name_init(os_semmutex_name("spin"));
 	return spin;
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_spin_unlock_entry(os_spin_t *spin, zpl_char *file, int line)
+#else
 int os_spin_unlock(os_spin_t *spin)
+#endif
 {
 	if(spin)
 	{
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("spin '%s' unlock on %s[%d]", spin->name, file, line);
+	#endif			
 		if(spin->lock == zpl_true)
 			spin->lock = zpl_false;
 		if(_sem_debug & OS_SPIN_DEBUG)
@@ -572,11 +614,17 @@ int os_spin_unlock(os_spin_t *spin)
 	}
 	return ERROR;
 }
-
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_spin_lock_entry(os_spin_t *spin, zpl_char *file, int line)
+#else
 int os_spin_lock(os_spin_t *spin)
+#endif
 {
 	if(spin == NULL)
 		return ERROR;
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("spin '%s' lock on %s[%d]", spin->name, file, line);
+	#endif			
 	if(spin->lock == zpl_false)
 		spin->lock = zpl_true;
 	if(_sem_debug & OS_SPIN_DEBUG)

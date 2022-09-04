@@ -409,7 +409,7 @@ extern int vty_resume(struct vty *vty);
 
 extern int vty_exec_timeout(struct vty *vty, const char *min_str, const char *sec_str);
 
-extern int vty_command(struct vty *vty, zpl_char *buf);
+extern int vty_command(struct vty *vty, const zpl_char *buf);
 extern int vty_execute(struct vty *vty);
 extern int vty_execute_shell(void *cli, const char *cmd);
 
@@ -456,7 +456,7 @@ extern int vtyrl_stdio_start(zpl_bool s);
 
 
 extern void vty_init (void);
-extern void vty_tty_init(zpl_char *tty);
+extern void vty_tty_init(const char *tty);
 extern void vty_init_vtysh (void);
 extern void vty_terminate (void);
 extern void vty_reset (void);

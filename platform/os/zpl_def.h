@@ -104,11 +104,11 @@ extern "C" {
 #endif
 
 #ifndef INT_MAX_MIN_SPACE
-#define INT_MAX_MIN_SPACE(v, m, M)	( ((v) > (m)) && ((v) < (M)) )
+#define INT_MAX_MIN_SPACE(v, m, M)	( ((int)(v) > (int)(m)) && ((int)(v) < (int)(M)) )
 #endif
 
 #ifndef NOT_INT_MAX_MIN_SPACE
-#define NOT_INT_MAX_MIN_SPACE(v, m, M)	( ((v) < (m)) && ((v) > (M)) )
+#define NOT_INT_MAX_MIN_SPACE(v, m, M)	( ((int)(v) < (int)(m)) && ((int)(v) > (int)(M)) )
 #endif
 
 #include "zpl_errno.h"

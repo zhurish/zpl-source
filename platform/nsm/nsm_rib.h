@@ -91,9 +91,9 @@ struct rib
   zpl_time_t uptime;
 
   /* Type fo this route. */
-  zpl_uint32 type;
+  zpl_int32 type;
 
-  zpl_uint32 instance;
+  zpl_int32 instance;
 
   /* VRF identifier. */
   vrf_id_t vrf_id;

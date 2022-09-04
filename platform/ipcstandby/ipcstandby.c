@@ -63,7 +63,7 @@ int ipcstandby_switch_master(zpl_bool master)
 }
 
 /* server callback */
-static int ipcstandby_callback_cli(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
+static int ipcstandby_callback_cli(const zpl_char *data, zpl_uint32 len, void *pVoid)
 {
   int ret = 0;
   struct vty *vty = pVoid;
@@ -113,9 +113,9 @@ static int ipcstandby_callback_res(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
   int ret = 0;
   struct ipcstanby_reskey reskey;
   if(ret == OK)
-    ipcstandby_serv_result(pVoid, 0, OK, &reskey, sizeof(struct ipcstanby_reskey));
+    ipcstandby_serv_result(pVoid, 0, OK, (char*)&reskey, sizeof(struct ipcstanby_reskey));
    else 
-    ipcstandby_serv_result(pVoid, 0, ret, zpl_strerror(ret), strlen(zpl_strerror(ret)));
+    ipcstandby_serv_result(pVoid, 0, ret, (char*)zpl_strerror(ret), strlen(zpl_strerror(ret)));
   return OK;
 }
 
@@ -225,7 +225,7 @@ int ipcstandby_request_res(int type, struct ipcstanby_reskey *reskey)
   res.pVoid = reskey;  
 
   ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
-                                   &res, ZPL_IPCSTANBY_RES, &req_type, 4);
+                                   &res, ZPL_IPCSTANBY_RES, (char*)&req_type, 4);
 
   if(ret == OK) 
   {

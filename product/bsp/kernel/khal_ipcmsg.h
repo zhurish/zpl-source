@@ -9,10 +9,6 @@ extern "C"
 #define HAL_IPCMSG_VERSION 1
 #define HAL_IPCMSG_HEADER_MARKER 255
 
-#define HAL_IPCMSG_CMD_PATH SYSVARDIR "/halipcsrv-cmd.sock"
-#define HAL_IPCMSG_EVENT_PATH SYSVARDIR "/halipcsrv-event.sock"
-#define HAL_IPCMSG_CMD_PORT 65300
-#define HAL_IPCMSG_EVENT_PORT 65301
 
 #define HAL_ENTER_FUNC()
 // printk("Into %s line %d", __func__, __LINE__)
@@ -115,10 +111,6 @@ typedef struct khal_port_header_s
 #define IF_INFINDEX_GET(n)	IF_TYPE_SET((n)->type)|IF_USPV_SET((n)->unit, (n)->slot, (n)->lgport, 0)
 
 
-//#define port_lgport      uport.lgport
-//#define port_phyport     uport.phyport
-//#define port_l3ifindex   uport.l3ifindex
-
 #pragma pack(0)
 
 #define HAL_IPCMSG_DEBUG_EVENT  0x10
@@ -184,20 +176,10 @@ extern int khal_ipcmsg_msglen_get(struct khal_ipcmsg *ipcmsg);
 extern int khal_ipcmsg_get_setp(struct khal_ipcmsg *ipcmsg);
 extern int khal_ipcmsg_get_getp(struct khal_ipcmsg *ipcmsg);
 
-extern int khal_ipcmsg_send_message(int unit, zpl_uint32 command, void *ipcmsg, int len);
-extern int khal_ipcmsg_send_cmd(int unit, zpl_uint32 command, struct khal_ipcmsg *src_ipcmsg);
-extern int khal_ipcmsg_send(int unit, struct khal_ipcmsg *src_ipcmsg);
-extern int khal_ipcmsg_send_andget_message(int unit, zpl_uint32 command, 
-  void *ipcmsg, int len,  struct khal_ipcmsg_result *getvalue);
-extern int khal_ipcmsg_getmsg_callback(int unit, zpl_uint32 command, void *ipcmsg, int len, 
-  struct khal_ipcmsg_result *getvalue, struct khal_ipcmsg_callback *callback);
-
-extern int khal_ipcmsg_hexmsg(struct khal_ipcmsg *ipcmsg, zpl_uint32 len, char *hdr);
 
 extern int khal_ipcmsg_global_set(struct khal_ipcmsg *ipcmsg, khal_global_header_t *glo);
 extern int khal_ipcmsg_global_get(struct khal_ipcmsg *ipcmsg, khal_global_header_t *glo);
 
-extern int khal_ipcmsg_port_set(struct khal_ipcmsg *ipcmsg, ifindex_t ifindex);
 extern int khal_ipcmsg_port_get(struct khal_ipcmsg *ipcmsg, khal_port_header_t *bspport);
 
 extern int khal_ipcmsg_result_set(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_result *val);

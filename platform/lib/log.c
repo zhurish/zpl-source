@@ -475,7 +475,7 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 
 static int zlog_task(struct zlog *zl)
 {
-	zpl_uint32 retval = 0;
+	zpl_int32 retval = 0;
 	fd_set rfds;
 	zlog_hdr_t loghdr;
 	os_msleep(10);
@@ -1164,6 +1164,14 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 	abort();
 }
 
+static void _oslog_callback_entry(int pri, const zpl_char *format, ...)
+{
+  va_list args; 
+  va_start(args, format); 
+  pl_vzlog (NULL, NULL, 0, zlog_default, MODULE_LIB, pri, format, args); 
+  va_end(args); 
+}
+
 /* Open log stream */
 struct zlog *
 openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
@@ -1219,6 +1227,8 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 	zl->testlog.filesize = 8;
 	zl->testlog.file_check_interval = 0;
 #endif
+	
+	os_log_init(_oslog_callback_entry);
 	return zl;
 }
 
@@ -1970,7 +1980,7 @@ int zlog_buffer_save(void)
 
 int zlog_buffer_callback_api (zlog_buffer_cb cb, void *pVoid)
 {
-	zpl_uint32 i = 0;
+	zpl_int32 i = 0;
 	int ret = 0;
 	if (zlog_default == NULL)
 		return 0;
@@ -2079,7 +2089,7 @@ lookup(const struct message *mes, zpl_uint32 key) {
 const char *
 message_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, const char *none,
 		const char *mesname) {
-	zpl_uint32 pos = index - meslist[0].key;
+	zpl_int32 pos = index - meslist[0].key;
 
 	/* first check for best case: index is in range and matches the key
 	 * value in that slot.

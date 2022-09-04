@@ -204,7 +204,7 @@ struct ipstack_rtattr *librtnl_addattr_nest(struct ipstack_nlmsghdr *n, size_t m
 
 int librtnl_addattr_nest_end(struct ipstack_nlmsghdr *n, struct ipstack_rtattr *nest)
 {
-	nest->rta_len = (void *) NLMSG_TAIL(n) - (void *) nest;
+	nest->rta_len = (char *) NLMSG_TAIL(n) - (char *) nest;
 	return n->nlmsg_len;
 }
 

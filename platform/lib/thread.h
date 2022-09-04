@@ -116,7 +116,7 @@ struct thread
     zpl_socket_t fd;			/* file descriptor in case of read/write. */
     struct timeval sands;	/* rest of time sands value. */
   } u;
-  zpl_uint32 index;			/* used for timers to store position in queue */
+  zpl_int32 index;			/* used for timers to store position in queue */
   struct timeval real;
   struct cpu_thread_history *hist; /* cache pointer to cpu_history */
   const char *funcname;

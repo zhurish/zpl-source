@@ -41,7 +41,7 @@ static int b53125_mirror_ingress_mac(sdk_driver_t *dev, u8 *mac)
 	}
 
 	ret |= b53125_write48(dev->sdk_device, B53_MGMT_PAGE, B53_IG_MIR_MAC, reg);
-	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_MAC, reg);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_MGMT_PAGE, B53_IG_MIR_MAC, reg);
 	sdk_handle_return(ret);
 	return ret;
 }
@@ -60,7 +60,7 @@ static int b53125_mirror_egress_mac(sdk_driver_t *dev, u8 *mac)
 	}
 
 	ret |= b53125_write48(dev->sdk_device, B53_MGMT_PAGE, B53_EG_MIR_MAC, reg);
-	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_MAC, reg);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_MGMT_PAGE, B53_EG_MIR_MAC, reg);
 	sdk_handle_return(ret);
 	return ret;
 }

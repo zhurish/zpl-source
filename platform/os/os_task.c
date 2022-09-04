@@ -391,7 +391,7 @@ static os_task_t * os_task_node_lookup_by_name(char *task_name)
 	return NULL;
 }
 
-zpl_taskid_t os_task_lookup_by_name(char *task_name)
+zpl_taskid_t os_task_lookup_by_name(const zpl_char *task_name)
 {
 	os_task_t *task = os_task_node_lookup_by_name(task_name);
 	if (task)
@@ -465,7 +465,7 @@ const zpl_char * os_task_self_name_alisa(void)
 	os_memset(name, 0, sizeof(name));
 	if (os_task_list == NULL)
 	{
-		snprintf(name, sizeof(name), "[LWP:%d]", syscall(SYS_gettid));
+		snprintf(name, sizeof(name), "[LWP:%ld]", syscall(SYS_gettid));
 		return name;
 	}
 	if (task_mutex)
@@ -488,7 +488,7 @@ const zpl_char * os_task_self_name_alisa(void)
 	}
 	if (task_mutex)
 		os_mutex_unlock(task_mutex);
-	snprintf(name, sizeof(name), "[LWP:%d]", syscall(SYS_gettid));
+	snprintf(name, sizeof(name), "[LWP:%ld]", syscall(SYS_gettid));
 	return name;
 }
 
@@ -1143,7 +1143,7 @@ static int os_task_tcb_active(os_task_t *task)
 	return ERROR;
 }
 
-static os_task_t * os_task_tcb_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
+static os_task_t * os_task_tcb_entry_create(zpl_char *name, zpl_int32 pri, zpl_uint32 op,
 		task_entry entry, void *pVoid, zpl_char *func_name, zpl_uint32 stacksize, zpl_bool active)
 {
 	if(pri > OS_TASK_MAX_PRIORITY || pri < 0)
@@ -1155,7 +1155,7 @@ static os_task_t * os_task_tcb_entry_create(zpl_char *name, zpl_uint32 pri, zpl_
 	if(!func_name || strlen(func_name) >= 2*TASK_NAME_MAX)
 		return NULL;
 
-	if(stacksize > OS_TASK_STACK_MAX || stacksize < 0)
+	if(stacksize > OS_TASK_STACK_MAX || stacksize <= 0)
 		return NULL;
 
 	os_task_t *task = os_malloc(sizeof(os_task_t));
@@ -1221,7 +1221,7 @@ static int os_task_moniter_init(void)
 	return ERROR;
 }
 
-zpl_taskid_t os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op, task_entry entry,
+zpl_taskid_t os_task_entry_create(const zpl_char *name, zpl_uint32 pri, zpl_uint32 op, task_entry entry,
 		void *pVoid, zpl_char *func_name, zpl_uint32 stacksize)
 {
 	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
@@ -1270,7 +1270,7 @@ zpl_taskid_t os_task_entry_create(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
 
 
 
-zpl_taskid_t os_task_entry_add(zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
+zpl_taskid_t os_task_entry_add(const zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
                          task_entry entry, void *pVoid,
                          zpl_char *func_name, zpl_uint32 stacksize, zpl_uint32 td_thread)
 {
@@ -1551,7 +1551,7 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	return 0;
 }
 
-int os_task_show(void *vty, zpl_char *task_name, zpl_uint32 detail)
+int os_task_show(void *vty, const zpl_char *task_name, zpl_uint32 detail)
 {
 //	zpl_taskid_t task_id = 0;
 	NODE *node = NULL;

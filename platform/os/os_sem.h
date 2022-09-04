@@ -115,7 +115,39 @@ typedef struct os_spin_s
 #define OS_SEM_DEBUG 	0x01
 #define OS_MUTEX_DEBUG 	0x02
 #define OS_SPIN_DEBUG 	0x04
+#define OS_LOCK_DETAIL_DEBUG 	0x08
 
+
+#ifdef OS_LOCK_DETAIL_DEBUG
+extern int os_sem_module_debug(int val);
+
+extern os_sem_t * os_sem_init(void);
+extern os_sem_t * os_sem_name_init(const char *name);
+extern int os_sem_give_entry(os_sem_t *, zpl_char *file, int line);
+extern int os_sem_take_entry(os_sem_t *, zpl_int32 wait_ms, zpl_char *file, int line);
+#define os_sem_give(n)		os_sem_give_entry(n, __func__, __LINE__)
+#define os_sem_take(n, w)	os_sem_take_entry(n, w, __func__, __LINE__)
+extern int os_sem_exit(os_sem_t *);
+
+
+extern os_mutex_t * os_mutex_init(void);
+extern os_mutex_t * os_mutex_name_init(const char *name);
+extern int os_mutex_lock_entry(os_mutex_t *, zpl_int32 wait_ms, zpl_char *file, int line);
+extern int os_mutex_unlock_entry(os_mutex_t *, zpl_char *file, int line);
+#define os_mutex_unlock(n)		os_mutex_unlock_entry(n, __func__, __LINE__)
+#define os_mutex_lock(n, w)		os_mutex_lock_entry(n, w, __func__, __LINE__)
+extern int os_mutex_exit(os_mutex_t *);
+
+
+extern os_spin_t * os_spin_init(void);
+extern os_spin_t * os_spin_name_init(const char *name);
+extern int os_spin_lock_entry(os_spin_t *, zpl_char *file, int line);
+extern int os_spin_unlock_entry(os_spin_t *, zpl_char *file, int line);
+#define os_spin_lock(n)		os_spin_lock_entry(n, __func__, __LINE__)
+#define os_spin_unlock(n)	os_spin_unlock_entry(n, __func__, __LINE__)
+extern int os_spin_exit(os_spin_t *);
+
+#else
 extern int os_sem_module_debug(int val);
 
 extern os_sem_t * os_sem_init(void);
@@ -137,10 +169,9 @@ extern os_spin_t * os_spin_name_init(const char *name);
 extern int os_spin_lock(os_spin_t *);
 extern int os_spin_unlock(os_spin_t *);
 extern int os_spin_exit(os_spin_t *);
-#endif
 
-#define _OS_SEM_DEBUG_DETAIL(fmt,...)	os_vslog("DETAIL", __func__, __LINE__,fmt, ##__VA_ARGS__)
-//#define _OS_SEM_DEBUG_DETAIL(fmt,...)	
+#endif
+#endif
 
 #ifdef __cplusplus
 }

@@ -236,7 +236,7 @@ typedef struct sched_param zpl_sched_param_t;
 
 
 
-//typedef int socklen_t;
+
 #define ZPL_ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 
 #define ZPL_BIT(n)		      (1)<<(n)

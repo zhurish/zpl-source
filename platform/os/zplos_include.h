@@ -20,13 +20,14 @@ extern "C" {
 #include "os_sem.h"
 #include "os_time.h"
 #include "os_ipstack.h"
-
+#include "os_log.h"
 #include "os_job.h"
 #include "os_ansync.h"
 #include "os_socket.h"
 #include "os_signal.h"
 #include "os_file.h"
 #include "os_url.h"
+
 #include "os_util.h"
 #include "os_backtrace.h"
 #include "os_bitmap.h"

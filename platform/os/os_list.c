@@ -528,7 +528,7 @@ NODE *lstNext
 NODE *lstNth
     (
     FAST LIST *pList,           /* pointer to list descriptor */
-    FAST zpl_uint32 nodenum            /* number of node to be found */
+    FAST zpl_int32 nodenum            /* number of node to be found */
     )
     {
     FAST NODE *pNode;
@@ -555,7 +555,7 @@ NODE *lstNth
 	nodenum -= pList->count;
 	pNode = pList->TAIL;
 
-	while (nodenum++ < (zpl_uint32)0)
+	while (nodenum++ < (zpl_int32)0)
 	    pNode = pNode->previous;
 	}
 
@@ -597,7 +597,7 @@ NODE *lstPrevious
 NODE *lstNStep
     (
     FAST NODE *pNode,           /* the known node */
-    zpl_uint32 nStep                   /* number of steps away to find */
+    zpl_int32 nStep                   /* number of steps away to find */
     )
     {
     zpl_uint32 i;

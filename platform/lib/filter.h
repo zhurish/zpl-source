@@ -180,7 +180,7 @@ struct filter_list
       #ifdef ZPL_FILTER_MAC
       struct filter_l2    mac_filter
       #endif
-    } u;
+    }u;
 };
 
 /* List of access_list. */

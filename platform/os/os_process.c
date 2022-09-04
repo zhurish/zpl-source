@@ -188,7 +188,7 @@ int os_process_register(process_action action, zpl_char *name,
 	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(ipstack_errno));
 	if( ret == sizeof(process_head))
 	{
-		zpl_uint32 num = 0;
+		zpl_int32 num = 0;
 		fd_set rfdset;
 		FD_ZERO(&rfdset);
 		FD_SET(os_process_sock, &rfdset);
@@ -236,7 +236,7 @@ int os_process_register(process_action action, zpl_char *name,
 
 int os_process_action(process_action action, zpl_char *name, zpl_uint32 id)
 {
-	zpl_uint32 ret = 0;
+	zpl_int32 ret = 0;
 	process_head head;
 	if(os_process_sock == 0)
 	{
@@ -254,7 +254,7 @@ int os_process_action(process_action action, zpl_char *name, zpl_uint32 id)
 	//zlog_debug(MODULE_NSM, "%s:name:%s(%d byte(%s))",__func__, head.name, ret, strerror(ipstack_errno));
 	if( ret == sizeof(process_head))
 	{
-		zpl_uint32 num = 0;
+		zpl_int32 num = 0;
 		fd_set rfdset;
 		FD_ZERO(&rfdset);
 		FD_SET(os_process_sock, &rfdset);

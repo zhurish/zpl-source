@@ -407,8 +407,6 @@ DEFUN (config_write_file,
 	file_vty = vty_new();
 	file_vty->fd = ipstack_init(OS_STACK, fd);
 	file_vty->wfd = ipstack_init(OS_STACK, fd);
-	//ipstack_fd(file_vty->fd) = fd;
-	//ipstack_fd(file_vty->wfd) = fd;
 	file_vty->type = VTY_FILE;
 	
 	vty_out(file_vty, "!\n! Zebra configuration saved from vty\n");

@@ -68,7 +68,7 @@ extern int hal_ipcsrv_getmsg_callback(int unit, zpl_uint32 command, void *msg, i
 
 
 
-extern int hal_ipcsrv_init(void *m, int port, const char *path, int evport, const char *evpath);
+extern int hal_ipcsrv_init(void *m, int port, const char *path);
 extern int hal_ipcsrv_exit(void);
 #ifdef ZPL_SHELL_MODULE
 extern int hal_ipcsrv_show(void *pvoid);

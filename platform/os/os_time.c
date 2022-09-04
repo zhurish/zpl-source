@@ -467,7 +467,7 @@ int os_tmtime_get (enum os_tmtime_id type, zpl_time_t t, struct tm *ptm)
 	return ERROR;
 }
 
-zpl_char *os_time_fmt (zpl_char *fmt, zpl_time_t t)
+zpl_char *os_time_fmt (const zpl_char *fmt, zpl_time_t t)
 {
 	zpl_uint32 len = 0;
 	struct tm tm;
@@ -1297,7 +1297,7 @@ int os_time_set_api(zpl_uint32 timesp)
 		return ERROR;
 }
 
-int os_timezone_set_api(zpl_uint32 tizone, zpl_char *timzstr)
+int os_timezone_set_api(zpl_int32 tizone, zpl_char *timzstr)
 {
 	if(timzstr)
 	{

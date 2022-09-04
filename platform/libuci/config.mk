@@ -6,7 +6,6 @@ MODULEDIR = platform/libuci
 OBJS	+= blob.o
 OBJS	+= delta.o
 OBJS	+= file.o
-#OBJS	+= list.o
 OBJS	+= parse.o
 OBJS	+= ucimap.o
 OBJS	+= util.o

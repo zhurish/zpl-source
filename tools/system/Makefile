@@ -60,16 +60,28 @@ install: $(UPGREATE_TARGET) $(NVRAMENV_TARGET)
 #	$(STRIP) ${ZPL_INSTALL_SBIN_DIR}/${I2CSET_TARGET}
 
 clean: objclean
-	@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${UPGREATE_TARGET}
-	@$(RM) $(UPGREATE_TARGET)
-	@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${NVRAMENV_TARGET}
-	@$(RM) $(NVRAMENV_TARGET)
+	@if test -f ${ZPL_INSTALL_SBIN_DIR}/${UPGREATE_TARGET} ; \
+		then \
+		@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${UPGREATE_TARGET} ; \
+	fi
+	@if test -f $(UPGREATE_TARGET) ; \
+		then \
+		@$(RM) $(UPGREATE_TARGET); \
+	fi
+	@if test -f ${ZPL_INSTALL_SBIN_DIR}/${NVRAMENV_TARGET} ; \
+		then \
+		@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${NVRAMENV_TARGET} ; \
+	fi
+	@if test -f $(NVRAMENV_TARGET) ; \
+		then \
+		@$(RM) $(NVRAMENV_TARGET); \
+	fi
 	
 #	@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${I2CSET_TARGET}
 #	@$(RM) $(I2CSET_TARGET)
 	
 objclean: 
-	@$(RM) $(OBJS_DIR)/*
+	@$(RM) -rf $(OBJS_DIR)/*
 
 all: obj install 
 

@@ -28,12 +28,12 @@
 
 #include "kbsp_types.h"
 #include "keth_drv.h"
-/*
+
 #include "khal_client.h"
 #include "khal_netpkt.h"
 #include "khal_netlink.h"
-*/
-struct list_head keth_head;
+
+static struct list_head keth_head;
 
 int ethkernel_init(void)
 {
@@ -70,13 +70,6 @@ static struct eth_interface * ethkernel_lookup(ifindex_t ifindex)
 }
 
 
-static inline struct eth_interface *to_ethkernel_board(struct net_device *dev)
-{
-  return netdev_priv(dev);
-}
-
-
-
 
 static void ethkernel_send_packet(struct net_device *dev,struct sk_buff *skb)
 {
@@ -106,8 +99,9 @@ static int ethkernel_start_xmit(struct sk_buff *skb, struct net_device *dev)
   dev->stats.tx_packets++;
 
   ethkernel_send_packet(dev, skb);
-    /* Free skb. */
-  //kfree_skb (skb);
+
+	/* free this SKB */
+	dev_consume_skb_any(skb);
   mutex_unlock(&db->mutex_lock);
 
   /* Wakeup queue. */
@@ -122,12 +116,12 @@ static int ethkernel_start_xmit(struct sk_buff *skb, struct net_device *dev)
  */
 static void ethkernel_rx(struct net_device *dev, char *data, int RxLen)
 {
-  struct eth_interface *db = netdev_priv(dev);
+  //struct eth_interface *db = netdev_priv(dev);
   struct sk_buff *skb;
-  while ((skb = skb_dequeue (&db->_eth_rx_queue)) != NULL)
-  {
+  //while ((skb = skb_dequeue (&db->_eth_rx_queue)) != NULL)
+  //{
     // dev = skb->dev;
-  }
+  //}
   /* Packet Status check */
   if (RxLen < 0x40)
   {
@@ -211,30 +205,6 @@ static const struct net_device_ops ethkernel_netdev_ops = {
     .ndo_get_stats = ethkernel_get_stats,
 };
 
-const struct header_ops eth_header_ops ____cacheline_aligned = {
-    .create = eth_header,
-    .parse = eth_header_parse,
-    .cache = eth_header_cache,
-    .cache_update = eth_header_cache_update,
-};
-
-static void ethkernel_ether_setup(struct net_device *dev)
-{
-  dev->header_ops = &eth_header_ops;
-
-  /* Overridden only for change_mtu for devices supporting jumbo frames. */
-
-  dev->netdev_ops = &ethkernel_netdev_ops;
-
-  dev->type =  ARPHRD_ETHER;
-  dev->hard_header_len = ETH_HLEN;
-  dev->mtu = ETH_DATA_LEN;
-  dev->addr_len = ETH_ALEN;
-  dev->tx_queue_len = 1000; /* Ethernet wants good queues */
-  dev->flags = IFF_BROADCAST | IFF_MULTICAST;
-
-  memset(dev->broadcast, 0xFF, ETH_ALEN);
-}
 /*
 static void ethkernel_slip_setup(struct net_device *ndev)
 {
@@ -259,87 +229,57 @@ struct eth_interface *ethkernel_create(char *name, ifindex_t ifindex, char *mac)
   int ret = 0;
 
   /* Init network device */
-  ndev = alloc_etherdev(sizeof(struct eth_interface));
+  ndev = alloc_netdev(sizeof(struct eth_interface), name, NET_NAME_UNKNOWN, ether_setup);
+  //ndev = alloc_etherdev(sizeof(struct eth_interface));
   if (!ndev)
   {
     ret = -ENOMEM;
-    return ret;
+    return NULL;
   }
-
+  //SET_NETDEV_DEV(ndev, &pdev->dev);
   /* setup board info structure */
   db = netdev_priv(ndev);
 
   db->ndev = ndev;
 
-  skb_queue_head_init (&db->_eth_tx_queue);
-  skb_queue_head_init (&db->_eth_rx_queue);
+  //skb_queue_head_init (&db->_eth_tx_queue);
+  //skb_queue_head_init (&db->_eth_rx_queue);
 
   mutex_init(&db->mutex_lock);
 
   ndev->netdev_ops = &ethkernel_netdev_ops;
 
-  // ndev->netdev_ops	= &dm9000_netdev_ops;
-  // ndev->watchdog_timeo	= msecs_to_jiffies(watchdog);
-  // ndev->ethtool_ops	= &dm9000_ethtool_ops;
-
-
-  ethkernel_ether_setup(ndev);
   /* Register netdevice. */
   ret = register_netdev(ndev);
   if (ret)
   {
+    free_netdev(ndev);
     return NULL;
   }
   if(mac)
     memcpy(ndev->dev_addr, mac, ndev->addr_len);
   db->upifindex = ifindex;
   ethkernel_list_add(db); 
-  return ret;
+  return db;
 }
 
 
 /* Destroy netdevice. */
 int ethkernel_destroy(struct eth_interface *db)
 {
-  struct sk_buff *skb = NULL;  
+  /*struct sk_buff *skb = NULL;  
   while ((skb = skb_dequeue (&db->_eth_tx_queue)) != NULL)
     kfree_skb (skb);
   while ((skb = skb_dequeue (&db->_eth_rx_queue)) != NULL)
-    kfree_skb (skb);  
+    kfree_skb (skb);  */
   ethkernel_list_del(db);  
   unregister_netdev(db->ndev);
+  free_netdev(db->ndev);
   return 0;
 }
 
 
-static __init int linux_keth_init(void)
-{
-		ethkernel_create("ethvlan", 11, NULL);
-		
-	  return OK;	
-}
 
-static __exit void linux_keth_exit(void)
-{
-    struct eth_interface *keth = ethkernel_lookup(11);
-		if(keth)
-		{
-			ethkernel_destroy(keth);
-			keth = NULL;
-		}
-	  return ;
-}
-
-
-module_init(linux_keth_init);
-module_exit(linux_keth_exit);
-
-MODULE_AUTHOR("zhurish <zhurish@163.com>");
-MODULE_DESCRIPTION("Linux ethdev library");
-MODULE_LICENSE("Dual BSD/GPL");
-
-
-#if 0
 static int kbsp_l3if_create(void *driver, khal_l3if_param_t *l3ifparam, khal_l3if_addr_param_t *l3addrparam)
 {
 	int ret = NO_SDK;
@@ -540,4 +480,3 @@ int kbsp_l3if_module_handle(struct khal_client *client, zpl_uint32 cmd, zpl_uint
 	BSP_LEAVE_FUNC();
 	return ret;
 }
-#endif

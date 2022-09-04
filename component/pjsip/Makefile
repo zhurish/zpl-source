@@ -157,10 +157,23 @@ install: install-lib
 #	@install -m 755 ${PJSUA2TEST_BIN} ${ZPL_INSTALL_SBIN_DIR}
 
 clean: $(SDL2CLEAN) objclean
-	@$(RM) $(LIB_DIR)/$(LIBS)
-	@$(RM) $(LIBS)
-	@$(RM) $(LIB_DIR)/$(PJSUA2LIBS)
-	@$(RM) $(PJSUA2LIBS)
+	@if test -f $(LIB_DIR)/$(LIBS) ; \
+		then \
+		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+	fi
+	@if test -f $(LIBS) ; \
+		then \
+		@$(RM) $(LIBS) ; \
+	fi
+	@if test ! -f $(LIB_DIR)/$(PJSUA2LIBS) ; \
+		then \
+		@$(RM) $(LIB_DIR)/$(PJSUA2LIBS) ; \
+	fi
+	@if test ! -f $(PJSUA2LIBS) ; \
+		then \
+		@$(RM) $(PJSUA2LIBS) ; \
+	fi
+
 else
 lib: $(LIBS)
 
@@ -174,13 +187,19 @@ install-lib:
 install: install-lib
 
 clean: objclean
-	@$(RM) $(LIB_DIR)/$(LIBS)
-	@$(RM) $(LIBS)
+	@if test -f $(LIB_DIR)/$(LIBS) ; \
+		then \
+		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+	fi
+	@if test -f $(LIBS) ; \
+		then \
+		@$(RM) $(LIBS) ; \
+	fi
 
 endif
 
 objclean: $(ZPL_PJPROJECT_LIBS) 
-	@$(RM) $(OBJS_DIR)/*
+	@$(RM) -rf $(OBJS_DIR)/*
 
 all: lib install
 

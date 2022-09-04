@@ -9,8 +9,8 @@ extern "C"
 #define HAL_IPCMSG_VERSION 1
 #define HAL_IPCMSG_HEADER_MARKER 255
 
-#define HAL_IPCMSG_CMD_PATH SYSVARDIR "/halipcsrv-cmd.sock"
-#define HAL_IPCMSG_EVENT_PATH SYSVARDIR "/halipcsrv-event.sock"
+#define HAL_IPCMSG_CMD_PATH         SYSVARDIR "/halipcsrv-cmd.sock"
+#define HAL_IPCMSG_EVENT_PATH       SYSVARDIR "/halipcsrv-event.sock"
 #define HAL_IPCMSG_CMD_PORT 65300
 #define HAL_IPCMSG_EVENT_PORT 65301
 

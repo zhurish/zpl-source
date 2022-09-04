@@ -46,11 +46,17 @@ install: $(TARGET)
 #	@$(STRIP) ${ZPL_INSTALL_SBIN_DIR}/${TARGET}
 
 clean: objclean
-	@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${TARGET}
-	@$(RM) $(TARGET)
-
+	@if test -f ${ZPL_INSTALL_SBIN_DIR}/${TARGET} ; \
+		then \
+		@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${TARGET} ; \
+	fi
+	@if test -f $(TARGET) ; \
+		then \
+		@$(RM) $(TARGET); \
+	fi
+	
 objclean: 
-	@$(RM) $(OBJS_DIR)/*
+	@$(RM) -rf $(OBJS_DIR)/*
 
 all: obj install 
 

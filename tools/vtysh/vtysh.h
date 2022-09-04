@@ -37,7 +37,7 @@ struct vtysh_user
 
 struct vtysh_client
 {
-  int fd;
+  zpl_socket_t fd;
   char name[64];
   int flag;
   char path[64];

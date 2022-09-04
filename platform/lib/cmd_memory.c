@@ -128,14 +128,14 @@ DEFUN (show_system_clock,
 	if(argc == 1)
 	{
 		struct timeval tv;
-		vty_out(vty, "os time              : %u %s", os_time (NULL), VTY_NEWLINE);
-		vty_out(vty, "os monotonic time    : %u %s", os_monotonic_time (), VTY_NEWLINE);
+		vty_out(vty, "os time              : %lu %s", os_time (NULL), VTY_NEWLINE);
+		vty_out(vty, "os monotonic time    : %lu %s", os_monotonic_time (), VTY_NEWLINE);
 		os_gettimeofday (&tv);
-		vty_out(vty, "os timeofday         : %u.%u %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
+		vty_out(vty, "os timeofday         : %lu.%lu %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
 		os_get_realtime (&tv);
-		vty_out(vty, "os realtime          : %u.%u %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
+		vty_out(vty, "os realtime          : %lu.%lu %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
 		os_get_monotonic (&tv);
-		vty_out(vty, "os monotonic         : %u.%u %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
+		vty_out(vty, "os monotonic         : %lu.%lu %s", tv.tv_sec, tv.tv_usec/1000, VTY_NEWLINE);
 	}
 	vty_out(vty, "%s", VTY_NEWLINE);
 	return CMD_SUCCESS;

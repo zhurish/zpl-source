@@ -389,10 +389,8 @@ static int kbsp_debug_module_handle(struct khal_client *client, zpl_uint32 cmd, 
 	khal_ipcmsg_getl(&client->ipcmsg, &moudle);
   khal_ipcmsg_getl(&client->ipcmsg, &enable);
 	khal_ipcmsg_getl(&client->ipcmsg, &value);
-  if (moudle == HAL_KLOG_MODULE)
-    klog_level(value);
-  else if (moudle == HAL_KNETPKT_MODULE)
-    netpkt_netlink_debug_set(enable, value);
+  if (moudle == HAL_KNETPKT_MODULE)
+    khal_netpkt_debug_set(enable, value);
   else if (moudle == HAL_KHALCLIENT_MODULE)
   {
     if (enable)
@@ -413,9 +411,8 @@ static int kbsp_global_module_handle(struct khal_client *client, zpl_uint32 cmd,
       int ifindex = 0;
 	    khal_ipcmsg_getl(&client->ipcmsg, &dstpid);
 	    khal_ipcmsg_getl(&client->ipcmsg, &ifindex);
-      klog_dstpid(dstpid);
-      netpkt_netlink_dstpid(dstpid);
-      netpkt_netlink_bind(ifindex, dstpid?1:0);
+      khal_netpkt_dstpid(dstpid);
+      khal_netpkt_bind(ifindex, dstpid?1:0);
   }
   BSP_LEAVE_FUNC();
   return 0;
@@ -494,7 +491,7 @@ static const khal_ipccmd_callback_t  kmoduletable[] = {
     HAL_CALLBACK_ENTRY(HAL_MODULE_DEBUG, kbsp_debug_module_handle),
 #else
     HAL_CALLBACK_ENTRY(HAL_MODULE_GLOBAL, kbsp_global_module_handle),
-    //HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, kbsp_l3if_module_handle),
+    HAL_CALLBACK_ENTRY(HAL_MODULE_L3IF, kbsp_l3if_module_handle),
     HAL_CALLBACK_ENTRY(HAL_MODULE_DEBUG, kbsp_debug_module_handle),
 #endif  
 };
@@ -539,8 +536,7 @@ static __init int linux_kbe_init(void)
 		khalclient = khal_client_create(NULL);
 		if(khalclient)
 		{
-			netpkt_netlink_init();
-			klog_init();
+			khal_netpkt_init();
 			return OK;
 		}
 		else
@@ -558,8 +554,7 @@ static __exit void linux_kbe_exit(void)
 			khal_client_destroy(khalclient);
 			khalclient = NULL;
 		}
-		netpkt_netlink_exit();
-		klog_exit();
+		khal_netpkt_exit();
 	  return ;
 }
 

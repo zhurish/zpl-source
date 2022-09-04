@@ -331,7 +331,7 @@ static int hal_ipcsrv_client_read(struct thread *thread)
         if ((nbyte == 0) || (nbyte == -1))
         {
             if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
-                zlog_err(MODULE_HAL, "connection closed ipstack_socket [%d]", sock);
+                zlog_err(MODULE_HAL, "connection closed ipstack_socket [%d]", ipstack_fd(sock));
             hal_ipcclient_client_close(client->ipcsrv, client);
             return -1;
         }
@@ -351,21 +351,21 @@ static int hal_ipcsrv_client_read(struct thread *thread)
     if (hdr->marker != HAL_IPCMSG_HEADER_MARKER || hdr->version != HAL_IPCMSG_VERSION)
     {
         zlog_err(MODULE_HAL, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
-                 __func__, sock, hdr->marker, hdr->version);
+                 __func__, ipstack_fd(sock), hdr->marker, hdr->version);
         hal_ipcclient_client_close(client->ipcsrv, client);
         return -1;
     }
     if (hdr->length < HAL_IPCMSG_HEADER_SIZE)
     {
-        zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u is less than header size %d",
-                  __func__, sock, hdr->length, HAL_IPCMSG_HEADER_SIZE);
+        zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u is less than header size %u",
+                  __func__, ipstack_fd(sock), hdr->length, (zpl_uint32)HAL_IPCMSG_HEADER_SIZE);
         hal_ipcclient_client_close(client->ipcsrv, client);
         return -1;
     }
     if (hdr->length > input_ipcmsg->length_max)
     {
         zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
-                  __func__, sock, hdr->length, (u_long)(input_ipcmsg->length_max));
+                  __func__, ipstack_fd(sock), hdr->length, (u_long)(input_ipcmsg->length_max));
         hal_ipcclient_client_close(client->ipcsrv, client);
         return -1;
     }
@@ -379,7 +379,7 @@ static int hal_ipcsrv_client_read(struct thread *thread)
             (nbyte == -1))
         {
             if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
-                zlog_err(MODULE_HAL, "connection closed [%d] when reading zebra data", sock);
+                zlog_err(MODULE_HAL, "connection closed [%d] when reading zebra data", ipstack_fd(sock));
             hal_ipcclient_client_close(client->ipcsrv, client);
             return -1;
         }
@@ -424,11 +424,11 @@ static int hal_ipcsrv_client_read(struct thread *thread)
         {
             hal_ipcsrv_msg_register(client, input_ipcmsg);
         }
-        else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_HWPORTTBL) //端口信息
+        else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_HWPORTTBL) //板卡端口信息
         {
             hal_ipcsrv_msg_hwport(client, input_ipcmsg);
         }
-        else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_REPORT) //端口信息
+        else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_REPORT) //上报信息
         {
             hal_ipcsrv_msg_report(client, input_ipcmsg);
         }
@@ -834,11 +834,11 @@ char *hal_ipcsrv_send_message()
 }
 */
 
-int hal_ipcsrv_init(void *m, int port, const char *path, int evport, const char *evpath)
+int hal_ipcsrv_init(void *m, int port, const char *path)
 {
     memset(&_ipcsrv, 0, sizeof(struct hal_ipcsrv));
     _ipcsrv.mutex = os_mutex_name_init("ipcsrvmutex");
-    zlog_force_trap(MODULE_HAL, "hal_ipcsrv_init port=%d path=%s eport=%d epath=%s", port, path?path:"null", evport, evpath?evpath:"null");
+    zlog_force_trap(MODULE_HAL, "hal_ipcsrv_init port=%d path=%s", port, path?path:"null");
     if (_ipcsrv.mutex == NULL)
     {
         return ERROR;

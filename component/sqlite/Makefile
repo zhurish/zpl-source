@@ -86,15 +86,28 @@ install: $(LIBS) $(LIBDS)
 
 ifeq ($(strip $(ZPL_SQLITE_EXE_MODULE)),true)
 clean: objclean
-	@$(RM) $(LIBD_DIR)/$(LIBDS)
-	@$(RM) $(ZPL_INSTALL_SBIN_DIR)/$(SQLBIN) $(SQLBIN)
+	@if test ! -f $(LIBD_DIR)/$(LIBDS) ; \
+		then \
+		@$(RM) $(LIBD_DIR)/$(LIBDS) ; \
+	fi
+	@if test ! -f $(ZPL_INSTALL_SBIN_DIR)/$(SQLBIN) ; \
+		then \
+		@$(RM) $(ZPL_INSTALL_SBIN_DIR)/$(SQLBIN) ; \
+	fi
+	@if test ! -f $(SQLBIN) ; \
+		then \
+		@$(RM) $(SQLBIN) ; \
+	fi
 else
 clean: objclean
-	@$(RM) $(LIBD_DIR)/$(LIBDS)
+	@if test ! -f $(LIBD_DIR)/$(LIBDS) ; \
+		then \
+		@$(RM) $(LIBD_DIR)/$(LIBDS); \
+	fi
 endif
 
 objclean: 
-	@$(RM) $(OBJS_DIR)/*
+	@$(RM) -rf $(OBJS_DIR)/*
 
 ifeq ($(strip $(ZPL_SQLITE_EXE_MODULE)),true)
 all: lib install taget

@@ -345,7 +345,7 @@ sockunion_connect (zpl_socket_t fd, const union sockunion *peersu, zpl_ushort po
 	  zpl_char str[SU_ADDRSTRLEN];
 	  zlog_info (MODULE_DEFAULT, "can't connect to %s fd %d : %s",
 		     sockunion_log (&su, str, sizeof str),
-		     fd, ipstack_strerror (ipstack_errno));
+		     ipstack_fd(fd), ipstack_strerror (ipstack_errno));
 	  return connect_error;
 	}
     }

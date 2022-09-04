@@ -45,8 +45,14 @@ install: $(LIBS)
 
 
 clean: objclean
-	@$(RM) $(LIB_DIR)/$(LIBS)
-	@$(RM) $(LIBS)
+	@if test -f $(LIB_DIR)/$(LIBS) ; \
+		then \
+		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+	fi
+	@if test -f $(LIBS) ; \
+		then \
+		@$(RM) $(LIBS) ; \
+	fi
 
 objclean: 
 	@$(RM) -rf $(OBJS_DIR)/*

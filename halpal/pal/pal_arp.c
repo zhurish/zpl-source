@@ -217,7 +217,7 @@ static int pal_arp_request(struct interface *ifp, struct prefix *address)
 	struct ipstack_sockaddr_ll sll;
 
 	zpl_socket_t skfd;
-	zpl_uint32 n = 0, len = 0;
+	zpl_int32 n = 0, len = 0;
 
 	zpl_uint8 buf[1024];
 

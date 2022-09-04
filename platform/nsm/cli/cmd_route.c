@@ -2136,7 +2136,7 @@ DEFUN (no_ip_protocol,
        "Remove route map from PROTO\n"
        "Protocol name\n")
 {
-  zpl_uint32 i = 0;
+  zpl_int32 i = 0;
 
   if (strcasecmp(argv[0], "any") == 0)
     i = ZPL_ROUTE_PROTO_MAX;
@@ -2765,7 +2765,7 @@ DEFUN (show_ip_route_protocol,
        "IP routing table\n"
        ROUTE_IP_REDIST_HELP_STR_NSM)
 {
-  zpl_uint32 type;
+  zpl_int32 type;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -3387,7 +3387,7 @@ DEFUN (show_ip_route_protocol_vrf_all,
        ROUTE_IP_REDIST_HELP_STR_NSM
        VRF_ALL_CMD_HELP_STR)
 {
-  zpl_uint32 type;
+  zpl_int32 type;
   struct route_table *table = NULL;
   struct route_node *rn = NULL;
   struct rib *rib = NULL;
@@ -5032,7 +5032,7 @@ DEFUN (show_ipv6_route_protocol,
        "IP routing table\n"
 	ROUTE_IP6_REDIST_HELP_STR_NSM)
 {
-  zpl_uint32 type;
+  zpl_int32 type;
   struct route_table *table;
   struct route_node *rn;
   struct rib *rib;
@@ -5521,7 +5521,7 @@ DEFUN (show_ipv6_route_protocol_vrf_all,
        ROUTE_IP6_REDIST_HELP_STR_NSM
        VRF_ALL_CMD_HELP_STR)
 {
-  zpl_uint32 type;
+  zpl_int32 type;
   struct route_table *table = NULL;
   struct route_node *rn = NULL;
   struct rib *rib = NULL;

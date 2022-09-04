@@ -68,6 +68,7 @@ extern int khal_client_send_result_msg(struct khal_client *khal_client, int ret,
     int subcmd, char *msg, int len);
 extern int khal_client_send_report(struct khal_client *khal_client, char *data, int len);
 
+
 #ifdef __cplusplus
 }
 #endif

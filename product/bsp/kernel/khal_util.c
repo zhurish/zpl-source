@@ -1,8 +1,20 @@
 #include "kbsp_types.h"
 #include "khal_util.h"
 
+static const char *sdklog_priority[] = { "emerg", "alert", "crit", "err",
+		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
 
-
+void sdk_log(int module, int priority, const char *file, const char *func, const int line, const char *format, ...)
+{
+	char buflog[2048];
+	va_list args;
+	va_start(args, format);
+	printk("%-8s: ", sdklog_priority[priority]);
+	printk("(%s line %d:) ", file, line);
+	vsprintf(buflog, format, args);
+	printk("%s", buflog);
+	va_end(args);
+}
 
 #ifdef ZPL_SDK_KERNEL
 static const zpl_uchar bitMask[8] = {

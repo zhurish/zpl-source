@@ -610,7 +610,7 @@ funcname_thread_add_read_write(zpl_uint32 dir, struct thread_master *m,
 
 	if (FD_ISSET(ipstack_fd(fd), fdset))
 	{
-		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", fd);
+		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", ipstack_fd(fd));
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		return NULL;
@@ -1045,7 +1045,7 @@ int thread_wait_quit(struct thread_master *m)
 struct thread *
 thread_fetch(struct thread_master *m)
 {
-	zpl_uint32 num = 0;
+	zpl_int32 num = 0;
 	struct thread *thread = NULL;
 	thread_fd_set readfd;
 	thread_fd_set writefd;

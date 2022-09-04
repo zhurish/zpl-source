@@ -362,7 +362,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 			if (nbytes < 0)
 			{
 				zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s",
-						__func__, fd, ipstack_strerror(ipstack_errno));
+						__func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
 				break;
 			}
 
@@ -374,7 +374,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 #else  /* IOV_MAX */
 		nbytes = ipstack_writev(fd, iov, iov_index);
 	if (nbytes < 0)
-		zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s", __func__, fd,
+		zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s", __func__, ipstack_fd(fd),
 				ipstack_strerror(ipstack_errno));
 #endif /* IOV_MAX */
 
@@ -436,7 +436,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 		if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			/* Calling code should try again later. */
 			return BUFFER_PENDING;
-		zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s", __func__, fd,
+		zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s", __func__, ipstack_fd(fd),
 				ipstack_strerror(ipstack_errno));
 		return BUFFER_ERROR;
 	}
@@ -500,7 +500,7 @@ buffer_status_t buffer_write(struct buffer *b, zpl_socket_t fd, const void *p,
 			else
 			{
 				zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s",
-						__func__, fd, ipstack_strerror(ipstack_errno));
+						__func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
 				return BUFFER_ERROR;
 			}
 		}

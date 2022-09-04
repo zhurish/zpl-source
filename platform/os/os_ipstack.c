@@ -264,7 +264,7 @@ zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __
 	{
 		ipstack_fd(_sock) = ipcom_socket(__domain, __type, __protocol);
 	}
-	_OS_DEBUG_DETAIL("socket create: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket create: %s" ,ipstack_sockstr(_sock));
 	if(ipstack_invalid(_sock))
 	{
 		ipstack_drstroy(_sock);
@@ -278,7 +278,7 @@ zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __
 	zpl_socket_t _sock = ipstack_create(OS_STACK);
 	IPSTACK_CHECK(_sock, _sock);	
 	ipstack_fd(_sock) = socket(__domain, __type, __protocol);
-	_OS_DEBUG_DETAIL("socket create: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket create: %s" ,ipstack_sockstr(_sock));
 	if(ipstack_invalid(_sock))
 	{
 		ipstack_drstroy(_sock);
@@ -379,7 +379,7 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 		ipstack_fd(_socks[0]) = mfds[0];
 		ipstack_fd(_socks[1]) = mfds[1];
 	}
-	_OS_DEBUG_DETAIL("socket socketpair: %s" ,ipstack_sockstr(_socks[0]));
+	OSSTACK_DEBUG_DETAIL("socket socketpair: %s" ,ipstack_sockstr(_socks[0]));
 	if(ipstack_invalid(_socks[0]))
 	{
 		ipstack_drstroy(_socks[0]);
@@ -424,7 +424,7 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 	ret = socketpair(__domain, __type, __protocol, mfds);
 	ipstack_fd(_socks[0]) = mfds[0];
 	ipstack_fd(_socks[1]) = mfds[1];
-	_OS_DEBUG_DETAIL("socket socketpair: %s" ,ipstack_sockstr(_socks[0]));
+	OSSTACK_DEBUG_DETAIL("socket socketpair: %s" ,ipstack_sockstr(_socks[0]));
 	if(ipstack_invalid(_socks[0]))
 	{
 		ipstack_drstroy(_socks[0]);
@@ -461,11 +461,11 @@ int ipstack_bind (zpl_socket_t _sock, void * __addr, socklen_t __len)
 	{
 		ret = ipcom_bind(ipstack_fd(_sock), __addr, __len);
 	}
-	_OS_DEBUG_DETAIL("socket bind: %s" ,ipstack_sockstr(_socks));
+	OSSTACK_DEBUG_DETAIL("socket bind: %s" ,ipstack_sockstr(_socks));
 	return ret;
 #else
 	int ret = bind(ipstack_fd(_sock), __addr, __len);
-	_OS_DEBUG_DETAIL("socket bind: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket bind: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -486,11 +486,11 @@ int ipstack_getsockname (zpl_socket_t _sock, void * __addr,
 	{
 		ret = ipcom_getsockname(ipstack_fd(_sock), __addr, __len);
 	}
-	_OS_DEBUG_DETAIL("socket getsockname: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket getsockname: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = getsockname(ipstack_fd(_sock), __addr, __len);
-	_OS_DEBUG_DETAIL("socket getsockname: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket getsockname: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -515,11 +515,11 @@ int ipstack_connect (zpl_socket_t _sock, void * __addr, socklen_t __len)
 	{
 		ret = ipcom_connect(ipstack_fd(_sock), __addr, __len);
 	}
-	_OS_DEBUG_DETAIL("socket connect: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket connect: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = connect(ipstack_fd(_sock), __addr, __len);
-	_OS_DEBUG_DETAIL("socket connect: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket connect: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -540,11 +540,11 @@ int ipstack_getpeername (zpl_socket_t _sock, void * __addr,
 	{
 		ret = ipcom_getpeername(ipstack_fd(_sock), __addr, __len);
 	}
-	_OS_DEBUG_DETAIL("socket getpeername: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket getpeername: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = getpeername(ipstack_fd(_sock), __addr, __len);
-	_OS_DEBUG_DETAIL("socket getpeername: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket getpeername: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -567,11 +567,11 @@ ssize_t ipstack_send (zpl_socket_t _sock, const void *__buf, size_t __n, int __f
 	{
 		ret = ipcom_send(ipstack_fd(_sock), __buf, __n, __flags);
 	}
-	_OS_DEBUG_DETAIL("socket send: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket send: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = send(ipstack_fd(_sock), __buf, __n, __flags);
-	_OS_DEBUG_DETAIL("socket send: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket send: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -594,11 +594,11 @@ ssize_t ipstack_recv (zpl_socket_t _sock, void *__buf, size_t __n, int __flags)
 	{
 		ret = ipcom_recv(ipstack_fd(_sock), __buf, __n, __flags);
 	}
-	_OS_DEBUG_DETAIL("socket recv: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket recv: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = recv(ipstack_fd(_sock), __buf, __n, __flags);
-	_OS_DEBUG_DETAIL("socket recv: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket recv: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -623,11 +623,11 @@ ssize_t ipstack_sendto (zpl_socket_t _sock, const void *__buf, size_t __n,
 	{
 		ret = ipcom_sendto(ipstack_fd(_sock), __buf, __n, __flags, __addr, __addr_len);
 	}
-	_OS_DEBUG_DETAIL("socket sendto: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket sendto: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = sendto(ipstack_fd(_sock), __buf, __n, __flags, __addr, __addr_len);
-	_OS_DEBUG_DETAIL("socket sendto: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket sendto: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -654,11 +654,11 @@ ssize_t ipstack_recvfrom (zpl_socket_t _sock, void * __buf, size_t __n,
 	{
 		ret = ipcom_recvfrom(ipstack_fd(_sock), __buf, __n, __flags, __addr, __addr_len);
 	}
-	_OS_DEBUG_DETAIL("socket recvfrom: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket recvfrom: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = recvfrom(ipstack_fd(_sock), __buf, __n, __flags, __addr, __addr_len);
-	_OS_DEBUG_DETAIL("socket recvfrom: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket recvfrom: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -683,11 +683,11 @@ ssize_t ipstack_sendmsg (zpl_socket_t _sock, const struct ipstack_msghdr *__mess
 	{
 		ret = ipcom_sendmsg(ipstack_fd(_sock), __message, __flags);
 	}
-	_OS_DEBUG_DETAIL("socket sendmsg: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket sendmsg: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = sendmsg(ipstack_fd(_sock), __message, __flags);
-	_OS_DEBUG_DETAIL("socket sendmsg: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket sendmsg: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -710,11 +710,11 @@ ssize_t ipstack_recvmsg (zpl_socket_t _sock, struct ipstack_msghdr *__message, i
 	{
 		ret = ipcom_recvmsg(ipstack_fd(_sock), __message, __flags);
 	}
-	_OS_DEBUG_DETAIL("socket recvmsg: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket recvmsg: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = recvmsg(ipstack_fd(_sock), __message, __flags);
-	_OS_DEBUG_DETAIL("socket recvmsg: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket recvmsg: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -739,11 +739,11 @@ int ipstack_getsockopt (zpl_socket_t _sock, int __level, int __optname,
 	{
 		ret = ipcom_getsockopt(ipstack_fd(_sock), __level, __optname, __optval, __optlen);
 	}
-	_OS_DEBUG_DETAIL("socket getsockopt: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket getsockopt: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = getsockopt(ipstack_fd(_sock), __level, __optname, __optval, __optlen);
-	_OS_DEBUG_DETAIL("socket getsockopt: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket getsockopt: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -765,11 +765,11 @@ int ipstack_setsockopt (zpl_socket_t _sock, int __level, int __optname,
 	{
 		ret = ipcom_setsockopt(ipstack_fd(_sock), __level, __optname, __optval, __optlen);
 	}
-	_OS_DEBUG_DETAIL("socket setsockopt: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket setsockopt: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = setsockopt(ipstack_fd(_sock), __level, __optname, __optval, __optlen);
-	_OS_DEBUG_DETAIL("socket setsockopt: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket setsockopt: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -791,11 +791,11 @@ int ipstack_listen (zpl_socket_t _sock, int __n)
 	{
 		ret = ipcom_listen(ipstack_fd(_sock), __n);
 	}
-	_OS_DEBUG_DETAIL("socket listen: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket listen: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = listen(ipstack_fd(_sock), __n);
-	_OS_DEBUG_DETAIL("socket listen: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket listen: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -830,8 +830,8 @@ zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
 	{
 		ipstack_fd(ret) = ipcom_accept(ipstack_fd(_sock), __addr, __addr_len);
 	}
-	_OS_DEBUG_DETAIL("socket accept: %s" ,ipstack_sockstr(_sock));
-	_OS_DEBUG_DETAIL("socket accept return:%s" ,ipstack_sockstr(ret));
+	OSSTACK_DEBUG_DETAIL("socket accept: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket accept return:%s" ,ipstack_sockstr(ret));
 	if(ipstack_invalid(ret))
 	{
 		ipstack_drstroy(ret);
@@ -844,8 +844,8 @@ zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
 	zpl_socket_t ret = ipstack_create(ipstack_type(_sock));
 	IPSTACK_CHECK(ret, ret);
 	ipstack_fd(ret) = accept(ipstack_fd(_sock), __addr, __addr_len);
-	_OS_DEBUG_DETAIL("socket accept: %s" ,ipstack_sockstr(_sock));
-	_OS_DEBUG_DETAIL("socket accept return:%s" ,ipstack_sockstr(ret));
+	OSSTACK_DEBUG_DETAIL("socket accept: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket accept return:%s" ,ipstack_sockstr(ret));
 	if(ipstack_invalid(ret))
 	{
 		ipstack_drstroy(ret);
@@ -879,11 +879,11 @@ int ipstack_shutdown (zpl_socket_t _sock, int __how)
 	{
 		ret = ipcom_shutdown(ipstack_fd(_sock), __how);
 	}
-	_OS_DEBUG_DETAIL("socket shutdown: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket shutdown: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = shutdown(ipstack_fd(_sock), __how);
-	_OS_DEBUG_DETAIL("socket shutdown: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket shutdown: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -908,7 +908,7 @@ int ipstack_close (zpl_socket_t _sock)
 		if(ipstack_fd(_sock)>0)
 			ret = ipcom_socketclose(ipstack_fd(_sock));
 	}
-	_OS_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(*_sock));
+	OSSTACK_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(*_sock));
 	if(ret >= 0)
 		ipstack_fd(_sock) = ERROR;
 	ipstack_drstroy(_sock);	
@@ -918,14 +918,14 @@ int ipstack_close (zpl_socket_t _sock)
 	return ret;
 #else
 	int ret = ERROR;
-	_OS_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(_sock));
 	if(ipstack_fd(_sock) > 0)	
 		ret = close(ipstack_fd(_sock));
 	if(ret >= 0)
 	{
 		ipstack_fd(_sock) = ERROR;
 	}
-	_OS_DEBUG_DETAIL("socket == close: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket == close: %s" ,ipstack_sockstr(_sock));
 	ipstack_drstroy(_sock);
 	#ifdef ZPL_SOCKET_T_POINT
 	_sock = NULL;
@@ -952,21 +952,21 @@ int ipstack_close_pst (zpl_socket_t *_sock)
 		if(ipstack_fd(_sock)>0)
 			ret = ipcom_socketclose(ipstack_fd(_sock));
 	}
-	_OS_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(*_sock));
+	OSSTACK_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(*_sock));
 	if(ret >= 0)
 		ipstack_fd(_sock) = ERROR;
 	ipstack_drstroy(_sock);	
 	return ret;
 #else
 	int ret = ERROR;
-	_OS_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(*_sock));
+	OSSTACK_DEBUG_DETAIL("socket close: %s" ,ipstack_sockstr(*_sock));
 	if((_sock->_fd) > 0)	
 		ret = close((_sock->_fd));
 	if(ret >= 0)
 	{
 		(_sock->_fd) = ERROR;
 	}
-	_OS_DEBUG_DETAIL("socket == close: %s" ,ipstack_sockstr(*_sock));
+	OSSTACK_DEBUG_DETAIL("socket == close: %s" ,ipstack_sockstr(*_sock));
 	ipstack_drstroy(*_sock);
 	return ret;
 #endif
@@ -994,11 +994,11 @@ int ipstack_ioctl (zpl_socket_t _sock, unsigned long request, void *argp)
 		}
 		ret = ipcom_socketioctl(ipstack_fd(_sock), request, argp);
 	}
-	_OS_DEBUG_DETAIL("socket ioctl: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket ioctl: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = ioctl(ipstack_fd(_sock), request, argp);
-	_OS_DEBUG_DETAIL("socket ioctl: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket ioctl: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }
@@ -1044,11 +1044,11 @@ int ipstack_writev (zpl_socket_t _sock, struct ipstack_iovec *iov, int iovlen)
 		}
 		ret = ipcom_socketwritev(ipstack_fd(_sock), iov, iovlen);
 	}
-	_OS_DEBUG_DETAIL("socket writev: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket writev: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #else
 	int ret = writev(ipstack_fd(_sock), iov, iovlen);
-	_OS_DEBUG_DETAIL("socket writev: %s" ,ipstack_sockstr(_sock));
+	OSSTACK_DEBUG_DETAIL("socket writev: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }

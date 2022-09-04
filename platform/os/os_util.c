@@ -11,20 +11,6 @@
 
 #define PROC_BASE "/proc"
 
-int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len)
-{
-	zpl_uint32 i = 0, offset = 0;
-	for(i = 0; i < len; i++)
-	{
-		if((i+1)%16 == 0)
-			offset += snprintf(format + offset, size - offset, "\r\n");
-		if((size >= offset) < 5 )
-			offset += snprintf(format + offset, size - offset, "0x%02x ", (zpl_uchar)data[i]);
-		else
-			return ++i;
-	}
-	return ++i;
-}
 
 int os_pipe_create(zpl_char *name, zpl_uint32 mode)
 {
@@ -60,7 +46,7 @@ int os_pipe_close(int fd)
 int os_get_blocking(int fd)
 {
 #ifdef ZPL_BUILD_OS_LINUX	
-	zpl_uint32 flags = 0;
+	zpl_int32 flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
@@ -79,7 +65,7 @@ int os_get_blocking(int fd)
 int os_set_nonblocking(int fd)
 {
 #ifdef ZPL_BUILD_OS_LINUX	
-	zpl_uint32 flags = 0;
+	zpl_int32 flags = 0;
 
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
@@ -107,7 +93,7 @@ int os_set_nonblocking(int fd)
 int os_set_blocking(int fd)
 {
 #ifdef ZPL_BUILD_OS_LINUX	
-	zpl_uint32 flags = 0;
+	zpl_int32 flags = 0;
 	/* According to the Single UNIX Spec, the return value for F_GETFL should
 	 never be negative. */
 	if ((flags = fcntl(fd, F_GETFL)) < 0)
@@ -130,70 +116,6 @@ int os_set_blocking(int fd)
 		return 0;
 	return -1;		
 #endif
-}
-
-static int os_log_file_printf(FILE *fp, const zpl_char *buf, va_list args)
-{
-	if(fp)
-	{
-		vfprintf(fp, buf, args);
-		fprintf(fp, "\n");
-		fflush(fp);
-	}
-	return OK;
-}
-
-void os_log(zpl_char *file, const zpl_char *format, ...)
-{
-	FILE *fp = fopen(file, "a+");
-	if(fp)
-	{
-		va_list args;
-		va_start(args, format);
-		os_log_file_printf(fp, format, args);
-		//vzlog(zlog_default, module, priority, format, args);
-		va_end(args);
-		fclose(fp);
-	}
-}
-
-void os_vslog(zpl_char *herd, zpl_char *file, int line, const zpl_char *format, ...)
-{
-	int len = 0;
-	char buftmp[2048];
-	va_list args;
-	memset(buftmp, 0, sizeof(buftmp));
-	va_start(args, format);
-	if(herd && strstr(herd,"ERROR"))
-	{
-		if(herd)
-			len = sprintf(buftmp, "%s", herd);
-		if(file)
-		{
-			len += sprintf(buftmp + len, "(%s:%d)", file, line);
-		}
-		len += sprintf(buftmp + len, "(%s)", os_task_self_name_alisa());
-		len += vsprintf(buftmp + len, format, args);
-		va_end(args);
-
-		fprintf(stderr, "%s\r\n",buftmp);
-		fflush(stderr);
-	}
-	else
-	{
-		if(herd)
-			len += sprintf(buftmp + len, "%s", herd);
-		if(file)
-		{
-			len += sprintf(buftmp + len, "(%s:%d)", file, line);
-		}
-		len += sprintf(buftmp + len, "(%s)", os_task_self_name_alisa());
-		len += vsprintf(buftmp + len, format, args);
-		va_end(args);
-
-		fprintf(stdout, "%s\r\n",buftmp);
-		fflush(stdout);
-	}
 }
 
 zpl_char * pid2name(zpl_pid_t pid)
@@ -242,8 +164,8 @@ zpl_pid_t name2pid(const zpl_char *name)
 
 		zpl_char comm[PATH_MAX + 1];
 		zpl_char path[PATH_MAX + 1];
-		zpl_uint32 len;
-		zpl_uint32 namelen;
+		zpl_int32 len;
+		zpl_int32 namelen;
 
 		/* See if this is a process */
 		if ((pid = atoi(d->d_name)) == 0)
@@ -345,26 +267,6 @@ zpl_pthread_t os_thread_once(void (*entry)(void *), void *p)
 		return td_thread;
 	return ERROR;
 }
-
-
-int fdprintf
-    (
-    int fd,       /* fd of control connection socket */
-	const zpl_char *format, ...
-    )
-    {
-		va_list args;
-		zpl_char buf[1024];
-		zpl_uint32 len = 0;
-		memset(buf, 0, sizeof(buf));
-		va_start(args, format);
-		len = vsnprintf(buf, sizeof(buf), format, args);
-		va_end(args);
-
-		if(len <= 0)
-			return ERROR;
-		return write(fd, buf, len);
-    }
 
 
 int hostname_ipv4_address(zpl_char *hostname, struct in_addr *addr)

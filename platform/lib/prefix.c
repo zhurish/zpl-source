@@ -1150,7 +1150,14 @@ const char *cli_inet_ethernet(zpl_uint8 *mac)
 
 int cli_ethernet_get(const char *macstr, zpl_uint8 *mac)
 {
-	sscanf(macstr, "%02x%02x-%02x%02x-%02x%02x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+  zpl_uint32 tmpmac[6];
+	sscanf(macstr, "%02x%02x-%02x%02x-%02x%02x", &tmpmac[0], &tmpmac[1], &tmpmac[2], &tmpmac[3], &tmpmac[4], &tmpmac[5]);
+  mac[0] = (zpl_uint8)(tmpmac[0] & 0xff);
+  mac[1] = (zpl_uint8)(tmpmac[1] & 0xff);
+  mac[2] = (zpl_uint8)(tmpmac[2] & 0xff);
+  mac[3] = (zpl_uint8)(tmpmac[3] & 0xff);
+  mac[4] = (zpl_uint8)(tmpmac[4] & 0xff);
+  mac[5] = (zpl_uint8)(tmpmac[5] & 0xff);
 	return 0;
 }
 

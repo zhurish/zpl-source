@@ -15,6 +15,14 @@ extern "C" {
 #include "zpl_type.h"
 #include "auto_include.h"
 
+#define OSSTACK_DEBUG_ENABLE
+
+#ifdef OSSTACK_DEBUG_ENABLE
+#define OSSTACK_DEBUG_DETAIL(fmt,...)	os_log_debug(fmt, ##__VA_ARGS__)
+#else
+#define OSSTACK_DEBUG_DETAIL(fmt,...)
+#endif
+
 /* Create a new socket of type TYPE in domain DOMAIN, using
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
    Returns a file descriptor for the new socket, or -1 for errors.  */

@@ -36,8 +36,6 @@ typedef struct bsp_driver
     zpl_uint32 taskid;
     zpl_void *hal_client;
 
-    zpl_void *event_client;
-
     bsp_netlink_t   *netlink_cfg;
     bsp_netlink_t   *netlink_klog;
 

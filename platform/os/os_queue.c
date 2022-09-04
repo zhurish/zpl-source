@@ -10,7 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-static zpl_uint32 _os_msgq_id = -1;
+static zpl_int32 _os_msgq_id = -1;
 
 
 int os_msgq_init(void)

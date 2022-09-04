@@ -361,9 +361,9 @@ ALIAS(show_mac_address_table,
 
 static int nsm_mac_address_table_summary(l2mac_t *node, struct mac_user *user)
 {
-	if(node->action == MAC_BROADCAST)
+	if(node->class == MAC_BROADCAST)
 		user->broadcast++;
-	else if(node->action == MAC_MULTICAST)
+	else if(node->class == MAC_MULTICAST)
 		user->multcast++;
 	else
 		user->unicast++;

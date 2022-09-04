@@ -354,7 +354,7 @@ static void vty_buf_put(struct vty *vty, zpl_char c)
 int vty_out(struct vty *vty, const char *format, ...)
 {
 	va_list args;
-	zpl_uint32 len = 0;
+	zpl_int32 len = 0;
 	zpl_size_t size = 4096;
 	zpl_char buf[4096];
 	zpl_char *p = NULL;
@@ -431,7 +431,7 @@ int vty_out(struct vty *vty, const char *format, ...)
 int vty_sync_out(struct vty *vty, const char *format, ...)
 {
 	va_list args;
-	zpl_uint32 len = 0;
+	zpl_int32 len = 0;
 	zpl_size_t size = 4096;
 	zpl_char buf[4096];
 	zpl_char *p = NULL;
@@ -601,7 +601,7 @@ static int vty_log_out(struct vty *vty, const char *level,
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 		zlog_warn(MODULE_DEFAULT,
 				  "%s: write failed to vty client fd %d, closing: %s", __func__,
-				  vty->fd, ipstack_strerror(ipstack_errno));
+				  ipstack_fd(vty->fd), ipstack_strerror(ipstack_errno));
 		if (vty->obuf)
 			buffer_reset(vty->obuf);
 		/* cannot call vty_close, because a parent routine may still try to access the vty struct */
@@ -813,7 +813,7 @@ static void vty_auth(struct vty *vty, zpl_char *buf)
 }
 
 /* Command execution over the vty interface. */
-int vty_command(struct vty *vty, zpl_char *buf)
+int vty_command(struct vty *vty, const zpl_char *buf)
 {
 	int ret;
 	vector vline;
@@ -1884,7 +1884,7 @@ int vty_getc_input(struct vty *vty)
 	else
 	{
 		//		int ret;
-		zpl_uint32 nbytes;
+		zpl_int32 nbytes;
 		zpl_uchar buf[VTY_READ_BUFSIZ];
 		while (1)
 		{
@@ -1905,7 +1905,7 @@ int vty_getc_input(struct vty *vty)
 					vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 					zlog_warn(MODULE_DEFAULT,
 							  "%s: read failed on vtysh client fd %d, closing: %s",
-							  __func__, vty->fd, ipstack_strerror(ipstack_errno));
+							  __func__, ipstack_fd(vty->fd), ipstack_strerror(ipstack_errno));
 					return -1;
 				}
 			}
@@ -2122,7 +2122,7 @@ int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len)
 
 static int vty_read(struct eloop *thread)
 {
-	zpl_uint32 nbytes;
+	zpl_int32 nbytes;
 	zpl_uchar buf[VTY_READ_BUFSIZ];
 	struct vty *vty = ELOOP_ARG(thread);
 	vty->t_read = NULL;
@@ -2203,7 +2203,7 @@ static int vty_flush_handle(struct vty *vty, zpl_socket_t vty_sock)
 	case BUFFER_ERROR:
 		vty->trapping = vty->monitor = 0; /* disable monitoring to avoid infinite recursion */
 		zlog_warn(MODULE_DEFAULT,
-				  "buffer_flush failed on vty client fd %d, closing", vty->wfd);
+				  "buffer_flush failed on vty client fd %d, closing", ipstack_fd(vty->wfd));
 		buffer_reset(vty->obuf);
 		vty_close(vty);
 		return 0;
@@ -2406,7 +2406,7 @@ static int vty_console_flush(struct thread *thread)
 
 static int vty_console_read(struct thread *thread)
 {
-	zpl_uint32 nbytes;
+	zpl_int32 nbytes;
 	zpl_uchar buf[VTY_READ_BUFSIZ];
 	struct vty *vty = THREAD_ARG(thread);
 	vty->t_read = NULL;
@@ -2703,7 +2703,7 @@ static int vty_console_init(const char *tty)
 	return OK;
 }
 
-void vty_tty_init(zpl_char *tty)
+void vty_tty_init(const char *tty)
 {
 	zpl_socket_t ttyfd;
 	ttyfd = ipstack_init(OS_STACK, -1);
@@ -3137,7 +3137,7 @@ static int vtysh_read(struct thread *thread)
 
 	if (msg.msglen > zpl_osmsg_get_size(vty->vtysh_msg))
 	{
-		zlog_warn(MODULE_DEFAULT, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
+		zlog_warn(MODULE_DEFAULT, "%s: ipstack_socket %d message length %u exceeds buffer size %d",
 				  __func__, ipstack_fd(sock), msg.msglen, zpl_osmsg_get_size(vty->vtysh_msg));
 		vty->trapping = vty->monitor = 0;
 		buffer_reset(vty->obuf);
@@ -3303,7 +3303,7 @@ vtysh_write(struct thread *thread)
 static int vty_sshd_read(struct thread *thread)
 {
 	zpl_socket_t sock;
-	zpl_uint32 nbytes;
+	zpl_int32 nbytes;
 	struct vty *vty;
 	zpl_uchar buf[VTY_READ_BUFSIZ];
 	sock = THREAD_FD(thread);

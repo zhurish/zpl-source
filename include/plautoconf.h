@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-08-13 21:08:22 CST"
+#define AUTOCONF_TIMESTAMP "2022-09-04 15:11:59 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -24,37 +24,37 @@
 #undef ZPL_SYSTEM_MSVC32
 #undef ZPL_SYSTEM_MSVC64
 #define ZPL_ARCH_MODULE 1
-#undef ZPL_ARCH_ARM
+#define ZPL_ARCH_ARM 1
 #undef ZPL_ARCH_ARM64
 #undef ZPL_ARCH_AARCH64
 #undef ZPL_ARCH_X86
-#define ZPL_ARCH_X86_64 1
+#undef ZPL_ARCH_X86_64
 #undef ZPL_ARM_A5
 #undef ZPL_ARM_A6
-#undef ZPL_ARM_A7
+#define ZPL_ARM_A7 1
 #undef ZPL_ARM_A8
 #undef ZPL_ARM_A9
 
 /*
  * Toolchain Config
  */
-#define ZPL_HOST_TOOLCHAIN_MODULE 1
-#undef ZPL_EXTERNAL_TOOLCHAIN_MODULE
-#define ZPL_TOOLCHAIN_PREFIX ""
-#undef ZPL_TOOLCHAIN_GLIBC
+#undef ZPL_HOST_TOOLCHAIN_MODULE
+#define ZPL_EXTERNAL_TOOLCHAIN_MODULE 1
+#define ZPL_TOOLCHAIN_PREFIX "arm-linux-gnueabihf-"
+#define ZPL_TOOLCHAIN_GLIBC 1
 #undef ZPL_TOOLCHAIN_UCLIBC
-#define ZPL_TOOLCHAIN_PATH ""
+#define ZPL_TOOLCHAIN_PATH "/opt/gcc-linaro-7.5.0-arm-linux-gnueabihf"
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
 #define ZPL_COMPILE_OPTIONS "-g"
-#undef ZPL_COREDUMP_ENABLE
+#define ZPL_COREDUMP_ENABLE 1
 #define ZPL_FPU_HARD 1
 #undef ZPL_FPU_SOFT
 #undef ZPL_FPU_SOFTFP
 #undef ZPL_FPU_NEON
 #undef ZPL_ARM_VFP
 #undef ZPL_ARM_NEON_VFP
-#define ZPL_TOOLCHAIN_CFLAGS ""
+#define ZPL_TOOLCHAIN_CFLAGS "-D__ARM_PCS_VFP"
 
 /*
  * Platform configuration
@@ -84,7 +84,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#define ZPL_ACTIVE_STANDBY 1
+#undef ZPL_ACTIVE_STANDBY
 #undef ZPL_NSM_SNMP
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
@@ -115,7 +115,7 @@
 #define ZPL_NSM_PORT 1
 #define ZPL_NSM_VLANETH 1
 #undef ZPL_NSM_WIRELESS
-#define ZPL_NSM_BRIDGE 1
+#undef ZPL_NSM_BRIDGE
 #define ZPL_NSM_SECURITY 1
 #define ZPL_NSM_RTADV 1
 #define ZPL_NSM_IRDP 1
@@ -239,10 +239,10 @@
  */
 #define ZPL_BSP_MODULE 1
 #define ZPL_SDK_MODULE 1
-#define ZPL_SDK_NONE 1
-#undef ZPL_SDK_USER
+#undef ZPL_SDK_NONE
+#define ZPL_SDK_USER 1
 #undef ZPL_SDK_KERNEL
-#undef ZPL_SDK_BCM53125
+#define ZPL_SDK_BCM53125 1
 
 /*
  * Externsions Module Config

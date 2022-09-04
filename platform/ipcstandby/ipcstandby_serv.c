@@ -210,7 +210,7 @@ ipcstandby_serv_client_read(struct thread *thread)
     {
       client->recv_faild_cnt++;
       if (IS_ZPL_IPCMSG_DEBUG_EVENT(client->debug))
-        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", sock);
+        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", ipstack_fd(sock));
       ipcstandby_serv_client_close(client);
       return -1;
     }
@@ -236,7 +236,7 @@ ipcstandby_serv_client_read(struct thread *thread)
   {
     client->pkt_err_cnt++;
     zlog_err(MODULE_NSM, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
-             __func__, sock, marker, version);
+             __func__, ipstack_fd(sock), marker, version);
     ipcstandby_serv_client_close(client);
     return -1;
   }
@@ -244,7 +244,7 @@ ipcstandby_serv_client_read(struct thread *thread)
   {
     client->pkt_err_cnt++;
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u is less than header size %d",
-              __func__, sock, length, ZPL_IPCMSG_HEADER_SIZE);
+              __func__, ipstack_fd(sock), length, ZPL_IPCMSG_HEADER_SIZE);
     ipcstandby_serv_client_close(client);
     return -1;
   }
@@ -252,7 +252,7 @@ ipcstandby_serv_client_read(struct thread *thread)
   {
     client->pkt_err_cnt++;
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
-              __func__, sock, length, (u_long)STREAM_SIZE(client->ibuf));
+              __func__, ipstack_fd(sock), length, (u_long)STREAM_SIZE(client->ibuf));
     ipcstandby_serv_client_close(client);
     return -1;
   }
@@ -267,7 +267,7 @@ ipcstandby_serv_client_read(struct thread *thread)
     {
       client->recv_faild_cnt++;
       if (IS_ZPL_IPCMSG_DEBUG_EVENT(client->debug))
-        zlog_debug(MODULE_NSM, "connection closed [%d] when reading ipcstandby data", sock);
+        zlog_debug(MODULE_NSM, "connection closed [%d] when reading ipcstandby data", ipstack_fd(sock));
       ipcstandby_serv_client_close(client);
       return -1;
     }
@@ -283,7 +283,7 @@ ipcstandby_serv_client_read(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_ZPL_IPCMSG_DEBUG_EVENT(client->debug))
-    zlog_debug(MODULE_NSM, "ipcstandby message comes from ipstack_socket [%d]", sock);
+    zlog_debug(MODULE_NSM, "ipcstandby message comes from ipstack_socket [%d]", ipstack_fd(sock));
 
   if (IS_ZPL_IPCMSG_DEBUG_PACKET(client->debug) && IS_ZPL_IPCMSG_DEBUG_RECV(client->debug))
     zlog_debug(MODULE_NSM, "ipcstandby message received [%d] %d",
@@ -442,6 +442,11 @@ ipcstandby_serv_event(struct ipcstandby_server_t *_server, enum ipcmsg_event eve
     
   case ZPL_IPCMSG_WRITE:
     /**/
+    break;
+  case ZPL_IPCMSG_NONE:
+  case ZPL_IPCMSG_CONNECT:
+  case ZPL_IPCMSG_EVENT:
+  case ZPL_IPCMSG_SCHEDULE:
     break;
   }
 }

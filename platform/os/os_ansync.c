@@ -46,6 +46,8 @@ os_ansync_lst * os_ansync_global_lookup(zpl_uint32 taskid, zpl_uint32 module)
 {
 	NODE index;
 	os_ansync_lst *pstNode = NULL;
+	if(ansyncList == NULL)
+		return NULL;
 	for(pstNode = (os_ansync_lst *)lstFirst(ansyncList);
 			pstNode != NULL;  pstNode = (os_ansync_lst *)lstNext((NODE*)&index))
 	{
@@ -64,6 +66,8 @@ int os_ansync_global_foreach(int (*func)(os_ansync_lst *, void *), void *pVoid)
 {
 	NODE index;
 	os_ansync_lst *pstNode = NULL;
+	if(ansyncList == NULL)
+		return OK;
 	for(pstNode = (os_ansync_lst *)lstFirst(ansyncList);
 			pstNode != NULL;  pstNode = (os_ansync_lst *)lstNext((NODE*)&index))
 	{
@@ -85,6 +89,8 @@ os_ansync_lst *os_ansync_lst_create(zpl_uint32 module, int maxfd)
 #ifdef OS_ANSYNC_GLOBAL_LIST
 	os_ansync_global_init();
 #endif
+	if(ansyncList == NULL)
+		return NULL;
 	if(lst)
 	{
 		os_memset(lst, 0, sizeof(os_ansync_lst));
@@ -148,7 +154,8 @@ int os_ansync_lst_destroy(os_ansync_lst *lst)
 	if(lst)
 	{
 #ifdef OS_ANSYNC_GLOBAL_LIST
-		lstDelete(ansyncList, (NODE *)lst);
+		if(ansyncList != NULL)
+			lstDelete(ansyncList, (NODE *)lst);
 #endif
 		if(lst->list && lstCount(lst->list))
 			lstFree(lst->list);

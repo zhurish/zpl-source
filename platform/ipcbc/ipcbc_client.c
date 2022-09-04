@@ -662,7 +662,7 @@ static int ipcbc_client_read(struct thread *thread)
     {
       client->recv_faild_cnt++;
       if (IS_ZPL_IPCMSG_DEBUG_EVENT(client->debug))
-        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", sock);
+        zlog_debug(MODULE_NSM, "connection closed ipstack_socket [%d]", ipstack_fd(sock));
       ipcbc_client_failed(client);
       return -1;
     }
@@ -688,7 +688,7 @@ static int ipcbc_client_read(struct thread *thread)
   {
     client->pkt_err_cnt++;
     zlog_err(MODULE_NSM, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
-             __func__, sock, marker, version);
+             __func__, ipstack_fd(sock), marker, version);
     ipcbc_client_failed(client);
     return -1;
   }
@@ -696,7 +696,7 @@ static int ipcbc_client_read(struct thread *thread)
   {
     client->pkt_err_cnt++;
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u is less than header size %d",
-              __func__, sock, length, ZPL_IPCMSG_HEADER_SIZE);
+              __func__, ipstack_fd(sock), length, ZPL_IPCMSG_HEADER_SIZE);
     ipcbc_client_failed(client);
     return -1;
   }
@@ -704,7 +704,7 @@ static int ipcbc_client_read(struct thread *thread)
   {
     client->pkt_err_cnt++;
     zlog_warn(MODULE_NSM, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
-              __func__, sock, length, (u_long)STREAM_SIZE(client->ibuf));
+              __func__, ipstack_fd(sock), length, (u_long)STREAM_SIZE(client->ibuf));
     ipcbc_client_failed(client);
     return -1;
   }
@@ -719,7 +719,7 @@ static int ipcbc_client_read(struct thread *thread)
     {
       client->recv_faild_cnt++;
       if (IS_ZPL_IPCMSG_DEBUG_EVENT(client->debug))
-        zlog_debug(MODULE_NSM, "connection closed [%d] when reading ipcbc data", sock);
+        zlog_debug(MODULE_NSM, "connection closed [%d] when reading ipcbc data", ipstack_fd(sock));
       ipcbc_client_failed(client);
       return -1;
     }
@@ -735,7 +735,7 @@ static int ipcbc_client_read(struct thread *thread)
 
   /* Debug packet information. */
   if (IS_ZPL_IPCMSG_DEBUG_EVENT(client->debug))
-    zlog_debug(MODULE_NSM, "ipcbc message comes from ipstack_socket [%d]", sock);
+    zlog_debug(MODULE_NSM, "ipcbc message comes from ipstack_socket [%d]", ipstack_fd(sock));
 
   if (IS_ZPL_IPCMSG_DEBUG_PACKET(client->debug) && IS_ZPL_IPCMSG_DEBUG_RECV(client->debug))
     zlog_debug(MODULE_NSM, "ipcbc message received [%d] %d",

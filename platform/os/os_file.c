@@ -174,7 +174,7 @@ int os_file_size (const zpl_char *filename)
 
 const zpl_char * os_file_size_string(zpl_ullong len)
 {
-	zpl_ullong glen = 0, mlen = 0, klen = 0, tlen = 0;
+	zpl_uint32 glen = 0, mlen = 0, klen = 0, tlen = 0;
 	static zpl_char buf[64];
 	memset(buf, 0, sizeof(buf));
 	tlen = (len >> 40) & KB_SIZE_MASK;
@@ -183,23 +183,23 @@ const zpl_char * os_file_size_string(zpl_ullong len)
 	klen = (len >> 10) & KB_SIZE_MASK;
 	if(tlen > 0)
 	{
-		snprintf(buf, sizeof(buf), "%d.%02d T",tlen, glen);
+		snprintf(buf, sizeof(buf), "%u.%02u T",(zpl_uint32)tlen, (zpl_uint32)glen);
 	}
 	else if(glen > 0)
 	{
-		snprintf(buf, sizeof(buf), "%d.%02d G",glen, mlen);
+		snprintf(buf, sizeof(buf), "%u.%02u G",glen, mlen);
 	}
 	else if(mlen > 0)
 	{
-		snprintf(buf, sizeof(buf), "%d.%02d M",mlen, klen);
+		snprintf(buf, sizeof(buf), "%u.%02u M",mlen, klen);
 	}
 	else if(klen > 0)
 	{
-		snprintf(buf, sizeof(buf), "%u.%02u K",klen, (len) & KB_SIZE_MASK);
+		snprintf(buf, sizeof(buf), "%u.%02u K",klen, (zpl_uint32)((len) & KB_SIZE_MASK));
 	}
 	else
 	{
-		snprintf(buf, sizeof(buf), "%d Byte",len);
+		snprintf(buf, sizeof(buf), "%u Byte",(zpl_uint32)len);
 	}
 	return buf;
 }

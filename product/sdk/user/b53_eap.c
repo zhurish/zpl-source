@@ -41,7 +41,7 @@ static int b53125_eap_mode_set(sdk_driver_t *dev, zpl_phyport_t port, int mode)
 	u32 val1 = 0, val2 = 0;
 
 	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), &regval);
-	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
 	val2 = regval & 0xffffffff;
 	val1 = (regval>>32) & 0xffffffff;
 	val1 &= ~(B53_EAP_MODE_MASK << (B53_EAP_MODE-32));
@@ -49,7 +49,7 @@ static int b53125_eap_mode_set(sdk_driver_t *dev, zpl_phyport_t port, int mode)
 	regval = val1;
 	regval =  (regval<<32) | val2;
 	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
-	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
 	sdk_handle_return(ret);
 	return ret;
 }
@@ -62,7 +62,7 @@ static int b53125_eap_stat_set(sdk_driver_t *dev, zpl_phyport_t port, int stat)
 	u32 val1 = 0, val2 = 0;
 
 	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), &regval);
-	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
 	val2 = regval & 0xffffffff;
 	val1 = (regval>>32) & 0xffffffff;
 	val1 &= ~(B53_EAP_BLK_MODE_M << (B53_EAP_BLK_MODE-32));
@@ -70,7 +70,7 @@ static int b53125_eap_stat_set(sdk_driver_t *dev, zpl_phyport_t port, int stat)
 	regval = val1;
 	regval =  (regval<<32) | val2;
 	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
-	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
 	sdk_handle_return(ret);
 	return ret;
 }
@@ -83,7 +83,7 @@ static int b53125_eap_dmac_set(sdk_driver_t *dev, zpl_phyport_t port, mac_t *mac
 	zpl_uint64 u = 0;
 	zpl_uint32 i;
 	ret |= b53125_read64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), &regval);
-	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
+	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
 	val2 = regval & 0xffffffff;
 	val1 = (regval>>32) & 0xffffffff;
 	val1 &= ~(1 << (B53_EAP_DA_EN-32));
@@ -100,7 +100,7 @@ static int b53125_eap_dmac_set(sdk_driver_t *dev, zpl_phyport_t port, mac_t *mac
 	regval =  (regval<<32) | val2;
 	regval |= u;
 	ret |= b53125_write64(dev->sdk_device, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
-	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%x", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
+	sdk_debug_detail(dev, "write %s(ret=%d) page=0x%x reg=0x%x val=0x%llx", __func__, ret, B53_EAP_PAGE, B53_EAP_PORT(port), regval);
 	sdk_handle_return(ret);
 	return ret;
 }
