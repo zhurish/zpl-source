@@ -86,12 +86,16 @@ typedef enum {
 #define SAFI_MAX                  8
 
 
-extern int16_t ip_protocol_type(const char *str);
-extern const char * ip_protocol_type_string(int16_t type);
-extern int16_t eth_protocol_type(const char *str);
-extern const char * eth_protocol_type_string(int16_t type);
-extern int16_t port_operation_type(const char *str);
-extern const char * port_operation_type_string(int16_t type);
+extern zpl_uint16 ip_protocol_type(const char *str);
+extern const char * ip_protocol_type_string(zpl_uint16 type);
+extern zpl_uint16 eth_protocol_type(const char *str);
+extern const char * eth_protocol_type_string(zpl_uint16 type);
+extern zpl_uint16 port_operation_type(const char *str);
+extern const char * port_operation_type_string(zpl_uint16 type);
+
+
+extern zpl_uint16 eth_l2protocol_type(const char *smac);
+extern const char *eth_l2protocol_type_string(zpl_uint16 type);
 
 #ifdef __cplusplus
 }

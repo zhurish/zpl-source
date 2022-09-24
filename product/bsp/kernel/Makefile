@@ -12,7 +12,7 @@ ifeq ($(ZPL_ARCH_X86_64),true)
 KERN_DIR = /usr/src/kernels/4.18.0-348.7.1.el8_5.x86_64 
 endif
 
-ZPLKCFLAGS=$(ZPLDEFINE) $(ZPLDEBUG) -Wno-error=incompatible-pointer-types
+ZPLKCFLAGS=$(ZPLDEFINE) $(ZPLDEBUG) -Wno-error=incompatible-pointer-types 
 MODULEDIR = product
 
 KO_DIR = $(ZPL_INSTALL_KO_DIR)
@@ -138,11 +138,11 @@ endif
 clean:  objclean   
 	@if test -f $(KO_DIR)/$(LINUX_KBE_NAME).ko ; \
 		then \
-		@$(RM) $(KO_DIR)/$(LINUX_KBE_NAME).ko ; \
+		$(RM) $(KO_DIR)/$(LINUX_KBE_NAME).ko ; \
 	fi
 	@if test -f $(KO_DIR)/$(LINUX_MDIODEV_NAME).ko ; \
 		then \
-		@$(RM) $(KO_DIR)/$(LINUX_MDIODEV_NAME).ko ; \
+		$(RM) $(KO_DIR)/$(LINUX_MDIODEV_NAME).ko ; \
 	fi                                
 
 

@@ -66,11 +66,11 @@ install: $(VTYSH_TARGET)
 clean: objclean
 	@if test -f ${ZPL_INSTALL_SBIN_DIR}/${VTYSH_TARGET} ; \
 		then \
-		@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${VTYSH_TARGET} ; \
+		$(RM) ${ZPL_INSTALL_SBIN_DIR}/${VTYSH_TARGET} ; \
 	fi
 	@if test -f $(VTYSH_TARGET) ; \
 		then \
-		@$(RM) $(VTYSH_TARGET); \
+		$(RM) $(VTYSH_TARGET); \
 	fi
 
 

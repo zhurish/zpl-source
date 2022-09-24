@@ -214,6 +214,6 @@ struct module_list module_list_modem =
 	.module_task_init=modem_task_init, 
 	.module_task_exit=modem_task_exit, 
 	.module_cmd_init=cmd_modem_init, 
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 	.taskid=0,
 };

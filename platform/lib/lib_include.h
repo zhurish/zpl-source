@@ -41,6 +41,7 @@ extern "C" {
 #include "plist.h"
 #include "lib_pqueue.h"
 #include "lib_event.h"
+#include "lib_netlink.h"
 #include "md5.h"
 #include "nexthop.h"
 #include "routemap.h"

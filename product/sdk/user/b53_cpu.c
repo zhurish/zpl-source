@@ -274,6 +274,7 @@ int b53125_imp_init(sdk_driver_t *dev)
 	int ret = 0;
 	ret |= b53_brcm_hdr_setup(dev, zpl_true, ((b53_device_t *)dev->sdk_device)->cpu_port);
 	sdk_debug_event(dev, "b53125 brcm hdr init %s", (ret == OK)?"OK":"ERROR");
+	return ret;
 	ret |= b53125_imp_enable(dev, zpl_true);//关闭IMP接口
 	sdk_debug_event(dev, "b53125 imp init %s", (ret == OK)?"OK":"ERROR");
 	ret |= b53125_imp_flow(dev, zpl_true, zpl_true);
@@ -282,6 +283,7 @@ int b53125_imp_init(sdk_driver_t *dev)
 	sdk_debug_event(dev, "b53125 imp duplex init %s", (ret == OK)?"OK":"ERROR");
 	ret |= b53125_imp_speed(dev, PORT_OVERRIDE_SPEED_1000M);
 	sdk_debug_event(dev, "b53125 imp speed init %s", (ret == OK)?"OK":"ERROR");
+	//ret |= b53125_imp_enable(dev, zpl_false);
 	return ret;
 }
 

@@ -25,7 +25,7 @@
 typedef struct
 {
 	zpl_uint32	 shmid;
-	pthread_mutex_t mutex;	//对共享内存信号量集的保护
+	zpl_pthread_mutex_t mutex;	//对共享内存信号量集的保护
 	zpl_char shm_cnt;			//记录当前共享内存有几个进程还在使用
 	zpl_char *p;
 }os_mshm_t;
@@ -59,7 +59,7 @@ int os_mutex_obj_init(void)
 			pthread_mutexattr_t mattr;
 			pthread_mutexattr_init(&mattr);
 			pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-			pthread_mutex_init ((pthread_mutex_t  *)&os_local_shm->mutex, &mattr);
+			pthread_mutex_init ((zpl_pthread_mutex_t  *)&os_local_shm->mutex, &mattr);
 			memset(os_local_mutex, 0, sizeof(os_mutex_t)*OS_MUTEX_SEM_MAX);
 		}
 		return OK;
@@ -76,7 +76,7 @@ int os_mutex_obj_exit(void)
 		if(os_local_shm->shm_cnt == 0)
 		{
 			memset(os_local_mutex, 0, sizeof(os_mutex_t)*OS_MUTEX_SEM_MAX);
-			pthread_mutex_destroy ((pthread_mutex_t  *)&os_local_shm->mutex);
+			pthread_mutex_destroy ((zpl_pthread_mutex_t  *)&os_local_shm->mutex);
 			memset(os_local_shm, 0, sizeof(os_mshm_t));
 			delete = 1;
 		}
@@ -151,7 +151,7 @@ static os_mutex_t * os_mutex_sem_init(zpl_uint32 key, zpl_uint32 type)
 				pthread_mutexattr_t mattr;
 				pthread_mutexattr_init(&mattr);
 				pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-				ret = pthread_mutex_init ((pthread_mutex_t  *)&mutex->value.mutex, &mattr);
+				ret = pthread_mutex_init ((zpl_pthread_mutex_t  *)&mutex->value.mutex, &mattr);
 			}
 			else
 			{
@@ -191,7 +191,7 @@ static int os_mutex_sem_exit(os_mutex_t * mutex)
 	if(mutex->cnt == 0)
 	{
 		if(mutex->type == OS_MUTEX_TYPE)
-			pthread_mutex_destroy ((pthread_mutex_t  *)&mutex->value.mutex);
+			pthread_mutex_destroy ((zpl_pthread_mutex_t  *)&mutex->value.mutex);
 		else
 		{
 			sem_destroy(&mutex->value.sem);
@@ -267,7 +267,7 @@ static int os_mutex_sem_unlock(os_mutex_t * mutex)
 	{
 		if(mutex->type == OS_MUTEX_TYPE)
 		{
-			return pthread_mutex_unlock(((pthread_mutex_t *)&mutex->value.mutex));
+			return pthread_mutex_unlock(((zpl_pthread_mutex_t *)&mutex->value.mutex));
 		}
 		else
 		{
@@ -289,7 +289,7 @@ int os_mutex_exit(os_mutex_t * mutex)
 	return os_mutex_sem_exit(mutex);
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_mutex_lock_entry(os_mutex_t * mutex, zpl_int32 wait_ms, zpl_char *file, int line)
+int os_mutex_lock_entry(os_mutex_t * mutex, zpl_int32 wait_ms, zpl_char *func, int line)
 #else
 int os_mutex_lock(os_mutex_t * mutex, zpl_int32 wait_ms)
 #endif
@@ -297,7 +297,7 @@ int os_mutex_lock(os_mutex_t * mutex, zpl_int32 wait_ms)
 	return os_mutex_sem_lock(mutex, wait_ms);
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_mutex_unlock_entry(os_mutex_t * mutex, zpl_char *file, int line)
+int os_mutex_unlock_entry(os_mutex_t * mutex, zpl_char *func, int line)
 #else
 int os_mutex_unlock(os_mutex_t *mutex)
 #endif
@@ -316,7 +316,7 @@ int os_sem_exit(os_sem_t * sem)
 	return os_mutex_sem_exit(sem);
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_sem_take_entry(os_sem_t * sem, zpl_int32 wait_ms, zpl_char *file, int line)
+int os_sem_take_entry(os_sem_t * sem, zpl_int32 wait_ms, zpl_char *func, int line)
 #else
 int os_sem_take(os_sem_t *ossem)
 #endif
@@ -324,7 +324,7 @@ int os_sem_take(os_sem_t *ossem)
 	return os_mutex_sem_lock(sem, wait_ms);
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_sem_give_entry(os_sem_t * sem, zpl_char *file, int line)
+int os_sem_give_entry(os_sem_t * sem, zpl_char *func, int line)
 #else
 int os_sem_give(os_sem_t *ossem)
 #endif
@@ -380,7 +380,7 @@ os_sem_t * os_sem_init(void)
 	return nsem;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_sem_give_entry(os_sem_t *ossem, zpl_char *file, int line)
+int os_sem_give_entry(os_sem_t *ossem, zpl_char *func, int line)
 #else
 int os_sem_give(os_sem_t *ossem)
 #endif
@@ -388,7 +388,7 @@ int os_sem_give(os_sem_t *ossem)
 	if(ossem)
 	{
 		#ifdef OS_LOCK_DETAIL_DEBUG
-		os_log_info("sem '%s' give on %s[%d]", ossem->name, file, line);
+		os_log_info("sem '%s' give on %s[%d]", ossem->name, func, line);
 		#endif
 		if(ossem->lock)
 			ossem->lock--;
@@ -397,7 +397,7 @@ int os_sem_give(os_sem_t *ossem)
 	return ERROR;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_sem_take_entry(os_sem_t *ossem, zpl_int32 wait_ms, zpl_char *file, int line)
+int os_sem_take_entry(os_sem_t *ossem, zpl_int32 wait_ms, zpl_char *func, int line)
 #else
 int os_sem_take(os_sem_t *ossem, zpl_int32 wait_ms)
 #endif
@@ -405,7 +405,7 @@ int os_sem_take(os_sem_t *ossem, zpl_int32 wait_ms)
 	if(ossem == NULL)
 		return ERROR;
 	#ifdef OS_LOCK_DETAIL_DEBUG
-	os_log_info("sem '%s' take on %s[%d]", ossem->name, file, line);
+	os_log_info("sem '%s' take on %s[%d]", ossem->name, func, line);
 	#endif		
 	ossem->lock++;	
 	if(wait_ms == OS_WAIT_NO)
@@ -486,7 +486,7 @@ os_mutex_t * os_mutex_init(void)
 	return osmutex;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_mutex_unlock_entry(os_mutex_t *osmutex, zpl_char *file, int line)
+int os_mutex_unlock_entry(os_mutex_t *osmutex, zpl_char *func, int line)
 #else
 int os_mutex_unlock(os_mutex_t *osmutex)
 #endif
@@ -494,7 +494,7 @@ int os_mutex_unlock(os_mutex_t *osmutex)
 	if(osmutex)
 	{
 	#ifdef OS_LOCK_DETAIL_DEBUG
-	os_log_info("mutex '%s' unlock on %s[%d]", osmutex->name, file, line);
+	os_log_info("mutex '%s' unlock on %s[%d]", osmutex->name, func, line);
 	#endif			
 		if(osmutex->lock == zpl_true)
 			osmutex->lock = zpl_false;
@@ -507,7 +507,7 @@ int os_mutex_unlock(os_mutex_t *osmutex)
 	return ERROR;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_mutex_lock_entry(os_mutex_t *osmutex, zpl_int32 wait_ms, zpl_char *file, int line)
+int os_mutex_lock_entry(os_mutex_t *osmutex, zpl_int32 wait_ms, zpl_char *func, int line)
 #else
 int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait_ms)
 #endif
@@ -515,7 +515,7 @@ int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait_ms)
 	if(osmutex == NULL)
 		return ERROR;
 	#ifdef OS_LOCK_DETAIL_DEBUG
-	os_log_info("mutex '%s' lock on %s[%d]", osmutex->name, file, line);
+	os_log_info("mutex '%s' lock on %s[%d]", osmutex->name, func, line);
 	#endif			
 	if(osmutex->lock == zpl_false)
 		osmutex->lock = zpl_true;
@@ -567,6 +567,150 @@ int os_mutex_exit(os_mutex_t *osmutex)
 }
 
 
+os_cond_t * os_cond_name_init(const char *name)
+{
+	os_cond_t *oscond = os_malloc(sizeof(os_cond_t));
+	if(oscond)
+	{
+		if(pthread_cond_init(&oscond->cond_wait, NULL) == 0)
+		{
+			pthread_mutex_init(&oscond->mutex, NULL);
+			if(name)
+				oscond->name = strdup(name);
+			return oscond;
+		}
+		else
+		{
+			os_free(oscond);
+			return NULL;
+		}
+	}
+	return NULL;
+}
+
+os_cond_t * os_cond_init(void)
+{
+	os_cond_t * oscond = os_cond_name_init(os_semmutex_name("cond"));
+	return oscond;
+}
+
+int os_cond_unlock(os_cond_t *oscond)
+{
+	if(oscond == NULL)
+		return ERROR;
+	return pthread_mutex_unlock(&oscond->mutex);
+}
+
+int os_cond_lock(os_cond_t *oscond)
+{
+	if(oscond == NULL)
+		return ERROR;
+	return pthread_mutex_lock(&oscond->mutex);
+}
+
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_cond_signal_entry(os_cond_t *oscond, zpl_char *func, int line)
+#else
+int os_cond_signal(os_cond_t *oscond)
+#endif
+{
+	if(oscond)
+	{
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("mutex '%s' unlock on %s[%d]", oscond->name, func, line);
+	#endif			
+
+		if(_sem_debug & OS_MUTEX_DEBUG)
+		{
+			os_log(OS_SEMM_LOG_FILE, "unlock mutex '%s'", oscond->name);
+		}		
+		return pthread_cond_signal(&oscond->mutex);
+	}
+	return ERROR;
+}
+
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_cond_broadcast_entry(os_cond_t *oscond, zpl_char *func, int line)
+#else
+int os_cond_broadcast(os_cond_t *oscond)
+#endif
+{
+	if(oscond)
+	{
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("mutex '%s' unlock on %s[%d]", oscond->name, func, line);
+	#endif			
+
+		if(_sem_debug & OS_MUTEX_DEBUG)
+		{
+			os_log(OS_SEMM_LOG_FILE, "unlock mutex '%s'", oscond->name);
+		}		
+		return pthread_cond_broadcast(&oscond->mutex);
+	}
+	return ERROR;
+}
+
+#ifdef OS_LOCK_DETAIL_DEBUG
+int os_cond_wait_entry(os_cond_t *oscond, zpl_int32 wait_ms, zpl_char *func, int line)
+#else
+int os_cond_wait(os_cond_t *oscond, zpl_int32 wait_ms)
+#endif
+{
+	if(oscond == NULL)
+		return ERROR;
+	//pthread_mutex_lock(&oscond->mutex);	
+	#ifdef OS_LOCK_DETAIL_DEBUG
+	os_log_info("mutex '%s' lock on %s[%d]", oscond->name, func, line);
+	#endif			
+	if(_sem_debug & OS_MUTEX_DEBUG)
+	{
+		os_log(OS_SEMM_LOG_FILE, "lock mutex '%s'", oscond->name);
+	}
+	if(wait_ms == OS_WAIT_FOREVER)
+		return pthread_cond_wait(&oscond->cond_wait, &oscond->mutex);
+	else
+	{
+		int ret = 0;
+		struct timespec value;
+		if(wait_ms == OS_WAIT_NO)
+		{
+			value.tv_sec=time(NULL);
+			value.tv_nsec=1;
+		}
+		else
+		{
+			value.tv_sec=time(NULL) + (wait_ms/1000);
+			value.tv_nsec=(wait_ms%1000)*10000000;
+		}
+		while ((ret = pthread_cond_timedwait(&oscond->cond_wait, &oscond->mutex, &value)) == -1 && 
+			(ipstack_errno == EINTR || ipstack_errno == EAGAIN))
+			continue;
+		if(ret == 0)
+			return OK;
+		else if(ipstack_errno == ETIMEDOUT)
+			return OS_TIMEOUT;
+	}
+	return ERROR;
+}
+
+int os_cond_exit(os_cond_t *oscond)
+{
+	if(oscond)
+	{
+		pthread_cond_destroy(&oscond->cond_wait);
+		pthread_mutex_destroy(&oscond->mutex);
+		if(oscond->name)
+		{
+			os_free(oscond->name);
+			oscond->name = NULL;
+		}
+		os_free(oscond);
+		oscond = NULL;
+		return OK;
+	}
+	return ERROR;
+}
+
 os_spin_t * os_spin_name_init(const char *name)
 {
 	os_spin_t *spin = os_malloc(sizeof(os_spin_t));
@@ -594,7 +738,7 @@ os_spin_t * os_spin_init(void)
 	return spin;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_spin_unlock_entry(os_spin_t *spin, zpl_char *file, int line)
+int os_spin_unlock_entry(os_spin_t *spin, zpl_char *func, int line)
 #else
 int os_spin_unlock(os_spin_t *spin)
 #endif
@@ -602,7 +746,7 @@ int os_spin_unlock(os_spin_t *spin)
 	if(spin)
 	{
 	#ifdef OS_LOCK_DETAIL_DEBUG
-	os_log_info("spin '%s' unlock on %s[%d]", spin->name, file, line);
+	os_log_info("spin '%s' unlock on %s[%d]", spin->name, func, line);
 	#endif			
 		if(spin->lock == zpl_true)
 			spin->lock = zpl_false;
@@ -615,7 +759,7 @@ int os_spin_unlock(os_spin_t *spin)
 	return ERROR;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
-int os_spin_lock_entry(os_spin_t *spin, zpl_char *file, int line)
+int os_spin_lock_entry(os_spin_t *spin, zpl_char *func, int line)
 #else
 int os_spin_lock(os_spin_t *spin)
 #endif
@@ -623,7 +767,7 @@ int os_spin_lock(os_spin_t *spin)
 	if(spin == NULL)
 		return ERROR;
 	#ifdef OS_LOCK_DETAIL_DEBUG
-	os_log_info("spin '%s' lock on %s[%d]", spin->name, file, line);
+	os_log_info("spin '%s' lock on %s[%d]", spin->name, func, line);
 	#endif			
 	if(spin->lock == zpl_false)
 		spin->lock = zpl_true;

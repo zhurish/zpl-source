@@ -2855,7 +2855,7 @@ static int vty_accept(struct eloop *thread)
 
 	return 0;
 }
-#ifndef ZPL_BUILD_IPV6
+
 /* Make vty server ipstack_socket. */
 static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 								 int family)
@@ -2926,7 +2926,7 @@ static void vty_serv_sock_family(const char *addr, zpl_ushort port,
 	/* Add vty server event. */
 	vty_event(VTY_SERV, accept_sock, NULL);
 }
-#endif
+
 
 #ifdef VTYSH
 /* For ipstack_sockaddr_un. */
@@ -3429,7 +3429,9 @@ void vty_serv_init(const char *addr, zpl_ushort port, const char *path, const ch
 	if (port)
 	{
 #ifdef ZPL_BUILD_IPV6
-		vty_serv_sock_addrinfo (addr, port);
+		if(addr)
+			vty_serv_sock_addrinfo (addr, port);
+		vty_serv_sock_family(addr, port, IPSTACK_AF_INET);	
 #else  /* ! ZPL_BUILD_IPV6 */
 		vty_serv_sock_family(addr, port, IPSTACK_AF_INET);
 #endif /* ZPL_BUILD_IPV6 */

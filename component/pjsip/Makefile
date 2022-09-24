@@ -159,19 +159,19 @@ install: install-lib
 clean: $(SDL2CLEAN) objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+		$(RM) $(LIB_DIR)/$(LIBS) ; \
 	fi
 	@if test -f $(LIBS) ; \
 		then \
-		@$(RM) $(LIBS) ; \
+		$(RM) $(LIBS) ; \
 	fi
 	@if test ! -f $(LIB_DIR)/$(PJSUA2LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(PJSUA2LIBS) ; \
+		$(RM) $(LIB_DIR)/$(PJSUA2LIBS) ; \
 	fi
 	@if test ! -f $(PJSUA2LIBS) ; \
 		then \
-		@$(RM) $(PJSUA2LIBS) ; \
+		$(RM) $(PJSUA2LIBS) ; \
 	fi
 
 else
@@ -189,11 +189,11 @@ install: install-lib
 clean: objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+		$(RM) $(LIB_DIR)/$(LIBS) ; \
 	fi
 	@if test -f $(LIBS) ; \
 		then \
-		@$(RM) $(LIBS) ; \
+		$(RM) $(LIBS) ; \
 	fi
 
 endif

@@ -8,13 +8,13 @@ struct eth_interface {
 	struct list_head node;
 	struct net_device  *ndev;
 
-	//struct sk_buff_head   _eth_tx_queue;
-	//struct sk_buff_head   _eth_rx_queue;
+	int (*eth_rx)(struct net_device *, char *, int );
 	struct mutex	mutex_lock;
 
-	ifindex_t	upifindex;
+	ifindex_t		upifindex;
 };
 
+void kloopback_setup(struct net_device *dev);
 
 int ethkernel_init(void);
 struct eth_interface * ethkernel_probe(char *name, ifindex_t ifindex, char *mac);

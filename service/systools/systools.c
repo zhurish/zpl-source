@@ -56,7 +56,7 @@ struct module_list module_list_utils =
 	.module_task_exit=systools_task_exit, 
 	.module_cmd_init=systools_cmd_init, 
 	.taskid=0,
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 };
 
 int systools_set(void *vty)

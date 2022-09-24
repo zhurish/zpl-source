@@ -55,6 +55,18 @@
 #include <net/net_namespace.h>
 #include <linux/u64_stats_sync.h>
 
+#include "kbsp_types.h"
+#include "keth_drv.h"
+
+//extern const struct header_ops eth_header_ops;
+
+static const struct header_ops keth_header_ops ____cacheline_aligned = {
+	.create		= eth_header,
+	.parse		= eth_header_parse,
+	.cache		= eth_header_cache,
+	.cache_update	= eth_header_cache_update,
+	.parse_protocol	= eth_header_parse_protocol,
+};
 
 static inline void kdev_lstats_add(struct net_device *dev, unsigned int len)
 {
@@ -197,12 +209,13 @@ static void kgen_lo_setup(struct net_device *dev,
 /* The loopback device is special. There is only one instance
  * per network namespace.
  */
-static void kloopback_setup(struct net_device *dev)
+void kloopback_setup(struct net_device *dev)
 {
-	kgen_lo_setup(dev, (64 * 1024), &kloopback_ethtool_ops, &eth_header_ops,
+	kgen_lo_setup(dev, (64 * 1024), &kloopback_ethtool_ops, &keth_header_ops,
 		     &kloopback_ops, kloopback_dev_free);
 }
 
+#if 0
 /* Setup and register the loopback device. */
 static int kloopback_net_init(char *name)
 {
@@ -228,3 +241,61 @@ out_free_netdev:
 	return err;
 }
 
+
+struct eth_interface *ethkernel_create(char *name, ifindex_t ifindex)
+{
+  struct net_device *ndev;
+  struct eth_interface *db;
+  int ret = 0;
+
+  /* Init network device */
+  ndev = alloc_netdev(sizeof(struct eth_interface), name, NET_NAME_UNKNOWN, ether_setup);
+  //ndev = alloc_etherdev(sizeof(struct eth_interface));
+  if (!ndev)
+  {
+    ret = -ENOMEM;
+    return NULL;
+  }
+  //SET_NETDEV_DEV(ndev, &pdev->dev);
+  /* setup board info structure */
+  db = netdev_priv(ndev);
+
+  db->ndev = ndev;
+
+  //skb_queue_head_init (&db->_eth_tx_queue);
+  //skb_queue_head_init (&db->_eth_rx_queue);
+
+  mutex_init(&db->mutex_lock);
+
+  ndev->netdev_ops = &ethkernel_netdev_ops;
+
+  /* Register netdevice. */
+  ret = register_netdev(ndev);
+  if (ret)
+  {
+    free_netdev(ndev);
+    return NULL;
+  }
+  if(mac)
+    memcpy(ndev->dev_addr, mac, ndev->addr_len);
+  db->upifindex = ifindex;
+  ethkernel_list_add(db); 
+  return db;
+}
+
+
+/* Destroy netdevice. */
+int ethkernel_destroy(struct eth_interface *db)
+{
+  /*struct sk_buff *skb = NULL;  
+  while ((skb = skb_dequeue (&db->_eth_tx_queue)) != NULL)
+    kfree_skb (skb);
+  while ((skb = skb_dequeue (&db->_eth_rx_queue)) != NULL)
+    kfree_skb (skb);  */
+  ethkernel_list_del(db);  
+  unregister_netdev(db->ndev);
+  free_netdev(db->ndev);
+  return 0;
+}
+
+#endif

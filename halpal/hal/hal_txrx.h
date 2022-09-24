@@ -2,9 +2,14 @@
 #ifndef __BSP_TXRX_H__
 #define __BSP_TXRX_H__
 
-#include "bsp_netlink.h"
+#include "lib_netlink.h"
 
 
+
+#define HAL_DATA_REQUEST_CMD (29)
+#define HAL_DATA_NETLINK_PROTO (29)
+
+#ifdef ZPL_SDK_BCM53125
 typedef struct
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -86,52 +91,25 @@ typedef struct
     }hdr_pkt;
 
 }hw_hdr_t __attribute__ ((aligned (1)));
+#endif
 
-typedef struct
-{
-    zpl_uint16      vlantype; 
-#if BYTE_ORDER == LITTLE_ENDIAN
-    zpl_uint16       vid:12;
-    zpl_uint16       cfi:1; 
-    zpl_uint16       pri:3; 
-#else    
-    zpl_uint16       pri:3; 
-    zpl_uint16       cfi:1; 
-    zpl_uint16       vid:12; 
-#endif 
-    zpl_uint16      ethtype; 
-}vlan_hdt_t __attribute__ ((aligned (1)));
-
-typedef struct
-{
-    zpl_uint8       dmac[ETH_ALEN]; 
-    zpl_uint8       smac[ETH_ALEN]; 
-    union 
-    {
-        zpl_uint16      ethtype; 
-        vlan_hdt_t      vlanhdr;
-    }ethhdr;
-
-}ethhdr_vlan_t __attribute__ ((aligned (1)));
-
-typedef struct bsp_txrx
+typedef struct hal_txrx
 {
     zpl_void *master;
     zpl_uint32 taskid;
-    bsp_netlink_t   *netlink_data;
+    lib_netlink_t   *netlink_data;
     struct thread *t_read;
     struct thread *t_write;
     int debug;
-}bsp_txrx_t;
+}hal_txrx_t;
 
 
-int bsp_module_txrx_init(void);
-int bsp_module_txrx_task_init(void);
-int bsp_module_txrx_exit(void);
-int bsp_module_txrx_task_exit(void);
+extern int hal_module_txrx_init(void);
+extern int hal_module_txrx_task_init(void);
+extern int hal_module_txrx_exit(void);
+extern int hal_module_txrx_task_exit(void);
 
-int bsp_txrx_sendto_port(char *data, int len, int flags, int cosq, int dportmap, vlan_t vlan, int cfi, int pri);
-int bsp_txrx_vlan_flood(char *data, int len, int flags, int cosq, vlan_t vlan, int cfi, int pri);
+extern int hal_txrx_sendto_port(char *data, int len, int flags, int cosq, int dportmap, vlan_t vlan, int cfi, int pri);
 
 
 #endif /* __BSP_TXRX_H__ */

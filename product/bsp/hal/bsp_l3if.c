@@ -138,7 +138,7 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	}
 	switch (subcmd)
 	{
-	#if 0	
+	#if 1	
 	case HAL_L3IF_CREATE:
 		hal_ipcmsg_port_get(&client->ipcmsg, &param.port);
 		hal_ipcmsg_get(&client->ipcmsg, &param.ifname, 6);

@@ -177,6 +177,12 @@ static inline int is531x5(struct b53125_device *dev)
 		dev->chip_id == BCM53128_DEVICE_ID;
 }
 
+#define BCM53125_SWDEV_DEBUG
+#ifdef BCM53125_SWDEV_DEBUG
+#define BCM53125_DEBUG_PORT(n)		(n) == 3
+#else
+#define BCM53125_DEBUG_PORT(n)		0
+#endif
 
 extern struct b53125_device * b53125_device_probe(void);
 extern int b53125_device_exit(struct b53125_device *);

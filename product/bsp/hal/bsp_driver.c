@@ -95,94 +95,6 @@ int bsp_driver_mac_cache_update(bsp_driver_t *sdkdriver, zpl_uint8 *mac, zpl_uin
 	return OK;
 }
 
-static int bsp_driver_kernel_netlink_request(bsp_driver_t *bspdriver, char *data, int len, int (*filter)(bsp_driver_t *, int, char *, int, void *), void *p)
-{
-	int	*from_pid = NULL;
-	struct ipstack_nlmsghdr *nlh = NULL;
-	//struct hal_ipcmsg_header *header = NULL;
-  	struct 
-  	{
-    	struct ipstack_nlmsghdr nlh;
-		char buf[2048];
-  	} req;	
-
-	memset (&req.nlh, 0, sizeof (struct ipstack_nlmsghdr));  
-  	nlh = &req.nlh;
-  	nlh->nlmsg_len = IPSTACK_NLMSG_LENGTH (len+4);
-  	nlh->nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REQUEST;
-  	nlh->nlmsg_type = HAL_CFG_REQUEST_CMD;
-	nlh->nlmsg_seq = ++bspdriver->netlink_cfg->seq;
-	nlh->nlmsg_flags |= IPSTACK_NLM_F_ACK;
-	nlh->nlmsg_pid = 0;
-	from_pid = (int*)req.buf;
-	*from_pid = htonl(getpid());
-	if(len)
-		memcpy (&req.buf[4], data, len); 
-	//header = (struct hal_ipcmsg_header *)data;
-	return bsp_netlink_talk(bspdriver->netlink_cfg, nlh, filter, p);
-}
-#if defined(ZPL_SDK_MODULE) && defined(ZPL_SDK_KERNEL)
-static int bsp_driver_kernel_netlink_parse_default(bsp_driver_t *bspdriver, int cmd, char *buf, int len, void *p)
-{
-	struct hal_ipcmsg_header header;
-	struct hal_client *halclient = p;
-	hal_ipcmsg_reset(&halclient->outmsg);
-	hal_ipcmsg_put(&halclient->outmsg, buf, len);
-	hal_ipcmsg_get_header(&halclient->outmsg, &header);
-	halclient->outmsg.getp -= sizeof(struct hal_ipcmsg_header);
-
-	return hal_client_send_message(halclient, 0);
-}
-#else
-static int bsp_driver_kernel_netlink_parse_default(bsp_driver_t *bspdriver, int cmd, char *buf, int len, void *p)
-{
-	struct hal_ipcmsg_header header;
-	struct hal_client *halclient = p;
-	struct hal_ipcmsg_result getvaluetmp;
-	hal_ipcmsg_reset(&halclient->outmsg);
-	hal_ipcmsg_put(&halclient->outmsg, buf, len);
-	hal_ipcmsg_get_header(&halclient->outmsg, &header);
-	hal_ipcmsg_result_get(&halclient->outmsg, &getvaluetmp);
-	return getvaluetmp.result;
-}
-#endif
-
-int bsp_driver_kernel_netlink_proxy(bsp_driver_t *bspdriver, char *data, int len, void *p)
-{
-	if(bspdriver->netlink_cfg && !ipstack_invalid(bspdriver->netlink_cfg->sock))
-		return bsp_driver_kernel_netlink_request(bspdriver, data, len, bsp_driver_kernel_netlink_parse_default, p);
-	return OK;	
-}
-
-
-int bsp_driver_start(bsp_driver_t *bspdriver, zpl_uint32 pid, zpl_uint32 ifindex)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_START);
-	hal_ipcmsg_create_header(&ipcmsg, command);
-	hal_ipcmsg_putl(&ipcmsg, pid);
-	hal_ipcmsg_putl(&ipcmsg, ifindex);
-	return bsp_driver_kernel_netlink_proxy(bspdriver, buf, ipcmsg.setp, bspdriver->hal_client);
-}
-
-int bsp_driver_debug(bsp_driver_t *bspdriver, zpl_uint32 module, zpl_uint32 enable, zpl_uint32 value)
-{
-	zpl_uint32 command = 0;
-	struct hal_ipcmsg ipcmsg;
-	char buf[512];
-	HAL_ENTER_FUNC();
-	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
-	command = IPCCMD_SET(HAL_MODULE_DEBUG, HAL_MODULE_CMD_REQ, module);
-	hal_ipcmsg_create_header(&ipcmsg, command);
-	hal_ipcmsg_putl(&ipcmsg, module);
-	hal_ipcmsg_putl(&ipcmsg, enable);
-	hal_ipcmsg_putl(&ipcmsg, value);
-	return bsp_driver_kernel_netlink_proxy(bspdriver, buf, ipcmsg.setp, bspdriver->hal_client);
-}
 
 #if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
 static const hal_ipccmd_callback_t moduletable[] = {
@@ -340,30 +252,11 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 		hal_client_destroy(bsp);
 		return ERROR;
 	}
-/*
-	bspdriver->netlink_cfg = bsp_netlink_create(4096, 0);
-	if(bspdriver->netlink_cfg == NULL)
-	{
-		XFREE(MTYPE_MAC, bspdriver->mac_cache_entry);
-		bspdriver->mac_cache_entry = NULL;
-		bspdriver->mac_cache_max = 0;
-		bspdriver->mac_cache_num = 0;
-		hal_client_destroy(bsp);
-		hal_client_destroy(event_bsp);
-		return ERROR;
-	}
 
-	if(bsp_netlink_open(bspdriver->netlink_cfg, HAL_CFG_NETLINK_PROTO) != OK)
-	{
-		bsp_driver_exit(bspdriver);
-		return ERROR;
-	}
-*/
     bsp->debug = 0xffff;
     bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
     bspdriver->hal_client = bsp;
     hal_client_start(bsp, HAL_IPCMSG_CMD_PATH, -1/*HAL_IPCMSG_CMD_PORT*/);
-	bsp_driver_start(bspdriver, getpid(), if_nametoindex("eth0"));
     return OK;
   }
   return ERROR;
@@ -371,26 +264,12 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 
 int bsp_driver_exit(bsp_driver_t *bspdriver)
 {
-	bsp_driver_start(bspdriver, 0, 0);
 	if(bspdriver->mac_cache_entry)
 	{
 		XFREE(MTYPE_MAC, bspdriver->mac_cache_entry);
 		bspdriver->mac_cache_entry = NULL;
 		bspdriver->mac_cache_max = 0;
 		bspdriver->mac_cache_num = 0;
-	}
-	if(bspdriver->netlink_cfg)
-	{
-		bsp_netlink_close(bspdriver->netlink_cfg);
-		bsp_netlink_destroy(bspdriver->netlink_cfg);
-		bspdriver->netlink_cfg = NULL;
-	}
-
-	if(bspdriver->netlink_klog)
-	{
-		bsp_netlink_close(bspdriver->netlink_klog);
-		bsp_netlink_destroy(bspdriver->netlink_klog);
-		bspdriver->netlink_klog = NULL;
 	}		
 	if(bspdriver->hal_client)
 		hal_client_destroy(bspdriver->hal_client);

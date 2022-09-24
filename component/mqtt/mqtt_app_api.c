@@ -1143,6 +1143,6 @@ struct module_list module_list_mqtt =
 	.module_task_init=mqtt_module_task_init, 
 	.module_task_exit=mqtt_module_task_exit, 
 	.module_cmd_init=cmd_mqtt_init, 
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 	.taskid=0,
 };

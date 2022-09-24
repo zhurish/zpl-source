@@ -536,6 +536,7 @@ static __init int linux_kbe_init(void)
 		khalclient = khal_client_create(NULL);
 		if(khalclient)
 		{
+      ethkernel_init();
 			khal_netpkt_init();
 			return OK;
 		}

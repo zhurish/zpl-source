@@ -53,6 +53,7 @@ static int pal_main_task(void *argv)
 {
 	module_setup_task(MODULE_PAL, os_task_id_self());
 	host_waitting_loadconfig();
+	linux_driver_start(getpid(), if_nametoindex("eth0"));
 	eloop_mainloop(master_eloop_kernel);
 	return OK;
 }
@@ -76,6 +77,11 @@ static int kernel_task_init (void)
 
 int pal_module_init(void)
 {
+	pal_stack.netlink_cfg = lib_netlink_create(4096, 0);
+	if(lib_netlink_open(pal_stack.netlink_cfg, HAL_CFG_NETLINK_PROTO) != OK)
+	{
+		return ERROR;
+	}
 	if(master_eloop_kernel == NULL)
 		master_eloop_kernel = eloop_master_module_create(MODULE_PAL);
 	iplinux_stack_init();

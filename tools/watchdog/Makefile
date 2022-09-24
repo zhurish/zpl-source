@@ -51,16 +51,16 @@ install: $(WATCHDOG_TARGET)
 clean: objclean
 	@if test -f ${ZPL_INSTALL_SBIN_DIR}/${WATCHDOG_TARGET}; \
 		then \
-		@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${WATCHDOG_TARGET} ; \
+		$(RM) ${ZPL_INSTALL_SBIN_DIR}/${WATCHDOG_TARGET} ; \
 	fi
 	@if test -f $(WATCHDOG_TARGET) ; \
 		then \
-		@$(RM) $(WATCHDOG_TARGET) ; \
+		$(RM) $(WATCHDOG_TARGET) ; \
 	fi
 
 
 objclean: 
-	@$(RM) -rf $(OBJS_DIR)/*
+	$(RM) -rf $(OBJS_DIR)/*
 
 all: obj install 
 

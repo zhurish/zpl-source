@@ -264,11 +264,11 @@ install: $(LIBS) webinstall sslinstall
 clean: objclean webclean sslclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+		$(RM) $(LIB_DIR)/$(LIBS) ; \
 	fi
 	@if test -f $(LIBS) ; \
 		then \
-		@$(RM) $(LIBS) ; \
+		$(RM) $(LIBS) ; \
 	fi
 
 objclean: 

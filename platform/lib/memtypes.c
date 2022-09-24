@@ -106,6 +106,8 @@ struct memory_list memory_list_lib[] =
   { MTYPE_VRF_BITMAP,		"VRF bit-map"			},
   { MTYPE_IF_LINK_PARAMS,       "Informational Link Parameters" },
   { MTYPE_CJSON,       "cJSON" },
+  { MTYPE_NETLINK,			"LIB Netlink information"	},
+  { MTYPE_NETLINK_DATA,			"LIB Netlink Data information"	},  
   { -1, "" },
 };
 

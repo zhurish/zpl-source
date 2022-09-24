@@ -61,11 +61,11 @@ install: install-lib
 clean: objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+		$(RM) $(LIB_DIR)/$(LIBS) ; \
 	fi
 	@if test -f $(LIBS) ; \
 		then \
-		@$(RM) $(LIBS) ; \
+		$(RM) $(LIBS) ; \
 	fi
 
 lib: $(LIBS)

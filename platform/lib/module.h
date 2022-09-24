@@ -17,10 +17,20 @@ extern "C" {
 #include "moduletypes.h"
 
 
-#define ZPL_MODULE_NEED_INIT  0x00000001
-#define ZPL_MODULE_IS_INIT    0x00000100
-#define ZPL_MODULE_INIT_TASK  0x00000200
-#define ZPL_MODULE_INIT_CMD   0x00000400
+#define ZPL_MODULE_NODE(module, name, init, exit, taskinit, taskexit, cmdinit) \
+struct module_list module ##_list = \
+{ \
+    .module = module, \
+    .name = name, \
+    .module_init = init, \
+    .module_exit = exit, \
+    .module_task_init = taskinit, \
+    .module_task_exit = taskexit, \
+    .module_cmd_init = cmdinit, \
+    .flags = 0, \
+    .master = NULL, \
+    .taskid = 0, \
+}; 
 
 /* For pretty printing of memory allocate information. */
 struct module_list
@@ -32,10 +42,14 @@ struct module_list
 	int	(*module_task_init)(void);
 	int	(*module_task_exit)(void);
 	int	(*module_cmd_init)(void);
-
-	zpl_uint32		flags;//模块是否初始化标志
-	zpl_void		  *master;    
-	zpl_taskid_t		taskid;       //模块任务ID
+	zpl_taskid_t	taskid;       //模块任务ID
+//	zpl_uint32		priority; 	
+	zpl_uint32		flags;
+	zpl_void		*master;  
+#define ZPL_MODULE_IS_INIT    0x00000100	//已经初始化
+#define ZPL_MODULE_IS_TASK  0x00000200	//初始化task
+#define ZPL_MODULE_IS_CMD   0x00000400	//初始化CLI
+ 
 	struct submodule
 	{
 		zpl_uint32 module;

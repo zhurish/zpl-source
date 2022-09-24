@@ -95,22 +95,22 @@ ifeq ($(ZPL_MQTT_SRV),true)
 clean: objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+		$(RM) $(LIB_DIR)/$(LIBS) ; \
 	fi
 	@if test -f $(LIBS) ; \
 		then \
-		@$(RM) $(LIBS) ; \
+		$(RM) $(LIBS) ; \
 	fi
 	@${MAKE} -C  src clean DEST_BIN_DIR=$(ZPL_INSTALL_SBIN_DIR)
 else
 clean: objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
-		@$(RM) $(LIB_DIR)/$(LIBS) ; \
+		$(RM) $(LIB_DIR)/$(LIBS) ; \
 	fi
 	@if test -f $(LIBS) ; \
 		then \
-		@$(RM) $(LIBS) ; \
+		$(RM) $(LIBS) ; \
 	fi
 endif
 

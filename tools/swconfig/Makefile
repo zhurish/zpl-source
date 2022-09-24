@@ -48,11 +48,11 @@ install: $(TARGET)
 clean: objclean
 	@if test -f ${ZPL_INSTALL_SBIN_DIR}/${TARGET} ; \
 		then \
-		@$(RM) ${ZPL_INSTALL_SBIN_DIR}/${TARGET} ; \
+		$(RM) ${ZPL_INSTALL_SBIN_DIR}/${TARGET} ; \
 	fi
 	@if test -f $(TARGET) ; \
 		then \
-		@$(RM) $(TARGET); \
+		$(RM) $(TARGET); \
 	fi
 	
 objclean: 

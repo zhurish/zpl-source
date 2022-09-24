@@ -185,97 +185,194 @@ void time_print(FILE *fp, zlog_timestamp_t ctl)
 }
 
 int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, const char *file,
-		const char *func, const zpl_uint32 line)
+							const char *func, const zpl_uint32 line)
 {
-	if(depth != ZLOG_DEPTH_NONE)
+	zpl_char tmpbuf[2048];
+	int temlen = 0;
+	if (depth != ZLOG_DEPTH_NONE)
 	{
-		if(file)
+		if (file != NULL && func != NULL && line > 0)
 		{
+			memset(tmpbuf, '\0', sizeof(tmpbuf));
 			zpl_char *bk = strrchr(file, '/');
-			if(buf)
-			{
-				zpl_uint32 offset = 0;
-				if(depth == ZLOG_DEPTH_LEVEL1)
-				{
-					if(bk)
-						sprintf(buf, "(%s ", ++bk);
-					else
-						sprintf(buf, "(%s ", file);
-					offset = strlen(buf);
-					sprintf(buf + offset, "line %d:)", line);
-					return strlen(buf);
-				}
-				else if(depth == ZLOG_DEPTH_LEVEL2)
-				{
-					if(bk)
-						sprintf(buf, "[LWP=%d](%s ", os_task_gettid(), ++bk);
-					else
-						sprintf(buf, "[LWP=%d](%s ", os_task_gettid(), file);
-					offset = strlen(buf);
-					sprintf(buf + offset, "line %d:)", line);
-					return strlen(buf);
-				}
-				else if(depth == ZLOG_DEPTH_LEVEL3)
-				{
-					if(bk)
-						sprintf(buf, "%s(%s ", os_task_self_name_alisa(), ++bk);
-					else
-						sprintf(buf, "%s(%s ", os_task_self_name_alisa(), file);
 
-					if(func)
-					{
-						strcat(buf, "->");
-						strcat(buf, func);
-					}
-					offset = strlen(buf);
-					sprintf(buf + offset, " line %d:)", line);
-					return strlen(buf);
-				}
-				return 0;
-			}
-			if(fp)
+			zpl_uint32 offset = 0;
+			if (depth == ZLOG_DEPTH_LEVEL1)
 			{
-				if(depth == ZLOG_DEPTH_LEVEL1)
+				if (bk)
+					temlen += sprintf(tmpbuf, "(%s ", ++bk);
+				else
+					temlen += sprintf(tmpbuf, "(%s ", file);
+				offset = strlen(tmpbuf);
+				temlen += sprintf(tmpbuf + offset, "line %d:)", line);
+				if (fp)
+					fprintf(fp, "%s", tmpbuf);
+				if (buf)
 				{
-					if(bk)
-						fprintf(fp, "(%s ", ++bk);
-					else
-						fprintf(fp, "(%s ", file);
-					fprintf(fp, "line %d:)", line);
+					strcpy(buf, tmpbuf);
 				}
-				else if(depth == ZLOG_DEPTH_LEVEL2)
-				{
-					if(bk)
-						fprintf(fp, "[LWP=%d](%s ", os_task_gettid(), ++bk);
-					else
-						fprintf(fp, "[LWP=%d](%s ", os_task_gettid(), file);
-					fprintf(fp, "line %d:)", line);
-				}
-				else if(depth == ZLOG_DEPTH_LEVEL3)
-				{
-					if(bk)
-						fprintf(fp, "%s(%s ", os_task_self_name_alisa(), ++bk);
-					else
-						fprintf(fp, "%s(%s ", os_task_self_name_alisa(), file);
-
-					if(func)
-						fprintf(fp, "->%s ", func);
-					fprintf(fp, "line %d:)", line);
-				}
+				return strlen(tmpbuf);
 			}
+			else if (depth == ZLOG_DEPTH_LEVEL2)
+			{
+				if (bk)
+					temlen += sprintf(tmpbuf, "[LWP=%d](%s ", os_task_gettid(), ++bk);
+				else
+					temlen += sprintf(tmpbuf, "[LWP=%d](%s ", os_task_gettid(), file);
+				offset = strlen(tmpbuf);
+				temlen += sprintf(tmpbuf + offset, "line %d:)", line);
+				if (fp)
+					fprintf(fp, "%s", tmpbuf);
+				if (buf)
+				{
+					strcpy(buf, tmpbuf);
+				}
+				return strlen(tmpbuf);
+			}
+			else if (depth == ZLOG_DEPTH_LEVEL3)
+			{
+				if (bk)
+					temlen += sprintf(tmpbuf, "%s(%s ", os_task_self_name_alisa(), ++bk);
+				else
+					temlen += sprintf(tmpbuf, "%s(%s ", os_task_self_name_alisa(), file);
+
+				if (func)
+				{
+					strcat(tmpbuf, "->");
+					strcat(tmpbuf, func);
+				}
+				offset = strlen(tmpbuf);
+				temlen += sprintf(tmpbuf + offset, " line %d:)", line);
+				if (fp)
+					fprintf(fp, "%s", tmpbuf);
+				if (buf)
+				{
+					strcpy(buf, tmpbuf);
+				}
+				return strlen(tmpbuf);
+			}
+			return 0;
 		}
 	}
 	return 0;
 }
 
-
 #ifdef ZLOG_TASK_ENABLE
 /* va_list version of zlog. */
 static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
-		va_list args) {
-	//zpl_uint16 protocol = 0;
-	int original_errno = ipstack_errno;
+		va_list args) 
+{
+#if 1
+	zpl_char tmpbuf[2048];
+	int original_errno = ipstack_errno, outlen = 0;
+	memset(tmpbuf, '\0', sizeof(tmpbuf));
 	/* If zlog is not specified, use default one. */
+	if (zl == NULL)
+		zl = zlog_default;
+	
+		/* When zlog_default is also NULL, use stderr for logging. */
+	if (zl == NULL) {
+		
+		outlen += sprintf(tmpbuf, ZLOG_PRI_FMT": ", "unknown");
+		outlen += vsprintf(tmpbuf + outlen, format, args);
+
+		time_print(stderr, ZLOG_TIMESTAMP_DATE);
+		fprintf(stderr, "%s\r\n", tmpbuf);
+		fflush(stderr);
+
+		/* In this case we return at here. */
+		ipstack_errno = original_errno;
+		return;
+	}
+	
+#ifdef ZLOG_TESTING_ENABLE
+	if (zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp)
+	{
+		va_list ac;
+		outlen += sprintf(tmpbuf + outlen, ZLOG_PRI_FMT": ", zlog_priority[priority]);
+		outlen += sprintf(tmpbuf + outlen, ZLOG_PRO_FMT": ", zlog_proto_names(module));
+		va_copy(ac, args);
+		outlen += vsprintf(tmpbuf + outlen, format, ac);
+		va_end(ac);
+		time_print(zl->testlog.fp, zl->timestamp);
+		fprintf(zl->testlog.fp, "%s\n", tmpbuf);
+		fflush(zl->testlog.fp);
+		zl->testlog.file_check_interval++;
+	}
+#endif
+	/* Syslog output */
+	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
+		va_list ac;
+		va_copy(ac, args);
+#ifndef ZPL_SERVICE_SYSLOG
+		vsyslog(priority | zl->facility, format, ac);
+#else
+		vsysclog(priority, zl->facility, format, args);
+#endif
+		va_end(ac);
+	}
+
+	/* File output. */
+	if ((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) {
+		va_list ac;
+		if (zl->record_priority)
+			outlen += sprintf(tmpbuf + outlen, ZLOG_PRI_FMT": ", zlog_priority[priority]);
+		outlen += sprintf(tmpbuf + outlen, ZLOG_PRO_FMT": ", zlog_proto_names(module));
+		va_copy(ac, args);
+		outlen += vsprintf(tmpbuf + outlen, format, ac);
+		va_end(ac);
+		time_print(zl->fp, zl->timestamp);
+		fprintf(zl->fp, "%s\r\n", tmpbuf);
+		fflush(zl->fp);
+		zl->file_check_interval++;
+	}
+
+	/* stdout output. */
+	if (priority <= zl->maxlvl[ZLOG_DEST_STDOUT]) {
+		va_list ac;
+		if (zl->record_priority)
+			outlen += sprintf(tmpbuf + outlen, ZLOG_PRI_FMT": ", zlog_priority[priority]);
+		outlen += sprintf(tmpbuf + outlen, ZLOG_PRO_FMT": ", zlog_proto_names(module));
+		va_copy(ac, args);
+		outlen += vsprintf(tmpbuf + outlen, format, ac);
+		va_end(ac);
+		time_print(stdout, zl->timestamp);
+		fprintf(stdout, "%s\r\n", tmpbuf);
+		fflush(stdout);
+	}
+	/* logbuff output. */
+	if (priority <= zl->maxlvl[ZLOG_DEST_BUFFER]) {
+		zlog_buffer_format(zl, &zl->log_buffer,
+					 module, priority, format,  args);
+	}
+	#ifdef ZPL_SHELL_MODULE
+	/* Terminal monitor. */
+	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
+	{
+		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_names(module), format, zl->timestamp, args);
+	}
+	//trapping
+	if ((priority == ZLOG_LEVEL_TRAP || priority == ZLOG_LEVEL_FORCE_TRAP) && zl->trap_lvl)
+	{
+		if(vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_names(module), format, zl->timestamp, args) != OK)
+		{
+			va_list ac;
+			if (zl->record_priority)
+				outlen += sprintf(tmpbuf + outlen, ZLOG_PRI_FMT": ", zlog_priority[priority]);
+			outlen += sprintf(tmpbuf + outlen, ZLOG_PRO_FMT": ", zlog_proto_names(module));
+			va_copy(ac, args);
+			outlen += vsprintf(tmpbuf + outlen, format, ac);
+			va_end(ac);
+			time_print(stdout, zl->timestamp);
+			fprintf(stdout, "%s\r\n", tmpbuf);
+			fflush(stdout);
+		}
+	}
+	#endif
+#else
+	int original_errno = ipstack_errno;
 	if (zl == NULL)
 		zl = zlog_default;
 	
@@ -378,6 +475,7 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		}
 	}
 	#endif
+#endif	
 	/*if (module != MODULE_NONE) {
 		zl->protocol = protocol;
 	}*/

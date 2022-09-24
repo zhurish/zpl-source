@@ -22,7 +22,7 @@ struct module_list module_list_webserver =
 	.module_task_init=web_app_module_task_init, 
 	.module_task_exit=web_app_module_task_exit, 
 	.module_cmd_init=cmd_webserver_init, 
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 	.taskid=0,
 };
 

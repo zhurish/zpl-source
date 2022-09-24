@@ -435,6 +435,6 @@ struct module_list module_list_modbus =
 	.module_task_init=modbus_module_task_init, 
 	.module_task_exit=modbus_module_task_exit, 
 	.module_cmd_init=NULL, 
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 	.taskid=0,
 };

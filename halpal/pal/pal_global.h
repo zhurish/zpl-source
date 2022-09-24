@@ -15,9 +15,13 @@ extern "C" {
 #ifdef ZPL_NSM_FIREWALLD
 #include "nsm_firewalld.h"
 #endif
+#include "lib_netlink.h"
+#define HAL_CFG_REQUEST_CMD (30) 
+#define HAL_CFG_NETLINK_PROTO (30)
 
 typedef struct pal_stack_s
 {
+	lib_netlink_t	*netlink_cfg;
 	//interface
 	int (*ip_stack_create)(struct interface *ifp);
 	int (*ip_stack_destroy)(struct interface *ifp);

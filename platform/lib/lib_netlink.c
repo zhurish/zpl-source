@@ -2,11 +2,10 @@
 #include "module.h"
 #include "zmemory.h"
 #include "log.h"
-#include "nsm_include.h"
-#include "hal_include.h"
-#include "bsp_netlink.h"
+#include "lib_netlink.h"
 
-static int bsp_netlink_sock_create(bsp_netlink_t *nsock, int proto)
+
+static int lib_netlink_sock_create(lib_netlink_t *nsock, int proto)
 {
     int ret = 0;
     struct ipstack_sockaddr_nl bindaddr;
@@ -20,7 +19,7 @@ static int bsp_netlink_sock_create(bsp_netlink_t *nsock, int proto)
     ret = ipstack_bind(nsock->sock, &bindaddr, sizeof(bindaddr));
     if (ret < 0)
     {
-        zlog_err(MODULE_BSP, "Can not bind to socket:%s", ipstack_strerror(ipstack_errno));
+        zlog_err(MODULE_LIB, "Can not bind to socket:%s", ipstack_strerror(ipstack_errno));
         ipstack_close(nsock->sock);
         return ERROR;
     }
@@ -28,7 +27,7 @@ static int bsp_netlink_sock_create(bsp_netlink_t *nsock, int proto)
     return OK;
 }
 
-static int bsp_netlink_sock_close(bsp_netlink_t *nsock)
+static int lib_netlink_sock_close(lib_netlink_t *nsock)
 {
     /* Close ipstack_socket. */
     if (!ipstack_invalid(nsock->sock))
@@ -38,7 +37,7 @@ static int bsp_netlink_sock_close(bsp_netlink_t *nsock)
     return OK;
 }
 
-static int _bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock, struct ipstack_msghdr *msg, int flags)
+static int _lib_netlink_sock_recvmsg(lib_netlink_t *nsock, struct ipstack_msghdr *msg, int flags)
 {
     int status = ERROR;
     while(1)
@@ -65,7 +64,7 @@ static int _bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock, struct ipstack_msghdr
     return status;
 }
 
-static int bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock)
+static int lib_netlink_sock_recvmsg(lib_netlink_t *nsock)
 {
     int ret = 0;
     struct ipstack_sockaddr_nl snl;
@@ -79,20 +78,20 @@ static int bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock)
         msg.msg_namelen = sizeof snl;
         msg.msg_iov = &iov;
         msg.msg_iovlen = 1;
-        ret = _bsp_netlink_sock_recvmsg(nsock, &msg, MSG_PEEK | MSG_TRUNC);
+        ret = _lib_netlink_sock_recvmsg(nsock, &msg, MSG_PEEK | MSG_TRUNC);
         if(ret < 0)
             return ret;
         if(ret > nsock->msgmax)  
         {
-            nsock->msgbuf = XREALLOC(MTYPE_BSP_NETLINK_DATA, nsock->msgbuf, ret);
+            nsock->msgbuf = XREALLOC(MTYPE_NETLINK_DATA, nsock->msgbuf, ret);
             nsock->msgmax = ret;
         }
         iov.iov_base = nsock->msgbuf + nsock->msgoffset;
         iov.iov_len = nsock->msgmax;   
-        ret = _bsp_netlink_sock_recvmsg(nsock, &msg, 0);
+        ret = _lib_netlink_sock_recvmsg(nsock, &msg, 0);
         if (msg.msg_namelen != sizeof snl)
         {
-            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] sender address length error: length %d",
+            zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] sender address length error: length %d",
                      ipstack_fd(nsock->sock), msg.msg_namelen);
             return ERROR;
         }
@@ -102,7 +101,7 @@ static int bsp_netlink_sock_recvmsg(bsp_netlink_t *nsock)
 }
 
 
-static int bsp_netlink_sock_flush(bsp_netlink_t *nsock)
+static int lib_netlink_sock_flush(lib_netlink_t *nsock)
 {
     int ret = 0;
     fd_set readfds;
@@ -122,13 +121,13 @@ static int bsp_netlink_sock_flush(bsp_netlink_t *nsock)
         }
         if (FD_ISSET(ipstack_fd(nsock->sock), &readfds))
         {
-            ret = bsp_netlink_sock_recvmsg(nsock);
+            ret = lib_netlink_sock_recvmsg(nsock);
         }
     }
     return 0;
 }
 
-static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
+static int lib_netlink_sock_msg_parse(lib_netlink_t *nsock,
                                       int (*filter)(void *, int, char *, int, void *), void *p)
 {
     int ret = 0, status = 0;
@@ -141,7 +140,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
         /* Finish of reading. */
         if (h->nlmsg_type == IPSTACK_NLMSG_DONE)
         {
-            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] IPSTACK_NLMSG_DONE", ipstack_fd(nsock->sock));
+            zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] IPSTACK_NLMSG_DONE", ipstack_fd(nsock->sock));
             return OK;
         }
 
@@ -155,9 +154,9 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
             /* If the error field is zero, then this is an ACK */
             if (err->error == 0)
             {
-                if (IS_HAL_IPCMSG_DEBUG_EVENT(nsock->debug))
+                if ((nsock->debug))
                 {
-                    zlog_debug(MODULE_BSP,
+                    zlog_debug(MODULE_LIB,
                                "%s: ipstack_recvmsg [%d] ACK: type=%u, seq=%u, pid=%u",
                                __FUNCTION__, ipstack_fd(nsock->sock),
                                err->msg.nlmsg_type, err->msg.nlmsg_seq,
@@ -167,7 +166,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
                 /* return if not a multipart message, otherwise continue */
                 if (!(h->nlmsg_flags & IPSTACK_NLM_F_MULTI))
                 {
-                    zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] IPSTACK_NLM_F_MULTI", ipstack_fd(nsock->sock));
+                    zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] IPSTACK_NLM_F_MULTI", ipstack_fd(nsock->sock));
                     return ERROR;
                 }
                 return ERROR;
@@ -175,11 +174,11 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
 
             if (h->nlmsg_len < IPSTACK_NLMSG_LENGTH(sizeof(struct ipstack_nlmsgerr)))
             {
-                zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] error: message truncated", ipstack_fd(nsock->sock));
+                zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] error: message truncated", ipstack_fd(nsock->sock));
                 return ERROR;
             }
 
-            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] error: %s, type=%u, seq=%u, pid=%u",
+            zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] error: %s, type=%u, seq=%u, pid=%u",
                      ipstack_fd(nsock->sock), ipstack_strerror(-errnum),
                      msg_type,
                      err->msg.nlmsg_seq, err->msg.nlmsg_pid);
@@ -191,7 +190,7 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
             error = (*filter)(nsock, h->nlmsg_type, IPSTACK_NLMSG_DATA(h), IPSTACK_NLMSG_PAYLOAD(h, 0), p);
             if (error < 0)
             {
-                zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] filter function error", ipstack_fd(nsock->sock));
+                zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] filter function error", ipstack_fd(nsock->sock));
                 ret = error;
             }
             ret = error;
@@ -202,14 +201,14 @@ static int bsp_netlink_sock_msg_parse(bsp_netlink_t *nsock,
             h = IPSTACK_NLMSG_NEXT(h, status);
         else
         {
-            zlog_err(MODULE_BSP, "ipstack_recvmsg [%d] END", ipstack_fd(nsock->sock));
+            zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] END", ipstack_fd(nsock->sock));
             return ret;
         }
     }
     return ret;
 }
 
-static int bsp_netlink_sock_parse_info(bsp_netlink_t *nsock,
+static int lib_netlink_sock_parse_info(lib_netlink_t *nsock,
                                        int (*filter)(void *, int, char *, int, void *), void *p)
 {
     int ret = 0;
@@ -233,9 +232,9 @@ static int bsp_netlink_sock_parse_info(bsp_netlink_t *nsock,
             _OS_ERROR("no events on sockfd(%d) found\n", ipstack_fd(nsock->sock));
             return ERROR;
         }
-        ret = bsp_netlink_sock_recvmsg(nsock);
+        ret = lib_netlink_sock_recvmsg(nsock);
         if(ret)
-            return bsp_netlink_sock_msg_parse(nsock, filter, p);
+            return lib_netlink_sock_msg_parse(nsock, filter, p);
         else
             return ERROR;
     }
@@ -243,7 +242,7 @@ static int bsp_netlink_sock_parse_info(bsp_netlink_t *nsock,
 }
 
 
-static int bsp_netlink_sock_talk(bsp_netlink_t *nsock, struct ipstack_nlmsghdr *n, int (*filter)(void *, int, char *, int, void *), void *p)
+static int lib_netlink_sock_talk(lib_netlink_t *nsock, struct ipstack_nlmsghdr *n, int (*filter)(void *, int, char *, int, void *), void *p)
 {
     zpl_int32 status;
     struct ipstack_sockaddr_nl snl;
@@ -259,10 +258,10 @@ static int bsp_netlink_sock_talk(bsp_netlink_t *nsock, struct ipstack_nlmsghdr *
     memset(&snl, 0, sizeof snl);
     snl.nl_family = IPSTACK_AF_NETLINK;
 
-    if (IS_HAL_IPCMSG_DEBUG_EVENT(nsock->debug))
+    if ((nsock->debug))
         zlog_debug(MODULE_PAL, "netlink_talk: cfg type (%u), seq=%u", n->nlmsg_type, n->nlmsg_seq);
 
-    bsp_netlink_sock_flush(nsock);
+    lib_netlink_sock_flush(nsock);
 
     /* Send message to netlink interface. */
     status = ipstack_sendmsg(nsock->sock, &msg, 0);
@@ -274,69 +273,69 @@ static int bsp_netlink_sock_talk(bsp_netlink_t *nsock, struct ipstack_nlmsghdr *
         return -1;
     }
     if(filter)
-        return bsp_netlink_sock_parse_info(nsock, filter, p);
+        return lib_netlink_sock_parse_info(nsock, filter, p);
     return  status;  
 }
 
-int bsp_netlink_open(bsp_netlink_t *nsock, int proto)
+int lib_netlink_open(lib_netlink_t *nsock, int proto)
 {
-    return bsp_netlink_sock_create(nsock, proto);
+    return lib_netlink_sock_create(nsock, proto);
 }
 
-int bsp_netlink_close(bsp_netlink_t *nsock)
+int lib_netlink_close(lib_netlink_t *nsock)
 {
-    return bsp_netlink_sock_close(nsock);
+    return lib_netlink_sock_close(nsock);
 }
 
-int bsp_netlink_talk(bsp_netlink_t *nsock, struct ipstack_nlmsghdr *n, int (*filter)(void *, int, char *, int, void *), void *p)
+int lib_netlink_talk(lib_netlink_t *nsock, struct ipstack_nlmsghdr *n, int (*filter)(void *, int, char *, int, void *), void *p)
 {
-    return bsp_netlink_sock_talk(nsock, n, filter, p);
+    return lib_netlink_sock_talk(nsock, n, filter, p);
 }
 
-int bsp_netlink_send(bsp_netlink_t *nsock, struct ipstack_nlmsghdr *n)
+int lib_netlink_send(lib_netlink_t *nsock, struct ipstack_nlmsghdr *n)
 {
-    return bsp_netlink_sock_talk(nsock, n, NULL, NULL);
+    return lib_netlink_sock_talk(nsock, n, NULL, NULL);
 }
 
-int bsp_netlink_recv(bsp_netlink_t *nsock)
+int lib_netlink_recv(lib_netlink_t *nsock)
 {
-    return bsp_netlink_sock_recvmsg(nsock);
+    return lib_netlink_sock_recvmsg(nsock);
 }
 
-int bsp_netlink_msg_callback(bsp_netlink_t *nsock, int (*filter)(void *, int, char *, int, void *), void *p)
+int lib_netlink_msg_callback(lib_netlink_t *nsock, int (*filter)(void *, int, char *, int, void *), void *p)
 {
-    return bsp_netlink_sock_msg_parse(nsock, filter, p);
+    return lib_netlink_sock_msg_parse(nsock, filter, p);
 }
 
 
-bsp_netlink_t * bsp_netlink_create(int maxsize, int msgoffset)
+lib_netlink_t * lib_netlink_create(int maxsize, int msgoffset)
 {
-    bsp_netlink_t *nsk = XMALLOC(MTYPE_BSP_NETLINK, sizeof(bsp_netlink_t));
+    lib_netlink_t *nsk = XMALLOC(MTYPE_NETLINK, sizeof(lib_netlink_t));
     if(nsk)
     {
-        nsk->msgbuf = XMALLOC(MTYPE_BSP_NETLINK_DATA, maxsize);
+        nsk->msgbuf = XMALLOC(MTYPE_NETLINK_DATA, maxsize);
         if(nsk->msgbuf)
         {
             nsk->msgmax = maxsize;
             nsk->msgoffset = msgoffset;
             return nsk;
         }
-        XFREE(MTYPE_BSP_NETLINK, nsk);
+        XFREE(MTYPE_NETLINK, nsk);
         nsk = NULL;
     }
     return nsk;
 }
 
-int bsp_netlink_destroy(bsp_netlink_t *nsock)
+int lib_netlink_destroy(lib_netlink_t *nsock)
 {
     if(nsock)
     {
         if(nsock->msgbuf)
         {
-            XFREE(MTYPE_BSP_NETLINK_DATA, nsock->msgbuf);
+            XFREE(MTYPE_NETLINK_DATA, nsock->msgbuf);
             nsock->msgbuf = NULL;
         }
-        XFREE(MTYPE_BSP_NETLINK, nsock);
+        XFREE(MTYPE_NETLINK, nsock);
         nsock = NULL;
     }
     return OK;

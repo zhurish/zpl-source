@@ -37,7 +37,7 @@ extern "C" {
 
 
 extern int iplinux_stack_init(void);
-
+extern int linux_driver_start(zpl_uint32 pid, zpl_uint32 ifindex);
 
 #ifdef __cplusplus
 }

@@ -282,7 +282,7 @@ struct module_list module_list_nsmdhcp =
 	.module_task_init=nsm_dhcp_task_init, 
 	.module_task_exit=nsm_dhcp_task_exit, 
 	.module_cmd_init=cmd_dhcp_init, 
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 	.taskid=0,
 };
 

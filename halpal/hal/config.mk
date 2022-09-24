@@ -11,6 +11,8 @@ OBJS	+= hal_client.o
 OBJS	+= hal_global.o
 OBJS	+= hal_netpkt.o
 OBJS	+= hal_misc.o
+OBJS	+= hal_txrx.o
+
 
 OBJS	+= hal_port.o		
 

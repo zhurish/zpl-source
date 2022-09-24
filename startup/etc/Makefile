@@ -36,29 +36,29 @@ install: config_install
 clean: config_clean
 	@if test -f $(ZPL_INSTALL_ETC_DIR)/plat.conf ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_ETC_DIR)/plat.conf ; \
+		$(RM) $(ZPL_INSTALL_ETC_DIR)/plat.conf ; \
 	fi
 	@if test -f $(ZPL_INSTALL_ETC_DIR)/default-config.cfg ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_ETC_DIR)/default-config.cfg ; \
+		$(RM) $(ZPL_INSTALL_ETC_DIR)/default-config.cfg ; \
 	fi
 	@if test -f $(ZPL_INSTALL_ETC_DIR)/nginx.conf ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_ETC_DIR)/nginx.conf ; \
+		$(RM) $(ZPL_INSTALL_ETC_DIR)/nginx.conf ; \
 	fi
 	
 objclean: 
 	@if test -f $(ZPL_INSTALL_ETC_DIR)/plat.conf ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_ETC_DIR)/plat.conf ; \
+		$(RM) $(ZPL_INSTALL_ETC_DIR)/plat.conf ; \
 	fi
 	@if test -f $(ZPL_INSTALL_ETC_DIR)/default-config.cfg ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_ETC_DIR)/default-config.cfg ; \
+		$(RM) $(ZPL_INSTALL_ETC_DIR)/default-config.cfg ; \
 	fi
 	@if test -f $(ZPL_INSTALL_ETC_DIR)/nginx.conf ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_ETC_DIR)/nginx.conf ; \
+		$(RM) $(ZPL_INSTALL_ETC_DIR)/nginx.conf ; \
 	fi
 
 all: lib install

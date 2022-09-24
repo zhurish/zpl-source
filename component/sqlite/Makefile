@@ -88,21 +88,21 @@ ifeq ($(strip $(ZPL_SQLITE_EXE_MODULE)),true)
 clean: objclean
 	@if test ! -f $(LIBD_DIR)/$(LIBDS) ; \
 		then \
-		@$(RM) $(LIBD_DIR)/$(LIBDS) ; \
+		$(RM) $(LIBD_DIR)/$(LIBDS) ; \
 	fi
 	@if test ! -f $(ZPL_INSTALL_SBIN_DIR)/$(SQLBIN) ; \
 		then \
-		@$(RM) $(ZPL_INSTALL_SBIN_DIR)/$(SQLBIN) ; \
+		$(RM) $(ZPL_INSTALL_SBIN_DIR)/$(SQLBIN) ; \
 	fi
 	@if test ! -f $(SQLBIN) ; \
 		then \
-		@$(RM) $(SQLBIN) ; \
+		$(RM) $(SQLBIN) ; \
 	fi
 else
 clean: objclean
 	@if test ! -f $(LIBD_DIR)/$(LIBDS) ; \
 		then \
-		@$(RM) $(LIBD_DIR)/$(LIBDS); \
+		$(RM) $(LIBD_DIR)/$(LIBDS); \
 	fi
 endif
 

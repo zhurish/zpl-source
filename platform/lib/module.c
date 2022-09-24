@@ -227,13 +227,13 @@ int zplib_module_task_init(zpl_uint32 module)
 			_module_lsttable[i].tbl->module_task_init &&
 			_module_lsttable[i].tbl->taskid <= 0 &&
 			CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT) &&
-			!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK))
+			!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK))
 		{
 			if(module && _module_lsttable[i].tbl->module  == module)
 			{
 				if(_module_lsttable[i].tbl->name != NULL)
 					liblog_trap( "Module : %s Create Task", _module_lsttable[i].tbl->name);
-				SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK);
+				SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK);
 				return (_module_lsttable[i].tbl->module_task_init)();
 			}
 		}	
@@ -249,13 +249,13 @@ int zplib_module_task_exit(zpl_uint32 module)
 		if(_module_lsttable[i].tbl && 
 			_module_lsttable[i].tbl->module_task_exit &&
 			_module_lsttable[i].tbl->taskid > 0 &&
-			CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK))
+			CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK))
 		{
 			if(module && _module_lsttable[i].tbl->module  == module)
 			{
 				if(_module_lsttable[i].tbl->name != NULL)
 					liblog_trap( "Module : %s Destroy Task", _module_lsttable[i].tbl->name);
-				UNSET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK);
+				UNSET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK);
 				return (_module_lsttable[i].tbl->module_task_exit)();
 			}
 		}
@@ -272,13 +272,13 @@ int zplib_module_cmd_init(zpl_uint32 module)
 		if(_module_lsttable[i].tbl && 
 			_module_lsttable[i].tbl->module_cmd_init &&
 			CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT) &&
-			!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_CMD))
+			!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_CMD))
 		{
 			if(module && _module_lsttable[i].tbl->module  == module)
 			{
 				if(_module_lsttable[i].tbl->name != NULL)
 					liblog_trap( "Module : %s CLI Init", _module_lsttable[i].tbl->name);
-				SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_CMD);
+				SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_CMD);
 				return (_module_lsttable[i].tbl->module_cmd_init)();
 			}
 		}	
@@ -298,7 +298,6 @@ static int _zplib_module_alltable_init(zpl_uint32 type)
 				case 1:
 				{
 					if(_module_lsttable[i].tbl->module_init && 
-						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_NEED_INIT) &&
 						!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT))
 					{
 						if(_module_lsttable[i].tbl->name != NULL)
@@ -311,7 +310,6 @@ static int _zplib_module_alltable_init(zpl_uint32 type)
 				case 2:
 				{
 					if(_module_lsttable[i].tbl->module_exit && 
-						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_NEED_INIT) &&
 						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT))
 					{
 						if(_module_lsttable[i].tbl->name != NULL)
@@ -324,42 +322,39 @@ static int _zplib_module_alltable_init(zpl_uint32 type)
 				case 3:
 				{
 					if(_module_lsttable[i].tbl->module_task_init && 
-						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_NEED_INIT) &&
 						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT) &&
-						!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK))
+						!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK))
 					{
 						if(_module_lsttable[i].tbl->name != NULL)
 							liblog_trap( "Module : %s Create Task", _module_lsttable[i].tbl->name);
 						(_module_lsttable[i].tbl->module_task_init)();
-						SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK);
+						SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK);
 					}
 				}
 				break;
 				case 4:
 				{
 					if(_module_lsttable[i].tbl->module_task_exit && 
-						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_NEED_INIT) &&
 						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT) &&
-						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK))
+						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK))
 					{
 						if(_module_lsttable[i].tbl->name != NULL)
 							liblog_trap( "Module : %s Destroy Task", _module_lsttable[i].tbl->name);
 						(_module_lsttable[i].tbl->module_task_exit)();
-						UNSET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_TASK);
+						UNSET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK);
 					}
 				}
 				break;
 				case 5:
 				{
 					if(_module_lsttable[i].tbl->module_cmd_init && 
-						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_NEED_INIT) &&
 						CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_INIT) &&
-						!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_CMD))
+						!CHECK_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_CMD))
 					{
 						if(_module_lsttable[i].tbl->name != NULL)
 							liblog_trap( "Module : %s CLI Init", _module_lsttable[i].tbl->name);
 						(_module_lsttable[i].tbl->module_cmd_init)();
-						SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_INIT_CMD);
+						SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_CMD);
 					}
 				}
 				break;

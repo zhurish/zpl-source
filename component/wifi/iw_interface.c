@@ -32,7 +32,7 @@ struct module_list module_list_wifi =
 	.module_task_init=NULL, 
 	.module_task_exit=NULL, 
 	.module_cmd_init=cmd_wireless_init, 
-	.flags = ZPL_MODULE_NEED_INIT,
+	.flags = 0,
 	.taskid=0,
 };
 

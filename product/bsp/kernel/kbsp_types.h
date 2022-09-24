@@ -272,12 +272,21 @@ static inline void *XREALLOC(int type, void *r, int size)
 
 */
 extern void sdk_log(int module, int priority, const char *file, const char *func, const int line, const char *format, ...);
+/*
 #define sdk_debug(format, ...)	sdk_log(MODULE_SDK, 7, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
 #define sdk_warn(format, ...)	sdk_log(MODULE_SDK, 4, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
 #define sdk_err(format, ...)	sdk_log(MODULE_SDK, 3, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
 #define sdk_info(format, ...)	sdk_log(MODULE_SDK, 6, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
 #define sdk_trap(format, ...)	sdk_log(MODULE_SDK, 8, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
 #define sdk_notice(format, ...) sdk_log(MODULE_SDK, 5, __FILE__, __FUNCTION__, __LINE__, format, ##__VA_ARGS__)
+*/
+#define sdk_debug(fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+#define sdk_warn(fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define sdk_err(fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define sdk_info(fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+#define sdk_trap(fmt, ...) 		printk(fmt, ##__VA_ARGS__)
+#define sdk_notice(fmt, ...) 	printk(fmt, ##__VA_ARGS__)
+
 	
 #define zlog_emerg(m, fmt, ...) 	sdk_err(fmt, ##__VA_ARGS__)
 #define zlog_err(m, fmt, ...) 		sdk_err(fmt, ##__VA_ARGS__)

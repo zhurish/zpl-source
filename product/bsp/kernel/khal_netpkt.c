@@ -14,6 +14,18 @@
 static struct khal_netlink *hal_netpkt = NULL;
 static struct net_device *hal_netdev = NULL;
 
+static int khal_netpkt_skb_hwport(zpl_uint8 *nethdr)
+{
+  zpl_uint8 *brcm_tag = NULL;  
+  brcm_tag = nethdr + 12;  
+  //00 00 22 03
+  //char *reason_str[] = {"mirroring", "SA Learning", "switching", "proto term", "proto snooping","flooding", "res"};
+  //if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  {
+    printk("DEV RECV: type=%c port=%d", (brcm_tag[3] & 0x20)?'T':'R', brcm_tag[3] & BRCM_EG_PID_MASK);
+  }
+  return (brcm_tag[3] & BRCM_EG_PID_MASK);
+}
 
 static void khal_netpkt_sock_skb_dump(struct khal_netlink *netpkt, zpl_uint8 *nethdr, char *hdr)
 {
@@ -21,11 +33,11 @@ static void khal_netpkt_sock_skb_dump(struct khal_netlink *netpkt, zpl_uint8 *ne
   brcm_tag = nethdr + 12;  
   //00 00 22 03
   //char *reason_str[] = {"mirroring", "SA Learning", "switching", "proto term", "proto snooping","flooding", "res"};
-  if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  //if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
   {
     printk("%s: type=%c port=%d", hdr, (brcm_tag[3] & 0x20)?'T':'R', brcm_tag[3] & BRCM_EG_PID_MASK);
   }
-  else//if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  //else//if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
   {
     /*
     if(brcm_tag[2] & 0x01)
@@ -58,18 +70,29 @@ static void khal_netpkt_sock_skb_dump(struct khal_netlink *netpkt, zpl_uint8 *ne
 
 static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, struct net_device *dev, const struct sk_buff *skb, int cmd)
 {
+  int ret = 0;
   char *nldata = NULL;
   zpl_uint8 *nethdr = skb->data;
   struct sk_buff *nlskb = NULL;
   struct nlmsghdr *nlh = NULL;
   khal_nettpkt_cmd_t  *hdr = (khal_nettpkt_cmd_t*)nldata;
+  /* 芯片上来的数据 */
+  if(cmd == NETPKT_FROMSWITCH)
+  {
+    ret = khal_netpkt_skb_hwport(skb->data - 14);  
+    if(ret == 3)
+      return NULL;
+  }
+          
   nlskb = XNLMSG_NEW(MTYPE_SDK_DATA, skb->len + sizeof(khal_nettpkt_cmd_t));
   if (nlskb && hal_netpkt)
   {
     if(cmd == NETPKT_FROMSWITCH)
+    {
       nethdr = skb->data - 14;
-    khal_netpkt_sock_skb_dump(netpkt, nethdr, (cmd==NETPKT_FROMSWITCH)?"DEV RECV":"FROM DEV");
-    //__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags)
+      khal_netpkt_sock_skb_dump(netpkt, nethdr, (cmd==NETPKT_FROMSWITCH)?"DEV RECV":"FROM DEV");
+      //__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags)
+    }
     nlh = nlmsg_put(nlskb, 0, 0, cmd, skb->len + sizeof(khal_nettpkt_cmd_t), 0);
     nldata = nlmsg_data(nlh);
     hdr = (khal_nettpkt_cmd_t*)nldata;
@@ -89,13 +112,17 @@ static int khal_netpkt_sock_skb_recv_callback(const struct sk_buff *skb, const s
   {
     struct sk_buff *nlskb = NULL;
     if (unlikely(!pskb_may_pull(skb, 4)))
+    {
+      zlog_err(MODULE_SDK, "switch pkt to netlink pskb_may_pull pid=%d", hal_netpkt->dstpid);
       return NET_RX_SUCCESS;
+    }
 
     nlskb = khal_netpkt_sock_skb_copy(hal_netpkt, dev, skb, NETPKT_FROMSWITCH);
     if (nlskb && hal_netpkt && hal_netpkt->dstpid)
     {
       if (khal_netlink_unicast(hal_netpkt, hal_netpkt->dstpid, (struct sk_buff *)nlskb) == 0)
       {
+        zlog_err(MODULE_SDK, "switch pkt to netlink pid=%d", hal_netpkt->dstpid);
         nlmsg_free(nlskb);
         return NET_RX_DROP;
       }
@@ -110,7 +137,6 @@ static void khal_netpkt_sock_send_tocpu(struct net_device *dev, struct sk_buff *
   if (skb)
   {
     skb->dev = dev;
-
     dev->stats.rx_bytes += skb->len;
     /* Pass to upper layer */
     skb->protocol = eth_type_trans(skb, dev);
@@ -207,16 +233,17 @@ int khal_netpkt_debug_set(int set, int val)
 
 int khal_netpkt_bind(int ifindex, int bind)
 {
-  hal_netdev = dev_get_by_index(&init_net, ifindex);
+  //hal_netdev = dev_get_by_index(&init_net, ifindex);
+  hal_netdev = dev_get_by_name(&init_net, "eth0");
   if (hal_netdev)
   {
-    zlog_debug(MODULE_SDK, " nk_pkt_sock_cmd NK_PKT_SETUP %d", ifindex);
+    zlog_debug(MODULE_SDK, " khal_netpkt_bind  ifndex=%d, bind=%d", ifindex, bind);
 #ifdef ZPL_BUILD_ARCH_X86_64
 #else    
-    if (bind)
-      hal_netdev->ndev_dsa_pktrx = khal_netpkt_sock_skb_recv_callback;
-    else
-      hal_netdev->ndev_dsa_pktrx = NULL;
+    //if (bind)
+    //  hal_netdev->ndev_dsa_pktrx = khal_netpkt_sock_skb_recv_callback;
+    ///else
+    //  hal_netdev->ndev_dsa_pktrx = NULL;
 #endif      
     return OK;
   }
@@ -240,6 +267,7 @@ static struct netlink_kernel_cfg _netpkt_sock_nkc = {
     .compare = NULL,
 };
 
+
 int khal_netpkt_init(void)
 {
   hal_netpkt = khal_netlink_create("netpkt", HAL_DATA_NETLINK_PROTO, 0, &_netpkt_sock_nkc);
@@ -252,7 +280,7 @@ int khal_netpkt_init(void)
   hal_netdev = dev_get_by_name(&init_net, "eth0");
   if (hal_netdev)
   {
-    zlog_debug(MODULE_SDK, " nk_pkt_sock_cmd NK_PKT_SETUP %s", "eth0");
+    zlog_debug(MODULE_SDK, " nk_pkt_sock_cmd bind %s", "eth0");
 #ifdef ZPL_BUILD_ARCH_X86_64
 #else       
     hal_netdev->ndev_dsa_pktrx = khal_netpkt_sock_skb_recv_callback;

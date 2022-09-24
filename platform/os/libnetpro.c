@@ -2,13 +2,19 @@
 #include "zplos_include.h"
 #include "libnetpro.h"
 
-struct proto_str_tbl
+struct net_proto_key
 {
-    int16_t proto;
+    zpl_uint16 proto;
+    const char *str;
+};
+struct net_l2proto_key
+{
+    zpl_uint8 mac[6];
+    zpl_uint16 proto;
     const char *str;
 };
 
-static struct proto_str_tbl ip_proto_str[] =
+static struct net_proto_key ip_proto_str[] =
     {
         {IP_IPPROTO_ANY, "any"},   /* ANY_PROTO */
         {IP_IPPROTO_IP, "ip"},     /* IP_PROTO */
@@ -39,7 +45,7 @@ static struct proto_str_tbl ip_proto_str[] =
         {IP_IPPROTO_OSPF, "ospf"},
 };
 
-static struct proto_str_tbl eth_proto_str[] =
+static struct net_proto_key eth_proto_str[] =
     {
         {ETH_P_LOOP, "loop"},           //	0x0060		/* Ethernet Loopback packet	*/
         {ETH_P_PUP, "pup"},             //	0x0200		/* Xerox PUP packet		*/
@@ -168,7 +174,7 @@ static const char *port_op_str[] =
         "le",
         "range"};
 */
-int16_t ip_protocol_type(const char *str)
+zpl_uint16 ip_protocol_type(const char *str)
 {
     zpl_uint32 i = 0;
     for (i = 0; i < sizeof(ip_proto_str) / sizeof(ip_proto_str[0]); i++)
@@ -179,7 +185,7 @@ int16_t ip_protocol_type(const char *str)
     return atoi(str);
 }
 
-const char *ip_protocol_type_string(int16_t type)
+const char *ip_protocol_type_string(zpl_uint16 type)
 {
     zpl_uint32 i = 0;
     for (i = 0; i < sizeof(ip_proto_str) / sizeof(ip_proto_str[0]); i++)
@@ -190,7 +196,7 @@ const char *ip_protocol_type_string(int16_t type)
     return itoa(type, 10);
 }
 
-int16_t eth_protocol_type(const char *str)
+zpl_uint16 eth_protocol_type(const char *str)
 {
     zpl_uint32 i = 0;
     for (i = 0; i < sizeof(eth_proto_str) / sizeof(eth_proto_str[0]); i++)
@@ -201,7 +207,7 @@ int16_t eth_protocol_type(const char *str)
     return strtol(str, NULL, 16);
 }
 
-const char *eth_protocol_type_string(int16_t type)
+const char *eth_protocol_type_string(zpl_uint16 type)
 {
     zpl_uint32 i = 0;
     for (i = 0; i < sizeof(eth_proto_str) / sizeof(eth_proto_str[0]); i++)
@@ -212,7 +218,7 @@ const char *eth_protocol_type_string(int16_t type)
     return itoa(type, 16);
 }
 
-int16_t port_operation_type(const char *str)
+zpl_uint16 port_operation_type(const char *str)
 {
     if (!strncmp(str, "eq", 2))
         return OPT_EQ;
@@ -231,7 +237,7 @@ int16_t port_operation_type(const char *str)
     return OPT_NONE;
 }
 
-const char *port_operation_type_string(int16_t type)
+const char *port_operation_type_string(zpl_uint16 type)
 {
     switch (type)
     {
@@ -257,3 +263,40 @@ const char *port_operation_type_string(int16_t type)
     return "none";
 }
 
+static struct net_l2proto_key l2mac_proto_str[] = {
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x00}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x01}, 0, "aa"}, 
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x02}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x03}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x04}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x05}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x06}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x07}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x08}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x09}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x0A}, 0, "aa"},
+{ {0x01, 0x80, 0xC2, 0x00, 0x00, 0x0B}, 0, "aa"},
+};
+
+
+zpl_uint16 eth_l2protocol_type(const char *smac)
+{
+    zpl_uint32 i = 0;
+    for (i = 0; i < sizeof(l2mac_proto_str) / sizeof(l2mac_proto_str[0]); i++)
+    {
+        if (memcmp(l2mac_proto_str[i].mac, smac, 6))
+            return l2mac_proto_str[i].proto;
+    }
+    return 0;
+}
+
+const char *eth_l2protocol_type_string(zpl_uint16 type)
+{
+    zpl_uint32 i = 0;
+    for (i = 0; i < sizeof(l2mac_proto_str) / sizeof(l2mac_proto_str[0]); i++)
+    {
+        if (l2mac_proto_str[i].proto == type)
+            return l2mac_proto_str[i].str;
+    }
+    return itoa(type, 16);
+}

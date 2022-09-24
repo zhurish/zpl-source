@@ -40,7 +40,7 @@
 //#define ZPL_SDK_USER
 #endif
 
-#define ZPL_ETHDEV_NAME "/dev/halclient0"
+//#define ZPL_ETHDEV_NAME "/dev/halclient0"
 
 #ifdef ZPL_ETHDEV_NAME
 static int linux_ethdev_ioctl(int cmd, char *data)
@@ -90,6 +90,118 @@ static int linux_ioctl_eth_delete(struct interface *ifp)
 	hal_ipcmsg_port_set(&ipcmsg, ifp->ifindex);
   return linux_ethdev_ioctl(command, buf);
 }
+
+int linux_driver_start(zpl_uint32 pid, zpl_uint32 ifindex)
+{
+  zpl_uint32 command = 0;
+  struct hal_ipcmsg ipcmsg;
+  char buf[512];
+  HAL_ENTER_FUNC();
+  hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+  command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_START);
+  hal_ipcmsg_create_header(&ipcmsg, command);
+  hal_ipcmsg_putl(&ipcmsg, pid);
+  hal_ipcmsg_putl(&ipcmsg, ifindex);
+  return linux_ethdev_ioctl(command, buf);
+}
+#else
+
+static int linux_driver_kernel_netlink_request(char *data, int len, int (*filter)(int, char *, int, void *), void *p)
+{
+  int *from_pid = NULL;
+  struct ipstack_nlmsghdr *nlh = NULL;
+  struct
+  {
+    struct ipstack_nlmsghdr nlh;
+    char buf[2048];
+  } req;
+
+  memset(&req.nlh, 0, sizeof(struct ipstack_nlmsghdr));
+  nlh = &req.nlh;
+  nlh->nlmsg_len = IPSTACK_NLMSG_LENGTH(len + 4);
+  nlh->nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REQUEST;
+  nlh->nlmsg_type = HAL_CFG_REQUEST_CMD;
+  nlh->nlmsg_seq = ++pal_stack.netlink_cfg->seq;
+  nlh->nlmsg_flags |= IPSTACK_NLM_F_ACK;
+  nlh->nlmsg_pid = 0;
+  from_pid = (int *)req.buf;
+  *from_pid = htonl(getpid());
+  if (len)
+    memcpy(&req.buf[4], data, len);
+  return lib_netlink_talk(pal_stack.netlink_cfg, nlh, filter, p);
+}
+
+static int linux_driver_kernel_netlink_parse_default(int cmd, char *buf, int len, void *p)
+{
+  struct hal_ipcmsg_header header;
+  lib_netlink_t *netlink = p;
+  struct hal_ipcmsg ipcmsg;
+  struct hal_ipcmsg_result getvaluetmp;
+  ipcmsg.setp = ipcmsg.getp = 0;
+  ipcmsg.length_max = netlink->msgmax;
+  ipcmsg.buf = netlink->msgbuf + netlink->msgoffset;
+  ipcmsg.setp = netlink->msglen;
+  hal_ipcmsg_get_header(&ipcmsg, &header);
+  hal_ipcmsg_result_get(&ipcmsg, &getvaluetmp);
+  return getvaluetmp.result;
+}
+
+static int linux_driver_kernel_netlink_proxy(char *data, int len, void *p)
+{
+  if (pal_stack.netlink_cfg && !ipstack_invalid(pal_stack.netlink_cfg->sock))
+    return linux_driver_kernel_netlink_request(data, len, linux_driver_kernel_netlink_parse_default, p);
+  return OK;
+}
+
+
+static int linux_ioctl_eth_add(struct interface *ifp)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+  zpl_uchar macadd[6] = {0x20,0x5f,0x87,0x65,0x66,0x00};
+	char buf[512];
+	char    ifname[IF_NAME_MAX];
+	HAL_ENTER_FUNC();
+	os_memset(ifname, 0, sizeof(ifname));
+	os_strcpy(ifname, ifp->k_name);
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+  command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_CREATE); 
+  hal_ipcmsg_create_header(&ipcmsg, command);
+	hal_ipcmsg_port_set(&ipcmsg, ifp->ifindex);
+	hal_ipcmsg_put(&ipcmsg, ifname, IF_NAME_MAX);
+	hal_ipcmsg_put(&ipcmsg, macadd, 6);
+  return linux_driver_kernel_netlink_proxy(buf, ipcmsg.setp, pal_stack.netlink_cfg);
+}
+
+static int linux_ioctl_eth_delete(struct interface *ifp)
+{
+	zpl_uint32 command = 0;
+	struct hal_ipcmsg ipcmsg;
+	char buf[512];
+	char    ifname[IF_NAME_MAX];
+	HAL_ENTER_FUNC();
+	os_memset(ifname, 0, sizeof(ifname));
+	os_strcpy(ifname, ifp->k_name);
+	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+  command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_DELETE); 
+  hal_ipcmsg_create_header(&ipcmsg, command);
+	hal_ipcmsg_port_set(&ipcmsg, ifp->ifindex);
+  return linux_driver_kernel_netlink_proxy(buf, ipcmsg.setp, pal_stack.netlink_cfg);
+}
+
+int linux_driver_start(zpl_uint32 pid, zpl_uint32 ifindex)
+{
+  zpl_uint32 command = 0;
+  struct hal_ipcmsg ipcmsg;
+  char buf[512];
+  HAL_ENTER_FUNC();
+  hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
+  command = IPCCMD_SET(HAL_MODULE_GLOBAL, HAL_MODULE_CMD_REQ, HAL_GLOBAL_START);
+  hal_ipcmsg_create_header(&ipcmsg, command);
+  hal_ipcmsg_putl(&ipcmsg, pid);
+  hal_ipcmsg_putl(&ipcmsg, ifindex);
+  return linux_driver_kernel_netlink_proxy(buf, ipcmsg.setp, pal_stack.netlink_cfg);
+}
 #endif
 
 static int linux_interface_create(struct interface *ifp)
@@ -110,7 +222,7 @@ static int linux_interface_create(struct interface *ifp)
   case IF_GIGABT_ETHERNET:
   case IF_XGIGABT_ETHERNET:
   case IF_VLAN:
-  #ifdef ZPL_ETHDEV_NAME
+  #if 1//def ZPL_ETHDEV_NAME
     ret = linux_ioctl_eth_add(ifp);
   #else
     ret = linux_ioctl_eth_create(ifp);
@@ -160,7 +272,7 @@ static int linux_interface_delete(struct interface *ifp)
   case IF_GIGABT_ETHERNET:
   case IF_XGIGABT_ETHERNET:
   case IF_VLAN:
-  #ifdef ZPL_ETHDEV_NAME
+  #if 1//def ZPL_ETHDEV_NAME
     ret = linux_ioctl_eth_delete(ifp);
   #else
     ret = linux_ioctl_eth_destroy(ifp);

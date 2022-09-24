@@ -134,7 +134,34 @@ enum zpl_netpkt_reason
 	NETPKT_REASON_TONETDEV,      
 };
 
-	
+
+
+typedef struct
+{
+    zpl_uint16      vlantype; 
+#if BYTE_ORDER == LITTLE_ENDIAN
+    zpl_uint16       vid:12;
+    zpl_uint16       cfi:1; 
+    zpl_uint16       pri:3; 
+#else    
+    zpl_uint16       pri:3; 
+    zpl_uint16       cfi:1; 
+    zpl_uint16       vid:12; 
+#endif 
+    zpl_uint16      ethtype; 
+}zpl_skb_vlanhdr_t __attribute__ ((aligned (1)));
+
+typedef struct
+{
+    zpl_uint8       dmac[ETH_ALEN]; 
+    zpl_uint8       smac[ETH_ALEN]; 
+    union 
+    {
+        zpl_uint16      ethtype; 
+        zpl_skb_vlanhdr_t      vlanhdr;
+    }ethhdr;
+}zpl_skb_ethvlan_t __attribute__ ((aligned (1)));
+
 typedef struct
 {
     zpl_uint8       unit;                         /* Unit number. */
@@ -192,17 +219,20 @@ typedef struct
     zpl_char	*skb_data;       //buffer
     zpl_uint32	skb_start;
     volatile zpl_uint8   reference;       //引用计数
-}zpl_skb_data_t __attribute__ ((aligned (1)));
+}zpl_skbuffer_t __attribute__ ((aligned (1)));
 
 typedef struct 
 {
 	void	*sem;
 	void	*mutex;
+
+    void    *cond;
+    
     zpl_uint32	maxsize;
 	LIST	    list;			//add queue
 	LIST	    rlist;			//ready queue
 	LIST	    ulist;			//unuse queue
-}zpl_skb_queue_t;
+}zpl_skbqueue_t;
 
 
 #define ZPL_SKB_DATA(sk)        (((sk)->skb_data + ((sk)->skb_start)))
@@ -212,30 +242,44 @@ typedef struct
 extern zpl_uint32 zpl_skb_timerstamp(void);
 
 
-extern zpl_skb_queue_t *zpl_skb_queue_create(zpl_uint32 maxsize, zpl_bool sem);
-extern int zpl_skb_queue_enqueue(zpl_skb_queue_t *queue, zpl_skb_data_t *data);
-extern zpl_skb_data_t * zpl_skb_queue_dequeue(zpl_skb_queue_t *queue);
-extern int zpl_skb_queue_finsh(zpl_skb_queue_t *queue, zpl_skb_data_t *data);
-extern int zpl_skb_queue_destroy(zpl_skb_queue_t *queue);
-extern int zpl_skb_queue_add(zpl_skb_queue_t *queue, zpl_skb_data_t *data);
-extern int zpl_skb_queue_put(zpl_skb_queue_t *queue, zpl_skb_data_t *data);
-extern zpl_skb_data_t *zpl_skb_queue_get(zpl_skb_queue_t *queue);
-extern int zpl_skb_queue_distribute(zpl_skb_queue_t *queue, int(*func)(zpl_skb_data_t*, void *), void *p);
+extern zpl_skbqueue_t *zpl_skbqueue_create(zpl_uint32 maxsize, zpl_bool sem);
+extern int zpl_skbqueue_destroy(zpl_skbqueue_t *queue);
 
-extern int zpl_skb_data_push(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len);
-extern int zpl_skb_data_pull(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len);
+extern int zpl_skbqueue_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
+extern zpl_skbuffer_t * zpl_skbqueue_dequeue(zpl_skbqueue_t *queue);
 
-extern int zpl_skb_data_append(zpl_skb_data_t *bufdata, uint8_t *data, uint32_t len);
-extern zpl_skb_data_t * zpl_skb_data_malloc(zpl_skb_queue_t *queue, zpl_uint32 len);
-extern zpl_skb_data_t * zpl_skb_data_clone(zpl_skb_queue_t *queue, zpl_skb_data_t *data);
+extern int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
+extern int zpl_skbqueue_add(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
+extern int zpl_skbqueue_put(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
+extern zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue);
 
-extern int zpl_skb_data_free(zpl_skb_data_t *data);
+extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p);
+/* 报文前面添加数据 */
+extern int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+/* 报文前面删除数据 */
+extern int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+
+/* 报文后面数据 */
+extern int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+
+extern int zpl_skbuffer_unref(zpl_skbuffer_t *skbuf);
+extern int zpl_skbuffer_addref(zpl_skbuffer_t *skbuf);
+
+extern zpl_skbuffer_t * zpl_skbuffer_create(zpl_skbqueue_t *queue, zpl_uint32 len);
+extern zpl_skbuffer_t * zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
+
+extern int zpl_skbuffer_destroy(zpl_skbuffer_t *skbuf);
 
 /* net pkt */
-extern int zpl_skb_data_net_header(zpl_skb_data_t *bufdata, zpl_netpkt_hdr_t *data);
-extern zpl_netpkt_hdr_t * zpl_skb_netpkt_hdrget(zpl_skb_data_t *src);
+extern int zpl_skbuffer_netpkt_hdrset(zpl_skbuffer_t *skbuf, zpl_netpkt_hdr_t *hdr);
+extern zpl_netpkt_hdr_t * zpl_skbuffer_netpkt_hdrget(zpl_skbuffer_t *src);
+extern int zpl_skbuffer_netpkt_build_source(ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid, zpl_skbuffer_t *skbuf);
+extern int zpl_skbuffer_netpkt_build_reason(zpl_uint32 reason, zpl_skbuffer_t *skbuf);
+extern int zpl_skbuffer_netpkt_build_timestamp(zpl_uint32 timestamp, zpl_skbuffer_t *skbuf);
+extern int zpl_skbuffer_netpkt_build_header(zpl_uint8 unit, zpl_skbuffer_t *skbuf, uint8_t *data);
 
-
+extern zpl_uint16 zpl_skbuf_ethtype(char *src);
+extern zpl_uint16 zpl_skbuf_vlan(char *src);
 
 #ifdef __cplusplus
 }

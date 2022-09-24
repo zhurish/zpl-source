@@ -271,6 +271,15 @@ DEFUN (sdk_sw_forwarding,
 	}
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
+DEFUN (sdk_reset,
+		sdk_reset_cmd,
+		"reset",
+		"reset\n")
+{
+	int ret = 0;
+	ret = b53125_reset(__msdkdriver);
+	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 #endif
 
 int b53125_global_init(sdk_driver_t *dev)
@@ -279,6 +288,7 @@ int b53125_global_init(sdk_driver_t *dev)
 #if defined( _SDK_CLI_DEBUG_EN)	
 	install_element(SDK_NODE, CMD_CONFIG_LEVEL, &sdk_manage_mode_cmd);
 	install_element(SDK_NODE, CMD_CONFIG_LEVEL, &sdk_sw_forwarding_cmd);
+	install_element(SDK_NODE, CMD_CONFIG_LEVEL, &sdk_reset_cmd);
 #endif	
 	sdk_maccb.sdk_mac_age_cb = b53125_aging_time;
 	sdk_global.sdk_jumbo_size_cb = b53125_jumbo_size;
