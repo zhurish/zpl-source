@@ -11,8 +11,23 @@
 #define BRCM_EG_RC_RSVD (3 << 6)
 #define BRCM_EG_PID_MASK 0x1f
 
+/* 1st byte in the tag */
+#define BRCM_IG_TC_SHIFT	2
+#define BRCM_IG_TC_MASK		0x7
+/* 2nd byte in the tag */
+#define BRCM_IG_TE_MASK		0x3
+#define BRCM_IG_TS_SHIFT	7
+/* 3rd byte in the tag */
+#define BRCM_IG_DSTMAP2_MASK	1
+#define BRCM_IG_DSTMAP1_MASK	0xff
+
+//#define KHAL_NETPKT_TEST
+
 static struct khal_netlink *hal_netpkt = NULL;
 static struct net_device *hal_netdev = NULL;
+#ifdef KHAL_NETPKT_TEST
+static int khal_netpkt_sock_send_switch_test(struct sk_buff *skb);
+#endif
 
 static int netpkt_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len)
 {
@@ -84,7 +99,6 @@ static void khal_netpkt_sock_skb_dump(struct khal_netlink *netpkt, zpl_uint8 *ne
                  nethdr[12], nethdr[13], nethdr[14], nethdr[15], nethdr[16], nethdr[17], nethdr[18], nethdr[19]);
 }
 
-
 static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, struct net_device *dev, const struct sk_buff *skb, int cmd)
 {
   int ret = 0;
@@ -96,6 +110,9 @@ static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, st
   /* 芯片上来的数据 */
   if(cmd == NETPKT_FROMSWITCH)
   {
+#ifdef KHAL_NETPKT_TEST
+    khal_netpkt_sock_send_switch_test(skb);
+#endif    
     ret = khal_netpkt_skb_hwport(netpkt, skb->data - NETPKT_ETHERNET_HEADER);  
     if(ret == 3)
       return NULL;
@@ -112,9 +129,9 @@ static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, st
     nlh = nlmsg_put(nlskb, 0, 0, HAL_DATA_REQUEST_CMD, skb->len + sizeof(khal_nettpkt_cmd_t), 0);
     nldata = nlmsg_data(nlh);
     hdr = (khal_nettpkt_cmd_t*)nldata;
-    hdr->cmd = cmd;
+    hdr->cmd = htonl(cmd);
     if(dev)
-      hdr->dstval = dev->ifindex;
+      hdr->dstval = htonl(dev->ifindex);
     if (skb->len)
       memcpy(nldata + sizeof(khal_nettpkt_cmd_t), skb->data-NETPKT_ETHERNET_HEADER, skb->len+NETPKT_ETHERNET_HEADER);
     return nlskb;
@@ -133,6 +150,7 @@ static int khal_netpkt_sock_skb_recv_callback(const struct sk_buff *skb, const s
       zlog_err(MODULE_SDK, "switch pkt to netlink pskb_may_pull pid=%d", hal_netpkt->dstpid);
       return NET_RX_SUCCESS;
     }
+
     if(ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
     {
       netpkt_loghex(tmpbuf, sizeof(tmpbuf), skb->data-NETPKT_ETHERNET_HEADER, skb->len+NETPKT_ETHERNET_HEADER);
@@ -162,34 +180,95 @@ static int khal_netpkt_sock_skb_recv_callback(const struct sk_buff *skb, const s
   return NET_RX_SUCCESS;
 }
 
-static void khal_netpkt_sock_send_tocpu(struct net_device *dev, struct sk_buff *skb)
+static void khal_netpkt_sock_send_tocpu(struct sk_buff *skb, khal_nettpkt_cmd_t *netkt_cmd)
 {
-  if (skb)
+  struct net_device *dev = NULL;
+  dev = dev_get_by_index(&init_net, ntohl(netkt_cmd->dstval));
+  if (dev)
   {
-    skb->dev = dev;
-    dev->stats.rx_bytes += skb->len;
-    /* Pass to upper layer */
-    skb->protocol = eth_type_trans(skb, dev);
-    dev->stats.rx_packets++;
-    netif_rx(skb);
+    struct sk_buff *nskb = skb_clone(skb, GFP_KERNEL); 
+    if (nskb)
+    {
+      //从缓冲区的开始删除数据
+      skb_pull(nskb, sizeof(khal_nettpkt_cmd_t) + sizeof(struct nlmsghdr)); 
+      if(hal_netpkt && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_SEND) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
+      {
+        char tmpbuf[2048];
+        netpkt_loghex(tmpbuf, sizeof(tmpbuf), nskb->data, nskb->len);
+        zlog_err(MODULE_SDK, " Send to CPU skb len=%d data={%s}", nskb->len, tmpbuf);
+      }
+      nskb->dev = dev;
+      dev->stats.rx_bytes += nskb->len;
+      nskb->protocol = eth_type_trans(nskb, dev);
+      dev->stats.rx_packets++;
+      netif_rx(nskb);
+    }
   }
 }
 
-static int khal_netpkt_sock_send_switch(struct sk_buff *skb)
+static int khal_netpkt_sock_send_switch(struct sk_buff *skb, khal_nettpkt_cmd_t *netkt_cmd)
 {
-  if (skb && hal_netdev)
+  struct sk_buff *nskb = skb_clone(skb, GFP_KERNEL);  
+  if (nskb && hal_netdev)
   {
+    //从缓冲区的开始删除数据
+    skb_pull(nskb, sizeof(khal_nettpkt_cmd_t) + sizeof(struct nlmsghdr));  
+    u16 queue = skb_get_queue_mapping(skb);
+	  u8 *brcm_tag = nskb->data;
+
     if(hal_netpkt && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_SEND) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
     {
+      //0x24 0x00 0x00 0x10
       char tmpbuf[2048];
-      netpkt_loghex(tmpbuf, sizeof(tmpbuf), skb->data, skb->len);
-      zlog_err(MODULE_SDK, " Send to switch skb len=%d data={%s}", skb->len, tmpbuf);
+      netpkt_loghex(tmpbuf, sizeof(tmpbuf), nskb->data, nskb->len);
+      zlog_err(MODULE_SDK, " Send to switch skb len=%d data={%s}", nskb->len, tmpbuf);
     }
-    skb->dev = hal_netdev;
-    hal_netdev->netdev_ops->ndo_start_xmit(skb, hal_netdev);
+    nskb->dev = hal_netdev;
+    //skb_set_queue_mapping(skb, BRCM_TAG_SET_PORT_QUEUE(dp->index, queue));
+    dev_queue_xmit(nskb);
+    //hal_netdev->netdev_ops->ndo_start_xmit(nskb, hal_netdev);
   }
   return 0;
 }
+
+#ifdef KHAL_NETPKT_TEST
+static int khal_netpkt_sock_send_switch_test(struct sk_buff *skb)
+{
+  struct sk_buff *nskb = skb_clone(skb, GFP_KERNEL);  
+  if (nskb && hal_netdev)
+  {
+    skb_push(nskb, NETPKT_ETHERNET_HEADER); 
+    //skb->data - NETPKT_ETHERNET_HEADER, skb->len + NETPKT_ETHERNET_HEADER;
+    u16 queue = skb_get_queue_mapping(nskb);
+	  u8 *brcm_tag = nskb->data;
+
+    char tmpbuf[2048];
+    brcm_tag[6] = 0x00;
+    brcm_tag[7] = 0x01;
+    brcm_tag[8] = 0x01;
+    brcm_tag[9] = 0x01;
+    brcm_tag[10] = 0x01;
+    brcm_tag[11] = 0x01;
+
+    brcm_tag[12] = (1 << BRCM_OPCODE_SHIFT) |
+		       ((queue & BRCM_IG_TC_MASK) << BRCM_IG_TC_SHIFT);
+    brcm_tag[13] = 0;
+    brcm_tag[14] = 0;
+    brcm_tag[15] = (1 << 4) & BRCM_IG_DSTMAP1_MASK;
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    netpkt_loghex(tmpbuf, sizeof(tmpbuf), nskb->data, nskb->len);
+    zlog_err(MODULE_SDK, " Send  to switch skb len=%d data={%s}", nskb->len, tmpbuf);
+    nskb->dev = hal_netdev;
+    //skb_set_queue_mapping(skb, BRCM_TAG_SET_PORT_QUEUE(dp->index, queue));
+    //skb->protocol = htons(ETH_P_IEEE802154);
+
+	  //err = dev_queue_xmit(skb);
+    dev_queue_xmit(nskb);
+    //hal_netdev->netdev_ops->ndo_start_xmit(nskb, hal_netdev);
+  }
+  return 0;
+}
+#endif
 
 static int khal_netpkt_sock_touser(struct khal_netlink *netpkt, struct net_device *dev, struct sk_buff *skb)
 {
@@ -218,38 +297,27 @@ void khal_netpkt_fromdev(struct net_device *dev, struct sk_buff *skb)
 
 static void khal_netpkt_input(struct sk_buff *__skb)
 {
-  khal_nettpkt_cmd_t *netkthdr = NULL;
   struct nlmsghdr *nlh = nlmsg_hdr(__skb);
-  struct net_device *dev = NULL;
-  zpl_uint8 *nethdr = NULL;
-  nethdr = (zpl_uint8 *)nlmsg_data(nlh);
-  netkthdr = (khal_nettpkt_cmd_t *)nethdr;
-  nethdr += sizeof(khal_nettpkt_cmd_t);
-  if (hal_netpkt && hal_netpkt)
+  khal_nettpkt_cmd_t *netkt_cmd = (khal_nettpkt_cmd_t *)nlmsg_data(nlh);  
+  if (hal_netpkt)
   {  
-    switch (nlh->nlmsg_type)
+    zlog_err(MODULE_SDK, "khal_netpkt_input nlmsg_type=0x%x cmd=0x%x", nlh->nlmsg_type, ntohl(netkt_cmd->cmd));
+
+    if(nlh->nlmsg_type == HAL_DATA_REQUEST_CMD)
     {
-    case NETPKT_TOCPU:
-      dev = dev_get_by_index(&init_net, ntohl(netkthdr->dstval));
-      if (dev)
+      switch (ntohl(netkt_cmd->cmd) /*nlh->nlmsg_type*/)
       {
-        skb_pull(__skb, sizeof(khal_nettpkt_cmd_t)); //从缓冲区的开始删除数据
-        if (ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
-          zlog_debug(MODULE_SDK, "TOCPU: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
-                     nethdr[0], nethdr[1], nethdr[2], nethdr[3], nethdr[4], nethdr[5],
-                     nethdr[6], nethdr[7], nethdr[8], nethdr[9], nethdr[10], nethdr[11],
-                     nethdr[12], nethdr[13], nethdr[14], nethdr[15], nethdr[16], nethdr[17]);
-        khal_netpkt_sock_send_tocpu(dev, __skb);
+      case NETPKT_TOCPU:
+        khal_netpkt_sock_send_tocpu(__skb, netkt_cmd);
+        break;
+      case NETPKT_TOSWITCH:
+        khal_netpkt_sock_send_switch(__skb, netkt_cmd);
+        break;
+      case NETPKT_FROMSWITCH:
+        break;
+      case NETPKT_FROMDEV:
+        break;
       }
-      break;
-    case NETPKT_TOSWITCH:
-      skb_pull(__skb, sizeof(khal_nettpkt_cmd_t));
-      khal_netpkt_sock_send_switch(__skb);
-      break;
-    case NETPKT_FROMSWITCH:
-      break;
-    case NETPKT_FROMDEV:
-      break;
     }
   }
 }

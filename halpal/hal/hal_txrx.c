@@ -55,6 +55,8 @@ static int hal_txrx_hwhdr_add(char *data, int len, int flags, int cosq, int dpor
     hwhdr->hdr_pkt.tx_pkt.tx_normal.tc = cosq; 
     hwhdr->hdr_pkt.tx_pkt.tx_normal.opcode = 0x01;
   }
+  hwhdr->hdr_pkt.uihdr = htonl(hwhdr->hdr_pkt.uihdr);
+  //zlog_debug(MODULE_TXRX,"====DEV SEND HW HDR: 0x%02x 0x%02x 0x%02x 0x%02x", data[0], data[1], data[2], data[3]);
   return 4;
 }
 #endif
@@ -66,6 +68,7 @@ static int hal_txrx_vlan_add(char *data, int len, vlan_t vlan, int cfi, int pri)
   vlanhdr->vid = vlan;
   vlanhdr->cfi = cfi;
   vlanhdr->pri = pri;
+  //zlog_debug(MODULE_TXRX,"====DEV SEND VLAN HDR: 0x%02x 0x%02x 0x%02x 0x%02x", data[0], data[1], data[2], data[3]);  
   return 4;
 }
 
@@ -76,6 +79,7 @@ static int hal_txrx_vlan_del(char *data, int len, zpl_skb_vlanhdr_t *vlan)
   vlan->vid = vlanhdr->vid;
   vlan->cfi = vlanhdr->cfi;
   vlan->pri = vlanhdr->pri;
+  //zlog_debug(MODULE_TXRX,"====DEV GET VLAN HDR: vlantype = 0x%x vid=%d cfi=%d pri=%d", vlan->vlantype, vlan->vid, vlan->cfi, vlan->pri);    
   if(vlan->vlantype == 0x8100)
   {
     memmove(data + 4, data , 2*ETH_ALEN);  
@@ -92,11 +96,11 @@ static int hal_txrx_sendto_netlink(hal_txrx_t *txrx, char *data, int len, int cm
   nlh = (struct ipstack_nlmsghdr *)(data - sizeof(hal_txrx_hdr_t) - sizeof(struct ipstack_nlmsghdr));
 	memset (nlh, 0, sizeof (struct ipstack_nlmsghdr));
   memset (header, 0, sizeof (hal_txrx_hdr_t));
-  header->cmd = cmd;
+  header->cmd = htonl(cmd);
   header->dstval = htonl(ifindex);
-  nlh->nlmsg_len = IPSTACK_NLMSG_LENGTH (len+sizeof(hal_txrx_hdr_t));
+  nlh->nlmsg_len = IPSTACK_NLMSG_LENGTH (len+sizeof(hal_txrx_hdr_t));//负载的长度
   nlh->nlmsg_flags = IPSTACK_NLM_F_CREATE | IPSTACK_NLM_F_REQUEST;
-  nlh->nlmsg_type = cmd;
+  nlh->nlmsg_type = HAL_DATA_REQUEST_CMD;
 	nlh->nlmsg_seq = ++txrx->netlink_data->seq;
 	nlh->nlmsg_flags |= IPSTACK_NLM_F_ACK;
 	nlh->nlmsg_pid = 0;
@@ -107,17 +111,32 @@ static int hal_txrx_sendto_netlink(hal_txrx_t *txrx, char *data, int len, int cm
 
 int hal_txrx_sendto_port(char *data, int len, int flags, int cosq, int dportmap, vlan_t vlan, int cfi, int pri)
 {
-  int txlen = 0, offset = 64;
-  char msgbuf[2048];
+  int txlen = 0, offset = 0, boffset = 100;
+  char msgbuf[4096];
+  offset = boffset;
   memcpy(msgbuf + offset, data, 2*ETH_ALEN);
-  txlen += hal_txrx_vlan_add(msgbuf + offset + 4 + 2*ETH_ALEN,  len,  vlan,  cfi,  pri);
+  offset += 2*ETH_ALEN;
 #ifdef ZPL_SDK_BCM53125  
-  txlen += hal_txrx_hwhdr_add(msgbuf + offset + 2*ETH_ALEN,  len,  flags,  cosq,  dportmap);
+  txlen = hal_txrx_hwhdr_add(msgbuf + offset,  len,  flags,  cosq,  dportmap);
 #endif  
-  memcpy(msgbuf + offset + 2*ETH_ALEN + txlen, data + 2*ETH_ALEN, len - 2*ETH_ALEN);
-  txlen += len;  
+  offset += txlen;
+  if(vlan)
+  {
+    txlen = hal_txrx_vlan_add(msgbuf + offset,  len,  vlan,  cfi,  pri);
+    offset += txlen;
+  }
+  memcpy(msgbuf + offset, data + 2*ETH_ALEN, len - 2*ETH_ALEN);
+  offset += (len - 2*ETH_ALEN);  
+  txlen = offset - boffset;
+  if(len < 64)
+    txlen += (64-len);
+
+  char tmpbuf[2048];
+  os_loghex(tmpbuf, sizeof(tmpbuf), msgbuf + boffset,  txlen);
+  zlog_debug(MODULE_TXRX, " send to switch data len=%d data={%s}", txlen, tmpbuf);
+
 #ifdef ZPL_SDK_BCM53125  
-  return hal_txrx_sendto_netlink(&hal_txrx, msgbuf + offset,  txlen, NETPKT_TOSWITCH, 0);
+  return hal_txrx_sendto_netlink(&hal_txrx, msgbuf + boffset,  txlen, NETPKT_TOSWITCH, 0);
 #else
   return 0;
 #endif  
@@ -127,11 +146,43 @@ int hal_txrx_sendto_port(char *data, int len, int flags, int cosq, int dportmap,
 
 #ifdef ZPL_SDK_BCM53125 
 
+#if 0
 #define BRCM_OPCODE_SHIFT 5
 #define BRCM_OPCODE_MASK 0x7
 #define BRCM_EG_RC_RSVD (3 << 6)
 #define BRCM_EG_PID_MASK 0x1f
 //0x00 0x00 0x20 0x04
+static void khal_netpkt_sock_skb_dump(zpl_uint8 *nethdr, char *hdr)
+{
+  zpl_uint8 *brcm_tag = NULL;  
+  brcm_tag = nethdr + HAL_ETHMAC_HEADER;  
+  char *reason_str[] = {"mirroring", "SA Learning", "switching", "proto term", "proto snooping","flooding", "res"};
+  if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  {
+    zlog_debug(MODULE_TXRX,"%s: type=%c port=%d", hdr, (brcm_tag[3] & 0x20)?'T':'R', brcm_tag[3] & BRCM_EG_PID_MASK);
+  }
+  else//if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  {
+    if(brcm_tag[2] & 0x01)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[0], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x02)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[1], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x04)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[2], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x08)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[3], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x10)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[4], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x20)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[5], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x40)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[6], brcm_tag[3] & BRCM_EG_PID_MASK);
+    if(brcm_tag[2] & 0x80)
+      zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", brcm_tag[2], reason_str[7], brcm_tag[3] & BRCM_EG_PID_MASK);
+  }  
+}
+#endif
+
 static int hal_txrx_hw_hdr_get(zpl_uint8 *nethdr, hw_hdr_t *hwhdr)
 {
   zpl_uint8 ethmac[HAL_ETHMAC_HEADER];
@@ -180,7 +231,13 @@ static void hal_txrx_hw_hdr_dump(hw_hdr_t *hwhdr, zpl_uint8 *nethdr)
       zlog_debug(MODULE_TXRX,"DEV RECV: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
                  nethdr[0], nethdr[1], nethdr[2], nethdr[3], nethdr[4], nethdr[5],
                  nethdr[6], nethdr[7], nethdr[8], nethdr[9], nethdr[10], nethdr[11],
-                 nethdr[12], nethdr[13], nethdr[14], nethdr[15], nethdr[16], nethdr[17], nethdr[18], nethdr[19]);   
+                 nethdr[12], nethdr[13], nethdr[14], nethdr[15], nethdr[16], nethdr[17], nethdr[18], nethdr[19]); 
+
+  /*char data[26];
+  zpl_skb_vlanhdr_t vlan;
+  hal_txrx_hwhdr_add(data, 16, 0, 1, hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);   
+  hal_txrx_vlan_add(data + 2*ETH_ALEN,  10,  101,  0,  2);     
+  hal_txrx_vlan_del(data, 16, &vlan);   */    
 }
 #endif
 
@@ -190,22 +247,42 @@ static int hal_txrx_tocpu(hal_txrx_t *txrx, char *data, int len, int ifindex)
   return hal_txrx_sendto_netlink(txrx, data,  len, NETPKT_TOCPU, ifindex);
 }
 
-static int hal_txrx_toswitch(hal_txrx_t *txrx, char *data, int len, int flags, int cosq, vlan_t vlan, int cfi, int pri, zpl_phyport_t ifindex)
+
+
+static int hal_txrx_toswitch(hal_txrx_t *txrx, char *data, int len, int flags, int cosq, vlan_t vlan, int cfi, int pri, zpl_phyport_t dportmap)
 {
-  int txlen = 0;
-  char *msgbuf = data - 8;
-  memmove(msgbuf, data, 2*ETH_ALEN);
-  txlen += hal_txrx_vlan_add(msgbuf + 4 + 2*ETH_ALEN,  len,  vlan,  cfi,  pri);
-  txlen += hal_txrx_hwhdr_add(msgbuf + 2*ETH_ALEN,  len,  flags,  cosq,  0);
-  txlen += len;  
-  return hal_txrx_sendto_netlink(&hal_txrx, msgbuf,  txlen, NETPKT_TOSWITCH, 0);
+  int txlen = 0, offset = 0, boffset = 100;
+  char msgbuf[4096];
+  offset = boffset;
+  memcpy(msgbuf + offset, data, 2*ETH_ALEN);
+  offset += 2*ETH_ALEN;
+#ifdef ZPL_SDK_BCM53125  
+  txlen = hal_txrx_hwhdr_add(msgbuf + offset,  len,  flags,  cosq,  dportmap);
+#endif  
+  offset += txlen;
+  if(vlan)
+  {
+    txlen = hal_txrx_vlan_add(msgbuf + offset,  len,  vlan,  cfi,  pri);
+    offset += txlen;
+  }
+  memcpy(msgbuf + offset, data + 2*ETH_ALEN, len - 2*ETH_ALEN);
+  offset += (len - 2*ETH_ALEN);  
+  txlen = offset - boffset;
+  if(len < 64)
+    txlen += (64-len);
+
+#ifdef ZPL_SDK_BCM53125  
+  return hal_txrx_sendto_netlink(txrx, msgbuf + boffset,  txlen, NETPKT_TOSWITCH, 0);
+#else
+  return 0;
+#endif 
 }
 
 static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, int len, hal_txrx_t *txrx)
 {
   hal_txrx_hdr_t *txhdr = (hal_txrx_hdr_t*)data;
 
-  if(txhdr->cmd == NETPKT_FROMDEV)
+  if(ntohl(txhdr->cmd) == NETPKT_FROMDEV)
   {
     int flags = 0;
     int cosq =0;
@@ -215,10 +292,12 @@ static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, in
     
     zpl_phyport_t  dstport;
     dstport = if_ifindex2phy(txhdr->dstval);
-    return 0;
-    hal_txrx_toswitch(txrx, data + sizeof(hal_txrx_hdr_t), len - sizeof(hal_txrx_hdr_t), flags, cosq, vlan, cfi, pri, dstport);
+    if(dstport == -1)
+      hal_txrx_toswitch(txrx, data + sizeof(hal_txrx_hdr_t), len - sizeof(hal_txrx_hdr_t), flags, cosq, vlan, cfi, pri, dstport);
+    else
+      hal_txrx_toswitch(txrx, data + sizeof(hal_txrx_hdr_t), len - sizeof(hal_txrx_hdr_t), flags, cosq, vlan, cfi, pri, 1<<dstport);
   }
-  if(txhdr->cmd == NETPKT_FROMSWITCH)
+  else if(ntohl(txhdr->cmd) == NETPKT_FROMSWITCH)
   {
     int ret = 0, rxlen = len;
     char *p = data;
@@ -227,6 +306,12 @@ static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, in
     hw_hdr_t hwhdr;
     p += (sizeof(hal_txrx_hdr_t));
     rxlen -= (sizeof(hal_txrx_hdr_t));
+    char tmpbuf[2048];
+    memset(&vlan, 0, sizeof(zpl_skb_vlanhdr_t));
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    os_loghex(tmpbuf, sizeof(tmpbuf), p, rxlen);
+    zlog_debug(MODULE_TXRX, " recv from switch data ifindex=0x%x len=%d data={%s}", vlanif2ifindex(1), rxlen, tmpbuf);
+
     ret = hal_txrx_hw_hdr_get(p, &hwhdr);
     p += ret;
     rxlen -= ret;
@@ -235,8 +320,42 @@ static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, in
     ret = hal_txrx_vlan_del(p, rxlen, &vlan);
     p += ret;
     rxlen -= ret;
+    /* 物理接口 */
     ifindex = if_phy2ifindex(hwhdr.hdr_pkt.rx_pkt.rx_normal.srcport);
+    if(ifindex > 0)
+    {
+      struct interface *ifp = if_lookup_by_index(ifindex);
+      if(ifp)
+      {
+        vlan_t acc_vlan = 0;
+        nsm_interface_access_vlan_get_api(ifp, &acc_vlan);
+        if(acc_vlan && acc_vlan == vlan.vid)
+        {
+          /* VLAN 接口 */
+          ifindex = vlanif2ifindex(vlan.vid);
+        }
+      }
+    }
+    
     hal_netpkt_filter_distribute(p, rxlen);
+    /*p[0] = 0xcc;
+    p[1] = 0xcc;
+    p[2] = 0xcc;
+    p[3] = 0xcc;
+    p[4] = 0xcc;
+    p[5] = 0xcc;*/
+    p[6] = 0x00;
+
+    p[7] = 0x01;
+    p[8] = 0x01;
+    p[9] = 0x01;
+    hal_txrx_sendto_port(p, rxlen, 0, 0, 1<<hwhdr.hdr_pkt.rx_pkt.rx_normal.srcport, 0, 0, 0);
+    p[9] = 0x02;
+    hal_txrx_sendto_port(p, rxlen, 0, 0, 1<<hwhdr.hdr_pkt.rx_pkt.rx_normal.srcport, 1, 0, 0);
+    p[9] = 0x03;
+    hal_txrx_sendto_port(p, rxlen, 0, 0, -1, 1, 0, 0);
+    p[9] = 0x04;
+    hal_txrx_sendto_port(p, rxlen, 0, 0, -1, 0, 0, 0);
     return 0;
     hal_txrx_tocpu(txrx, p, rxlen, ifindex2ifkernel(ifindex));
   }

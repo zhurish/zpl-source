@@ -133,6 +133,7 @@ static int linux_driver_kernel_netlink_request(char *data, int len, int (*filter
   nlh->nlmsg_pid = 0;
   cmdhdr = (hal_client_cmd_t *)req.buf;
   cmdhdr->srcpid = htonl(getpid());
+  cmdhdr->cmd = htonl(0);
   if (len)
     memcpy(&req.buf[4], data, len);
   return lib_netlink_talk(pal_stack.netlink_cfg, nlh, filter, p);

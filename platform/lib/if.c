@@ -786,6 +786,12 @@ if_lookup_by_name_len(const char *name, zpl_uint32 namelen)
 	return if_lookup_by_name(name);
 }
 
+ifindex_t  vlanif2ifindex(vlan_t vid)
+{
+	zpl_uint32 iuspv = IF_USPV_SET(0, 0, 0, vid);
+	ifindex_t ifindex = IF_IFINDEX_SET(IF_VLAN, iuspv);
+	return ifindex;
+}
 
 zpl_phyport_t  if_ifindex2phy(ifindex_t ifindex)
 {

@@ -132,6 +132,7 @@ extern ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id);
 extern ifindex_t ifindex2ifkernel(ifindex_t);
 extern ifindex_t ifkernel2ifindex(ifindex_t);
 
+extern ifindex_t  vlanif2ifindex(vlan_t vid);
 //extern const char *ifkernelindex2ifname(ifindex_t kifindex);
 /* Please use ifname2ifindex instead of if_nametoindex where possible;
    ifname2ifindex uses internal interface info, whereas if_nametoindex must
