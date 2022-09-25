@@ -88,6 +88,7 @@ static int khal_client_register(struct khal_client *khal_client)
 	if (khal_client->dev == NULL) 
 	{
 		unregister_chrdev(khal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
+    class_destroy(khal_client->class);
 		printk(KERN_ERR "%s[%d] device_create() error.\n", __FILE__,__LINE__);
 		return -1;
 	}
@@ -99,6 +100,7 @@ static void khal_client_unregister(struct khal_client *khal_client)
 {
 	unregister_chrdev(khal_client->dev_num, KHAL_CLIENT_DEVICE_NAME);
 	device_destroy(khal_client->class, khal_client->dev_num);
+  class_destroy(khal_client->class);
 }
 
 static int khal_client_read_handle(struct khal_client *client)
@@ -152,18 +154,18 @@ static void khal_client_sock_input(struct sk_buff *__skb)
 {
   struct nlmsghdr *nlh = nlmsg_hdr(__skb);
   const char *nlmsg = NULL;
-  int *from_pid = NULL;
+  khal_client_cmd_t *khalhdr = NULL;
   nlmsg = (const char *)nlmsg_data(nlh);
-  from_pid = (int *)nlmsg;
+  khalhdr = (khal_client_cmd_t *)nlmsg;
 
   if (khalclient && nlh->nlmsg_type == HAL_CFG_REQUEST_CMD)
   {
-    khal_client_putdata(khalclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
+    khal_client_putdata(khalclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(khalhdr->srcpid), nlmsg + 4, nlmsg_len(nlh) - 4);
   }
     
   else if (khalclient && nlh->nlmsg_type == HAL_DATA_REQUEST_CMD)
   {
-    khal_client_putdata(khalclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(*from_pid), nlmsg + 4, nlmsg_len(nlh) - 4);
+    khal_client_putdata(khalclient, nlh->nlmsg_type, nlh->nlmsg_seq, ntohl(khalhdr->srcpid), nlmsg + 4, nlmsg_len(nlh) - 4);
   }
   else if (khalclient && nlh->nlmsg_type == HAL_KLOG_REQUEST_CMD)
   {
@@ -278,7 +280,6 @@ int khal_client_destroy(struct khal_client *khal_client)
 static int khal_client_send_message(struct khal_client *khal_client)
 {
   char *nldata = NULL;
-  //int *result = NULL;
   struct nlmsghdr *nlh = NULL;
   struct sk_buff *skb = NULL;
   khal_ipcmsg_hdrlen_set(&khal_client->outmsg);
@@ -310,6 +311,7 @@ int khal_client_send_report(struct khal_client *khal_client, char *data, int len
   return khal_client_send_message(khal_client);
 }
 
+
 int khal_client_send_return(struct khal_client *khal_client, int ret, char *fmt, ...)
 {
   int len = 0;
@@ -331,7 +333,8 @@ int khal_client_send_return(struct khal_client *khal_client, int ret, char *fmt,
     if (len > 0 && len < sizeof(logbuf))
       khal_ipcmsg_put(&khal_client->outmsg, logbuf, len);
   }
-  if (ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_SEND))
+  //if (ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_EVENT) && ZPL_TST_BIT(khal_client->debug, KLOG_DEBUG_SEND))
+  if(ret != 0)
     zlog_debug(MODULE_HAL, "Client Send result msg [%d] seqno %d dstpid %d result %d %s",
                khal_client->netlink->cmd, khal_client->netlink->seqno, khal_client->netlink->dstpid, ret, (ret != OK) ? logbuf : "OK");
   return khal_client_send_message(khal_client);
@@ -556,6 +559,7 @@ static __exit void linux_kbe_exit(void)
 			khalclient = NULL;
 		}
 		khal_netpkt_exit();
+    ethkernel_exit();
 	  return ;
 }
 

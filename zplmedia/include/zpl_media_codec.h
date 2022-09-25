@@ -277,7 +277,7 @@ typedef struct
 	ZPL_VENC_RC_E		enRcMode;	
 	ZPL_VENC_GOP_MODE_E	gopmode;
     zpl_uint8           packetization_mode; //封包解包模式
-}zpl_video_codec_t __attribute__ ((aligned (1)));
+}zpl_video_codec_t __attribute__ ((packed));
 
 typedef struct
 {
@@ -285,7 +285,7 @@ typedef struct
     zpl_uint32			framerate;		//帧率
     zpl_uint32			bitrate;		//码率
     ZPL_BIT_RATE_E		bitrate_type;	//码率类型
-}zpl_audio_codec_t __attribute__ ((aligned (1)));
+}zpl_audio_codec_t __attribute__ ((packed));
 
 #ifdef __cplusplus
 }

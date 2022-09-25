@@ -6,8 +6,10 @@
 
 
 
-#define HAL_DATA_REQUEST_CMD (29)
+#define HAL_DATA_REQUEST_CMD (0x29)
 #define HAL_DATA_NETLINK_PROTO (29)
+#define HAL_ETHMAC_HEADER   12
+
 
 #ifdef ZPL_SDK_BCM53125
 typedef struct
@@ -24,7 +26,7 @@ typedef struct
     zpl_uint32       srcport:5;  
 #endif    
     zpl_uint32       timestamp;       
-}hw_hdr_rx_time_t __attribute__ ((aligned (1)));
+}hw_hdr_rx_time_t __attribute__ ((packed));
 typedef struct
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -40,7 +42,7 @@ typedef struct
     zpl_uint32       tc:3; 
     zpl_uint32       srcport:5; 
 #endif  
-}hw_hdr_rx_normal_t __attribute__ ((aligned (1)));
+}hw_hdr_rx_normal_t __attribute__ ((packed));
 
 typedef struct
 {
@@ -55,7 +57,7 @@ typedef struct
     zpl_uint32       te:2; 
     zpl_uint32       reserved:24; 
 #endif         
-}hw_hdr_tx_flood_t __attribute__ ((aligned (1)));
+}hw_hdr_tx_flood_t __attribute__ ((packed));
 
 typedef struct
 {
@@ -72,12 +74,14 @@ typedef struct
     zpl_uint32       ts:1; 
     zpl_uint32       dstport:23; 
 #endif        
-}hw_hdr_tx_normal_t __attribute__ ((aligned (1)));
+}hw_hdr_tx_normal_t __attribute__ ((packed));
 
 typedef struct
 {
     union 
     {
+        zpl_uint32  uihdr;
+        zpl_uint8   uchdr[4];
         union 
         {
             hw_hdr_rx_normal_t rx_normal;
@@ -90,7 +94,7 @@ typedef struct
         }tx_pkt;
     }hdr_pkt;
 
-}hw_hdr_t __attribute__ ((aligned (1)));
+}hw_hdr_t __attribute__ ((packed));
 #endif
 
 typedef struct hal_txrx

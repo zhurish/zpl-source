@@ -41,6 +41,18 @@ int ethkernel_init(void)
   return OK;
 }
 
+int ethkernel_exit(void)
+{
+  struct eth_interface *dev = NULL;
+  if (list_empty(&keth_head))
+    return 0;
+  list_for_each_entry(dev, &keth_head, node)
+  {
+    ethkernel_destroy(dev);
+  }
+  return 0;
+}
+
 static int ethkernel_list_add(struct eth_interface *dev)
 {
   list_add(&dev->node, &keth_head);
@@ -246,7 +258,10 @@ static int kbsp_l3if_create(void *driver, khal_l3if_param_t *l3ifparam, khal_l3i
     ethdev = ethkernel_create(l3ifparam->ifname, upifindex, l3ifparam->mac);
     if (ethdev)
       ret = OK;
+    zlog_debug(MODULE_BSP, "=================== %s line %d ret=%d", __func__, __LINE__, ret);
   }
+  else
+    ret = OK;
   BSP_LEAVE_FUNC();
   return ret;
 }

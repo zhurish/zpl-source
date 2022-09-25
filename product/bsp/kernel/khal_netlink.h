@@ -10,9 +10,9 @@ extern "C"
 #include "khal_ipccmd.h"
 #include "khal_ipcmsg.h"
 
-#define HAL_CFG_REQUEST_CMD (30) 
-#define HAL_DATA_REQUEST_CMD (29)
-#define HAL_KLOG_REQUEST_CMD (28)
+#define HAL_CFG_REQUEST_CMD (0x30) 
+#define HAL_DATA_REQUEST_CMD (0x29)
+#define HAL_KLOG_REQUEST_CMD (0x28)
 
 #define HAL_CFG_NETLINK_PROTO (30)
 #define HAL_DATA_NETLINK_PROTO (29)

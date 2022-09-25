@@ -113,7 +113,7 @@ typedef struct
 	zpl_uint32 	frame_seq;	
 	zpl_uint32	video_len;
 	zpl_uint32	audio_lan;
-}zpl_media_head_t __attribute__ ((aligned (1)));
+}zpl_media_head_t __attribute__ ((packed));
 
 
 

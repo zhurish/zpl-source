@@ -65,7 +65,7 @@ typedef struct
     zpl_uint32	buffer_len;         //当前缓存帧的长度
     zpl_uint32	buffer_maxsize;		//buffer 的长度
     zpl_void	*buffer_data;       //buffer
-}zpl_media_buffer_data_t, zpl_buffer_data_t __attribute__ ((aligned (1)));
+}zpl_media_buffer_data_t, zpl_buffer_data_t __attribute__ ((packed));
 
 typedef struct 
 {

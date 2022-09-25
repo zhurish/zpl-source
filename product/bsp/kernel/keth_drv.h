@@ -17,6 +17,7 @@ struct eth_interface {
 void kloopback_setup(struct net_device *dev);
 
 int ethkernel_init(void);
+int ethkernel_exit(void);
 struct eth_interface * ethkernel_probe(char *name, ifindex_t ifindex, char *mac);
 int ethkernel_destroy(struct eth_interface *db);
 int kbsp_l3if_module_handle(struct khal_client *client, zpl_uint32 cmd, zpl_uint32 subcmd, void *driver);

@@ -30,10 +30,10 @@ struct module_list module_list_txrx =
 
 typedef struct
 {
-    zpl_uint8       cmd;                         /* Unit number. */
+    zpl_uint32      cmd;                         /* Unit number. */
     zpl_phyport_t   dstval;          
 
-}hal_txrx_hdr_t __attribute__ ((aligned (1)));
+}hal_txrx_hdr_t __attribute__ ((packed));
 
 
 
@@ -126,14 +126,26 @@ int hal_txrx_sendto_port(char *data, int len, int flags, int cosq, int dportmap,
 
 
 #ifdef ZPL_SDK_BCM53125 
+
+#define BRCM_OPCODE_SHIFT 5
+#define BRCM_OPCODE_MASK 0x7
+#define BRCM_EG_RC_RSVD (3 << 6)
+#define BRCM_EG_PID_MASK 0x1f
+//0x00 0x00 0x20 0x04
 static int hal_txrx_hw_hdr_get(zpl_uint8 *nethdr, hw_hdr_t *hwhdr)
 {
-  hw_hdr_t *hdr = (hw_hdr_t *)(nethdr+12);
-  memcpy(hwhdr, hdr, hdr->hdr_pkt.rx_pkt.rx_normal.opcode?8:4);
-  memmove(nethdr + 4, nethdr , 12);
-  if(hdr->hdr_pkt.rx_pkt.rx_normal.opcode == 0x01)
-    return 8;
-  return 4;  
+  zpl_uint8 ethmac[HAL_ETHMAC_HEADER];
+  zpl_uint32 offset = 0, *phwhdr;
+  hw_hdr_t *hdr = (hw_hdr_t *)(nethdr+HAL_ETHMAC_HEADER);
+  phwhdr = (zpl_uint32*)(nethdr+HAL_ETHMAC_HEADER);
+  *phwhdr = ntohl(*phwhdr);
+
+  offset = hdr->hdr_pkt.rx_pkt.rx_normal.opcode?8:4;
+  memcpy(ethmac, nethdr, HAL_ETHMAC_HEADER);
+  memcpy(hwhdr, hdr, offset);
+
+  memcpy(nethdr + offset, ethmac , HAL_ETHMAC_HEADER);
+  return offset;  
 }
 
 static void hal_txrx_hw_hdr_dump(hw_hdr_t *hwhdr, zpl_uint8 *nethdr)
@@ -145,17 +157,17 @@ static void hal_txrx_hw_hdr_dump(hw_hdr_t *hwhdr, zpl_uint8 *nethdr)
   }
   else
   {
-    if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x01)
+    if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x01)//
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[0], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
     if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x02)
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[1], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
     if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x04)
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[2], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
-    if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x08)
+    if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x08)//
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[3], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
     if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x10)
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[4], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
-    if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x20)
+    if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x20)//
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[5], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
     if(hwhdr->hdr_pkt.rx_pkt.rx_normal.reason & 0x40)
       zlog_debug(MODULE_TXRX,"DEV RECV: reason=(%x)%s port=%d", hwhdr->hdr_pkt.rx_pkt.rx_normal.reason, reason_str[6], hwhdr->hdr_pkt.rx_pkt.rx_normal.srcport);
@@ -191,27 +203,30 @@ static int hal_txrx_toswitch(hal_txrx_t *txrx, char *data, int len, int flags, i
 
 static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, int len, hal_txrx_t *txrx)
 {
-  if(type == NETPKT_FROMDEV)
+  hal_txrx_hdr_t *txhdr = (hal_txrx_hdr_t*)data;
+
+  if(txhdr->cmd == NETPKT_FROMDEV)
   {
     int flags = 0;
     int cosq =0;
     vlan_t vlan = 1;
     int cfi = 0;
     int pri = 0;    
-    hal_txrx_hdr_t *txhdr = (hal_txrx_hdr_t*)data;
+    
     zpl_phyport_t  dstport;
     dstport = if_ifindex2phy(txhdr->dstval);
+    return 0;
     hal_txrx_toswitch(txrx, data + sizeof(hal_txrx_hdr_t), len - sizeof(hal_txrx_hdr_t), flags, cosq, vlan, cfi, pri, dstport);
   }
-  if(type == NETPKT_FROMSWITCH)
+  if(txhdr->cmd == NETPKT_FROMSWITCH)
   {
     int ret = 0, rxlen = len;
     char *p = data;
     zpl_skb_vlanhdr_t vlan;
     ifindex_t ifindex;
     hw_hdr_t hwhdr;
-    p += sizeof(hal_txrx_hdr_t);
-    rxlen -= sizeof(hal_txrx_hdr_t);
+    p += (sizeof(hal_txrx_hdr_t));
+    rxlen -= (sizeof(hal_txrx_hdr_t));
     ret = hal_txrx_hw_hdr_get(p, &hwhdr);
     p += ret;
     rxlen -= ret;
@@ -222,6 +237,7 @@ static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, in
     rxlen -= ret;
     ifindex = if_phy2ifindex(hwhdr.hdr_pkt.rx_pkt.rx_normal.srcport);
     hal_netpkt_filter_distribute(p, rxlen);
+    return 0;
     hal_txrx_tocpu(txrx, p, rxlen, ifindex2ifkernel(ifindex));
   }
   return OK;
@@ -234,7 +250,6 @@ static int hal_txrx_thread(struct thread *thread)
     txrx->t_read = NULL;
     if(lib_netlink_recv(txrx->netlink_data))
     {
-      zlog_err(MODULE_TXRX, "lib_netlink_recv =====================");
 #ifdef ZPL_SDK_BCM53125     
       lib_netlink_msg_callback(txrx->netlink_data, hal_txrx_recv_callback, txrx);
 #endif     
@@ -260,11 +275,13 @@ int hal_module_txrx_init(void)
     {
         hal_txrx.master = thread_master_module_create(MODULE_TXRX);
     }
+    hal_txrx.debug = 0xffffff;
     hal_txrx.netlink_data = lib_netlink_create(4096, 64);
     if(hal_txrx.netlink_data == NULL)
     {
       return ERROR;
     }
+    hal_netpkt_filter_init();
     if(lib_netlink_open(hal_txrx.netlink_data, HAL_DATA_NETLINK_PROTO) != OK)
     {
       hal_module_txrx_exit();
@@ -294,12 +311,14 @@ int hal_module_txrx_task_init(void)
 
 int hal_module_txrx_exit(void)
 {
+  hal_netpkt_filter_exit();
 	if(hal_txrx.netlink_data)
 	{
 		lib_netlink_close(hal_txrx.netlink_data);
 		lib_netlink_destroy(hal_txrx.netlink_data);
 		hal_txrx.netlink_data = NULL;
 	}
+  
  	if (hal_txrx.master)
 	{
     	thread_master_free(hal_txrx.master);

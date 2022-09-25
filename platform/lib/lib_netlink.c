@@ -86,8 +86,9 @@ static int lib_netlink_sock_recvmsg(lib_netlink_t *nsock)
             nsock->msgbuf = XREALLOC(MTYPE_NETLINK_DATA, nsock->msgbuf, ret);
             nsock->msgmax = ret;
         }
+
         iov.iov_base = nsock->msgbuf + nsock->msgoffset;
-        iov.iov_len = nsock->msgmax;   
+        iov.iov_len = nsock->msgmax - nsock->msgoffset;   
         ret = _lib_netlink_sock_recvmsg(nsock, &msg, 0);
         if (msg.msg_namelen != sizeof snl)
         {
@@ -95,6 +96,10 @@ static int lib_netlink_sock_recvmsg(lib_netlink_t *nsock)
                      ipstack_fd(nsock->sock), msg.msg_namelen);
             return ERROR;
         }
+        if(ret > 0)
+            nsock->msglen = ret;
+        else
+            nsock->msglen = 0;           
         return ret;
     }
     return ERROR;
@@ -127,15 +132,20 @@ static int lib_netlink_sock_flush(lib_netlink_t *nsock)
     return 0;
 }
 
-static int lib_netlink_sock_msg_parse(lib_netlink_t *nsock,
+static int lib_netlink_sock_msg_parse(lib_netlink_t *nsock, int len,
                                       int (*filter)(void *, int, char *, int, void *), void *p)
 {
-    int ret = 0, status = 0;
+    int ret = 0;
     int error = 0;
     struct ipstack_nlmsghdr *h = NULL;
 
     h = (struct ipstack_nlmsghdr *)(nsock->msgbuf + nsock->msgoffset);
-    while (IPSTACK_NLMSG_OK(h, status))
+    //if(nsock->proto == 29)
+    {
+        //nlmsg_type=4 nlmsg_len=74 nlmsg_flags=0x0 nlmsg_seq=0 nlmsg_pid=0
+        //zlog_debug(MODULE_LIB, "========= nlmsg_type=%d nlmsg_len=%d nlmsg_flags=0x%x nlmsg_seq=%d nlmsg_pid=%d", h->nlmsg_type, h->nlmsg_len, h->nlmsg_flags, h->nlmsg_seq, h->nlmsg_pid);
+    }
+    while (IPSTACK_NLMSG_OK(h, len))
     {
         /* Finish of reading. */
         if (h->nlmsg_type == IPSTACK_NLMSG_DONE)
@@ -197,11 +207,12 @@ static int lib_netlink_sock_msg_parse(lib_netlink_t *nsock,
         }
         else
             ret = 0;
+
         if ((h->nlmsg_flags & IPSTACK_NLM_F_MULTI))
-            h = IPSTACK_NLMSG_NEXT(h, status);
+            h = IPSTACK_NLMSG_NEXT(h, len);
         else
         {
-            zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] END", ipstack_fd(nsock->sock));
+            //zlog_err(MODULE_LIB, "ipstack_recvmsg [%d] END", ipstack_fd(nsock->sock));
             return ret;
         }
     }
@@ -211,7 +222,7 @@ static int lib_netlink_sock_msg_parse(lib_netlink_t *nsock,
 static int lib_netlink_sock_parse_info(lib_netlink_t *nsock,
                                        int (*filter)(void *, int, char *, int, void *), void *p)
 {
-    int ret = 0;
+    int ret = ERROR;
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(ipstack_fd(nsock->sock), &readfds);
@@ -234,7 +245,7 @@ static int lib_netlink_sock_parse_info(lib_netlink_t *nsock,
         }
         ret = lib_netlink_sock_recvmsg(nsock);
         if(ret)
-            return lib_netlink_sock_msg_parse(nsock, filter, p);
+            return lib_netlink_sock_msg_parse(nsock, ret, filter, p);
         else
             return ERROR;
     }
@@ -279,6 +290,7 @@ static int lib_netlink_sock_talk(lib_netlink_t *nsock, struct ipstack_nlmsghdr *
 
 int lib_netlink_open(lib_netlink_t *nsock, int proto)
 {
+    nsock->proto = proto;
     return lib_netlink_sock_create(nsock, proto);
 }
 
@@ -304,7 +316,7 @@ int lib_netlink_recv(lib_netlink_t *nsock)
 
 int lib_netlink_msg_callback(lib_netlink_t *nsock, int (*filter)(void *, int, char *, int, void *), void *p)
 {
-    return lib_netlink_sock_msg_parse(nsock, filter, p);
+    return lib_netlink_sock_msg_parse(nsock, nsock->msglen, filter, p);
 }
 
 

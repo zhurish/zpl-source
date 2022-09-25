@@ -149,7 +149,7 @@ typedef struct
     zpl_uint16       vid:12; 
 #endif 
     zpl_uint16      ethtype; 
-}zpl_skb_vlanhdr_t __attribute__ ((aligned (1)));
+}zpl_skb_vlanhdr_t __attribute__ ((packed));
 
 typedef struct
 {
@@ -160,7 +160,7 @@ typedef struct
         zpl_uint16      ethtype; 
         zpl_skb_vlanhdr_t      vlanhdr;
     }ethhdr;
-}zpl_skb_ethvlan_t __attribute__ ((aligned (1)));
+}zpl_skb_ethvlan_t __attribute__ ((packed));
 
 typedef struct
 {
@@ -186,7 +186,7 @@ typedef struct
     zpl_uint32      timestamp;
     volatile zpl_uint32      reference;
 
-}zpl_netpkt_hdr_t __attribute__ ((aligned (1)));
+}zpl_netpkt_hdr_t __attribute__ ((packed));
 
 typedef struct
 {
@@ -199,7 +199,7 @@ typedef struct
     zpl_uint32 	buffer_timetick;    //时间戳毫秒
     zpl_uint32 	buffer_seq;         //序列号底层序列号
     zpl_uint32	buffer_len;         //帧长度
-}zpl_media_hdr_t __attribute__ ((aligned (1)));
+}zpl_media_hdr_t __attribute__ ((packed));
 
 
 typedef struct
@@ -219,7 +219,7 @@ typedef struct
     zpl_char	*skb_data;       //buffer
     zpl_uint32	skb_start;
     volatile zpl_uint8   reference;       //引用计数
-}zpl_skbuffer_t __attribute__ ((aligned (1)));
+}zpl_skbuffer_t __attribute__ ((packed));
 
 typedef struct 
 {

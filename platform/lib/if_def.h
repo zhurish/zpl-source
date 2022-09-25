@@ -204,7 +204,7 @@ typedef struct
     zpl_uint16       vid:12; 
 #endif 
     zpl_uint16      ethtype; 
-}zpl_vlancfipri_t __attribute__ ((aligned (1)));
+}zpl_vlancfipri_t __attribute__ ((packed));
 
 
 /* Interface structure */
@@ -293,7 +293,7 @@ struct interface
    zpl_uint32 count;
    zpl_uint32 raw_status;
 };
-//__attribute__ ((aligned (1)))
+//__attribute__ ((packed))
 
 struct if_master
 {

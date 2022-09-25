@@ -6,6 +6,7 @@
 typedef struct lib_netlink_s 
 {
     zpl_socket_t    sock;
+    int             proto;
     int             seq;
     int             debug;
     zpl_uint32      msgmax;

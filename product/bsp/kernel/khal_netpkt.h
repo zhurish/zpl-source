@@ -13,12 +13,14 @@ extern "C"
 #define NETPKT_TOSWITCH     3
 #define NETPKT_FROMSWITCH   4
 
+#define NETPKT_ETHERNET_HEADER   14
+#define NETPKT_ETHMAC_HEADER   12
 typedef struct
 {
-    zpl_uint8       cmd;                         /* Unit number. */
+    zpl_uint32      cmd;                         /* Unit number. */
     zpl_phyport_t   dstval;          
 
-}khal_nettpkt_cmd_t __attribute__ ((aligned (1)));
+}khal_nettpkt_cmd_t __attribute__ ((packed));
 
 
 

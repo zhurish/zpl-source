@@ -136,6 +136,7 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 		BSP_LEAVE_FUNC();
 		return OS_NO_CALLBACK;
 	}
+	return OK;
 	switch (subcmd)
 	{
 	#if 1	

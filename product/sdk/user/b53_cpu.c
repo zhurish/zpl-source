@@ -283,7 +283,7 @@ int b53125_imp_init(sdk_driver_t *dev)
 	sdk_debug_event(dev, "b53125 imp duplex init %s", (ret == OK)?"OK":"ERROR");
 	ret |= b53125_imp_speed(dev, PORT_OVERRIDE_SPEED_1000M);
 	sdk_debug_event(dev, "b53125 imp speed init %s", (ret == OK)?"OK":"ERROR");
-	//ret |= b53125_imp_enable(dev, zpl_false);
+
 	return ret;
 }
 

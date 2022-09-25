@@ -106,9 +106,16 @@ int linux_driver_start(zpl_uint32 pid, zpl_uint32 ifindex)
 }
 #else
 
-static int linux_driver_kernel_netlink_request(char *data, int len, int (*filter)(int, char *, int, void *), void *p)
+typedef struct
 {
-  int *from_pid = NULL;
+    zpl_uint32   cmd;                         /* Unit number. */
+    zpl_uint32   srcpid;          
+
+}hal_client_cmd_t __attribute__ ((packed));
+
+static int linux_driver_kernel_netlink_request(char *data, int len, int (*filter)(lib_netlink_t *, int, char *, int, void *), void *p)
+{
+  hal_client_cmd_t *cmdhdr = NULL;
   struct ipstack_nlmsghdr *nlh = NULL;
   struct
   {
@@ -124,14 +131,14 @@ static int linux_driver_kernel_netlink_request(char *data, int len, int (*filter
   nlh->nlmsg_seq = ++pal_stack.netlink_cfg->seq;
   nlh->nlmsg_flags |= IPSTACK_NLM_F_ACK;
   nlh->nlmsg_pid = 0;
-  from_pid = (int *)req.buf;
-  *from_pid = htonl(getpid());
+  cmdhdr = (hal_client_cmd_t *)req.buf;
+  cmdhdr->srcpid = htonl(getpid());
   if (len)
     memcpy(&req.buf[4], data, len);
   return lib_netlink_talk(pal_stack.netlink_cfg, nlh, filter, p);
 }
 
-static int linux_driver_kernel_netlink_parse_default(int cmd, char *buf, int len, void *p)
+static int linux_driver_kernel_netlink_parse_default(lib_netlink_t *nsock, int cmd, char *buf, int len, void *p)
 {
   struct hal_ipcmsg_header header;
   lib_netlink_t *netlink = p;
@@ -139,10 +146,11 @@ static int linux_driver_kernel_netlink_parse_default(int cmd, char *buf, int len
   struct hal_ipcmsg_result getvaluetmp;
   ipcmsg.setp = ipcmsg.getp = 0;
   ipcmsg.length_max = netlink->msgmax;
-  ipcmsg.buf = netlink->msgbuf + netlink->msgoffset;
-  ipcmsg.setp = netlink->msglen;
+  ipcmsg.buf = buf;
+  ipcmsg.setp = len;
   hal_ipcmsg_get_header(&ipcmsg, &header);
   hal_ipcmsg_result_get(&ipcmsg, &getvaluetmp);
+
   return getvaluetmp.result;
 }
 

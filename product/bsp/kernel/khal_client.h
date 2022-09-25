@@ -52,7 +52,12 @@ struct khal_client
 #define BSP_DRIVER(bspdev, bsp)
 #endif
 
+typedef struct
+{
+    zpl_uint32   cmd;                         /* Unit number. */
+    zpl_uint32   srcpid;          
 
+}khal_client_cmd_t __attribute__ ((packed));
 
   /*
    *   hal client   ------------------- > bsp driver -------------------> sdk driver

@@ -16,7 +16,7 @@ extern "C" {
 #include "nsm_firewalld.h"
 #endif
 #include "lib_netlink.h"
-#define HAL_CFG_REQUEST_CMD (30) 
+#define HAL_CFG_REQUEST_CMD (0x30) 
 #define HAL_CFG_NETLINK_PROTO (30)
 
 typedef struct pal_stack_s

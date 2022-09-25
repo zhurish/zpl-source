@@ -29,9 +29,10 @@
 //#include "platform/nsm/filter.h"
 //#include "platform/nsm/plist.h"
 
-// extern struct nsm_privs_t os_privs;
-// extern struct quagga_signal_t os_signals[];
-// handle SIGUSR2 nostop noprint
+
+/*
+ handle SIGUSR2 nostop noprint
+ */
 /*
 sudo ip link add link enp0s25 name enp0s25.200 type vlan id 200
 sudo ip link set enp0s25.200 up

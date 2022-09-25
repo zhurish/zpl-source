@@ -14,13 +14,29 @@
 static struct khal_netlink *hal_netpkt = NULL;
 static struct net_device *hal_netdev = NULL;
 
-static int khal_netpkt_skb_hwport(zpl_uint8 *nethdr)
+static int netpkt_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len)
+{
+	zpl_uint32 i = 0, offset = 0;
+	for(i = 0; i < len; i++)
+	{
+		if((i+1)%16 == 0)
+			offset += snprintf(format + offset, size - offset, "\r\n");
+		if((size >= offset) < 5 )
+			offset += snprintf(format + offset, size - offset, "0x%02x ", (zpl_uchar)data[i]);
+		else
+			return ++i;
+	}
+	return ++i;
+}
+
+static int khal_netpkt_skb_hwport(struct khal_netlink *netpkt, zpl_uint8 *nethdr)
 {
   zpl_uint8 *brcm_tag = NULL;  
-  brcm_tag = nethdr + 12;  
+  brcm_tag = nethdr + NETPKT_ETHMAC_HEADER;  
   //00 00 22 03
   //char *reason_str[] = {"mirroring", "SA Learning", "switching", "proto term", "proto snooping","flooding", "res"};
-  //if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  if(ZPL_TST_BIT(netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(netpkt->debug, KLOG_DEBUG_DETAIL) && 
+    (brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
   {
     printk("DEV RECV: type=%c port=%d", (brcm_tag[3] & 0x20)?'T':'R', brcm_tag[3] & BRCM_EG_PID_MASK);
   }
@@ -30,10 +46,11 @@ static int khal_netpkt_skb_hwport(zpl_uint8 *nethdr)
 static void khal_netpkt_sock_skb_dump(struct khal_netlink *netpkt, zpl_uint8 *nethdr, char *hdr)
 {
   zpl_uint8 *brcm_tag = NULL;  
-  brcm_tag = nethdr + 12;  
+  brcm_tag = nethdr + NETPKT_ETHMAC_HEADER;  
   //00 00 22 03
   //char *reason_str[] = {"mirroring", "SA Learning", "switching", "proto term", "proto snooping","flooding", "res"};
-  //if((brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
+  if(ZPL_TST_BIT(netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(netpkt->debug, KLOG_DEBUG_DETAIL) && 
+    (brcm_tag[0] >> BRCM_OPCODE_SHIFT) & BRCM_OPCODE_MASK)
   {
     printk("%s: type=%c port=%d", hdr, (brcm_tag[3] & 0x20)?'T':'R', brcm_tag[3] & BRCM_EG_PID_MASK);
   }
@@ -74,12 +91,12 @@ static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, st
   char *nldata = NULL;
   zpl_uint8 *nethdr = skb->data;
   struct sk_buff *nlskb = NULL;
-  struct nlmsghdr *nlh = NULL;
+  struct nlmsghdr *nlh = NULL;//16-20
   khal_nettpkt_cmd_t  *hdr = (khal_nettpkt_cmd_t*)nldata;
   /* 芯片上来的数据 */
   if(cmd == NETPKT_FROMSWITCH)
   {
-    ret = khal_netpkt_skb_hwport(skb->data - 14);  
+    ret = khal_netpkt_skb_hwport(netpkt, skb->data - NETPKT_ETHERNET_HEADER);  
     if(ret == 3)
       return NULL;
   }
@@ -89,18 +106,17 @@ static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, st
   {
     if(cmd == NETPKT_FROMSWITCH)
     {
-      nethdr = skb->data - 14;
+      nethdr = skb->data - NETPKT_ETHERNET_HEADER;
       khal_netpkt_sock_skb_dump(netpkt, nethdr, (cmd==NETPKT_FROMSWITCH)?"DEV RECV":"FROM DEV");
-      //__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags)
     }
-    nlh = nlmsg_put(nlskb, 0, 0, cmd, skb->len + sizeof(khal_nettpkt_cmd_t), 0);
+    nlh = nlmsg_put(nlskb, 0, 0, HAL_DATA_REQUEST_CMD, skb->len + sizeof(khal_nettpkt_cmd_t), 0);
     nldata = nlmsg_data(nlh);
     hdr = (khal_nettpkt_cmd_t*)nldata;
     hdr->cmd = cmd;
     if(dev)
       hdr->dstval = dev->ifindex;
     if (skb->len)
-      memcpy(nldata + sizeof(khal_nettpkt_cmd_t), skb->data, skb->len);
+      memcpy(nldata + sizeof(khal_nettpkt_cmd_t), skb->data-NETPKT_ETHERNET_HEADER, skb->len+NETPKT_ETHERNET_HEADER);
     return nlskb;
   }
   return nlskb;
@@ -108,6 +124,7 @@ static struct sk_buff *khal_netpkt_sock_skb_copy(struct khal_netlink *netpkt, st
 
 static int khal_netpkt_sock_skb_recv_callback(const struct sk_buff *skb, const struct net_device *dev)
 {
+  char tmpbuf[2048];
   if (hal_netpkt)
   {
     struct sk_buff *nlskb = NULL;
@@ -116,17 +133,30 @@ static int khal_netpkt_sock_skb_recv_callback(const struct sk_buff *skb, const s
       zlog_err(MODULE_SDK, "switch pkt to netlink pskb_may_pull pid=%d", hal_netpkt->dstpid);
       return NET_RX_SUCCESS;
     }
-
+    if(ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_RECV) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
+    {
+      netpkt_loghex(tmpbuf, sizeof(tmpbuf), skb->data-NETPKT_ETHERNET_HEADER, skb->len+NETPKT_ETHERNET_HEADER);
+      zlog_err(MODULE_SDK, " Recv from switch skb len=%d data={%s}", skb->len, tmpbuf);
+    }
     nlskb = khal_netpkt_sock_skb_copy(hal_netpkt, dev, skb, NETPKT_FROMSWITCH);
     if (nlskb && hal_netpkt && hal_netpkt->dstpid)
     {
-      if (khal_netlink_unicast(hal_netpkt, hal_netpkt->dstpid, (struct sk_buff *)nlskb) == 0)
+      int ret = khal_netlink_unicast(hal_netpkt, hal_netpkt->dstpid, nlskb);     
+      if (ret > 0)
       {
-        zlog_err(MODULE_SDK, "switch pkt to netlink pid=%d", hal_netpkt->dstpid);
-        nlmsg_free(nlskb);
+        //zlog_err(MODULE_SDK, "switch pkt to netlink pid=%d len=%d nllen=%d, ret=%d", hal_netpkt->dstpid, skb->len, nlskb->len, ret);
+        //nlmsg_free(nlskb);
+        //nlskb = NULL;
         return NET_RX_DROP;
       }
       nlmsg_free(nlskb);
+      nlskb = NULL;
+      return NET_RX_DROP;
+    }
+    if(nlskb != NULL)
+    {
+      nlmsg_free(nlskb);
+      nlskb = NULL;
     }
   }
   return NET_RX_SUCCESS;
@@ -149,7 +179,12 @@ static int khal_netpkt_sock_send_switch(struct sk_buff *skb)
 {
   if (skb && hal_netdev)
   {
-    zlog_err(MODULE_SDK, "nk_pkt_sock_send_todev %s", hal_netdev->name);
+    if(hal_netpkt && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_SEND) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))
+    {
+      char tmpbuf[2048];
+      netpkt_loghex(tmpbuf, sizeof(tmpbuf), skb->data, skb->len);
+      zlog_err(MODULE_SDK, " Send to switch skb len=%d data={%s}", skb->len, tmpbuf);
+    }
     skb->dev = hal_netdev;
     hal_netdev->netdev_ops->ndo_start_xmit(skb, hal_netdev);
   }
@@ -164,7 +199,7 @@ static int khal_netpkt_sock_touser(struct khal_netlink *netpkt, struct net_devic
     nlskb = khal_netpkt_sock_skb_copy(netpkt, dev, skb, NETPKT_FROMDEV);
     if (nlskb && netpkt && netpkt->dstpid)
     {
-      if (khal_netlink_unicast(netpkt, netpkt->dstpid, (struct sk_buff *)nlskb) == 0)
+      if (khal_netlink_unicast(netpkt, netpkt->dstpid, (struct sk_buff *)nlskb) > 0)
       {
         nlmsg_free(nlskb);
         return NET_RX_DROP;
@@ -276,7 +311,7 @@ int khal_netpkt_init(void)
     zlog_err(MODULE_SDK, "[netlink] create netlink socket error!");
     return ERROR;
   }
-  hal_netpkt->debug = 0x00ffffff;
+  hal_netpkt->debug = 0;
   hal_netdev = dev_get_by_name(&init_net, "eth0");
   if (hal_netdev)
   {

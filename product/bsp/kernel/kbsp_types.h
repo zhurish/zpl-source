@@ -224,7 +224,7 @@ enum zpl_module
 
 
 #define XFREE(t, p)         kfree(p)
-#define XNLMSG_NEW(t, s)    nlmsg_new(s, GFP_KERNEL)
+#define XNLMSG_NEW(t, s)    nlmsg_new(NLMSG_SPACE(s), GFP_KERNEL)
 
 static inline void *XMALLOC(int type, int size)
 {
