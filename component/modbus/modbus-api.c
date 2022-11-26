@@ -279,7 +279,7 @@ static int modbus_main_task(void *p)
     zpl_socket_t s;
     int rc = 0;
 	host_waitting_loadconfig();
-	while (modbus_config && modbus_config->running == zpl_false)
+	while (modbus_config && modbus_config->running == zpl_false && OS_TASK_TRUE())
 #ifdef OS_WIN32
 		Sleep(1000);
 #else

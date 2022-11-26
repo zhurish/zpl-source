@@ -176,7 +176,8 @@ typedef struct
     zpl_uint8       inner_vlan_pri;               /* Inner vlan tag priority . */
     zpl_uint8       inner_vlan_cfi;               /* Inner vlan tag CFI bit. */
     zpl_uint16      ethtype;
-
+    zpl_uint8       l2proto;
+    
     zpl_uint8       color;                  /* Packet color. */
     zpl_uint32      reason;         /* Opcode from packet. */
     zpl_uint8       untagged;       /* The packet was untagged on ingress. */
@@ -201,10 +202,13 @@ typedef struct
     zpl_uint32	buffer_len;         //帧长度
 }zpl_media_hdr_t __attribute__ ((packed));
 
+struct zpl_skbuffer_s;
 
-typedef struct
+typedef struct zpl_skbuffer_s
 {
 	NODE	node;
+	struct zpl_skbuffer_s		*next;
+	struct zpl_skbuffer_s		*prev;
     union 
     {
         zpl_netpkt_hdr_t    net_header;
@@ -241,7 +245,7 @@ typedef struct
 
 extern zpl_uint32 zpl_skb_timerstamp(void);
 
-
+/* zpl_skbqueue_t */
 extern zpl_skbqueue_t *zpl_skbqueue_create(zpl_uint32 maxsize, zpl_bool sem);
 extern int zpl_skbqueue_destroy(zpl_skbqueue_t *queue);
 
@@ -254,6 +258,8 @@ extern int zpl_skbqueue_put(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue);
 
 extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p);
+
+/* zpl_skbuffer_t */
 /* 报文前面添加数据 */
 extern int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
 /* 报文前面删除数据 */

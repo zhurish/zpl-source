@@ -33,8 +33,7 @@ typedef struct os_url_s
 extern int os_url_split(const zpl_char * URL, os_url_t *spliurl);
 //extern int os_url_show(os_url_t *spliurl);
 extern int os_url_free(os_url_t *spliurl);
-//extern int os_url_test();
-
+extern int os_url_test(void);
 
 #ifdef __cplusplus
 }

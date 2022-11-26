@@ -66,7 +66,7 @@ INCLUDE FILES: tftpdLib.h, tftpLib.h
 SEE ALSO:
 tftpLib, RFC 783 "TFTP Protocol"
 */
-#include "systools.h"
+#include "service.h"
 #include "tftpLib.h"
 #include "tftpdLib.h"
 #include "thread.h"
@@ -168,7 +168,7 @@ static zpl_socket_t tftpd_socket_init(TFTPD_CONFIG *config)
 	      sizeof (struct ipstack_sockaddr_in)) == ERROR)
 	{
     	ipstack_close(serverSocket);
-    	systools_error ("%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
+    	service_log_err ("%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
     	return (serverSocket);
 	}
     while(1)
@@ -240,7 +240,7 @@ int tftpdUnInit(void)
 	{
 		if(tftpd_config->count)
 		{
-			systools_printf("%s is running, please waiting...\r\n", tftpdErrStr);
+			service_cliout_output("%s is running, please waiting...\r\n", tftpdErrStr);
 			return ERROR;
 		}
 		if(tftpd_config->t_read)
@@ -262,7 +262,7 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 		{
 			if(tftpd_config->count)
 			{
-				systools_printf("%s is running, please waiting...\r\n", tftpdErrStr);
+				service_cliout_output("%s is running, please waiting...\r\n", tftpdErrStr);
 				return ERROR;
 			}
 			if(tftpd_config->t_read)
@@ -290,7 +290,7 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 		{
 			if(tftpd_config->count)
 			{
-				systools_printf("%s is running, please waiting...\r\n", tftpdErrStr);
+				service_cliout_output("%s is running, please waiting...\r\n", tftpdErrStr);
 				return ERROR;
 			}
 			if(tftpd_config->t_read)
@@ -635,7 +635,7 @@ static int tftpdTask( struct eloop *thread)
 
 	if (value == ERROR)
 	{
-		systools_error("%s:  could not read on TFTP port\n", tftpdErrStr);
+		service_log_err("%s:  could not read on TFTP port\n", tftpdErrStr);
 	}
 	memset(&tftpdDesc, 0, sizeof(tftpdDesc));
 
@@ -676,7 +676,7 @@ static int tftpdTask( struct eloop *thread)
 
 	if (tftpd_config && tftpd_config->tftpdDebug)
 	{
-		systools_debug("%s: Request: Opcode = %d, file = %s, client = %s\n",
+		service_log_debug("%s: Request: Opcode = %d, file = %s, client = %s\n",
 				tftpdErrStr, opCode, tftpdDesc.fileName, tftpdDesc.serverName);
 	}
 	/*
@@ -865,7 +865,7 @@ static int tftpdFileRead
     if (requestFd == ERROR)
 	{
 
-		systools_error ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
+		service_log_err ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
 		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
@@ -887,7 +887,7 @@ static int tftpdFileRead
 
     if (returnValue == ERROR)
 	{
-    	systools_error ("%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
+    	service_log_err ("%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
 	}
 
 
@@ -929,7 +929,7 @@ static int tftpdFileWrite
 
     if (requestFd == ERROR)
 	{
-		systools_error ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
+		service_log_err ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
 		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
@@ -952,7 +952,7 @@ static int tftpdFileWrite
 
     if (returnValue == ERROR)
 	{
-    	systools_error ("%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
+    	service_log_err ("%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
 	}
 
     tftpdDescriptorDelete (pReplyDesc);

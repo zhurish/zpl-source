@@ -17,7 +17,7 @@
 #include <linux/interrupt.h>
 #include <linux/skbuff.h>
 #include <linux/spinlock.h>
-#include <linux/crc32.h>
+#include <linux/crc32.h>:
 #include <linux/of.h>
 #include <linux/of_net.h>
 #include <linux/ethtool.h>

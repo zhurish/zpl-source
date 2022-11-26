@@ -178,7 +178,11 @@ static int linux_ioctl_eth_add(struct interface *ifp)
   hal_ipcmsg_create_header(&ipcmsg, command);
 	hal_ipcmsg_port_set(&ipcmsg, ifp->ifindex);
 	hal_ipcmsg_put(&ipcmsg, ifname, IF_NAME_MAX);
-	hal_ipcmsg_put(&ipcmsg, macadd, 6);
+  if(is_bzero(ifp->hw_addr, NSM_MAC_MAX))
+	  hal_ipcmsg_put(&ipcmsg, macadd, NSM_MAC_MAX);
+  else
+	  hal_ipcmsg_put(&ipcmsg, ifp->hw_addr, NSM_MAC_MAX);
+
   return linux_driver_kernel_netlink_proxy(buf, ipcmsg.setp, pal_stack.netlink_cfg);
 }
 

@@ -262,10 +262,9 @@ endif#($(strip $(ZPL_COMPONENT_MODULE)),true)
 
 #
 # service
+#$(findstring true,$(strip $(ZPL_SERVICE_SNTPC)) )
 #
 ifeq ($(strip $(ZPL_SERVICE_MODULE)),true)
-ZPLPRODS += $(SERVICE_ROOT)/systools
-ZPL_INCLUDE += -I$(SERVICE_ROOT)/systools
 
 ifeq ($(strip $(ZPL_SERVICE_SNTPC)),true)
 ZPLPRODS += $(SERVICE_ROOT)/sntp
@@ -293,34 +292,56 @@ ZPL_INCLUDE += -I$(SERVICE_ROOT)/syslog
 ZPL_DEFINE += -DZPL_SERVICE_SYSLOG
 endif
 
+
 ifeq ($(strip $(ZPL_SERVICE_TFTPC)),true)
 ZPL_DEFINE += -DZPL_SERVICE_TFTPC
+ZPLPRODS += $(SERVICE_ROOT)/tftp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/tftp
 endif
 ifeq ($(strip $(ZPL_SERVICE_TFTPD)),true)
 ZPL_DEFINE += -DZPL_SERVICE_TFTPD
+ifneq ($(strip $(ZPL_SERVICE_TFTPC)),true)
+ZPLPRODS += $(SERVICE_ROOT)/tftp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/tftp
 endif
+endif
+
 ifeq ($(strip $(ZPL_SERVICE_FTPC)),true)
 ZPL_DEFINE += -DZPL_SERVICE_FTPC
+ZPLPRODS += $(SERVICE_ROOT)/ftp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/ftp
 endif
 ifeq ($(strip $(ZPL_SERVICE_FTPD)),true)
 ZPL_DEFINE += -DZPL_SERVICE_FTPD
+ifneq ($(strip $(ZPL_SERVICE_FTPC)),true)
+ZPLPRODS += $(SERVICE_ROOT)/ftp
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/ftp
 endif
+endif
+
 ifeq ($(strip $(ZPL_SERVICE_TELNET)),true)
 ZPL_DEFINE += -DZPL_SERVICE_TELNET
+ZPLPRODS += $(SERVICE_ROOT)/telnet
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/telnet
 endif
 ifeq ($(strip $(ZPL_SERVICE_TELNETD)),true)
 ZPL_DEFINE += -DZPL_SERVICE_TELNETD
 endif
 ifeq ($(strip $(ZPL_SERVICE_PING)),true)
 ZPL_DEFINE += -DZPL_SERVICE_PING
+ZPLPRODS += $(SERVICE_ROOT)/ping
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/ping
 endif
 ifeq ($(strip $(ZPL_SERVICE_TRACEROUTE)),true)
 ZPL_DEFINE += -DZPL_SERVICE_TRACEROUTE
+ZPLPRODS += $(SERVICE_ROOT)/traceroute
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/traceroute
 endif
 ifeq ($(strip $(ZPL_SERVICE_UBUS_SYNC)),true)
 ZPL_DEFINE += -DZPL_SERVICE_UBUS_SYNC
 endif
-
+ZPLPRODS += $(SERVICE_ROOT)/service
+ZPL_INCLUDE += -I$(SERVICE_ROOT)/service
 endif #($(strip $(ZPL_SERVICE_MODULE)),true)
 
 

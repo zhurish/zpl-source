@@ -1771,7 +1771,7 @@ static int x5b_app_mgt_task(void *argv)
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
 	module_setup_task(MODULE_APP, os_task_id_self());
-	host_waitting_loadconfig);
+	host_waitting_loadconfig();
 	if(!mgt->enable)
 	{
 		os_sleep(5);

@@ -3,7 +3,7 @@
 /* Copyright 1984 - 2001 Wind River Systems, Inc. */
 
 
-#include "systools.h"
+#include "service.h"
 #include "tftpLib.h"
 /*
  modification history
@@ -13,7 +13,7 @@
  33975, 32821/31223, 23051, 5515, etc.)
  02m,15mar99,elg  fix errors in sample code in tftpXfer refman (SPR 8557).
  02l,30dec98,ead  Commented out the erroneous calls to unlink() in tftpGet()
- and tftpPut().  Included systools_printf() calls. (SPR #23051)
+ and tftpPut().  Included service_cliout_output() calls. (SPR #23051)
  02k,26aug97,spm  removed compiler warnings (SPR #7866)
  02j,23oct96,sgv  Added code for file truncation when file transfer is aborted
  SPR #6839
@@ -355,7 +355,7 @@ int tftpXfer(char * pHost, /* host name or address */
 	//if (os_job_add(tftpTask, pParam) == ERROR)
 	if(tftpTask(pParam) == ERROR)
 	{
-		//systools_error("tftp transfer failed: %s", strerror(ipstack_errno));
+		//service_log_err("tftp transfer failed: %s", strerror(ipstack_errno));
 		tftpParamCleanUp(pParam);
 		pParam = NULL;
 		return (ERROR);
@@ -386,7 +386,7 @@ static int tftpTask(TFTPPARAM * pParam /* param need to cleanup*/
 	if ((status = tftpCopy(pParam->pHost, pParam->port, pParam->pFname,
 			pParam->pCmd, pParam->pMode, pParam->dSock)) == ERROR)
 	{
-		//systools_error("tftp transfer failed: %s", strerror(ipstack_errno));
+		//service_log_err("tftp transfer failed: %s", strerror(ipstack_errno));
 	}
 	//(pParam); /* clean tftp params up here */
 	return (status);
@@ -471,7 +471,7 @@ int tftpCopy(char * pHost, /* host name or address	*/
 	}
 	if(status == ERROR)
 	{
-		systools_printf("TFTP CMD is not define.");
+		service_cliout_output("TFTP CMD is not define.");
 	}
 	else
 		tftpInfoShow(pTftpDesc);
@@ -505,7 +505,7 @@ TFTP_DESC * tftpInit(void)
 	if (ipstack_invalid(pTftpDesc->sock))
 	{
 		free((char *) pTftpDesc);
-		systools_error("TFTP  ipstack_socket create failed: %s", strerror(ipstack_errno));
+		service_log_err("TFTP  ipstack_socket create failed: %s", strerror(ipstack_errno));
 		return (NULL);
 	}
 
@@ -516,7 +516,7 @@ TFTP_DESC * tftpInit(void)
 	if (ipstack_bind(pTftpDesc->sock, (const struct ipstack_sockaddr *) &localAddr,
 			sizeof(struct ipstack_sockaddr_in)) == ERROR)
 	{
-		systools_error("TFTP  ipstack_socket ipstack_bind failed: %s", strerror(ipstack_errno));
+		service_log_err("TFTP  ipstack_socket ipstack_bind failed: %s", strerror(ipstack_errno));
 		free((char *) pTftpDesc);
 		ipstack_close(pTftpDesc->sock);
 		return (NULL);
@@ -582,23 +582,23 @@ static int tftpModeSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor 	*/
 			bzero(pTftpDesc->mode, sizeof(pTftpDesc->mode));
 			strcpy(pTftpDesc->mode, pTftpModes->m_mode);
 			if (tftpDebug)
-				systools_debug("TFTP mode set to %s.\r\n", pTftpDesc->mode);
+				service_log_debug("TFTP mode set to %s.\r\n", pTftpDesc->mode);
 			return (OK);
 		}
 	}
 	/* invalid mode, print error */
 	//ipstack_errno = S_tftpLib_INVALID_MODE;
 #ifdef TFTPC_DEBUG
-	systools_printf("%s: unknown mode\r\n", pMode);
-	systools_printf("valid modes: [");
+	service_cliout_output("%s: unknown mode\r\n", pMode);
+	service_cliout_output("valid modes: [");
 
 	for (pTftpModes = tftpModes; pTftpModes->m_name != NULL; pTftpModes++)
 	{
-		systools_printf("%s%s", sep, pTftpModes->m_name);
+		service_cliout_output("%s%s", sep, pTftpModes->m_name);
 		if (*sep == ' ')
 			sep = " | ";
 	}
-	systools_printf(" ]\r\n");
+	service_cliout_output(" ]\r\n");
 #endif
 
 	return (ERROR);
@@ -655,9 +655,9 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
     	{
 			pTftpDesc->connected = zpl_false;
 
-			systools_error("TFTP %s: unknown host.", pHostname);
+			service_log_err("TFTP %s: unknown host.", pHostname);
 #ifdef TFTPC_DEBUG
-			systools_printf("tftpPeerSet %s: unknown host.\r\n", pHostname);
+			service_cliout_output("tftpPeerSet %s: unknown host.\r\n", pHostname);
 #endif
 			ipstack_errno = IPSTACK_ERRNO_EHOSTUNREACH;
 			return (ERROR);
@@ -672,7 +672,7 @@ static int tftpPeerSet(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 	pTftpDesc->connected = zpl_true;
 
 	if (tftpDebug)
-		systools_debug("TFTP Connected to %s [%d]", pHostname,
+		service_log_debug("TFTP Connected to %s [%d]", pHostname,
 				ntohs(pTftpDesc->serverPort));
 	return (OK);
 }
@@ -723,9 +723,9 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	pTftpDesc->tftp_size = 0;
 	if (!pTftpDesc->connected) /* must be connected */
 	{
-		systools_error("TFTP  PUT No target machine specified.");
+		service_log_err("TFTP  PUT No target machine specified.");
 #ifdef TFTPC_DEBUG
-		systools_printf("tftpPut: No target machine specified.\r\n");
+		service_cliout_output("tftpPut: No target machine specified.\r\n");
 #endif
 		ipstack_errno = IPSTACK_ERRNO_ENOTCONN;
 		return (ERROR);
@@ -739,7 +739,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	block = 0;
 
 	if (tftpDebug)
-		systools_debug("TFTP putting to %s:%s [%s]", pTftpDesc->serverName,
+		service_log_debug("TFTP putting to %s:%s [%s]", pTftpDesc->serverName,
 				pFilename, pTftpDesc->mode);
 
 	/*
@@ -754,7 +754,7 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		size = tftpRequestCreate(&tftpMsg, TFTP_WRQ, pFilename,
 				pTftpDesc->mode);
 		if (tftpDebug)
-			systools_debug("TFTP Sending WRQ to port %d", pTftpDesc->serverPort);
+			service_log_debug("TFTP Sending WRQ to port %d", pTftpDesc->serverPort);
 
 		if ((tftpSend(pTftpDesc, &tftpMsg, size, &tftpAck, TFTP_ACK, block,
 				&port) == ERROR))
@@ -782,9 +782,9 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 			(void) tftpSend(pTftpDesc, &tftpMsg, size, (TFTP_MSG *) NULL, 0, 0,
 					(int *) NULL);
 			close(fd);
-			systools_error("TFTP PUT: Error occurred while reading the file: %s", strerror(ipstack_errno));
+			service_log_err("TFTP PUT: Error occurred while reading the file: %s", strerror(ipstack_errno));
 #ifdef TFTPC_DEBUG
-			systools_printf("tftpPut: Error occurred while reading the file.\r\n");
+			service_cliout_output("tftpPut: Error occurred while reading the file.\r\n");
 #endif
 
 			return (ERROR);
@@ -808,14 +808,14 @@ int tftpPut(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		{
 			tftpwli++;
 			if(tftpwli%80 == 0)
-				systools_printf("#\r\n");
+				service_cliout_output("#\r\n");
 			else
-				systools_printf("#");
+				service_cliout_output("#");
 		}
 
 	} while (size == TFTP_SEGSIZE);
 	if(tftpVerbose)
-		systools_printf("\r\n");
+		service_cliout_output("\r\n");
 	return (OK);
 }
 
@@ -871,7 +871,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	if (!pTftpDesc->connected) /* return if not connected  */
 	{
 #ifdef TFTPC_DEBUG
-		systools_printf("tftpGet: No target machine specified.\r\n");
+		service_cliout_output("tftpGet: No target machine specified.\r\n");
 #endif
 
 		ipstack_errno = IPSTACK_ERRNO_ENOTCONN;
@@ -888,7 +888,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 	block = 1;
 
 	if (tftpDebug)
-		systools_debug("TFTP getting from %s:%s [%s]", pTftpDesc->serverName,
+		service_log_debug("TFTP getting from %s:%s [%s]", pTftpDesc->serverName,
 				pFilename, pTftpDesc->mode);
 
 	/*
@@ -922,9 +922,9 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 
 		if (sizeReply == ERROR) /* if error then bail */
 		{
-			systools_error("TFTP GET Error occurred while transferring the file: %s", strerror(ipstack_errno));
+			service_log_err("TFTP GET Error occurred while transferring the file: %s", strerror(ipstack_errno));
 #ifdef TFTPC_DEBUG
-			systools_printf(
+			service_cliout_output(
 					"tftpGet: Error occurred while transferring the file.\r\n");
 #endif
 			return (ERROR);
@@ -960,7 +960,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 				if ((numBytes = write(fd, pBuffer, sizeReply - bytesWritten))
 						<= 0)
 				{
-					systools_error("TFTP GET Error occurred while writing to the file: %s", strerror(ipstack_errno));
+					service_log_err("TFTP GET Error occurred while writing to the file: %s", strerror(ipstack_errno));
 					errorVal = ERROR;
 					break;
 				}
@@ -972,9 +972,9 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 			sizeMsg = tftpErrorCreate(&tftpMsg, EUNDEF);
 			(void) tftpSend(pTftpDesc, &tftpMsg, sizeMsg, (TFTP_MSG *) NULL, 0,
 					0, (int *) NULL);
-			systools_error("TFTP GET Error occurred while writing the file: %s", strerror(ipstack_errno));
+			service_log_err("TFTP GET Error occurred while writing the file: %s", strerror(ipstack_errno));
 #ifdef TFTPC_DEBUG
-			systools_printf("tftpGet: Error occurred while writing the file.\r\n");
+			service_cliout_output("tftpGet: Error occurred while writing the file.\r\n");
 #endif
 			return (ERROR);
 		}
@@ -986,9 +986,9 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 		{
 			tftpwli++;
 			if(tftpwli%80 == 0)
-				systools_printf("#\r\n");
+				service_cliout_output("#\r\n");
 			else
-				systools_printf("#");
+				service_cliout_output("#");
 		}
 		/* create ACK message */
 
@@ -1008,7 +1008,7 @@ int tftpGet(TFTP_DESC * pTftpDesc, /* TFTP descriptor       */
 
 			if(tftpVerbose)
 			{
-				systools_printf("\r\n");
+				service_cliout_output("\r\n");
 			}
 			return (OK);
 		}
@@ -1052,7 +1052,7 @@ static int tftpInfoShow(TFTP_DESC * pTftpDesc /* TFTP descriptor */
 		return (ERROR);
 	}
 
-	systools_printf("TFTP Transfer size : %s in %d seconds to %s\r\n",
+	service_cliout_output("TFTP Transfer size : %s in %d seconds to %s\r\n",
 			os_file_size_string(pTftpDesc->tftp_size),
 			tftp_end_time - pTftpDesc->tftp_start_time,
 			pTftpDesc->serverName);
@@ -1060,14 +1060,14 @@ static int tftpInfoShow(TFTP_DESC * pTftpDesc /* TFTP descriptor */
 /*    int	tftp_start_time;
 
 	if (pTftpDesc->connected == zpl_true)
-		systools_printf("\tConnected to %s [%d]\r\n", pTftpDesc->serverName,
+		service_cliout_output("\tConnected to %s [%d]\r\n", pTftpDesc->serverName,
 				ntohs(pTftpDesc->serverPort));
 	else
-		systools_printf("\tNot connected\r\n");
+		service_cliout_output("\tNot connected\r\n");
 
-	systools_printf("\tMode: %s  Verbose: %s  Tracing: %s\r\n", pTftpDesc->mode,
+	service_cliout_output("\tMode: %s  Verbose: %s  Tracing: %s\r\n", pTftpDesc->mode,
 			tftpDebug ? "on" : "off", tftpTrace ? "on" : "off");
-	systools_printf("\tRexmt-interval: %d seconds, Max-timeout: %d seconds\r\n",
+	service_cliout_output("\tRexmt-interval: %d seconds, Max-timeout: %d seconds\r\n",
 			tftpReXmit, tftpTimeout);*/
 
 	return (OK);
@@ -1168,7 +1168,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 						(const struct ipstack_sockaddr *) &pTftpDesc->serverAddr,
 						sizeof (struct ipstack_sockaddr_in)) != sizeMsg)
 		{
-			systools_error("TFTP Send: Error occurred while ipstack_sendto %s:%d: %s",
+			service_log_err("TFTP Send: Error occurred while ipstack_sendto %s:%d: %s",
 					ipstack_inet_ntoa(pTftpDesc->serverAddr.sin_addr),
 					ntohs(pTftpDesc->serverAddr.sin_port), strerror(ipstack_errno));
 			return (ERROR);
@@ -1181,7 +1181,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 					sizeof(struct ipstack_sockaddr_in));
 			if (num < 0)
 			{
-				systools_error("TFTP Send: Error occurred while ipstack_sendto %s:%d: %s",
+				service_log_err("TFTP Send: Error occurred while ipstack_sendto %s:%d: %s",
 						ipstack_inet_ntoa(pTftpDesc->serverAddr.sin_addr),
 						ntohs(pTftpDesc->serverAddr.sin_port), strerror(ipstack_errno));
 				switch (ipstack_errno)
@@ -1199,13 +1199,13 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 					/* else FALLTHROUGH */
 					break;
 				default:
-					systools_error("TFTP message transmit failed.");
+					service_log_err("TFTP message transmit failed.");
 					return (ERROR);
 				}
 			}
 			else if (num != sizeMsg)
 			{
-				systools_error("TFTP incomplete message transmit.");
+				service_log_err("TFTP incomplete message transmit.");
 				return (ERROR);
 			}
 			break;
@@ -1230,9 +1230,9 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 				if (timeWait >= maxWait) /* return error, if waited */
 				/* for too long 	   */
 				{
-					systools_error("Tftp ipstack_send Transfer Timed Out.");
+					service_log_err("Tftp ipstack_send Transfer Timed Out.");
 #ifdef TFTPC_DEBUG
-					systools_printf("Transfer Timed Out.\r\n");
+					service_cliout_output("Transfer Timed Out.\r\n");
 #endif
 					ipstack_errno = IPSTACK_ERRNO_ETIMEDOUT;
 					return (ERROR);
@@ -1253,7 +1253,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 					sizeof(TFTP_MSG), 0, (const struct ipstack_sockaddr *) &peer,
 					&peerlen)) == ERROR)
 			{
-				systools_error("Tftp ipstack_send occurred while ipstack_recvfrom %s:%d: %s",
+				service_log_err("Tftp ipstack_send occurred while ipstack_recvfrom %s:%d: %s",
 										ipstack_inet_ntoa(pTftpDesc->serverAddr.sin_addr),
 										ntohs(pTftpDesc->serverAddr.sin_port), strerror(ipstack_errno));
 				return (ERROR);
@@ -1265,10 +1265,10 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 
 			if (ntohs(pTftpReply->th_opcode) == TFTP_ERROR)
 			{
-				systools_error("Tftp ipstack_send: Error code %d: %s",
+				service_log_err("Tftp ipstack_send: Error code %d: %s",
 						ntohs(pTftpReply->th_error), pTftpReply->th_errMsg);
 #ifdef TFTPC_DEBUG
-				systools_printf("Error code %d: %s\r\n",
+				service_cliout_output("Error code %d: %s\r\n",
 						ntohs(pTftpReply->th_error), pTftpReply->th_errMsg);
 #endif
 				//ipstack_errno = S_tftpLib_TFTP_ERROR;
@@ -1553,7 +1553,7 @@ int tftpErrorCreate(TFTP_MSG * pTftpMsg, /* TFTP error message	*/
 	pTftpMsg->th_error = htons((zpl_ushort) pError->e_code);
 	strcpy(pTftpMsg->th_errMsg, pError->e_msg);
 
-	systools_printf("ERROR : Tftp module e_code : %d, emsg = %s\r\n", pError->e_code, pError->e_msg);
+	service_cliout_output("ERROR : Tftp module e_code : %d, emsg = %s\r\n", pError->e_code, pError->e_msg);
 
 	return (strlen(pError->e_msg) + 5); /* return size of message */
 }
@@ -1590,10 +1590,10 @@ static void tftpPacketTrace(char * pMsg, /* diagnostic message 	*/
 
 	if (op < TFTP_RRQ || op > TFTP_ERROR) /* unknown op code */
 	{
-		systools_printf("%s opcode=%x\r\n", pMsg, op);
+		service_cliout_output("%s opcode=%x\r\n", pMsg, op);
 		return;
 	}
-	systools_printf("%s %s ", pMsg, tftpOpCodes[op]);
+	service_cliout_output("%s %s ", pMsg, tftpOpCodes[op]);
 
 	switch (op)
 	{
@@ -1602,26 +1602,26 @@ static void tftpPacketTrace(char * pMsg, /* diagnostic message 	*/
 	case TFTP_RRQ:
 	case TFTP_WRQ:
 		cp = index(pTftpMsg->th_request, '\0');
-		systools_printf("<file=%s, mode=%s>\r\n", pTftpMsg->th_request, cp + 1);
+		service_cliout_output("<file=%s, mode=%s>\r\n", pTftpMsg->th_request, cp + 1);
 		break;
 
 		/* for the data messages, display the block number and bytes */
 
 	case TFTP_DATA:
-		systools_printf("<block=%d, %d bytes>\r\n", ntohs(pTftpMsg->th_block),
+		service_cliout_output("<block=%d, %d bytes>\r\n", ntohs(pTftpMsg->th_block),
 				size - TFTP_DATA_HDR_SIZE);
 		break;
 
 		/* for the ack messages, display the block number */
 
 	case TFTP_ACK:
-		systools_printf("<block=%d>\r\n", ntohs(pTftpMsg->th_block));
+		service_cliout_output("<block=%d>\r\n", ntohs(pTftpMsg->th_block));
 		break;
 
 		/* for error messages display the error code and message */
 
 	case TFTP_ERROR:
-		systools_printf("<code=%d, msg=%s>\r\n", ntohs(pTftpMsg->th_error),
+		service_cliout_output("<code=%d, msg=%s>\r\n", ntohs(pTftpMsg->th_error),
 				pTftpMsg->th_errMsg);
 		break;
 	}
@@ -1775,25 +1775,25 @@ int tftp_download(void *v, char *hostName, int port, char *fileName, char *usr,
 {
 	int fd = 0;
 
-	systools_set(v);
+	service_cliout_set(v);
 
 	fd = open(localfileName, O_RDWR|O_CREAT, CONFIGFILE_MASK);
 	if (fd <= 0)
 	{
-		systools_error("TFTP transfer failed: %s", strerror(ipstack_errno));
-		systools_set(NULL);
+		service_log_err("TFTP transfer failed: %s", strerror(ipstack_errno));
+		service_cliout_set(NULL);
 		return (ERROR);
 	}
 
 	if (tftpXfer(hostName, port, fileName, "get", "binary", fd, 0) == ERROR)
 	{
-		systools_error("TFTP transfer failed.");
-		systools_set(NULL);
+		service_log_err("TFTP transfer failed.");
+		service_cliout_set(NULL);
 		//close(fd);
 		remove(localfileName);
 		return (ERROR);
 	}
-	systools_set(NULL);
+	service_cliout_set(NULL);
 	//close(fd);
 	return (OK);
 }
@@ -1803,23 +1803,23 @@ int tftp_upload(void *v, char *hostName, int port, char *fileName, char *usr,
 		char *passwd, char *localfileName)
 {
 	int fd = 0;
-	systools_set(v);
+	service_cliout_set(v);
 	fd = open(localfileName, O_RDONLY);
 	if (fd <= 0)
 	{
-		systools_printf("TFTP transfer failed: %s", strerror(ipstack_errno));
-		systools_set(NULL);
+		service_cliout_output("TFTP transfer failed: %s", strerror(ipstack_errno));
+		service_cliout_set(NULL);
 		return (ERROR);
 	}
 
 	if (tftpXfer(hostName, port, fileName, "put", "binary", fd, 0) == ERROR)
 	{
-		systools_error("TFTP transfer failed.");
-		systools_set(NULL);
+		service_log_err("TFTP transfer failed.");
+		service_cliout_set(NULL);
 		//close(fd);
 		return (ERROR);
 	}
-	systools_set(NULL);
+	service_cliout_set(NULL);
 	//close(fd);
 	return (OK);
 }

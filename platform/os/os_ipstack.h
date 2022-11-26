@@ -15,7 +15,7 @@ extern "C" {
 #include "zpl_type.h"
 #include "auto_include.h"
 
-#define OSSTACK_DEBUG_ENABLE
+//#define OSSTACK_DEBUG_ENABLE
 
 #ifdef OSSTACK_DEBUG_ENABLE
 #define OSSTACK_DEBUG_DETAIL(fmt,...)	os_log_debug(fmt, ##__VA_ARGS__)

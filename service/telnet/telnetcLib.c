@@ -68,7 +68,7 @@ RFCs 854 (telnet), 855 (options), 857 (echo), 858 (suppress go ahead)
 */
 
 /* includes */
-#include "systools.h"
+#include "service.h"
 #include "vty.h"
 #include "zmemory.h"
 #include "command.h"
@@ -369,7 +369,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 	}
 	session->hostStreamState = TELNET_STATE_NORMAL;
 
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		if(session->state == SCTD_EMPTY)
 			return telnetExit(session);
@@ -464,6 +464,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 		}
 	}
 	/* NOT REACHED */
+	return 0;
 }
 
 

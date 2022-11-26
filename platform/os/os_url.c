@@ -169,7 +169,7 @@ split_agent:
 	return ERROR;
 }
 
-#if 0
+#if 1
 static int os_url_debug_test(zpl_char *URL)
 {
 	os_url_t spliurl;
@@ -179,44 +179,45 @@ static int os_url_debug_test(zpl_char *URL)
 		//os_url_free(&spliurl);
 		//return -1;
 	}
-	fprintf(stdout, "===================================================\n");
-	fprintf(stdout, "URL            :%s\n", URL);
+	fprintf(stdout, "================================================== \r\n");
+	fprintf(stdout, "URL            :%s\r\n", URL);
 	if(spliurl.proto)
 	{
-		fprintf(stdout, " proto         :%s\n", spliurl.proto);
+		fprintf(stdout, " proto         :%s\r\n", spliurl.proto);
 	}
 	if(spliurl.host)
 	{
-		fprintf(stdout, " host          :%s\n", spliurl.host);
+		fprintf(stdout, " host          :%s\r\n", spliurl.host);
 	}
 	if(spliurl.port)
 	{
-		fprintf(stdout, " port          :%d\n", spliurl.port);
+		fprintf(stdout, " port          :%d\r\n", spliurl.port);
 	}
 	if(spliurl.path)
 	{
-		fprintf(stdout, " path          :%s\n", spliurl.path);
+		fprintf(stdout, " path          :%s\r\n", spliurl.path);
 	}
 	if(spliurl.filename)
 	{
-		fprintf(stdout, " filename      :%s\n", spliurl.filename);
+		fprintf(stdout, " filename      :%s\r\n", spliurl.filename);
 	}
 	if(spliurl.user)
 	{
-		fprintf(stdout, " user          :%s\n", spliurl.user);
+		fprintf(stdout, " user          :%s\r\n", spliurl.user);
 	}
 	if(spliurl.pass)
 	{
-		fprintf(stdout, " pass          :%s\n", spliurl.pass);
+		fprintf(stdout, " pass          :%s\r\n", spliurl.pass);
 	}
-	fprintf(stdout, "===================================================\n");
+	fprintf(stdout, "===================================================\r\n");
 	os_url_free(&spliurl);
 	return OK;
 }
 
-int os_url_test()
+int os_url_test(void)
 {
-/*	os_url_debug_test("tftp://1.1.1.1:80/file");
+	/*
+	os_url_debug_test("tftp://1.1.1.1:80/file");
 	os_url_debug_test("tftp://1.1.1.1/file");
 	os_url_debug_test("tftp://1.1.1.1:80:/file");
 	os_url_debug_test("tftp://1.1.1.1:/file");
@@ -236,11 +237,16 @@ int os_url_test()
 	os_url_debug_test("ssh://user@1.1.1.1:80");
 	os_url_debug_test("ssh://user:password@1.1.1.1:80");
 	os_url_debug_test("ssh://user@1.1.1.1");
-	os_url_debug_test("ssh://user:password@1.1.1.1");*/
+	os_url_debug_test("ssh://user:password@1.1.1.1");
 	//proto://[user[:password@]] ip [:port][:][/file]
+*/
+	os_url_debug_test("ftp://zhurish:centos@127.0.0.1/home/zhurish/fsdd.pdf");
+	os_url_debug_test("ftp://zhurish:centos@127.0.0.1:/home/zhurish/fsdd.pdf");
 
-	os_url_debug_test("rtsp://admin:abc123456@192.168.3.64:554/av0_0");
-	os_url_debug_test("rtsp://admin:abc123456@192.168.1.64/av0_0");
+	// copy url-string ftp://zhurish:centos@127.0.0.1/home/zhurish/fsdd.pdf aa.pdf
+
+	//os_url_debug_test("rtsp://admin:abc123456@192.168.3.64:554/av0_0");
+	//os_url_debug_test("rtsp://admin:abc123456@192.168.1.64/av0_0");
 	return 0;
 }
 #endif

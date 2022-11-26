@@ -381,3 +381,14 @@ const char *dtoa(zpl_double value, zpl_char *fmt)
 	snprintf(buf, sizeof(buf), fmt, value);
 	return buf;
 }
+
+zpl_bool is_bzero (zpl_char *str, int len)
+{
+	int i = 0;
+	while (i < len)
+	{
+		if(str[i++] != 0)
+			return zpl_false;
+	}
+	return zpl_true;
+}

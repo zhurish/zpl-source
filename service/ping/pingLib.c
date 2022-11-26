@@ -72,7 +72,7 @@
  #include "errnoLib.h"
  #include "kernelLib.h"
  */
-#include "systools.h"
+#include "service.h"
 #include "vty.h"
 #include "zmemory.h"
 #include "command.h"
@@ -452,7 +452,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 			//icp->icmp_type = min(icp->icmp_type, ICMP_TYPENUM);
 			vty_out(vty,"icmp_type=%d%s", icp->icmp_type, VTY_NEWLINE);
 			for (ix = 0; ix < 12; ix++)
-				vty_out(vty,"x%2.2lx: x%8.8lx%s",  (ix * sizeof(long)),
+				vty_out(vty,"x%2.2x: x%8.8lx%s",  (ix * sizeof(long)),
 						 *lp++, VTY_NEWLINE);
 
 			vty_out(vty,"icmp_code=%d%s", icp->icmp_code,VTY_NEWLINE);

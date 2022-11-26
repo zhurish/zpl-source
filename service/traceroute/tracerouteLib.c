@@ -72,7 +72,7 @@
  #include "errnoLib.h"
  #include "kernelLib.h"
  */
-#include "systools.h"
+#include "service.h"
 #include "vty.h"
 #include "zmemory.h"
 #include "command.h"

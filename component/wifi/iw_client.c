@@ -1018,7 +1018,7 @@ static int iw_client_task(iw_client_t *iw_client)
 	}*/
 	os_sleep(5);
 	host_waitting_loadconfig();
-	while(1)
+	while(OS_TASK_TRUE())
 	{
 		if(iw_client->scan_enable)
 		{

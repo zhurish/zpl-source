@@ -12,9 +12,12 @@ extern struct module_list module_list_telnet;
 extern struct module_list module_list_rib;
 extern struct module_list module_list_nsm;
 extern struct module_list module_list_bsp;
+extern struct module_list module_list_txrx;
 extern struct module_list module_list_hal;
 extern struct module_list module_list_pal;
-extern struct module_list module_list_txrx;
+extern struct module_list module_list_sntpc;
+extern struct module_list module_list_sntps;
+extern struct module_list module_list_utils;
 extern struct module_list module_list_sdk;
  
 struct module_alllist module_lists_tbl[MODULE_MAX] = {
@@ -28,9 +31,12 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_rib,
   &module_list_nsm,
   &module_list_bsp,
+  &module_list_txrx,
   &module_list_hal,
   &module_list_pal,
-  &module_list_txrx,
+  &module_list_sntpc,
+  &module_list_sntps,
+  &module_list_utils,
   &module_list_sdk,
  NULL,
 };

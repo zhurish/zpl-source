@@ -134,7 +134,7 @@ SEE ALSO: rlogLib
 */
 #define ZPL_BUILD_OS_LINUX
 #if defined(ZPL_BUILD_OS_LINUX)||defined(__linux)
-#include "systools.h"
+#include "service.h"
 #include "telnetLib.h"
 
 

@@ -849,7 +849,7 @@ os_ansync_t *os_ansync_fetch(os_ansync_lst *lst)
 
 	if(lst->taskid <= 0)
 		lst->taskid = os_task_id_self();
-	while(1)
+	while(OS_TASK_TRUE())
 	{
 		node = os_ansync_run(lst);
 		if(node)
@@ -1157,7 +1157,7 @@ int os_ansync_empty_running(void)
 	if(_ansync_empty._empty_ansync == NULL)
 	{
 		int val = _ansync_empty.timer_invalue;
-		while(1)
+		while(OS_TASK_TRUE())
 		{
 			if(_ansync_empty.timer_callback && val == 0)
 			{

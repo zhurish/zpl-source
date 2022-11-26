@@ -186,23 +186,26 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32
 {
 	NODE node;
 	zpl_skbuffer_t *skbuf = NULL;
-	assert(queue);
-	if (queue->mutex)
-		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
-	if (lstCount(&queue->list) >= queue->maxsize)
+	if(queue)
 	{
+		assert(queue);
 		if (queue->mutex)
-			os_mutex_unlock(queue->mutex);
-		return NULL;
-	}
-	for (skbuf = (zpl_skbuffer_t *)lstFirst(&queue->ulist); skbuf != NULL;
-		 skbuf = (zpl_skbuffer_t *)lstNext(&node))
-	{
-		node = skbuf->node;
-		if (skbuf && skbuf->skb_maxsize >= (len))
+			os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+		if (lstCount(&queue->list) >= queue->maxsize)
 		{
-			lstDelete(&queue->ulist, (NODE *)skbuf);
-			break;
+			if (queue->mutex)
+				os_mutex_unlock(queue->mutex);
+			return NULL;
+		}
+		for (skbuf = (zpl_skbuffer_t *)lstFirst(&queue->ulist); skbuf != NULL;
+			skbuf = (zpl_skbuffer_t *)lstNext(&node))
+		{
+			node = skbuf->node;
+			if (skbuf && skbuf->skb_maxsize >= (len))
+			{
+				lstDelete(&queue->ulist, (NODE *)skbuf);
+				break;
+			}
 		}
 	}
 	if (skbuf == NULL)
@@ -223,7 +226,7 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32
 			}
 		}
 	}
-	if (queue->mutex)
+	if (queue && queue->mutex)
 		os_mutex_unlock(queue->mutex);
 	return skbuf;
 }

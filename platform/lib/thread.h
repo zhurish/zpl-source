@@ -95,7 +95,7 @@ struct thread_master
   struct timeval relative_time;
   struct thread *thread_current;
   void *mutex;
-  zpl_bool	bquit;
+  zpl_bool volatile bquit;
   zpl_uint32 debug;
 };
 

@@ -92,7 +92,7 @@ int zpl_stack_start(const char* progname, int localport)
 #ifdef ZPL_NSM_MODULE
 	nsm_module_cmd_init();
 #endif
-
+	
 #ifdef ZPL_ZPLMEDIA_MODULE
 	zpl_media_cmd_init();
 #endif
@@ -145,6 +145,7 @@ int startup_module_load(void)
 	zplib_module_init(MODULE_NSM);
 	#endif
 	zplib_module_initall();
+	zplib_module_cmd_all();
 	os_msleep(50);
 	#ifdef ZPL_NSM_MODULE
 	zplib_module_task_init(MODULE_NSM);

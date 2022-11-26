@@ -378,7 +378,7 @@ web_app_task (void *argv)
 		os_sleep (1);
 	}
 	//web_app_start (web);
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		if (!web->enable)
 		{

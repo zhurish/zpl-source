@@ -134,7 +134,7 @@ struct eloop_master
   struct timeval relative_time;
   struct eloop *eloop_current;
   void *mutex;
-  zpl_bool bquit;
+  zpl_bool volatile bquit;
 };
 
 typedef zpl_uchar eloop_type;

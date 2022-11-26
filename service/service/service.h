@@ -1,5 +1,5 @@
 /*
- * systools.h
+ * service.h
  *
  *  Created on: Oct 28, 2018
  *      Author: zhurish
@@ -28,22 +28,22 @@
 #define MAX_LOGIN_NAME_LEN 	128
 #define MAX_DIR_NAME_LEN 	128
 
-#define systools_debug(fmt,...)	zlog_debug(MODULE_UTILS, fmt, ##__VA_ARGS__)
-#define systools_warn(fmt,...)		zlog_warn(MODULE_UTILS, fmt, ##__VA_ARGS__)
-#define systools_error(fmt,...)	zlog_err(MODULE_UTILS, fmt, ##__VA_ARGS__)
+#define service_log_debug(fmt,...)	zlog_debug(MODULE_UTILS, fmt, ##__VA_ARGS__)
+#define service_log_warn(fmt,...)		zlog_warn(MODULE_UTILS, fmt, ##__VA_ARGS__)
+#define service_log_err(fmt,...)	zlog_err(MODULE_UTILS, fmt, ##__VA_ARGS__)
 
 
-extern int systools_set(void *vty);
+extern int service_cliout_set(void *vty);
 
-extern int systools_printf(const char *format, ...);
+extern int service_cliout_output(const char *format, ...);
 
 extern const char *ftpd_hostname(void);
 
-extern int systools_task_init (void);
-extern int systools_task_exit (void);
-extern int systools_module_init (void);
-extern int systools_module_exit (void);
-extern int systools_cmd_init (void);
+extern int service_task_init (void);
+extern int service_task_exit (void);
+extern int service_module_init (void);
+extern int service_module_exit (void);
+extern int service_clicmd_init (void);
 
 
 #endif /* __SYSTOOLS_H__ */

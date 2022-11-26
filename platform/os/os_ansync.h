@@ -99,7 +99,7 @@ typedef struct
 	int 	max_fd;
 	struct epoll_event *events;
 	os_ansync_t		*os_ansync;
-	zpl_bool	bquit;
+	zpl_bool volatile bquit;
 }os_ansync_lst;
 
 #define OS_ANSYNC_FD(n)		(((os_ansync_t *)(n))->fd)

@@ -366,7 +366,7 @@ static int vtyrl_stdio_task(void *p)
 		os_sleep(1);
 	} 
 	zlog_warn(MODULE_LIB, "====  vtyrl_stdio_task 2");
-	while (vtyrl_stdio.rl_exit)
+	while (vtyrl_stdio.rl_exit && OS_TASK_TRUE())
 	{
 		vty_hello(vtyrl_stdio.vty);
 		while (vtyrl_stdio_gets())
@@ -925,7 +925,7 @@ wakeup_send_echo(os_ansync_t *t_write)
 static int vtysh_tets_task(void)
 {
 	os_ansync_t *node = NULL;
-    while (master)
+    while (master && OS_TASK_TRUE())
 	{
     	while ((node = os_ansync_fetch(master)))
       		os_ansync_execute(master, node, OS_ANSYNC_EXECUTE_NONE);

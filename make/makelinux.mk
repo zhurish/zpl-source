@@ -163,7 +163,7 @@ ZPLOS_FLAGS_WFORMAT += -Wformat-extra-args #当传递给格式字符串的参数
 ZPLOS_FLAGS_WFORMAT += -Wformat-security #当使用格式字符串的函数可能导致安全问题时给出警告   
 ZPLOS_FLAGS_WFORMAT += -Wformat-zero-length #对长度为 0 的格式字符串给出警告 
 
-ZPLOS_FLAGS_EFORMAT += -Werror=format
+#ZPLOS_FLAGS_EFORMAT += -Werror=format
 ZPLOS_FLAGS_EFORMAT += -Werror=format-contains-nul #当格式字符串包含 NUL 字节时给出警告  
 ZPLOS_FLAGS_EFORMAT += -Werror=format-extra-args #当传递给格式字符串的参数太多时给出警告  
 #ZPLOS_FLAGS_EFORMAT += -Werror=format-nonliteral #当格式字符串不是字面值时给出警告  

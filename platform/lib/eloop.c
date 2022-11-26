@@ -1032,7 +1032,7 @@ eloop_fetch(struct eloop_master *m)
 	//m->ptid = os_task_pthread_self ();
 	//m->taskId = os_task_id_self ();
 
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		if (m->mutex)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);
@@ -1146,7 +1146,7 @@ eloop_mainloop(struct eloop_master *m)
 	struct timeval *timer_wait = &timer_val;
 	zpl_uint32 num = 0;
 
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		if (m->mutex)
 			os_mutex_lock(m->mutex, OS_WAIT_FOREVER);

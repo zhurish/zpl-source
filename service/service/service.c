@@ -1,11 +1,11 @@
 /*
- * systools.c
+ * service.c
  *
  *  Created on: Oct 28, 2018
  *      Author: zhurish
  */
 
-#include "systools.h"
+#include "service.h"
 #ifdef ZPL_SERVICE_SNTPC
 #include "sntpcLib.h"
 #endif
@@ -50,22 +50,22 @@ struct module_list module_list_utils =
 { 
 	.module=MODULE_UTILS, 
 	.name="UTILS\0", 
-	.module_init=systools_module_init, 
-	.module_exit=systools_module_exit, 
-	.module_task_init=systools_task_init, 
-	.module_task_exit=systools_task_exit, 
-	.module_cmd_init=systools_cmd_init, 
+	.module_init=service_module_init, 
+	.module_exit=service_module_exit, 
+	.module_task_init=service_task_init, 
+	.module_task_exit=service_task_exit, 
+	.module_cmd_init=service_clicmd_init, 
 	.taskid=0,
 	.flags = 0,
 };
 
-int systools_set(void *vty)
+int service_cliout_set(void *vty)
 {
 	tftp_vty = vty;
 	return OK;
 }
 
-int systools_printf(const char *format, ...)
+int service_cliout_output(const char *format, ...)
 {
 	va_list args;
 	char buf[1024];
@@ -101,7 +101,7 @@ static int ftpd_loginVerify(char *user, char *pass)
 }
 #endif
 
-static int systools_task(void *argv)
+static int service_main_task(void *argv)
 {
 	module_list_utils.taskid = os_task_id_self();
 	module_setup_task(MODULE_UTILS, os_task_id_self());
@@ -110,14 +110,14 @@ static int systools_task(void *argv)
 	return 0;
 }
 
-int systools_task_init (void)
+int service_task_init (void)
 {
 	if(master_eloop == NULL)
 		master_eloop = eloop_master_module_create(MODULE_UTILS);
 	//master_thread[MODULE_UTILS] = thread_master_module_create(MODULE_UTILS);
 	if(sys_task_id == 0)
 		sys_task_id = os_task_create("sysTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, systools_task, NULL, OS_TASK_DEFAULT_STACK);
+	               0, service_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(sys_task_id)
 	{
 		module_list_utils.taskid = sys_task_id;
@@ -127,7 +127,7 @@ int systools_task_init (void)
 	return ERROR;
 }
 
-int systools_task_exit (void)
+int service_task_exit (void)
 {
 	if(sys_task_id)
 		os_task_destroy(sys_task_id);
@@ -136,7 +136,7 @@ int systools_task_exit (void)
 }
 
 
-int systools_module_init (void)
+int service_module_init (void)
 {
 	if(master_eloop == NULL)
 		master_eloop = eloop_master_module_create(MODULE_UTILS);
@@ -172,7 +172,7 @@ int systools_module_init (void)
 	return OK;
 }
 
-int systools_module_exit (void)
+int service_module_exit (void)
 {
 #ifdef ZPL_SERVICE_FTPD
 	ftpdDisable();
@@ -195,8 +195,4 @@ int systools_module_exit (void)
 	return OK;
 }
 
-/*int systools_cmd_init ()
-{
-	//cmd_tftp_init();
-	return OK;
-}*/
+

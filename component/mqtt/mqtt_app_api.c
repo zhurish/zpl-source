@@ -1012,7 +1012,7 @@ static int mqtt_app_task (void *argv)
 			return ERROR;
 		}
 	}
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		if(cfg->mutex)
 			os_mutex_lock(cfg->mutex, OS_WAIT_FOREVER);

@@ -1101,7 +1101,7 @@ static int os_time_task(void *p)
 	os_task_sigexecute(1, signo_tbl);
 	timer_connect(0, NULL);
 #endif
-	while(1)
+	while(OS_TASK_TRUE())
 	{
 #ifdef OS_SIGNAL_SIGWAIT
 		err = sigwait(&set, &signum);

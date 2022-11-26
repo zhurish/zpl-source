@@ -56,10 +56,10 @@ extern "C" {
 
 /* For debugging options */
 
-#define FTPL_DEBUG_OFF          0 /* No debugging messages */
-#define FTPL_DEBUG_INCOMING     1 /* Show all incoming responses */
-#define FTPL_DEBUG_OUTGOING     2 /* Show all outgoing commands */
-#define FTPL_DEBUG_ERRORS       4 /* Display all errors and warnings that occur */
+#define FTPL_DEBUG_OFF          0x00 /* No debugging messages */
+#define FTPL_DEBUG_INCOMING     0x01 /* Show all incoming responses */
+#define FTPL_DEBUG_OUTGOING     0x02 /* Show all outgoing commands */
+#define FTPL_DEBUG_ERRORS       0x04 /* Display all errors and warnings that occur */
 
 /* For FTP specification see RFC-765 */
 
@@ -153,11 +153,7 @@ extern "C" {
 
 /* externals */
 
-//extern zpl_bool ftplDebug;        /*  print error message, defined in funcBind.c */
-
-/* disable passive mode - XXX this will be removed in the next release XXX */
-
-//extern zpl_bool ftplPasvModeDisable;
+#define MAX_REPLY_MAX_LEN 1024
 
 /* function declarations */
 
@@ -165,9 +161,12 @@ extern "C" {
 extern int ftpLibInit (long timeout);
 extern int ftpLogin (zpl_socket_t ctrlSock, char *user, char *passwd, char *account);
 extern int ftpLs (char *dirName);
+extern int ftpFileSize(zpl_socket_t ctrlSock, const char *filename, int *rfilesize);
+
 extern int ftpXfer (char *host, char *user, char *passwd, char *acct,
                        char *cmd, char *dirname, char *filename,
-                       zpl_socket_t *pCtrlSock, zpl_socket_t *pDataSock);
+                       zpl_socket_t *pCtrlSock, zpl_socket_t *pDataSock, int *rfilesize);
+
 extern int ftpCommand (zpl_socket_t ctrlSock, const char *format, ...);
 extern int ftpCommandEnhanced (zpl_socket_t ctrlSock, char *replyString,
         				int replyStringLength, const char *format, ...);
@@ -181,7 +180,7 @@ extern int ftpReplyGetEnhanced (zpl_socket_t ctrlSock, zpl_bool expecteof, char 
                                 int replyStringLength);
 extern int ftpTransientConfigSet (zpl_uint32 maxRetryCount, zpl_uint32 retryInterval);
 extern int ftpTransientConfigGet (zpl_uint32 *maxRetryCount, zpl_uint32 *retryInterval);
-extern int ftpTransientFatalInstall (void * configlette);
+extern int ftpTransientFatalInstall ( zpl_bool (*configlette)(zpl_uint32));
 
 
 

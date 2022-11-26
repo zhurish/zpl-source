@@ -69,8 +69,9 @@ typedef int(*os_task_hook)(void *);
 typedef struct os_task_s
 {
 	NODE		node;
-	zpl_bool		active;
-	zpl_taskid_t		td_id;		/* task id */
+	zpl_bool volatile active;
+	zpl_bool		bcreate;
+	zpl_taskid_t	td_id;		/* task id */
 	zpl_char 		td_name[TASK_NAME_MAX];	/* name of task */
 	zpl_uint32		td_name_key;
 	zpl_pthread_t 	td_thread; /* POSIX thread ID */
@@ -93,7 +94,7 @@ typedef struct os_task_s
 	zpl_uint32			td_options;	/* task option bits (see below) */
 	zpl_uint32			td_stack_size;	/* size of stack in bytes */
 
-	task_entry	td_entry;
+	task_entry		td_entry;
 	zpl_void 		*pVoid;
 
 	zpl_char 		td_entry_name[TASK_NAME_MAX*2];
@@ -104,7 +105,7 @@ typedef struct os_task_s
 	zpl_void 		*priv;
 }os_task_t;
 
-
+#define OS_TASK_TRUE()	os_task_running_state()
 
 extern int os_limit_stack_size(zpl_int32 size);
 extern int os_limit_core_size(zpl_int32 size);
@@ -134,6 +135,7 @@ extern zpl_pthread_t os_task_pthread_self( void);
 extern zpl_taskid_t os_task_id_self( void);
 extern int os_task_gettid( void);
 extern const zpl_char * os_task_self_name_alisa(void);
+extern zpl_bool os_task_running_state(void);
 
 extern int os_task_name_get( zpl_taskid_t task_id, char *task_name);
 extern zpl_char * os_task_2_name( zpl_taskid_t task_id);
@@ -156,13 +158,14 @@ extern int os_task_foreach(os_task_hook cb, void *p);
 
 extern int os_task_entry_destroy(os_task_t *task);
 extern int os_task_destroy(zpl_taskid_t taskId);
+extern int os_task_cancel(zpl_taskid_t taskId);
 
 extern zpl_taskid_t os_task_entry_create(const zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
                          task_entry entry, void *pVoid,
                          zpl_char *func_name, zpl_uint32 stacksize);
 
 #define os_task_create(n,p,o,f,a,s)	os_task_entry_create(n,p,o,f,a,#f,s)
-//#define os_task_destroy(i)	os_task_entry_create(i)
+
 
 extern zpl_taskid_t os_task_entry_add(const zpl_char *name, zpl_uint32 pri, zpl_uint32 op,
                          task_entry entry, void *pVoid,

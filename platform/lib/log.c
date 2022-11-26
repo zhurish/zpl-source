@@ -580,7 +580,7 @@ static int zlog_task(struct zlog *zl)
 	memset(&loghdr, 0, sizeof(loghdr));
 	FD_ZERO (&rfds);
 	//FD_SET (zl->lfd, &rfds);
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		if(zl->lfd <= 0)
 		{

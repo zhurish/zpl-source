@@ -202,7 +202,7 @@ static int zpl_media_event_task(void *p)
 {
     zpl_media_event_queue_t *queue = p;
 	host_waitting_loadconfig();
-	while(queue)
+	while(queue && OS_TASK_TRUE())
 	{
         if(queue->sem)
 		    os_sem_take(queue->sem, OS_WAIT_FOREVER);

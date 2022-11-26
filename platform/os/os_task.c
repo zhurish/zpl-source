@@ -409,6 +409,14 @@ os_task_t * os_task_tcb_self(void)
 	return NULL;
 }
 
+zpl_bool os_task_running_state(void)
+{
+	os_task_t * ptask = os_task_tcb_self();
+	if(ptask)
+		return ptask->active;
+	return zpl_false;	
+}
+
 os_task_t * os_task_tcb_get(zpl_taskid_t id, zpl_pthread_t pid)
 {
 	os_task_t *task = os_task_lookup(id, pid, zpl_true);
@@ -534,7 +542,7 @@ int os_task_priority_set(zpl_taskid_t taskId, zpl_int32 Priority)
 	os_task_t *osapiTask = (os_task_t *) taskId;
 	if(taskId == (zpl_taskid_t)ERROR)
 		return ERROR;
-	if(osapiTask && !osapiTask->active)
+	if(osapiTask && !osapiTask->bcreate)
 		return OK;
 	if (osapiTask)
 	{
@@ -963,9 +971,9 @@ static int os_task_finsh_job(void)
 }
 #endif
 
-static int os_task_tcb_entry_destroy(os_task_t *task)
+static int os_task_attribute_destroy(os_task_t *task)
 {
-	if(task->active)
+	if(task->bcreate)
 	{
 		pthread_mutex_destroy(&(task->td_mutex));
 		pthread_cond_destroy(&(task->td_control));
@@ -976,14 +984,16 @@ static int os_task_tcb_entry_destroy(os_task_t *task)
 		task->priv = NULL;
 	}
 	os_free(task);
+	task = NULL;
 	return OK;
 }
 
 int os_task_entry_destroy(os_task_t *task)
 {
+	#if 0
 	if (task->td_thread == pthread_self())
 	{
-		zpl_bool	active = task->active;
+		zpl_bool	bcreate = task->bcreate;
 		/*
 		 if (pthread_mutex_lock(&zombie_tasks_lock) != 0)
 		 {
@@ -1005,15 +1015,16 @@ int os_task_entry_destroy(os_task_t *task)
 			}
 		}
 		_os_task_destroy_callback(task);
-		os_task_tcb_entry_destroy(task);
+		os_task_attribute_destroy(task);
 		if (task_mutex)
 			os_mutex_unlock(task_mutex);
-		if(active)
+		if(bcreate)
 		{
 			pthread_exit(0);
 		}
 	}
 	else
+	#endif
 	{
 		if (os_task_list == NULL)
 		{
@@ -1021,14 +1032,14 @@ int os_task_entry_destroy(os_task_t *task)
 		}
 		if (task_mutex)
 			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		if(task->active)
+		if(task->bcreate)
 		{
-			pthread_cancel(task->td_thread);
-			pthread_join(task->td_thread, (void **) NULL);
+			//pthread_cancel(task->td_thread);
+			//pthread_join(task->td_thread, (void **) NULL);
 		}
 		lstDelete(os_task_list, (NODE *) task);
 		_os_task_destroy_callback(task);
-		os_task_tcb_entry_destroy(task);
+		os_task_attribute_destroy(task);
 		if (lstCount(os_task_list) == 0)
 		{
 			if (os_moniter_id)
@@ -1052,10 +1063,23 @@ int os_task_destroy(zpl_taskid_t taskId)
 	return ERROR;
 }
 
-static int os_task_tcb_create(os_task_t *task, zpl_bool active)
+int os_task_cancel(zpl_taskid_t taskId)
+{
+	os_task_t *task = (os_task_t *) taskId;
+	if(taskId == (zpl_taskid_t)ERROR)
+		return ERROR;	
+	if (task)
+	{
+		task->active = zpl_false;
+		return OK;
+	}
+	return ERROR;
+}
+
+static int os_task_attribute_create(os_task_t *task, zpl_bool bcreate)
 {
 	//int time_slice = 0;
-	if(active == zpl_false)
+	if(bcreate == zpl_false)
 		return OK;
 	pthread_mutexattr_t attr;
 	//pthread_condattr_t 	cat;
@@ -1096,7 +1120,7 @@ static int os_task_tcb_create(os_task_t *task, zpl_bool active)
 }
 
 
-static void os_task_entry_start(os_task_t *task)
+static void os_task_entry_running(os_task_t *task)
 {
 	usleep(100000);
 #ifdef OS_TASK_DEBUG_LOG
@@ -1108,17 +1132,17 @@ static void os_task_entry_start(os_task_t *task)
 	os_task_sigmaskall();
 	task->td_tid = os_task_gettid();
 	_os_task_start_callback(task);
-
+	task->active = zpl_true;
     prctl(PR_SET_NAME, task->td_name, 0);
-	//os_task_waitting_signal();
 
 	task->td_entry(task->pVoid);
-
+	task->active = zpl_true;
+#if 0
 	if (task_mutex)
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
 	lstDelete(os_task_list, (NODE *) task);
 	_os_task_destroy_callback(task);
-	os_task_tcb_entry_destroy(task);
+	os_task_attribute_destroy(task);
 	if (lstCount(os_task_list) == 0)
 	{
 		if (os_moniter_id)
@@ -1126,13 +1150,14 @@ static void os_task_entry_start(os_task_t *task)
 	}
 	if (task_mutex)
 		os_mutex_unlock(task_mutex);
+#endif
 	return ;
 }
 
-static int os_task_tcb_active(os_task_t *task)
+static int os_task_entry_start(os_task_t *task)
 {
 	if (pthread_create(&(task->td_thread), &(task->td_attr),
-			os_task_entry_start, (void *) task) == 0)
+			os_task_entry_running, (void *) task) == 0)
 	{
 		pthread_detach(task->td_thread);
 //		pthread_attr_destroy(&(task->td_attr));
@@ -1143,8 +1168,8 @@ static int os_task_tcb_active(os_task_t *task)
 	return ERROR;
 }
 
-static os_task_t * os_task_tcb_entry_create(zpl_char *name, zpl_int32 pri, zpl_uint32 op,
-		task_entry entry, void *pVoid, zpl_char *func_name, zpl_uint32 stacksize, zpl_bool active)
+static os_task_t * os_task_entry_malloc(zpl_char *name, zpl_int32 pri, zpl_uint32 op,
+		task_entry entry, void *pVoid, zpl_char *func_name, zpl_uint32 stacksize, zpl_bool bcreate)
 {
 	if(pri > OS_TASK_MAX_PRIORITY || pri < 0)
 		return NULL;
@@ -1186,7 +1211,7 @@ static os_task_t * os_task_tcb_entry_create(zpl_char *name, zpl_int32 pri, zpl_u
 
 		task->td_entry = entry;
 		task->pVoid = pVoid;
-		task->active = active;
+		task->bcreate = bcreate;
 		os_strcpy(task->td_entry_name, func_name);
 		task->state = OS_STATE_CREATE;
 
@@ -1196,9 +1221,9 @@ static os_task_t * os_task_tcb_entry_create(zpl_char *name, zpl_int32 pri, zpl_u
 		if (task_mutex)
 			os_mutex_unlock(task_mutex);
 
-		if (os_task_tcb_create(task, active) == OK)
+		if (os_task_attribute_create(task, bcreate) == OK)
 		{
-			//if(active)
+			//if(bcreate)
 			_os_task_create_callback(task);
 			return task;
 		}
@@ -1224,11 +1249,11 @@ static int os_task_moniter_init(void)
 zpl_taskid_t os_task_entry_create(const zpl_char *name, zpl_uint32 pri, zpl_uint32 op, task_entry entry,
 		void *pVoid, zpl_char *func_name, zpl_uint32 stacksize)
 {
-	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
+	os_task_t * task = os_task_entry_malloc(name, pri, op, entry, pVoid,
 			func_name, stacksize, zpl_true);
 	if (task == NULL)
 		return ERROR;
-	if (os_task_tcb_active(task) == OK)
+	if (os_task_entry_start(task) == OK)
 	{
 #ifdef HAVE_PTHREAD_SETNAME_NP
 		//prctl(PR_SET_NAME,"THREAD2");
@@ -1262,7 +1287,7 @@ zpl_taskid_t os_task_entry_create(const zpl_char *name, zpl_uint32 pri, zpl_uint
 	}
 	else
 	{
-		os_task_tcb_entry_destroy(task);
+		os_task_attribute_destroy(task);
 		return OK;
 	}
 	return ERROR;
@@ -1274,14 +1299,14 @@ zpl_taskid_t os_task_entry_add(const zpl_char *name, zpl_uint32 pri, zpl_uint32 
                          task_entry entry, void *pVoid,
                          zpl_char *func_name, zpl_uint32 stacksize, zpl_uint32 td_thread)
 {
-	os_task_t * task = os_task_tcb_entry_create(name, pri, op, entry, pVoid,
+	os_task_t * task = os_task_entry_malloc(name, pri, op, entry, pVoid,
 			func_name, stacksize, zpl_false);
 	if (task == NULL)
 	{
 		return ERROR;
 	}
 	task->td_thread = td_thread;
-	//task->active = zpl_false;
+	//task->bcreate = zpl_false;
 	task->td_id = (zpl_taskid_t)task;
 #ifndef OS_TASK_DEBUG
 	os_task_finsh_job();

@@ -163,8 +163,8 @@ static int thread_master_del_list(struct thread_master *node)
 	if (_master_mutex)
 		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
 	cutmp = thread_master_list_delete(&_master_thread_list, node);
-	if (cutmp)
-		XFREE(MTYPE_THREAD_MASTER, cutmp);
+	//if (cutmp)
+	//	XFREE(MTYPE_THREAD_MASTER, cutmp);
 	if (_master_mutex)
 		os_mutex_unlock(_master_mutex);	
 	return OK;
@@ -1055,7 +1055,7 @@ thread_fetch(struct thread_master *m)
 	struct timeval *timer_wait = &timer_val;
 	struct timeval *timer_wait_bg;
 
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		//if (m->module == MODULE_ZPLMEDIA)
 		//	zlog_warn(MODULE_DEFAULT, " ===============thread_fetch======");
@@ -1153,13 +1153,14 @@ thread_fetch(struct thread_master *m)
 			// if ((thread = thread_trim_head (&m->ready)) != NULL)
 			return thread;
 	}
+	return NULL;
 }
 
 struct thread *
 thread_mainloop(struct thread_master *m)
 {
 	struct thread *rethread = NULL;
-	while (1)
+	while (OS_TASK_TRUE())
 	{
 		rethread = thread_fetch((struct thread_master *)m);
 		if (rethread)

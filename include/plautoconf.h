@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-09-04 15:11:59 CST"
+#define AUTOCONF_TIMESTAMP "2022-11-25 23:24:00 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -24,37 +24,37 @@
 #undef ZPL_SYSTEM_MSVC32
 #undef ZPL_SYSTEM_MSVC64
 #define ZPL_ARCH_MODULE 1
-#define ZPL_ARCH_ARM 1
+#undef ZPL_ARCH_ARM
 #undef ZPL_ARCH_ARM64
 #undef ZPL_ARCH_AARCH64
 #undef ZPL_ARCH_X86
-#undef ZPL_ARCH_X86_64
+#define ZPL_ARCH_X86_64 1
 #undef ZPL_ARM_A5
 #undef ZPL_ARM_A6
-#define ZPL_ARM_A7 1
+#undef ZPL_ARM_A7
 #undef ZPL_ARM_A8
 #undef ZPL_ARM_A9
 
 /*
  * Toolchain Config
  */
-#undef ZPL_HOST_TOOLCHAIN_MODULE
-#define ZPL_EXTERNAL_TOOLCHAIN_MODULE 1
-#define ZPL_TOOLCHAIN_PREFIX "arm-linux-gnueabihf-"
-#define ZPL_TOOLCHAIN_GLIBC 1
+#define ZPL_HOST_TOOLCHAIN_MODULE 1
+#undef ZPL_EXTERNAL_TOOLCHAIN_MODULE
+#define ZPL_TOOLCHAIN_PREFIX ""
+#undef ZPL_TOOLCHAIN_GLIBC
 #undef ZPL_TOOLCHAIN_UCLIBC
-#define ZPL_TOOLCHAIN_PATH "/opt/gcc-linaro-7.5.0-arm-linux-gnueabihf"
+#define ZPL_TOOLCHAIN_PATH ""
 #define ZPL_TOOLCHAIN_INC_PATH ""
 #define ZPL_TOOLCHAIN_LIB_PATH ""
 #define ZPL_COMPILE_OPTIONS "-g"
-#define ZPL_COREDUMP_ENABLE 1
+#undef ZPL_COREDUMP_ENABLE
 #define ZPL_FPU_HARD 1
 #undef ZPL_FPU_SOFT
 #undef ZPL_FPU_SOFTFP
 #undef ZPL_FPU_NEON
 #undef ZPL_ARM_VFP
 #undef ZPL_ARM_NEON_VFP
-#define ZPL_TOOLCHAIN_CFLAGS "-D__ARM_PCS_VFP"
+#define ZPL_TOOLCHAIN_CFLAGS ""
 
 /*
  * Platform configuration
@@ -84,7 +84,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#undef ZPL_ACTIVE_STANDBY
+#define ZPL_ACTIVE_STANDBY 1
 #undef ZPL_NSM_SNMP
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
@@ -115,7 +115,7 @@
 #define ZPL_NSM_PORT 1
 #define ZPL_NSM_VLANETH 1
 #undef ZPL_NSM_WIRELESS
-#undef ZPL_NSM_BRIDGE
+#define ZPL_NSM_BRIDGE 1
 #define ZPL_NSM_SECURITY 1
 #define ZPL_NSM_RTADV 1
 #define ZPL_NSM_IRDP 1
@@ -173,19 +173,19 @@
 /*
  * Service Module Config
  */
-#undef ZPL_SERVICE_MODULE
-#undef ZPL_SERVICE_SNTPC
-#undef ZPL_SERVICE_SNTPS
-#undef ZPL_SERVICE_SYSLOG
-#undef ZPL_SERVICE_FTPC
-#undef ZPL_SERVICE_FTPD
-#undef ZPL_SERVICE_TFTPC
-#undef ZPL_SERVICE_TFTPD
-#undef ZPL_SERVICE_PING
-#undef ZPL_SERVICE_TELNET
+#define ZPL_SERVICE_MODULE 1
+#define ZPL_SERVICE_SNTPC 1
+#define ZPL_SERVICE_SNTPS 1
+#define ZPL_SERVICE_SYSLOG 1
+#define ZPL_SERVICE_FTPC 1
+#define ZPL_SERVICE_FTPD 1
+#define ZPL_SERVICE_TFTPC 1
+#define ZPL_SERVICE_TFTPD 1
+#define ZPL_SERVICE_PING 1
+#define ZPL_SERVICE_TELNET 1
 #undef ZPL_SERVICE_TELENTD
-#undef ZPL_SERVICE_TRACEROUTE
-#undef ZPL_SERVICE_UBUS_SYNC
+#define ZPL_SERVICE_TRACEROUTE 1
+#define ZPL_SERVICE_UBUS_SYNC 1
 
 /*
  * Multimedia Module Config
@@ -239,10 +239,10 @@
  */
 #define ZPL_BSP_MODULE 1
 #define ZPL_SDK_MODULE 1
-#undef ZPL_SDK_NONE
-#define ZPL_SDK_USER 1
+#define ZPL_SDK_NONE 1
+#undef ZPL_SDK_USER
 #undef ZPL_SDK_KERNEL
-#define ZPL_SDK_BCM53125 1
+#undef ZPL_SDK_BCM53125
 
 /*
  * Externsions Module Config

@@ -654,7 +654,7 @@ int sshd_task(void *argv)
 
 	ssh_config_t *sshd = argv;
 	host_waitting_loadconfig
-	while(1)
+	while(OS_TASK_TRUE())
 	{
 		if(sshd->quit)
 			break;

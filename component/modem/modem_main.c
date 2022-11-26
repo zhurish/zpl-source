@@ -97,7 +97,7 @@ static int modem_main_task(void *argv)
 	os_ansync_t *node = NULL;
 	os_sleep(5);
 	host_waitting_loadconfig();
-	while(modem_ansync_lst)
+	while(modem_ansync_lst && OS_TASK_TRUE())
 	{
 		while((node = os_ansync_fetch(modem_ansync_lst)))
 			os_ansync_execute(modem_ansync_lst, node, OS_ANSYNC_EXECUTE_NONE);

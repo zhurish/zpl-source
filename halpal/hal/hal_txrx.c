@@ -71,7 +71,7 @@ static int hal_txrx_vlan_add(char *data, int len, vlan_t vlan, int cfi, int pri)
   //zlog_debug(MODULE_TXRX,"====DEV SEND VLAN HDR: 0x%02x 0x%02x 0x%02x 0x%02x", data[0], data[1], data[2], data[3]);  
   return 4;
 }
-
+#if 0
 static int hal_txrx_vlan_del(char *data, int len, zpl_skb_vlanhdr_t *vlan)
 {
   zpl_skb_vlanhdr_t *vlanhdr = (zpl_skb_vlanhdr_t *)(data + 2*ETH_ALEN);
@@ -87,7 +87,7 @@ static int hal_txrx_vlan_del(char *data, int len, zpl_skb_vlanhdr_t *vlan)
   }
   return 0;
 }
-
+#endif
 #ifdef ZPL_SDK_BCM53125
 static int hal_txrx_sendto_netlink(hal_txrx_t *txrx, char *data, int len, int cmd, int ifindex)
 {
@@ -336,7 +336,18 @@ static int hal_txrx_recv_callback(lib_netlink_t *nsock, int type, char *data, in
         }
       }
     }
-    
+    if(eth_l2protocol_type(p) != 0)
+    {
+      zpl_skbuffer_t * skb = zpl_skbuffer_create(NULL, rxlen);
+      if(skb)
+      {
+        zpl_skbuffer_netpkt_build_source(ifindex, 0, hwhdr.hdr_pkt.rx_pkt.rx_normal.srcport, skb);
+        zpl_skbuffer_netpkt_build_reason(hwhdr.hdr_pkt.rx_pkt.rx_normal.reason, skb);
+        //zpl_skbuffer_netpkt_build_timestamp(zpl_uint32 timestamp, skb);
+        zpl_skbuffer_netpkt_build_header(0, skb, p);
+        zpl_skbuffer_put(skb, p, rxlen);
+      }
+    }
     hal_netpkt_filter_distribute(p, rxlen);
     /*p[0] = 0xcc;
     p[1] = 0xcc;

@@ -166,7 +166,7 @@ static int zpl_media_rtsp_task(void* argv)
         //rtsp_server_warp_add_session_filename(rtsp_srv, "0/3", "/home/zhurish/workspace/planform/output.264");
         rtsp_srv_running = 0;
         rtsp_server_warp_tunneling_over_http(rtsp_srv, 8888);
-        while(1)
+        while(OS_TASK_TRUE())
         {
             //rtsp_server_warp_event_loop_running(rtsp_srv);
             if(rtsp_srv_running == 0)

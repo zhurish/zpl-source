@@ -68,7 +68,7 @@ static int main_func(int argc, char *argv[])
 	//cfg.argv = argv;
 	cfg.running = PJ_TRUE;
 
-	while (cfg.running)
+	while (cfg.running && OS_TASK_TRUE())
 	{
 		//__ZPL_PJSIP_DEBUG( "%s:pjsua_app_init","main_func");
 		status = pjsua_app_init(&cfg);

@@ -13,7 +13,7 @@
 #include "nsm_include.h"
 #include "vty_include.h"
 
-#include "systools.h"
+#include "service.h"
 #include "ftpdLib.h"
 #include "ftpLib.h"
 #include "tftpdLib.h"

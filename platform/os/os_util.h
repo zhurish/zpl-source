@@ -46,6 +46,7 @@ extern const char *dtoa(zpl_double value, zpl_char *fmt);
 extern zpl_uint8 atoascii(int a);
 extern zpl_bool is_hex (zpl_char c);
 
+extern zpl_bool is_bzero (zpl_char *str, int len);
 
 #ifdef __cplusplus
 }

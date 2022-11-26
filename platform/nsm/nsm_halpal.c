@@ -26,6 +26,7 @@
 #include "vrf.h"
 #include "prefix.h"
 #include "zclient.h"
+#include "host.h"
 #include "nsm_include.h"
 
 #ifdef ZPL_HAL_MODULE
@@ -41,11 +42,19 @@ int nsm_halpal_interface_add(struct interface *ifp)
 	int ret = 0;
 	if(os_strlen(ifp->k_name))
 	{
+		if(if_is_l3intf(ifp))
+		{
+			char mac[8];
+			host_config_get_api(API_GET_SYSMAC_CMD, mac);
+			memcpy(ifp->hw_addr, mac, NSM_MAC_MAX);
+   			ifp->hw_addr_len = NSM_MAC_MAX;
+		}
 		if(if_is_l3intf(ifp) && pal_interface_create(ifp) != OK)
 			return ERROR;
 		ret = hal_l3if_add(ifp->ifindex, ifp->k_name, NULL);
 		if(ret != OK)
 			return ret;
+		pal_interface_up(ifp);	
 	}
 	return ret;
 }

@@ -133,7 +133,6 @@ extern ifindex_t ifindex2ifkernel(ifindex_t);
 extern ifindex_t ifkernel2ifindex(ifindex_t);
 
 extern ifindex_t  vlanif2ifindex(vlan_t vid);
-//extern const char *ifkernelindex2ifname(ifindex_t kifindex);
 /* Please use ifname2ifindex instead of if_nametoindex where possible;
    ifname2ifindex uses internal interface info, whereas if_nametoindex must
    make a system call. */
@@ -147,6 +146,7 @@ extern vrf_id_t  if_ifindex2vrfid(ifindex_t ifindex);
 
 extern zpl_phyport_t  if_ifindex2l3intfid(ifindex_t ifindex);
 extern ifindex_t  if_l3intfid2ifindex(zpl_phyport_t l3intfid);
+
 
 //extern unsigned int if_nametoindex (const char *__ifname);
 //extern char *if_indextoname (unsigned int __ifindex, char *__ifname);

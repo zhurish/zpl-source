@@ -12,7 +12,7 @@
 #include "zmemory.h"
 #include "vty.h"
 #include "command.h"
-#include "systools.h"
+#include "service.h"
 
 #ifdef ZPL_SERVICE_TFTPC
 #include "tftpLib.h"
@@ -46,8 +46,8 @@
 #include "ssh_api.h"
 #endif
 
-#ifdef ZPL_SERVICE_TFTPC
-
+#if defined(ZPL_SERVICE_TFTPC) || defined(ZPL_SERVICE_FTPC)
+//copy url-string ftp://zhurish:centos@127.0.0.1:/home/zhurish/fsdd.pdf aa.pdf
 DEFUN (tftp_copy_download,
 		tftp_copy_download_cmd,
 	    "copy url-string URL FILE",
@@ -74,7 +74,7 @@ DEFUN (tftp_copy_download,
 
 	if(os_url_split(url, &spliurl) == OK)
 	{
-		vty_ansync_enable(vty, zpl_true);
+		//vty_ansync_enable(vty, zpl_true);
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
 			ret = tftp_download(vty, spliurl.host, spliurl.port, spliurl.filename,
@@ -92,7 +92,7 @@ DEFUN (tftp_copy_download,
 		else
 		{
 			vty_out(vty, " URL protocol '%s' is not support%s", spliurl.proto, VTY_NEWLINE);
-			vty_ansync_enable(vty, zpl_false);
+			//vty_ansync_enable(vty, zpl_false);
 			os_url_free(&spliurl);
 			return CMD_WARNING;
 		}
@@ -100,11 +100,11 @@ DEFUN (tftp_copy_download,
 	else
 	{
 		vty_out(vty, "URL format is warning.%s", VTY_NEWLINE);
-		vty_ansync_enable(vty, zpl_false);
+		//vty_ansync_enable(vty, zpl_false);
 		os_url_free(&spliurl);
 		return CMD_WARNING;
 	}
-	vty_ansync_enable(vty, zpl_false);
+	//vty_ansync_enable(vty, zpl_false);
 	os_url_free(&spliurl);
 	if(ret != CMD_SUCCESS)
 		return CMD_WARNING;
@@ -172,8 +172,9 @@ DEFUN (tftp_copy_upload,
 		return CMD_WARNING;
 	return CMD_SUCCESS;
 }
+#endif
 
-
+#if defined(ZPL_SERVICE_TFTPC) 
 DEFUN (tftp_server_enable,
 		tftp_server_enable_cmd,
 	    "tftp server enable",
@@ -563,13 +564,14 @@ ALIAS_HIDDEN (load_image_xyz_modem,
 
 
 
-int systools_cmd_init()
+int service_clicmd_init()
 {
 
-#ifdef ZPL_SERVICE_TFTPC
+#if defined(ZPL_SERVICE_TFTPC) || defined(ZPL_SERVICE_FTPC)
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &tftp_copy_download_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &tftp_copy_upload_cmd);
-
+#endif
+#if defined(ZPL_SERVICE_TFTPC)
 	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &tftp_server_enable_cmd);
 	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &tftp_server_address_cmd);
 	install_element (CONFIG_NODE, CMD_CONFIG_LEVEL, &no_tftp_server_enable_cmd);

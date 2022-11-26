@@ -178,7 +178,7 @@ static int os_job_task(void *p)
 	NODE node;
 	os_job_t *t;
 	//host_waitting_loadconfig();
-	while(1)
+	while(OS_TASK_TRUE())
 	{
 		os_sem_take(job_sem, OS_WAIT_FOREVER);
 
