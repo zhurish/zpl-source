@@ -355,8 +355,6 @@ LIBSSH_API int ssh_message_global_request_port(ssh_message msg);
 
 LIBSSH_API int ssh_channel_open_reverse_forward(ssh_channel channel, const char *remotehost,
     int remoteport, const char *sourcehost, int localport);
-LIBSSH_API int ssh_channel_open_x11(ssh_channel channel, 
-                                        const char *orig_addr, int orig_port);
 
 LIBSSH_API int ssh_channel_request_send_exit_status(ssh_channel channel,
                                                 int exit_status);

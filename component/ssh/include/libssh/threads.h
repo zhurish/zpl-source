@@ -56,7 +56,7 @@ const char *ssh_threads_get_type(void);
 void ssh_mutex_lock(SSH_MUTEX *mutex);
 void ssh_mutex_unlock(SSH_MUTEX *mutex);
 
-struct ssh_threads_callbacks_struct *ssh_threads_get_default(void);
+//struct ssh_threads_callbacks_struct *ssh_threads_get_default(void);
 int crypto_thread_init(struct ssh_threads_callbacks_struct *user_callbacks);
 void crypto_thread_finalize(void);
 

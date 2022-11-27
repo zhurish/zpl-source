@@ -976,21 +976,7 @@ static void defaultLogHandler(int flags, cchar *buf)
         }
     }
 }
-/*PUBLIC void error(cchar *fmt, ...)
-{
-    va_list     args;
-    char        *message;
 
-    if (!logHandler) {
-        return;
-    }
-    va_start(args, fmt);
-    message = sfmtv(fmt, args);
-    va_end(args);
-    logHandler(WEBS_ERROR_MSG, message);
-    wfree(message);
-}
-*/
 PUBLIC void flerror(char *file, int line, cchar *fmt, ...)
 {
     va_list     args;

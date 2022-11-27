@@ -42,7 +42,7 @@ char *ssh_keep_known_algos(enum ssh_kex_types_e algo, const char *list);
 char *ssh_keep_fips_algos(enum ssh_kex_types_e algo, const char *list);
 char **ssh_space_tokenize(const char *chain);
 int ssh_get_kex1(ssh_session session);
-char *ssh_find_matching(const char *in_d, const char *what_d);
+//char *ssh_find_matching(const char *in_d, const char *what_d);
 const char *ssh_kex_get_supported_method(uint32_t algo);
 const char *ssh_kex_get_default_methods(uint32_t algo);
 const char *ssh_kex_get_fips_methods(uint32_t algo);

@@ -41,7 +41,6 @@
 #endif
 
 
-static struct vty *tftp_vty = NULL;
 
 static zpl_taskid_t sys_task_id = 0;
 static void *master_eloop = NULL;
@@ -59,35 +58,6 @@ struct module_list module_list_utils =
 	.flags = 0,
 };
 
-int service_cliout_set(void *vty)
-{
-	tftp_vty = vty;
-	return OK;
-}
-
-int service_cliout_output(const char *format, ...)
-{
-	va_list args;
-	char buf[1024];
-	int len = 0;
-	struct vty *vty = tftp_vty;
-	memset(buf, 0, sizeof(buf));
-	if (!tftp_vty)
-	{
-		va_start(args, format);
-		len = vprintf(format, args);
-		va_end(args);
-	}
-	else
-	{
-		va_start(args, format);
-		len = vsnprintf(buf, sizeof(buf), format, args);
-		va_end(args);
-		if (len)
-			vty_out(vty, "%s", buf);
-	}
-	return len;
-}
 
 #ifdef ZPL_SERVICE_FTPD
 const char *ftpd_hostname(void)
@@ -114,7 +84,6 @@ int service_task_init (void)
 {
 	if(master_eloop == NULL)
 		master_eloop = eloop_master_module_create(MODULE_UTILS);
-	//master_thread[MODULE_UTILS] = thread_master_module_create(MODULE_UTILS);
 	if(sys_task_id == 0)
 		sys_task_id = os_task_create("sysTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, service_main_task, NULL, OS_TASK_DEFAULT_STACK);

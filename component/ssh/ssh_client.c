@@ -18,13 +18,11 @@
 static int ssh_client_auth_callback(const char *prompt, char *buf, zpl_size_t len,
     zpl_uint32 echo, zpl_uint32 verify, void *userdata) {
     (void) verify;
-    struct vty *vty = (struct vty *)userdata;
-    if(vty)
-    {
-    	zpl_size_t slen = ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
-    	vty_out(vty, "get password:%s%s", buf, VTY_NEWLINE);
+	if (ssh_stdin_get(userdata)>0)
+	{
+		zpl_size_t slen = ssh_getpass(userdata, ssh_stdin_get(userdata), prompt, buf, len, echo, verify);
+		//vty_out(vty, "get password:%s%s", buf, VTY_NEWLINE);
     	return slen;
-    	//return ssh_getpass(vty->fd, prompt, buf, len, echo, verify);
     }
     return -1;
 }
@@ -55,19 +53,19 @@ static void ssh_client_select_loop(ssh_session session,ssh_channel channel)
 	ssh_channel channels[2], outchannels[2];
 	zpl_uint32 lus = 0;
 	zpl_uint32 eof = 0;
-	int maxfd = 0;
+	int maxfd = 0, infd = 0, outfd = 0;
 	zpl_uint32 r = 0;
 	int ret = 0;
-	struct vty *vty = ssh_get_session_private(session);
 	while (channel)
 	{
 		do
 		{
 			int fd;
-
+			infd = ssh_stdin_get(session);
+			outfd = ssh_stdout_get(session);
 			FD_ZERO(&fds);
-			if (!eof)
-				FD_SET(vty->fd, &fds);
+			if (!eof && infd > 0)
+				FD_SET(infd, &fds);
 			timeout.tv_sec = 30;
 			timeout.tv_usec = 0;
 
@@ -78,29 +76,29 @@ static void ssh_client_select_loop(ssh_session session,ssh_channel channel)
 				goto taskout;
 			}
 			FD_SET(fd, &fds);
-			maxfd = MAX(fd, vty->fd) + 1;
+			maxfd = MAX(fd, infd) + 1;
 
 			channels[0] = channel; // set the first channel we want to read from
 			channels[1] = NULL;
-			//ssh_printf(NULL, "Error ========= ssh_select\n");
+			//ssh_printf(session, "Error ========= ssh_select\n");
 			ret = ssh_select(channels, outchannels, maxfd, &fds, &timeout);
 			if (ret == EINTR)
 				continue;
-			if (FD_ISSET(vty->fd, &fds))
+			if (FD_ISSET(infd, &fds))
 			{
-				lus = read(vty->fd, buffer, sizeof(buffer));
+				lus = read(infd, buffer, sizeof(buffer));
 				if (lus)
 					ssh_channel_write(channel, buffer, lus);
 				else
 				{
 					eof = 1;
-					ssh_printf(NULL, "Error ========= ssh_channel_send_eof\n");
+					ssh_printf(session, "Error ========= ssh_channel_send_eof\n");
 					ssh_channel_send_eof(channel);
 				}
 			}
 			if (channel && ssh_channel_is_closed(channel))
 			{
-				ssh_printf(NULL, "Error ========= ssh_channel_free 0\n");
+				ssh_printf(session, "Error ========= ssh_channel_free 0\n");
 				ssh_channel_free(channel);
 				channel = NULL;
 				channels[0] = NULL;
@@ -115,20 +113,20 @@ static void ssh_client_select_loop(ssh_session session,ssh_channel channel)
 							sizeof(buffer) > r ? r : sizeof(buffer), 0);
 					if (lus == -1)
 					{
-						ssh_printf(NULL, "Error reading channel: %s\n",
+						ssh_printf(session, "Error reading channel: %s\n",
 								ssh_get_error(session));
 						goto taskout;
 					}
 					if (lus == 0)
 					{
-						ssh_printf(NULL, "Error ========= ssh_channel_free 1\n");
+						ssh_printf(session, "Error ========= ssh_channel_free 1\n");
 						ssh_channel_free(channel);
 						channel = channels[0] = NULL;
 						goto taskout;
 					}
-					else if (write(vty->wfd, buffer, lus) < 0)
+					else if (write(outfd, buffer, lus) < 0)
 					{
-						ssh_printf(NULL, "Error writing to buffer\n");
+						ssh_printf(session, "Error writing to buffer\n");
 						goto taskout;
 					}
 				}
@@ -139,27 +137,27 @@ static void ssh_client_select_loop(ssh_session session,ssh_channel channel)
 							sizeof(buffer) > r ? r : sizeof(buffer), 1);
 					if (lus == -1)
 					{
-						ssh_printf(NULL, "Error reading channel: %s\n",
+						ssh_printf(session, "Error reading channel: %s\n",
 								ssh_get_error(session));
 						goto taskout;
 					}
 					if (lus == 0)
 					{
-						ssh_printf(NULL, "Error ========= ssh_channel_free 2\n");
+						ssh_printf(session, "Error ========= ssh_channel_free 2\n");
 						ssh_channel_free(channel);
 						channel = channels[0] = NULL;
 						goto taskout;
 					}
-					else if (write(vty->wfd, buffer, lus) < 0)
+					else if (write(outfd, buffer, lus) < 0)
 					{
-						ssh_printf(NULL, "Error writing to buffer\n");
+						ssh_printf(session, "Error writing to buffer\n");
 						goto taskout;
 					}
 				}
 			}
 			if (channel && ssh_channel_is_closed(channel))
 			{
-				ssh_printf(NULL, "Error ========= ssh_channel_free 3\n");
+				ssh_printf(session, "Error ========= ssh_channel_free 3\n");
 				ssh_channel_free(channel);
 				channel = NULL;
 				goto taskout;
@@ -168,28 +166,26 @@ static void ssh_client_select_loop(ssh_session session,ssh_channel channel)
 
 	}
 taskout:
-	ssh_printf(NULL, "taskout =========================\n");
+	ssh_printf(session, "taskout =========================\n");
 	if (channel && !ssh_channel_is_closed(channel))
 		ssh_channel_close(channel);
 	if(channel)
 		ssh_channel_free(channel);
-	ssh_printf(NULL, "taskout ============------=========\n");
+	ssh_printf(session, "taskout ============------=========\n");
 	ssh_client_exit( session);
 }
 
 
 static int ssh_client_exit(ssh_session session)
 {
-	struct vty *vty = ssh_get_session_private(session);
+	struct vty *vty = session->ssh_cli;
 	if(vty)
 	{
-		ssh_printf(NULL, "taskout ============vty_ansync_enable\n");
+		ssh_printf(session, "taskout ============vty_ansync_enable\n");
 		vty_ansync_enable(vty, zpl_false);
 		vty_resume(vty);
 	}
-	ssh_printf(NULL, "taskout ============ssh_stdout_set\n");
-	ssh_stdout_set(NULL);
-	ssh_printf(NULL, "taskout ============ssh_free\n");
+	ssh_printf(session, "taskout ============ssh_free\n");
 	ssh_free(session);
 	return 0;
 }
@@ -197,11 +193,11 @@ static int ssh_client_exit(ssh_session session)
 static void ssh_client_shell(ssh_session session)
 {
 	ssh_channel channel;
-	struct vty *vty = ssh_get_session_private(session);
+	struct vty *vty = session->ssh_cli;
 	channel = ssh_channel_new(session);
 	if (ssh_channel_open_session(channel))
 	{
-		ssh_printf(NULL, "error opening channel : %s\n",
+		ssh_printf(session, "error opening channel : %s\n",
 				ssh_get_error(session));
 		ssh_client_exit(session);
 		return;
@@ -212,7 +208,7 @@ static void ssh_client_shell(ssh_session session)
 
 	if (ssh_channel_request_shell(channel))
 	{
-		ssh_printf(NULL, "Requesting shell : %s\n", ssh_get_error(session));
+		ssh_printf(session, "Requesting shell : %s\n", ssh_get_error(session));
 		ssh_client_exit(session);
 		return;
 	}
@@ -233,9 +229,9 @@ int ssh_client(struct vty *vty, char *remotehost, zpl_uint16 port, char *user, c
 		vty_resume(vty);
 		return -1;
 	}
-	ssh_stdout_set(vty);
-	ssh_client_auth_cb.userdata = vty;
-    ssh_callbacks_init(&ssh_client_auth_cb);
+	session->ssh_cli = vty;
+	ssh_client_auth_cb.userdata = session;
+	ssh_callbacks_init(&ssh_client_auth_cb);
     ssh_set_callbacks(session, &ssh_client_auth_cb);
     if(ssh_client_connect_api(session, vty, remotehost,  port, user, pasword))
     {

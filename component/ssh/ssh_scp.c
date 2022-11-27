@@ -49,7 +49,7 @@ static int ssh_read_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_
 {
 	zpl_uint32 filesize = 0;
 	char buffer[2048];
-	zpl_uint32 r = 0, total = 0, w = 0;
+	zpl_int32 r = 0, total = 0, w = 0;
 	int fd = 0;
 	struct stat s;
 	/* Get the file name and size*/
@@ -58,7 +58,7 @@ static int ssh_read_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_
 		fd = fileno(src->file);
 		if (fd < 0)
 		{
-			ssh_printf(NULL, "Invalid file pointer, error: %s\n",
+			ssh_printf(session, "Invalid file pointer, error: %s\n",
 					strerror(errno));
 			return -1;
 		}
@@ -71,10 +71,10 @@ static int ssh_read_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_
 		r = ssh_scp_push_file(scp, src->path, filesize, s.st_mode & ~S_IFMT);
 		if (r == SSH_ERROR)
 		{
-			ssh_printf(NULL, "error: %s\n", ssh_get_error(session));
+			ssh_printf(session, "error: %s\n", ssh_get_error(session));
 			return -1;
 		}
-		ssh_printf(NULL,"upload size %d\n", filesize);
+		ssh_printf(session,"upload size %d\n", filesize);
 	}
 	do
 	{
@@ -83,14 +83,14 @@ static int ssh_read_local_file(ssh_session session, ssh_scp scp, struct ssh_scp_
 			break;
 		if (r < 0)
 		{
-			ssh_printf(NULL, "Error reading file: %s\n", strerror(errno));
+			ssh_printf(session, "Error reading file: %s\n", strerror(errno));
 			return -1;
 		}
 
 		w = ssh_scp_write(scp, buffer, r);
 		if (w == SSH_ERROR)
 		{
-			ssh_printf(NULL, "Error writing in scp: %s\n",
+			ssh_printf(session, "Error writing in scp: %s\n",
 					ssh_get_error(session));
 			return -1;
 		}
@@ -111,7 +111,7 @@ static int ssh_write_local_file(ssh_session session, ssh_scp scp, struct ssh_scp
 		r = ssh_scp_read(scp, buffer, sizeof(buffer));
 		if (r == SSH_ERROR)
 		{
-			ssh_printf(NULL, "Error reading scp: %s\n", ssh_get_error(session));
+			ssh_printf(session, "Error reading scp: %s\n", ssh_get_error(session));
 			return -1;
 		}
 		if (r == 0)
@@ -121,7 +121,7 @@ static int ssh_write_local_file(ssh_session session, ssh_scp scp, struct ssh_scp
 			w = fwrite(buffer, r, 1, src->file);
 			if (w <= 0)
 			{
-				ssh_printf(NULL, "Error writing in local file: %s\n", strerror(errno));
+				ssh_printf(session, "Error writing in local file: %s\n", strerror(errno));
 				return -1;
 			}
 		}
@@ -145,11 +145,11 @@ static int ssh_upload_files(ssh_session session, struct ssh_scp_connect *src, ch
 	ssh_scp scp = ssh_scp_new(session, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, src->path);
 	if (ssh_scp_init(scp) != SSH_OK)
 	{
-		ssh_printf(NULL, "error initializing scp: %s\n", ssh_get_error(session));
+		ssh_printf(session, "error initializing scp: %s\n", ssh_get_error(session));
 		ssh_scp_free(scp);
 		return -1;
 	}
-	ssh_printf(NULL, "Trying to upload files '%s'\n", src->path);
+	ssh_printf(session, "Trying to upload files '%s'\n", src->path);
 
 	if(!src->file)
 	{
@@ -167,7 +167,7 @@ static int ssh_upload_files(ssh_session session, struct ssh_scp_connect *src, ch
 		ssh_scp_free(scp);
 		return -1;
 	}
-	ssh_printf(NULL, "done\n");
+	ssh_printf(session, "done\n");
 
 	ssh_scp_close(scp);
 	ssh_scp_free(scp);
@@ -184,11 +184,11 @@ static int ssh_download_files(ssh_session session, struct ssh_scp_connect *src, 
 	ssh_scp scp = ssh_scp_new(session, SSH_SCP_READ | SSH_SCP_RECURSIVE, src->path);
 	if (ssh_scp_init(scp) != SSH_OK)
 	{
-		ssh_printf(NULL, "error initializing scp: %s\n", ssh_get_error(session));
+		ssh_printf(session, "error initializing scp: %s\n", ssh_get_error(session));
 		ssh_scp_free(scp);
 		return -1;
 	}
-	ssh_printf(NULL, "Trying to download files '%s'\n", src->path);
+	ssh_printf(session, "Trying to download files '%s'\n", src->path);
 	do
 	{
 		r = ssh_scp_pull_request(scp);
@@ -198,7 +198,7 @@ static int ssh_download_files(ssh_session session, struct ssh_scp_connect *src, 
 			size = ssh_scp_request_get_size(scp);
 			filename = strdup(ssh_scp_request_get_filename(scp));
 			mode = ssh_scp_request_get_permissions(scp);
-			ssh_printf(NULL,"downloading file %s, size %d\n", filename, size);
+			ssh_printf(session,"downloading file %s, size %d\n", filename, size);
 			ssh_scp_accept_request(scp);
 			if(!src->file)
 			{
@@ -217,29 +217,29 @@ static int ssh_download_files(ssh_session session, struct ssh_scp_connect *src, 
 				ssh_scp_free(scp);
 				return -1;
 			}
-			ssh_printf(NULL, "done\n");
+			ssh_printf(session, "done\n");
 			break;
 		case SSH_ERROR:
-			ssh_printf(NULL, "Error: %s\n", ssh_get_error(session));
+			ssh_printf(session, "Error: %s\n", ssh_get_error(session));
 			ssh_scp_close(scp);
 			ssh_scp_free(scp);
 			return -1;
 		case SSH_SCP_REQUEST_WARNING:
-			ssh_printf(NULL, "Warning: %s\n", ssh_scp_request_get_warning(scp));
+			ssh_printf(session, "Warning: %s\n", ssh_scp_request_get_warning(scp));
 			break;
 		case SSH_SCP_REQUEST_NEWDIR:
 			filename = strdup(ssh_scp_request_get_filename(scp));
 			mode = ssh_scp_request_get_permissions(scp);
 			mkdir(filename, mode);
-			ssh_printf(NULL,"downloading directory %s\n", filename);
+			ssh_printf(session,"downloading directory %s\n", filename);
 			free(filename);
 			ssh_scp_accept_request(scp);
 			break;
 		case SSH_SCP_REQUEST_ENDDIR:
-			//ssh_printf(NULL,"End of directory\n");
+			//ssh_printf(session,"End of directory\n");
 			break;
 		case SSH_SCP_REQUEST_EOF:
-			//ssh_printf(NULL,"End of requests\n");
+			//ssh_printf(session,"End of requests\n");
 			goto end;
 		}
 	} while (1);
@@ -263,13 +263,11 @@ int ssh_scp_upload(struct vty *vty, zpl_bool download, char *url, char *localfil
 		return -1;
 	}
 	ssh_url_setup(&src, &spliurl);
-	ssh_stdout_set(vty);
 
 	src.session = ssh_connect_api(vty, src.host, src.port, src.user, src.password);
 	if (!src.session)
 	{
-		ssh_printf(NULL, "Couldn't connect to %s\n", src.host);
-		ssh_stdout_set(NULL);
+		ssh_printf(src.session, "Couldn't connect to %s\n", src.host);
 		os_url_free(&spliurl);
 		return -1;
 	}
@@ -277,7 +275,6 @@ int ssh_scp_upload(struct vty *vty, zpl_bool download, char *url, char *localfil
 
 	ssh_disconnect(src.session);
 	ssh_free(src.session);
-	ssh_stdout_set(NULL);
 	os_url_free(&spliurl);
 	return ret;
 }
@@ -296,13 +293,11 @@ int ssh_scp_download(struct vty *vty, zpl_bool download, char *url, char *localf
 		return -1;
 	}
 	ssh_url_setup(&src, &spliurl);
-	ssh_stdout_set(vty);
 
 	src.session = ssh_connect_api(vty, src.host, src.port, src.user, src.password);
 	if (!src.session)
 	{
-		ssh_printf(NULL, "Couldn't connect to %s\n", src.host);
-		ssh_stdout_set(NULL);
+		ssh_printf(src.session, "Couldn't connect to %s\n", src.host);
 		os_url_free(&spliurl);
 		return -1;
 	}
@@ -310,7 +305,6 @@ int ssh_scp_download(struct vty *vty, zpl_bool download, char *url, char *localf
 
 	ssh_disconnect(src.session);
 	ssh_free(src.session);
-	ssh_stdout_set(NULL);
 	os_url_free(&spliurl);
 	return ret;
 }
@@ -365,8 +359,8 @@ int ssh_scpd_init(sshd_client_t *sshclient, char *cmd)
 	ssh_scp scp = malloc(sizeof(struct ssh_scp_struct));
 	if (scp == NULL)
 	{
-		ssh_printf(NULL,
-				"Error allocating memory for ssh_scp\n");
+		ssh_printf(sshclient->session,
+				   "Error allocating memory for ssh_scp\n");
 		return NULL;
 	}
 	ZERO_STRUCTP(scp);
@@ -401,7 +395,7 @@ int ssh_scpd_init(sshd_client_t *sshclient, char *cmd)
 			sshclient);
 
 	sshclient->scp_data.filename = strdup(strstr(cmd, "/"));
-	ssh_printf(NULL,"%s :%s\n", __func__, sshclient->scp_data.filename);
+	ssh_printf(sshclient->session, "%s :%s\n", __func__, sshclient->scp_data.filename);
 	os_job_add(ssh_scpd_thread, sshclient);
 	return SSH_OK;
 }
@@ -457,8 +451,8 @@ static int ssh_scpd_write(sshd_client_t *sshclient, const void *buffer, zpl_uint
   if(scp==NULL)
       return SSH_ERROR;
   if(scp->state != SSH_SCP_WRITE_WRITING){
-    ssh_printf(NULL,"ssh_scp_write called under invalid state\n");
-    return SSH_ERROR;
+	  ssh_printf(sshclient->session, "ssh_scp_write called under invalid state\n");
+	  return SSH_ERROR;
   }
   if(scp->processed + len > scp->filelen)
     len = (size_t) (scp->filelen - scp->processed);
@@ -476,8 +470,8 @@ static int ssh_scpd_write(sshd_client_t *sshclient, const void *buffer, zpl_uint
       return SSH_ERROR;
     }
     if(code == 1 || code == 2){
-      ssh_printf(NULL, "SCP: Error: status code %i received\n", code);
-      return SSH_ERROR;
+		ssh_printf(sshclient->session, "SCP: Error: status code %i received\n", code);
+		return SSH_ERROR;
     }
   /* Check if we arrived at end of file */
   if(scp->processed == scp->filelen) {
@@ -504,8 +498,8 @@ static int ssh_scpd_start_file(sshd_client_t *sshclient, const char *filename, z
   if(scp==NULL)
       return SSH_ERROR;
   if(scp->state != SSH_SCP_WRITE_INITED){
-	ssh_printf(NULL,"ssh_scp_push_file called under invalid state\n");
-    return SSH_ERROR;
+	  ssh_printf(sshclient->session, "ssh_scp_push_file called under invalid state\n");
+	  return SSH_ERROR;
   }
   file=ssh_basename(filename);
   perms=ssh_scp_string_mode(mode);
@@ -520,14 +514,14 @@ static int ssh_scpd_start_file(sshd_client_t *sshclient, const char *filename, z
   }
   r=_ssh_scpd_read_buffer(sshclient, &code, 1);
   if(r<=0){
-	ssh_printf(NULL, "Error reading status code: %s\n",ssh_get_error(scp->session));
-    scp->state=SSH_SCP_ERROR;
-    return SSH_ERROR;
+	  ssh_printf(sshclient->session, "Error reading status code: %s\n", ssh_get_error(scp->session));
+	  scp->state = SSH_SCP_ERROR;
+	  return SSH_ERROR;
   }
   if(code != 0){
-	ssh_printf(NULL, "scp status code %ud not valid\n", code);
-    scp->state=SSH_SCP_ERROR;
-    return SSH_ERROR;
+	  ssh_printf(sshclient->session, "scp status code %ud not valid\n", code);
+	  scp->state = SSH_SCP_ERROR;
+	  return SSH_ERROR;
   }
   scp->filelen = size;
   scp->processed = 0;
@@ -563,7 +557,7 @@ static int ssh_scpd_thread(sshd_client_t *sshclient)
 {
 	int ret = 0;
 	int fd = 0;
-	ssh_printf(NULL,"%s :%s\n", __func__, sshclient->scp_data.filename);
+	ssh_printf(sshclient->session, "%s :%s\n", __func__, sshclient->scp_data.filename);
 
 	if(_ssh_scpd_waiting_respone(sshclient) == OK)
 	{
@@ -598,7 +592,7 @@ static int ssh_scpd_thread(sshd_client_t *sshclient)
 				{
 					close(fd);
 					ssh_scpd_close(sshclient);
-					ssh_printf(NULL, "Error reading file: %s\n", strerror(errno));
+					ssh_printf(sshclient->session, "Error reading file: %s\n", strerror(errno));
 					return SSH_ERROR;
 				}
 				w = ssh_scpd_write(sshclient, buffer, r);
@@ -606,7 +600,7 @@ static int ssh_scpd_thread(sshd_client_t *sshclient)
 				{
 					close(fd);
 					ssh_scpd_close(sshclient);
-					ssh_printf(NULL, "Error writing in scp\n");
+					ssh_printf(sshclient->session, "Error writing in scp\n");
 					return SSH_ERROR;
 				}
 				total += r;
@@ -618,7 +612,7 @@ static int ssh_scpd_thread(sshd_client_t *sshclient)
 			if(sshclient->scp_data.filename)
 				free(sshclient->scp_data.filename);
 			//ssh_scpd_close(sshclient);
-			ssh_printf(NULL, "finsh writing in scp\n");
+			ssh_printf(sshclient->session, "finsh writing in scp\n");
 			return SSH_OK;
 		}
 		close(fd);

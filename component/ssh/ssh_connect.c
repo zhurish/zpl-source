@@ -27,6 +27,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, zpl_uint16 
 	{
 		return NULL;
 	}
+	session->ssh_cli = vty;
 	if (user != NULL)
 	{
 		if (ssh_options_set(session, SSH_OPTIONS_USER, user) < 0)
@@ -51,7 +52,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, zpl_uint16 
 		return NULL;
 	}
 
-	ssh_set_session_private(session, vty);
+	ssh_set_session_private(session, session);
 
 	ssh_options_set(session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 	if (ssh_connect(session))
@@ -62,7 +63,7 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, zpl_uint16 
 		ssh_free(session);
 		return NULL;
 	}
-	if (ssh_verify_knownhost(vty->fd, session) < 0)
+	if (ssh_verify_knownhost(ipstack_fd(vty->fd), session) < 0)
 	{
 		ssh_printf(session, "verify_knownhost failed : %s\n", ssh_get_error(session));
 		ssh_disconnect(session);
@@ -96,10 +97,8 @@ ssh_session ssh_connect_api(struct vty *vty, const char *remotehost, zpl_uint16 
 ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const char *remotehost, zpl_uint16 port,
 		const char *user, char *password)
 {
-	//ssh_session session;
 	zpl_uint32 auth = 0;
 	zpl_uint32 verbosity = 3;
-	//session = ssh_new();
 	if (session == NULL)
 	{
 		return NULL;
@@ -128,7 +127,7 @@ ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const c
 		return NULL;
 	}
 
-	ssh_set_session_private(session, vty);
+	ssh_set_session_private(session, session);
 
 	ssh_options_set(session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 	if (ssh_connect(session))
@@ -139,7 +138,7 @@ ssh_session ssh_client_connect_api(ssh_session session, struct vty *vty, const c
 		ssh_free(session);
 		return NULL;
 	}
-	if (ssh_verify_knownhost(vty->fd, session) < 0)
+	if (ssh_verify_knownhost(ipstack_fd(vty->fd), session) < 0)
 	{
 		ssh_printf(session, "verify_knownhost failed : %s\n", ssh_get_error(session));
 		ssh_disconnect(session);

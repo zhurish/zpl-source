@@ -168,7 +168,7 @@ static zpl_socket_t tftpd_socket_init(TFTPD_CONFIG *config)
 	      sizeof (struct ipstack_sockaddr_in)) == ERROR)
 	{
     	ipstack_close(serverSocket);
-    	service_log_err ("%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
+    	zlog_debug(MODULE_UTILS,"%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
     	return (serverSocket);
 	}
     while(1)
@@ -240,7 +240,6 @@ int tftpdUnInit(void)
 	{
 		if(tftpd_config->count)
 		{
-			service_cliout_output("%s is running, please waiting...\r\n", tftpdErrStr);
 			return ERROR;
 		}
 		if(tftpd_config->t_read)
@@ -262,7 +261,6 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 		{
 			if(tftpd_config->count)
 			{
-				service_cliout_output("%s is running, please waiting...\r\n", tftpdErrStr);
 				return ERROR;
 			}
 			if(tftpd_config->t_read)
@@ -290,7 +288,6 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 		{
 			if(tftpd_config->count)
 			{
-				service_cliout_output("%s is running, please waiting...\r\n", tftpdErrStr);
 				return ERROR;
 			}
 			if(tftpd_config->t_read)
@@ -635,7 +632,7 @@ static int tftpdTask( struct eloop *thread)
 
 	if (value == ERROR)
 	{
-		service_log_err("%s:  could not read on TFTP port\n", tftpdErrStr);
+		zlog_err(MODULE_UTILS,"%s:  could not read on TFTP port\n", tftpdErrStr);
 	}
 	memset(&tftpdDesc, 0, sizeof(tftpdDesc));
 
@@ -676,7 +673,7 @@ static int tftpdTask( struct eloop *thread)
 
 	if (tftpd_config && tftpd_config->tftpdDebug)
 	{
-		service_log_debug("%s: Request: Opcode = %d, file = %s, client = %s\n",
+		zlog_debug(MODULE_UTILS,"%s: Request: Opcode = %d, file = %s, client = %s\n",
 				tftpdErrStr, opCode, tftpdDesc.fileName, tftpdDesc.serverName);
 	}
 	/*
@@ -865,7 +862,7 @@ static int tftpdFileRead
     if (requestFd == ERROR)
 	{
 
-		service_log_err ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
+		zlog_debug(MODULE_UTILS,"%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
 		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
@@ -887,7 +884,7 @@ static int tftpdFileRead
 
     if (returnValue == ERROR)
 	{
-    	service_log_err ("%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
+    	zlog_debug(MODULE_UTILS,"%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
 	}
 
 
@@ -929,7 +926,7 @@ static int tftpdFileWrite
 
     if (requestFd == ERROR)
 	{
-		service_log_err ("%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
+		zlog_debug(MODULE_UTILS,"%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
 		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
@@ -952,7 +949,7 @@ static int tftpdFileWrite
 
     if (returnValue == ERROR)
 	{
-    	service_log_err ("%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
+    	zlog_debug(MODULE_UTILS,"%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
 	}
 
     tftpdDescriptorDelete (pReplyDesc);

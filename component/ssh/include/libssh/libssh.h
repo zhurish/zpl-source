@@ -790,11 +790,11 @@ LIBSSH_API char *ssh_string_to_char(ssh_string str);
 LIBSSH_API void ssh_string_free_char(char *s);
 
 #ifndef SSH_STD_REDIST
-LIBSSH_API int ssh_getpass(const char *prompt, char *buf, size_t len, int echo,
-     int verify);
+LIBSSH_API int ssh_getpass(ssh_session session, const char *prompt, char *buf, size_t len, int echo,
+                           int verify);
 #else
-LIBSSH_API int ssh_getpass(int fd, const char *prompt, char *buf, size_t len, int echo,
-    int verify);
+LIBSSH_API int ssh_getpass(ssh_session session, int fd, const char *prompt, char *buf, size_t len, int echo,
+                           int verify);
 #endif
 
 

@@ -73,9 +73,8 @@ static int sshd_close(struct vty *vty)
         if(sshclient->sock)
         	close(sshclient->sock);
     	sshclient->sock = 0;
-    	if(vty->wfd)
-    		close(vty->wfd);
-        vty->wfd = 0;
+		if (!ipstack_invalid(vty->wfd))
+			ipstack_close(vty->wfd);
 
 	    ssh_event_remove_session(sshclient->config->event, sshclient->session);
 
@@ -114,9 +113,8 @@ static void sshd_shell_close(ssh_session session,
 	    	sshclient->vty->ssh_close = NULL;
 	    	vty_close(sshclient->vty);
 	    	sshclient->vty->ssh = NULL;
-	    	if(sshclient->vty->wfd)
-	    		close(sshclient->vty->wfd);
-	    	sshclient->vty->wfd = 0;
+			if (!ipstack_invalid(sshclient->vty->wfd))
+				ipstack_close(sshclient->vty->wfd);
 	    }
 #ifdef SSH_SCPD_ENABLE
 	    if(sshclient && sshclient->type == SSH_C_SCP)
@@ -160,9 +158,8 @@ static void sshd_session_userdata_close(ssh_session session, sshd_client_t *sshc
 	    	sshclient->vty->ssh_close = NULL;
 	    	vty_close(sshclient->vty);
 	    	sshclient->vty->ssh = NULL;
-	    	if(sshclient->vty->wfd)
-	    		close(sshclient->vty->wfd);
-	    	sshclient->vty->wfd = 0;
+			if (!ipstack_invalid(sshclient->vty->wfd))
+				ipstack_close(sshclient->vty->wfd);
 	    }
 #ifdef SSH_SCPD_ENABLE
 	    if(sshclient && sshclient->type == SSH_C_SCP)
@@ -615,8 +612,8 @@ int sshd_accept(socket_t fd, zpl_uint32 revents, void *userdata)
 	ssh_config_t *ssh_config = userdata;
     session = ssh_new();
     if (session == NULL) {
-    	ssh_printf(NULL, "Failed to allocate session\n");
-        return ERROR;
+		ssh_printf(session, "Failed to allocate session\n");
+		return ERROR;
     }
     /* Blocks until there is a new incoming connection. */
     if(ssh_bind_accept(ssh_config->sshbind, session) != SSH_ERROR)
@@ -653,7 +650,7 @@ int sshd_task(void *argv)
 	zpl_uint32 waittime = 2;
 
 	ssh_config_t *sshd = argv;
-	host_waitting_loadconfig
+	host_waitting_loadconfig();
 	while(OS_TASK_TRUE())
 	{
 		if(sshd->quit)

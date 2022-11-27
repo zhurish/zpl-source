@@ -117,13 +117,11 @@ int sftp_action(struct vty *vty, zpl_bool download, char *url, char *localfile)
 		return -1;
 	}
 	ssh_url_setup(&src, &spliurl);
-	ssh_stdout_set(vty);
 
 	src.session = ssh_connect_api(vty, src.host, src.port, src.user, src.password);
 	if (!src.session)
 	{
-		ssh_printf(NULL, "Couldn't connect to %s\n", src.host);
-		ssh_stdout_set(NULL);
+		ssh_printf(src.session, "Couldn't connect to %s\n", src.host);
 		os_url_free(&spliurl);
 		return -1;
 	}
@@ -131,7 +129,6 @@ int sftp_action(struct vty *vty, zpl_bool download, char *url, char *localfile)
 
 	ssh_disconnect(src.session);
 	ssh_free(src.session);
-	ssh_stdout_set(NULL);
 	os_url_free(&spliurl);
 	return ret;
 }

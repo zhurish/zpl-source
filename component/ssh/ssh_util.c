@@ -20,7 +20,6 @@ int ssh_set_log_level(int level)
 int ssh_set_log_callback(ssh_logging_callback cb)
 int ssh_set_log_userdata(void *data)
 */
-static struct vty *ssh_vty = NULL;
 
 void ssh_log_callback_func(zpl_uint32 priority,
         const char *function,
@@ -44,7 +43,7 @@ void ssh_log_callback_func(zpl_uint32 priority,
 	case ZLOG_LEVEL_DEBUG:
 		zlog_debug(MODULE_SSH, "SSH %s", buffer);
 		break;
-	case LOG_TRAP:
+	case ZLOG_LEVEL_TRAP:
 		zlog_trap(MODULE_SSH, "SSH %s", buffer);
 		break;
 	default:
@@ -88,30 +87,31 @@ FILE * ssh_stdin_get(ssh_session session)
 
 int ssh_stdin_get(ssh_session session)
 {
-    struct vty * vty = NULL;
-	if(!session)
-	{
-		//printf();
-		vty = ssh_vty;
-	}
-	else
-	{
-		vty = ssh_get_session_private(session);
-	}
+	struct vty *vty = session->ssh_cli;
     if(vty)
     {
-    	return vty->fd;
+    	return ipstack_fd(vty->fd);
     }
     return -1;
 }
 
-int ssh_get_input(int fd, char *buf, zpl_uint32 len)
+int ssh_stdout_get(ssh_session session) 
+{
+	struct vty *vty = session->ssh_cli;
+	if (vty)
+	{
+		return ipstack_fd(vty->wfd);
+	}
+	return -1;
+}
+int ssh_get_input(ssh_session session, int fd, char *buf, zpl_uint32 len)
 {
 	int c = 0;
 	zpl_uint32 i = 0;
-	while(1)
+	while (session && session->ssh_cli)
 	{
-		c = vty_getc_input(ssh_vty);
+
+		c = vty_getc_input(session->ssh_cli);
 		if(c == '\r' || c == '\n')
 		{
 			buf[i++] = '\n';
@@ -128,24 +128,14 @@ int ssh_get_input(int fd, char *buf, zpl_uint32 len)
 	return i;
 }
 
-int ssh_stdout_set(void *v)
-{
-	ssh_vty = v;
-	return OK;
-}
+
 
 int ssh_printf(ssh_session session, const char *fmt,...)
 {
     struct vty * vty = NULL;
-	if(!session)
+	if(session)
 	{
-		//printf();
-		vty = ssh_vty;
-	}
-	else
-	{
-		vty = ssh_get_session_private(session);
-		ssh_vty = vty;
+		vty = session->ssh_cli;
 	}
     if(vty)
     {

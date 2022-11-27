@@ -48,15 +48,12 @@ extern void ssh_log_callback_func(zpl_uint32 priority,
         const char *buffer,
         void *userdata);
 
-
-extern int ssh_get_input(int fd, char *buf, zpl_uint32 len);
-
+extern int ssh_get_input(ssh_session session, int fd, char *buf, zpl_uint32 len);
 
 extern int ssh_url_setup(struct ssh_scp_connect *dest,  os_url_t *spliurl);
 
-//extern FILE * ssh_stdin_get(ssh_session session);
 extern int ssh_stdin_get(ssh_session session);
-extern int ssh_stdout_set(void *v);
+extern int ssh_stdout_get(ssh_session session);
 
 extern int ssh_printf(ssh_session session, const char *fmt,...);
 

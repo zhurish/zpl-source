@@ -44,6 +44,7 @@
 
 #ifdef ZPL_LIBSSH_MODULE
 #include "ssh_api.h"
+#include "ssh_util.h"
 #endif
 
 #if defined(ZPL_SERVICE_TFTPC) || defined(ZPL_SERVICE_FTPC)
@@ -58,6 +59,8 @@ DEFUN (tftp_copy_download,
 {
 	int ret = CMD_SUCCESS;
 	os_url_t spliurl;
+	struct ftpc_session ftp_session;
+	struct tftpc_session tftp_session;
 	char *url = NULL;
 	char *localfileName = argv[1];
 	if(strstr(argv[0], ":"))
@@ -77,11 +80,33 @@ DEFUN (tftp_copy_download,
 		//vty_ansync_enable(vty, zpl_true);
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
-			ret = tftp_download(vty, spliurl.host, spliurl.port, spliurl.filename,
-					NULL, NULL, localfileName);
+		{
+			tftp_session.hostName = spliurl.host;
+			tftp_session.port = spliurl.port;
+			tftp_session.user = spliurl.user;
+			tftp_session.passwd = spliurl.pass;
+			tftp_session.cli = vty;
+			tftp_session.cli_out = vty_out;
+			tftp_session.cli_write = vty_write;
+			tftp_session.fileName = spliurl.filename;
+			tftp_session.localfileName = localfileName;
+			ret = tftp_download(&tftp_session, vty_out, vty);
+		}
 		else if(strstr(spliurl.proto,"ftp"))
-			ret = ftp_download(vty, spliurl.host, spliurl.port, spliurl.path, spliurl.filename,
-					spliurl.user, spliurl.pass, localfileName);
+		{
+			ftp_session.hostName = spliurl.host;
+			ftp_session.port = spliurl.port;
+			ftp_session.user = spliurl.user;
+			ftp_session.passwd = spliurl.pass;
+			ftp_session.acct = NULL;
+			ftp_session.path = spliurl.path;
+			ftp_session.fileName = spliurl.filename;
+			ftp_session.localfileName = localfileName;
+			ftp_session.cli = vty;
+			ftp_session.cli_out = vty_out;
+			ftp_session.cli_write = vty_write;
+			ret = ftp_download(&ftp_session, vty_out, vty);
+		}
 #ifdef ZPL_LIBSSH_MODULE
 		else if(strstr(spliurl.proto,"scp"))
 			ret = ssh_scp_download(vty, zpl_true, url, localfileName);
@@ -121,6 +146,8 @@ DEFUN (tftp_copy_upload,
 {
 	int ret = CMD_SUCCESS;
 	os_url_t spliurl;
+	struct ftpc_session ftp_session;
+	struct tftpc_session tftp_session;
 	char *url = NULL;
 	char *localfileName = argv[1];
 	if(strstr(argv[0], ":"))
@@ -140,11 +167,33 @@ DEFUN (tftp_copy_upload,
 		vty_ansync_enable(vty, zpl_true);
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
-			ret = tftp_upload(vty, spliurl.host, spliurl.port, spliurl.filename,
-					NULL, NULL, localfileName);
-		else if(strstr(spliurl.proto,"ftp"))
-			ret = ftp_upload(vty, spliurl.host, spliurl.port, spliurl.path, spliurl.filename,
-					spliurl.user, spliurl.pass, localfileName);
+		{
+			tftp_session.hostName = spliurl.host;
+			tftp_session.port = spliurl.port;
+			tftp_session.user = spliurl.user;
+			tftp_session.passwd = spliurl.pass;
+			tftp_session.cli = vty;
+			tftp_session.cli_out = vty_out;
+			tftp_session.cli_write = vty_write;
+			tftp_session.fileName = spliurl.filename;
+			tftp_session.localfileName = localfileName;
+			ret = tftp_upload(&tftp_session, vty_out, vty);
+		}
+		else if (strstr(spliurl.proto, "ftp"))
+		{
+			ftp_session.hostName = spliurl.host;
+			ftp_session.port = spliurl.port;
+			ftp_session.user = spliurl.user;
+			ftp_session.passwd = spliurl.pass;
+			ftp_session.acct = NULL;
+			ftp_session.path = spliurl.path;
+			ftp_session.fileName = spliurl.filename;
+			ftp_session.localfileName = localfileName;
+			ftp_session.cli = vty;
+			ftp_session.cli_out = vty_out;
+			ftp_session.cli_write = vty_write;
+			ret = ftp_upload(&ftp_session, vty_out, vty);
+		}
 #ifdef ZPL_LIBSSH_MODULE
 		else if(strstr(spliurl.proto,"scp"))
 			ret = ssh_scp_upload(vty, zpl_false, url, localfileName);

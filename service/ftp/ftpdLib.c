@@ -432,12 +432,12 @@ static void ftpdTask (void)
 
 		addrLen = sizeof(struct ipstack_sockaddr);
 
-		service_log_debug("waiting for a new client connection...");
+		zlog_debug(MODULE_UTILS,"waiting for a new client connection...");
 
 		newSock = ipstack_accept(ftpdServerSock, (struct ipstack_sockaddr *) &addr, &addrLen);
 		if (newSock < 0)
 		{
-			service_log_debug("cannot ipstack_accept a new connection");
+			zlog_debug(MODULE_UTILS,"cannot ipstack_accept a new connection");
 			break;
 		}
 
@@ -453,7 +453,7 @@ static void ftpdTask (void)
 		//semTake (ftpsMutexSem, WAIT_FOREVER);
 		ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &on, sizeof(on));
 
-		service_log_debug("accepted a new client connection from %s\n",
+		zlog_debug(MODULE_UTILS,"accepted a new client connection from %s\n",
 				ipstack_inet_ntoa(addr.sin_addr));
 
 		/* Create a new session entry for this connection, if possible. */
@@ -465,7 +465,7 @@ static void ftpdTask (void)
 
 			ftpdCmdSend(pSlot, newSock, 421,
 					"Session limit reached, closing control connection");
-			service_log_debug("cannot get a new connection slot");
+			zlog_debug(MODULE_UTILS,"cannot get a new connection slot");
 			close(newSock);
 			//semGive (ftpsMutexSem);
 			continue;
@@ -487,7 +487,7 @@ static void ftpdTask (void)
 
 		/* Spawn a secondary task to process FTP requests for this session. */
 
-		service_log_debug("creating a new server task %s...", ftpdWorkTaskName);
+		zlog_debug(MODULE_UTILS,"creating a new server task %s...", ftpdWorkTaskName);
 #if 0
 		if (taskSpawn (ftpdWorkTaskName, ftpdWorkTaskPriority,
 						ftpdWorkTaskOptions, ftpdWorkTaskStackSize,
@@ -499,12 +499,12 @@ static void ftpdTask (void)
 			ftpdCmdSend (pSlot, newSock, 421,
 					"Service not available, closing control connection");
 			ftpdSessionDelete (pSlot);
-			service_log_debug ("cannot create a new work task");
+			zlog_err(MODULE_UTILS,"cannot create a new work task");
 			semGive (ftpsMutexSem);
 			continue;
 		}
 #endif
-		service_log_debug("done.");
+		zlog_debug(MODULE_UTILS,"done.");
 
 		/* Session added - end of critical section with ipstack_shutdown routine. */
 
@@ -534,13 +534,13 @@ static int ftpdTask (struct eloop *thread)
 	newSock = ipstack_accept(sock, (struct ipstack_sockaddr *) &addr, &addrLen);
 	if (ipstack_invalid(newSock))
 	{
-		service_log_err("FTPD cannot ipstack_accept a new connection");
+		zlog_err(MODULE_UTILS,"FTPD cannot ipstack_accept a new connection");
 		return ERROR;
 	}
 	ipstack_setsockopt(newSock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (char *) &on, sizeof(on));
 
 	if(FTPD_IS_DEBUG(EVENT))
-		service_log_debug("FTPD accepted a new client connection from %s\n",
+		zlog_debug(MODULE_UTILS,"FTPD accepted a new client connection from %s\n",
 			ipstack_inet_ntoa(addr.sin_addr));
 
 	/* Create a new session entry for this connection, if possible. */
@@ -551,7 +551,7 @@ static int ftpdTask (struct eloop *thread)
 		/* Send transient failure report to client. */
 		ftpdCmdSend(pSlot, newSock, FTP_TOO_MANY_USERS,
 				"Session limit reached, closing control connection");
-		service_log_err("FTPD cannot get a new connection session");
+		zlog_err(MODULE_UTILS,"FTPD cannot get a new connection session");
 		ipstack_close(newSock);
 		return ERROR;
 	}
@@ -916,7 +916,7 @@ static void ftpdSessionDelete
 	 * detected during normal processing.
 	 */
 	if(FTPD_IS_DEBUG(EVENT))
-		service_log_debug("FTPD delete session : %s", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+		zlog_debug(MODULE_UTILS,"FTPD delete session : %s", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 /*	if(pSlot->taskid)
 		os_task_destroy(pSlot->taskid);*/
 	pSlot->taskid = 0;
@@ -1095,7 +1095,7 @@ static int ftpdWorkTask
 			*upperCommand = toupper(*upperCommand);
 
 		if(FTPD_IS_DEBUG(CMD))
-			service_log_debug("FTPD ipstack_recv command %s\n", pBuf);
+			zlog_debug(MODULE_UTILS,"FTPD ipstack_recv command %s\n", pBuf);
 
 		/*
 		 * Send an abort message to the client if a server
@@ -1124,7 +1124,7 @@ static int ftpdWorkTask
 			pSlot->status &= ~FTPD_USER_OK;
 
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD Password required on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD Password required on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (ftpdCmdSend(pSlot, sock, FTP_GIVEPWORD, messages[MSG_PASSWORD_REQUIRED]) == ERROR)
 			{
@@ -1143,7 +1143,7 @@ static int ftpdWorkTask
 				if ((ftpd_config.loginVerifyRtn)(pSlot->user, pBuf + 5) != OK)
 				{
 					if(FTPD_IS_DEBUG(EVENT))
-						service_log_debug("FTPD User login failed on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+						zlog_debug(MODULE_UTILS,"FTPD User login failed on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 					if (ftpdCmdSend(pSlot, sock, FTP_LOGINERR,messages[MSG_USER_LOGIN_FAILED])== ERROR)
 					{
@@ -1155,7 +1155,7 @@ static int ftpdWorkTask
 				}
 			}
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD User login successful on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD User login successful on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			pSlot->status |= FTPD_USER_OK;
 			if (ftpdCmdSend(pSlot, sock, FTP_LOGINOK, messages[MSG_USER_LOGGED_IN]) == ERROR)
@@ -1169,7 +1169,7 @@ static int ftpdWorkTask
 		{
 			/* sayonara */
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD User logout on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD User logout on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 			ftpdCmdSend(pSlot, sock, FTP_GOODBYE, messages[MSG_SEE_YOU_LATER]);
 			ftpdSessionDelete(pSlot);
 			return OK;
@@ -1203,7 +1203,7 @@ static int ftpdWorkTask
 		{
 			/* user is not validated yet.  tell him to log in first */
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD USER and PASS required on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD USER and PASS required on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (ftpdCmdSend(pSlot, sock, FTP_LOGINERR, messages[MSG_USER_PASS_REQ]) == ERROR)
 			{
@@ -1220,7 +1220,7 @@ static int ftpdWorkTask
 		{
 			int retVal;
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD LIST cmd on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD LIST cmd on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			/* client wants to list out the contents of a directory */
 
@@ -1241,7 +1241,7 @@ static int ftpdWorkTask
 			else
 				dirName = &pBuf[5];
 
-			//service_log_debug("LIST %s\n", dirName);
+			//zlog_debug(MODULE_UTILS,"LIST %s\n", dirName);
 
 			/* get a new data ipstack_socket connection for the transmission of
 			 * the directory listing data
@@ -1304,7 +1304,7 @@ static int ftpdWorkTask
 				pFileName = &pBuf[5];
 
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD read file (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD read file (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 
 			if ((inStream = fopen(pFileName, "r")) == NULL)
@@ -1343,9 +1343,9 @@ static int ftpdWorkTask
 				pFileName = &pBuf[5];
 
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD write file (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD write file (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
-			//service_log_debug("STOR %s\n", pFileName);
+			//zlog_debug(MODULE_UTILS,"STOR %s\n", pFileName);
 
 			if ((outStream = fopen(pFileName, "w")) == NULL)
 			{
@@ -1389,7 +1389,7 @@ static int ftpdWorkTask
 			chdir(newPath); /* condense ".." shit */
 
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD change DIR (-> %s) on %s ", newPath, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD change DIR (-> %s) on %s ", newPath, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			/* remember where we are */
 
@@ -1407,7 +1407,7 @@ static int ftpdWorkTask
 		{
 			/* we only support BINARY and ASCII representation types */
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD SET TYPE on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD SET TYPE on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (pBuf[5] == 'I' || pBuf[5] == 'i' || pBuf[5] == 'L'
 					|| pBuf[5] == 'l')
@@ -1547,7 +1547,7 @@ static int ftpdWorkTask
 			 * ipstack_socket
 			 */
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD Connect to client (PASV TYPE) on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD Connect to client (PASV TYPE) on %s ", ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			ftpdSockFree(&pSlot->dataSock);
 
@@ -1657,7 +1657,7 @@ static int ftpdWorkTask
 			else
 				pFileName = &pBuf[5];
 			if(FTPD_IS_DEBUG(EVENT))
-				service_log_debug("FTPD DELETE File (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
+				zlog_debug(MODULE_UTILS,"FTPD DELETE File (%s) on %s ", pFileName, ipstack_inet_ntoa(pSlot->peerAddr.sin_addr));
 
 			if (remove(pFileName) != OK)
 			{
@@ -2136,7 +2136,7 @@ static void ftpdDataStreamSend
 		unImplementedType(pSlot); /* invalide representation type */
 
 	if(FTPD_IS_DEBUG(EVENT))
-		service_log_debug("FTPD transferred %d bytes", pSlot->byteCount);
+		zlog_debug(MODULE_UTILS,"FTPD transferred %d bytes", pSlot->byteCount);
 }
 
 /*******************************************************************************
@@ -2313,7 +2313,7 @@ static void ftpdDataStreamReceive
 		unImplementedType(pSlot); /* invalid representation type */
 
 	if(FTPD_IS_DEBUG(EVENT))
-		service_log_debug("FTPD receive %d bytes", pSlot->byteCount);
+		zlog_debug(MODULE_UTILS,"FTPD receive %d bytes", pSlot->byteCount);
 }
 
 /*******************************************************************************
@@ -2626,13 +2626,13 @@ static int ftpdCmdSend
     buflen = strlen (buf);
 
 	if(FTPD_IS_DEBUG(CMD))
-		service_log_debug("FTPD ipstack_send command %s\n", buf);
+		zlog_debug(MODULE_UTILS,"FTPD ipstack_send command %s\n", buf);
 
     if ( ipstack_write (controlSock, buf, buflen) != buflen )
     {
         if (pSlot != NULL)
             pSlot->cmdSockError = ERROR;
-        service_log_err ("FTPD sent %s Failed on write\n", buf);
+        zlog_err(MODULE_UTILS,"FTPD sent %s Failed on write\n", buf);
         return (ERROR);    /* Write Error */
     }
 

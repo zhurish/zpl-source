@@ -270,7 +270,7 @@ typedef void (*WebsLogHandler)(int level, cchar *msg);
     @return Zero if successful
     @stability Stable
 */
-//PUBLIC void error(cchar *fmt, ...);
+
 PUBLIC void flerror(char *file, int line, cchar *fmt, ...);
 #define web_error(...) flerror(__FILE__, __LINE__,__VA_ARGS__)
 /**

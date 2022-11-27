@@ -107,13 +107,13 @@ config ZPL_LIBSSH_MBEDTLS
 config ZPL_LIBSSH_CRYPTO
 	bool "Libssh CRYPTO"
 	depends on ZPL_LIBSSH_MODULE
-	default n
+	default y
 	help
 	Build Libssh whih CRYPTO Module.
 config ZPL_LIBSSH_OPENSSL_ED25519
 	bool "Libssh OPENSSL ED25519"
 	depends on ZPL_LIBSSH_CRYPTO
-	default n
+	default y
 	help
 	Build Libssh whih OPENSSL ED25519 Module.
 config ZPL_LIBSSH_BLOWFISH

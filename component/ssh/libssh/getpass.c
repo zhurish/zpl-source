@@ -28,7 +28,8 @@
 #include <stdlib.h>
 
 #include <libssh/priv.h>
-
+extern int ssh_printf(ssh_session session, const char *fmt, ...);
+extern int ssh_get_input(ssh_session session, int fd, char *buf, zpl_uint32 len);
 /**
  * @internal
  *
@@ -45,7 +46,8 @@
  * @return              1 on success, 0 on error.
  */
 #ifndef SSH_STD_REDIST
-static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
+static int ssh_gets(ssh_session session, const char *prompt, char *buf, size_t len, int verify)
+{
     char *tmp;
     char *ptr = NULL;
     int ok = 0;
@@ -115,7 +117,8 @@ static int ssh_gets(const char *prompt, char *buf, size_t len, int verify) {
     return ok;
 }
 #else
-static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verify) {
+static int ssh_gets(ssh_session session, int fd, const char *prompt, char *buf, size_t len, int verify)
+{
     char *tmp;
     char *ptr = NULL;
     int ok = 0;
@@ -129,12 +132,13 @@ static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verif
     /* read the password */
     while (!ok) {
         if (buf[0] != '\0') {
-            ssh_printf(NULL, "%s[%s] ", prompt, buf);
+            ssh_printf(session, "%s[%s] ", prompt, buf);
         } else {
-        	ssh_printf(NULL, "%s", prompt);
+        	ssh_printf(session, "%s", prompt);
         }
 
-        if (!ssh_get_input(fd, tmp, len)) {
+        if (!ssh_get_input(session, fd, tmp, len))
+        {
             SAFE_FREE(tmp);
             return 0;
         }
@@ -142,7 +146,7 @@ static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verif
         if ((ptr = strchr(tmp, '\n'))) {
             *ptr = '\0';
         }
-        ssh_printf(NULL, "\n");
+        ssh_printf(session, "\n");
 
         if (*tmp) {
             strncpy(buf, tmp, len);
@@ -157,19 +161,20 @@ static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verif
             }
 	          memset(key_string, '\0', len);
 
-	          ssh_printf(NULL, "\nVerifying, please re-enter. %s", prompt);
-            if (! ssh_get_input(fd, key_string, len)) {
-                memset(key_string, '\0', len);
-                SAFE_FREE(key_string);
-                //clearerr(in);
-                continue;
-            }
+	          ssh_printf(session, "\nVerifying, please re-enter. %s", prompt);
+              if (!ssh_get_input(session, fd, key_string, len))
+              {
+                  memset(key_string, '\0', len);
+                  SAFE_FREE(key_string);
+                  // clearerr(in);
+                  continue;
+              }
             if ((ptr = strchr(key_string, '\n'))) {
                 *ptr = '\0';
             }
-            ssh_printf(NULL, "\n");
+            ssh_printf(session, "\n");
             if (strcmp(buf, key_string)) {
-            	ssh_printf(NULL, "\n\07\07Mismatch - try again\n");
+            	ssh_printf(session, "\n\07\07Mismatch - try again\n");
                 memset(key_string, '\0', len);
                 SAFE_FREE(key_string);
                 continue;
@@ -188,11 +193,12 @@ static int ssh_gets(int fd, const char *prompt, char *buf, size_t len, int verif
 #ifdef _WIN32
 #include <windows.h>
 
-int ssh_getpass(const char *prompt,
+int ssh_getpass(ssh_session session, const char *prompt,
                 char *buf,
                 size_t len,
                 int echo,
-                int verify) {
+                int verify)
+{
     HANDLE h;
     DWORD mode = 0;
     int ok;
@@ -215,7 +221,7 @@ int ssh_getpass(const char *prompt,
         }
     }
 
-    ok = ssh_gets(prompt, buf, len, verify);
+    ok = ssh_gets(session, prompt, buf, len, verify);
 
     /* reset echo */
     SetConsoleMode(h, mode);
@@ -281,11 +287,12 @@ int ssh_getpass(const char *prompt,
  * @return              0 on success, -1 on error.
  */
 #ifndef SSH_STD_REDIST
-int ssh_getpass(const char *prompt,
+int ssh_getpass(ssh_session session, const char *prompt,
                 char *buf,
                 size_t len,
                 int echo,
-                int verify) {
+                int verify)
+{
     struct termios attr;
     struct termios old_attr;
     int ok = 0;
@@ -330,7 +337,7 @@ int ssh_getpass(const char *prompt,
         fcntl(0, F_SETFL, fd & ~O_NDELAY);
     }
 
-    ok = ssh_gets(prompt, buf, len, verify);
+    ok = ssh_gets(session, prompt, buf, len, verify);
 
     if (isatty(STDIN_FILENO)) {
         /* reset terminal */
@@ -353,13 +360,13 @@ int ssh_getpass(const char *prompt,
     return 0;
 }
 #else
- 
 
-int ssh_getpass(int fd, const char *prompt,
+int ssh_getpass(ssh_session session, int fd, const char *prompt,
                 char *buf,
                 size_t len,
                 int echo,
-                int verify) {
+                int verify)
+{
     int ok = 0;
 
     /* fgets needs at least len - 1 */
@@ -367,7 +374,7 @@ int ssh_getpass(int fd, const char *prompt,
         return -1;
     }
 
-    ok = ssh_gets(fd, prompt, buf, len, verify);
+    ok = ssh_gets(session, fd, prompt, buf, len, verify);
 
     if (!ok) {
         memset (buf, '\0', len);

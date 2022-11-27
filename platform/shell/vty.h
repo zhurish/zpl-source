@@ -415,8 +415,8 @@ extern int vty_execute_shell(void *cli, const char *cmd);
 
 extern int vty_getc_input(struct vty *vty);
 extern int vty_read_handle(struct vty *vty, zpl_uchar *buf, zpl_uint32 len);
-
-extern int vty_out (struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
+extern int vty_write(struct vty *vty, const char *buf, zpl_size_t nbytes);
+extern int vty_out(struct vty *, const char *, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_sync_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern int vty_result_out(struct vty *vty, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
 extern void vty_close (struct vty *);

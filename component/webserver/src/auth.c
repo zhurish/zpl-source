@@ -421,7 +421,7 @@ static void computeUserAbilities(WebsUser *user)
             web_trace(WEBS_DEBUG, "%s ", key->name.value.string);
             ability = key->name.value.string;
         }
-        web_trace(WEBS_DEBUG, "");
+        web_trace(WEBS_DEBUG, " ");
     }
 #endif
     wfree(proles);

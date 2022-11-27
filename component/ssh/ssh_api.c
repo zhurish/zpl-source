@@ -34,8 +34,7 @@ static ssh_config_t ssh_config;
 
 static int ssh_ctl_thread(socket_t fd, int revents, void *userdata);
 
-
-int ssh_module_init()
+int ssh_module_init(void)
 {
 	int socket[2] = { 0, 0 };
 	memset(&ssh_config, 0, sizeof(ssh_config));
@@ -69,7 +68,7 @@ int ssh_module_init()
     return OK;
 }
 
-int ssh_module_exit()
+int ssh_module_exit(void)
 {
     ssh_event_free(ssh_config.event);
     ssh_bind_free(ssh_config.sshbind);
@@ -78,8 +77,7 @@ int ssh_module_exit()
     return OK;
 }
 
-
-int ssh_module_task_init ()
+int ssh_module_task_init(void)
 {
 	if(ssh_config.sshd_taskid == 0)
 		ssh_config.sshd_taskid = os_task_create("sshdTask", OS_TASK_DEFAULT_PRIORITY,
@@ -92,7 +90,7 @@ int ssh_module_task_init ()
 	return ERROR;
 }
 
-int ssh_module_task_exit ()
+int ssh_module_task_exit(void)
 {
 	ssh_config.quit = zpl_true;
 /*	if(ssh_config.sshd_taskid)
@@ -129,7 +127,7 @@ int sshd_enable(char *address, int port)
     sshd_set_default_keys(ssh_config.sshbind, 0, 1, 1);
 
     if(ssh_bind_listen(ssh_config.sshbind) < 0) {
-    	ssh_printf(NULL, "%s\n", ssh_get_error(ssh_config.sshbind));
+    	//ssh_printf(NULL, "%s\n", ssh_get_error(ssh_config.sshbind));
         return 1;
     }
     ssh_socket_set_nonblocking(ssh_bind_get_fd(ssh_config.sshbind));

@@ -564,7 +564,7 @@ DEFUN (show_ssh_keys,
 
 
 
-int ssh_cmd_init()
+int ssh_cmd_init(void)
 {
 /*	reinstall_node(CONFIG_NODE, ssh_write_config);
 	install_default(CONFIG_NODE);

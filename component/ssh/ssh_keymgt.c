@@ -119,7 +119,7 @@ int ssh_keymgt_export_set(ssh_config_t *ssh, char *keyname, zpl_uint32 type, cha
 		int ret = SSH_ERROR;
 		char file_name[128];
 		memset(file_name, 0, sizeof(file_name));
-		sprintf(file_name, sizeof(file_name), "%s%s", KEYS_FOLDER, filename);
+		snprintf(file_name, sizeof(file_name), "%s%s", KEYS_FOLDER, filename);
 		if(type == 1 && ssh_key_is_public(sshkey->key))
 		{
 			ret = ssh_pki_export_pubkey_file(sshkey->key, file_name);
@@ -142,7 +142,7 @@ int ssh_keymgt_import_set(ssh_config_t *ssh, char *keyname, zpl_uint32 type, cha
 		int ret = SSH_ERROR;
 		char file_name[128];
 		memset(file_name, 0, sizeof(file_name));
-		sprintf(file_name, sizeof(file_name), "%s%s", KEYS_FOLDER, filename);
+		snprintf(file_name, sizeof(file_name), "%s%s", KEYS_FOLDER, filename);
 		if(type == 1)
 		{
 			if(sshkey->key)

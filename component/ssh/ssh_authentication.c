@@ -50,11 +50,12 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
 
                 ssh_printf(session,"%s", prompt);
 
-                if (!ssh_get_input(fd, buffer, sizeof(buffer))) {
-                    return SSH_AUTH_ERROR;
-                }
+				if (!ssh_get_input(session, fd, buffer, sizeof(buffer)))
+				{
+					return SSH_AUTH_ERROR;
+				}
 
-                buffer[sizeof(buffer) - 1] = '\0';
+				buffer[sizeof(buffer) - 1] = '\0';
                 if ((p = strchr(buffer, '\n'))) {
                     *p = '\0';
                 }
@@ -70,10 +71,11 @@ int ssh_authenticate_kbdint(int fd, ssh_session session, const char *password) {
                 } else {
                     buffer[0] = '\0';
 
-                    if (ssh_getpass(fd, prompt, buffer, (size_t)sizeof(buffer), 0, 0) < 0) {
-                        return SSH_AUTH_ERROR;
-                    }
-                    answer = buffer;
+					if (ssh_getpass(session, fd, prompt, buffer, (size_t)sizeof(buffer), 0, 0) < 0)
+					{
+						return SSH_AUTH_ERROR;
+					}
+					answer = buffer;
                 }
                 err = ssh_userauth_kbdint_setanswer(session, i, answer);
                 memset(buffer, 0, sizeof(buffer));
@@ -145,7 +147,7 @@ int ssh_verify_knownhost(int fd, ssh_session session)
 		ssh_printf(session, "Public key hash: %s\n", hexa);
 		ssh_string_free_char(hexa);
 		ssh_printf(session, "waiting input [yes/no] ?\n");
-		if (!ssh_get_input(fd, buf, sizeof(buf)))
+		if (!ssh_get_input(session, fd, buf, sizeof(buf)))
 		{
 			ssh_clean_pubkey_hash(&hash);
 			return -1;
@@ -158,7 +160,7 @@ int ssh_verify_knownhost(int fd, ssh_session session)
 		ssh_printf(session,
 				"This new key will be written on disk for further usage. do you agree ?\n");
 		ssh_printf(session, "waiting input [yes/no] ?\n");
-		if (!ssh_get_input(fd, buf, sizeof(buf)))
+		if (!ssh_get_input(session, fd, buf, sizeof(buf)))
 		//if (fgets(buf, sizeof(buf), ssh_stdin_get(session)) == NULL)
 		{
 			ssh_clean_pubkey_hash(&hash);
@@ -248,7 +250,7 @@ int ssh_authenticate_api (ssh_session session, char *pass)
 			rc = ssh_authenticate_kbdint(fd, session, NULL);
 			if (rc == SSH_AUTH_ERROR)
 			{
-				error(session);
+				//error(session);
 				return rc;
 			}
 			else if (rc == SSH_AUTH_SUCCESS)
@@ -295,7 +297,7 @@ int ssh_authenticate_api (ssh_session session, char *pass)
 		if (method & SSH_AUTH_METHOD_PASSWORD)
 		{
 			memset(password, 0, sizeof(password));
-			if (ssh_getpass(fd, "Password: ", password, sizeof(password), 0, 0) < 0)
+			if (ssh_getpass(session, fd, "Password: ", password, sizeof(password), 0, 0) < 0)
 			{
 				return SSH_AUTH_ERROR;
 			}

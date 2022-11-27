@@ -963,20 +963,21 @@ int vty_command(struct vty *vty, const zpl_char *buf)
 }
 
 /* Basic function to write buffer to vty. */
-static void vty_write(struct vty *vty, const char *buf, zpl_size_t nbytes)
+int vty_write(struct vty *vty, const char *buf, zpl_size_t nbytes)
 {
 	if ((vty->node == AUTH_NODE) || (vty->node == AUTH_ENABLE_NODE))
-		return;
+		return nbytes;
 
 	if (vty->ansync && !vty_shell(vty))
 	{
-		ipstack_write(vty->wfd, buf, nbytes);
+		return ipstack_write(vty->wfd, buf, nbytes);
 	}
 	else
 	{
 		/* Should we do buffering here ?  And make vty_flush (vty) ? */
 		buffer_put(vty->obuf, buf, nbytes);
 	}
+	return nbytes;
 }
 
 /* Basic function to insert character into vty. */

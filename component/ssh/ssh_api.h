@@ -125,14 +125,13 @@ extern int ssh_keymgt_import_api(char *keyname, zpl_uint32 type, char *filename,
 extern int show_ssh_keymgt(struct vty *vty);
 extern int ssh_write_config(struct vty *vty);
 
+extern int ssh_cmd_init(void);
+extern int ssh_module_init(void);
+extern int ssh_module_exit(void);
 
-extern int ssh_module_init();
-extern int ssh_module_exit();
+extern int ssh_module_task_init(void);
+extern int ssh_module_task_exit(void);
 
-extern int ssh_module_task_init ();
-extern int ssh_module_task_exit ();
-
- 
 #ifdef __cplusplus
 }
 #endif

@@ -28,14 +28,7 @@
 #define MAX_LOGIN_NAME_LEN 	128
 #define MAX_DIR_NAME_LEN 	128
 
-#define service_log_debug(fmt,...)	zlog_debug(MODULE_UTILS, fmt, ##__VA_ARGS__)
-#define service_log_warn(fmt,...)		zlog_warn(MODULE_UTILS, fmt, ##__VA_ARGS__)
-#define service_log_err(fmt,...)	zlog_err(MODULE_UTILS, fmt, ##__VA_ARGS__)
 
-
-extern int service_cliout_set(void *vty);
-
-extern int service_cliout_output(const char *format, ...);
 
 extern const char *ftpd_hostname(void);
 

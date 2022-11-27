@@ -106,6 +106,20 @@ TFTP_ERROR |  05    | ErrorCode | ErrMsg |   0  |
 #endif /* __arm__ */
 #endif /* _WRS_VXWORKS_5_X */
 
+struct tftpc_session
+{
+    char *hostName;
+    int port;
+    char *user;
+    char *passwd;
+    char *fileName;
+    char *localfileName;
+
+    void *cli;
+    int (*cli_out)(void *, char *, ...);
+    int (*cli_write)(void *, char *, int);
+};
+
 /* TFTP packet structure.  */
 
 struct	tftpFormat
@@ -180,6 +194,7 @@ typedef struct tftp_desc
     char	fileName [TFTP_FILENAME_SIZE];	/* requested file name  */
     int tftp_size;
     int	tftp_start_time;
+    struct tftpc_session *session;
     } TFTP_DESC;
 
 
@@ -203,11 +218,12 @@ typedef struct tftp_desc
 
 */
 
-extern int 	tftpXfer (char * pHost, int port, char * pFilename,
-			  char * pCommand, char * pMode, int pDataDesc,
-    			  int value);
-extern int 	tftpCopy (char * pHost,	int port, char * pFilename,
-			  char * pCommand, char * pMode, int fd);
+
+extern int tftpXfer(struct tftpc_session *,
+                    char *pCommand, char *pMode, int pDataDesc,
+                    int value);
+extern int tftpCopy(struct tftpc_session *,
+                    char *pCommand, char *pMode, int fd);
 extern TFTP_DESC *tftpInit (void);
 extern int 	tftpQuit (TFTP_DESC * pTftpDesc);
 
@@ -231,12 +247,9 @@ extern int 	tftpErrorCreate (TFTP_MSG * pTftpMsg, int errorNum);
 
 extern zpl_bool tftpDebug;
 
-extern int tftp_download(void *v, char *hostName, int port, char *fileName, char *usr,
-		char *passwd, char *localfileName);
+extern int tftp_download(struct tftpc_session *, int (*cli_out)(void *, char *, ...), void *);
 
-extern int tftp_upload(void *v, char *hostName, int port, char *fileName, char *usr,
-		char *passwd, char *localfileName);
-
+extern int tftp_upload(struct tftpc_session *, int (*cli_out)(void *, char *, ...), void *);
 
 //extern int cmd_tftp_init();
 

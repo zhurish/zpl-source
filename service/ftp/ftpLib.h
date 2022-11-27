@@ -60,7 +60,7 @@ extern "C" {
 #define FTPL_DEBUG_INCOMING     0x01 /* Show all incoming responses */
 #define FTPL_DEBUG_OUTGOING     0x02 /* Show all outgoing commands */
 #define FTPL_DEBUG_ERRORS       0x04 /* Display all errors and warnings that occur */
-
+#define FTPL_DEBUG_ON           0x08
 /* For FTP specification see RFC-765 */
 
 /* Reply codes for ftpReplyGet(). (Major numbers 1xx-5xx) */
@@ -155,41 +155,53 @@ extern "C" {
 
 #define MAX_REPLY_MAX_LEN 1024
 
+struct ftpc_session
+{
+    char *hostName;
+    int port;
+    char *user;
+    char *passwd;
+    char *acct;
+
+    char *path;
+    char *fileName;
+    char *localfileName;
+    int   remote_filesize;
+
+    void *cli;
+    int (*cli_out)(void *, char *,...);
+    int (*cli_write)(void *, char *, int );
+};
+
 /* function declarations */
 
 
 extern int ftpLibInit (long timeout);
-extern int ftpLogin (zpl_socket_t ctrlSock, char *user, char *passwd, char *account);
-extern int ftpLs (char *dirName);
-extern int ftpFileSize(zpl_socket_t ctrlSock, const char *filename, int *rfilesize);
+extern int ftpLogin(struct ftpc_session *, zpl_socket_t ctrlSock, char *user, char *passwd, char *account);
+extern int ftpLs(struct ftpc_session *, char *dirName);
+extern int ftpFileSize(struct ftpc_session *session, zpl_socket_t ctrlSock, const char *filename, int *rfilesize);
 
-extern int ftpXfer (char *host, char *user, char *passwd, char *acct,
-                       char *cmd, char *dirname, char *filename,
-                       zpl_socket_t *pCtrlSock, zpl_socket_t *pDataSock, int *rfilesize);
+extern int ftpXfer(struct ftpc_session *,
+                   char *cmd, char *dirname, char *filename,
+                   zpl_socket_t *pCtrlSock, zpl_socket_t *pDataSock, int *rfilesize);
 
-extern int ftpCommand (zpl_socket_t ctrlSock, const char *format, ...);
-extern int ftpCommandEnhanced (zpl_socket_t ctrlSock, char *replyString,
-        				int replyStringLength, const char *format, ...);
-extern zpl_socket_t ftpDataConnGet (zpl_socket_t dataSock);
-extern zpl_socket_t ftpDataConnInit (zpl_socket_t ctrlSock);
-extern zpl_socket_t ftpDataConnInitPassiveMode (zpl_socket_t ctrlSock);
-extern zpl_socket_t ftpHookup (char *host);
+extern int ftpCommand(struct ftpc_session *, zpl_socket_t ctrlSock, const char *format, ...);
+extern int ftpCommandEnhanced(struct ftpc_session *, zpl_socket_t ctrlSock, char *replyString,
+                              int replyStringLength, const char *format, ...);
+extern zpl_socket_t ftpDataConnGet(struct ftpc_session *, zpl_socket_t dataSock);
+extern zpl_socket_t ftpDataConnInit(struct ftpc_session *, zpl_socket_t ctrlSock);
+extern zpl_socket_t ftpDataConnInitPassiveMode(struct ftpc_session *, zpl_socket_t ctrlSock);
+extern zpl_socket_t ftpHookup(struct ftpc_session *session, char *host);
 extern void ftpLibDebugOptionsSet (zpl_uint32 options);
-extern int ftpReplyGet (zpl_socket_t ctrlSock, zpl_bool expecteof);
-extern int ftpReplyGetEnhanced (zpl_socket_t ctrlSock, zpl_bool expecteof, char *replyString,
-                                int replyStringLength);
+extern int ftpReplyGet(struct ftpc_session *, zpl_socket_t ctrlSock, zpl_bool expecteof);
+extern int ftpReplyGetEnhanced(struct ftpc_session *, zpl_socket_t ctrlSock, zpl_bool expecteof, char *replyString,
+                               int replyStringLength);
 extern int ftpTransientConfigSet (zpl_uint32 maxRetryCount, zpl_uint32 retryInterval);
 extern int ftpTransientConfigGet (zpl_uint32 *maxRetryCount, zpl_uint32 *retryInterval);
 extern int ftpTransientFatalInstall ( zpl_bool (*configlette)(zpl_uint32));
 
-
-
-
-
-extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
-		char *passwd, char *localfileName);
-extern int ftp_upload(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
-		char *passwd, char *localfileName);
+extern int ftp_download(struct ftpc_session *, int (*cli_out)(void *, char *, ...), void *);
+extern int ftp_upload(struct ftpc_session *, int (*cli_out)(void *, char *, ...), void *);
 
 #ifdef __cplusplus
 }

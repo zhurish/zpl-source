@@ -437,7 +437,7 @@ static int pingRxPrint(PING_STAT * pPS, /* ping stats structure */
 	if (len < hlen + ICMP_MINLEN) /* at least min length ? */
 	{
 		if (pPS->flags & PING_OPT_DEBUG)
-			vty_out(vty,"packet too zpl_int16 (%d bytes) from %s%s", len, ipstack_inet_ntoa(from->sin_addr), VTY_NEWLINE);
+			vty_out(vty,"packet too min (%d bytes) from %s%s", len, ipstack_inet_ntoa(from->sin_addr), VTY_NEWLINE);
 		return (ERROR);
 	}
 
