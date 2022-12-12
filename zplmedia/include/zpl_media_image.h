@@ -37,6 +37,7 @@ typedef struct zpl_media_image_s
 
 typedef struct zpl_media_imagelst_s
 {
+    char    *name;
     os_mutex_t	*mutex;
     zpl_uint32	maxsize;
     LIST        list;			//add queue
@@ -47,7 +48,7 @@ typedef struct zpl_media_imagelst_s
 
 
 
-extern zpl_media_imglst_t *zpl_media_imglst_create(zpl_uint32 maxsize);
+extern zpl_media_imglst_t *zpl_media_imglst_create(char *name, zpl_uint32 maxsize);
 extern int zpl_media_imglst_destroy(zpl_media_imglst_t *queue);
 
 extern zpl_media_image_t * zpl_media_image_create(zpl_media_imglst_t *queue, zpl_uint32 width, zpl_uint32 height,

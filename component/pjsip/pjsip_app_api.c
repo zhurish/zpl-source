@@ -270,7 +270,7 @@ int pl_pjsip_module_init()
 	if(!pl_pjsip)
 		return ERROR;
 	os_memset(pl_pjsip, 0, sizeof(pl_pjsip_t));
-	pl_pjsip->mutex = os_mutex_init();
+	pl_pjsip->mutex = os_mutex_name_init("pl_pjsip->mutex");
 	pl_pjsip_config_default(pl_pjsip);
 	pjsip_module_init();
 #ifdef APP_X5BA_MODULE

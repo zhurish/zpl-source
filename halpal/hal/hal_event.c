@@ -13,7 +13,7 @@
 
 struct hal_event_serv _ipcsrv_event;
 
-static void hal_ipcclient_client_close(struct hal_event_serv *ipcsrv, struct hal_event_client *client)
+static void hal_event_client_close(struct hal_event_serv *ipcsrv, struct hal_event_client *client)
 {
     if (ipcsrv->mutex)
         os_mutex_lock(ipcsrv->mutex, OS_WAIT_FOREVER);
@@ -23,7 +23,7 @@ static void hal_ipcclient_client_close(struct hal_event_serv *ipcsrv, struct hal
         os_mutex_unlock(ipcsrv->mutex);
 }
 
-static int hal_ipcclient_client_create(struct hal_event_serv *ipcsrv, zpl_uint8 event, hal_event_callback event_callback, void *event_argv)
+static int hal_event_client_create(struct hal_event_serv *ipcsrv, zpl_uint8 event, hal_event_callback event_callback, void *event_argv)
 {
     struct hal_event_client *client;
     client = XCALLOC(MTYPE_HALEVENT, sizeof(struct hal_event_client));
@@ -77,12 +77,12 @@ int hal_event_exit(void)
 
 void hal_event_close(struct hal_event_client *client)
 {
-    hal_ipcclient_client_close(&_ipcsrv_event, client);
+    hal_event_client_close(&_ipcsrv_event, client);
 }
 
 int hal_event_install(zpl_uint8 event, hal_event_callback event_callback, void *event_argv)
 {
-    return hal_ipcclient_client_create(&_ipcsrv_event, event, event_callback, event_argv);
+    return hal_event_client_create(&_ipcsrv_event, event, event_callback, event_argv);
 }
 
 int hal_event_handler(struct hal_ipcmsg_event *report_event, zpl_uint8 *data, zpl_uint32 len)

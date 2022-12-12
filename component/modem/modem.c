@@ -42,7 +42,7 @@ static int modem_main_list_init(void)
 	gModemmain.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModemmain.list)
 	{
-		gModemmain.mutex = os_mutex_init();
+		gModemmain.mutex = os_mutex_name_init("gModemmain.mutex");
 		lstInit(gModemmain.list);
 		return OK;
 	}
@@ -106,7 +106,7 @@ static int modem_main_default_node(modem_t *modem)
 	modem->dedelay = MODEM_DECHK_TIME;
 	modem->detime_base = os_time (NULL);
 	modem->detime_axis = modem->detime_base;
-	modem->mutex = os_mutex_init();
+	modem->mutex = os_mutex_name_init("modem->mutex");
 	return OK;
 }
 

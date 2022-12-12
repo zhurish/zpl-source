@@ -701,7 +701,7 @@ static int tftpdTask( struct eloop *thread)
 		 * We've received a read request.  Spawn a tftpdFileRead
 		 * task to process it.
 		 */
-		os_job_add(tftpdFileRead, pReplyDesc);
+		os_job_add(OS_JOB_NONE,tftpdFileRead, pReplyDesc);
 
 		break;
 
@@ -711,7 +711,7 @@ static int tftpdTask( struct eloop *thread)
 		 * We've received a write request.  Spawn a tftpdFileWrite
 		 * task to process it.
 		 */
-		os_job_add(tftpdFileWrite, pReplyDesc);
+		os_job_add(OS_JOB_NONE,tftpdFileWrite, pReplyDesc);
 		break;
 	default:
 		break;

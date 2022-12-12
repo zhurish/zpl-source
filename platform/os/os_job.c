@@ -36,7 +36,7 @@ int os_job_init(void)
 		if(job_list)
 		{
 			lstInit(job_list);
-			job_sem = os_sem_init();
+			job_sem = os_sem_name_init("job_sem");
 		}
 		job_unused_list = os_malloc(sizeof(LIST));
 		if(job_unused_list)
@@ -96,7 +96,7 @@ int os_job_load(void)
 	return ERROR;
 }
 
-static os_job_t * os_job_entry_create(int (*job_entry)(void *), void *pVoid, zpl_char *entry_name)
+static os_job_t * os_job_entry_create(int type, int (*job_entry)(void *), void *pVoid, zpl_char *entry_name)
 {
 	os_job_t *t = NULL;
 	if(job_unused_list)
@@ -137,9 +137,9 @@ int os_job_del(int (*job_entry)(void *), void *pVoid)
 	return OK;
 }
 
-int os_job_add_entry(int (*job_entry)(void *), void *pVoid, const zpl_char *entry_name)
+int os_job_add_entry(int type, int (*job_entry)(void *), void *pVoid, const zpl_char *entry_name)
 {
-	os_job_t * t = os_job_entry_create(job_entry, pVoid, entry_name);
+	os_job_t * t = os_job_entry_create(type, job_entry, pVoid, entry_name);
 	if(t)
 	{
 		if(job_mutex)
@@ -199,9 +199,9 @@ static int os_job_task(void *p)
 						os_mutex_lock(job_mutex, OS_WAIT_FOREVER);
 					t->cnt++;
 				}
-				lstDelete(job_list, t);
+				lstDelete(job_list, (NODE*)t);
 				if(job_unused_list)
-					lstAdd(job_unused_list, t);
+					lstAdd(job_unused_list, (NODE*)t);
 			}
 		}
 		if(job_mutex)

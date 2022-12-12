@@ -352,7 +352,7 @@ int tftpXfer(struct tftpc_session *session,
 	/* closing sockets/freeing TFTPPARM are done by tftpParamCleanUp */
 	/*    if (netJobAdd ((FUNCPTR)tftpChildTaskSpawn, tftpTaskPriority,
 	 tftpTaskOptions, tftpTaskStackSize, (int)pParam,0) == ERROR)*/
-	//if (os_job_add(tftpTask, pParam) == ERROR)
+	//if (os_job_add(OS_JOB_NONE,tftpTask, pParam) == ERROR)
 	if(tftpTask(pParam) == ERROR)
 	{
 		//zlog_err(MODULE_UTILS,"tftp transfer failed: %s", strerror(ipstack_errno));

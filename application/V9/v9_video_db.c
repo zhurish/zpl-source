@@ -147,7 +147,7 @@ int v9_video_sqldb_load(zpl_uint32 id)
 {
 	if(!_db_cap_mutex)
 	{
-		_db_cap_mutex = os_mutex_init();
+		_db_cap_mutex = os_mutex_name_init("_db_cap_mutex");
 	}
 	return OK;
 }

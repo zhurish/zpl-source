@@ -20,7 +20,7 @@ typedef struct
     zpl_uint32      cmd;                         /* Unit number. */
     zpl_phyport_t   dstval;          
 
-}khal_nettpkt_cmd_t __attribute__ ((packed));
+}__attribute__ ((packed)) khal_nettpkt_cmd_t ;
 
 
 

@@ -122,15 +122,15 @@ extern const char *ifindex2ifname_vrf(ifindex_t, vrf_id_t vrf_id);
 extern struct interface *if_lookup_by_kernel_name(const char *ifname);
 extern struct interface *if_lookup_by_kernel_name_vrf(const char *ifname,
                                                       vrf_id_t vrf_id);
-extern struct interface *if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id);
-extern struct interface *if_lookup_by_kernel_index(ifindex_t kifindex);
+extern struct interface *if_lookup_by_kernel_index_vrf(ifkernindex_t kifindex, vrf_id_t vrf_id);
+extern struct interface *if_lookup_by_kernel_index(ifkernindex_t kifindex);
 
-extern const char *ifkernelindex2kernelifname(ifindex_t);
-extern const char *ifkernelindex2kernelifname_vrf(ifindex_t, vrf_id_t vrf_id);
-extern ifindex_t ifname2kernelifindex(const char *ifname);
-extern ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id);
-extern ifindex_t ifindex2ifkernel(ifindex_t);
-extern ifindex_t ifkernel2ifindex(ifindex_t);
+extern const char *ifkernelindex2kernelifname(ifkernindex_t);
+extern const char *ifkernelindex2kernelifname_vrf(ifkernindex_t, vrf_id_t vrf_id);
+extern ifkernindex_t ifname2kernelifindex(const char *ifname);
+extern ifkernindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id);
+extern ifkernindex_t ifindex2ifkernel(ifindex_t);
+extern ifindex_t ifkernel2ifindex(ifkernindex_t);
 
 extern ifindex_t  vlanif2ifindex(vlan_t vid);
 /* Please use ifname2ifindex instead of if_nametoindex where possible;
@@ -180,8 +180,7 @@ extern struct connected *connected_check(struct interface *ifp, struct prefix *p
 extern int connected_same (struct connected *ifc1, struct connected *ifc2);
 extern struct connected *connected_lookup(struct interface *, struct prefix *);
 
-extern int if_data_lock(void);
-extern int if_data_unlock(void);
+
 
 extern enum if_link_type netlink_to_if_link_type(zpl_uint32  hwt);
  

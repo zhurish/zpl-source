@@ -57,7 +57,7 @@
 /* clear and set interface name string */
 void linux_ioctl_ifreq_set_name(struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp)
 {
-  strncpy(ipstack_ifreq->ifr_name, ifp->k_name, IFNAMSIZ);
+  strncpy(ipstack_ifreq->ifr_name, ifp->ker_name, IFNAMSIZ);
 }
 
 /* call ipstack_ioctl system call */
@@ -218,9 +218,9 @@ linux_ioctl_if_get_flags(struct interface *ifp)
   struct ipstack_ifreq ipstack_ifreq;
   linux_ioctl_ifreq_set_name(&ipstack_ifreq, ifp);
 
-  if (ifp->k_ifindex == 0)
-    ifp->k_ifindex = if_nametoindex(ifp->k_name);
-  // ifp->k_ifindex = if_get_ifindex(ifp->k_name);
+  if (ifp->ker_ifindex == 0)
+    ifp->ker_ifindex = if_nametoindex(ifp->ker_name);
+  // ifp->ker_ifindex = if_get_ifindex(ifp->ker_name);
   if_get_mtu(ifp);
   if_get_metric(ifp);
   //  linux_ioctl_if_get_hwaddr(ifp);

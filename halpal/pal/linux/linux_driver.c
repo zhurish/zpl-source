@@ -65,7 +65,7 @@ static int linux_ioctl_eth_add(struct interface *ifp)
 	char    ifname[IF_NAME_MAX];
 	HAL_ENTER_FUNC();
 	os_memset(ifname, 0, sizeof(ifname));
-	os_strcpy(ifname, ifp->k_name);
+	os_strcpy(ifname, ifp->ker_name);
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
   command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_CREATE); 
   hal_ipcmsg_create_header(&ipcmsg, command);
@@ -83,7 +83,7 @@ static int linux_ioctl_eth_delete(struct interface *ifp)
 	char    ifname[IF_NAME_MAX];
 	HAL_ENTER_FUNC();
 	os_memset(ifname, 0, sizeof(ifname));
-	os_strcpy(ifname, ifp->k_name);
+	os_strcpy(ifname, ifp->ker_name);
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
   command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_DELETE); 
   hal_ipcmsg_create_header(&ipcmsg, command);
@@ -172,7 +172,7 @@ static int linux_ioctl_eth_add(struct interface *ifp)
 	char    ifname[IF_NAME_MAX];
 	HAL_ENTER_FUNC();
 	os_memset(ifname, 0, sizeof(ifname));
-	os_strcpy(ifname, ifp->k_name);
+	os_strcpy(ifname, ifp->ker_name);
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
   command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_CREATE); 
   hal_ipcmsg_create_header(&ipcmsg, command);
@@ -194,7 +194,7 @@ static int linux_ioctl_eth_delete(struct interface *ifp)
 	char    ifname[IF_NAME_MAX];
 	HAL_ENTER_FUNC();
 	os_memset(ifname, 0, sizeof(ifname));
-	os_strcpy(ifname, ifp->k_name);
+	os_strcpy(ifname, ifp->ker_name);
 	hal_ipcmsg_msg_init(&ipcmsg, buf, sizeof(buf));
   command = IPCCMD_SET(HAL_MODULE_L3IF, HAL_MODULE_CMD_REQ, HAL_L3IF_DELETE); 
   hal_ipcmsg_create_header(&ipcmsg, command);

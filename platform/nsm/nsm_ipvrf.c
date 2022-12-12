@@ -42,7 +42,7 @@ struct ip_vrf *ipvrf_create(const char *name)
   struct ip_vrf *ip_vrf = ip_vrf_create(name);
   if (ip_vrf)
   {
-    ip_vrf->info = nsm_vrf_create(ip_vrf->vrf_id);
+    ip_vrf->info = nsm_vrf_create(name, ip_vrf->vrf_id);
     if (ip_vrf->info)
     {
       ret = nsm_halpal_create_vrf(ip_vrf);

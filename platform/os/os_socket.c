@@ -1006,7 +1006,7 @@ zpl_socket_t ipstack_sock_unix_accept(zpl_socket_t accept_sock, void *p)
 zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, const char *name)
 {
 	int ret;
-	zpl_socket_t sock;
+	ZPL_SOCKET_T(sock);
 	zpl_uint32 len;
 	struct ipstack_sockaddr_un addr;
 	struct stat s_stat;

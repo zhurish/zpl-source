@@ -472,7 +472,7 @@ zpl_char *os_time_fmt (const zpl_char *fmt, zpl_time_t t)
 	zpl_uint32 len = 0;
 	struct tm tm;
 	//struct tm *ptm = NULL;
-	static zpl_uint32 data[128];
+	static zpl_int8 data[128];
 	zpl_time_t ticlock = t;
 	if(t == 0)
 		ticlock = os_time(NULL);
@@ -603,7 +603,7 @@ int os_time_init(void)
 		{
 			lstInit(time_list);
 			lstSortInit(time_list, os_time_compar);
-			time_sem = os_sem_init();
+			time_sem = os_sem_name_init("os_timer_sem");
 		}
 		else
 			return ERROR;

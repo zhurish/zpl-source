@@ -48,21 +48,26 @@ static int nsm_interface_mode_hook_handler(nsm_submodule_t module, struct interf
 void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid)
 {
 	struct nsm_interface *nsm_intf = NULL;
+	IF_DATA_LOCK();
 	if(mid >= NSM_INTF_NONE && mid < NSM_INTF_MAX)
 	{
 		nsm_intf = (struct nsm_interface *)ifp->info[MODULE_NSM];
 		if(nsm_intf)
 		{
+			IF_DATA_UNLOCK();
 			return nsm_intf->nsm_intf_data[mid];
 		}
+		IF_DATA_UNLOCK();
 		return NULL;
 	}
+	IF_DATA_UNLOCK();
 	return NULL;	
 }
 
 int nsm_intf_module_data_set(struct interface *ifp, nsm_submodule_t mid, void *p)
 {
 	struct nsm_interface *nsm_intf = NULL;
+	IF_DATA_LOCK();
 	if(mid >= NSM_INTF_NONE && mid < NSM_INTF_MAX)
 	{
 		nsm_intf = (struct nsm_interface *)ifp->info[MODULE_NSM];
@@ -70,18 +75,18 @@ int nsm_intf_module_data_set(struct interface *ifp, nsm_submodule_t mid, void *p
 		{
 			nsm_intf->nsm_intf_data[mid] = p;
 		}
+		IF_DATA_UNLOCK();
 		return 0;
 	}
+	IF_DATA_UNLOCK();
 	return 0;	
 }
-/* Wake up configured address if it is not in current kernel
-   address. */
+/* Wake up configured address if it is not in current kernel address. */
 static void if_addr_wakeup(struct interface *ifp)
 {
 	struct listnode *node, *nnode;
 	struct connected *ifc;
 	struct prefix *p;
-	// int ret;
 
 	for (ALL_LIST_ELEMENTS(ifp->connected, node, nnode, ifc))
 	{
@@ -257,7 +262,6 @@ int nsm_interface_create_hook(struct interface *ifp)
 	nsm_interface = XCALLOC(MTYPE_IF_INFO, sizeof(struct nsm_interface));
 	if (nsm_interface == NULL)
 	{
-		IF_DATA_UNLOCK();
 		return ERROR;
 	}
 	nsm_interface->shutdown = NSM_IF_SHUTDOWN_OFF;
@@ -279,10 +283,10 @@ int nsm_interface_create_hook(struct interface *ifp)
 
 	ret = nsm_halpal_interface_add(ifp);
 
-	if (ret == OK && if_have_kernel(ifp) && os_strlen(ifp->k_name))
+	if (ret == OK && if_have_kernel(ifp) && os_strlen(ifp->ker_name))
 	{
 		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
-		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
+		ifp->ker_ifindex = nsm_halpal_interface_ifindex(ifp->ker_name);
 	}
 
 	return OK;
@@ -474,7 +478,7 @@ int nsm_interface_create_api(const char *ifname)
 	int ret = ERROR;
 	struct interface *ifp = NULL;
 	NSM_ENTER_FUNC();
-	IF_DATA_LOCK();
+
 	ifp = if_create(ifname, os_strlen(ifname));
 	if (ifp)
 	{
@@ -482,21 +486,17 @@ int nsm_interface_create_api(const char *ifname)
 		if (ifp->dynamic == zpl_false)
 			nsm_redistribute_interface_create(ifp);
 #endif
-		IF_DATA_UNLOCK();
 		return OK;
 	}
-	IF_DATA_UNLOCK();
 	return ret;
 }
 
 int nsm_interface_delete_api(struct interface *ifp)
 {
 	int ret = ERROR;
-	IF_DATA_LOCK();
 	ret = nsm_interface_delete(ifp);
 	if (ret == OK)
 		if_delete(ifp);
-	IF_DATA_UNLOCK();
 	return ret;
 }
 
@@ -1458,6 +1458,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	struct connected *connected;
 	struct listnode *node;
 	struct nsm_interface *nsm_interface = NULL;
+	IF_DATA_LOCK();
 	nsm_interface = ifp->info[MODULE_NSM];
 
 	vty_out(vty, "Interface %s is ", ifp->name);
@@ -1522,9 +1523,6 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	{
 		connected_dump_vty(vty, connected);
 	}
-#include "nsm_rtadv.h"
-
-
 #if defined (ZPL_NSM_RTADV)
 	nd_dump_vty (vty, ifp);
 #endif
@@ -1559,6 +1557,7 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 			nsm_interface->stats.tx_window_errors, nsm_interface->stats.collisions, VTY_NEWLINE);
 
 	vty_out(vty, "%s", VTY_NEWLINE);
+	IF_DATA_UNLOCK();
 	return;
 }
 
@@ -1570,6 +1569,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 	//struct nsm_interface *nsm_interface;
 	zpl_char pstatus[32];
 	zpl_uint32 offset = 0;
+	IF_DATA_LOCK();
 	//nsm_interface = ifp->info[MODULE_NSM];
 	if (status)
 	{
@@ -1642,6 +1642,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 			vty_out(vty, " %-16s%s", pstatus, VTY_NEWLINE);
 		}
 	}
+	IF_DATA_UNLOCK();
 	return;
 }
 #endif

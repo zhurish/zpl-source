@@ -57,20 +57,22 @@ int nsm_serial_interface_create_api(struct interface *ifp)
 		return OK;
 	if(serial == NULL)
 	{
-	serial = XMALLOC(MTYPE_SERIAL, sizeof(nsm_serial_t));
-	zassert(serial);
-	os_memset(serial, 0, sizeof(nsm_serial_t));
+		serial = XMALLOC(MTYPE_SERIAL, sizeof(nsm_serial_t));
+		zassert(serial);
+		os_memset(serial, 0, sizeof(nsm_serial_t));
+		if (serial->mutex == NULL)
+			serial->mutex = os_mutex_name_init("if_serial_mutex");
+		IF_NSM_SERIAL_DATA_LOCK(serial);
+		serial->serial.databit = NSM_SERIAL_DATA_DEFAULT;
+		serial->serial.stopbit = NSM_SERIAL_STOP_DEFAULT;
+		serial->serial.flow_control = NSM_SERIAL_FLOW_CTL_DEFAULT;
+		serial->serial.parity = NSM_SERIAL_PARITY_DEFAULT;
+		serial->serial.speed = NSM_SERIAL_CLOCK_DEFAULT;
 
-
-	serial->serial.databit = NSM_SERIAL_DATA_DEFAULT;
-	serial->serial.stopbit = NSM_SERIAL_STOP_DEFAULT;
-	serial->serial.flow_control = NSM_SERIAL_FLOW_CTL_DEFAULT;
-	serial->serial.parity = NSM_SERIAL_PARITY_DEFAULT;
-	serial->serial.speed = NSM_SERIAL_CLOCK_DEFAULT;
-
-	serial->ifp = ifp;
-	//serial->serial_index = serial_index_make();
-	nsm_intf_module_data_set(ifp, NSM_INTF_SERIAL, serial);
+		serial->ifp = ifp;
+		//serial->serial_index = serial_index_make();
+		nsm_intf_module_data_set(ifp, NSM_INTF_SERIAL, serial);
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 	}
 	return OK;
 }
@@ -82,7 +84,14 @@ int nsm_serial_interface_del_api(struct interface *ifp)
 	if(!if_is_serial(ifp))
 		return OK;
 	if(serial)
+	{
+		if(serial->mutex)
+		{
+			os_mutex_exit(serial->mutex);
+			serial->mutex = NULL;
+		}
 		XFREE(MTYPE_SERIAL, serial);
+	}
 	nsm_intf_module_data_set(ifp, NSM_INTF_SERIAL, NULL);
 	return OK;
 }
@@ -93,9 +102,9 @@ int nsm_serial_interface_kernel(struct interface *ifp, zpl_char *kname)
 	if(ifp)
 	{
 		if_kname_set(ifp, kname);
-		if(!nsm_halpal_interface_ifindex(ifp->k_name))
+		if(!nsm_halpal_interface_ifindex(ifp->ker_name))
 			nsm_halpal_interface_add(ifp);
-		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
+		ifp->ker_ifindex = nsm_halpal_interface_ifindex(ifp->ker_name);
 		//pal_interface_get_lladdr(ifp);
 		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 		return OK;
@@ -108,7 +117,9 @@ int nsm_serial_interface_clock(struct interface *ifp, zpl_uint32 clock)
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
+		IF_NSM_SERIAL_DATA_LOCK(serial);
 		serial->serial.speed = clock;
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		return OK;
 	}
 	return ERROR;
@@ -119,7 +130,9 @@ int nsm_serial_interface_databit(struct interface *ifp, zpl_uint32 databit)
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
+		IF_NSM_SERIAL_DATA_LOCK(serial);
 		serial->serial.databit = databit;
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		return OK;
 	}
 	return ERROR;
@@ -130,7 +143,9 @@ int nsm_serial_interface_stopbit(struct interface *ifp, zpl_uint32 stopbit)
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
+		IF_NSM_SERIAL_DATA_LOCK(serial);
 		serial->serial.stopbit = stopbit;
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		return OK;
 	}
 	return ERROR;
@@ -141,7 +156,9 @@ int nsm_serial_interface_parity(struct interface *ifp, zpl_uint32 parity)
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
+		IF_NSM_SERIAL_DATA_LOCK(serial);
 		serial->serial.parity = parity;
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		return OK;
 	}
 	return ERROR;
@@ -152,7 +169,9 @@ int nsm_serial_interface_flow_control(struct interface *ifp, zpl_uint32 flow_con
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
+		IF_NSM_SERIAL_DATA_LOCK(serial);
 		serial->serial.flow_control = flow_control;
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		return OK;
 	}
 	return ERROR;
@@ -164,6 +183,7 @@ int nsm_serial_interface_devname(struct interface *ifp, zpl_char * devname)
 	nsm_serial_t * serial = nsm_serial_get(ifp);
 	if(serial)
 	{
+		IF_NSM_SERIAL_DATA_LOCK(serial);
 		if(devname)
 		{
 			zpl_char *p;//, *k;
@@ -183,6 +203,7 @@ int nsm_serial_interface_devname(struct interface *ifp, zpl_char * devname)
 			os_memset(serial->serial.devname, 0, sizeof(serial->serial.devname));
 			serial->serial_index = 0;//serial_index_make();
 		}
+		IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		return OK;
 	}
 	return ERROR;
@@ -235,6 +256,7 @@ int nsm_serial_interface_write_config(struct vty *vty, struct interface *ifp)
 		nsm_serial_t * serial = nsm_serial_get(ifp);
 		if(serial)
 		{
+			IF_NSM_SERIAL_DATA_LOCK(serial);
 			if(serial->serial.speed != NSM_SERIAL_CLOCK_DEFAULT)
 				vty_out(vty, " clock rate %d%s", serial->serial.speed, VTY_NEWLINE);
 
@@ -252,6 +274,7 @@ int nsm_serial_interface_write_config(struct vty *vty, struct interface *ifp)
 
 			//vty_out(vty, " clock %d%s", serial->serial.speed, VTY_NEWLINE);
 			//vty_out(vty, " clock %d%s", serial->serial.speed, VTY_NEWLINE);
+			IF_NSM_SERIAL_DATA_UNLOCK(serial);
 		}
 	}
 	return OK;

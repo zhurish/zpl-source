@@ -29,6 +29,7 @@ typedef struct nsm_stormcontrol_s
 	zpl_uint8			multicast_flags;
 	zpl_uint32			stormcontrol_broadcast;
 	zpl_uint8			broadcast_flags;
+	
 }nsm_stormcontrol_t;
 
 
@@ -37,6 +38,7 @@ typedef struct nsm_security_s
 {
 	zpl_bool			stormcontrol_enable;
 	nsm_stormcontrol_t	stormcontrol;			//storm control
+	void        *mutex;
 }nsm_security_t;
 
 
@@ -46,6 +48,9 @@ typedef struct Global_Security_s
 	
 }Global_Security_t;
 
+
+#define IF_NSM_SECURITY_DATA_LOCK(security)   if(security && security->mutex) os_mutex_lock(security->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_SECURITY_DATA_UNLOCK(security) if(security && security->mutex) os_mutex_unlock(security->mutex)
 
 
 extern int nsm_stormcontrol_enable_set_api(struct interface *ifp, zpl_bool enable);

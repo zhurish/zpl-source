@@ -102,7 +102,7 @@ enum khal_l3if_cmd
 };
 typedef struct khal_l3if_param_s
 {
-  	khal_port_header_t  port;
+  	khal_port_header_t  porthdr;
   	char    ifname[64];
 	zpl_uint8 l2if_type;
   	vrf_id_t vrfid;
@@ -111,7 +111,7 @@ typedef struct khal_l3if_param_s
 
 typedef struct khal_l3if_addr_param_s
 {
-	khal_port_header_t  port;
+	khal_port_header_t  porthdr;
 	zpl_uint8 family;
 	zpl_uint8 prefixlen;
 	union g_addr address;  
@@ -129,7 +129,7 @@ enum khal_route_cmd
 typedef struct khal_nexthop
 {
   	ifindex_t kifindex;
-	khal_port_header_t  port;
+	khal_port_header_t  porthdr;
   	union g_addr gateway;
 } 	khal_nexthop_t;
 

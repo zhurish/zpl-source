@@ -276,9 +276,9 @@ static int librtnl_ipvrf_add(char *name, char * dev)
 int linux_ioctl_vrf_set(struct interface *ifp, struct ip_vrf *vrf)
 {
 	if(vrf)
-		return librtnl_ipvrf_add(vrf->name, ifp->k_name);
+		return librtnl_ipvrf_add(vrf->name, ifp->ker_name);
 	else
-		return librtnl_ipvrf_add(NULL, ifp->k_name);
+		return librtnl_ipvrf_add(NULL, ifp->ker_name);
 }
 /*
  * Enable a VRF - that is, let the VRF be ready to use.

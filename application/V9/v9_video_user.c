@@ -332,7 +332,7 @@ int v9_video_user_load()
 	v9_video_group_init();
 	if(!_user_mutex)
 	{
-		_user_mutex = os_mutex_init();
+		_user_mutex = os_mutex_name_init("_user_mutex");
 	}
 	return OK;
 }

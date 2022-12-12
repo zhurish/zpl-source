@@ -35,7 +35,9 @@ int nsm_stormcontrol_enable_set_api(struct interface *ifp, zpl_bool enable)
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		stormcontrol->stormcontrol_enable = enable;
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);
 		return OK;
 	}
 	return ERROR;
@@ -60,8 +62,10 @@ int nsm_stormcontrol_unicast_set_api(struct interface *ifp, zpl_uint32 stormcont
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		stormcontrol->stormcontrol.stormcontrol_unicast = stormcontrol_unicast;
 		stormcontrol->stormcontrol.unicast_flags = unicastflag;
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);
 		return OK;
 	}
 	return ERROR;
@@ -73,10 +77,12 @@ int nsm_stormcontrol_unicast_get_api(struct interface *ifp, zpl_uint32 *stormcon
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		if (stormcontrol_unicast)
 			*stormcontrol_unicast = stormcontrol->stormcontrol.stormcontrol_unicast;
 		if (unicastflag)
 			*unicastflag = stormcontrol->stormcontrol.unicast_flags;
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);	
 		return OK;
 	}
 	return ERROR;
@@ -88,12 +94,15 @@ int nsm_stormcontrol_multicast_set_api(struct interface *ifp, zpl_uint32 stormco
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		if(hal_port_stormcontrol_set(ifp->ifindex, 1, stormcontrol_multicast, NSM_STORMCONTROL_RATE) == OK)
 		{
 			stormcontrol->stormcontrol.multicast_flags = multicastflag;
 			stormcontrol->stormcontrol.stormcontrol_multicast = stormcontrol_multicast;
+			IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);
 			return OK;
 		}
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);
 	}
 	return ERROR;
 }
@@ -104,10 +113,12 @@ int nsm_stormcontrol_multicast_get_api(struct interface *ifp, zpl_uint32 *stormc
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		if (multicastflag)
 			*multicastflag = stormcontrol->stormcontrol.multicast_flags;
 		if (stormcontrol_multicast)
 			*stormcontrol_multicast = stormcontrol->stormcontrol.stormcontrol_multicast;
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);	
 		return OK;
 	}
 	return ERROR;
@@ -119,12 +130,15 @@ int nsm_stormcontrol_broadcast_set_api(struct interface *ifp, zpl_uint32 stormco
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		if(hal_port_stormcontrol_set(ifp->ifindex, 2, stormcontrol_broadcast, NSM_STORMCONTROL_RATE) == OK)
 		{
 			stormcontrol->stormcontrol.broadcast_flags = broadcastflag;
 			stormcontrol->stormcontrol.stormcontrol_broadcast = stormcontrol_broadcast;
+			IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);
 			return OK;
 		}
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);
 	}
 	return ERROR;
 }
@@ -135,10 +149,12 @@ int nsm_stormcontrol_broadcast_get_api(struct interface *ifp, zpl_uint32 *stormc
 	nsm_security_t *stormcontrol = _nsm_security_get(ifp);
 	if (stormcontrol)
 	{
+		IF_NSM_SECURITY_DATA_LOCK(stormcontrol);
 		if (broadcastflag)
 			*broadcastflag = stormcontrol->stormcontrol.broadcast_flags;
 		if (stormcontrol_broadcast)
 			*stormcontrol_broadcast = stormcontrol->stormcontrol.stormcontrol_broadcast;
+		IF_NSM_SECURITY_DATA_UNLOCK(stormcontrol);	
 		return OK;
 	}
 	return ERROR;
@@ -209,6 +225,8 @@ int nsm_security_interface_create_api(struct interface *ifp)
 		{
 			security = XMALLOC(MTYPE_SECURITY, sizeof(nsm_security_t));
 			os_memset(security, 0, sizeof(nsm_security_t));
+			if (security->mutex == NULL)
+				security->mutex = os_mutex_name_init("if_security_mutex");
 			nsm_intf_module_data_set(ifp, NSM_INTF_SEC, security);
 		}
 	}
@@ -222,6 +240,11 @@ int nsm_security_interface_del_api(struct interface *ifp)
 	security = (nsm_security_t *)nsm_intf_module_data(ifp, NSM_INTF_SEC);
 	if(if_is_ethernet(ifp) && security)
 	{
+		if(security->mutex)
+		{
+			os_mutex_exit(security->mutex);
+			security->mutex = NULL;
+		}
 		XFREE(MTYPE_SECURITY, security);
 		security = NULL;
 		nsm_intf_module_data_set(ifp, NSM_INTF_SEC, NULL);
@@ -235,7 +258,9 @@ int nsm_security_interface_write_config(struct vty *vty, struct interface *ifp)
 	nsm_security_t *security = _nsm_security_get(ifp);
 	if(security && if_is_ethernet(ifp) && !if_is_l3intf(ifp))
 	{
-		nsm_stormcontrol_interface_storm_write_config(vty, security);		
+		IF_NSM_SECURITY_DATA_LOCK(security);
+		nsm_stormcontrol_interface_storm_write_config(vty, security);	
+		IF_NSM_SECURITY_DATA_UNLOCK(security);	
 	}
 	return OK;
 }

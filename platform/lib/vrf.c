@@ -191,7 +191,7 @@ static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
 struct ip_vrf *ip_vrf_lookup(vrf_id_t vrf_id)
 {
   struct ip_vrf *ip_vrf = NULL;
-  ip_vrf = lstFirst(_ip_vrf_master.ip_vrf_list);
+  ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
   while (ip_vrf)
   {
     if (ip_vrf)
@@ -201,7 +201,7 @@ struct ip_vrf *ip_vrf_lookup(vrf_id_t vrf_id)
         return ip_vrf;
       }
     }
-    ip_vrf = lstNext((NODE *)ip_vrf);
+    ip_vrf = (struct ip_vrf *)lstNext((NODE *)ip_vrf);
   }
   return NULL;
 }
@@ -210,7 +210,7 @@ struct ip_vrf *ip_vrf_lookup(vrf_id_t vrf_id)
 struct ip_vrf *ip_vrf_lookup_by_name(const char *name)
 {
   struct ip_vrf *ip_vrf = NULL;
-  ip_vrf = lstFirst(_ip_vrf_master.ip_vrf_list);
+  ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
   while (ip_vrf)
   {
     if (ip_vrf && ip_vrf->name)
@@ -220,7 +220,7 @@ struct ip_vrf *ip_vrf_lookup_by_name(const char *name)
         return ip_vrf;
       }
     }
-    ip_vrf = lstNext((NODE *)ip_vrf);
+    ip_vrf = (struct ip_vrf *)lstNext((NODE *)ip_vrf);
   }
   return NULL;
 }

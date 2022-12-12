@@ -17,7 +17,7 @@
 #include <linux/interrupt.h>
 #include <linux/skbuff.h>
 #include <linux/spinlock.h>
-#include <linux/crc32.h>:
+#include <linux/crc32.h>
 #include <linux/of.h>
 #include <linux/of_net.h>
 #include <linux/ethtool.h>
@@ -248,8 +248,8 @@ static int kbsp_l3if_create(void *driver, khal_l3if_param_t *l3ifparam, khal_l3i
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -270,8 +270,8 @@ static int kbsp_l3if_destroy(void *driver, khal_l3if_param_t *l3ifparam, khal_l3
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -287,8 +287,8 @@ static int kbsp_l3addr_add(void *driver, khal_l3if_param_t *l3ifparam, khal_l3if
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -300,8 +300,8 @@ static int kbsp_l3addr_del(void *driver, khal_l3if_param_t *l3ifparam, khal_l3if
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -313,8 +313,8 @@ static int kbsp_l3dstaddr_add(void *driver, khal_l3if_param_t *l3ifparam, khal_l
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -326,8 +326,8 @@ static int kbsp_l3dstaddr_del(void *driver, khal_l3if_param_t *l3ifparam, khal_l
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -339,8 +339,8 @@ static int kbsp_l3if_vrf(void *driver, khal_l3if_param_t *l3ifparam, khal_l3if_a
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -352,8 +352,8 @@ static int kbsp_l3if_mac(void *driver, khal_l3if_param_t *l3ifparam, khal_l3if_a
 {
   int ret = NO_SDK;
   BSP_DRIVER(bspdev, driver);
-  khal_port_header_t *port = &l3ifparam->port;
-  ifindex_t upifindex = IF_INFINDEX_GET(port);
+  khal_port_header_t *porthdr = (khal_port_header_t*)&l3ifparam->porthdr;
+  ifindex_t upifindex = IF_INFINDEX_GET(porthdr);
   struct eth_interface *ethdev = NULL;
   BSP_ENTER_FUNC();
   ethdev = ethkernel_lookup(upifindex);
@@ -400,7 +400,7 @@ int kbsp_l3if_module_handle(struct khal_client *client, zpl_uint32 cmd, zpl_uint
     BSP_LEAVE_FUNC();
     return OS_NO_CALLBACK;
   }
-  khal_ipcmsg_port_get(&client->ipcmsg, &l3ifparam.port);
+  khal_ipcmsg_port_get(&client->ipcmsg, &l3ifparam.porthdr);
 
   switch (subcmd)
   {
@@ -420,7 +420,7 @@ int kbsp_l3if_module_handle(struct khal_client *client, zpl_uint32 cmd, zpl_uint
   case HAL_L3IF_ADDR_DEL:
   case HAL_L3IF_DSTADDR_ADD:
   case HAL_L3IF_DSTADDR_DEL:
-    memcpy(&l3addrparam.port, &l3ifparam.port, sizeof(khal_port_header_t));
+    memcpy(&l3addrparam.porthdr, &l3ifparam.porthdr, sizeof(khal_port_header_t));
     khal_ipcmsg_getc(&client->ipcmsg, &l3addrparam.family);
     khal_ipcmsg_getc(&client->ipcmsg, &l3addrparam.prefixlen);
     if (l3addrparam.family == AF_INET)

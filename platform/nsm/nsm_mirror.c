@@ -25,7 +25,7 @@ int nsm_mirror_init(void)
 	template_t * temp = NULL;
 
 	os_memset(&gMirror, 0, sizeof(Gmirror_t));
-	gMirror.mutex = os_mutex_init();
+	gMirror.mutex = os_mutex_name_init("mirror-mutex");
 
 	temp = lib_template_new (zpl_true);
 	if(temp)

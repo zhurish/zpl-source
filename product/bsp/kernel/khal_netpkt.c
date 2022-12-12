@@ -36,7 +36,7 @@ static int netpkt_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *dat
 	{
 		if((i+1)%16 == 0)
 			offset += snprintf(format + offset, size - offset, "\r\n");
-		if((size >= offset) < 5 )
+		if((size >= offset))
 			offset += snprintf(format + offset, size - offset, "0x%02x ", (zpl_uchar)data[i]);
 		else
 			return ++i;
@@ -213,7 +213,7 @@ static int khal_netpkt_sock_send_switch(struct sk_buff *skb, khal_nettpkt_cmd_t 
   {
     //从缓冲区的开始删除数据
     skb_pull(nskb, sizeof(khal_nettpkt_cmd_t) + sizeof(struct nlmsghdr));  
-    u16 queue = skb_get_queue_mapping(skb);
+    int queue = skb_get_queue_mapping(skb);
 	  u8 *brcm_tag = nskb->data;
 
     if(hal_netpkt && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_SEND) && ZPL_TST_BIT(hal_netpkt->debug, KLOG_DEBUG_DETAIL))

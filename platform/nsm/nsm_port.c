@@ -34,9 +34,13 @@ static int nsm_port_interface_create_api(struct interface *ifp)
 			if(port == NULL)
 				return ERROR;
 			os_memset(port, 0, sizeof(nsm_port_t));
+			if (port->mutex == NULL)
+				port->mutex = os_mutex_name_init(os_name_format("%s-port_mutex", ifp->name));
+			IF_NSM_PORT_DATA_LOCK(port);
 			port->ifp = ifp;
 			port->learning_enable = zpl_true;
 			nsm_intf_module_data_set(ifp, NSM_INTF_PORT, port);
+			IF_NSM_PORT_DATA_UNLOCK(port);
 		}
 	}
 	return OK;
@@ -49,6 +53,11 @@ static int nsm_port_interface_del_api(struct interface *ifp)
 	port = (nsm_port_t *)nsm_intf_module_data(ifp, NSM_INTF_PORT);
 	if(if_is_ethernet(ifp) && port)
 	{
+		if(port->mutex)
+		{
+			os_mutex_exit(port->mutex);
+			port->mutex = NULL;
+		}
 		XFREE(MTYPE_PORT, port);
 		port = NULL;
 		nsm_intf_module_data_set(ifp, NSM_INTF_PORT, NULL);
@@ -63,7 +72,7 @@ int nsm_port_jumbo_set_api(struct interface *ifp, zpl_bool value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -74,7 +83,7 @@ int nsm_port_jumbo_set_api(struct interface *ifp, zpl_bool value)
 		if(ret == OK)
 			port->jumbo_enable = value;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -84,13 +93,13 @@ int nsm_port_jumbo_get_api(struct interface *ifp, zpl_bool *value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(value)
 			*value = port->jumbo_enable;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -101,7 +110,7 @@ int nsm_port_loopback_set_api(struct interface *ifp, zpl_bool value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -112,7 +121,7 @@ int nsm_port_loopback_set_api(struct interface *ifp, zpl_bool value)
 		if(ret == OK)
 			port->loopback = value;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 int nsm_port_loopback_get_api(struct interface *ifp, zpl_bool *value)
@@ -121,13 +130,13 @@ int nsm_port_loopback_get_api(struct interface *ifp, zpl_bool *value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(value)
 			*value = port->loopback;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -137,7 +146,7 @@ int nsm_port_learning_set_api(struct interface *ifp, zpl_bool value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -148,7 +157,7 @@ int nsm_port_learning_set_api(struct interface *ifp, zpl_bool value)
 		if(ret == OK)
 			port->learning_enable = value;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 int nsm_port_learning_get_api(struct interface *ifp, zpl_bool *value)
@@ -157,13 +166,13 @@ int nsm_port_learning_get_api(struct interface *ifp, zpl_bool *value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(value)
 			*value = port->learning_enable;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -173,7 +182,7 @@ int nsm_port_sw_learning_set_api(struct interface *ifp, zpl_bool value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -184,7 +193,7 @@ int nsm_port_sw_learning_set_api(struct interface *ifp, zpl_bool value)
 		if(ret == OK)
 			port->sw_learning_enable = value;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 int nsm_port_sw_learning_get_api(struct interface *ifp, zpl_bool *value)
@@ -193,13 +202,13 @@ int nsm_port_sw_learning_get_api(struct interface *ifp, zpl_bool *value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(value)
 			*value = port->sw_learning_enable;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -209,7 +218,7 @@ int nsm_port_pause_set_api(struct interface *ifp, zpl_bool tx, zpl_bool rx)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -223,7 +232,7 @@ int nsm_port_pause_set_api(struct interface *ifp, zpl_bool tx, zpl_bool rx)
 			port->pause_rx = rx;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 int nsm_port_pause_get_api(struct interface *ifp, zpl_bool *tx, zpl_bool *rx)
@@ -232,7 +241,7 @@ int nsm_port_pause_get_api(struct interface *ifp, zpl_bool *tx, zpl_bool *rx)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(tx)
@@ -240,7 +249,7 @@ int nsm_port_pause_get_api(struct interface *ifp, zpl_bool *tx, zpl_bool *rx)
 		if(rx)
 			*rx = port->pause_rx;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -250,7 +259,7 @@ int nsm_port_protect_set_api(struct interface *ifp, zpl_bool value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -261,7 +270,7 @@ int nsm_port_protect_set_api(struct interface *ifp, zpl_bool value)
 		if(ret == OK)
 			port->protect = value;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 int nsm_port_protect_get_api(struct interface *ifp, zpl_bool *value)
@@ -270,13 +279,13 @@ int nsm_port_protect_get_api(struct interface *ifp, zpl_bool *value)
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(value)
 			*value = port->protect;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -286,7 +295,7 @@ int nsm_port_flowcontrol_set_api(struct interface *ifp, zpl_bool tx, zpl_bool rx
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 #ifdef ZPL_HAL_MODULE
@@ -300,7 +309,7 @@ int nsm_port_flowcontrol_set_api(struct interface *ifp, zpl_bool tx, zpl_bool rx
 			port->flowcontrol_rx = rx;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 int nsm_port_flowcontrol_get_api(struct interface *ifp, zpl_bool *tx, zpl_bool *rx)
@@ -309,7 +318,7 @@ int nsm_port_flowcontrol_get_api(struct interface *ifp, zpl_bool *tx, zpl_bool *
 	zassert(ifp);
 	nsm_port_t *port = (nsm_port_t *)_nsm_port_get(ifp);
 	zassert(port);
-	IF_DATA_LOCK();
+	IF_NSM_PORT_DATA_LOCK(port);
 	if(port)
 	{
 		if(tx)
@@ -317,7 +326,7 @@ int nsm_port_flowcontrol_get_api(struct interface *ifp, zpl_bool *tx, zpl_bool *
 		if(rx)
 			*rx = port->flowcontrol_rx;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_PORT_DATA_UNLOCK(port);
 	return ret;
 }
 
@@ -327,6 +336,7 @@ static int nsm_port_interface_write_config(struct vty *vty, struct interface *if
 	nsm_port_t *port = _nsm_port_get(ifp);
 	if(port && if_is_ethernet(ifp))
 	{
+		IF_NSM_PORT_DATA_LOCK(port);
 		if(port->learning_enable != NSM_PORT_LEARNING_DEFAULT)
 			vty_out(vty, " mac-address learning %s%s", port->learning_enable?"enable":"disable",VTY_NEWLINE);
 
@@ -351,6 +361,7 @@ static int nsm_port_interface_write_config(struct vty *vty, struct interface *if
 			vty_out(vty, " flowcontrol transmit%s",VTY_NEWLINE);
 		if(port->flowcontrol_rx != NSM_PORT_FLOWCONTROL_RX_DEFAULT)
 			vty_out(vty, " flowcontrol receive%s",VTY_NEWLINE);//flowcontrol {send|receive} {on|off}
+		IF_NSM_PORT_DATA_UNLOCK(port);	
 	}
 	return OK;
 }

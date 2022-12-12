@@ -34,7 +34,8 @@ struct hal_ipcmsg_header
     zpl_uint8 marker;
     zpl_uint8 version;
     zpl_uint32 command;
-    zpl_uint32 unit;
+    zpl_uint8 from_unit;
+    zpl_uint8 to_unit;
 };
  
 #define HAL_IPCMSG_HEADER_SIZE sizeof(struct hal_ipcmsg_header)
@@ -74,7 +75,7 @@ struct hal_ipcmsg_hwport
     zpl_uint8 unit;
     zpl_uint8 slot;
     zpl_uint8 type;
-    zpl_uint8 port;
+    zpl_uint8 lport;
     zpl_phyport_t phyid;
 };
     
@@ -99,12 +100,9 @@ typedef struct hal_port_header_s
     zpl_uint8     unit;
     zpl_uint8     slot;
     zpl_uint8     type;
-    //union
-    //{
-      zpl_uint32    lgport;
-      zpl_phyport_t phyport; 
-      zpl_uint32    l3ifindex;
-    //} uport;
+    zpl_uint32    lport;
+    zpl_phyport_t phyport; 
+    zpl_uint32    l3ifindex;
     zpl_uint32    vrfid;  
 } hal_port_header_t;
 
@@ -170,7 +168,7 @@ extern int hal_ipcmsg_reset(struct hal_ipcmsg *ipcmsg);
 extern int hal_ipcmsg_msg_init(struct hal_ipcmsg *ipcmsg, char *buf, int len);
 extern int hal_ipcmsg_create_header(struct hal_ipcmsg *ipcmsg, zpl_uint32 command);
 extern int hal_ipcmsg_get_header(struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_header *header);
-extern int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint32 unit);
+extern int hal_ipcmsg_hdr_unit_set(struct hal_ipcmsg *ipcmsg, zpl_uint8 unit);
 extern int hal_ipcmsg_hdr_unit_get(struct hal_ipcmsg *ipcmsg);
 extern int hal_ipcmsg_msg_copy(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);
 extern int hal_ipcmsg_msg_clone(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_ipcmsg);

@@ -26,36 +26,56 @@ extern "C"
     HAL_EVENT_REGISTER,
   };
 
-
-  /* Structure for the zebra client. */
-  struct hal_client
-  {
-    /* Socket to zebra daemon. */
+ struct hal_client_node
+ {
     zpl_socket_t sock;
     zpl_socket_t evt_sock;
     zpl_uint16 port;  // sock 端口
     char    remote[128];
+
+    enum hal_client_state state;
+    enum hal_client_state evt_state;
+    zpl_uint8 fail;
+    zpl_uint32 timeout;
+
+    struct thread *t_read;
+    struct thread *t_connect;
+    struct thread *t_time;
+ 
+    struct thread *t_evt_connect;
+    struct thread *t_evt_time;   
+ };
+  /* Structure for the hal client. */
+  struct hal_client
+  {
+    /* Socket to zebra daemon. */
+    //zpl_socket_t sock;
+    //zpl_socket_t evt_sock;
+    //zpl_uint16 port;  // sock 端口
+    //char    remote[128];
 
     module_t module; //模块ID
     zpl_int8 unit;
     zpl_int8 slot;
     zpl_int8 portnum;
     char version[128];
- 
-    enum hal_client_state state;
-    enum hal_client_state evt_state;
-    zpl_uint8 fail;
-    zpl_uint32 timeout;
+    int index;
+    struct hal_client_node client[2];
+
+    //enum hal_client_state state;
+    //enum hal_client_state evt_state;
+    //zpl_uint8 fail;
+    //zpl_uint32 timeout;
     
     /* Read and ipstack_connect thread. */
-    
+    /*
     struct thread *t_read;
     struct thread *t_connect;
     struct thread *t_time;
  
     struct thread *t_evt_connect;
     struct thread *t_evt_time;
-
+*/
     struct thread_master *master;
     struct hal_ipcmsg ipcmsg;
     struct hal_ipcmsg outmsg;
@@ -73,7 +93,7 @@ extern "C"
   /* Prototypes of zebra client service functions. */
   extern struct hal_client *hal_client_create(module_t module, zpl_int8 unit, zpl_int8 slot);
   extern int hal_client_destroy(struct hal_client *hal_client);
-  extern int hal_client_start(struct hal_client *hal_client, char *remote, int port);
+  extern int hal_client_start(struct hal_client *hal_client, char *remote, int port, int standby);
   extern int hal_client_send_report(struct hal_client *hal_client, char *data, int len);
   extern int hal_client_send_return(struct hal_client *hal_client, int ret, const char *fmt, ...);
   extern int hal_client_send_result(struct hal_client *hal_client, int ret, struct hal_ipcmsg_result *getvalue);
@@ -81,7 +101,7 @@ extern "C"
     int subcmd, char *msg, int len);
   extern int hal_client_callback(struct hal_client *, int (*bsp_handle)(struct hal_client *, zpl_uint32, void *), void *);
 
-  extern void hal_client_event(enum hal_client_event_e event, struct hal_client *hal_client, int val);
+  extern void hal_client_event(enum hal_client_event_e event, struct hal_client *hal_client, int val, int standby);
 
   extern int hal_client_bsp_register(struct hal_client *hal_client, module_t module,
                                   zpl_int8 unit, zpl_int8 slot, zpl_int8 portnum, zpl_char *version);

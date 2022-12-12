@@ -31,7 +31,7 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 	zassert(cfg != NULL);
 	memset(cfg, 0, sizeof(struct mqtt_app_config));
 
-	cfg->mutex = os_mutex_init();
+	cfg->mutex = os_mutex_name_init("mqtt->mutex");
 
 	cfg->mqtt_mode = pub_or_sub;
 

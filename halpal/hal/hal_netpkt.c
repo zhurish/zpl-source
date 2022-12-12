@@ -153,7 +153,7 @@ int hal_netpkt_send(ifindex_t ifindex, zpl_vlan_t vlanid,
 	zpl_uint8 pri, zpl_uchar *data, zpl_uint32 len)
 {
 	#if 1
-	return hal_txrx_sendto_port((char *)data,  len, 0, 0, IF_IFINDEX_PHYID_GET(ifindex), vlanid, 0, 1);
+	return 0;//hal_txrx_sendto_port((char *)data,  len, 0, 0, IF_IFINDEX_PHYID_GET(ifindex), vlanid, 0, 1);
 	//hal_txrx_vlan_flood((char *)data,  len, 0, 0, vlanid, 0, 1);	
 	#else
 	zpl_uint32 command = 0;

@@ -28,7 +28,7 @@ static int ip_arp_dynamic_update(void *pVoid);
 int nsm_ip_arp_init(void)
 {
 	gIparp.arpList = malloc(sizeof(LIST));
-	gIparp.mutex = os_mutex_init();
+	gIparp.mutex = os_mutex_name_init("gIparp.mutex");
 	lstInit(gIparp.arpList);
 	return OK;
 }
@@ -517,9 +517,9 @@ static int ip_arp_dynamic_del_cb(ip_arp_t *value)
 int ip_arp_dynamic_cb(zpl_action action, void *pVoid)
 {
 	if(action == zpl_add)
-		return os_job_add(ip_arp_dynamic_add_cb, pVoid);
+		return os_job_add(OS_JOB_NONE,ip_arp_dynamic_add_cb, pVoid);
 	else if(action == zpl_delete)
-		return os_job_add(ip_arp_dynamic_del_cb, pVoid);
+		return os_job_add(OS_JOB_NONE,ip_arp_dynamic_del_cb, pVoid);
 	return ERROR;	
 }
 

@@ -92,8 +92,11 @@ enum if_link_type
 
 #define IF_MTU_DEFAULT 1500
 
-#define IF_DATA_LOCK()   //if_data_lock()
-#define IF_DATA_UNLOCK() //if_data_unlock()
+#define IF_DATA_LOCK()   if_data_lock()
+#define IF_DATA_UNLOCK() if_data_unlock()
+
+#define IF_MASTER_LOCK()   if_master_lock()
+#define IF_MASTER_UNLOCK() if_master_unlock()
 
 typedef enum
 {
@@ -204,7 +207,7 @@ typedef struct
     zpl_uint16       vid:12; 
 #endif 
     zpl_uint16      ethtype; 
-}zpl_vlancfipri_t __attribute__ ((packed));
+} __attribute__ ((packed)) zpl_vlancfipri_t ;
 
 
 /* Interface structure */
@@ -225,12 +228,12 @@ struct interface
    ifindex_t ifindex;
 #define IFINDEX_INTERNAL 0
 
-   zpl_uint32  uspv;
+   zpl_uint32  uspv;/* unit slot lport*/
 
    zpl_bool have_kernel;
-   zpl_char k_name[IF_NAME_MAX + 1];
-   zpl_uint32  k_name_hash;
-   ifindex_t k_ifindex;
+   zpl_char ker_name[IF_NAME_MAX + 1];
+   zpl_uint32  ker_name_hash;
+   ifkernindex_t ker_ifindex;
 
    zpl_phyport_t  phyid;   //L2 phy port
 	zpl_phyport_t  l3intfid;//L3 intf id
@@ -293,7 +296,7 @@ struct interface
    zpl_uint32 count;
    zpl_uint32 raw_status;
 };
-//__attribute__ ((packed))
+
 
 struct if_master
 {
@@ -301,6 +304,7 @@ struct if_master
 	int (*if_master_del_cb)(struct interface *);
 	zpl_uint32 llc;
 	zpl_uint32 mode;
+   void *ifdatamutex;
 	void *ifMutex;
 	struct list *intfList;	
 };
@@ -474,6 +478,11 @@ struct connected
    ((CONNECTED_PEER(C) && !prefix_match((C)->destination, (C)->address)) ? (C)->destination : (C)->address)
 
 
+extern int if_data_lock(void);
+extern int if_data_unlock(void);
+
+extern int if_master_lock(void);
+extern int if_master_unlock(void);
 
 #ifdef __cplusplus
 }

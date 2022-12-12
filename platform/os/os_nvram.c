@@ -23,7 +23,7 @@ int os_nvram_env_init(void)
 {
 	if (env_mutex == NULL)
 	{
-		env_mutex = os_mutex_init();
+		env_mutex = os_mutex_name_init("env_mutex");
 	}
 	if (env_table == NULL)
 	{

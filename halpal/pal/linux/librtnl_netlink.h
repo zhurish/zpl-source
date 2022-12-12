@@ -108,7 +108,7 @@ extern void librtnl_parse_rtattr(struct ipstack_rtattr **tb, zpl_uint32 max, str
 extern void librtnl_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interface *ifp);
 
 
-extern void librtnl_set_ifindex(struct interface *ifp, ifindex_t ifi_index);
+extern void librtnl_set_ifindex(struct interface *ifp, ifkernindex_t ifi_index);
 
 extern int librtnl_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id);
 

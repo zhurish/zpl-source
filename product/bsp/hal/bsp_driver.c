@@ -256,7 +256,7 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
     bsp->debug = 0xffff;
     bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
     bspdriver->hal_client = bsp;
-    hal_client_start(bsp, HAL_IPCMSG_CMD_PATH, -1/*HAL_IPCMSG_CMD_PORT*/);
+    hal_client_start(bsp, HAL_IPCMSG_CMD_PATH, -1/*HAL_IPCMSG_CMD_PORT*/, 0);
     return OK;
   }
   return ERROR;
@@ -356,23 +356,23 @@ int bsp_module_start(void)
 	bsp_driver.cpu_port = ((sdk_driver_t*)bsp_driver.sdk_driver)->cpu_port;
 
 	porttbl[0].type = IF_ETHERNET;//lan1
-	porttbl[0].port = 1;
+	porttbl[0].lport = 1;
   	porttbl[0].phyid = 4;
 
 	porttbl[1].type = IF_ETHERNET;//lan2
-	porttbl[1].port = 2;
+	porttbl[1].lport = 2;
   	porttbl[1].phyid = 0;
 
 	porttbl[2].type = IF_ETHERNET;//lan3
-	porttbl[2].port = 3;
+	porttbl[2].lport = 3;
   	porttbl[2].phyid = 1;
 
 	porttbl[3].type = IF_ETHERNET;//lan4
-	porttbl[3].port = 4;
+	porttbl[3].lport = 4;
   	porttbl[3].phyid = 2;
 
 	porttbl[4].type = IF_ETHERNET;//wan
-	porttbl[4].port = 5;
+	porttbl[4].lport = 5;
   	porttbl[4].phyid = 3;
   /*
 				port0: port@0 {
@@ -415,7 +415,7 @@ int bsp_module_start(void)
   	hal_client_bsp_hwport_register(bsp_driver.hal_client, 5, porttbl);
 
 	if(bsp_driver.hal_client)
-	hal_client_event(HAL_EVENT_REGISTER, bsp_driver.hal_client, 1);
+		hal_client_event(HAL_EVENT_REGISTER, bsp_driver.hal_client, 1, 0);
 	zlog_debug(MODULE_BSP, "SDK Init, Done.");
 	return OK;
 }

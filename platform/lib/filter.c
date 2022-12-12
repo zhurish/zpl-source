@@ -696,11 +696,11 @@ filter_lookup_mac_local(struct access_list *access,
   struct filter_l2 *filter;
   struct filter_l2 *new;
 
-  new = &mnew->u.zextfilter;
+  new = &mnew->u.mac_filter;
 
   for (mfilter = access->head; mfilter; mfilter = mfilter->next)
   {
-    filter = &mfilter->u.zextfilter;
+    filter = &mfilter->u.mac_filter;
     if (mfilter->type == mnew->type && filter_compare_l2mac(filter, new))
       return mfilter;
   }

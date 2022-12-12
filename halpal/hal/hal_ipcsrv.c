@@ -259,9 +259,9 @@ static void hal_ipcsrv_msg_hwport(struct hal_ipcclient *client, struct hal_ipcms
         hal_ipcmsg_getc(ipcmsg, &porttbl.unit);
         hal_ipcmsg_getc(ipcmsg, &porttbl.slot);
         hal_ipcmsg_getc(ipcmsg, &porttbl.type);
-        hal_ipcmsg_getc(ipcmsg, &porttbl.port);
+        hal_ipcmsg_getc(ipcmsg, &porttbl.lport);
         hal_ipcmsg_getl(ipcmsg, &porttbl.phyid);
-        unit_board_port_add(client->board, (if_type_t)porttbl.type, porttbl.port, porttbl.phyid);
+        unit_board_port_add(client->board, (if_type_t)porttbl.type, porttbl.lport, porttbl.phyid);
     }
     if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug) && IS_HAL_IPCMSG_DEBUG_RECV(client->ipcsrv->debug))
     {

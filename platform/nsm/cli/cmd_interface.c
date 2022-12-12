@@ -1405,7 +1405,7 @@ DEFUN_HIDDEN(no_nsm_interface_set_kernel,
 
 		if_kname_set(ifp, NULL);
 		UNSET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
-		ifp->k_ifindex = 0;
+		ifp->ker_ifindex = 0;
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
 	return CMD_WARNING;
@@ -1433,7 +1433,7 @@ DEFUN_HIDDEN(show_interface_kernel,
 			{
 				if (ifp)
 				{
-					vty_out(vty, " %-20s %-16s->%d %s", ifp->name, ifp->k_name, ifp->k_ifindex, VTY_NEWLINE);
+					vty_out(vty, " %-20s %-16s->%d %s", ifp->name, ifp->ker_name, ifp->ker_ifindex, VTY_NEWLINE);
 				}
 			}
 		}
@@ -1450,17 +1450,18 @@ static int _show_interface_info(int argc, char *name, char *uspv, struct vty *vt
 	struct listnode *node;
 	struct interface *ifp;
 	struct list *if_list = NULL;
-	IF_DATA_LOCK();
 	if (argc == 0)
 	{
 		if_list = if_list_get();
 		if (if_list)
 		{
+			IF_MASTER_LOCK();
 			for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 			{
 				if (ifp)
 					nsm_interface_show_api(vty, ifp);
 			}
+			IF_MASTER_UNLOCK();
 		}
 	}
 	else if (argc == 1) // brief
@@ -1474,11 +1475,13 @@ static int _show_interface_info(int argc, char *name, char *uspv, struct vty *vt
 		if_list = if_list_get();
 		if (if_list)
 		{
+			IF_MASTER_LOCK();
 			for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 			{
 				if (ifp)
 					nsm_interface_show_brief_api(vty, ifp, brief, &head);
 			}
+			IF_MASTER_UNLOCK();
 		}
 	}
 	else if (argc == 2)
@@ -1673,10 +1676,10 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 	struct listnode *node;
 	struct interface *ifp;
 	struct list *if_list = NULL;
-	IF_DATA_LOCK();
 	if_list = if_list_get();
 	if (if_list)
 	{
+		IF_MASTER_LOCK();
 		for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 		{
 			struct nsm_interface *if_data;
@@ -1706,8 +1709,8 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 				vty_out(vty, "!%s", VTY_NEWLINE);
 			}
 		}
+		IF_MASTER_UNLOCK();
 	}
-	IF_DATA_UNLOCK();
 	return 0;
 }
 
@@ -1716,10 +1719,10 @@ static int nsm_interface_config_write(struct vty *vty)
 	struct listnode *node;
 	struct interface *ifp;
 	struct list *if_list = NULL;
-	IF_DATA_LOCK();
 	if_list = if_list_get();
 	if (if_list)
 	{
+		IF_MASTER_LOCK();
 		for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 		{
 			struct nsm_interface *if_data;
@@ -1789,8 +1792,8 @@ static int nsm_interface_config_write(struct vty *vty)
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);
 		}
+		IF_MASTER_UNLOCK();
 	}
-	IF_DATA_UNLOCK();
 	return 0;
 }
 

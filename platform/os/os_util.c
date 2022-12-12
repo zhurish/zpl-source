@@ -392,3 +392,18 @@ zpl_bool is_bzero (zpl_char *str, int len)
 	}
 	return zpl_true;
 }
+
+
+char* os_name_format(char *format,...)
+{
+	int len = 0;
+	static char buftmp[1024];
+	va_list args;
+	memset(buftmp, 0, sizeof(buftmp));
+	va_start(args, format);
+	len = vsnprintf(buftmp, sizeof(buftmp), format, args);
+	va_end(args);
+	if(len)
+		return buftmp;
+	return NULL;	
+}

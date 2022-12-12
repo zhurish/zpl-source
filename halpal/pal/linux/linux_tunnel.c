@@ -89,7 +89,7 @@ int linux_ioctl_tunnel_create(struct interface *ifp)
 	tunnel = nsm_tunnel_get(ifp);
 	if(tunnel == NULL)
 		return ERROR;	
-	os_strcpy(p.name, tunnel->ifp->k_name);
+	os_strcpy(p.name, tunnel->ifp->ker_name);
 	nsm_tunnel_make_iphdr(tunnel, &p.iph);
 
 /*	p.link;
@@ -141,10 +141,10 @@ int linux_ioctl_tunnel_delete(struct interface *ifp)
 	tunnel = nsm_tunnel_get(ifp);
 	if(tunnel == NULL)
 		return ERROR;	
-	os_strcpy(p.name, tunnel->ifp->k_name);
+	os_strcpy(p.name, tunnel->ifp->ker_name);
 	nsm_tunnel_make_iphdr(tunnel, &p.iph);
 
-	p.link = tunnel->ifp->k_ifindex;
+	p.link = tunnel->ifp->ker_ifindex;
 	switch(tunnel->mode)
 	{
 	case NSM_TUNNEL_IPIP:
@@ -184,10 +184,10 @@ int linux_ioctl_tunnel_change(struct interface *ifp)
 	tunnel = nsm_tunnel_get(ifp);
 	if(tunnel == NULL)
 		return ERROR;
-	os_strcpy(p.name, tunnel->ifp->k_name);
+	os_strcpy(p.name, tunnel->ifp->ker_name);
 	nsm_tunnel_make_iphdr(tunnel, &p.iph);
 
-	p.link = tunnel->ifp->k_ifindex;
+	p.link = tunnel->ifp->ker_ifindex;
 /*	p.link;
 	p.i_flags;
 	p.o_flags;

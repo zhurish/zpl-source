@@ -58,20 +58,12 @@ struct thread_cpu
 	void *data;
 };
 
-enum thread_mode
-{
-	OS_MODE = 1,
-	IP_MODE = 2,
-};
 
 /* Master of the theads. */
 struct thread_master
 {
-  #ifdef THREAD_MASTER_LIST
   struct thread_master *next;		/* next pointer of the thread */   
   struct thread_master *prev;		/* previous pointer of the thread */
-  #endif
-  enum thread_mode workmode;
 
   struct thread_list read;
   struct thread_list write;
@@ -256,12 +248,7 @@ extern void thread_getrusage (struct timeval *real);
 /* Returns elapsed real (wall clock) time. */
 extern zpl_ulong thread_consumed_time(struct timeval *after, struct timeval *before,
 					  zpl_ulong *cpu_time_elapsed);
-#ifndef THREAD_MASTER_LIST
-extern struct thread_master * master_thread[];
-#endif
-//extern struct timeval recent_relative_time (void);
 
-//extern int cpu_thread_show(struct thread_master *m, struct vty *vty);
 #ifdef ZPL_SHELL_MODULE
 extern int cmd_os_thread_init(void);
 #endif

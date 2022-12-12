@@ -27,7 +27,7 @@ int nsm_dos_init(void)
 {
 	template_t * temp = NULL;
 	memset(&gdos, 0, sizeof(gdos));
-	gdos.mutex = os_mutex_init();
+	gdos.mutex = os_mutex_name_init("gdos.mutex");
 	temp = lib_template_new (zpl_true);
 	if(temp)
 	{

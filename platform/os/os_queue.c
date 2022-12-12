@@ -27,16 +27,21 @@ int os_msgq_exit(void)
 	return OK;
 }
 
-os_queue_t *os_queue_create(zpl_uint32 max, zpl_uint32 size)
+os_queue_t *os_queue_create(zpl_char *name, zpl_uint32 max, zpl_uint32 size)
 {
 	os_queue_t *queue = os_malloc(sizeof(os_queue_t));
 	if(queue)
 	{
 		os_memset(queue, 0, sizeof(os_queue_t));
+		if(name)
+		{
+			os_memset(queue->name, 0, OS_QUEUE_NAME_MAX);
+			os_memcpy(queue->name, name, MIN(OS_QUEUE_NAME_MAX, os_strlen(name)));
+		}
 		queue->max = max;
 		queue->size = size;
-		queue->sem = os_sem_init();
-		queue->mutex = os_mutex_init();
+		queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
+		queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
 		lstInit (&queue->ulist);
 		lstInit (&queue->list);
 		return queue;

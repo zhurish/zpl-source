@@ -18,6 +18,7 @@
 #include <sstream>
 #include <utility>
 
+
 // Provide implementation equivalent of std::snprintf for older _MSC compilers
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #include <stdarg.h>

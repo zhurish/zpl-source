@@ -33,13 +33,16 @@ typedef struct nsm_serial_s
 	struct interface *ifp;
 	tty_type_en		serial_type;
 	struct tty_com	serial;
-
+	void        *mutex;
 	zpl_uint32	 serial_index;
 
 	int	(*encapsulation)(zpl_char *, zpl_uint32, zpl_char *, zpl_uint32);
 	int	(*decapsulation)(zpl_char *, zpl_uint32, zpl_char *, zpl_uint32);
 
 }nsm_serial_t;
+
+#define IF_NSM_SERIAL_DATA_LOCK(serial)   if(serial && serial->mutex) os_mutex_lock(serial->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_SERIAL_DATA_UNLOCK(serial) if(serial && serial->mutex) os_mutex_unlock(serial->mutex)
 
 
 extern int nsm_serial_init(void);

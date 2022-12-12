@@ -73,7 +73,7 @@ int pjsip_buddy_load()
 		if (pjsip_buddy_table)
 		{
 			if(pjsip_buddy_mutex == NULL)
-				pjsip_buddy_mutex = os_mutex_init();
+				pjsip_buddy_mutex = os_mutex_name_init("pjsip_buddy_mutex");
 			lstInit(pjsip_buddy_table);
 			if(pjsip_buddy_mutex)
 				os_mutex_lock(pjsip_buddy_mutex, OS_WAIT_FOREVER);

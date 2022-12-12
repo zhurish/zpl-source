@@ -28,7 +28,7 @@ int zpl_video_input_init()
 	}
 	if(video_input_mutex == NULL)
 	{
-		video_input_mutex = os_mutex_init();
+		video_input_mutex = os_mutex_name_init("video_input_mutex");
 	}
 	zpl_video_input_pipe_init();
 	return ERROR;

@@ -176,8 +176,11 @@ typedef struct nsm_pppd_s
 
 	struct interface	*ifp;
 	pppd_options_t 		pppd_options;
+    void        *mutex;
 }nsm_pppd_t;
 
+#define IF_NSM_PPP_DATA_LOCK(ppp)   if(ppp && ppp->mutex) os_mutex_lock(ppp->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_PPP_DATA_UNLOCK(ppp) if(ppp && ppp->mutex) os_mutex_unlock(ppp->mutex)
 
 
 int nsm_ppp_interface_create_api(struct interface *ifp);

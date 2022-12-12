@@ -28,7 +28,7 @@ typedef struct			/* Header for a linked list. */
     {
     NODE node;			/* Header list node */
     zpl_uint32 count;			/* Number of nodes in list */
-    int (*free)(void *);
+    void (*free)(void *);
     int (*cmp)(void *, void *);
     } LIST;
 
@@ -59,7 +59,7 @@ extern void 	lstInit (LIST *pList);
 extern void 	lstInsert (LIST *pList, NODE *pPrev, NODE *pNode);
 
 extern void 	lstSortInit (LIST *pList, int(*cmp)(void *, void *));
-extern void 	lstInitFree (LIST *pList, int(*freecb)(void *));
+extern void 	lstInitFree (LIST *pList, void(*freecb)(void *));
 extern void 	lstAddSort (LIST *pList, NODE *pNode);
 
 

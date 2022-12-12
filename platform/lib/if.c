@@ -38,38 +38,52 @@
 
 
 
-struct if_master _zif_master;
+static struct if_master _zpl_if_master_lst;
 
 int if_data_lock(void)
 {
-	if (_zif_master.ifMutex)
-		os_mutex_lock(_zif_master.ifMutex, OS_WAIT_FOREVER);
+	if (_zpl_if_master_lst.ifdatamutex)
+		os_mutex_lock(_zpl_if_master_lst.ifdatamutex, OS_WAIT_FOREVER);
 	return OK;
 }
 
 int if_data_unlock(void)
 {
-	if (_zif_master.ifMutex)
-		os_mutex_unlock(_zif_master.ifMutex);
+	if (_zpl_if_master_lst.ifdatamutex)
+		os_mutex_unlock(_zpl_if_master_lst.ifdatamutex);
+	return OK;
+}
+
+int if_master_lock(void)
+{
+	if (_zpl_if_master_lst.ifMutex)
+		os_mutex_lock(_zpl_if_master_lst.ifMutex, OS_WAIT_FOREVER);
+	return OK;
+}
+
+int if_master_unlock(void)
+{
+	if (_zpl_if_master_lst.ifMutex)
+		os_mutex_unlock(_zpl_if_master_lst.ifMutex);
 	return OK;
 }
 
 struct list *if_list_get(void)
 {
-	return _zif_master.intfList;
+	return _zpl_if_master_lst.intfList;
 }
 
 int if_hook_add(int (*add_cb)(struct interface *), int (*del_cb)(struct interface *))
 {
-	_zif_master.if_master_add_cb = add_cb;
-	_zif_master.if_master_del_cb = del_cb;
+	_zpl_if_master_lst.if_master_add_cb = add_cb;
+	_zpl_if_master_lst.if_master_del_cb = del_cb;
 	return OK;
 }
 
 int if_new_llc_type_mode(zpl_uint32 llc, zpl_uint32 mode)
 {
-	_zif_master.llc = llc;
-	_zif_master.mode = mode;
+	_zpl_if_master_lst.llc = llc;
+	_zpl_if_master_lst.mode = mode;
 	return OK;
 }
 
@@ -238,15 +252,15 @@ int if_make_llc_type(struct interface *ifp)
 	default:
 		break;
 	}
-	if (_zif_master.llc)
+	if (_zpl_if_master_lst.llc)
 	{
-		ifp->ll_type = _zif_master.llc;
-		_zif_master.llc = 0;
+		ifp->ll_type = _zpl_if_master_lst.llc;
+		_zpl_if_master_lst.llc = 0;
 	}
-	if (_zif_master.mode)
+	if (_zpl_if_master_lst.mode)
 	{
-		ifp->if_mode = _zif_master.mode;
-		_zif_master.mode = 0;
+		ifp->if_mode = _zpl_if_master_lst.mode;
+		_zpl_if_master_lst.mode = 0;
 	}
 	return OK;
 }
@@ -339,13 +353,13 @@ int if_kernelname_set(struct interface *ifp)
 	case IF_MODEM:
 #endif
 		if (IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(ifp->k_name, "%s%d/%d/%d.%d", getkernelname(ifp->if_type),
+			sprintf(ifp->ker_name, "%s%d/%d/%d.%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_UNIT_GET(ifp->ifindex),
 					IF_IFINDEX_SLOT_GET(ifp->ifindex),
 					IF_IFINDEX_PORT_GET(ifp->ifindex),
 					IF_IFINDEX_ID_GET(ifp->ifindex));
 		else
-			sprintf(ifp->k_name, "%s%d/%d/%d", getkernelname(ifp->if_type),
+			sprintf(ifp->ker_name, "%s%d/%d/%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_UNIT_GET(ifp->ifindex),
 					IF_IFINDEX_SLOT_GET(ifp->ifindex),
 					IF_IFINDEX_PORT_GET(ifp->ifindex));
@@ -354,30 +368,30 @@ int if_kernelname_set(struct interface *ifp)
 	case IF_VLAN:
 	case IF_LAG:
 		if (IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(ifp->k_name, "%s%d", getkernelname(ifp->if_type),
+			sprintf(ifp->ker_name, "%s%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_ID_GET(ifp->ifindex));
 		else
-			sprintf(ifp->k_name, "%s%d", getkernelname(ifp->if_type),
+			sprintf(ifp->ker_name, "%s%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_PORT_GET(ifp->ifindex));
 		break;
 	default:
 		break;
 	}
-	ifp->k_name_hash = if_name_hash_make(ifp->k_name);
+	ifp->ker_name_hash = if_name_hash_make(ifp->ker_name);
 	return OK;
 }
 #else
 int if_kernelname_set(struct interface *ifp)
 {
-	zpl_char k_name[64];
-	os_memset(k_name, 0, sizeof(k_name));
+	zpl_char ker_name[64];
+	os_memset(ker_name, 0, sizeof(ker_name));
 	switch (ifp->if_type)
 	{
 #if defined(ZPL_NSM_TUNNEL)||defined(ZPL_NSM_SERIAL)||defined(ZPL_NSM_BRIGDE)		
 	case IF_SERIAL:
 	case IF_TUNNEL:
 	case IF_BRIGDE:	
-		sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
+		sprintf(ker_name, "%s%d%d", getkernelname(ifp->if_type),
 				IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
 		break;
 #endif		
@@ -390,17 +404,17 @@ int if_kernelname_set(struct interface *ifp)
 	case IF_MODEM:
 #endif
 		if (!IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(k_name, "%s%d%d", getkernelname(ifp->if_type),
+			sprintf(ker_name, "%s%d%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex));
 		else
 		{
-			ifindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
+			ifkernindex_t root_kifindex = ifindex2ifkernel(IF_IFINDEX_ROOT_GET(ifp->ifindex));
 			const char *root_kname = ifkernelindex2kernelifname(root_kifindex);
 			if (root_kname)
-				sprintf(k_name, "%s.%d", root_kname,
+				sprintf(ker_name, "%s.%d", root_kname,
 						IF_IFINDEX_VLAN_GET(ifp->ifindex));
 			else
-				sprintf(k_name, "%s%d%d.%d", getkernelname(ifp->if_type),
+				sprintf(ker_name, "%s%d%d.%d", getkernelname(ifp->if_type),
 						IF_IFINDEX_SLOT_GET(ifp->ifindex), IF_IFINDEX_PORT_GET(ifp->ifindex),
 						IF_IFINDEX_VLAN_GET(ifp->ifindex));
 		}
@@ -411,18 +425,18 @@ int if_kernelname_set(struct interface *ifp)
 	case IF_LAG:
 #if defined(ZPL_NSM_TRUNK)||defined(ZPL_NSM_VLAN)
 		if (IF_IFINDEX_ID_GET(ifp->ifindex))
-			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
+			sprintf(ker_name, "%s%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_ID_GET(ifp->ifindex));
 		else
-			sprintf(k_name, "%s%d", getkernelname(ifp->if_type),
+			sprintf(ker_name, "%s%d", getkernelname(ifp->if_type),
 					IF_IFINDEX_PORT_GET(ifp->ifindex));
 		break;
 #endif
 	default:
 		break;
 	}
-	if (os_strlen(k_name))
-		if_kname_set(ifp, k_name);
+	if (os_strlen(ker_name))
+		if_kname_set(ifp, ker_name);
 	return OK;
 }
 #endif
@@ -431,14 +445,13 @@ struct interface *
 if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct interface *ifp = NULL;
-	struct list *intf_list = _zif_master.intfList;
+	struct list *intf_list = _zpl_if_master_lst.intfList;
 	assert(name);
 	assert(namelen <= IF_NAME_MAX); /* Need space for '\0' at end. */
-	IF_DATA_LOCK();
+	
 	ifp = XCALLOC(MTYPE_IF, sizeof(struct interface));
 	if (ifp == NULL)
 	{
-		IF_DATA_UNLOCK();
 		return NULL;
 	}
 	ifp->ifindex = IFINDEX_INTERNAL;
@@ -452,7 +465,6 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected  %u!", name, namelen);
 
 		XFREE(MTYPE_IF, ifp);
-		IF_DATA_UNLOCK();
 		return NULL;
 	}
 
@@ -475,7 +487,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 	if_make_llc_type(ifp);
 	if_mode_default(ifp);
-
+	IF_MASTER_LOCK();
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
 	else
@@ -486,9 +498,9 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	zlog_debug(MODULE_DEFAULT, "================if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
 
-	if (_zif_master.if_master_add_cb)
-		(_zif_master.if_master_add_cb)(ifp);
-	IF_DATA_UNLOCK();
+	if (_zpl_if_master_lst.if_master_add_cb)
+		(_zpl_if_master_lst.if_master_add_cb)(ifp);
+	IF_MASTER_UNLOCK();
 	return ifp;
 }
 
@@ -496,14 +508,12 @@ struct interface *
 if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {
 	struct interface *ifp = NULL;
-	struct list *intf_list = _zif_master.intfList;
+	struct list *intf_list = _zpl_if_master_lst.intfList;
 	assert(name);
 	assert(namelen <= IF_NAME_MAX); /* Need space for '\0' at end. */
-	IF_DATA_LOCK();
 	ifp = XCALLOC(MTYPE_IF, sizeof(struct interface));
 	if (ifp == NULL)
 	{
-		IF_DATA_UNLOCK();
 		return NULL;
 	}
 	ifp->ifindex = IFINDEX_INTERNAL;
@@ -515,7 +525,6 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	if (if_ifname_setup(ifp, name, namelen) != OK)
 	{
 		XFREE(MTYPE_IF, ifp);
-		IF_DATA_UNLOCK();
 		return NULL;
 	}
 
@@ -537,7 +546,7 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	ifp->flags |= IPSTACK_IFF_UP | IPSTACK_IFF_RUNNING;
 	if_make_llc_type(ifp);
 	if_mode_default(ifp);
-
+	IF_MASTER_LOCK();
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
 	else
@@ -548,9 +557,9 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	zlog_debug(MODULE_DEFAULT, "if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
 
-	if (_zif_master.if_master_add_cb)
-		_zif_master.if_master_add_cb(ifp);
-	IF_DATA_UNLOCK();
+	if (_zpl_if_master_lst.if_master_add_cb)
+		_zpl_if_master_lst.if_master_add_cb(ifp);
+	IF_MASTER_UNLOCK();
 	return ifp;
 }
 
@@ -569,15 +578,15 @@ if_create_dynamic(const char *name, zpl_uint32 namelen)
 /* Delete and free interface structure. */
 void if_delete(struct interface *ifp)
 {
-	IF_DATA_LOCK();
-	if (_zif_master.if_master_del_cb)
-		(_zif_master.if_master_del_cb)(ifp);
+	IF_MASTER_LOCK();
+	if (_zpl_if_master_lst.if_master_del_cb)
+		(_zpl_if_master_lst.if_master_del_cb)(ifp);
 
-	listnode_delete(_zif_master.intfList, ifp);
+	listnode_delete(_zpl_if_master_lst.intfList, ifp);
 	list_delete_all_node(ifp->connected);
 	list_free(ifp->connected);
 	XFREE(MTYPE_IF, ifp);
-	IF_DATA_UNLOCK();
+	IF_MASTER_UNLOCK();
 }
 
 /* Interface existance check by index. */
@@ -586,12 +595,16 @@ if_lookup_by_index_vrf(ifindex_t ifindex, vrf_id_t vrf_id)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if ((ifp->ifindex && ifp->ifindex == ifindex) && (ifp->vrf_id == vrf_id))
+		{
+			IF_MASTER_UNLOCK();
 			return ifp;
+		}
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -600,12 +613,16 @@ if_lookup_by_index(ifindex_t ifindex)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp->ifindex && ifp->ifindex == ifindex)
+		{
+			IF_MASTER_UNLOCK();
 			return ifp;
+		}
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -614,13 +631,19 @@ if_lookup_by_kernel_name_vrf(const char *name, vrf_id_t vrf_id)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
+	IF_MASTER_LOCK();
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	{
+		for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 		{
-			if (ifp->k_name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
+			if (ifp->ker_name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
+			{
+				IF_MASTER_UNLOCK();
 				return ifp;
+			}
 		}
+	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -629,75 +652,88 @@ if_lookup_by_kernel_name(const char *name)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
+	IF_MASTER_LOCK();
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	{
+		for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 		{
-			if (ifp->k_name_hash == if_name_hash_make(name))
+			if (ifp->ker_name_hash == if_name_hash_make(name))
+			{
+				IF_MASTER_UNLOCK();
 				return ifp;
+			}
 		}
-	return NULL;
-	//return if_lookup_by_kernel_name_vrf(name, VRF_DEFAULT);
-}
-
-struct interface *
-if_lookup_by_kernel_index_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
-{
-	struct listnode *node = NULL;
-	struct interface *ifp = NULL;
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
-	{
-		if (ifp->k_ifindex && ifp->k_ifindex == kifindex && (ifp->vrf_id == vrf_id))
-			return ifp;
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
 struct interface *
-if_lookup_by_kernel_index(ifindex_t kifindex)
+if_lookup_by_kernel_index_vrf(ifkernindex_t kifindex, vrf_id_t vrf_id)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
-		if (ifp->k_ifindex && ifp->k_ifindex == kifindex)
+		if (ifp->ker_ifindex && ifp->ker_ifindex == kifindex && (ifp->vrf_id == vrf_id))
+		{
+			IF_MASTER_UNLOCK();
 			return ifp;
+		}
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
-	//return if_lookup_by_kernel_index_vrf(kifindex, VRF_DEFAULT);
 }
 
-const char *ifkernelindex2kernelifname(ifindex_t kifindex)
+struct interface * if_lookup_by_kernel_index(ifkernindex_t kifindex)
+{
+	struct listnode *node = NULL;
+	struct interface *ifp = NULL;
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
+	{
+		if (ifp->ker_ifindex && ifp->ker_ifindex == kifindex)
+		{
+			IF_MASTER_UNLOCK();
+			return ifp;
+		}
+	}
+	IF_MASTER_UNLOCK();
+	return NULL;
+}
+
+const char *ifkernelindex2kernelifname(ifkernindex_t kifindex)
 {
 	struct interface *ifp = NULL;
-	return ((ifp = if_lookup_by_kernel_index(kifindex)) != NULL) ? ifp->k_name : NULL;
+	return ((ifp = if_lookup_by_kernel_index(kifindex)) != NULL) ? ifp->ker_name : NULL;
 }
 
-const char *ifkernelindex2kernelifname_vrf(ifindex_t kifindex, vrf_id_t vrf_id)
+const char *ifkernelindex2kernelifname_vrf(ifkernindex_t kifindex, vrf_id_t vrf_id)
 {
 	struct interface *ifp = NULL;
-	return ((ifp = if_lookup_by_kernel_index_vrf(kifindex, vrf_id)) != NULL) ? ifp->k_name : NULL;
+	return ((ifp = if_lookup_by_kernel_index_vrf(kifindex, vrf_id)) != NULL) ? ifp->ker_name : NULL;
 }
 
-ifindex_t ifname2kernelifindex(const char *ifname)
+ifkernindex_t ifname2kernelifindex(const char *ifname)
 {
 	struct interface *ifp = NULL;
-	return ((ifp = if_lookup_by_kernel_name(ifname)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_kernel_name(ifname)) != NULL) ? ifp->ker_ifindex : IFINDEX_INTERNAL;
 }
 
-ifindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id)
+ifkernindex_t ifname2kernelifindex_vrf(const char *ifname, vrf_id_t vrf_id)
 {
 	struct interface *ifp = NULL;
-	return ((ifp = if_lookup_by_kernel_name_vrf(ifname, vrf_id)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_kernel_name_vrf(ifname, vrf_id)) != NULL) ? ifp->ker_ifindex : IFINDEX_INTERNAL;
 }
 
-ifindex_t ifindex2ifkernel(ifindex_t ifindex)
+ifkernindex_t ifindex2ifkernel(ifindex_t ifindex)
 {
 	struct interface *ifp = NULL;
-	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->k_ifindex : IFINDEX_INTERNAL;
+	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->ker_ifindex : IFINDEX_INTERNAL;
 }
 
-ifindex_t ifkernel2ifindex(ifindex_t ifkindex)
+ifindex_t ifkernel2ifindex(ifkernindex_t ifkindex)
 {
 	struct interface *ifp = NULL;
 	return ((ifp = if_lookup_by_kernel_index(ifkindex)) != NULL) ? ifp->ifindex : IFINDEX_INTERNAL;
@@ -714,9 +750,7 @@ const char *
 ifindex2ifname(ifindex_t ifindex)
 {
 	struct interface *ifp = NULL;
-
 	return ((ifp = if_lookup_by_index(ifindex)) != NULL) ? ifp->name : "unknown";
-	//return ifindex2ifname_vrf(ifindex, VRF_DEFAULT);
 }
 
 ifindex_t ifname2ifindex_vrf(const char *name, vrf_id_t vrf_id)
@@ -737,13 +771,19 @@ if_lookup_by_name_vrf(const char *name, vrf_id_t vrf_id)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
+	IF_MASTER_LOCK();
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	{
+		for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 		{
 			if (ifp->name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
+			{
+				IF_MASTER_UNLOCK();
 				return ifp;
+			}
 		}
+	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -752,15 +792,20 @@ if_lookup_by_name(const char *name)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
+	IF_MASTER_LOCK();
 	if (name)
-		for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	{
+		for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 		{
 			if (ifp->name_hash == if_name_hash_make(name))
+			{
+				IF_MASTER_UNLOCK();
 				return ifp;
+			}
 		}
+	}
+	IF_MASTER_UNLOCK();
 	return NULL;
-	//return if_lookup_by_name_vrf(name, VRF_DEFAULT);
 }
 
 struct interface *
@@ -771,12 +816,16 @@ if_lookup_by_name_len_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	if (namelen > IF_NAME_MAX)
 		return NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp->name_hash == if_name_hash_make(name) && (ifp->vrf_id == vrf_id))
+		{
+			IF_MASTER_UNLOCK();
 			return ifp;
+		}
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -803,12 +852,16 @@ ifindex_t  if_phy2ifindex(zpl_phyport_t phyid)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp->phyid && ifp->phyid == phyid)
+		{
+			IF_MASTER_UNLOCK();
 			return ifp->ifindex;
+		}
 	}
+	IF_MASTER_UNLOCK();
 	return IFINDEX_INTERNAL;
 }
 
@@ -822,12 +875,16 @@ ifindex_t  if_l3intfid2ifindex(zpl_phyport_t l3intfid)
 {
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp->l3intfid && ifp->l3intfid == l3intfid)
+		{
+			IF_MASTER_UNLOCK();
 			return ifp->ifindex;
+		}
 	}
+	IF_MASTER_UNLOCK();
 	return IFINDEX_INTERNAL;
 }
 
@@ -881,8 +938,8 @@ if_lookup_exact_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 	struct interface *ifp = NULL;
 	struct prefix *p = NULL;
 	struct connected *c = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if ((ifp->vrf_id == vrf_id))
 		{
@@ -893,11 +950,15 @@ if_lookup_exact_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 				if (p && p->family == IPSTACK_AF_INET)
 				{
 					if (IPV4_ADDR_SAME(&p->u.prefix4, &src))
+					{
+						IF_MASTER_UNLOCK();
 						return ifp;
+					}
 				}
 			}
 		}
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -918,14 +979,14 @@ if_lookup_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 	struct interface *ifp = NULL;
 	struct connected *c = NULL;
 	struct interface *match = NULL;
-
+	IF_MASTER_LOCK();
 	addr.family = IPSTACK_AF_INET;
 	addr.u.prefix4 = src;
 	addr.prefixlen = IPV4_MAX_BITLEN;
 
 	match = NULL;
 
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp->vrf_id == vrf_id)
 		{
@@ -939,6 +1000,7 @@ if_lookup_address_vrf(struct ipstack_in_addr src, vrf_id_t vrf_id)
 			}
 		}
 	}
+	IF_MASTER_UNLOCK();
 	return match;
 }
 
@@ -957,8 +1019,8 @@ if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id)
 	struct listnode *cnode = NULL;
 	struct interface *ifp = NULL;
 	struct connected *c = NULL;
-
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp->vrf_id == vrf_id)
 		{
@@ -966,11 +1028,13 @@ if_lookup_prefix_vrf(struct prefix *prefix, vrf_id_t vrf_id)
 			{
 				if (prefix_cmp(c->address, prefix) == 0)
 				{
+					IF_MASTER_UNLOCK();
 					return ifp;
 				}
 			}
 		}
 	}
+	IF_MASTER_UNLOCK();
 	return NULL;
 }
 
@@ -983,17 +1047,17 @@ if_lookup_prefix(struct prefix *prefix)
 zpl_uint32 if_count_lookup_type(if_type_t type)
 {
 	struct listnode *node = NULL;
-	//struct listnode *cnode;
 	struct interface *ifp = NULL;
-	//struct connected *c;
 	int count = 0;
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (IF_TYPE_GET(ifp->if_type) == type)
 		{
 			(count)++;
 		}
 	}
+	IF_MASTER_UNLOCK();
 	return (count);
 }
 /* Get interface by name if given name interface doesn't exist create one. */
@@ -1159,18 +1223,18 @@ int if_kname_set(struct interface *ifp, const char *str)
 		zpl_char buf[IF_NAME_MAX + 1];
 		os_memset(buf, 0, sizeof(buf));
 		os_strcpy(buf, str);
-		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
-		os_strcpy(ifp->k_name, buf);
-		ifp->k_name_hash = if_name_hash_make(ifp->k_name);
+		os_memset(ifp->ker_name, 0, sizeof(ifp->ker_name));
+		os_strcpy(ifp->ker_name, buf);
+		ifp->ker_name_hash = if_name_hash_make(ifp->ker_name);
 #ifdef ZPL_PAL_MODULE
-		ifp->k_ifindex = if_nametoindex(ifp->k_name);
+		ifp->ker_ifindex = if_nametoindex(ifp->ker_name);
 #endif
 	}
 	else
 	{
-		os_memset(ifp->k_name, 0, sizeof(ifp->k_name));
-		ifp->k_name_hash = 0;
-		ifp->k_ifindex = 0;
+		os_memset(ifp->ker_name, 0, sizeof(ifp->ker_name));
+		ifp->ker_name_hash = 0;
+		ifp->ker_ifindex = 0;
 	}
 	return OK;
 }
@@ -1229,7 +1293,8 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 	int ret = OK;
 	struct listnode *node = NULL;
 	struct interface *ifp = NULL;
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, ifp))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, ifp))
 	{
 		if (ifp)
 		{
@@ -1241,6 +1306,7 @@ int if_list_each(int (*cb)(struct interface *ifp, void *pVoid), void *pVoid)
 			}
 		}
 	}
+	IF_MASTER_UNLOCK();
 	return ret;
 }
 
@@ -1507,38 +1573,55 @@ void if_dump_all(void)
 {
 	struct listnode *node = NULL;
 	void *p = NULL;
-	for (ALL_LIST_ELEMENTS_RO(_zif_master.intfList, node, p))
+	IF_MASTER_LOCK();
+	for (ALL_LIST_ELEMENTS_RO(_zpl_if_master_lst.intfList, node, p))
 		if_dump(p);
+	IF_MASTER_UNLOCK();	
 }
 
 /* Initialize interface list. */
 void if_init(void)
 {
-	memset(&_zif_master, 0, sizeof(struct if_master));
-	if(_zif_master.intfList == NULL)
+	memset(&_zpl_if_master_lst, 0, sizeof(struct if_master));
+	if(_zpl_if_master_lst.intfList == NULL)
 	{
-		_zif_master.intfList = list_new();
-		if (_zif_master.ifMutex == NULL)
-			_zif_master.ifMutex = os_mutex_name_init("ifMutex");
-		(_zif_master.intfList)->cmp = (zpl_int (*)(void *, void *))if_cmp_func;
+		_zpl_if_master_lst.intfList = list_new();
+		if (_zpl_if_master_lst.ifMutex == NULL)
+			_zpl_if_master_lst.ifMutex = os_mutex_name_init("ifMutex");
+		if (_zpl_if_master_lst.ifdatamutex == NULL)
+			_zpl_if_master_lst.ifdatamutex = os_mutex_name_init("if_data_mutex");
+			
+		(_zpl_if_master_lst.intfList)->cmp = (zpl_int (*)(void *, void *))if_cmp_func;
 	}
 }
 
 void if_terminate(void)
 {
+	IF_MASTER_LOCK();
 	for (;;)
 	{
 		struct interface *ifp = NULL;
 
-		ifp = listnode_head(_zif_master.intfList);
+		ifp = listnode_head(_zpl_if_master_lst.intfList);
 		if (ifp == NULL)
 			break;
 
 		if_delete(ifp);
 	}
 
-	list_delete(_zif_master.intfList);
-	_zif_master.intfList = NULL;
+	list_delete(_zpl_if_master_lst.intfList);
+	_zpl_if_master_lst.intfList = NULL;
+	IF_MASTER_UNLOCK();
+	if(_zpl_if_master_lst.ifdatamutex)
+	{
+		os_mutex_exit(_zpl_if_master_lst.ifdatamutex);
+		_zpl_if_master_lst.ifdatamutex = NULL;
+	}
+	if(_zpl_if_master_lst.ifMutex)
+	{
+		os_mutex_exit(_zpl_if_master_lst.ifMutex);
+		_zpl_if_master_lst.ifMutex = NULL;
+	}
 }
 
 const char *

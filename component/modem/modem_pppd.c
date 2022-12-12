@@ -45,7 +45,7 @@ int modem_pppd_init(void)
 	gModepppd.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModepppd.list)
 	{
-		gModepppd.mutex = os_mutex_init();
+		gModepppd.mutex = os_mutex_name_init("gModepppd.mutex");
 		lstInit(gModepppd.list);
 		return OK;
 	}

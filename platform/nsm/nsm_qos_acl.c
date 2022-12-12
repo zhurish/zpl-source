@@ -268,7 +268,7 @@ static qos_access_filter_list_t *_qos_access_filter_list_create_layer(char *name
     {
         os_memset(node, 0, sizeof(qos_access_filter_list_t));
         lstInitFree(&node->list, _qos_access_filter_free_layer);
-        node->mutex = os_mutex_init();
+        node->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
         node->seqnum_step = SEQNUM_STEP;
         strcpy(node->name, name);
     }
@@ -837,11 +837,11 @@ static int _qos_access_list_list_init_layer(void)
     _global_qos_access_list.init = 1;
     os_memset(&_global_qos_access_list._qos_alc_t, 0, sizeof(qos_access_list_t));
     lstInitFree(&_global_qos_access_list._qos_alc_t.list, _qos_access_filter_list_destroy_layer);
-    _global_qos_access_list._qos_alc_t.mutex = os_mutex_init();
+    _global_qos_access_list._qos_alc_t.mutex = os_mutex_name_init("access-list-mutex");
     lstInitFree(&_global_qos_access_list.class_map_list, _qos_class_free_layer);
     lstInitFree(&_global_qos_access_list.service_policy_list, _qos_policy_free_layer);
-    _global_qos_access_list.service_policy_mutex = os_mutex_init();
-    _global_qos_access_list.class_map_mutex = os_mutex_init();
+    _global_qos_access_list.service_policy_mutex = os_mutex_name_init("service_policy_mutex");
+    _global_qos_access_list.class_map_mutex = os_mutex_name_init("class_map_mutex");
     return OK;
 }
 

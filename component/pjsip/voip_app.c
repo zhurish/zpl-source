@@ -518,8 +518,8 @@ static int voip_app_call_state_callback(int id, void *p, int input)
 							voip_app->session->instance = -1;
 							//V_APP_DEBUG("================================%s-------> call next phone number", __func__);
 							//触发下一个号码呼叫流程
-							//os_job_add(voip_app_call_timeout, voip_app->session);
-							os_job_add(voip_app_call_next_number, voip_app->session);
+							//os_job_add(OS_JOB_NONE,voip_app_call_timeout, voip_app->session);
+							os_job_add(OS_JOB_NONE,voip_app_call_next_number, voip_app->session);
 							//voip_app->session->time_id = os_time_create_once(voip_app_call_timeout, voip_app->session, 1000);
 						}
 					}
@@ -1166,7 +1166,7 @@ static int voip_app_call_timeout(void *p)
 		V_APP_DEBUG("================================%s-------> call next", __func__);
 		//进入下一个号码呼叫
 		call->time_id = 0;
-		os_job_add(voip_app_call_next_number, call);
+		os_job_add(OS_JOB_NONE,voip_app_call_next_number, call);
 		//call->time_id = 0;
 		//voip_app_call_next_number(call);
 	}

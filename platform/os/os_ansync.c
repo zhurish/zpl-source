@@ -94,13 +94,13 @@ os_ansync_lst *os_ansync_lst_create(zpl_uint32 module, int maxfd)
 	if(lst)
 	{
 		os_memset(lst, 0, sizeof(os_ansync_lst));
-		lst->mutex = os_mutex_init();
+		lst->mutex = os_mutex_name_init(os_name_format("md-%d-lmutex", module));
 		if(!lst->mutex)
 		{
 			os_free(lst);
 			return NULL;
 		}
-		lst->ansync_mutex = os_mutex_init();
+		lst->ansync_mutex = os_mutex_name_init(os_name_format("md-%d-ansyncmutex", module));
 		if(!lst->ansync_mutex)
 		{
 			os_mutex_exit(lst->mutex);

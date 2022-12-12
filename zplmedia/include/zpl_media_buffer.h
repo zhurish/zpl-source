@@ -69,6 +69,7 @@ typedef struct
 
 typedef struct 
 {
+    char    *name;
 	os_sem_t	*sem;
 	os_mutex_t	*mutex;
     zpl_uint32	maxsize;
@@ -88,7 +89,7 @@ extern char *zpl_media_timerstring();
 extern zpl_uint32 zpl_media_timerstamp();
 extern void zpl_media_msleep(zpl_uint32 msec);
 
-extern zpl_media_buffer_t *zpl_media_buffer_create(zpl_uint32 maxsize, zpl_bool sem, zpl_void *chn);
+extern zpl_media_buffer_t *zpl_media_buffer_create(char *name, zpl_uint32 maxsize, zpl_bool sem, zpl_void *chn);
 
 extern zpl_media_buffer_data_t * zpl_media_buffer_data_malloc(zpl_media_buffer_t *queue, ZPL_MEDIA_E type, ZPL_BUFFER_DATA_E flag, zpl_uint32 len);
 extern zpl_media_buffer_data_t * zpl_media_buffer_data_clone(zpl_media_buffer_t *queue, zpl_media_buffer_data_t *data);

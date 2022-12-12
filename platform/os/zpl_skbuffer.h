@@ -138,18 +138,18 @@ enum zpl_netpkt_reason
 
 typedef struct
 {
-    zpl_uint16      vlantype; 
+    zpl_proto_t      vlantype; 
 #if BYTE_ORDER == LITTLE_ENDIAN
-    zpl_uint16       vid:12;
-    zpl_uint16       cfi:1; 
-    zpl_uint16       pri:3; 
+    zpl_vlan_t       vid:12;
+    zpl_vlan_t       cfi:1; 
+    zpl_vlan_t       pri:3; 
 #else    
-    zpl_uint16       pri:3; 
-    zpl_uint16       cfi:1; 
-    zpl_uint16       vid:12; 
+    zpl_vlan_t       pri:3; 
+    zpl_vlan_t       cfi:1; 
+    zpl_vlan_t       vid:12; 
 #endif 
-    zpl_uint16      ethtype; 
-}zpl_skb_vlanhdr_t __attribute__ ((packed));
+    zpl_proto_t      ethtype; 
+}__attribute__ ((packed)) zpl_skb_vlanhdr_t ;
 
 typedef struct
 {
@@ -157,10 +157,10 @@ typedef struct
     zpl_uint8       smac[ETH_ALEN]; 
     union 
     {
-        zpl_uint16      ethtype; 
+        zpl_proto_t      ethtype; 
         zpl_skb_vlanhdr_t      vlanhdr;
     }ethhdr;
-}zpl_skb_ethvlan_t __attribute__ ((packed));
+}__attribute__ ((packed)) zpl_skb_ethvlan_t;
 
 typedef struct
 {
@@ -187,7 +187,7 @@ typedef struct
     zpl_uint32      timestamp;
     volatile zpl_uint32      reference;
 
-}zpl_netpkt_hdr_t __attribute__ ((packed));
+} __attribute__ ((packed)) zpl_netpkt_hdr_t ;
 
 typedef struct
 {
@@ -200,7 +200,15 @@ typedef struct
     zpl_uint32 	buffer_timetick;    //时间戳毫秒
     zpl_uint32 	buffer_seq;         //序列号底层序列号
     zpl_uint32	buffer_len;         //帧长度
-}zpl_media_hdr_t __attribute__ ((packed));
+}__attribute__ ((packed)) zpl_media_hdr_t ;
+
+
+typedef enum zpl_skbuf_type_s 
+{
+    ZPL_SKBUF_TYPE_NONE,
+    ZPL_SKBUF_TYPE_NETPKT,
+	ZPL_SKBUF_TYPE_MEDIA, 
+}zpl_skbuf_type_t;
 
 struct zpl_skbuffer_s;
 
@@ -209,6 +217,14 @@ typedef struct zpl_skbuffer_s
 	NODE	node;
 	struct zpl_skbuffer_s		*next;
 	struct zpl_skbuffer_s		*prev;
+    zpl_skbuf_type_t    skbtype;
+    zpl_uint32 	skb_timetick;    //时间戳 毫秒
+    zpl_uint32	skb_len;         //当前缓存帧的长度
+    zpl_uint32	skb_maxsize;     //buffer 的长度
+    zpl_char	*skb_data;       //buffer
+    zpl_uint32	skb_start;
+    volatile zpl_uint8   reference;       //引用计数
+
     union 
     {
         zpl_netpkt_hdr_t    net_header;
@@ -217,22 +233,17 @@ typedef struct zpl_skbuffer_s
 
     zpl_void    *device;
 
-    zpl_uint32 	skb_timetick;    //时间戳 毫秒
-    zpl_uint32	skb_len;         //当前缓存帧的长度
-    zpl_uint32	skb_maxsize;     //buffer 的长度
-    zpl_char	*skb_data;       //buffer
-    zpl_uint32	skb_start;
-    volatile zpl_uint8   reference;       //引用计数
-}zpl_skbuffer_t __attribute__ ((packed));
+}__attribute__ ((packed)) zpl_skbuffer_t ;
 
 typedef struct 
 {
+    char    *name;
 	void	*sem;
 	void	*mutex;
 
     void    *cond;
     
-    zpl_uint32	maxsize;
+    zpl_uint32	max_num;
 	LIST	    list;			//add queue
 	LIST	    rlist;			//ready queue
 	LIST	    ulist;			//unuse queue
@@ -246,7 +257,7 @@ typedef struct
 extern zpl_uint32 zpl_skb_timerstamp(void);
 
 /* zpl_skbqueue_t */
-extern zpl_skbqueue_t *zpl_skbqueue_create(zpl_uint32 maxsize, zpl_bool sem);
+extern zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem);
 extern int zpl_skbqueue_destroy(zpl_skbqueue_t *queue);
 
 extern int zpl_skbqueue_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
@@ -254,16 +265,15 @@ extern zpl_skbuffer_t * zpl_skbqueue_dequeue(zpl_skbqueue_t *queue);
 
 extern int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern int zpl_skbqueue_add(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
-extern int zpl_skbqueue_put(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue);
 
 extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p);
 
 /* zpl_skbuffer_t */
-/* 报文前面添加数据 */
-extern int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
-/* 报文前面删除数据 */
-extern int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+/* 在报文offset前面添加数据 */
+extern int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint32_t offset, uint8_t *data, uint32_t len);
+/* 在报文offset处删除数据 */
+extern int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint32_t offset, uint32_t len);
 
 /* 报文后面数据 */
 extern int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
@@ -271,21 +281,19 @@ extern int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
 extern int zpl_skbuffer_unref(zpl_skbuffer_t *skbuf);
 extern int zpl_skbuffer_addref(zpl_skbuffer_t *skbuf);
 
-extern zpl_skbuffer_t * zpl_skbuffer_create(zpl_skbqueue_t *queue, zpl_uint32 len);
+extern zpl_skbuffer_t * zpl_skbuffer_create(zpl_skbuf_type_t skbtype, zpl_skbqueue_t *queue, zpl_uint32 len);
 extern zpl_skbuffer_t * zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 
 extern int zpl_skbuffer_destroy(zpl_skbuffer_t *skbuf);
 
 /* net pkt */
-extern int zpl_skbuffer_netpkt_hdrset(zpl_skbuffer_t *skbuf, zpl_netpkt_hdr_t *hdr);
-extern zpl_netpkt_hdr_t * zpl_skbuffer_netpkt_hdrget(zpl_skbuffer_t *src);
-extern int zpl_skbuffer_netpkt_build_source(ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid, zpl_skbuffer_t *skbuf);
-extern int zpl_skbuffer_netpkt_build_reason(zpl_uint32 reason, zpl_skbuffer_t *skbuf);
-extern int zpl_skbuffer_netpkt_build_timestamp(zpl_uint32 timestamp, zpl_skbuffer_t *skbuf);
-extern int zpl_skbuffer_netpkt_build_header(zpl_uint8 unit, zpl_skbuffer_t *skbuf, uint8_t *data);
+extern int zpl_skbuffer_reason_set(zpl_skbuffer_t *skbuf, zpl_uint32 reason);
+extern int zpl_skbuffer_timestamp_set(zpl_skbuffer_t *skbuf, zpl_uint32 timestamp);
+extern int zpl_skbuffer_source_set(zpl_skbuffer_t *skbuf, zpl_uint8 unit, ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid);
 
-extern zpl_uint16 zpl_skbuf_ethtype(char *src);
-extern zpl_uint16 zpl_skbuf_vlan(char *src);
+extern zpl_proto_t zpl_skbuf_ethtype(char *src);
+extern zpl_vlan_t zpl_skbuf_vlan(char *src);
+extern zpl_vlan_t zpl_skbuf_qinq(char *src, vlan_tpid_t tpid);
 
 #ifdef __cplusplus
 }

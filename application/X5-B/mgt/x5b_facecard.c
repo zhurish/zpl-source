@@ -73,7 +73,7 @@ int x5b_user_load()
 		if (facecard_table)
 		{
 			if(facecard_mutex == NULL)
-				facecard_mutex = os_mutex_init();
+				facecard_mutex = os_mutex_name_init("facecard_mutex");
 			lstInit(facecard_table);
 			if(facecard_mutex)
 				os_mutex_lock(facecard_mutex, OS_WAIT_FOREVER);

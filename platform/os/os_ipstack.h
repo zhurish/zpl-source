@@ -183,7 +183,7 @@ extern int ipstack_set_blocking(zpl_socket_t _sock);
 
 extern char * ipstack_sockstr(zpl_socket_t _sock);
 
-
+#define ZPL_SOCKET_T(n)       zpl_socket_t n = NULL;//ipstack_create(OS_STACK)
 
 #ifdef ZPL_SOCKET_T_POINT
 #define ipstack_fd(n)         (((n)->_fd))

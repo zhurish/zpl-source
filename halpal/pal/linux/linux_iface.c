@@ -71,14 +71,14 @@ static int librtnl_ioctl_interface(zpl_uint32 cmd, zpl_family_t family, struct i
 	req.i.__ifi_pad = 0;
 	req.i.ifi_type = 0;		/* ARPHRD_* */
 	if(!(flags & IPSTACK_NLM_F_CREATE))
-		req.i.ifi_index = if_nametoindex(ifp->k_name);
+		req.i.ifi_index = if_nametoindex(ifp->ker_name);
 	req.i.ifi_flags = 0;
 	req.i.ifi_change = 0;		/* IFF_* change mask */
 
-	if (os_strlen(ifp->k_name))
+	if (os_strlen(ifp->ker_name))
 	{
 		librtnl_addattr_l(&req.n, sizeof(req),
-			  IPSTACK_IFLA_IFNAME, ifp->k_name, strlen(ifp->k_name)+1);
+			  IPSTACK_IFLA_IFNAME, ifp->ker_name, strlen(ifp->ker_name)+1);
 	}
 
 
@@ -453,21 +453,21 @@ int linux_netlink_create_interface(struct interface *ifp)
 	case IF_XGIGABT_ETHERNET:
 		break;
 	case IF_TUNNEL:
-		ret = rtnl_tunnel_interface_create(NULL, ifp->k_name, IPSTACK_IPPROTO_GRE, 64, "1.1.1.1", "1.1.1.2");
+		ret = rtnl_tunnel_interface_create(NULL, ifp->ker_name, IPSTACK_IPPROTO_GRE, 64, "1.1.1.1", "1.1.1.2");
 		break;
 	case IF_LAG:
-		ret = rtnl_bond_interface_create(ifp->k_name);
+		ret = rtnl_bond_interface_create(ifp->ker_name);
 		break;
 	case IF_BRIGDE:		//brigde interface
-		ret = rtnl_bridge_interface_create(ifp->k_name);
+		ret = rtnl_bridge_interface_create(ifp->ker_name);
 		break;
 	case IF_SUBVLAN:
-		ret = rtnl_vlan_interface_create(ifp->k_name, NULL, 0);
+		ret = rtnl_vlan_interface_create(ifp->ker_name, NULL, 0);
 		break;
 	case IF_VLAN:
 		break;
 	case IF_VXLAN:
-		ret = rtnl_vxlan_interface_create(ifp->k_name, 0, NULL);
+		ret = rtnl_vxlan_interface_create(ifp->ker_name, 0, NULL);
 		break;
 		
 #ifdef CUSTOM_INTERFACE
@@ -477,7 +477,7 @@ int linux_netlink_create_interface(struct interface *ifp)
 		break;
 #endif
 	default:
-		rtnl_ipvlan_interface_create(ifp->k_name, NULL, 0);
+		rtnl_ipvlan_interface_create(ifp->ker_name, NULL, 0);
 		break;
 	}	
 	return ret;
@@ -485,7 +485,7 @@ int linux_netlink_create_interface(struct interface *ifp)
 
 int linux_netlink_destroy_interface(struct interface *ifp)
 {
-	if(libnl_netlink_link_del(&netlink_cmd, ifp->k_name) == 0)
+	if(libnl_netlink_link_del(&netlink_cmd, ifp->ker_name) == 0)
 	{
 		return OK;
 	}

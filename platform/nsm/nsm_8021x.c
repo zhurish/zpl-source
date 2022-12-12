@@ -22,7 +22,7 @@ int nsm_dot1x_init(void)
 	template_t *temp = NULL;
 	os_memset(&gDot1x_t, 0, sizeof(Gdot1x_t));
 	gDot1x_t.dot1xList = malloc(sizeof(LIST));
-	gDot1x_t.mutex = os_mutex_init();
+	gDot1x_t.mutex = os_mutex_name_init("gDot1x_t.mutex");
 	lstInit(gDot1x_t.dot1xList);
 	nsm_interface_write_hook_add(NSM_INTF_DOT1X, build_dot1x_interface);
 	temp = lib_template_new(zpl_true);

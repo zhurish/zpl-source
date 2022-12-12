@@ -153,7 +153,7 @@ config ZPL_SHRL_MODULE
 
 config ZPL_ACTIVE_STANDBY
 	bool "Library Active Standby Module"
-	default y
+	default n
 	depends on ZPL_LIB_MODULE
 	help
 	Build Library Active Standby Module.

@@ -21,7 +21,12 @@
 
 int nsm_interface_dhcpc_enable(struct interface *ifp, zpl_bool enable)
 {
-	return dhcpc_interface_enable_api(ifp, enable);
+	int ret = ERROR;
+	nsm_dhcp_ifp_t *dhcp = nsm_dhcp_get(ifp);
+	IF_NSM_DHCP_DATA_LOCK(dhcp);
+	ret = dhcpc_interface_enable_api(ifp, enable);
+	IF_NSM_DHCP_DATA_UNLOCK(dhcp);
+	return ret;
 }
 
 int nsm_interface_dhcpc_start(struct interface *ifp, zpl_bool enable)
@@ -30,10 +35,12 @@ int nsm_interface_dhcpc_start(struct interface *ifp, zpl_bool enable)
 	if(ifp->dhcp == zpl_true)
 	{
 		nsm_dhcp_ifp_t *dhcp = nsm_dhcp_get(ifp);
+		IF_NSM_DHCP_DATA_LOCK(dhcp);
 		if(dhcp && dhcp->running != enable)
 		{
 			dhcp->running = enable;
 		}
+		IF_NSM_DHCP_DATA_UNLOCK(dhcp);
 	}
 	//ret = OK;
 	return ret;
@@ -55,19 +62,32 @@ zpl_bool nsm_interface_dhcpc_is_running(struct interface *ifp)
 int nsm_interface_dhcpc_option(struct interface *ifp, zpl_bool enable, zpl_uint32 index, zpl_char *option)
 {
 	int ret = ERROR;
+	nsm_dhcp_ifp_t *dhcp = nsm_dhcp_get(ifp);
+	IF_NSM_DHCP_DATA_LOCK(dhcp);
 	ret = dhcpc_interface_option_api(ifp, enable, index, option);
+	IF_NSM_DHCP_DATA_UNLOCK(dhcp);
 	return ret;
 }
 
 #ifdef ZPL_SHELL_MODULE
 int nsm_interface_dhcpc_write_config(struct interface *ifp, struct vty *vty)
 {
-	return dhcpc_interface_config(ifp, vty);
+	int ret = ERROR;
+	nsm_dhcp_ifp_t *dhcp = nsm_dhcp_get(ifp);
+	IF_NSM_DHCP_DATA_LOCK(dhcp);
+	ret = dhcpc_interface_config(ifp, vty);
+	IF_NSM_DHCP_DATA_UNLOCK(dhcp);
+	return ret;
 }
 
 int nsm_interface_dhcpc_client_show(struct interface *ifp, struct vty *vty, zpl_bool detail)
 {
-	return dhcpc_interface_lease_show(vty, ifp, detail);
+	int ret = ERROR;
+	nsm_dhcp_ifp_t *dhcp = nsm_dhcp_get(ifp);
+	IF_NSM_DHCP_DATA_LOCK(dhcp);
+	ret = dhcpc_interface_lease_show(vty, ifp, detail);
+	IF_NSM_DHCP_DATA_UNLOCK(dhcp);
+	return ret;
 }
 #endif
 #endif

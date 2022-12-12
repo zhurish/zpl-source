@@ -209,7 +209,7 @@ static int sys_upgrade_cb(Webs *wp, WebsUpload *up, void *p)
 		}
 		else if(strstr(uploadfile, "sysupgrade"))
 		{
-			os_job_add(web_system_action_clean_job, strdup(uploadfile));
+			os_job_add(OS_JOB_NONE,web_system_action_clean_job, strdup(uploadfile));
 			return OK;
 		}
 	}
@@ -217,7 +217,7 @@ static int sys_upgrade_cb(Webs *wp, WebsUpload *up, void *p)
 	{
 		if(strstr(uploadfile, "sysupgrade"))
 		{
-			os_job_add(web_system_action_job, strdup(uploadfile));
+			os_job_add(OS_JOB_NONE,web_system_action_job, strdup(uploadfile));
 			return OK;
 		}
 	}

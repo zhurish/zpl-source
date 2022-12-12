@@ -165,6 +165,7 @@ int khal_ipcmsg_create_header(struct khal_ipcmsg *ipcmsg, zpl_uint32 command)
     hdr->marker = HAL_IPCMSG_HEADER_MARKER;
     hdr->version = HAL_IPCMSG_VERSION;
     hdr->command = htonl(command);
+    hdr->from_unit = 0;
     ipcmsg->setp = sizeof(struct khal_ipcmsg_header);
     return ipcmsg->setp;
 }
@@ -176,6 +177,8 @@ int khal_ipcmsg_get_header(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_header
     header->marker = hdr->marker ;
     header->version = hdr->version;
     header->command = ntohl(hdr->command);
+    header->to_unit = hdr->to_unit ;
+    header->from_unit = hdr->from_unit;       
     ipcmsg->getp = sizeof(struct khal_ipcmsg_header);
     return ipcmsg->getp;
 }
@@ -183,14 +186,14 @@ int khal_ipcmsg_get_header(struct khal_ipcmsg *ipcmsg, struct khal_ipcmsg_header
 int khal_ipcmsg_hdr_unit_set(struct khal_ipcmsg *ipcmsg, zpl_uint32 unit)
 {
     struct khal_ipcmsg_header *hdr = (struct khal_ipcmsg_header *)ipcmsg->buf;
-    hdr->unit = htonl(unit);
+    hdr->to_unit = (unit);
     return OK;
 }
 
 int khal_ipcmsg_hdr_unit_get(struct khal_ipcmsg *ipcmsg)
 {
     struct khal_ipcmsg_header *hdr = (struct khal_ipcmsg_header *)ipcmsg->buf;
-    return ntohl(hdr->unit);
+    return (hdr->to_unit);
 }
 
 int khal_ipcmsg_hdrlen_set(struct khal_ipcmsg *ipcmsg)
@@ -261,7 +264,7 @@ int khal_ipcmsg_port_get(struct khal_ipcmsg *ipcmsg, khal_port_header_t *bspport
     khal_ipcmsg_getc(ipcmsg, &bspport->unit);
     khal_ipcmsg_getc(ipcmsg, &bspport->slot);
     khal_ipcmsg_getc(ipcmsg, &bspport->type);
-    khal_ipcmsg_getl(ipcmsg, &bspport->lgport);
+    khal_ipcmsg_getl(ipcmsg, &bspport->lport);
     khal_ipcmsg_getl(ipcmsg, &bspport->phyport);
     khal_ipcmsg_getl(ipcmsg, &bspport->l3ifindex);
     khal_ipcmsg_getl(ipcmsg, &bspport->vrfid);

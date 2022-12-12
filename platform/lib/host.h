@@ -76,8 +76,10 @@ struct zpl_host
 	struct ipmc_slot ipmctable[IPMC_SLOT_MAX];
 
 #ifdef ZPL_ACTIVE_STANDBY
-	zpl_bool active_standby;	//主备
+	zpl_bool active_standby;	//主:0;备:1
 #endif
+	zpl_bool control_access;	//控制板卡还是接入板卡
+	
 	void *bspinit_sem;
 
 	enum{LOAD_NONE, LOAD_INIT, LOADING, LOAD_DONE} load;
@@ -121,6 +123,12 @@ extern int host_standby(zpl_bool val);
 extern zpl_bool host_isactive(void);
 extern int host_active(zpl_bool val);
 #endif
+
+extern zpl_bool host_is_access(void);//接入板卡
+extern int host_access_set(zpl_bool val);
+extern zpl_bool host_is_control(void);//控制板卡
+extern int host_control_set(zpl_bool val);
+
 extern int host_config_loading(char *config);
 extern zpl_bool host_waitting_loadconfig(void);
 extern zpl_bool host_loadconfig_done(void);

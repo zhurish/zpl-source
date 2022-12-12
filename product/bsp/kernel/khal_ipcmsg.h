@@ -30,7 +30,8 @@ struct khal_ipcmsg_header
     zpl_uint8 marker;
     zpl_uint8 version;
     zpl_uint32 command;
-    zpl_uint32 unit;
+    zpl_uint8 from_unit;
+    zpl_uint8 to_unit;
 };
  
 #define HAL_IPCMSG_HEADER_SIZE sizeof(struct khal_ipcmsg_header)
@@ -70,7 +71,7 @@ struct khal_ipcmsg_hwport
     zpl_uint8 unit;
     zpl_uint8 slot;
     zpl_uint8 type;
-    zpl_uint8 port;
+    zpl_uint8 lport;
     zpl_phyport_t phyid;
 };
     
@@ -95,12 +96,10 @@ typedef struct khal_port_header_s
     zpl_uint8     unit;
     zpl_uint8     slot;
     zpl_uint8     type;
-    //union
-    //{
-      zpl_uint32    lgport;
-      zpl_phyport_t phyport; 
-      zpl_uint32    l3ifindex;
-    //} uport;
+
+    zpl_uint32    lport;
+    zpl_phyport_t phyport; 
+    zpl_uint32    l3ifindex;
     zpl_uint32    vrfid;  
 } khal_port_header_t;
 
@@ -108,7 +107,7 @@ typedef struct khal_port_header_s
 #define IF_TYPE_CLR(n) (((n)) & 0x03FFFFFF)
 #define IF_USPV_SET(u, s, p, v) (((u)&0x07) << 23) | (((s)&0x1F) << 18) | (((p)&0x3F) << 12) | ((v)&0x0FFF)
 
-#define IF_INFINDEX_GET(n)	IF_TYPE_SET((n)->type)|IF_USPV_SET((n)->unit, (n)->slot, (n)->lgport, 0)
+#define IF_INFINDEX_GET(n)	IF_TYPE_SET((n)->type)|IF_USPV_SET((n)->unit, (n)->slot, (n)->lport, 0)
 
 
 #pragma pack(0)

@@ -55,7 +55,6 @@ struct cmd_node
   
   /* Node's configuration write function */
   int (*func) (struct vty *);
-  //struct list *show_hook_list;
   /* Vector of this node's command list. */
   vector cmd_vector;
   

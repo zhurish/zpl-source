@@ -710,7 +710,7 @@ firewall_zone_t * nsm_firewall_zone_add(zpl_int8 	*zonename)
 		os_memset(node, 0, sizeof(firewall_zone_t));
 		os_strcpy(node->zonename, zonename);
 		node->zone_list = malloc(sizeof(LIST));
-		node->mutex = os_mutex_init();
+		node->mutex = os_mutex_name_init(os_name_format("%s-mutex",zonename));
 		lstInit(node->zone_list);
 		lstAdd(gFirewalld.firewall_list, (NODE *)node);
 		return node;
@@ -1000,7 +1000,7 @@ int nsm_firewall_init(void)
 {
 	memset(&gFirewalld, 0, sizeof(Gfirewall_t));
 	gFirewalld.firewall_list = malloc(sizeof(LIST));
-	gFirewalld.mutex = os_mutex_init();
+	gFirewalld.mutex = os_mutex_name_init("gFirewalld.mutex");
 	lstInit(gFirewalld.firewall_list);
 	gFirewalld.init = zpl_true;
 	nsm_firewall_default();

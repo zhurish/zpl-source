@@ -699,7 +699,7 @@ int syslogc_lib_init(void *m, char *processname)
 			//os_memcpy(syslog_client->processname, processname, MIN(os_strlen(processname),DFT_HOST_NAME_LEN));
 		}
 		if(!syslog_client->mutx)
-			syslog_client->mutx = os_mutex_init();
+			syslog_client->mutx = os_mutex_name_init("syslog-mutex");
 //		OS_SERVICE_DEBUG("%s:processname=%s\r\n", __func__,syslog_client->processname);
 		return OK;
 	}

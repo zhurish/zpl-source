@@ -215,14 +215,14 @@ static int bsp_vlan_test(void *driver, hal_port_header_t *port, hal_vlan_param_t
 	BSP_DRIVER(bspdev, driver);
 	BSP_ENTER_FUNC();
 	//extern int sdk_b53_vlan_add_test(int port, int vid,int tag);
-	if(bspdev->sdk_driver && sdk_vlan.sdk_vlan_create && port->lgport == 1)
+	if(bspdev->sdk_driver && sdk_vlan.sdk_vlan_create && port->lport == 1)
 		ret = sdk_vlan.sdk_vlan_create(bspdev->sdk_driver, 1, param->vlan);	
 
 
-	if(bspdev->sdk_driver && sdk_vlan.sdk_port_allowed_tag_vlan && port->lgport == 2)
+	if(bspdev->sdk_driver && sdk_vlan.sdk_port_allowed_tag_vlan && port->lport == 2)
 		ret = sdk_vlan.sdk_port_allowed_tag_vlan(bspdev->sdk_driver, 1, port->phyport, param->vlan);
 
-	if(bspdev->sdk_driver && sdk_vlan.sdk_port_access_vlan && port->lgport == 3)
+	if(bspdev->sdk_driver && sdk_vlan.sdk_port_access_vlan && port->lport == 3)
 		ret = sdk_vlan.sdk_port_access_vlan(bspdev->sdk_driver, 1, port->phyport, param->vlan);
 
 
@@ -318,7 +318,7 @@ int bsp_vlan_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
     case HAL_VLAN_TEST:
 	{
 		hal_ipcmsg_port_get(&client->ipcmsg, &bspport);
-		hal_ipcmsg_getl(&client->ipcmsg, &bspport.lgport);
+		hal_ipcmsg_getl(&client->ipcmsg, &bspport.lport);
 		hal_ipcmsg_getw(&client->ipcmsg, &param.vlan);
 		ret = (callback->cmd_handle)(driver, &bspport, &param);
 		return ret;

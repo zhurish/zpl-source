@@ -38,8 +38,8 @@ int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 	//strcpy (ifr.ifr_slave, "enp0s25");
 
 
-	strcpy (ifr.ifr_name, ifp->k_name);
-	strcpy (ifr.ifr_slave, slave->k_name);
+	strcpy (ifr.ifr_name, ifp->ker_name);
+	strcpy (ifr.ifr_slave, slave->ker_name);
 
 
 	if (linux_ioctl_if_ioctl (SIOCBONDENSLAVE, (caddr_t) &ifr) < 0)
@@ -51,8 +51,8 @@ int _if_bond_add_slave(struct interface *ifp, struct interface *slave)
 int _if_bond_delete_slave(struct interface *ifp, struct interface *slave)
 {
 	struct ipstack_ifreq ifr;
-	strcpy (ifr.ifr_name, ifp->k_name);
-	strcpy (ifr.ifr_slave, slave->k_name);
+	strcpy (ifr.ifr_name, ifp->ker_name);
+	strcpy (ifr.ifr_slave, slave->ker_name);
 
 	if (linux_ioctl_if_ioctl (SIOCBONDRELEASE, (caddr_t) &ifr) < 0)
 	    return -1;
@@ -64,8 +64,8 @@ int _if_bond_delete_slave(struct interface *ifp, struct interface *slave)
 int _if_bond_slave_active(struct interface *ifp, struct interface *slave)
 {
 	struct ipstack_ifreq ifr;
-	strcpy (ifr.ifr_name, ifp->k_name);
-	strcpy (ifr.ifr_slave, slave->k_name);
+	strcpy (ifr.ifr_name, ifp->ker_name);
+	strcpy (ifr.ifr_slave, slave->ker_name);
 
 	if (linux_ioctl_if_ioctl (SIOCBONDCHANGEACTIVE, (caddr_t) &ifr) < 0)
 	    return -1;

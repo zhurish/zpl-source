@@ -144,7 +144,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		}
 
 		os_uci_save_config("network");
-		os_job_add(web_networkset_set_active, NULL);
+		os_job_add(OS_JOB_NONE,web_networkset_set_active, NULL);
 		//super_system("/etc/init.d/network restart");
 		return web_return_text_plain(wp, OK);
 #endif
@@ -246,7 +246,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 
 		}
 		os_uci_save_config("network");
-		os_job_add(web_networkset_set_active, NULL);
+		os_job_add(OS_JOB_NONE,web_networkset_set_active, NULL);
 		//super_system("/etc/init.d/network restart");
 		return web_return_text_plain(wp, OK);
 #endif

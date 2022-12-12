@@ -501,7 +501,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 
 	web_return_text_plain(wp, OK);
 
-	os_job_add(web_wireless_disable_job, NULL);
+	os_job_add(OS_JOB_NONE,web_wireless_disable_job, NULL);
 
 	return OK;
 }
@@ -783,7 +783,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 				}
 				else if (strstr(strval, "false"))
 				{
-					os_job_add(web_wireless_disable_job, ifp);
+					os_job_add(OS_JOB_NONE,web_wireless_disable_job, ifp);
 /*					nsm_iw_enable_api(ifp, zpl_false);
 					vty_execute_shell("write memory");*/
 					return web_return_text_plain(wp, OK);
@@ -807,7 +807,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 #ifdef WEB_OPENWRT_PROCESS
 			os_uci_set_integer("wireless.radio0.disabled", 0);
 			os_uci_save_config("wireless");
-			os_job_add(web_wireless_disable_job, NULL);
+			os_job_add(OS_JOB_NONE,web_wireless_disable_job, NULL);
 #endif
 			return web_return_text_plain(wp, OK);
 		}
@@ -816,7 +816,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 #ifdef WEB_OPENWRT_PROCESS
 			os_uci_set_integer("wireless.radio0.disabled", 1);
 			os_uci_save_config("wireless");
-			os_job_add(web_wireless_disable_job, NULL);
+			os_job_add(OS_JOB_NONE,web_wireless_disable_job, NULL);
 #endif
 			return web_return_text_plain(wp, OK);
 		}

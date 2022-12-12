@@ -254,7 +254,7 @@ void librtnl_interface_update_hw_addr(struct ipstack_rtattr **tb, struct interfa
 
 /* Note: on netlink systems, there should be a 1-to-1 mapping between interface
  names and ifindex values. */
-void librtnl_set_ifindex(struct interface *ifp, ifindex_t ifi_index)
+void librtnl_set_ifindex(struct interface *ifp, ifkernindex_t ifi_index)
 {
 	struct interface *oifp;
 
@@ -263,8 +263,8 @@ void librtnl_set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 	{
 		if (ifi_index == IFINDEX_INTERNAL)
 			zlog_err(MODULE_PAL,
-					"Netlink is setting interface %s k_ifindex to reserved "
-							"internal value %u", ifp->k_name, ifi_index);
+					"Netlink is setting interface %s ker_ifindex to reserved "
+							"internal value %u", ifp->ker_name, ifi_index);
 		else
 		{
 			if (IS_NSM_DEBUG_KERNEL)
@@ -279,7 +279,7 @@ void librtnl_set_ifindex(struct interface *ifp, ifindex_t ifi_index)
 			// zhurish if_delete_update(oifp);
 		}
 	}
-	ifp->k_ifindex = ifi_index;
+	ifp->ker_ifindex = ifi_index;
 }
 
 static int librtnl_cachesize(struct nlsock *nl, zpl_socket_t sock, zpl_uint32 newsize)

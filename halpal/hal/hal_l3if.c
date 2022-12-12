@@ -53,7 +53,7 @@ int hal_l3if_del(ifindex_t ifindex)
 
 int hal_l3if_addr_add(ifindex_t ifindex, struct prefix *address, zpl_bool sec)
 {
-		zpl_uint32 command = 0;
+	zpl_uint32 command = 0;
 	struct hal_ipcmsg ipcmsg;
 	char buf[512];
 	HAL_ENTER_FUNC();

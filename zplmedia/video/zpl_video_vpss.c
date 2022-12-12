@@ -30,7 +30,7 @@ static int zpl_video_vpss_channel_init()
 	}
 	if(_vpss_channel_mutex == NULL)
 	{
-		_vpss_channel_mutex = os_mutex_init();
+		_vpss_channel_mutex = os_mutex_name_init("_vpss_channel_mutex");
 	}
 	return ERROR;
 }

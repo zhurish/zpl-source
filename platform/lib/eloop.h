@@ -80,8 +80,6 @@ extern "C" {
 #define eloop_consumed_time  thread_consumed_time
 
 #else
-#define ELOOP_MASTER_LIST
-
 
 /* Linked list of eloop. */
 struct eloop_list
@@ -110,10 +108,9 @@ struct eloop_cpu
 /* Master of the theads. */
 struct eloop_master
 {
-  #ifdef ELOOP_MASTER_LIST
   struct eloop_master *next;		/* next pointer of the thread */   
   struct eloop_master *prev;		/* previous pointer of the thread */
-  #endif
+
   struct eloop_list read;
   struct eloop_list write;
   struct eloop_list timer;
@@ -135,6 +132,7 @@ struct eloop_master
   struct eloop *eloop_current;
   void *mutex;
   zpl_bool volatile bquit;
+  zpl_uint32 debug;
 };
 
 typedef zpl_uchar eloop_type;
@@ -154,7 +152,7 @@ struct eloop
     zpl_socket_t fd;			/* file descriptor in case of read/write. */
     struct timeval sands;	/* rest of time sands value. */
   } u;
-  zpl_uint32 index;			/* used for timers to store position in queue */
+  zpl_int32 index;			/* used for timers to store position in queue */
   struct timeval real;
   struct cpu_eloop_history *hist; /* cache pointer to cpu_history */
   const char *funcname;
@@ -296,9 +294,7 @@ extern void eloop_getrusage (struct timeval *);
 /* Returns elapsed real (wall clock) time. */
 extern zpl_ulong eloop_consumed_time(struct timeval *after, struct timeval *before,
 					  zpl_ulong *cpu_time_elapsed);
-#ifndef ELOOP_MASTER_LIST
-extern struct eloop_master * master_eloop[];
-#endif
+
 
 #ifdef ZPL_SHELL_MODULE
 extern int cmd_os_eloop_init(void);

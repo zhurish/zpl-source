@@ -1006,13 +1006,13 @@ static int voip_ubus_capture_enable(zpl_bool start)
 static int voip_sip_restart_cb(void *buf)
 {
 	//return voip_sip_restart_job(NULL);
-	os_job_add(voip_sip_restart_job, NULL);
+	os_job_add(OS_JOB_NONE,voip_sip_restart_job, NULL);
 	return OK;
 }
 
 static int voip_stream_restart_cb(void *buf)
 {
-	os_job_add(voip_stream_restart_job, NULL);
+	os_job_add(OS_JOB_NONE,voip_stream_restart_job, NULL);
 	return OK;
 }
 

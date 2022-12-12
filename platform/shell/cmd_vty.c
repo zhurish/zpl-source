@@ -30,8 +30,8 @@ DEFUN (who,
 	zpl_uint32  i;
 	struct vty *v;
 
-	for (i = 0; i < vector_active(cli_shell.vtyvec); i++)
-		if ((v = vector_slot(cli_shell.vtyvec, i)) != NULL)
+	for (i = 0; i < vector_active(g_vtyshell.vtyvec); i++)
+		if ((v = vector_slot(g_vtyshell.vtyvec, i)) != NULL)
 			vty_out(vty, "%svty[%d] connected from %s.%s",
 					v->config ? "*" : " ", i, v->address, VTY_NEWLINE);
 	return CMD_SUCCESS;
@@ -258,7 +258,7 @@ DEFUN (log_commands,
 		"Logging control\n"
 		"Log all commands (can't be unset without restart)\n")
 {
-	cli_shell.do_log_commands = 1;
+	g_vtyshell.do_log_commands = 1;
 	return CMD_SUCCESS;
 }
 
@@ -282,6 +282,7 @@ DEFUN_HIDDEN (exit_platform,
 		"exit platform\n")
 {
 	vty_out(vty, "os_signal_send(SIGTERM)%s", VTY_NEWLINE);
+	vty_terminate();
 	os_signal_send(SIGTERM);
 	return CMD_SUCCESS;
 }
@@ -310,7 +311,7 @@ static int vty_config_write(struct vty *vty)
 	if (_global_host.no_password_check)
 		vty_out(vty, " no login%s", VTY_NEWLINE);
 
-	if (cli_shell.do_log_commands)
+	if (g_vtyshell.do_log_commands)
 		vty_out(vty, "log commands%s", VTY_NEWLINE);
 
 	vty_out(vty, "!%s", VTY_NEWLINE);

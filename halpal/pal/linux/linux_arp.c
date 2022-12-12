@@ -39,7 +39,7 @@ int kernel_arp_del(struct interface *ifp, struct prefix *address)
 	memset(sin, 0, sizeof(struct ipstack_sockaddr_in));
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct ipstack_in_addr));
-	strcpy(ipstack_arpreq.arp_dev, ifp->k_name);
+	strcpy(ipstack_arpreq.arp_dev, ifp->ker_name);
 
 	rc = linux_ioctl_if_ioctl (IPSTACK_SIOCDARP, &ipstack_arpreq);
 	if (rc < 0)
@@ -62,7 +62,7 @@ int kernel_arp_set(struct interface *ifp, struct prefix *address, zpl_uint8 *mac
 	memset(sin, 0, sizeof(struct ipstack_sockaddr_in));
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct ipstack_in_addr));
-	strcpy(ipstack_arpreq.arp_dev, ifp->k_name);
+	strcpy(ipstack_arpreq.arp_dev, ifp->ker_name);
 	memcpy((zpl_uint8 *) ipstack_arpreq.arp_ha.sa_data, mac, 6);
 
 	ipstack_arpreq.arp_flags = IPSTACK_ATF_PERM | IPSTACK_ATF_COM; //note, must set flag, if not,you will get error
@@ -88,7 +88,7 @@ int kernel_arp_get(struct interface *ifp, struct prefix *address, zpl_uint8 *mac
 	memset(sin, 0, sizeof(struct ipstack_sockaddr_in));
 	sin->sin_family = address->family;
 	memcpy(&sin->sin_addr, (char *) &address->u.prefix4, sizeof(struct ipstack_in_addr));
-	strcpy(ipstack_arpreq.arp_dev, ifp->k_name);
+	strcpy(ipstack_arpreq.arp_dev, ifp->ker_name);
 
 	rc = linux_ioctl_if_ioctl (IPSTACK_SIOCGARP, &ipstack_arpreq);
 	if (rc < 0)

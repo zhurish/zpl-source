@@ -52,10 +52,13 @@ static int nsm_port_channel_add(struct interface *ifp)
 
 	port_channel = l2trunk_group_lookup_node(IF_IFINDEX_ID_GET(ifp->ifindex));
 	if(!port_channel)
+	{
+		NSM_LEAVE_FUNC();
 		return ERROR;
+	}
 	port_channel->ifp = ifp;
 	nsm_intf_module_data_set(ifp, NSM_INTF_TRUNK, port_channel);
-
+	NSM_LEAVE_FUNC();
 	return OK;
 }
 
@@ -71,9 +74,13 @@ static int nsm_port_channel_del(struct interface *ifp)
 	if(port_channel)
 	{
 		if(nsm_trunk_destroy_api(port_channel->trunkId) == ERROR)
+		{
+			NSM_LEAVE_FUNC();
 			return ERROR;
+		}
 		nsm_intf_module_data_set(ifp, NSM_INTF_TRUNK, NULL);
 	}
+	NSM_LEAVE_FUNC();
 	return OK;
 }
 
@@ -110,7 +117,7 @@ int nsm_trunk_init(void)
 		lstInit(gtrunk.group[i].trunkList);
 	}
 	gtrunk.enable = zpl_true;
-	gtrunk.mutex = os_mutex_init();
+	gtrunk.mutex = os_mutex_name_init("gtrunk.mutex");
 
 	nsm_interface_hook_add(NSM_INTF_TRUNK, nsm_trunk_interface_create_api, nsm_trunk_interface_del_api);
 	return OK;
@@ -131,6 +138,7 @@ static int l2trunk_cleanup(l2trunk_group_t *group)
 			XFREE(MTYPE_TRUNK, pstNode);
 		}
 	}
+	NSM_LEAVE_FUNC();
 	return OK;
 }
 
@@ -153,6 +161,7 @@ int nsm_trunk_exit(void)
 		os_mutex_unlock(gtrunk.mutex);
 	if(gtrunk.mutex)
 		os_mutex_exit(gtrunk.mutex);
+	NSM_LEAVE_FUNC();
 	return OK;
 }
 
@@ -172,6 +181,7 @@ int nsm_trunk_enable(void)
 		gtrunk.enable = zpl_true;
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
+	NSM_LEAVE_FUNC();	
 	return ret;
 }
 
@@ -185,7 +195,6 @@ zpl_bool nsm_trunk_is_enable(void)
 static l2trunk_group_t * l2trunk_group_lookup_node(zpl_uint32 trunkid)
 {
 	zpl_uint32 i = 0;
-	NSM_ENTER_FUNC();
 	zlog_warn(MODULE_NSM, " ===== lookup trunkid %d ", trunkid);
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
 	{
@@ -224,9 +233,11 @@ static l2trunk_member_t * l2trunk_lookup_node(void *pList, ifindex_t ifindex)
 		index = pstNode->node;
 		if(pstNode->ifindex == ifindex)
 		{
+			NSM_LEAVE_FUNC();
 			return pstNode;
 		}
 	}
+	NSM_LEAVE_FUNC();
 	return NULL;
 }
 
@@ -245,8 +256,10 @@ static int l2trunk_add_node(l2trunk_group_t *group, l2trunk_member_t *value)
 		node->lacp_port_priority = LACP_PORT_PRIORITY_DEFAULT;
 		node->lacp_timeout = LACP_TIMEOUT_DEFAULT;
 		lstAdd(group->trunkList, (NODE *)node);
+		NSM_LEAVE_FUNC();
 		return OK;
 	}
+	NSM_LEAVE_FUNC();
 	return ERROR;
 }
 
@@ -261,8 +274,10 @@ static int l2trunk_del_node(l2trunk_group_t *group, l2trunk_member_t *value)
 		lstDelete(group->trunkList, (NODE *)value);
 		value->group = NULL;
 		XFREE(MTYPE_TRUNK, value);
+		NSM_LEAVE_FUNC();
 		return OK;
 	}
+	NSM_LEAVE_FUNC();
 	return ERROR;
 }
 
@@ -279,6 +294,7 @@ static l2trunk_member_t * l2trunk_lookup_port(ifindex_t ifindex)
 		if(pstNode)
 			return pstNode;
 	}
+	NSM_LEAVE_FUNC();
 	return NULL;
 }
 
@@ -305,7 +321,6 @@ static int l2trunk_add_port(l2trunk_group_t *group, l2trunk_member_t *value)
 
 static int l2trunk_del_port(l2trunk_group_t *group, l2trunk_member_t *value)
 {
-	NSM_ENTER_FUNC();
 #ifdef ZPL_HAL_MODULE
 	if(hal_trunk_del_interface(group->trunkId, value->ifindex) == OK)
 #else
@@ -323,7 +338,6 @@ static int l2trunk_del_port(l2trunk_group_t *group, l2trunk_member_t *value)
 
 zpl_bool l2trunk_lookup_api(zpl_uint32 trunkid)
 {
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	if(l2trunk_group_lookup_node(trunkid) != NULL)
@@ -339,7 +353,6 @@ zpl_bool l2trunk_lookup_api(zpl_uint32 trunkid)
 
 int l2trunk_lookup_interface_count_api(zpl_uint32 trunkid)
 {
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	l2trunk_group_t *group = l2trunk_group_lookup_node(trunkid);
@@ -359,7 +372,6 @@ int nsm_trunk_create_api(zpl_uint32 trunkid, trunk_type_t type)
 {
 	int ret = ERROR;
 	l2trunk_group_t *pstNode = NULL;
-	NSM_ENTER_FUNC();
 	if(!nsm_trunk_is_enable())
 		nsm_trunk_enable();
 	if(gtrunk.mutex)
@@ -406,7 +418,6 @@ int nsm_trunk_destroy_api(zpl_uint32 trunkid)
 {
 	int ret = ERROR;
 	l2trunk_group_t *pstNode = NULL;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	if(l2trunk_lookup_interface_count_api(trunkid) >= 1)
@@ -442,7 +453,6 @@ int nsm_trunk_destroy_api(zpl_uint32 trunkid)
 
 zpl_bool l2trunk_lookup_interface_api(ifindex_t ifindex)
 {
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	if(l2trunk_lookup_port(ifindex) != NULL)
@@ -458,7 +468,6 @@ zpl_bool l2trunk_lookup_interface_api(ifindex_t ifindex)
 
 int nsm_trunk_get_ID_interface_api(ifindex_t ifindex, zpl_uint32 *trunkId)
 {
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	l2trunk_member_t *pstNode = l2trunk_lookup_port(ifindex);
@@ -480,7 +489,6 @@ int nsm_trunk_add_interface_api(zpl_uint32 trunkid, trunk_type_t type, trunk_mod
 	int ret = ERROR;
 	l2trunk_member_t *value = NULL;
 	l2trunk_group_t *group = NULL;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	value = l2trunk_lookup_port(ifp->ifindex);
@@ -500,6 +508,12 @@ int nsm_trunk_add_interface_api(zpl_uint32 trunkid, trunk_type_t type, trunk_mod
 		trunk.type = type;
 		trunk.mode = mode;
 		ret = l2trunk_add_port(group, &trunk);
+		if(ret == 0)
+		{
+			IF_DATA_LOCK();
+			SET_FLAG(ifp->ifmember, IF_TRUNK_MEM);
+			IF_DATA_UNLOCK();
+		}
 	}
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
@@ -509,16 +523,20 @@ int nsm_trunk_add_interface_api(zpl_uint32 trunkid, trunk_type_t type, trunk_mod
 
 int nsm_trunk_del_interface_api(zpl_uint32 trunkid, struct interface *ifp)
 {
-	//zpl_uint32 i = 0;
 	int ret = ERROR;
 	l2trunk_member_t *value;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	value = l2trunk_lookup_port(ifp->ifindex);
 	if(value)
 	{
 		ret = l2trunk_del_port(l2trunk_group_lookup_node(value->trunkId), value);
+		if(ret == 0)
+		{
+			IF_DATA_LOCK();
+			UNSET_FLAG(ifp->ifmember, IF_TRUNK_MEM);
+			IF_DATA_UNLOCK();
+		}
 	}
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
@@ -530,7 +548,6 @@ int nsm_trunk_load_balance_api(zpl_uint32 trunkid, load_balance_t mode)
 {
 	int ret = ERROR;
 	l2trunk_group_t *value;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 
@@ -573,7 +590,6 @@ int nsm_trunk_lacp_port_priority_api(ifindex_t ifindex, zpl_uint32 pri)
 	zpl_uint32 i = 0;
 	int ret = ERROR;
 	l2trunk_member_t *value;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 
@@ -604,7 +620,6 @@ int nsm_trunk_lacp_timeout_api(ifindex_t ifindex, zpl_uint32 timeout)
 	zpl_uint32 i = 0;
 	int ret = ERROR;
 	l2trunk_member_t *value;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 
@@ -633,7 +648,6 @@ int nsm_trunk_lacp_system_priority_api(zpl_uint32 trunkid, zpl_uint32 pri)
 {
 	int ret = ERROR;
 	l2trunk_group_t *value;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	value = l2trunk_group_lookup_node(trunkid);
@@ -660,7 +674,6 @@ int nsm_trunk_lacp_system_priority_api(zpl_uint32 trunkid, zpl_uint32 pri)
 int nsm_trunk_group_callback_api(l2trunk_group_cb cb, void *pVoid)
 {
 	zpl_uint32 i = 0, ret = 0;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)
@@ -680,7 +693,6 @@ int nsm_trunk_member_callback_api(l2trunk_member_cb cb, void *pVoid)
 	zpl_uint32 i = 0, ret = 0;
 	l2trunk_member_t *pstNode = NULL;
 	NODE index;
-	NSM_ENTER_FUNC();
 	if(gtrunk.mutex)
 		os_mutex_lock(gtrunk.mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < NSM_TRUNK_ID_MAX; i++)

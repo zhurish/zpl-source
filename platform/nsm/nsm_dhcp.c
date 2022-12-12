@@ -34,17 +34,21 @@ int nsm_dhcp_interface_create_api(struct interface *ifp)
 	if(if_is_ethernet(ifp) || if_is_lag(ifp) || if_is_vlan(ifp) ||
 			if_is_brigde(ifp) || if_is_wireless(ifp))
 	{
+		nsm_dhcp_ifp_t *dhcp = ifp->info[MODULE_DHCP];
 		if(ifp->info[MODULE_DHCP] == NULL)
 		{
 			ifp->info[MODULE_DHCP] = XMALLOC(MTYPE_DHCP, sizeof(nsm_dhcp_ifp_t));
 			zassert(ifp->info[MODULE_DHCP]);
 			os_memset(ifp->info[MODULE_DHCP], 0, sizeof(nsm_dhcp_ifp_t));
 			((nsm_dhcp_ifp_t *)(ifp->info[MODULE_DHCP]))->ifp = ifp;
+
+			if (dhcp->mutex == NULL)
+				dhcp->mutex = os_mutex_name_init("if_dhcp_mutex");
 		}
 		else
 		{
 			nsm_dhcp_ifp_t *dhcp = ifp->info[MODULE_DHCP];
-			dhcp->ifp = ifp;
+			//dhcp->ifp = ifp;
 		}
 	}
 	return OK;
@@ -56,8 +60,17 @@ int nsm_dhcp_interface_del_api(struct interface *ifp)
 	if(if_is_ethernet(ifp) || if_is_lag(ifp) || if_is_vlan(ifp) ||
 			if_is_brigde(ifp) || if_is_wireless(ifp))
 	{
+		nsm_dhcp_ifp_t *dhcp = ifp->info[MODULE_DHCP];
+
 		if(ifp->info[MODULE_DHCP])
+		{
+			if(dhcp->mutex)
+			{
+				os_mutex_exit(dhcp->mutex);
+				dhcp->mutex = NULL;
+			}
 			XFREE(MTYPE_DHCP, ifp->info[MODULE_DHCP]);
+		}
 		ifp->info[MODULE_DHCP] = NULL;
 	}
 	return OK;
@@ -70,6 +83,7 @@ int nsm_dhcp_interface_set_pravite(struct interface *ifp, nsm_dhcp_type type, vo
 	nsm_dhcp = nsm_dhcp_get(ifp);
 	if(!nsm_dhcp)
 		return OK;
+	IF_NSM_DHCP_DATA_LOCK(nsm_dhcp);	
 	switch(type)
 	{
 	case DHCP_CLIENT:
@@ -84,6 +98,7 @@ int nsm_dhcp_interface_set_pravite(struct interface *ifp, nsm_dhcp_type type, vo
 	default:
 		break;
 	}
+	IF_NSM_DHCP_DATA_UNLOCK(nsm_dhcp);
 	return OK;
 }
 
@@ -129,6 +144,7 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, z
 	nsm_dhcp = nsm_dhcp_get(ifp);
 	if(nsm_dhcp)
 	{
+		IF_NSM_DHCP_DATA_LOCK(nsm_dhcp);
 		if(!ifp->dhcp)
 		{
 			ifp->dhcp = zpl_true;
@@ -158,7 +174,10 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, z
 					ifp->dhcp = zpl_true;
 				}
 				else
+				{
+					IF_NSM_DHCP_DATA_UNLOCK(nsm_dhcp);
 					return ERROR;
+				}
 			}
 			if(nsm_dhcp->type == DHCP_SERVER && type == DHCP_NONE)
 			{
@@ -170,7 +189,10 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, z
 					ifp->dhcp = zpl_false;
 				}
 				else
+				{
+					IF_NSM_DHCP_DATA_UNLOCK(nsm_dhcp);
 					return ERROR;
+				}
 			}
 #endif
 #ifdef ZPL_DHCPC_MODULE
@@ -186,8 +208,10 @@ int nsm_interface_dhcp_mode_set_api(struct interface *ifp, nsm_dhcp_type type, z
 			}
 #endif
 			nsm_dhcp->type = type;
+			IF_NSM_DHCP_DATA_UNLOCK(nsm_dhcp);
 			return OK;
 		}
+		IF_NSM_DHCP_DATA_UNLOCK(nsm_dhcp);
 	}
 	return ERROR;
 }
@@ -200,6 +224,7 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 		return OK;
 	if (ifp->dhcp)
 	{
+		IF_NSM_DHCP_DATA_LOCK(nsm_dhcp);
 #ifdef ZPL_DHCPC_MODULE
 		if(nsm_dhcp->type == DHCP_CLIENT)
 		{
@@ -219,6 +244,7 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 			vty_out(vty, " dhcp select relay%s", VTY_NEWLINE);
 		}
 #endif
+		IF_NSM_DHCP_DATA_UNLOCK(nsm_dhcp);
 	}
 	return OK;
 }

@@ -20,7 +20,7 @@ extern "C" {
 typedef struct hal_nexthop
 {
   ifindex_t kifindex;
-	hal_port_header_t  port;
+  hal_port_header_t porthdr;
   union g_addr gateway;
 } hal_nexthop_t;
 

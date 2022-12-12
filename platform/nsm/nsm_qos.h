@@ -229,7 +229,7 @@ typedef struct nsm_qos_s
 	nsm_service_policy_t service_policy_input;
 
 	zpl_bool			qos_shaping;
-
+	void        *mutex;
 }nsm_qos_t;
 
 
@@ -248,8 +248,11 @@ typedef struct Global_Qos_s
 	nsm_qos_queue_e	qos_pri_map_queue[NSM_QOS_PRI_MAX]; //priority map to queue
 	//input 用户优先级到内部优先级的映射（队列到内部优先级的映射）
 	nsm_qos_priority_e	qos_queue_map_pri[NSM_QOS_QUEUE_MAX]; // queue map to priority
+	//void        *mutex;
 }Global_Qos_t;
 
+#define IF_NSM_QOS_DATA_LOCK(qos)   if(qos && qos->mutex) os_mutex_lock(qos->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_QOS_DATA_UNLOCK(qos) if(qos && qos->mutex) os_mutex_unlock(qos->mutex)
 
 extern int nsm_qos_global_enable(zpl_bool enable);
 extern zpl_bool nsm_qos_global_get(void);

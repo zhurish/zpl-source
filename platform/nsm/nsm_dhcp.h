@@ -141,7 +141,11 @@ typedef struct nsm_dhcp_ifp_s
 	void				*client;
 	void				*server;
 	void				*relay;
+	void        *mutex;
 }nsm_dhcp_ifp_t;
+
+#define IF_NSM_DHCP_DATA_LOCK(dhcp)   if(dhcp && dhcp->mutex) os_mutex_lock(dhcp->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_DHCP_DATA_UNLOCK(dhcp) if(dhcp && dhcp->mutex) os_mutex_unlock(dhcp->mutex)
 
 
 extern nsm_dhcp_ifp_t *nsm_dhcp_get(struct interface *ifp);

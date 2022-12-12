@@ -35,7 +35,7 @@ int nsm_dhcps_init(void)
 {
 	memset(&dhcps_list, 0, sizeof(dhcps_list));
 	dhcps_list.dhcpslist = malloc(sizeof(LIST));
-	dhcps_list.mutex = os_mutex_init();
+	dhcps_list.mutex = os_mutex_name_init("dhcps-mutex");
 	lstInit(dhcps_list.dhcpslist);
 	return OK;
 }

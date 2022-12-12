@@ -88,7 +88,7 @@ int bsp_route_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint3
 		for(i = 0; i < param.nexthop_num; i++)
 		{
 			hal_ipcmsg_getl(&client->ipcmsg, &param.nexthop[i].kifindex);
-			hal_ipcmsg_port_get(&client->ipcmsg, &param.nexthop[i].port);
+			hal_ipcmsg_port_get(&client->ipcmsg, &param.nexthop[i].porthdr);
 			if (param.family == IPSTACK_AF_INET)
 			{
 				hal_ipcmsg_getl(&client->ipcmsg, &param.nexthop[i].gateway.ipv4.s_addr);

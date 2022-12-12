@@ -96,7 +96,7 @@ static int proxy_server_init(void *master, int port)
         memset(&proxy_server, 0, sizeof(proxy_server));
 
         proxy_server.port = port;
-        proxy_server.mutex = os_mutex_init();
+        proxy_server.mutex = os_mutex_name_init("proxy_server.mutex");
 		lstInitFree(&proxy_server.list, proxy_server_client_destroy);
         proxy_server.sock = ipstack_sock_create(IPCOM_STACK, zpl_true);
 

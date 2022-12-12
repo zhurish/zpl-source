@@ -269,11 +269,14 @@ typedef struct vtysh_result_s
 #endif /* VTYSH */
 /* Master of the threads. */
 
-typedef struct cli_shell_s
+typedef struct cli_vtyshell_s
 {
   vector vtyvec;
-  vector serv_thread;
-  
+  zpl_socket_t vty_sock;
+  zpl_socket_t vtysh_sock;
+  void *t_thread;
+  void *t_eloop;
+
   os_mutex_t *mutex;
 
   void *m_thread_master;
@@ -283,15 +286,14 @@ typedef struct cli_shell_s
   zpl_taskid_t telnet_taskid;
 #endif
 	struct tty_com	ttycom;
-	struct vty *vty;
+  struct vty *console_vty;
   struct vty *cli_shell_vty;
   int do_log_commands;
   void (*vty_ctrl_cmd)(zpl_uint32 ctrl, struct vty *vty);
   int init;
-}cli_shell_t;
+}cli_vtyshell_t;
 
-extern cli_shell_t  cli_shell;
-
+extern cli_vtyshell_t g_vtyshell;
 
 /* Integrated configuration file. */
 #define INTEGRATE_DEFAULT_CONFIG "Quagga.conf"
@@ -437,8 +439,8 @@ extern int vty_ansync_enable(struct vty *vty, zpl_bool enable);
 extern void vty_self_insert(struct vty *vty, zpl_char c);
 extern int vty_write_hello(struct vty *vty);
 
-
-extern int vty_shell (struct vty *);
+extern void vty_console_exit(struct vty *vty);
+extern int vty_shell(struct vty *);
 extern int vty_shell_serv (struct vty *);
 
 extern enum vtylogin_type vty_login_type(struct vty *vty);
@@ -459,7 +461,7 @@ extern void vty_init (void);
 extern void vty_tty_init(const char *tty);
 extern void vty_init_vtysh (void);
 extern void vty_terminate (void);
-extern void vty_reset (void);
+
 extern void vty_task_init (void);
 extern void vty_task_exit (void);
 extern void vty_serv_init (const char *, zpl_ushort, const char *, const char *);

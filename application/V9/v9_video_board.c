@@ -61,7 +61,7 @@ int v9_video_board_init()
 {
 	if(!board_mutex)
 	{
-		board_mutex = os_mutex_init();
+		board_mutex = os_mutex_name_init("board_mutex");
 	}
 	if(!v9_video_board)
 	{

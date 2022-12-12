@@ -64,6 +64,7 @@ int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct ipstack_iphdr *iph)
 	struct interface *ifp = NULL;
 	if(!tunnel || !tunnel->ifp)
 		return ERROR;
+	IF_NSM_TUNNEL_DATA_LOCK(tunnel);	
 	ifp = tunnel->ifp;
 	iph->version 	= 4;
 	iph->ihl 		= 5;
@@ -77,6 +78,7 @@ int nsm_tunnel_make_iphdr(nsm_tunnel_t *tunnel, struct ipstack_iphdr *iph)
 
     iph->saddr 		= tunnel->source.u.prefix4.s_addr;
     iph->daddr 		= tunnel->remote.u.prefix4.s_addr;
+	IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
     return OK;
 }
 
@@ -154,7 +156,13 @@ static int nsm_tunnel_create_thread(struct interface *ifp)
 {
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
-		return nsm_tunnellinux_ioctl_create(tunnel);
+	{
+		int ret = 0;
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
+		ret = nsm_tunnellinux_ioctl_create(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
+		return ret;
+	}
 	return ERROR;
 }
 
@@ -204,7 +212,7 @@ static int nsm_tunnel_create_update(nsm_tunnel_t *tunnel)
 		{
 			tunnel->ready = zpl_true;
 			nsm_tunnel_kname(tunnel);
-			os_job_add(nsm_tunnel_create_thread, tunnel->ifp);
+			os_job_add(OS_JOB_NONE,nsm_tunnel_create_thread, tunnel->ifp);
 			return OK;
 		}
 	}
@@ -219,8 +227,10 @@ int nsm_tunnel_mode_set_api(struct interface *ifp, tunnel_mode mode)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		tunnel->mode = mode;
 		nsm_tunnel_create_update(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		return OK;
 	}
 	return ERROR;
@@ -231,8 +241,10 @@ int nsm_tunnel_mode_get_api(struct interface *ifp, tunnel_mode *mode)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		if(mode)
 			*mode = tunnel->mode;
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);	
 		return OK;
 	}
 	return ERROR;
@@ -243,8 +255,10 @@ int nsm_tunnel_source_set_api(struct interface *ifp, struct prefix  *source)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		prefix_copy(&tunnel->source, source);
 		nsm_tunnel_create_update(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		return OK;
 	}
 	return ERROR;
@@ -255,8 +269,10 @@ int nsm_tunnel_source_get_api(struct interface *ifp, struct prefix *source)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		if(source)
 			prefix_copy(source, &tunnel->remote);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);	
 		return OK;
 	}
 	return ERROR;
@@ -267,8 +283,10 @@ int nsm_tunnel_destination_set_api(struct interface *ifp, struct prefix *dest)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		prefix_copy(&tunnel->remote, dest);
 		nsm_tunnel_create_update(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		return OK;
 	}
 	return ERROR;
@@ -279,8 +297,10 @@ int nsm_tunnel_destination_get_api(struct interface *ifp, struct prefix *dest)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		if(dest)
 			prefix_copy(dest, &tunnel->remote);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);	
 		return OK;
 	}
 	return ERROR;
@@ -291,8 +311,10 @@ int nsm_tunnel_ttl_set_api(struct interface *ifp, zpl_uint32 ttl)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		tunnel->tun_ttl = ttl;
 		nsm_tunnel_create_update(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		return OK;
 	}
 	return ERROR;
@@ -303,8 +325,10 @@ int nsm_tunnel_ttl_get_api(struct interface *ifp, zpl_uint32 *ttl)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		if(ttl)
 			*ttl = tunnel->tun_ttl;
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);	
 		return OK;
 	}
 	return ERROR;
@@ -316,8 +340,10 @@ int nsm_tunnel_mtu_set_api(struct interface *ifp, zpl_uint32 mtu)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		tunnel->tun_mtu = mtu;
 		nsm_tunnel_create_update(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		return OK;
 	}
 	return ERROR;
@@ -328,8 +354,10 @@ int nsm_tunnel_mtu_get_api(struct interface *ifp, zpl_uint32 *mtu)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		if(mtu)
 			*mtu = tunnel->tun_mtu;
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);	
 		return OK;
 	}
 	return ERROR;
@@ -340,8 +368,10 @@ int nsm_tunnel_tos_set_api(struct interface *ifp, zpl_uint32 tos)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		tunnel->tun_tos = tos;
 		nsm_tunnel_create_update(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		return OK;
 	}
 	return ERROR;
@@ -352,8 +382,10 @@ int nsm_tunnel_tos_get_api(struct interface *ifp, zpl_uint32 *tos)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		if(tos)
 			*tos = tunnel->tun_tos;
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);	
 		return OK;
 	}
 	return ERROR;
@@ -369,15 +401,18 @@ int nsm_tunnel_interface_create_api(struct interface *ifp)
 		tunnel = XMALLOC(MTYPE_IF_DATA, sizeof(nsm_tunnel_t));
 		zassert(tunnel);
 		os_memset(tunnel, 0, sizeof(nsm_tunnel_t));
+		if (tunnel->mutex == NULL)
+			tunnel->mutex = os_mutex_name_init("if_tunnel_mutex");
 		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, tunnel);
 	}
+	IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 	tunnel->ifp = ifp;
 	tunnel->tun_ttl = NSM_TUNNEL_TTL_DEFAULT;		//change: ip tunnel change tunnel0 ttl
 	tunnel->tun_mtu = NSM_TUNNEL_MTU_DEFAULT;		//change: ip link set dev tunnel0 mtu 1400
 
 	tunnel->tun_tos = NSM_TUNNEL_TOS_DEFAULT;
 	//serial->serial_index = serial_index_make();
-	
+	IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 	return OK;
 }
 
@@ -387,7 +422,14 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 	nsm_tunnel_t * tunnel = nsm_tunnel_get(ifp);
 	if(tunnel)
 	{
+		IF_NSM_TUNNEL_DATA_LOCK(tunnel);
 		nsm_tunnellinux_ioctl_destroy(tunnel);
+		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
+		if(tunnel->mutex)
+		{
+			os_mutex_exit(tunnel->mutex);
+			tunnel->mutex = NULL;
+		}
 		XFREE(MTYPE_IF_DATA, tunnel);
 		tunnel = NULL;
 		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, NULL);

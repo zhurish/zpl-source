@@ -631,7 +631,7 @@ rib_tables_iter_cleanup (rib_tables_iter_t *iter)
 }
  
 
-struct nsm_ipvrf * nsm_vrf_create(vrf_id_t vrf_id);
+struct nsm_ipvrf * nsm_vrf_create(const char *name, vrf_id_t vrf_id);
 int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf);
 int nsm_vrf_enable(struct nsm_ipvrf *zvrf);
 int nsm_vrf_disable(struct nsm_ipvrf *zvrf);

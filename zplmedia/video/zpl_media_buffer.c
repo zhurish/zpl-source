@@ -57,7 +57,7 @@ int zpl_media_buffer_data_free(zpl_media_buffer_data_t *data)
 	return OK;
 }
 
-zpl_media_buffer_t *zpl_media_buffer_create(zpl_uint32 maxsize, zpl_bool sem, zpl_void *chn)
+zpl_media_buffer_t *zpl_media_buffer_create(char *name, zpl_uint32 maxsize, zpl_bool sem, zpl_void *chn)
 {
 	zpl_media_buffer_t *queue = os_malloc(sizeof(zpl_media_buffer_t));
 	if (queue)
@@ -65,9 +65,11 @@ zpl_media_buffer_t *zpl_media_buffer_create(zpl_uint32 maxsize, zpl_bool sem, zp
 		zpl_media_buffer_data_t *dnode = NULL;
 		os_memset(queue, 0, sizeof(zpl_media_buffer_t));
 		queue->maxsize = maxsize;
-		queue->mutex = os_mutex_init();
+		if(name)
+			queue->name = strdup(name);
+		queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
 		if (sem)
-			queue->sem = os_sem_init();
+			queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
 		else
 			queue->sem = NULL;
 		queue->media_channel = chn;
@@ -105,6 +107,8 @@ int zpl_media_buffer_destroy(zpl_media_buffer_t *queue)
 		os_mutex_exit(queue->mutex);
 	if (queue->sem)
 		os_sem_exit(queue->sem);
+	if (queue->name)
+		free(queue->name);
 	os_free(queue);
 	return OK;
 }

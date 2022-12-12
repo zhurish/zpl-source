@@ -3549,7 +3549,7 @@ static void nsm_vrf_table_create(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi)
 	assert(!zvrf->table[afi][safi]);
 
 	table = route_table_init();
-	table->mutex = os_mutex_init();
+	table->mutex = os_mutex_name_init(os_name_format("%s-mutex",zvrf->name));
 	zvrf->table[afi][safi] = table;
 
 	info = XCALLOC(MTYPE_RIB_TABLE_INFO, sizeof(rib_table_info_t));
@@ -3560,34 +3560,36 @@ static void nsm_vrf_table_create(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi)
 }
 
 /* Allocate new nsmribd VRF. */
-static struct nsm_ipvrf * nsm_vrf_alloc(vrf_id_t vrf_id)
+static struct nsm_ipvrf * nsm_vrf_alloc(const char *name, vrf_id_t vrf_id)
 {
 	struct nsm_ipvrf *zvrf = NULL;
 
 	zvrf = XCALLOC(MTYPE_VRF, sizeof(struct nsm_ipvrf));
 	if(zvrf)
 	{
+		if(name)
+			zvrf->name = strdup(name);
 		/* Allocate routing table and static table.  */
 		nsm_vrf_table_create(zvrf, AFI_IP, SAFI_UNICAST);
 		nsm_vrf_table_create(zvrf, AFI_IP6, SAFI_UNICAST);
 
 		zvrf->stable[AFI_IP][SAFI_UNICAST] = route_table_init();
-		zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex = os_mutex_init();
+		zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex = os_mutex_name_init(os_name_format("%s-un-mutex",zvrf->name));
 		zvrf->stable[AFI_IP6][SAFI_UNICAST] = route_table_init();
-		zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex = os_mutex_init();
+		zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex = os_mutex_name_init(os_name_format("%s-unv6-mutex",zvrf->name));
 
 		nsm_vrf_table_create(zvrf, AFI_IP, SAFI_MULTICAST);
 		nsm_vrf_table_create(zvrf, AFI_IP6, SAFI_MULTICAST);
 
 		zvrf->stable[AFI_IP][SAFI_MULTICAST] = route_table_init();
-		zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex = os_mutex_init();
+		zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex = os_mutex_name_init(os_name_format("%s-mu-mutex",zvrf->name));
 		zvrf->stable[AFI_IP6][SAFI_MULTICAST] = route_table_init();
-		zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex = os_mutex_init();
+		zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex = os_mutex_name_init(os_name_format("%s-umuv6-mutex",zvrf->name));
 
 		zvrf->rnh_table[AFI_IP] = route_table_init();
-		zvrf->rnh_table[AFI_IP]->mutex = os_mutex_init();
+		zvrf->rnh_table[AFI_IP]->mutex = os_mutex_name_init(os_name_format("%s-rnh-mutex",zvrf->name));
 		zvrf->rnh_table[AFI_IP6] = route_table_init();
-		zvrf->rnh_table[AFI_IP6]->mutex = os_mutex_init();
+		zvrf->rnh_table[AFI_IP6]->mutex = os_mutex_name_init(os_name_format("%s-rnhv6-mutex",zvrf->name));
 
 		/* Set VRF ID */
 		zvrf->vrf_id = vrf_id;
@@ -3625,9 +3627,9 @@ struct route_table * nsm_vrf_static_table(afi_t afi, safi_t safi, vrf_id_t vrf_i
 }
 
 /* Callback upon creating a new VRF. */
-struct nsm_ipvrf * nsm_vrf_create(vrf_id_t vrf_id)
+struct nsm_ipvrf * nsm_vrf_create(const char *name, vrf_id_t vrf_id)
 {
-    struct nsm_ipvrf *info = nsm_vrf_alloc(vrf_id);
+    struct nsm_ipvrf *info = nsm_vrf_alloc(name, vrf_id);
 	if(info)
 	{
 		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, info);
@@ -3645,6 +3647,8 @@ int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf)
   	assert(ipvrf);
   	if (ipvrf)
   	{
+		if(ipvrf->name)
+			free(ipvrf->name);
 		//nsm_halpal_delete_vrf(ip_vrf_lookup(vrf_id));
     	//zvrf = nsm_vrf_alloc(vrf_id);
     	//ip_vrf->info = (void *)zvrf;

@@ -67,7 +67,7 @@ static int ipcstandby_callback_cli(const zpl_char *data, zpl_uint32 len, void *p
 {
   int ret = 0;
   struct vty *vty = pVoid;
-  if(strstr(data, "switch standby"))
+  if(strstr(data, "switch standby"))//切换为备用
   {
     if(host_isactive())//主
     {
@@ -78,7 +78,7 @@ static int ipcstandby_callback_cli(const zpl_char *data, zpl_uint32 len, void *p
     }
     return ret;
   }
-  if(strstr(data, "switch master"))
+  if(strstr(data, "switch master"))//切换为主用
   {
     if(host_isstandby())//主
     {
@@ -95,7 +95,7 @@ static int ipcstandby_callback_cli(const zpl_char *data, zpl_uint32 len, void *p
     return OK;  
   }
 
-  if(vty)
+  if(vty && host_isstandby())//当前是备用，执行主用发送的CLI命令
     ret = vty_command(vty, data);
   return ret;
 }

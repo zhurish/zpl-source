@@ -101,7 +101,7 @@ static int ip_vlan_ingress(const char *vname, int skb_priority, int vlan_qos)
 int linux_ioctl_vlan_create (struct interface *ifp)
 {
 	nsm_vlaneth_t *kifp = nsm_vlaneth_get(ifp);
-	if(kifp && ip_vlan_create(kifp->root->k_name, kifp->vlanid) == 0)
+	if(kifp && ip_vlan_create(kifp->root->ker_name, kifp->vlanid) == 0)
 	{
 		return OK;
 	}
@@ -112,7 +112,7 @@ int linux_ioctl_vlan_destroy (struct interface *ifp)
 {
 	nsm_vlaneth_t *kifp = nsm_vlaneth_get(ifp);
 	if(kifp)
-		return ip_vlan_delete(kifp->root->k_name, kifp->vlanid);
+		return ip_vlan_delete(kifp->root->ker_name, kifp->vlanid);
 	return ERROR;	
 }
 

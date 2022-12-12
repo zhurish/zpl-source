@@ -219,12 +219,12 @@ extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
 extern int ip_main(int argc, char **argv);
 extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
                  char *passwd, char *localfileName);
-
+extern int task_mutex_graph_show(void);
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
 	char *p = NULL;
-
+	int intval = 0;
 	/* Set umask before anything for security */
 	umask(0027);
 
@@ -272,6 +272,12 @@ int main(int argc, char **argv)
 	{
 		//os_ansync_empty_running(NULL, NULL, 1000);
 		os_signal_process(200);
+		intval++;
+		if(intval == 100)
+		{
+		task_mutex_graph_show();
+		intval = 0;
+		}
 	}
 #ifdef ZPL_TOOLS_PROCESS
 	os_process_stop();

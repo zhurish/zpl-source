@@ -1322,7 +1322,7 @@ static int iw_ap_stop(iw_ap_t *iw_ap)
 	assert(iw_ap != NULL);
 	//if(iw_ap->ap_mutex)
 	//	os_mutex_lock(iw_ap->ap_mutex, OS_WAIT_FOREVER);
-	//os_job_add(iw_ap_stop_script, iw_ap);
+	//os_job_add(OS_JOB_NONE,iw_ap_stop_script, iw_ap);
 	if(iw_ap->t_thread)
 		thread_cancel(iw_ap->t_thread);
 	iw_ap->t_thread = NULL;

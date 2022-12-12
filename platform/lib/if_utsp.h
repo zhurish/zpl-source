@@ -33,7 +33,7 @@ typedef struct
 {
   NODE	node;
   if_type_t type;
-  zpl_uint8 port;
+  zpl_uint8 lport;
   zpl_phyport_t phyid;
 }unit_port_mgt_t;
 
@@ -62,8 +62,8 @@ extern int unit_board_del(zpl_uint8 unit, zpl_uint8 slot);
 extern unit_board_mgt_t * unit_board_lookup(zpl_uint8 unit, zpl_uint8 slot);
 
 extern int unit_board_port_foreach(unit_board_mgt_t*, int (*func)(unit_port_mgt_t *, void *), void *p);
-extern unit_port_mgt_t * unit_board_port_add(unit_board_mgt_t*, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid);
-extern int unit_board_port_del(unit_board_mgt_t*, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid);
+extern unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *, if_type_t type, zpl_uint8 lport, zpl_phyport_t phyid);
+extern int unit_board_port_del(unit_board_mgt_t *, if_type_t type, zpl_uint8 lport, zpl_phyport_t phyid);
 
 extern int unit_board_show(void *pvoid);
 

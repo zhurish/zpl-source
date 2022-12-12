@@ -234,7 +234,7 @@ static int web_system_app_action(Webs *wp, void *p)
 #endif/* APP_X5BA_MODULE */
 		if(ret == OK)
 		{
-			os_job_add(web_system_app_action_job, NULL);
+			os_job_add(OS_JOB_NONE,web_system_app_action_job, NULL);
 			return web_return_text_plain(wp, OK);
 		}
 	}
@@ -248,7 +248,7 @@ static int web_system_app_action(Webs *wp, void *p)
 #endif/* APP_X5BA_MODULE */
 		if(ret == OK)
 		{
-			os_job_add(web_system_app_action_job, NULL);
+			os_job_add(OS_JOB_NONE,web_system_app_action_job, NULL);
 			return web_return_text_plain(wp, OK);
 		}
 	}

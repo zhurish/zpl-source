@@ -64,10 +64,14 @@ int nsm_ppp_interface_create_api(struct interface *ifp)
 		return OK;
 	ppp = nsm_intf_module_data(ifp, NSM_INTF_PPP);
 	if(!ppp)
+	{
 		ppp = XMALLOC(MTYPE_PPP, sizeof(nsm_pppd_t));
-	zassert(ppp);
-	os_memset(ppp, 0, sizeof(nsm_pppd_t));
-	nsm_intf_module_data_set(ifp, NSM_INTF_PPP, ppp);
+		zassert(ppp);
+		os_memset(ppp, 0, sizeof(nsm_pppd_t));
+		if (ppp->mutex == NULL)
+			ppp->mutex = os_mutex_name_init("if_ppp_mutex");		
+		nsm_intf_module_data_set(ifp, NSM_INTF_PPP, ppp);
+	}
 	return OK;
 }
 
@@ -79,7 +83,14 @@ int nsm_ppp_interface_del_api(struct interface *ifp)
 		return OK;
 	ppp = nsm_intf_module_data(ifp, NSM_INTF_PPP);
 	if(ppp)
+	{
+		if(ppp->mutex)
+		{
+			os_mutex_exit(ppp->mutex);
+			ppp->mutex = NULL;
+		}
 		XFREE(MTYPE_PPP, ppp);
+	}
 	ppp = NULL;
 	nsm_intf_module_data_set(ifp, NSM_INTF_PPP, NULL);
 	return OK;

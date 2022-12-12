@@ -34,7 +34,7 @@ typedef struct nsm_bridge_s
 	zpl_uint32 				forward_delay;
 	ifindex_t			member[BRIDGE_MEMBER_MAX];
 
-
+	void        *mutex;
 	int (*add_member_cb)(struct nsm_bridge_s *br, ifindex_t ifindex);
 	int (*del_member_cb)(struct nsm_bridge_s *br, ifindex_t ifindex);
 	int (*get_member_cb)(struct nsm_bridge_s *br, ifindex_t ifindex[]);

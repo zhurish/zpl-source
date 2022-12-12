@@ -1026,7 +1026,7 @@ int sntpcInit(void *m)
 	os_memset(sntp_client, 0, sizeof(struct sntp_client));
 	sntp_client->master = m;
 	sntp_client->leapVerMode = SNTP_CLIENT_REQUEST;
-	sntp_client->mutex = os_mutex_init();
+	sntp_client->mutex = os_mutex_name_init("sntpc");
 #ifdef SNTPC_CLI_ENABLE
 	install_node (&service_node, sntpc_config);
 	install_default (ALL_SERVICE_NODE);

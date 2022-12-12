@@ -361,10 +361,10 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 	struct prefix *p = NULL;
 	nsm_tunnel_t * tunnel = NULL;
 	union prefix46constptr up;
-	IF_DATA_LOCK();
 	if_list = if_list_get();
 	if (if_list)
 	{
+		IF_MASTER_LOCK();
 		for (ALL_LIST_ELEMENTS_RO(if_list, node, ifp))
 		{
 			if (!if_is_tunnel(ifp))
@@ -451,6 +451,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);
 		}
+		IF_MASTER_UNLOCK();
 	}
 	return OK;
 }

@@ -81,7 +81,7 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 	{
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 	}
-	strcpy(ifr.ifr_name, ifp->k_name);
+	strcpy(ifr.ifr_name, ifp->ker_name);
 	/*
 	 *Inidicate that this is a tap interface
 	 *and that we provide no additional packet information
@@ -104,7 +104,7 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 		return ERROR;
 	}
 	ipstack_set_nonblocking(kifp->fd);
-	ifp->k_ifindex = if_nametoindex(ifp->k_name);
+	ifp->ker_ifindex = if_nametoindex(ifp->ker_name);
 	linux_ioctl_if_set_up(ifp);
 	return OK;
 }
@@ -119,7 +119,7 @@ static int _linux_kernel_eth_destroy (nsm_vlaneth_t *kifp)
 	pal_interface_down (ifp);
 	ipstack_close (kifp->fd);
 
-	ifp->k_ifindex = 0;
+	ifp->ker_ifindex = 0;
 	return OK;
 
 }

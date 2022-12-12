@@ -141,14 +141,14 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	{
 	#if 1	
 	case HAL_L3IF_CREATE:
-		hal_ipcmsg_port_get(&client->ipcmsg, &param.port);
+		hal_ipcmsg_port_get(&client->ipcmsg, &param.porthdr);
 		hal_ipcmsg_get(&client->ipcmsg, &param.ifname, 6);
 		hal_ipcmsg_get(&client->ipcmsg, &param.mac, 6);
-		ret = (callback->cmd_handle)(driver, &param.port, &param);
+		ret = (callback->cmd_handle)(driver, &param.porthdr, &param);
 		break;
 	case HAL_L3IF_DELETE:
-		hal_ipcmsg_port_get(&client->ipcmsg, &param.port);
-		ret = (callback->cmd_handle)(driver, &param.port, &param);
+		hal_ipcmsg_port_get(&client->ipcmsg, &param.porthdr);
+		ret = (callback->cmd_handle)(driver, &param.porthdr, &param);
 		break;
 	#else	
 	case HAL_L3IF_CREATE:
@@ -162,7 +162,7 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 	case HAL_L3IF_ADDR_DEL:
 	case HAL_L3IF_DSTADDR_ADD:
 	case HAL_L3IF_DSTADDR_DEL:
-		hal_ipcmsg_port_get(&client->ipcmsg, &addr_param.port);
+		hal_ipcmsg_port_get(&client->ipcmsg, &addr_param.porthdr);
 		hal_ipcmsg_getc(&client->ipcmsg, &addr_param.family);
 		hal_ipcmsg_getc(&client->ipcmsg, &addr_param.prefixlen);
 		if (addr_param.family == IPSTACK_AF_INET)
@@ -173,17 +173,17 @@ int bsp_l3if_module_handle(struct hal_client *client, zpl_uint32 cmd, zpl_uint32
 #endif
 		if(subcmd == HAL_L3IF_ADDR_DEL || subcmd == HAL_L3IF_ADDR_ADD)
 			hal_ipcmsg_getc(&client->ipcmsg, &addr_param.sec);
-		ret = (callback->cmd_handle)(driver, &addr_param.port, &addr_param);
+		ret = (callback->cmd_handle)(driver, &addr_param.porthdr, &addr_param);
 		break;
 	case HAL_L3IF_VRF:
-		hal_ipcmsg_port_get(&client->ipcmsg, &param.port);
+		hal_ipcmsg_port_get(&client->ipcmsg, &param.porthdr);
 		hal_ipcmsg_getw(&client->ipcmsg, &param.vrfid);
-		ret = (callback->cmd_handle)(driver, &param.port, &param);
+		ret = (callback->cmd_handle)(driver, &param.porthdr, &param);
 		break;
 	case HAL_L3IF_MAC:
-		hal_ipcmsg_port_get(&client->ipcmsg, &param.port);
+		hal_ipcmsg_port_get(&client->ipcmsg, &param.porthdr);
 		hal_ipcmsg_get(&client->ipcmsg, &param.mac, 6);
-		ret = (callback->cmd_handle)(driver, &param.port, &param);
+		ret = (callback->cmd_handle)(driver, &param.porthdr, &param);
 		break;
 	}
 

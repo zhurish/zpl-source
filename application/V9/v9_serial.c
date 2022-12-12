@@ -279,7 +279,7 @@ static int v9_ntp_time_update_cb(void *p, char *buf, zpl_uint32 len)
 		return 0;
 	memset(v9_serial->tmpbuf, 0, sizeof(v9_serial->tmpbuf));
 	strncpy(v9_serial->tmpbuf, buf, MIN(sizeof(v9_serial->tmpbuf), len));
-	os_job_add(v9_job_cb_action, v9_serial);
+	os_job_add(OS_JOB_NONE,v9_job_cb_action, v9_serial);
 	return 0;
 }
 #endif /* ZPL_SERVICE_UBUS_SYNC */
@@ -348,7 +348,7 @@ int v9_serial_init(char *devname, zpl_uint32 speed)
 			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 
 		v9_serial->master = master_eloop[MODULE_APP_START];
-		v9_serial->mutex = os_mutex_init();
+		v9_serial->mutex = os_mutex_name_init("v9_serial->mutex");
 		memset(v9_serial->tty->devname, 0, sizeof(v9_serial->tty->devname));
 		strcpy(v9_serial->tty->devname, devname);
 		v9_serial->tty->speed = speed;		// speed bit

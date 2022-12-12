@@ -41,7 +41,7 @@ int process_init(void)
 	gProcessMain.list = XMALLOC(MTYPE_THREAD_MASTER, sizeof(LIST));
 	if(gProcessMain.list)
 	{
-		gProcessMain.mutex = os_mutex_init();
+		gProcessMain.mutex = os_mutex_name_init("gProcessMain.mutex");
 		lstInit(gProcessMain.list);
 		return OK;
 	}

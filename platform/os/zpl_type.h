@@ -70,7 +70,8 @@ typedef size_t zpl_size_t;
 typedef ssize_t zpl_ssize_t;
 
 
-typedef zpl_uint  ifindex_t;
+typedef zpl_int  ifindex_t;
+typedef zpl_int  ifkernindex_t;
 typedef zpl_ushort zpl_proto_t;
 typedef zpl_uchar zpl_family_t;
 typedef zpl_int zpl_error_t;

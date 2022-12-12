@@ -31,7 +31,7 @@ int zpl_media_channel_init()
 	}
 	if (media_channel_mutex == NULL)
 	{
-		media_channel_mutex = os_mutex_init();
+		media_channel_mutex = os_mutex_name_init("media_channel_mutex");
 	}
 	return ERROR;
 }

@@ -20,21 +20,21 @@
 // ip arp
 int pal_interface_arp_add(struct interface *ifp, struct prefix *address, zpl_uint8 *mac)
 {
-	if(pal_stack.ip_stack_arp_add && ifp->k_ifindex)
+	if(pal_stack.ip_stack_arp_add && ifp->ker_ifindex)
 		return pal_stack.ip_stack_arp_add(ifp, address, mac);
     return OK;
 }
 
 int pal_interface_arp_delete(struct interface *ifp, struct prefix *address)
 {
-	if(pal_stack.ip_stack_arp_delete && ifp->k_ifindex)
+	if(pal_stack.ip_stack_arp_delete && ifp->ker_ifindex)
 		return pal_stack.ip_stack_arp_delete(ifp, address);
     return OK;
 }
 
 int pal_interface_arp_request(struct interface *ifp, struct prefix *address)
 {
-	if(pal_stack.ip_stack_arp_request && ifp->k_ifindex)
+	if(pal_stack.ip_stack_arp_request && ifp->ker_ifindex)
 		return pal_stack.ip_stack_arp_request(ifp, address);
     return OK;
 }
@@ -97,7 +97,7 @@ static zpl_socket_t pal_arp_sock_init(void)
 	return skfd;
 }
 
-static int pal_arp_relay_handle(ifindex_t ifindex, struct ipstack_sockaddr_in *from, zpl_uint8 *buf, zpl_uint32 len)
+static int pal_arp_relay_handle(ifkernindex_t ifindex, struct ipstack_sockaddr_in *from, zpl_uint8 *buf, zpl_uint32 len)
 {
 	struct interface * ifp = NULL;
 	struct ipstack_ether_header *eth = NULL;
@@ -138,7 +138,7 @@ static int pal_arp_recv(zpl_socket_t	sock)
 	struct ipstack_sockaddr_dl	*sdl = NULL;
 #endif
 	zpl_uint8		 packetbuf[1024];
-	ifindex_t ifindex = 0;
+	ifkernindex_t ifindex = 0;
 
 	memset(&ss, 0, sizeof(ss));
 	iov[0].iov_base = packetbuf;
@@ -237,7 +237,7 @@ static int pal_arp_request(struct interface *ifp, struct prefix *address)
 	}
 
 	bzero(&sll, sizeof(sll));
-	sll.sll_ifindex	= ifp->k_ifindex;
+	sll.sll_ifindex	= ifp->ker_ifindex;
 	sll.sll_family	= IPSTACK_PF_PACKET;
 	sll.sll_protocol = htons(IPSTACK_ETH_P_ARP/*ETH_P_ALL*/);
 

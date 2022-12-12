@@ -17,7 +17,7 @@ extern "C" {
 
 typedef struct hal_l3if_param_s
 {
-  hal_port_header_t  port;
+  hal_port_header_t porthdr;
   char    ifname[IF_NAME_MAX];
 	zpl_uint8 l2if_type;
   vrf_id_t vrfid;
@@ -26,7 +26,7 @@ typedef struct hal_l3if_param_s
 
 typedef struct hal_l3if_addr_param_s
 {
-  hal_port_header_t  port;
+  hal_port_header_t porthdr;
   zpl_uint8 family;
   zpl_uint8 prefixlen;
   union g_addr address;  

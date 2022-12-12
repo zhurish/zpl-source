@@ -16,6 +16,8 @@ extern "C" {
 #include "semaphore.h"
 
 //#define OS_SEM_PROCESS
+//#define OS_LOCK_ERR_CHECK 
+//#define OS_LOCK_ERR_CHECK_GRAPH_VIEW
 
 #ifdef OS_SEM_PROCESS
 
@@ -89,30 +91,43 @@ extern int os_sem_exit(os_sem_t *);
 #else
 typedef struct os_sem_s
 {
-	zpl_sem_t  sem;
-	zpl_uint32 lock;
 	char *name;
+	zpl_sem_t  sem;
+	#ifdef OS_LOCK_ERR_CHECK
+	zpl_pid_t	self_lock;
+	zpl_pid_t	wait_lock;
+	#endif
 }os_sem_t;
 
 typedef struct os_mutex_s
 {
-	zpl_pthread_mutex_t mutex;
-	zpl_bool lock;
 	char *name;
+	zpl_pthread_mutex_t mutex;
+	#ifdef OS_LOCK_ERR_CHECK
+	zpl_pid_t	self_lock;
+	zpl_pid_t	wait_lock;
+	#endif
 }os_mutex_t;
 
 typedef struct os_cond_s
 {
+	char *name;
 	zpl_pthread_cond_t cond_wait;
 	zpl_pthread_mutex_t mutex;
-	char *name;
+	#ifdef OS_LOCK_ERR_CHECK
+	zpl_pid_t	self_lock;
+	zpl_pid_t	wait_lock;
+	#endif
 }os_cond_t;
 
 typedef struct os_spin_s
 {
-	pthread_spinlock_t spinlock;
-	zpl_bool lock;
 	char *name;
+	pthread_spinlock_t spinlock;
+	#ifdef OS_LOCK_ERR_CHECK
+	zpl_pid_t	self_lock;
+	zpl_pid_t	wait_lock;
+	#endif
 }os_spin_t;
 
 

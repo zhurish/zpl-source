@@ -208,7 +208,7 @@ int nsm_vlan_database_default(void)
 int nsm_vlan_database_init(void)
 {
 	gvlan.vlanList = malloc(sizeof(LIST));
-	gvlan.mutex = os_mutex_init();
+	gvlan.mutex = os_mutex_name_init("vlandb-mutex");
 	lstInit(gvlan.vlanList);
 	return OK;
 }

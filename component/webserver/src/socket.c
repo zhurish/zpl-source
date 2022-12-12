@@ -28,11 +28,15 @@ static void socketDoEvent(WebsSocket *sp);
 PUBLIC int socketOpen(void)
 {
     Socket  fd;
-
-    if (++socketOpenCount > 1) {
+    if (ipstack_invalid(socketHighestFd))
+    {
+        socketHighestFd = ipstack_create(OS_STACK);
+    }
+    if (++socketOpenCount > 1)
+    {
         return 0;
     }
-
+    
 #if ME_WIN_LIKE
 {
     WSADATA     wsaData;
@@ -47,7 +51,6 @@ PUBLIC int socketOpen(void)
 #endif
     socketList = NULL;
     socketMax = 0;
-    //socketHighestFd;
     fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(fd)) {
         hasIPv6 = 1;
@@ -424,14 +427,13 @@ PUBLIC int socketSelect(int sid, int timeout)
     struct timeval  tv;
     WebsSocket      *sp;
     fd_set          readFds, writeFds, exceptFds;
-    int             nEvents;
-    int             all, socketHighestFd;   /* Highest socket fd opened */
+    int             nEvents = 0;
+    int             all = 0;
 
     FD_ZERO(&readFds);
     FD_ZERO(&writeFds);
     FD_ZERO(&exceptFds);
-    socketHighestFd = -1;
-
+    
     tv.tv_sec = (long) (timeout / 1000);
     tv.tv_usec = (DWORD) (timeout % 1000) * 1000;
 
@@ -454,15 +456,15 @@ PUBLIC int socketSelect(int sid, int timeout)
             Set the appropriate bit in the ready masks for the sp->sock.
          */
         if (sp->handlerMask & SOCKET_READABLE) {
-            FD_SET(sp->sock, &readFds);
+            FD_SET(ipstack_fd(sp->sock), &readFds);
             nEvents++;
         }
         if (sp->handlerMask & SOCKET_WRITABLE) {
-            FD_SET(sp->sock, &writeFds);
+            FD_SET(ipstack_fd(sp->sock), &writeFds);
             nEvents++;
         }
         if (sp->handlerMask & SOCKET_EXCEPTION) {
-            FD_SET(sp->sock, &exceptFds);
+            FD_SET(ipstack_fd(sp->sock), &exceptFds);
             nEvents++;
         }
         if (sp->flags & SOCKET_RESERVICE) {
@@ -484,7 +486,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Wait for the event or a timeout
      */
-    nEvents = ipstack_select(socketHighestFd + 1, &readFds, &writeFds, &exceptFds, &tv);
+    nEvents = ipstack_select(OS_STACK, ipstack_fd(socketHighestFd) + 1, &readFds, &writeFds, &exceptFds, &tv);
 
     if (all) {
         sid = 0;
@@ -503,13 +505,16 @@ PUBLIC int socketSelect(int sid, int timeout)
             sp->flags &= ~SOCKET_RESERVICE;
             nEvents++;
         }
-        if (FD_ISSET(sp->sock, &readFds)) {
+        if (FD_ISSET(ipstack_fd(sp->sock), &readFds))
+        {
             sp->currentEvents |= SOCKET_READABLE;
         }
-        if (FD_ISSET(sp->sock, &writeFds)) {
+        if (FD_ISSET(ipstack_fd(sp->sock), &writeFds))
+        {
             sp->currentEvents |= SOCKET_WRITABLE;
         }
-        if (FD_ISSET(sp->sock, &exceptFds)) {
+        if (FD_ISSET(ipstack_fd(sp->sock), &exceptFds))
+        {
             sp->currentEvents |= SOCKET_EXCEPTION;
         }
         if (! all) {

@@ -70,7 +70,7 @@ unit_board_mgt_t *unit_board_add(zpl_uint8 unit, zpl_uint8 slot)
 		t->slot = slot;
 		if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
 			zlog_debug(MODULE_NSM, "Unit Board Add unit %d slot %d ", unit, slot);
-		// t->port = port;
+		// t->lport = lport;
 		// t->phyid = phyid;
 		t->port_list = os_malloc(sizeof(LIST));
 		if (t->port_list)
@@ -165,7 +165,7 @@ int unit_board_foreach(int (*func)(unit_board_mgt_t *, void *), void *p)
 	return OK;
 }
 
-unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid)
+unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zpl_uint8 lport, zpl_phyport_t phyid)
 {
 	unit_port_mgt_t *t = NULL;
 	if (t == NULL)
@@ -173,10 +173,10 @@ unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zp
 	if (t)
 	{
 		t->type = (zpl_uint32)type;
-		t->port = port;
+		t->lport = lport;
 		t->phyid = phyid;
 		if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
-			zlog_debug(MODULE_NSM, "Unit Board Add Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
+			zlog_debug(MODULE_NSM, "Unit Board Add Port unit %d slot %d type %d lport %d phyid %d", board->unit, board->slot, type, lport, phyid);
 		if (board->mutex)
 			os_mutex_lock(board->mutex, OS_WAIT_FOREVER);
 		if (board->port_list)
@@ -188,7 +188,7 @@ unit_port_mgt_t *unit_board_port_add(unit_board_mgt_t *board, if_type_t type, zp
 	return NULL;
 }
 
-int unit_board_port_del(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port, zpl_phyport_t phyid)
+int unit_board_port_del(unit_board_mgt_t *board, if_type_t type, zpl_uint8 lport, zpl_phyport_t phyid)
 {
 	NODE node;
 	unit_port_mgt_t *t;
@@ -197,10 +197,10 @@ int unit_board_port_del(unit_board_mgt_t *board, if_type_t type, zpl_uint8 port,
 	for (t = (unit_port_mgt_t *)lstFirst(board->port_list); t != NULL; t = (unit_port_mgt_t *)lstNext(&node))
 	{
 		node = t->node;
-		if (t && t->type == type && t->port == port && t->phyid == phyid)
+		if (t && t->type == type && t->lport == lport && t->phyid == phyid)
 		{
 			if(IS_BMGT_DEBUG_EVENT(_utsp_manage.bmgt_debug))
-				zlog_debug(MODULE_NSM, "Unit Board Del Port unit %d slot %d type %d port %d phyid %d", board->unit, board->slot, type, port, phyid);
+				zlog_debug(MODULE_NSM, "Unit Board Del Port unit %d slot %d type %d lport %d phyid %d", board->unit, board->slot, type, lport, phyid);
 			lstDelete(board->port_list, (NODE *)t);
 			break;
 		}
@@ -249,7 +249,7 @@ static int unit_board_port_show(unit_board_mgt_t *t, void *pvoid, zpl_char datil
 		if (mgt)
 		{
 			vty_out(vty, "%-8s %-4d %-4d %-4d %-4s %-4d %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
-				mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", VTY_NEWLINE);
+				mgt->lport, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", VTY_NEWLINE);
 		}
 	}
 	if (t->mutex)
@@ -261,7 +261,7 @@ static int unit_board_port_show(unit_board_mgt_t *t, void *pvoid, zpl_char datil
 		if (mgt)
 		{
 			fprintf(stdout, "%-8s %-4d %-4d %-4d %-4s %-4d %s%s%s", getabstractname(mgt->type), t->unit, t->slot, 
-				mgt->port, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", "\r\n");
+				mgt->lport, state_str[t->state], mgt->phyid, t->online ? "U":"D", t->b_install?"I":"N", "\r\n");
 		}
 	}
 	if (t->mutex)
@@ -406,15 +406,15 @@ static int unit_board_port_installfunc(unit_port_mgt_t *mgt, void *p)
 {
 	unit_board_mgt_t *board = p;
 	zlog_debug(MODULE_NSM, " unit_board_port_installfunc online=%d %d %d/%d/%d", 
-		board->online, mgt->type, board->unit, board->slot, mgt->port);
+		board->online, mgt->type, board->unit, board->slot, mgt->lport);
 	if (board->state != UBMG_STAT_ACTIVE && board->online)
 	{
-		if (unit_board_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+		if (unit_board_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->lport, mgt->phyid) == OK)
 			;//board->state = UBMG_STAT_ACTIVE;
 	}
 	else if (board->state == UBMG_STAT_ACTIVE && !board->online)
 	{
-		if (unit_board_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->port, mgt->phyid) == OK)
+		if (unit_board_slot_port(board->online, mgt->type, board->unit, board->slot, mgt->lport, mgt->phyid) == OK)
 			;//board->state = UBMG_STAT_UNACTIVE;
 	}
 	return OK;

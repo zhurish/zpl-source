@@ -57,7 +57,7 @@ typedef struct
     zpl_uint32   cmd;                         /* Unit number. */
     zpl_uint32   srcpid;          
 
-}khal_client_cmd_t __attribute__ ((packed));
+}__attribute__ ((packed)) khal_client_cmd_t ;
 
   /*
    *   hal client   ------------------- > bsp driver -------------------> sdk driver

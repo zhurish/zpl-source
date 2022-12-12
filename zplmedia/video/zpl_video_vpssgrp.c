@@ -32,7 +32,7 @@ int zpl_video_vpssgrp_init()
 	}
 	if(_vpss_group_mutex == NULL)
 	{
-		_vpss_group_mutex = os_mutex_init();
+		_vpss_group_mutex = os_mutex_name_init("_vpss_group_mutex");
 	}
 	return ERROR;
 }

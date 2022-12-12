@@ -18,7 +18,7 @@ int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint
 	{
 		if((i+1)%16 == 0)
 			offset += snprintf(format + offset, size - offset, "\r\n");
-		if((size >= offset) < 5 )
+		if((size - offset) < 5 )
 			offset += snprintf(format + offset, size - offset, "0x%02x ", (zpl_uchar)data[i]);
 		else
 			return ++i;

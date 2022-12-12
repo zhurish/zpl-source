@@ -396,7 +396,7 @@ int ssh_scpd_init(sshd_client_t *sshclient, char *cmd)
 
 	sshclient->scp_data.filename = strdup(strstr(cmd, "/"));
 	ssh_printf(sshclient->session, "%s :%s\n", __func__, sshclient->scp_data.filename);
-	os_job_add(ssh_scpd_thread, sshclient);
+	os_job_add(OS_JOB_NONE,ssh_scpd_thread, sshclient);
 	return SSH_OK;
 }
 

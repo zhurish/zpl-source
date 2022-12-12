@@ -57,7 +57,7 @@ static int librtnl_address(zpl_uint32 cmd, int family, struct interface *ifp, st
 	req.n.nlmsg_flags = IPSTACK_NLM_F_REQUEST;
 	req.n.nlmsg_type = cmd;
 	req.ifa.ifa_family = family;
-  req.ifa.ifa_index = ifp->k_ifindex;
+  req.ifa.ifa_index = ifp->ker_ifindex;
   req.ifa.ifa_prefixlen = p->prefixlen;
 
   if(family == IPSTACK_AF_INET)
@@ -118,7 +118,7 @@ int linux_ioctl_if_set_dst_prefix(struct interface *ifp, struct connected *ifc)
   struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
 
-  strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(ifp->k_ifindex));
+  strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(ifp->ker_ifindex));
   addr.sin_addr = p->u.prefix4;
   addr.sin_family = IPSTACK_AF_INET;
   memcpy(&ipstack_ifreq.ifr_addr, &addr, sizeof(struct ipstack_sockaddr_in));
@@ -137,7 +137,7 @@ int linux_ioctl_if_unset_dst_prefix(struct interface *ifp, struct connected *ifc
   p = ifc->address;
   struct ipstack_ifreq ipstack_ifreq;
   struct ipstack_sockaddr_in addr;
-  strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(ifp->k_ifindex));
+  strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(ifp->ker_ifindex));
 
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_family = IPSTACK_AF_INET;
@@ -173,7 +173,7 @@ int linux_ioctl_if_prefix_add_ipv6(struct interface *ifp, struct connected *ifc,
   //addr.sin_family = family;
   //strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(kifindex));
   memcpy(&ipstack_ifreq.ifr6_addr, &p->u.prefix6, sizeof(struct ipstack_in6_addr));
-  ipstack_ifreq.ifr6_ifindex = ifp->k_ifindex;
+  ipstack_ifreq.ifr6_ifindex = ifp->ker_ifindex;
   ipstack_ifreq.ifr6_prefixlen = p->prefixlen;
 
   ret = linux_ioctl_if_ioctl_ipv6(IPSTACK_SIOCSIFADDR, (caddr_t)&ipstack_ifreq);
@@ -192,7 +192,7 @@ int linux_ioctl_if_prefix_delete_ipv6(struct interface *ifp, struct connected *i
   //strcpy(ipstack_ifreq.ifr_name, ifkernelindex2kernelifname(kifindex));
 
   memcpy(&ipstack_ifreq.ifr6_addr, &p->u.prefix6, sizeof(struct ipstack_in6_addr));
-  ipstack_ifreq.ifr6_ifindex = ifp->k_ifindex;
+  ipstack_ifreq.ifr6_ifindex = ifp->ker_ifindex;
   ipstack_ifreq.ifr6_prefixlen = p->prefixlen;
 
   ret = linux_ioctl_if_ioctl_ipv6(IPSTACK_SIOCDIFADDR, (caddr_t)&ipstack_ifreq);

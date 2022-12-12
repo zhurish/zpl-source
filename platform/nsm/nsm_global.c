@@ -106,7 +106,7 @@ int nsm_global_init(void)
 {
   template_t * temp = NULL;
   os_memset(&nsm_global, 0, sizeof(nsm_global_t));
-	nsm_global.mutex = os_mutex_init();
+	nsm_global.mutex = os_mutex_name_init("nsmgl");
 	temp = lib_template_new (zpl_true);
 	if(temp)
 	{

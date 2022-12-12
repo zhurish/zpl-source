@@ -154,11 +154,13 @@ int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (qos_dir == NSM_QOS_DIR_INBOUND && rate)
 		{
 			if(hal_qos_ingress_rate_limit(ifp->ifindex, rate->qos_cir, rate->qos_cbs) == OK)
 			{
 				os_memcpy(&qos->qos_input_limit, rate, sizeof(nsm_qos_limit_t));
+				IF_NSM_QOS_DATA_UNLOCK(qos);
 				return OK;
 			}
 		}
@@ -167,9 +169,11 @@ int nsm_qos_rate_set_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 			if(hal_qos_egress_rate_limit(ifp->ifindex, rate->qos_cir, rate->qos_cbs) == OK)
 			{
 				os_memcpy(&qos->qos_output_limit, rate, sizeof(nsm_qos_limit_t));
+				IF_NSM_QOS_DATA_UNLOCK(qos);
 				return OK;
 			}
 		}
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 	}
 	return ERROR;
 }
@@ -180,16 +184,20 @@ int nsm_qos_rate_get_api(struct interface *ifp, nsm_qos_dir_e qos_dir,
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (qos_dir == NSM_QOS_DIR_INBOUND && rate)
 		{
 			os_memcpy(rate, &qos->qos_input_limit, sizeof(nsm_qos_limit_t));
+			IF_NSM_QOS_DATA_UNLOCK(qos);
 			return OK;
 		}
 		else if (qos_dir == NSM_QOS_DIR_OUTBOUND && rate)
 		{
 			os_memcpy(rate, &qos->qos_output_limit, sizeof(nsm_qos_limit_t));
+			IF_NSM_QOS_DATA_UNLOCK(qos);
 			return OK;
 		}
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 	}
 	return ERROR;
 }
@@ -202,7 +210,9 @@ int nsm_qos_trust_set_api(struct interface *ifp, nsm_qos_trust_e trust)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		qos->qos_trust = trust;
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 		return OK;
 	}
 	return ERROR;
@@ -213,8 +223,10 @@ int nsm_qos_trust_get_api(struct interface *ifp, nsm_qos_trust_e *trust)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (trust)
 			*trust = qos->qos_trust;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -225,10 +237,12 @@ int nsm_qos_queue_sched_mode_get_api(struct interface *ifp, nsm_qos_queue_e queu
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (mode)
 			*mode = qos->qos_queue_sched[queue];
 		if(sched_weight)
 			*sched_weight = qos->qos_queue_sched_weight[queue];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -239,9 +253,11 @@ int nsm_qos_queue_sched_mode_set_api(struct interface *ifp, nsm_qos_queue_e queu
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		qos->qos_queue_sched[queue] = mode;
 		if(mode != NSM_QOS_MODE_PQ && mode != NSM_QOS_MODE_SP)
 			qos->qos_queue_sched_weight[queue] = sched_weight;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -256,6 +272,7 @@ int nsm_qos_class_map_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		nsm_qos_queue_e i = 0;
 		qos->qos_class_enable = zpl_false;
 		qos->qos_class[queue] = class;
@@ -264,6 +281,7 @@ int nsm_qos_class_map_set_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_
 			if (qos->qos_class[i])
 				qos->qos_class_enable = zpl_true;
 		}
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 		return OK;
 	}
 	return ERROR;
@@ -274,8 +292,10 @@ int nsm_qos_class_map_get_api(struct interface *ifp, nsm_qos_queue_e queue, nsm_
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (class)
 			*class = qos->qos_class[queue];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -286,9 +306,11 @@ int nsm_qos_class_sched_set_api(struct interface *ifp, nsm_qos_class_e class, ns
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		qos->qos_class_sched[class] = mode;
 		if(mode == NSM_CLASS_SCHED_WRR)
 			qos->qos_class_sched_weight[class] = sched_weight;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -299,10 +321,12 @@ int nsm_qos_class_sched_get_api(struct interface *ifp, nsm_qos_class_e class, ns
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (mode)
 			*mode = qos->qos_class_sched[class];
 		if(sched_weight)
 			*sched_weight = qos->qos_class_sched_weight[class];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -317,7 +341,9 @@ int nsm_qos_shaping_set_api(struct interface *ifp, zpl_bool enable)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		qos->qos_shaping = enable;
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 		return OK;
 	}
 	return ERROR;
@@ -328,8 +354,10 @@ int nsm_qos_shaping_get_api(struct interface *ifp, zpl_bool *enable)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (enable)
 			*enable = qos->qos_shaping;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -341,10 +369,12 @@ int nsm_qos_port_map_queue_set_api(struct interface *ifp, nsm_qos_queue_e queue)
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (queue == NSM_QOS_QUEUE_NONE)
 			qos->qos_port_input_queue = qos->qos_port_input_queue_default;
 		else
 			qos->qos_port_input_queue = queue;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -355,8 +385,10 @@ int nsm_qos_port_map_queue_get_api(struct interface *ifp, nsm_qos_queue_e *queue
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (queue)
 			*queue = qos->qos_port_input_queue;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -370,6 +402,7 @@ static int _nsm_qos_user_priority_map_queue_get_api(struct interface *ifp, zpl_b
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		switch (type)
 		{
 		case QOS_MAP_PORT:
@@ -426,9 +459,10 @@ static int _nsm_qos_user_priority_map_queue_get_api(struct interface *ifp, zpl_b
 			}
 			break;
 		default:
+			IF_NSM_QOS_DATA_UNLOCK(qos);
 			return ERROR;
 		}
-
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 		return OK;
 	}
 	return ERROR;
@@ -440,6 +474,7 @@ static int _nsm_qos_user_priority_map_queue_set_api(struct interface *ifp, zpl_b
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		switch (type)
 		{
 		case QOS_MAP_PORT:
@@ -491,8 +526,10 @@ static int _nsm_qos_user_priority_map_queue_set_api(struct interface *ifp, zpl_b
 				qos->mplsexp_map_queue_default[pri] = queue;
 			break;
 		default:
+			IF_NSM_QOS_DATA_UNLOCK(qos);
 			return ERROR;
 		}
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 		return OK;
 	}
 	return ERROR;
@@ -544,10 +581,12 @@ int nsm_qos_priority_map_queue_set_api(struct interface *ifp, nsm_qos_priority_e
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (queue == NSM_QOS_QUEUE_NONE)
 			qos->qos_priority_map_queue[pri] = qos->qos_priority_map_queue_default[pri];
 		else
 			qos->qos_priority_map_queue[pri] = queue;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -558,8 +597,10 @@ int nsm_qos_priority_map_queue_get_api(struct interface *ifp, nsm_qos_priority_e
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (queue)
 			*queue = qos->qos_priority_map_queue[pri];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -572,10 +613,12 @@ int nsm_qos_queue_map_priority_set_api(struct interface *ifp, nsm_qos_queue_e qu
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->qos_queue_map_priority[queue] = qos->qos_queue_map_priority_default[queue];
 		else
 			qos->qos_queue_map_priority[queue] = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -586,8 +629,10 @@ int nsm_qos_queue_map_priority_get_api(struct interface *ifp, nsm_qos_queue_e qu
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->qos_queue_map_priority[queue];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -603,10 +648,12 @@ int nsm_qos_cos_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e p
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->cos_map_priority[pri] = qos->cos_map_priority_default[pri];
 		else
 			qos->cos_map_priority[pri] = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -616,8 +663,10 @@ int nsm_qos_cos_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e p
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->cos_map_priority[pri];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -627,10 +676,12 @@ int nsm_qos_ipprec_map_priority_set_api(struct interface *ifp, nsm_qos_priority_
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->ip_prec_map_priority[pri] = qos->ip_prec_map_priority_default[pri];
 		else
 			qos->ip_prec_map_priority[pri] = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -640,8 +691,10 @@ int nsm_qos_ipprec_map_priority_get_api(struct interface *ifp, nsm_qos_priority_
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->ip_prec_map_priority[pri];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -651,10 +704,12 @@ int nsm_qos_mplsexp_map_priority_set_api(struct interface *ifp, nsm_qos_priority
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->mplsexp_map_priority[pri] = qos->mplsexp_map_priority_default[pri];
 		else
 			qos->mplsexp_map_priority[pri] = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -664,8 +719,10 @@ int nsm_qos_mplsexp_map_priority_get_api(struct interface *ifp, nsm_qos_priority
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->mplsexp_map_priority[pri];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -675,10 +732,12 @@ int nsm_qos_dscp_map_priority_set_api(struct interface *ifp, nsm_qos_priority_e 
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->dscp_map_priority[pri] = qos->dscp_map_priority_default[pri];
 		else
 			qos->dscp_map_priority[pri] = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -688,8 +747,10 @@ int nsm_qos_dscp_map_priority_get_api(struct interface *ifp, nsm_qos_priority_e 
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->dscp_map_priority[pri];
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -702,10 +763,12 @@ int nsm_qos_cos_replace_set_api(struct interface *ifp, nsm_qos_priority_e priori
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->qos_cos_replace = NSM_QOS_PRI_NONE;
 		else
 			qos->qos_cos_replace = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -716,8 +779,10 @@ int nsm_qos_cos_replace_get_api(struct interface *ifp, nsm_qos_priority_e *prior
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->qos_cos_replace;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -729,10 +794,12 @@ int nsm_qos_dscp_replace_set_api(struct interface *ifp, nsm_qos_priority_e prior
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority == NSM_QOS_PRI_NONE)
 			qos->qos_dscp_replace = NSM_QOS_PRI_NONE;
 		else
 			qos->qos_dscp_replace = priority;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -743,8 +810,10 @@ int nsm_qos_dscp_replace_get_api(struct interface *ifp, nsm_qos_priority_e *prio
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (priority)
 			*priority = qos->qos_dscp_replace;
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -755,8 +824,10 @@ int nsm_qos_service_policy_set_api(struct interface *ifp, int input, zpl_char * 
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if(qos_service_policy_lookup(service_policy) == NULL)
 		{
+			IF_NSM_QOS_DATA_UNLOCK(qos);
 			return ERROR;
 		}
 		if(input)
@@ -791,6 +862,7 @@ int nsm_qos_service_policy_set_api(struct interface *ifp, int input, zpl_char * 
 				qos->service_policy_output.service_policy = strdup(service_policy);
 			}
 		}
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 		return OK;
 	}
 	return ERROR;
@@ -801,10 +873,12 @@ int nsm_qos_service_policy_get_api(struct interface *ifp, int input, zpl_char *s
 	nsm_qos_t *qos = _nsm_qos_get(ifp);
 	if (qos)
 	{
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (input && service_policy && qos->service_policy_input.service_policy)
 			strcpy(service_policy, qos->service_policy_input.service_policy);
 		else if (!input && service_policy && qos->service_policy_output.service_policy)
 			strcpy(service_policy, qos->service_policy_output.service_policy);
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 		return OK;
 	}
 	return ERROR;
@@ -820,9 +894,13 @@ static int nsm_qos_interface_create_api(struct interface *ifp)
 	{
 		 qos = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
 		os_memset(qos, 0, sizeof(nsm_qos_t));
+		if (qos->mutex == NULL)
+			qos->mutex = os_mutex_name_init(os_name_format("%s-qos_mutex", ifp->name));
+		IF_NSM_QOS_DATA_LOCK(qos);	
 		qos->ifindex = ifp->ifindex;
 		nsm_intf_module_data_set(ifp, NSM_INTF_QOS, qos);
 		nsm_qos_interface_default(qos);
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 	}
 	return OK;
 }
@@ -834,7 +912,14 @@ static int nsm_qos_interface_del_api(struct interface *ifp)
 		return OK;
 	qos = nsm_intf_module_data(ifp, NSM_INTF_QOS);
 	if (qos)
+	{
+		if(qos->mutex)
+		{
+			os_mutex_exit(qos->mutex);
+			qos->mutex = NULL;
+		}
 		XFREE(MTYPE_QOS, qos);
+	}
 	qos = NULL;
 	nsm_intf_module_data_set(ifp, NSM_INTF_QOS, NULL);
 	return OK;
@@ -850,7 +935,7 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 		int32_t i = 0;//, j = 0;//, n = 0;
 		//zpl_uint32 tmpb[NSM_QOS_DSCP_PRI_MAX];
 		zpl_char tmpstr[512];
-
+		IF_NSM_QOS_DATA_LOCK(qos);
 		if (qos->qos_input_limit.qos_cir)
 		{
 			memset(tmpstr, 0, sizeof(tmpstr));
@@ -1010,6 +1095,7 @@ int nsm_qos_interface_write_config(struct vty *vty, struct interface *ifp)
 #endif
 		if(qos->qos_shaping)
 			vty_out(vty, " qos shaping%s", VTY_NEWLINE);
+		IF_NSM_QOS_DATA_UNLOCK(qos);	
 	}
 	return OK;
 }
@@ -1025,6 +1111,7 @@ int nsm_qos_interface_show(struct vty *vty, struct interface *ifp)
 		memset(tmpstr, 0, sizeof(tmpstr));
 		memset(tmpstr1, 0, sizeof(tmpstr1));
 		memset(tmpstr2, 0, sizeof(tmpstr2));
+		IF_NSM_QOS_DATA_LOCK(qos);
 		vty_out(vty, "%sInterface  : %s %s", VTY_NEWLINE, ifp->name, VTY_NEWLINE);
 		vty_out(vty, " Qos Shaping  : %s %s", qos->qos_shaping?"Enable":"Disable", VTY_NEWLINE);
 		for (i = NSM_QOS_QUEUE_0; i < NSM_QOS_QUEUE_MAX; i++)
@@ -1122,6 +1209,7 @@ int nsm_qos_interface_show(struct vty *vty, struct interface *ifp)
 		}
 		vty_out(vty, " %s", VTY_NEWLINE);
 #endif
+		IF_NSM_QOS_DATA_UNLOCK(qos);
 	}
 	return OK;
 }

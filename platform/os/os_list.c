@@ -142,7 +142,7 @@ void lstInit
     pList->TAIL  = NULL;
     pList->count = 0;
     }
-void lstInitFree (LIST *pList, int(*freecb)(void *))
+void lstInitFree (LIST *pList, void(*freecb)(void *))
 {
     pList->HEAD	 = NULL;
     pList->TAIL  = NULL;

@@ -21,7 +21,7 @@ OSOBJ	+= os_bitmap.o
 OSOBJ	+= os_backtrace.o
 OSOBJ	+= zpl_skbuffer.o
 OSOBJ	+= zpl_errno.o
-
+OSOBJ	+= os_sem_errchk.o
 ifeq ($(strip $(ZPL_OS_QUEUE)),true)
 OSOBJ	+= os_queue.o			
 endif

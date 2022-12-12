@@ -104,8 +104,11 @@ typedef struct nsm_vlan_s
 
     //zpl_bool	qinq_enable;
 	//vlan_t		qinq_vid;
+    void        *mutex;
 }nsm_vlan_t;
 
+#define IF_NSM_VLAN_DATA_LOCK(nsm_vlan)   if(nsm_vlan && nsm_vlan->mutex) os_mutex_lock(nsm_vlan->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan) if(nsm_vlan && nsm_vlan->mutex) os_mutex_unlock(nsm_vlan->mutex)
 
 
 extern int nsm_vlan_init(void);

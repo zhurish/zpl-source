@@ -44,8 +44,11 @@ typedef struct nsm_port_s
 	zpl_bool		protect;
 	zpl_bool		flowcontrol_tx;
 	zpl_bool		flowcontrol_rx;
-
+	void        *mutex;
 }nsm_port_t;
+
+#define IF_NSM_PORT_DATA_LOCK(port)   if(port && port->mutex) os_mutex_lock(port->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_PORT_DATA_UNLOCK(port) if(port && port->mutex) os_mutex_unlock(port->mutex)
 
 
 

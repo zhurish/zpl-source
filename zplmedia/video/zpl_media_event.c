@@ -36,8 +36,8 @@ zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uint32 max
 	if(queue)
 	{
         memset(queue, 0, sizeof(zpl_media_event_queue_t));
-        queue->mutex = os_mutex_init();
-        queue->sem = os_sem_init();
+        queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
+        queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
         queue->maxsize = maxsize;
         if(name)
             queue->name = strdup(name);

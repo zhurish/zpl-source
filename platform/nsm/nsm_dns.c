@@ -44,7 +44,7 @@ static int ip_host_kernel_del(ip_host_t *dns1);
 int nsm_ip_dns_init(void)
 {
 	gIpdns.dnsList = malloc(sizeof(LIST));
-	gIpdns.mutex = os_mutex_init();
+	gIpdns.mutex = os_mutex_name_init("dns-mutex");
 	lstInit(gIpdns.dnsList);
 	return OK;
 }
@@ -1092,7 +1092,7 @@ static int ip_dns_start_job(dns_cmd_t cmd, void *p)
 		{
 			zlog_debug(MODULE_NSM, "add work job %d # %p", node->cmd, node->p);
 		}
-		os_job_add(ip_dns_job_work, node);
+		os_job_add(OS_JOB_NONE,ip_dns_job_work, node);
 		return OK;
 	}
 	return ERROR;

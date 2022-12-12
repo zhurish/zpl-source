@@ -43,7 +43,7 @@ int modem_serial_init(void)
 	gModemSerialmain.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModemSerialmain.list)
 	{
-		gModemSerialmain.mutex = os_mutex_init();
+		gModemSerialmain.mutex = os_mutex_name_init("gModemSerialmain.mutex");
 		lstInit(gModemSerialmain.list);
 		return OK;
 	}

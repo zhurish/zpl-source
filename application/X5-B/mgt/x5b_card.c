@@ -98,7 +98,7 @@ int voip_card_load()
 		if (card_table)
 		{
 			if(card_mutex == NULL)
-				card_mutex = os_mutex_init();
+				card_mutex = os_mutex_name_init("card_mutex");
 			lstInit(card_table);
 			if(card_mutex)
 				os_mutex_lock(card_mutex, OS_WAIT_FOREVER);

@@ -48,6 +48,9 @@ extern zpl_bool is_hex (zpl_char c);
 
 extern zpl_bool is_bzero (zpl_char *str, int len);
 
+
+extern char * os_name_format(char *format,...);
+
 #ifdef __cplusplus
 }
 #endif

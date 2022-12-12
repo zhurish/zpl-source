@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-11-27 15:03:39 CST"
+#define AUTOCONF_TIMESTAMP "2022-11-27 18:01:22 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -84,7 +84,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#define ZPL_ACTIVE_STANDBY 1
+#undef ZPL_ACTIVE_STANDBY
 #undef ZPL_NSM_SNMP
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
@@ -131,8 +131,8 @@
 #undef ZPL_MQTT_SRV
 #undef ZPL_PJSIP_MODULE
 #undef ZPL_PJSIP_PJSUA2
-#define ZPL_SQLITE_MODULE 1
-#define ZPL_SQLITE_EXE_MODULE 1
+#undef ZPL_SQLITE_MODULE
+#undef ZPL_SQLITE_EXE_MODULE
 #define ZPL_LIBSSH_MODULE 1
 #undef ZPL_LIBSSH_NACL
 #define ZPL_LIBSSH_ZLIB 1

@@ -1361,17 +1361,17 @@ int iw_client_init(iw_client_t *iw_client, ifindex_t ifindex)
 	assert(ifindex != NULL);
 	os_memset(iw_client, 0, sizeof(iw_client_t));
 	iw_client->db_list = malloc(sizeof(LIST));
-	iw_client->db_mutex = os_mutex_init();
+	iw_client->db_mutex = os_mutex_name_init(os_name_format("db_mutex-%d", ifindex));
 	lstInit(iw_client->db_list);
 
 	iw_client->ap_list = malloc(sizeof(LIST));
-	iw_client->ap_mutex = os_mutex_init();
+	iw_client->ap_mutex = os_mutex_name_init(os_name_format("ap_mutex-%d", ifindex));
 	lstInit(iw_client->ap_list);
 
 	iw_client->ap_unlist = malloc(sizeof(LIST));
 	lstInit(iw_client->ap_unlist);
 
-	iw_client->mutex = os_mutex_init();
+	iw_client->mutex = os_mutex_name_init(os_name_format("mutex-%d", ifindex));
 
 	iw_client->connect_delay = IW_CLIENT_CON_DEFAULT;
 	iw_client->scan_interval = IW_CLIENT_SCAN_DEFAULT;

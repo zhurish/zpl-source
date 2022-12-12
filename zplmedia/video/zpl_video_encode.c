@@ -29,7 +29,7 @@ int zpl_video_encode_init()
 	}
 	if(video_encode_mutex == NULL)
 	{
-		video_encode_mutex = os_mutex_init();
+		video_encode_mutex = os_mutex_name_init("video_encode_mutex");
 	}
 	return ERROR;
 }

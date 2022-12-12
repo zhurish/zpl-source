@@ -112,7 +112,7 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;	
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	if(vlan)
 	{
 		if(nsm_vlan_database_lookup_api(vlan))
@@ -153,7 +153,7 @@ int nsm_interface_native_vlan_set_api(struct interface *ifp, vlan_t vlan)
 			nsm_vlan->native = vlan;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -167,13 +167,13 @@ int nsm_interface_native_vlan_get_api(struct interface *ifp, vlan_t *vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;	
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	if(nsm_vlan)
 	{
 		if(vlan)
 			*vlan = nsm_vlan->native;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -186,7 +186,7 @@ int nsm_interface_access_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;	
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	if(nsm_vlan_database_lookup_api(vlan))
 	{
 #ifdef ZPL_HAL_MODULE
@@ -201,7 +201,7 @@ int nsm_interface_access_vlan_set_api(struct interface *ifp, vlan_t vlan)
 			nsm_vlan->access = vlan;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -214,7 +214,7 @@ int nsm_interface_access_vlan_unset_api(struct interface *ifp, vlan_t vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;	
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	if(nsm_vlan_database_lookup_api(vlan))
 	{
 #ifdef ZPL_HAL_MODULE
@@ -229,7 +229,7 @@ int nsm_interface_access_vlan_unset_api(struct interface *ifp, vlan_t vlan)
 			nsm_vlan->access = 0;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	if(ret == OK)
 		ret = nsm_interface_access_vlan_set_api(ifp, 1);//重新加入到vlan 1
 	return ret;
@@ -244,13 +244,13 @@ int nsm_interface_access_vlan_get_api(struct interface *ifp, vlan_t *vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;	
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	if(nsm_vlan)
 	{
 		if(vlan)
 			*vlan = nsm_vlan->access;
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -263,32 +263,32 @@ int nsm_interface_trunk_add_allowed_vlan_lookup_api(struct interface *ifp, vlan_
 	if(!if_is_ethernet(ifp))
 		return ERROR;
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 
 	if(vlan)
 	{
 		if(nsm_vlan->allow_all)
 		{
-			IF_DATA_UNLOCK();
+			IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 			return 1;
 		}	
 		else if(vlan >= nsm_vlan->trunk_allowed[vlan].minvlan && vlan <= nsm_vlan->trunk_allowed[vlan].maxvlan)
 		{
-			IF_DATA_UNLOCK();
+			IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 			return 1;
 		}		
 		else if(nsm_vlan->trunk_allowed[vlan].vlan == vlan)
 		{
-			IF_DATA_UNLOCK();
+			IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 			return 1;
 		}
 		else
 		{
-			IF_DATA_UNLOCK();
+			IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 			return 0;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return 0;
 }
 int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
@@ -301,7 +301,7 @@ int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	//if(nsm_vlan_database_lookup_api(vlan))
 	{
 		if(vlan && nsm_vlan_database_lookup_api(vlan))
@@ -335,7 +335,7 @@ int nsm_interface_trunk_add_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 			}
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -348,7 +348,7 @@ int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	//if(nsm_vlan_database_lookup_api(vlan))
 	{
 		if(vlan && nsm_vlan_database_lookup_api(vlan))
@@ -381,7 +381,7 @@ int nsm_interface_trunk_del_allowed_vlan_api(struct interface *ifp, vlan_t vlan)
 			}
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -396,13 +396,13 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	if(!if_is_ethernet(ifp))
 		return ERROR;
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 
 	for(i = minvlan; i <= maxvlan; i++)
 	{
 		if(i && nsm_vlan_database_lookup_api(i) == NULL)
 		{
-			IF_DATA_UNLOCK();
+			IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 			return ret;
 		}
 	}
@@ -413,7 +413,7 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 #endif	
 	if(ret != OK)
 	{
-		IF_DATA_UNLOCK();
+		IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 		return ret;
 	}
 	for(i = minvlan; i <= maxvlan; i++)
@@ -431,7 +431,7 @@ int nsm_interface_trunk_add_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 		}
 	}
 	nsm_vlan_index_max(nsm_vlan);
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -445,12 +445,12 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 	if(!if_is_ethernet(ifp))
 		return ERROR;
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	for(i = minvlan; i <= maxvlan; i++)
 	{
 		if(i && nsm_vlan_database_lookup_api(i) == NULL)
 		{
-			IF_DATA_UNLOCK();
+			IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 			return ret;
 		}
 	}
@@ -461,7 +461,7 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 #endif
 	if(ret != OK)
 	{
-		IF_DATA_UNLOCK();
+		IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 		return ret;
 	}
 	for(i = minvlan; i <= maxvlan; i++)
@@ -482,7 +482,7 @@ int nsm_interface_trunk_del_allowed_batch_vlan_api(struct interface *ifp, vlan_t
 		}
 	}
 	nsm_vlan_index_max(nsm_vlan);
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -576,7 +576,8 @@ int nsm_interface_trunk_allowed_vlan_list_lookup_api(struct interface *ifp, vlan
 	nsm_vlan_t *nsm_vlan = (nsm_vlan_t *)nsm_intf_module_data(ifp, NSM_INTF_VLAN);
 	if(!if_is_ethernet(ifp))
 		return 0;
-	IF_DATA_LOCK();
+	zassert(nsm_vlan);	
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 
 	for(n = 0; n < num; n++)
 	{
@@ -584,12 +585,12 @@ int nsm_interface_trunk_allowed_vlan_list_lookup_api(struct interface *ifp, vlan
 		{
 			if(nsm_vlan->trunk_allowed[vlanlist[n]].vlan != vlanlist[n])
 			{
-				IF_DATA_UNLOCK();
+				IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 				return 0;	
 			}
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return 1;	
 }
 
@@ -605,6 +606,8 @@ int nsm_vlan_interface_create_api(struct interface *ifp)
 			nsm_vlan = XMALLOC(MTYPE_VLAN, sizeof(nsm_vlan_t));
 			zassert(nsm_vlan);
 			os_memset(nsm_vlan, 0, sizeof(nsm_vlan_t));
+			if (nsm_vlan->mutex == NULL)
+				nsm_vlan->mutex = os_mutex_name_init("if_vlan_mutex");
 			nsm_intf_module_data_set(ifp, NSM_INTF_VLAN, nsm_vlan);
 		}
 		if(if_is_ethernet(ifp) && nsm_vlan_database_lookup_api(1))
@@ -627,7 +630,14 @@ int nsm_vlan_interface_del_api(struct interface *ifp)
 			nsm_interface_access_vlan_unset_api(ifp, 1);
 		}
 		if(nsm_vlan)
+		{
+			if(nsm_vlan->mutex)
+			{
+				os_mutex_exit(nsm_vlan->mutex);
+				nsm_vlan->mutex = NULL;
+			}
 			XFREE(MTYPE_VLAN, nsm_vlan);
+		}
 		nsm_vlan = NULL;
 		nsm_intf_module_data_set(ifp, NSM_INTF_VLAN, NULL);
 	}
@@ -697,7 +707,7 @@ int nsm_interface_qinq_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	if(!if_is_ethernet(ifp))
 		return ERROR;	
 	zassert(nsm_vlan);
-	IF_DATA_LOCK();
+	IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 	if(vlan)
 	{
 		if(nsm_vlan_database_lookup_api(vlan))
@@ -737,7 +747,7 @@ int nsm_interface_qinq_vlan_set_api(struct interface *ifp, vlan_t vlan)
 			nsm_vlan->native = vlan;
 		}
 	}
-	IF_DATA_UNLOCK();
+	IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	return ret;
 }
 
@@ -757,7 +767,7 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 		nsm_vlan = (nsm_vlan_t *)nsm_intf_module_data(ifp, NSM_INTF_VLAN);
 		if(!nsm_vlan)
 			return OK;
-
+		IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 		if(ifp->if_mode == IF_MODE_L3)
 			vty_out(vty, " no switchport%s", VTY_NEWLINE);
 		else if(ifp->if_mode == IF_MODE_DOT1Q_TUNNEL)
@@ -819,6 +829,7 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 					vty_out(vty, " switchport trunk allowed add vlan %s%s", tmpcli_str, VTY_NEWLINE);
 			}
 		}
+		IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
 	}
 	return OK;
 }

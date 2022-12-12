@@ -44,7 +44,7 @@ extern int os_msgq_init(void);
 extern int os_msgq_exit(void);
 
 
-extern os_queue_t *os_queue_create(zpl_uint32 max, zpl_uint32 size);
+extern os_queue_t *os_queue_create(zpl_char *name, zpl_uint32 max, zpl_uint32 size);
 extern int os_queue_name(os_queue_t *queue, zpl_char *name);
 //int os_queue_info(os_queue_t *queue, zpl_char *name);
 extern int os_queue_send(os_queue_t *queue, zpl_char *data, zpl_uint32 len, zpl_uint32 op);

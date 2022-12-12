@@ -1702,7 +1702,7 @@ int x5b_app_module_init(char *local, zpl_uint16 port)
 			x5b_app_mgt->master = eloop_master_module_create(MODULE_APP);
 
 
-		x5b_app_mgt->mutex = os_mutex_init();
+		x5b_app_mgt->mutex = os_mutex_name_init("x5b_app_mgt->mutex");
 
 		if(local)
 			x5b_app_mgt->local_address = strdup(local);

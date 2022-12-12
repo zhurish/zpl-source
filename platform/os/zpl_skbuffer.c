@@ -10,6 +10,7 @@
 
 
 
+static int zpl_skbuffer_netpkt_parse_header(zpl_skbuffer_t *skbuf, uint8_t *data);
 
 zpl_uint32 zpl_skb_timerstamp(void)
 {
@@ -35,16 +36,18 @@ int zpl_skbuffer_destroy(zpl_skbuffer_t *skbuf)
 	return OK;
 }
 
-zpl_skbqueue_t *zpl_skbqueue_create(zpl_uint32 maxsize, zpl_bool sem)
+zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem)
 {
 	zpl_skbqueue_t *queue = os_malloc(sizeof(zpl_skbqueue_t));
 	if (queue)
 	{
 		os_memset(queue, 0, sizeof(zpl_skbqueue_t));
-		queue->maxsize = maxsize;
-		queue->mutex = os_mutex_init();
+		if(name)
+			queue->name = strdup(name);
+		queue->max_num = max_num;
+		queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
 		if (sem)
-			queue->sem = os_sem_init();
+			queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
 		else
 			queue->sem = NULL;
 
@@ -69,6 +72,8 @@ int zpl_skbqueue_destroy(zpl_skbqueue_t *queue)
 		os_mutex_exit(queue->mutex);
 	if (queue->sem)
 		os_sem_exit(queue->sem);
+	if (queue->name)
+		free(queue->name);
 	os_free(queue);
 	return OK;
 }
@@ -134,11 +139,6 @@ int zpl_skbqueue_add(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 	return OK;
 }
 
-int zpl_skbqueue_put(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
-{
-	return zpl_skbqueue_add(queue, skbuf);
-}
-
 zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue)
 {
 	zpl_skbuffer_t *skbuf = NULL;
@@ -182,7 +182,7 @@ int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, v
 
 
 
-static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32 len)
+static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbuf_type_t skbtype, zpl_skbqueue_t *queue, zpl_uint32 len)
 {
 	NODE node;
 	zpl_skbuffer_t *skbuf = NULL;
@@ -191,7 +191,7 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32
 		assert(queue);
 		if (queue->mutex)
 			os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
-		if (lstCount(&queue->list) >= queue->maxsize)
+		if (lstCount(&queue->list) >= queue->max_num)
 		{
 			if (queue->mutex)
 				os_mutex_unlock(queue->mutex);
@@ -204,6 +204,11 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32
 			if (skbuf && skbuf->skb_maxsize >= (len))
 			{
 				lstDelete(&queue->ulist, (NODE *)skbuf);
+				skbuf->skbtype = skbtype;
+				skbuf->skb_start = ZPL_SKB_START_OFFSET;
+				skbuf->skb_len = 0;
+				skbuf->reference = 0;
+				skbuf->skb_timetick = 0;
 				break;
 			}
 		}
@@ -214,10 +219,13 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32
 		if (skbuf)
 		{
 			memset(skbuf, 0, sizeof(zpl_skbuffer_t));
-
+			skbuf->skbtype = skbtype;
 			skbuf->skb_maxsize = (len); //buffer 的长度
 			skbuf->skb_data = os_malloc(skbuf->skb_maxsize);				//buffer
 			skbuf->skb_start = ZPL_SKB_START_OFFSET;
+			skbuf->skb_len = 0;
+			skbuf->reference = 0;
+			skbuf->skb_timetick = 0;
 			if (skbuf->skb_data == NULL)
 			{
 				skbuf->skb_maxsize = 0;
@@ -231,16 +239,16 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbqueue_t *queue, zpl_uint32
 	return skbuf;
 }
 
-zpl_skbuffer_t *zpl_skbuffer_create(zpl_skbqueue_t *queue, zpl_uint32 len)
+zpl_skbuffer_t *zpl_skbuffer_create(zpl_skbuf_type_t skbtype, zpl_skbqueue_t *queue, zpl_uint32 len)
 {
-	zpl_skbuffer_t *skbuf = zpl_skbuffer_create_raw(queue, ZPL_SKSIZE_ALIGN(len));
+	zpl_skbuffer_t *skbuf = zpl_skbuffer_create_raw(skbtype, queue, ZPL_SKSIZE_ALIGN(len));
 	return skbuf;
 }
 
 zpl_skbuffer_t *zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 {
 	zpl_skbuffer_t *skbuftmp = NULL;
-	skbuftmp = zpl_skbuffer_create_raw(queue, skbuf->skb_maxsize);
+	skbuftmp = zpl_skbuffer_create_raw(skbuf->skbtype, queue, skbuf->skb_maxsize);
 	if (skbuftmp)
 	{
 		memcpy(&skbuftmp->skb_header, &skbuf->skb_header, sizeof(skbuf->skb_header));
@@ -255,25 +263,38 @@ zpl_skbuffer_t *zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 }
 
 /* 报文前面添加数据 */
-int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
+int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint32_t offset, uint8_t *data, uint32_t len)
 {
 	if(skbuf->skb_start > 0 && skbuf->skb_start >= len)
 	{
-		skbuf->skb_start -= len;
-		skbuf->skb_len += len;
-		if(data)
-			memcpy(skbuf->skb_data + skbuf->skb_start, data, len);
+		if(offset == 0)
+		{
+			skbuf->skb_start -= len;
+			skbuf->skb_len += len;
+			if(data)
+				memcpy(skbuf->skb_data + skbuf->skb_start, data, len);
+		}
+		else
+		{
+			memmove(skbuf->skb_data + skbuf->skb_start - len, skbuf->skb_data + skbuf->skb_start, offset);
+			skbuf->skb_start -= len;
+			skbuf->skb_len += len;			
+			if(data)
+				memcpy(skbuf->skb_data + skbuf->skb_start, data, len);
+		}
 		return  len;
 	}
 	return ERROR;
 }
 
 /* 报文前面删除数据 */
-int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
+int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint32_t offset, uint32_t len)
 {
+	uint8_t *data = NULL;
 	if(skbuf->skb_start > 0 && skbuf->skb_len >= len)
 	{
-		if(data)
+		data = skbuf->skb_data + (skbuf->skb_start + offset);
+		if(offset)
 		{
 			memcpy(data, skbuf->skb_data + skbuf->skb_start, len);
 		}
@@ -295,6 +316,9 @@ int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
 		skbuf->skb_maxsize = ZPL_SKSIZE_ALIGN(len);
 		skbuf->skb_data = malloc(skbuf->skb_maxsize);
 		skbuf->skb_start = ZPL_SKB_START_OFFSET;
+		skbuf->skb_len = 0;
+		skbuf->reference = 0;
+		skbuf->skb_timetick = 0;
 	}
 	else
 	{
@@ -307,10 +331,27 @@ int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
 		}
 	}
 
-	if (skbuf->skb_data != NULL && skbuf->skb_len > 0)
+	if (skbuf->skb_data != NULL)
 	{
-		memcpy(skbuf->skb_data + skbuf->skb_len, data, len);
+		memcpy(skbuf->skb_data + skbuf->skb_start + skbuf->skb_len, data, len);
 		skbuf->skb_len += len;
+		if(skbuf->skbtype == ZPL_SKBUF_TYPE_NETPKT)
+		{
+			zpl_skbuffer_netpkt_parse_header(skbuf, skbuf->skb_data + skbuf->skb_start);
+
+			if(zpl_skbuf_qinq(skbuf->skb_data + skbuf->skb_start, 0x9100))
+			{
+				zpl_skbuffer_pull(skbuf, 12, 4);
+			}
+			else if(zpl_skbuf_qinq(skbuf->skb_data + skbuf->skb_start, 0x9200))
+			{
+				zpl_skbuffer_pull(skbuf, 12, 4);
+			}
+			if(zpl_skbuf_vlan(skbuf->skb_data + skbuf->skb_start))
+			{
+				zpl_skbuffer_pull(skbuf, 12, 4);
+			}
+		}
 		return skbuf->skb_len;
 	}
 	return OK;
@@ -330,42 +371,31 @@ int zpl_skbuffer_addref(zpl_skbuffer_t *skbuf)
 }
 
 /* net pkt */
-int zpl_skbuffer_netpkt_hdrset(zpl_skbuffer_t *skbuf, zpl_netpkt_hdr_t *hdr)
+int zpl_skbuffer_source_set(zpl_skbuffer_t *skbuf, zpl_uint8 unit, ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid)
 {
-	memcpy(&skbuf->skb_header.net_header, hdr, sizeof(zpl_netpkt_hdr_t));
-	return sizeof(zpl_netpkt_hdr_t);
-}
-
-zpl_netpkt_hdr_t * zpl_skbuffer_netpkt_hdrget(zpl_skbuffer_t *src)
-{
-	zpl_netpkt_hdr_t *netpkt = &src->skb_header.net_header;
-	return netpkt;
-}
-
-int zpl_skbuffer_netpkt_build_source(ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid, zpl_skbuffer_t *skbuf)
-{
+	skbuf->skb_header.net_header.unit = unit;
     skbuf->skb_header.net_header.ifindex = ifindex;
     skbuf->skb_header.net_header.trunk = trunk;          /* Source trunk group ID used in header/tag, -1 if src_port set . */
     skbuf->skb_header.net_header.phyid = phyid;          /* Source port used in header/tag. */
 	return OK;
 }
 
-int zpl_skbuffer_netpkt_build_reason(zpl_uint32 reason, zpl_skbuffer_t *skbuf)
+int zpl_skbuffer_reason_set(zpl_skbuffer_t *skbuf, zpl_uint32 reason)
 {
 	skbuf->skb_header.net_header.reason = reason;         /* Opcode from packet. */
 	return OK;
 }
 
-int zpl_skbuffer_netpkt_build_timestamp(zpl_uint32 timestamp, zpl_skbuffer_t *skbuf)
+int zpl_skbuffer_timestamp_set(zpl_skbuffer_t *skbuf, zpl_uint32 timestamp)
 {
 	skbuf->skb_header.net_header.timestamp = timestamp;         /* Opcode from packet. */
 	return OK;
 }
 
-int zpl_skbuffer_netpkt_build_header(zpl_uint8 unit, zpl_skbuffer_t *skbuf, uint8_t *data)
+static int zpl_skbuffer_netpkt_parse_header(zpl_skbuffer_t *skbuf, uint8_t *data)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)data;
-    skbuf->skb_header.net_header.unit = unit;                         /* Unit number. */
+    //skbuf->skb_header.net_header.unit = unit;                         /* Unit number. */
     skbuf->skb_header.net_header.cos = 0;                          /* The local COS queue to use. */
 	skbuf->skb_header.net_header.prio_int = 0;                     /* Internal priority of the packet. */
 	if(ntohs(hdr->ethhdr.ethtype) == 0x8100 || ntohs(hdr->ethhdr.ethtype) == 0x9100 || ntohs(hdr->ethhdr.ethtype) == 0x9200)
@@ -396,7 +426,7 @@ int zpl_skbuffer_netpkt_build_header(zpl_uint8 unit, zpl_skbuffer_t *skbuf, uint
 	return OK;
 }
 
-zpl_uint16 zpl_skbuf_ethtype(char *src)
+zpl_proto_t zpl_skbuf_ethtype(char *src)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)src;
 	if(ntohs(hdr->ethhdr.ethtype) == 0x8100)
@@ -406,7 +436,17 @@ zpl_uint16 zpl_skbuf_ethtype(char *src)
 	return ntohs(hdr->ethhdr.ethtype);
 }
 
-zpl_uint16 zpl_skbuf_vlan(char *src)
+zpl_vlan_t zpl_skbuf_qinq(char *src, vlan_tpid_t tpid)
+{
+	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)src;
+	if(ntohs(hdr->ethhdr.ethtype) == tpid)
+	{
+		return (hdr->ethhdr.vlanhdr.vid);
+	}
+	return 0;
+}
+
+zpl_vlan_t zpl_skbuf_vlan(char *src)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)src;
 	if(ntohs(hdr->ethhdr.ethtype) == 0x8100)

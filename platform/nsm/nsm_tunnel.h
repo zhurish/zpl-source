@@ -48,7 +48,7 @@ typedef struct nsm_tunnel_s
 
 	zpl_bool	ready;
     zpl_bool 	active;				//隧道接口是否激活
-
+	void        *mutex;
 }nsm_tunnel_t;
 /*
     zpl_uint8 tos;
@@ -68,6 +68,10 @@ struct ip_tunnel_parm {
 	struct ipstack_iphdr		iph;
 };
 */
+#define IF_NSM_TUNNEL_DATA_LOCK(tunnel)   if(tunnel && tunnel->mutex) os_mutex_lock(tunnel->mutex, OS_WAIT_FOREVER)
+#define IF_NSM_TUNNEL_DATA_UNLOCK(tunnel) if(tunnel && tunnel->mutex) os_mutex_unlock(tunnel->mutex)
+
+
 extern nsm_tunnel_t * nsm_tunnel_get(struct interface *ifp);
 extern int nsm_tunnel_init(void);
 extern int nsm_tunnel_exit(void);
