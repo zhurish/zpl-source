@@ -1159,7 +1159,7 @@ zfpm_connect_cb (struct thread *t)
   zfpm_g->t_connect = NULL;
   assert (zfpm_g->state == ZFPM_STATE_ACTIVE);
 
-  sock = ipstack_socket (OS_STACK, AF_INET, SOCK_STREAM, 0);
+  sock = ipstack_socket (IPSTACK_OS, AF_INET, SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     {
       zfpm_debug ("Failed to create socket for connect(): %s", strerror(errno));

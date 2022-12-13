@@ -33,8 +33,8 @@ static int dhcpd_config_init(dhcp_global_t *config)
 	config->server_port_v6 = DHCP_SERVER_PORT6;
 	config->client_port_v6 = DHCP_CLIENT_PORT6;
 	config->r_thread = NULL;
-	config->sock = ipstack_init(IPCOM_STACK, -1);
-	config->rawsock = ipstack_init(IPCOM_STACK, -1);
+	config->sock = ipstack_init(IPSTACK_IPCOM, -1);
+	config->rawsock = ipstack_init(IPSTACK_IPCOM, -1);
 	return OK;
 }
 

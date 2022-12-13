@@ -125,11 +125,11 @@ openPort( unsigned short port, unsigned int interfaceIp )
    struct sockaddr_in addr;
    Socket fd;
     
-   fd = ipstack_socket(OS_STACK, PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+   fd = ipstack_socket(IPSTACK_OS, PF_INET, SOCK_DGRAM, IPPROTO_UDP);
    if (ipstack_invalid(fd) )
    {
 	  ortp_error("stun_udp: Could not create a UDP socket");
-      return ZPL_SOCKET_NULL;
+      return ZPL_SOCKET_INVALID;
    }
    
    memset((char*) &(addr),0, sizeof((addr)));
@@ -153,18 +153,18 @@ openPort( unsigned short port, unsigned int interfaceIp )
          case 0:
          {
             ortp_error("stun_udp: Could not bind socket");;
-            return ZPL_SOCKET_NULL;
+            return ZPL_SOCKET_INVALID;
          }
          case EADDRINUSE:
          {
             ortp_error("stun_udp: Port %i for receiving UDP is in use", port);
-            return ZPL_SOCKET_NULL;
+            return ZPL_SOCKET_INVALID;
          }
          break;
          case EADDRNOTAVAIL:
          {
             ortp_error("stun_udp: Cannot assign requested address");
-            return ZPL_SOCKET_NULL;
+            return ZPL_SOCKET_INVALID;
          }
          break;
          default:
@@ -176,7 +176,7 @@ openPort( unsigned short port, unsigned int interfaceIp )
 			 ortp_error("stun_udp: Could not bind UDP receive port Error=%i",
                    e);
 #endif
-            return ZPL_SOCKET_NULL;
+            return ZPL_SOCKET_INVALID;
          }
          break;
       }

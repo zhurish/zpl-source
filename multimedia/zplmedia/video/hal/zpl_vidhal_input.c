@@ -761,7 +761,7 @@ int zpl_vidhal_input_pipe_update_fd(zpl_video_input_pipe_t *input)
 #ifdef ZPL_HISIMPP_MODULE
     if(input->input_pipe >= 0)
     {
-        ipstack_type(input->pipefd) = OS_STACK;
+        ipstack_type(input->pipefd) = IPSTACK_OS;
         ipstack_fd(input->pipefd) = HI_MPI_VI_GetPipeFd(input->input_pipe);
 		if(ZPL_MEDIA_DEBUG(INPUTPIPE, EVENT) && ZPL_MEDIA_DEBUG(INPUTPIPE, DETAIL))
 			zpl_media_debugmsg_debug(" video INPUT pipe %d fd %d\n", input->input_pipe, input->pipefd);
@@ -778,7 +778,7 @@ int zpl_vidhal_input_channel_update_fd(zpl_video_input_channel_t *input)
 #ifdef ZPL_HISIMPP_MODULE
     if(input->input_chn >= 0 && input->inputpipe->input_pipe >= 0)
     {
-        ipstack_type(input->chnfd) = OS_STACK;
+        ipstack_type(input->chnfd) = IPSTACK_OS;
         ipstack_fd(input->chnfd) = HI_MPI_VI_GetChnFd(input->inputpipe->input_pipe, input->input_chn); 
 		if(ZPL_MEDIA_DEBUG(INPUT, EVENT) && ZPL_MEDIA_DEBUG(INPUT, DETAIL))
 			zpl_media_debugmsg_debug(" video INPUT channel %d/%d fd %d\n", input->inputpipe->input_pipe, input->input_chn, input->chnfd);

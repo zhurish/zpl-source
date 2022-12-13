@@ -23,8 +23,9 @@ KARCH_TYPE = $(shell echo $(ARCH_TYPE) | tr A-Z a-z)
 # module 
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 LINUX_KBE_NAME := linux-sdk-kbe
+ZPLKCFLAGS+=-MMD -MP 
 else
-ZPLKCFLAGS+=-UZPL_SDK_USER -UZPL_SDK_NONE
+ZPLKCFLAGS+=-MMD -MP -UZPL_SDK_USER -UZPL_SDK_NONE
 LINUX_KBE_NAME := linux-dev-kbe
 endif
 
@@ -153,6 +154,6 @@ ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 	@$(RM) -rf ../../bsp/hal/*.ko ../../bsp/hal/*.o ../../bsp/hal/.*.cmd 
 endif
 
-all: lib install
+all: lib 
 
 .PHONY:	obj all lib install objclean clean make_prepare 

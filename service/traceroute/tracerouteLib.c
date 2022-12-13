@@ -191,7 +191,7 @@ static int traceroute_thread(TRACEROUTE_STAT * pPS)
 	pPS->dataLen = pPS->tracerouteTxLen - 8; /* compute size of data */
 
 	/* open raw ipstack_socket for ICMP communication */
-	pPS->tracerouteFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
+	pPS->tracerouteFd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
 	if (ipstack_invalid(pPS->tracerouteFd))
 		tracerouteError(pPS);
 
@@ -269,7 +269,7 @@ check_fd_again: /* Wait for ICMP reply */
 			IPSTACK_FD_ZERO(&readFd);
 			IPSTACK_FD_SET(ipstack_fd(pPS->tracerouteFd), &readFd);
 			IPSTACK_FD_SET(ipstack_fd(vty->fd), &readFd);
-			sel = ipstack_select(IPCOM_STACK, max(ipstack_fd(pPS->tracerouteFd), ipstack_fd(vty->fd)) + 1, &readFd, NULL,
+			sel = ipstack_select(IPSTACK_IPCOM, max(ipstack_fd(pPS->tracerouteFd), ipstack_fd(vty->fd)) + 1, &readFd, NULL,
 					NULL, &tracerouteTmo);
 			if (sel == ERROR)
 			{

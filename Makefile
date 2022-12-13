@@ -213,7 +213,7 @@ config_install: openwrt_install
 #
 #
 #
-app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install  make_prepare
+app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install  make_prepare kernel_module
 
 #
 #
@@ -303,6 +303,9 @@ all:
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 #lib: install
 lib:
+	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	
+kernel_module:
 	${MAKE} -C  $(TOP_DIR)/make/ $@ 
 	
 rebuild: clean all $(TAGET)

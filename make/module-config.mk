@@ -454,7 +454,7 @@ endif
 
 
 ZPLPRODS += $(ZPLPRODS_LAST)
-ZPLPRODS += $(ZPLPRODS_KERNEL)
+#ZPLPRODS += $(ZPLPRODS_KERNEL)
 #
 # 下面两个模块保持在最后
 # 

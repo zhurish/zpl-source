@@ -393,6 +393,63 @@ int zpl_skbuffer_addref(zpl_skbuffer_t *skbuf)
 	return OK;
 }
 
+int zpl_skbuffer_next_add(zpl_skbuffer_t *head, zpl_skbuffer_t *nnext)
+{
+	if(head)
+		head->next = nnext;
+	if(nnext)
+	{
+		nnext->next = NULL;
+		nnext->prev = head;
+	}
+	return OK;
+}
+
+int zpl_skbuffer_prev_add(zpl_skbuffer_t *head, zpl_skbuffer_t *nnext)
+{
+	if(head)
+		head->prev = nnext;
+	if(nnext)
+	{
+		nnext->next = head;
+		nnext->prev = NULL;
+	}
+	return OK;
+}
+
+zpl_skbuffer_t * zpl_skbuffer_next_get(zpl_skbuffer_t *head)
+{
+	zpl_skbuffer_t *nnext = NULL;
+	if(head)
+	{
+		nnext = head->next;
+		if(nnext)
+		{
+			head->next = nnext->next;
+			if(nnext->next)
+				nnext->next->prev = head;
+		}
+	}
+	return nnext;
+}
+
+zpl_skbuffer_t * zpl_skbuffer_prev_get(zpl_skbuffer_t *head)
+{
+	zpl_skbuffer_t *nnext = NULL;
+	if(head)
+	{
+		nnext = head->prev;
+		if(nnext)
+		{
+			head->prev = nnext->prev;
+			if(nnext->prev)
+				nnext->prev->next = head;
+		}
+	}
+	return nnext;
+}
+
+
 /* net pkt */
 int zpl_skbuffer_source_set(zpl_skbuffer_t *skbuf, zpl_uint8 unit, ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid)
 {

@@ -51,7 +51,7 @@ typedef struct zpl_media_hardadap_s {
     zpl_int32           src_channel;            // 发送目的通道
     zpl_bool            *online;
     zpl_void            *dst_private;
-    zpl_media_hardadap_handler hardadap_sendto;// 发送回调
+    zpl_media_hardadap_handler hardadap_sendto;// 发送回调(前面一个节点的数据发送到下一个节点的回调函数)
 } zpl_media_hardadap_t;
 
 typedef struct

@@ -14,6 +14,9 @@
 #define ZPL_MEDIA_CLIENT_INDEX_SET(n)  ((n) + 0XAEB0)
 #define ZPL_MEDIA_CLIENT_INDEX_GET(n)  ((n) - 0XAEB0)
 
+
+
+/* 多媒体数据接收客户端， 需要摄像头完成编码的音视频数据的模块当作多媒体客户端 */
 zpl_bool zpl_media_client_lookup(zpl_media_client_t *client, zpl_media_buffer_handler cb_handler, void *pUser)
 {
     zpl_uint32 i = 0;

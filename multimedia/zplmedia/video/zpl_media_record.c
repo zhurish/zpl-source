@@ -75,7 +75,8 @@ int zpl_media_channel_record_enable(zpl_media_channel_t *mediachn, zpl_bool enab
             return ERROR;
         memset(record, 0, sizeof(zpl_media_record_t));    
         record->event_queue = zpl_media_event_default();
-		record->buffer_queue = zpl_media_buffer_create("record", ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, NULL);
+		record->buffer_queue = zpl_media_buffer_create(os_name_format("record-%d/%d", mediachn->channel, mediachn->channel_index), 
+            ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, NULL);
 		if (record->buffer_queue == NULL)
 		{
 			os_free(record);

@@ -77,7 +77,7 @@ static int have_netns(void)
 {
 	if (have_netns_enabled < 0)
 	{
-		zpl_fd_t fd = ipstack_open(IPCOM_STACK, VRF_DEFAULT_NAME, O_RDONLY);
+		zpl_fd_t fd = ipstack_open(IPSTACK_IPCOM, VRF_DEFAULT_NAME, O_RDONLY);
 
 		if (ipstack_invalid(fd))
 			have_netns_enabled = 0;
@@ -139,7 +139,7 @@ static int netns_enable(struct ip_vrf *vrf)
 	{
 		if (have_netns())
 		{
-			vrf->fd = ipstack_open(IPCOM_STACK, pathname, O_RDONLY);
+			vrf->fd = ipstack_open(IPSTACK_IPCOM, pathname, O_RDONLY);
 		}
 		else
 		{
@@ -192,7 +192,7 @@ static zpl_socket_t _kernel_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 p
 	struct ip_vrf *vrf = ip_vrf_lookup(vrf_id);
 	int ret = -1;
 	zpl_socket_t tmp;
-	tmp = ipstack_init(OS_STACK, -1);
+	tmp = ipstack_init(IPSTACK_OS, -1);
 	if (!vrf)
 		return tmp;
 	if (!netns_is_enabled(vrf))
@@ -375,7 +375,7 @@ zpl_socket_t linux_vrf_socket(int domain, zpl_uint32 type, zpl_uint16 protocol, 
 #ifdef ZPL_NETNS_ENABLE	
 	return _kernel_vrf_socket(domain, type, protocol, vrf_id);
 #else
-	zpl_socket_t tmpsock = ipstack_init(OS_STACK, -1);
+	zpl_socket_t tmpsock = ipstack_init(IPSTACK_OS, -1);
 	ipstack_fd(tmpsock) = socket(domain, type, protocol);
 	return tmpsock;
 #endif /* ZPL_NETNS_ENABLE */	

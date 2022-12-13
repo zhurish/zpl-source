@@ -36,7 +36,7 @@ zpl_socket_t udhcp_udp_socket(/*zpl_uint32  ip,*/zpl_uint16 port, ifindex_t ifin
 	ifindex_t kifindex = 0;
 	if(ifindex)
 		kifindex = ifindex2ifkernel(ifindex);
-	fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
+	fd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, IPSTACK_IPPROTO_UDP);
 	if (ipstack_invalid(fd))
 	{
 		sockopt_reuseaddr(fd);
@@ -68,7 +68,7 @@ zpl_socket_t udhcp_raw_socket(void)
 {
 	zpl_socket_t fd;
 	int onoff = 1;
-	fd = ipstack_sock_raw_create(IPCOM_STACK, IPSTACK_SOCK_DGRAM, (ETH_P_IP));
+	fd = ipstack_sock_raw_create(IPSTACK_IPCOM, IPSTACK_SOCK_DGRAM, (ETH_P_IP));
 	/* Get packet socket to write raw frames on */
 	if (ipstack_invalid(fd))
 	{

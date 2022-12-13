@@ -497,7 +497,7 @@ TFTP_DESC * tftpInit(void)
 	strcpy(pTftpDesc->mode, "netascii");
 	pTftpDesc->connected = zpl_false;
 	/* set up a datagram ipstack_socket */
-	pTftpDesc->sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+	pTftpDesc->sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
 	if (ipstack_invalid(pTftpDesc->sock))
 	{
 		free((char *) pTftpDesc);
@@ -1184,7 +1184,7 @@ int tftpSend(TFTP_DESC * pTftpDesc, /* TFTP descriptor	*/
 			IPSTACK_FD_SET(ipstack_fd(pTftpDesc->sock), &readFds);
 			/* wait for reply message */
 
-			if ((num = ipstack_select(IPCOM_STACK, ipstack_fd(pTftpDesc->sock)+1, &readFds, (fd_set *) NULL,
+			if ((num = ipstack_select(IPSTACK_IPCOM, ipstack_fd(pTftpDesc->sock)+1, &readFds, (fd_set *) NULL,
 					(fd_set *) NULL, &reXmitTimer)) == ERROR)
 				return (ERROR);
 

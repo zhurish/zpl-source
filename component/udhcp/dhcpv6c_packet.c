@@ -654,7 +654,7 @@ int dhcpv6c_packet_socket(struct dhcpv6c_interface *ifp)
 {
 	ifindex_t kifindex = ifindex2ifkernel(ifp->ifindex);
 	char *kifname = ifkernelindex2kernelifname(kifindex);
-	ifp->sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_DGRAM | SOCK_CLOEXEC, IPSTACK_IPPROTO_UDP);
+	ifp->sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET6, IPSTACK_SOCK_DGRAM | SOCK_CLOEXEC, IPSTACK_IPPROTO_UDP);
 	if (ipstack_invalid(ifp->sock))
 		goto failure;
 

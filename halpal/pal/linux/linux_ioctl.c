@@ -66,7 +66,7 @@ int linux_ioctl_if_ioctl(zpl_uint32 request, caddr_t buffer)
   zpl_socket_t sock;
   int ret = -1;
 
-  sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+  sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
   if (ipstack_invalid(sock))
   {
     zlog_err(MODULE_PAL, "Cannot create datagram ipstack_socket: %s",
@@ -90,7 +90,7 @@ int linux_ioctl_if_ioctl_ipv6(zpl_uint32 request, caddr_t buffer)
   zpl_socket_t sock;
   int ret = -1;
 
-  sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_DGRAM, 0);
+  sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET6, IPSTACK_SOCK_DGRAM, 0);
   if (ipstack_invalid(sock))
   {
     zlog_err(MODULE_PAL, "Cannot create IPv6 datagram ipstack_socket: %s",

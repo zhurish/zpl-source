@@ -505,7 +505,7 @@ nsm_rtadv_make_socket (vrf_id_t vrf_id)
   int ret;
   struct ipstack_icmp6_filter filter;
 
-  sock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET6, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMPV6);
+  sock = ipstack_socket (IPSTACK_IPCOM, IPSTACK_AF_INET6, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMPV6);
 
 
   /* When we can't make ICMPV6 socket simply back.  Router

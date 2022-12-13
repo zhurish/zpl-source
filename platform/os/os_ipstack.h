@@ -183,19 +183,21 @@ extern int ipstack_set_blocking(zpl_socket_t _sock);
 
 extern char * ipstack_sockstr(zpl_socket_t _sock);
 
-#define ZPL_SOCKET_T(n)       zpl_socket_t n = NULL;//ipstack_create(OS_STACK)
-#define ZPL_SOCKET_NULL       NULL
-
 #ifdef ZPL_SOCKET_T_POINT
+#define ZPL_SOCKET_T(n)       zpl_socket_t n = NULL
+#define ZPL_SOCKET_INVALID    NULL
 #define ipstack_fd(n)         (((n)->_fd))
 #define ipstack_type(n)       (((n)->stack))
-#define is_os_stack(n)	      ((n)->stack == OS_STACK)
-#define is_ipcom_stack(n)	   ((n)->stack == IPCOM_STACK)
+#define is_os_stack(n)	      ((n)->stack == IPSTACK_OS)
+#define is_ipcom_stack(n)	   ((n)->stack == IPSTACK_IPCOM)
 #else
+extern zpl_socket_t _ipstack_invalid_sock;
+#define ZPL_SOCKET_T(n)       zpl_socket_t n = {0, IPSTACK_UNKNOEW};
+#define ZPL_SOCKET_INVALID    _ipstack_invalid_sock
 #define ipstack_fd(n)         ((n)._fd)
 #define ipstack_type(n)       ((n).stack)
-#define is_os_stack(n)	      ((n).stack == OS_STACK)
-#define is_ipcom_stack(n)	   ((n).stack == IPCOM_STACK)
+#define is_os_stack(n)	      ((n).stack == IPSTACK_OS)
+#define is_ipcom_stack(n)	   ((n).stack == IPSTACK_IPCOM)
 #endif
 #define ipstack_closesocket	ipstack_close
 #define ipstack_select	ipstack_socketselect

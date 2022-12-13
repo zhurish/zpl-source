@@ -727,7 +727,7 @@ int ftpXfer(struct ftpc_session *session,
             width = (ipstack_fd(dataSock) > ipstack_fd(ctrlSock)) ? ipstack_fd(dataSock) : ipstack_fd(ctrlSock);
             width++;
 
-            if (ipstack_select(IPCOM_STACK, width, &readFds, NULL, NULL, NULL) == ERROR)
+            if (ipstack_select(IPSTACK_IPCOM, width, &readFds, NULL, NULL, NULL) == ERROR)
             {
                 if (ftpc_config.ftplDebug & FTPL_DEBUG_ERRORS)
                     zlog_err(MODULE_UTILS, "FTP in select()");
@@ -902,7 +902,7 @@ int ftpReplyGetEnhanced(struct ftpc_session *session,
         stringIndex = 0;
         continuation = zpl_false;
         memset(reString, 0, sizeof(reString));
-        if ((num = ipstack_select(IPCOM_STACK, ipstack_fd(ctrlSock) + 1, &readFds, (fd_set *)NULL,
+        if ((num = ipstack_select(IPSTACK_IPCOM, ipstack_fd(ctrlSock) + 1, &readFds, (fd_set *)NULL,
                                   (fd_set *)NULL, &replyTimeOut)) == ERROR)
             return (ERROR);
 
@@ -1022,7 +1022,7 @@ zpl_socket_t ftpHookup(struct ftpc_session *session,
 
     /* make our control ipstack_socket */
 
-    ctrlSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    ctrlSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(ctrlSock))
     {
         if (ftpc_config.ftplDebug & FTPL_DEBUG_ERRORS)
@@ -1250,7 +1250,7 @@ zpl_socket_t ftpDataConnInitPassiveMode(struct ftpc_session *session,
 
         /* make our data ipstack_socket */
 
-        dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+        dataSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
         if (ipstack_invalid(dataSock))
         {
             if (ftpc_config.ftplDebug & FTPL_DEBUG_ERRORS)
@@ -1357,7 +1357,7 @@ zpl_socket_t ftpDataConnInit(struct ftpc_session *session,
 
     /* first try - try to ipstack_send port */
 
-    dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    dataSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(dataSock))
     {
         // IF_LOG_ERR (funcName = "ipstack_socket"; line = __LINE__);
@@ -1416,7 +1416,7 @@ zpl_socket_t ftpDataConnInit(struct ftpc_session *session,
 
     ipstack_close(dataSock);
 
-    dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    dataSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(dataSock))
     {
         // IF_LOG_ERR (funcName = "2nd try : ipstack_socket"; line = __LINE__);
@@ -1488,7 +1488,7 @@ zpl_socket_t ftpDataConnGet(struct ftpc_session *session,
     IPSTACK_FD_ZERO(&readFds);
     IPSTACK_FD_SET(ipstack_fd(dataSock), &readFds);
 
-    if ((rc = ipstack_select(IPCOM_STACK, ipstack_fd(dataSock) + 1, &readFds, (fd_set *)NULL,
+    if ((rc = ipstack_select(IPSTACK_IPCOM, ipstack_fd(dataSock) + 1, &readFds, (fd_set *)NULL,
                              (fd_set *)NULL, &replyTime)) <= 0)
     {
         if (rc == 0) /* select timed out */

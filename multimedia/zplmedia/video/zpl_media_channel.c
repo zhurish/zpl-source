@@ -234,7 +234,8 @@ int zpl_media_channel_create(zpl_int32 channel,
 		chn->bindcount = 0;
 		zpl_media_channel_encode_default(chn);
 
-		chn->buffer_queue = zpl_media_buffer_create("media",ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, chn);
+		chn->buffer_queue = zpl_media_buffer_create(os_name_format("media-%d/%d", channel,channel_index),
+			ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, chn);
 		if (chn->buffer_queue == NULL)
 		{
 			zpl_media_debugmsg_debug("can not create buffer for media channel(%d/%d)", channel, channel_index);
@@ -340,7 +341,8 @@ zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool 
 
 		chn->channel_type = ZPL_MEDIA_CHANNEL_FILE;
 		chn->bindcount = 0;
-		chn->buffer_queue = zpl_media_buffer_create("media",ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, chn);
+		chn->buffer_queue = zpl_media_buffer_create(os_name_format("media-%s", filename),
+			ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, chn);
 		if (chn->buffer_queue == NULL)
 		{
 			os_free(chn);
@@ -686,7 +688,8 @@ int zpl_media_channel_load(zpl_void *obj)
 	zpl_video_assert(chn);
 	if (chn)
 	{
-		chn->buffer_queue = zpl_media_buffer_create("load",ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, chn);
+		chn->buffer_queue = zpl_media_buffer_create(os_name_format("media-%d/%d", chn->channel, chn->channel_index), 
+			ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false, chn);
 		if (chn->buffer_queue == NULL)
 		{
 			os_free(chn);

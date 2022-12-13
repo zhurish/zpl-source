@@ -195,7 +195,7 @@ int zpl_video_encode_show(void *pvoid)
 
 
 
-
+/* 编码模块接收到数据后完成编码，编码输出数据有这里接收，接收到编码后的数据发送到通道的消息队列，*/
 static int zpl_video_encode_read(struct thread *t)
 {
 	zpl_video_encode_t *encode = THREAD_ARG(t);

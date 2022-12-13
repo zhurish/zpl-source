@@ -22,13 +22,13 @@ static zpl_socket_t rtsp_client_create_socket(const char *lip, uint16_t port)
     zpl_socket_t client_sock;
     if(rtsp_socket._socket)
     {
-        client_sock = (rtsp_socket._socket)(OS_STACK, AF_INET, SOCK_STREAM, 0);
+        client_sock = (rtsp_socket._socket)(IPSTACK_OS, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
         if(!ipstack_invalid(client_sock))
         {
             return client_sock;
         }
     }
-    return ZPL_SOCKET_NULL;
+    return ZPL_SOCKET_INVALID;
 }
 
 static zpl_socket_t rtsp_client_connect_socket(zpl_socket_t client_sock, const char *ip, uint16_t port)
@@ -41,14 +41,14 @@ static zpl_socket_t rtsp_client_connect_socket(zpl_socket_t client_sock, const c
             {
                 fprintf(stdout,"%s [%d]  _connect(%s)\r\n", __func__, __LINE__, strerror(errno));
                 fflush(stdout);
-                return ZPL_SOCKET_NULL;
+                return ZPL_SOCKET_INVALID;
             }
             fprintf(stdout, "%s [%d]  rtsp client connect:%s:%d ok\r\n", __func__, __LINE__, ip, port);
             fflush(stdout);
             return client_sock;
         }
     }
-    return ZPL_SOCKET_NULL;
+    return ZPL_SOCKET_INVALID;
 }
 
 rtsp_client_t * rtsp_client_create(const char *name, const char *url)

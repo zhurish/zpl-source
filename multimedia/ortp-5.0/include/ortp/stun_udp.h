@@ -164,9 +164,12 @@ typedef LONGLONG Int64;
 #else
 
 typedef zpl_socket_t Socket;
+
+#undef INVALID_SOCKET
 #ifndef INVALID_SOCKET 
-#define INVALID_SOCKET -1
+#define INVALID_SOCKET ZPL_SOCKET_INVALID
 #endif
+
 #ifndef SOCKET_ERROR 
 #define SOCKET_ERROR -1
 #endif

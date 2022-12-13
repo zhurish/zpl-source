@@ -380,7 +380,7 @@ static int telnetTask(TELNETC_SESSION_DATA *session)
 		width = max(ipstack_fd(session->linfd), ipstack_fd(session->hostFd)) + 1;
 		/* wait for input */
 		//fprintf(stdout, "%s wait for input\r\n", __func__);
-		if (ipstack_select(IPCOM_STACK, width, &readFds, NULL, NULL, NULL) == ERROR)
+		if (ipstack_select(IPSTACK_IPCOM, width, &readFds, NULL, NULL, NULL) == ERROR)
 		{
 			//log_err (TELNET_LOG | LOG_ERRNO, "select() failure.");
 			return telnetExit(session);
@@ -503,7 +503,7 @@ int telnet(struct vty *vty, char * pHostName, int port)
 
 	vty_out(vty, "%sTrying %s...%s", VTY_NEWLINE, session->hostname, VTY_NEWLINE);
 
-	session->hostFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, IPSTACK_IPPROTO_TCP);
+	session->hostFd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, IPSTACK_IPPROTO_TCP);
 
 	if (ipstack_invalid(session->hostFd))
 	{

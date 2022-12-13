@@ -366,7 +366,7 @@ eloop_get(struct eloop_master *m, zpl_uchar type, int (*func)(struct eloop *),
 static zpl_int fd_select(zpl_uint32 size, eloop_fd_set *read, eloop_fd_set *write,
 		eloop_fd_set *except, struct timeval *t)
 {
-	return (ipstack_select(IPCOM_STACK, size, read, write, except, t));
+	return (ipstack_select(IPSTACK_IPCOM, size, read, write, except, t));
 }
 
 static zpl_int fd_is_set(int fd, eloop_fd_set *fdset)

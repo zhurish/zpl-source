@@ -1742,7 +1742,7 @@ nsm_zserv_serv()
   zpl_socket_t accept_sock;
   struct ipstack_sockaddr_in addr;
 
-  accept_sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  accept_sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 
   if (ipstack_invalid(accept_sock))
   {
@@ -1809,7 +1809,7 @@ nsm_zserv_serv_un(const char *path)
   old_mask = umask(0077);
 
   /* Make UNIX domain ipstack_socket. */
-  sock = ipstack_socket(OS_STACK, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_OS, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
   {
     zlog_warn(MODULE_NSM, "Can't create zserv unix ipstack_socket: %s",

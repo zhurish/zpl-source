@@ -378,7 +378,7 @@ static zpl_socket_t ipcstandby_serv_tcp(char *ip, int port)
   zpl_socket_t accept_sock;
   struct ipstack_sockaddr_in addr;
 
-  accept_sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  accept_sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 
   if (ipstack_invalid(accept_sock))
   {
@@ -462,8 +462,8 @@ struct ipcstandby_server_t * ipcstandby_serv_init(void *m)
     _server->client_list = list_new();
     _server->serv_sock = ipcstandby_serv_tcp(NULL, 0);
     _server->vty = vty_new();
-    _server->vty->wfd = ipstack_init(OS_STACK, STDOUT_FILENO);
-    _server->vty->fd = ipstack_init(OS_STACK, STDIN_FILENO);
+    _server->vty->wfd = ipstack_init(IPSTACK_OS, STDOUT_FILENO);
+    _server->vty->fd = ipstack_init(IPSTACK_OS, STDIN_FILENO);
     //ipstack_fd(_server->vty->wfd) = STDOUT_FILENO;
     //ipstack_fd(_server->vty->fd) = STDIN_FILENO;
     _server->vty->type = VTY_STABDVY;

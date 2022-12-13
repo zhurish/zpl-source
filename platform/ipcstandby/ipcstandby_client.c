@@ -125,7 +125,7 @@ ipcstandby_client_socket_tcp(char *ip, int port)
   struct ipstack_sockaddr_in serv;
 
   /* We should think about IPv6 connection. */
-  sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
 

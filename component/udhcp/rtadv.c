@@ -93,7 +93,7 @@ int ra_init(const char *ifname, const struct ipstack_in6_addr *ifid,
 	ra_holdoff_interval = holdoff_interval;
 
 	const pid_t ourpid = getpid();
-	rasock = ipstack_socket(IPCOM_STACK, AF_INET6, SOCK_RAW | SOCK_CLOEXEC, IPPROTO_ICMPV6);
+	rasock = ipstack_socket(IPSTACK_IPCOM, AF_INET6, SOCK_RAW | SOCK_CLOEXEC, IPPROTO_ICMPV6);
 	if (ipstack_invalid( rasock ))
 		goto failure;
 
@@ -101,7 +101,7 @@ int ra_init(const char *ifname, const struct ipstack_in6_addr *ifid,
 	zlif_index = ifr.ifr_ifindex;
 	lladdr = *ifid;
 
-	rtnl = ipstack_socket(IPCOM_STACK, AF_NETLINK, SOCK_DGRAM | SOCK_CLOEXEC, NETLINK_ROUTE);
+	rtnl = ipstack_socket(IPSTACK_IPCOM, AF_NETLINK, SOCK_DGRAM | SOCK_CLOEXEC, NETLINK_ROUTE);
 	if (ipstack_invalid( rtnl ))
 		goto failure;
 
@@ -364,7 +364,7 @@ bool ra_process(void)
 	if (IN6_IS_ADDR_UNSPECIFIED(&lladdr)) {
 		struct ipstack_sockaddr_in6 addr = {AF_INET6, 0, 0, ALL_IPV6_ROUTERS, zlif_index};
 		socklen_t alen = sizeof(addr);
-		zpl_socket_t sock = ipstack_socket(IPCOM_STACK, AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+		zpl_socket_t sock = ipstack_socket(IPSTACK_IPCOM, AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 
 		if (!ipstack_invalid(sock)) {
 			if (!ipstack_connect(sock, (struct ipstack_sockaddr*)&addr, sizeof(addr)) &&

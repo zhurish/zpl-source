@@ -192,7 +192,7 @@ static int vtysh_connect_node(struct vtysh_client *vclient)
     }
   }
 
-  sock = ipstack_socket(OS_STACK, AF_UNIX, SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_OS, AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0)
   {
 #ifdef DEBUG

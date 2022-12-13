@@ -9,7 +9,7 @@ static int lib_netlink_sock_create(lib_netlink_t *nsock, int proto)
 {
     int ret = 0;
     struct ipstack_sockaddr_nl bindaddr;
-    nsock->sock = ipstack_socket(OS_STACK, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, proto);
+    nsock->sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, proto);
     if (ipstack_invalid(nsock->sock))
         return ERROR;
     memset(&bindaddr, 0, sizeof(struct ipstack_sockaddr_nl));

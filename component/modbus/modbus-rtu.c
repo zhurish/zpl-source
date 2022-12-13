@@ -596,7 +596,7 @@ static int _modbus_rtu_connect(modbus_t *ctx)
         }
         return -1;
     }
-    ipstack_type(ctx->s) = OS_STACK;
+    ipstack_type(ctx->s) = IPSTACK_OS;
     /* Save */
     tcgetattr(ipstack_fd(ctx->s), &ctx_rtu->old_tios);
 

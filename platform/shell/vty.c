@@ -1877,7 +1877,7 @@ int vty_getc_input(struct vty *vty)
 	{
 		return getchar();
 	}
-	/*	if (vty->fd_type == OS_STACK
+	/*	if (vty->fd_type == IPSTACK_OS
 				|| os_memcmp(vty->address, "console", os_strlen("console")))
 		{
 			return getchar();
@@ -2469,8 +2469,8 @@ static struct vty *vty_console_new(const char *tty, zpl_socket_t vty_sock)
 	vty = vty_new_init(vty_sock);
 	if (vty == NULL)
 		return vty;
-	ipstack_type(vty->fd) = OS_STACK;
-	ipstack_type(vty->wfd) = OS_STACK;
+	ipstack_type(vty->fd) = IPSTACK_OS;
+	ipstack_type(vty->wfd) = IPSTACK_OS;
 	vty->login_type = tty ? VTY_LOGIN_CONSOLE : VTY_LOGIN_STDIO;
 	if (ipstack_fd(vty->fd) == STDIN_FILENO)
 	{
@@ -2719,7 +2719,7 @@ static int vty_console_init(const char *tty)
 void vty_tty_init(const char *tty)
 {
 	zpl_socket_t ttyfd;
-	ttyfd = ipstack_init(OS_STACK, -1);
+	ttyfd = ipstack_init(IPSTACK_OS, -1);
 #ifdef ZPL_SHRL_MODULE
 	if(tty && strstr(tty, "readline"))
 	{
@@ -2742,7 +2742,7 @@ void vty_tty_init(const char *tty)
 			g_vtyshell.ttycom.flow_control = cli_tty_com.flow_control; // flow control
 
 			if (tty_com_open(&g_vtyshell.ttycom) == OK)
-				ttyfd = ipstack_init(OS_STACK, -1);
+				ttyfd = ipstack_init(IPSTACK_OS, -1);
 			else
 			{
 				zlog_err(MODULE_LIB,"vty can not open %s(%s)\r\n", tty, strerror(ipstack_errno));
@@ -2753,7 +2753,7 @@ void vty_tty_init(const char *tty)
 	}
 	else
 	{
-		ttyfd = ipstack_init(OS_STACK, STDIN_FILENO);
+		ttyfd = ipstack_init(IPSTACK_OS, STDIN_FILENO);
 		ipstack_fd(ttyfd) = STDIN_FILENO;
 	}
 	if (g_vtyshell.init == 1)
@@ -2959,7 +2959,7 @@ vty_serv_un(const char *path)
 	old_mask = umask(0007);
 
 	/* Make UNIX domain ipstack_socket. */
-	g_vtyshell.vtysh_sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+	g_vtyshell.vtysh_sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
 	if (ipstack_invalid(g_vtyshell.vtysh_sock) < 0)
 	{
 		zlog_err(MODULE_DEFAULT, "Cannot create unix stream ipstack_socket: %s", ipstack_strerror(ipstack_errno));
@@ -3420,7 +3420,7 @@ vty_serv_sock_addrinfo (const char *hostname, unsigned short port)
       	if (ainfo->ai_family != IPSTACK_AF_INET	&& ainfo->ai_family != IPSTACK_AF_INET6)
 			continue;
 
-      	sock = ipstack_socket (IPCOM_STACK, ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol);
+      	sock = ipstack_socket (IPSTACK_IPCOM, ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol);
       	if (ipstack_fd(sock) < 0)
 			continue;
 
@@ -3585,8 +3585,8 @@ static void vty_read_file(FILE *confp)
 	struct vty *vty;
 	zpl_uint32 line_num = 0;
 	vty = vty_new();
-	vty->fd = ipstack_init(OS_STACK, STDOUT_FILENO);
-	vty->wfd = ipstack_init(OS_STACK, STDIN_FILENO);
+	vty->fd = ipstack_init(IPSTACK_OS, STDOUT_FILENO);
+	vty->wfd = ipstack_init(IPSTACK_OS, STDIN_FILENO);
 	ipstack_fd(vty->wfd) = STDOUT_FILENO;
 	ipstack_fd(vty->fd) = STDIN_FILENO;
 	vty->type = VTY_FILE;
@@ -4229,8 +4229,8 @@ int vty_execute_shell(void *cli, const char *cmd)
 	if (vty == NULL)
 	{
 		vty = vty_new();
-		vty->fd = ipstack_init(OS_STACK, STDOUT_FILENO);
-		vty->wfd = ipstack_init(OS_STACK, STDIN_FILENO);
+		vty->fd = ipstack_init(IPSTACK_OS, STDOUT_FILENO);
+		vty->wfd = ipstack_init(IPSTACK_OS, STDIN_FILENO);
 		ipstack_fd(vty->wfd) = STDOUT_FILENO;
 		ipstack_fd(vty->fd) = STDIN_FILENO;
 		vty->type = VTY_TERM;

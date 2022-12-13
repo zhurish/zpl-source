@@ -130,7 +130,7 @@ static int lib_event_read(struct thread *arg)
 
 static int lib_event_base_create(void)
 {
-    if(ipstack_unix_sockpair_create(OS_STACK, zpl_false, &_lib_event.r_evfd, &_lib_event.w_evfd) == OK)
+    if(ipstack_unix_sockpair_create(IPSTACK_OS, zpl_false, &_lib_event.r_evfd, &_lib_event.w_evfd) == OK)
     {
         _lib_event.t_read = thread_add_read(_lib_event.t_master, lib_event_read, NULL, _lib_event.r_evfd);
         return OK;

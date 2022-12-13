@@ -427,7 +427,7 @@ static int vty_readline_init(void)
 
 int vtyrl_stdio_init(void)
 {
-	zpl_socket_t vty_sock = {OS_STACK, 0};
+	zpl_socket_t vty_sock = {IPSTACK_OS, 0};
 	if(vtyrl_stdio.init == 0)
 	{
 		memset(&vtyrl_stdio, 0, sizeof(vtyrl_stdio));
@@ -837,7 +837,7 @@ try_connect(struct daemon *dmn)
                dmn->name, addr.sun_path, ipstack_strerror(errno));
     return -1;
   }
-  sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
   {
     fdprintf(STDOUT_FILENO, "%s(%s): cannot make socket: %s\r\n",

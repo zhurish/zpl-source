@@ -30,7 +30,7 @@ PUBLIC int socketOpen(void)
     Socket  fd;
     if (ipstack_invalid(socketHighestFd))
     {
-        socketHighestFd = ipstack_create(OS_STACK);
+        socketHighestFd = ipstack_create(IPSTACK_OS);
     }
     if (++socketOpenCount > 1)
     {
@@ -51,7 +51,7 @@ PUBLIC int socketOpen(void)
 #endif
     socketList = NULL;
     socketMax = 0;
-    fd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    fd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(fd)) {
         hasIPv6 = 1;
         ipstack_closesocket(fd);
@@ -125,7 +125,7 @@ PUBLIC int socketListen(cchar *ip, int port, SocketAccept accept, int flags)
     if (socketInfo(sip, port, &family, &protocol, &addr, &addrlen) < 0) {
         return -1;
     }
-    sp->sock = ipstack_socket(IPCOM_STACK, family, IPSTACK_SOCK_STREAM, protocol);
+    sp->sock = ipstack_socket(IPSTACK_IPCOM, family, IPSTACK_SOCK_STREAM, protocol);
     if (ipstack_invalid(sp->sock)) {
         socketFree(sid);
         return -1;
@@ -208,7 +208,7 @@ PUBLIC int socketConnect(char *ip, int port, int flags)
     if (socketInfo(ip, port, &family, &protocol, &addr, &addrlen) < 0) {
         return -1;
     }
-    sp->sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    sp->sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(sp->sock)) {
         socketFree(sid);
         return -1;
@@ -486,7 +486,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Wait for the event or a timeout
      */
-    nEvents = ipstack_select(OS_STACK, ipstack_fd(socketHighestFd) + 1, &readFds, &writeFds, &exceptFds, &tv);
+    nEvents = ipstack_select(IPSTACK_OS, ipstack_fd(socketHighestFd) + 1, &readFds, &writeFds, &exceptFds, &tv);
 
     if (all) {
         sid = 0;
@@ -597,7 +597,7 @@ PUBLIC int socketSelect(int sid, int timeout)
     /*
         Wait for the event or a timeout
      */
-    nEvents = ipstack_select(IPCOM_STACK, ipstack_fd(socketHighestFd) + 1, (ipstack_fd_set *) readFds, (ipstack_fd_set *) writeFds, (ipstack_fd_set *) exceptFds, &tv);
+    nEvents = ipstack_select(IPSTACK_IPCOM, ipstack_fd(socketHighestFd) + 1, (ipstack_fd_set *) readFds, (ipstack_fd_set *) writeFds, (ipstack_fd_set *) exceptFds, &tv);
     if (all) {
         sid = 0;
     }

@@ -53,7 +53,7 @@ ipcbc_client_new(void *m)
   client->obuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
   client->ackbuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
   client->master = m;
-  if (ipstack_socketpair (OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, client->ack_sock)<0)
+  if (ipstack_socketpair (IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, client->ack_sock)<0)
   {
       ipcbc_client_free(client);
       client = NULL;
@@ -142,7 +142,7 @@ ipcbc_client_socket_tcp(char *ip, int port)
   struct ipstack_sockaddr_in serv;
 
   /* We should think about IPv6 connection. */
-  sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
 

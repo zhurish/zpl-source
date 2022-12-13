@@ -165,7 +165,7 @@ zclient_socket(void)
   struct ipstack_sockaddr_in serv;
 
   /* We should think about IPv6 connection. */
-  sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return -1;
 
@@ -201,7 +201,7 @@ zclient_socket_un(const char *path)
   int len = 0;
   struct ipstack_sockaddr_un addr;
 
-  sock = ipstack_socket(OS_STACK, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_OS, AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     return sock;
 

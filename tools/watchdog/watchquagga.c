@@ -813,7 +813,7 @@ try_connect(struct daemon *dmn)
                dmn->name, addr.sun_path, ipstack_strerror(errno));
     return -1;
   }
-  sock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
   {
     fdprintf(STDOUT_FILENO, "%s(%s): cannot make socket: %s\r\n",

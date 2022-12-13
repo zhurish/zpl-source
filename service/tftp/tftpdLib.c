@@ -148,7 +148,7 @@ static zpl_socket_t tftpd_socket_init(TFTPD_CONFIG *config)
     int	value;
 	struct ipstack_sockaddr_in	serverAddr;
     TFTP_MSG 		requestBuffer;
-    serverSocket = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+    serverSocket = ipstack_socket (IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
     if(ipstack_invalid(serverSocket))
     	return serverSocket;
     bzero ((char *) &serverAddr, sizeof (struct ipstack_sockaddr_in));
@@ -679,7 +679,7 @@ static int tftpdTask( struct eloop *thread)
 	/*
 	 * Get a reply descriptor.  This will pend until one is available.
 	 */
-	clientSocket = ipstack_sock_create(IPCOM_STACK, zpl_false);
+	clientSocket = ipstack_sock_create(IPSTACK_IPCOM, zpl_false);
 	if(ipstack_invalid(clientSocket))
 		return ERROR;
 	ipstack_sock_bind(clientSocket, NULL, 0);

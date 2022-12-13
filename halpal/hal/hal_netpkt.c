@@ -81,7 +81,7 @@ static struct hal_netpkt_filter * hal_netpkt_filter_add(struct osker_list_head *
     struct hal_netpkt_filter * newNode = NULL; //每次申请链表结点时所使用的指针
     newNode = (struct hal_netpkt_filter *)malloc(sizeof(struct hal_netpkt_filter));
 	if(newNode)
-	newNode->sock = ipstack_create(OS_STACK);
+	newNode->sock = ipstack_create(IPSTACK_OS);
     if(newNode && !ipstack_invalid(newNode->sock))
     {
         memset(&newNode->_netpkt_field, 0, sizeof(struct hal_netpkt_field));

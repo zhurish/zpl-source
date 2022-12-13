@@ -2222,7 +2222,7 @@ message_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, 
 
 
 
-static const struct rttype_desc_table unknown = { 0, "unknown", '?' };
+static const struct rttype_desc_table zr_unknown = { 0, "unknown", '?' };
 
 static const struct rttype_desc_table *
 zroute_lookup(zpl_uint32 zroute) {
@@ -2230,7 +2230,7 @@ zroute_lookup(zpl_uint32 zroute) {
 
 	if (zroute >= array_size(route_types)) {
 		zlog_err(MODULE_DEFAULT, "unknown zebra route type: %u", zroute);
-		return &unknown;
+		return &zr_unknown;
 	}
 	if (zroute == route_types[zroute].type)
 		return &route_types[zroute];
@@ -2245,7 +2245,7 @@ zroute_lookup(zpl_uint32 zroute) {
 	}
 	zlog_err(MODULE_DEFAULT,
 			"internal error: cannot find route type %u in table!", zroute);
-	return &unknown;
+	return &zr_unknown;
 }
 
 const char *

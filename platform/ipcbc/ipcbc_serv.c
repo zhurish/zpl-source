@@ -483,7 +483,7 @@ static zpl_socket_t ipcbc_serv_tcp(char *ip, int port)
   zpl_socket_t accept_sock;
   struct ipstack_sockaddr_in addr;
 
-  accept_sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+  accept_sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 
   if (ipstack_invalid(accept_sock))
   {
@@ -554,7 +554,7 @@ void ipcbc_serv_init(void *m)
   ipcbc_server.client_list = list_new();
   ipcbc_server.serv_sock = ipcbc_serv_tcp(NULL, 0);
   ipcbc_server.ackbuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
-  if (ipstack_socketpair (OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, ipcbc_server.ack_sock)<0)
+  if (ipstack_socketpair (IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, ipcbc_server.ack_sock)<0)
   {
       ipcbc_serv_exit();
       return;

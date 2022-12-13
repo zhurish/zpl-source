@@ -51,7 +51,7 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 	 */
 	if(if_is_serial(ifp))
 	{
-		kifp->fd = ipstack_open(IPCOM_STACK, IPKERNEL_TUN_NAME, O_RDWR);
+		kifp->fd = ipstack_open(IPSTACK_IPCOM, IPKERNEL_TUN_NAME, O_RDWR);
 		if (ipstack_invalid(kifp->fd))
 		{
 			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",
@@ -61,7 +61,7 @@ static int _linux_kernel_eth_create (nsm_vlaneth_t *kifp)
 	}
 	else
 	{
-		kifp->fd = ipstack_open(IPCOM_STACK, IPKERNEL_TAP_NAME, O_RDWR);
+		kifp->fd = ipstack_open(IPSTACK_IPCOM, IPKERNEL_TAP_NAME, O_RDWR);
 		if (ipstack_invalid(kifp->fd))
 		{
 			zlog_err(MODULE_PAL, "Unable to open %s to create L3 interface(%s).",

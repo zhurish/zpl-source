@@ -700,7 +700,7 @@ int librtnl_socket(struct nlsock *nl, zpl_ulong groups, vrf_id_t vrf_id)
 	zpl_uint32 namelen;
 	int save_errno;
 
-	sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE);
+	sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE);
 	if (ipstack_invalid(sock))
 	{
 		zlog_err(MODULE_PAL, "Can't open %s ipstack_socket: %s", nl->name,

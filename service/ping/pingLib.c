@@ -199,7 +199,7 @@ static int ping_thread(PING_STAT * pPS)
 	pPS->dataLen = pPS->pingTxLen - 8; /* compute size of data */
 
 	/* open raw ipstack_socket for ICMP communication */
-	pPS->pingFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
+	pPS->pingFd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
 	if (ipstack_invalid(pPS->pingFd))
 		pingError(pPS);
 
@@ -265,7 +265,7 @@ check_fd_again: /* Wait for ICMP reply */
 		IPSTACK_FD_ZERO(&readFd);
 		IPSTACK_FD_SET(ipstack_fd(pPS->pingFd), &readFd);
 		IPSTACK_FD_SET(ipstack_fd(vty->fd), &readFd);
-		sel = ipstack_select(IPCOM_STACK, max(ipstack_fd(pPS->pingFd), ipstack_fd(vty->fd)) + 1, &readFd, NULL, NULL, &pingTmo);
+		sel = ipstack_select(IPSTACK_IPCOM, max(ipstack_fd(pPS->pingFd), ipstack_fd(vty->fd)) + 1, &readFd, NULL, NULL, &pingTmo);
 		if (sel == ERROR)
 		{
 			if (!(pPS->flags & PING_OPT_SILENT))

@@ -174,7 +174,7 @@ print <<EOF;
 
 #ifdef ROUTE_DEFINE_DESC_TABLE
 
-struct lib_desc_table
+struct rttype_desc_table
 {
   unsigned int type;
   const char *string;
@@ -182,7 +182,7 @@ struct lib_desc_table
 };
 
 #define DESC_ENTRY(T,S,C) [(T)] = { (T), (S), (C) }
-static const struct nsm_desc_table route_types[] = {
+static const struct rttype_desc_table route_types[] = {
 EOF
 
 for (my $c = 0; $c < @protos; $c++) {

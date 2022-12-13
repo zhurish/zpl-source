@@ -124,7 +124,7 @@ static zpl_socket_t hal_ipcsrv_un(const char *path)
     struct ipstack_sockaddr_un serv;
     unlink(path);
     /* Make UNIX domain ipstack_socket. */
-    unixsock = ipstack_socket(OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
+    unixsock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0);
     if (ipstack_invalid(unixsock))
     {
         zlog_err(MODULE_HAL, "Can't create zserv unix ipstack_socket: %s",
@@ -169,7 +169,7 @@ static zpl_socket_t hal_ipcsrv_socket(int port)
     zpl_socket_t sock;
     struct ipstack_sockaddr_in addr;
 
-    sock = ipstack_socket(OS_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+    sock = ipstack_socket(IPSTACK_OS, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 
     if (ipstack_invalid(sock))
     {
@@ -844,7 +844,7 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
         return ERROR;
     }
 #ifdef HAL_IPCSRV_SYNC_ACK
-    if (ipstack_socketpair (OS_STACK, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, _ipcsrv.waitfd)<0)
+    if (ipstack_socketpair (IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, _ipcsrv.waitfd)<0)
     {
         os_mutex_exit(_ipcsrv.mutex);
         _ipcsrv.mutex = NULL;

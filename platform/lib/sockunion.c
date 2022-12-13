@@ -222,7 +222,7 @@ sockunion_socket (const union sockunion *su)
 {
   zpl_socket_t sock;
 
-  sock = ipstack_socket (IPCOM_STACK, su->sa.sa_family, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket (IPSTACK_IPCOM, su->sa.sa_family, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     {
       zlog (MODULE_DEFAULT,  ZLOG_LEVEL_WARNING, "Can't make socket : %s", ipstack_strerror (ipstack_errno));
@@ -364,7 +364,7 @@ sockunion_stream_socket (union sockunion *su)
   if (su->sa.sa_family == 0)
     su->sa.sa_family = AF_INET_UNION;
 
-  sock = ipstack_socket (IPCOM_STACK, su->sa.sa_family, IPSTACK_SOCK_STREAM, 0);
+  sock = ipstack_socket (IPSTACK_IPCOM, su->sa.sa_family, IPSTACK_SOCK_STREAM, 0);
 
   if (ipstack_invalid(sock))
     zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't make socket sockunion_stream_socket");

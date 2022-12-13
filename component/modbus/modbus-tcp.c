@@ -283,7 +283,7 @@ static int _connect(zpl_socket_t sockfd, const struct ipstack_sockaddr *addr, so
         /* Wait to be available in writing */
         IPSTACK_FD_ZERO(&wset);
         IPSTACK_FD_SET(ipstack_fd(sockfd), &wset);
-        rc = ipstack_select(IPCOM_STACK, ipstack_fd(sockfd) + 1, NULL, &wset, NULL, &tv);
+        rc = ipstack_select(IPSTACK_IPCOM, ipstack_fd(sockfd) + 1, NULL, &wset, NULL, &tv);
         if (rc <= 0) {
             /* Timeout or fail */
             return -1;
@@ -324,7 +324,7 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     flags |= SOCK_NONBLOCK;
 #endif
 
-    ctx->s = ipstack_socket(IPCOM_STACK, IPSTACK_PF_INET, flags, 0);
+    ctx->s = ipstack_socket(IPSTACK_IPCOM, IPSTACK_PF_INET, flags, 0);
     if (ipstack_invalid(ctx->s)) {
         return -1;
     }
@@ -401,7 +401,7 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
         flags |= SOCK_NONBLOCK;
 #endif
 
-        s = ipstack_socket(IPCOM_STACK, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
+        s = ipstack_socket(IPSTACK_IPCOM, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
         if (ipstack_invalid(s))
             continue;
 
@@ -506,7 +506,7 @@ zpl_socket_t modbus_tcp_listen(modbus_t *ctx, int nb_connection)
     flags |= SOCK_CLOEXEC;
 #endif
 
-    new_s = ipstack_socket(IPCOM_STACK, IPSTACK_PF_INET, flags, IPSTACK_IPPROTO_TCP);
+    new_s = ipstack_socket(IPSTACK_IPCOM, IPSTACK_PF_INET, flags, IPSTACK_IPPROTO_TCP);
     if (ipstack_invalid(new_s)) {
         return new_s;
     }
@@ -609,7 +609,7 @@ zpl_socket_t modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
         flags |= SOCK_CLOEXEC;
 #endif
 
-        s = ipstack_socket(IPCOM_STACK, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
+        s = ipstack_socket(IPSTACK_IPCOM, ai_ptr->ai_family, flags, ai_ptr->ai_protocol);
         if (ipstack_invalid(s)) {
             if (ctx->debug) {
                 perror("socket");
@@ -720,7 +720,7 @@ zpl_socket_t modbus_tcp_pi_accept(modbus_t *ctx, zpl_socket_t *s)
 static int _modbus_tcp_select(modbus_t *ctx, ipstack_fd_set *rset, struct timeval *tv, int length_to_read)
 {
     int s_rc;
-    while ((s_rc = ipstack_select(IPCOM_STACK, ipstack_fd(ctx->s)+1, rset, NULL, NULL, tv)) == -1) {
+    while ((s_rc = ipstack_select(IPSTACK_IPCOM, ipstack_fd(ctx->s)+1, rset, NULL, NULL, tv)) == -1) {
         if (ipstack_errno == EINTR) {
             if (ctx->debug) {
                 fprintf(stderr, "A non blocked signal was caught\n");

@@ -289,6 +289,11 @@ extern zpl_skbuffer_t * zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t
 
 extern int zpl_skbuffer_destroy(zpl_skbuffer_t *skbuf);
 
+extern int zpl_skbuffer_next_add(zpl_skbuffer_t *head, zpl_skbuffer_t *next);
+extern int zpl_skbuffer_prev_add(zpl_skbuffer_t *head, zpl_skbuffer_t *next);
+extern zpl_skbuffer_t * zpl_skbuffer_next_get(zpl_skbuffer_t *head);
+extern zpl_skbuffer_t * zpl_skbuffer_prev_get(zpl_skbuffer_t *head);
+
 /* net pkt */
 extern int zpl_skbuffer_reason_set(zpl_skbuffer_t *skbuf, zpl_uint32 reason);
 extern int zpl_skbuffer_timestamp_set(zpl_skbuffer_t *skbuf, zpl_uint32 timestamp);

@@ -151,7 +151,7 @@ static int sntp_socket_init(struct sntp_client *client)
     int result;
     struct ipstack_sockaddr_in srcAddr;
 
-    client->sock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+    client->sock = ipstack_socket (IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
     if (ipstack_invalid(client->sock))
         return (ERROR);
 

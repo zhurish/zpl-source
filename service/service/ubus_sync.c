@@ -197,9 +197,9 @@ int ubus_sync_init(void *m)
 	os_uci_init();
 
 	memset(&ubus_sync_ctx, 0, sizeof(ubus_sync_ctx));
-	ubus_sync_ctx.sock = ipstack_create(OS_STACK);
+	ubus_sync_ctx.sock = ipstack_create(IPSTACK_OS);
 	//ipstack_fd(ubus_sync_ctx.sock) = 0;
-	//ipstack_type(ubus_sync_ctx.sock) = OS_STACK;
+	//ipstack_type(ubus_sync_ctx.sock) = IPSTACK_OS;
 	ubus_sync_ctx.master = NULL;
 	ubus_sync_ctx.len = 0;
 	memset(ubus_sync_ctx.buf, 0, sizeof(ubus_sync_ctx.buf));
@@ -211,10 +211,10 @@ int ubus_sync_init(void *m)
 	if(iaccept <= 0)
 		return ERROR;
 	os_set_nonblocking(iaccept);
-	ubus_sync_ctx.accept = ipstack_create(OS_STACK);
+	ubus_sync_ctx.accept = ipstack_create(IPSTACK_OS);
 
 	ipstack_fd(ubus_sync_ctx.accept) = iaccept;
-	ipstack_type(ubus_sync_ctx.accept) = OS_STACK;
+	ipstack_type(ubus_sync_ctx.accept) = IPSTACK_OS;
 	ubus_sync_ctx.master = m;
 	ubus_sync_ctx.t_accept = eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, &ubus_sync_ctx, ubus_sync_ctx.accept);
 	//ubus_sync_debug(zpl_true);

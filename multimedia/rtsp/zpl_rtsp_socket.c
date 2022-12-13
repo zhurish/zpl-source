@@ -37,7 +37,7 @@ static int _rtsp_set_ipv4_options(zpl_socket_t s)
     /* Set the TCP no delay flag */
     /* SOL_TCP = IPPROTO_TCP */
     option = 1;
-    rc = ipstack_setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
+    rc = ipstack_setsockopt(s, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY,
                     (const void *)&option, sizeof(int));
     if (rc == -1) {
         fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
@@ -53,11 +53,11 @@ static int _rtsp_set_ipv4_options(zpl_socket_t s)
     {
         /* Setting FIONBIO expects an unsigned long according to MSDN */
         u_long loption = 1;
-        ioctlsocket(s, FIONBIO, &loption);
+        ioctlsocket(s, IPSTACK_FIONBIO, &loption);
     }
 #else
     option = 1;
-    ioctl(s, FIONBIO, &option);
+    ioctl(s, IPSTACK_FIONBIO, &option);
 #endif
 #endif
 
@@ -67,8 +67,8 @@ static int _rtsp_set_ipv4_options(zpl_socket_t s)
      * necessary to workaround that problem.
      **/
     /* Set the IP low delay option */
-    option = IPTOS_LOWDELAY;
-    rc = ipstack_setsockopt(s, IPPROTO_IP, IP_TOS,
+    option = IPSTACK_IPTOS_LOWDELAY;
+    rc = ipstack_setsockopt(s, IPSTACK_IPPROTO_IP, IPSTACK_IP_TOS,
                     (const void *)&option, sizeof(int));
     if (rc == -1) {
         fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
@@ -85,14 +85,14 @@ static int _rtsp_set_ipv4_keepalive(zpl_socket_t sock)
 #if defined(__WIN32__) || defined(_WIN32)
   // How do we do this in Windows?  For now, just make this a no-op in Windows:
     int const keepalive_enabled = 1;
-    if (ipstack_setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepalive_enabled, sizeof keepalive_enabled) < 0) {
+    if (ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (void*)&keepalive_enabled, sizeof keepalive_enabled) < 0) {
         fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
         fflush(stdout);
         return -1;
     }
 #else
   int const keepalive_enabled = 1;
-  if (ipstack_setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepalive_enabled, sizeof keepalive_enabled) < 0) {
+  if (ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_KEEPALIVE, (void*)&keepalive_enabled, sizeof keepalive_enabled) < 0) {
       fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
       fflush(stdout);
       return -1;
@@ -100,7 +100,7 @@ static int _rtsp_set_ipv4_keepalive(zpl_socket_t sock)
 
 #ifdef TCP_KEEPIDLE
   int const keepalive_time = 180;
-  if (ipstack_setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&keepalive_time, sizeof keepalive_time) < 0) {
+  if (ipstack_setsockopt(sock, IPSTACK_IPPROTO_TCP, TCP_KEEPIDLE, (void*)&keepalive_time, sizeof keepalive_time) < 0) {
       fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
       fflush(stdout);
       return -1;
@@ -109,7 +109,7 @@ static int _rtsp_set_ipv4_keepalive(zpl_socket_t sock)
 
 #ifdef TCP_KEEPCNT
   int const keepalive_count = 5;
-  if (ipstack_setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, (void*)&keepalive_count, sizeof keepalive_count) < 0) {
+  if (ipstack_setsockopt(sock, IPSTACK_IPPROTO_TCP, TCP_KEEPCNT, (void*)&keepalive_count, sizeof keepalive_count) < 0) {
       fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
       fflush(stdout);
       return -1;
@@ -118,7 +118,7 @@ static int _rtsp_set_ipv4_keepalive(zpl_socket_t sock)
 
 #ifdef TCP_KEEPINTVL
   int const keepalive_interval = 20;
-  if (ipstack_setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, (void*)&keepalive_interval, sizeof keepalive_interval) < 0) {
+  if (ipstack_setsockopt(sock, IPSTACK_IPPROTO_TCP, TCP_KEEPINTVL, (void*)&keepalive_interval, sizeof keepalive_interval) < 0) {
       fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
       fflush(stdout);
       return -1;
@@ -134,7 +134,7 @@ static void _rtsp_set_ipv4_ignore_sig_pipe(zpl_socket_t socketNum) {
   #ifdef USE_SIGNALS
   #ifdef SO_NOSIGPIPE
   int set_option = 1;
-  ipstack_setsockopt(socketNum, SOL_SOCKET, SO_NOSIGPIPE, &set_option, sizeof set_option);
+  ipstack_setsockopt(socketNum, IPSTACK_SOL_SOCKET, SO_NOSIGPIPE, &set_option, sizeof set_option);
   #else
   signal(SIGPIPE, SIG_IGN);
   #endif
@@ -144,7 +144,7 @@ static void _rtsp_set_ipv4_ignore_sig_pipe(zpl_socket_t socketNum) {
 static unsigned _rtsp_get_buffer_size(int bufOptName,zpl_socket_t sock) {
   unsigned curSize;
   socklen_t sizeSize = sizeof curSize;
-  if (ipstack_getsockopt(sock, SOL_SOCKET, bufOptName,
+  if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, bufOptName,
          (char*)&curSize, &sizeSize) < 0) {
       fprintf(stdout,"%s [%d]  getsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
       fflush(stdout);
@@ -157,17 +157,17 @@ static unsigned _rtsp_get_buffer_size(int bufOptName,zpl_socket_t sock) {
 static unsigned _rtsp_set_buffer_size(int bufOptName,
                 zpl_socket_t socket, unsigned requestedSize) {
   socklen_t sizeSize = sizeof requestedSize;
-  ipstack_setsockopt(socket, SOL_SOCKET, bufOptName, (char*)&requestedSize, sizeSize);
+  ipstack_setsockopt(socket, IPSTACK_SOL_SOCKET, bufOptName, (char*)&requestedSize, sizeSize);
 
   // Get and return the actual, resulting buffer size:
   return _rtsp_get_buffer_size(bufOptName, socket);
 }
 
 static unsigned _rtsp_set_send_buffer_size(zpl_socket_t sock, unsigned requestedSize) {
-    return _rtsp_set_buffer_size(SO_SNDBUF, sock, requestedSize);
+    return _rtsp_set_buffer_size(IPSTACK_SO_SNDBUF, sock, requestedSize);
 }
 static unsigned _rtsp_set_recv_buffer_size(zpl_socket_t sock, unsigned requestedSize) {
-    return _rtsp_set_buffer_size(SO_RCVBUF, sock, requestedSize);
+    return _rtsp_set_buffer_size(IPSTACK_SO_RCVBUF, sock, requestedSize);
 }
 
 
@@ -175,7 +175,7 @@ static unsigned _rtsp_set_recv_buffer_size(zpl_socket_t sock, unsigned requested
 static int rtsp_socket_close(zpl_socket_t s)
 {
     if (s != -1) {
-        ipstack_shutdown(s, SHUT_RDWR);
+        ipstack_shutdown(s, IPSTACK_SHUT_RDWR);
 #ifdef _WIN32
         ipstack_closesocket(s);
 #else
@@ -199,14 +199,14 @@ static int rtsp_socket_bind(zpl_socket_t s, char *address, uint16_t port)
 {
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     /* If the modbus port is < to 1024, we need the setuid root. */
     addr.sin_port = htons(port);
     if (address == NULL) {
         fprintf(stdout, " socket bind 0.0.0.0:%d\r\n", port);
         fflush(stdout);
         /* Listen any addresses */
-        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        addr.sin_addr.s_addr = htonl(IPSTACK_INADDR_ANY);
     } else {
         fprintf(stdout, " socket bind %s:%d\r\n", address, port);
         fflush(stdout);
@@ -264,7 +264,7 @@ static int rtsp_socket_sendto(zpl_socket_t s,  uint8_t *req, uint32_t req_length
        Requests not to send SIGPIPE on errors on stream oriented
        sockets when the other end breaks the connection.  The EPIPE
        error is still returned. */
-    return ipstack_send(s, (const char *)req, req_length, MSG_NOSIGNAL);
+    return ipstack_send(s, (const char *)req, req_length, IPSTACK_MSG_NOSIGNAL);
 }
 
 static int rtsp_socket_recvfrom(zpl_socket_t s, uint8_t *rsp, uint32_t rsp_length) {
@@ -278,7 +278,7 @@ static int rtsp_socket_connect(zpl_socket_t s,  char *address, uint16_t port)
     int rc = 0;
     /* Specialized version of sockaddr for Internet socket address (same size) */
     struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
+    addr.sin_family = IPSTACK_AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = inet_addr(address);
     rc = ipstack_connect(s, (struct sockaddr *)&addr, sizeof(addr));
@@ -333,7 +333,7 @@ static zpl_socket_t rtsp_socket_create(zpl_ipstack s, int ai_family, int pro, in
         return sock;
     } else {
         int enable = 1;
-        int rc = ipstack_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+        int rc = ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                         (void *)&enable, sizeof (enable));
         if (rc != 0) {
             fprintf(stdout,"%s [%d]  setsockopt(%s)\r\n", __func__, __LINE__, strerror(errno));
@@ -345,7 +345,7 @@ static zpl_socket_t rtsp_socket_create(zpl_ipstack s, int ai_family, int pro, in
 #endif
             return sock;
         }
-        if(pro == SOCK_STREAM)
+        if(pro == IPSTACK_SOCK_STREAM)
         {
             _rtsp_set_ipv4_options(sock);
             _rtsp_set_ipv4_keepalive(sock);

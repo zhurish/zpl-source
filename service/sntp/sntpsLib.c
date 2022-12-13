@@ -770,7 +770,7 @@ static int sntps_socket_init(struct sntp_server *server)
 		srcAddr.sin_family = IPSTACK_AF_INET;
 		srcAddr.sin_port = server->sntpsPort;
 		/* Create UDP ipstack_socket and ipstack_bind to the SNTP port. */
-		server->sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
+		server->sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_DGRAM, 0);
 		if (ipstack_invalid(server->sock))
 			return ERROR;
 

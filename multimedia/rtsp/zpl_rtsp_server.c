@@ -79,7 +79,7 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
     rtsp_srv_t *ctx = NULL;
     if (rtsp_socket._socket)
     {
-        listen_sock = (rtsp_socket._socket)(OS_STACK, AF_INET, SOCK_STREAM, 0);
+        listen_sock = (rtsp_socket._socket)(IPSTACK_OS, AF_INET, SOCK_STREAM, 0);
         if (listen_sock)
         {
             if (rtsp_socket._bind)

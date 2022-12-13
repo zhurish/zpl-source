@@ -405,8 +405,8 @@ DEFUN (config_write_file,
 	}
 	/* Make vty for configuration file. */
 	file_vty = vty_new();
-	file_vty->fd = ipstack_init(OS_STACK, fd);
-	file_vty->wfd = ipstack_init(OS_STACK, fd);
+	file_vty->fd = ipstack_init(IPSTACK_OS, fd);
+	file_vty->wfd = ipstack_init(IPSTACK_OS, fd);
 	file_vty->type = VTY_FILE;
 	
 	vty_out(file_vty, "!\n! Zebra configuration saved from vty\n");

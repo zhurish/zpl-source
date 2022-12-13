@@ -182,9 +182,9 @@ typedef bool zpl_bool;
 
 
 typedef enum {
-  UNKNOEW_STACK = 0,
-  OS_STACK	= 1,
-  IPCOM_STACK	= 2,
+  IPSTACK_UNKNOEW = 0,
+  IPSTACK_OS	= 1,
+  IPSTACK_IPCOM	= 2,
 } zpl_ipstack;
 
 

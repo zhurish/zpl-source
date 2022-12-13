@@ -1109,7 +1109,7 @@ int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdse
 	os_gettime (OS_CLK_REALTIME, &timer_tmp1);
 	while (1)
 	{
-		num = ipstack_select(IPCOM_STACK, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
+		num = ipstack_select(IPSTACK_IPCOM, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
 		if (num < 0)
 		{
 			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)

@@ -131,7 +131,7 @@ static int syslogc_socket_init(struct syslog_client *client) {
 		family = IPSTACK_SOCK_STREAM;
 	else
 		family = IPSTACK_SOCK_DGRAM;
-	sFd = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, family, 0);
+	sFd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, family, 0);
 	if (ipstack_invalid(sFd)) {
     	fprintf (stdout, "\r\n%s: syslogcLibInit, syslog ipstack_socket creation fail:%s\r\n",
                    __func__,os_strerror (ipstack_errno) );

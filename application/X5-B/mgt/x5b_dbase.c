@@ -1661,7 +1661,7 @@ static int voip_ubus_dbase_select_one(zpl_bool selsel)
 		file_vty->fd = fd;
 		file_vty->wfd = fd;
 		file_vty->type = VTY_FILE;
-		file_vty->fd_type = OS_STACK;
+		file_vty->fd_type = IPSTACK_OS;
 		file_vty->res0 = zpl_true;
 		if(selsel)
 			voip_dbase_show_room_phone(file_vty,  building,  unit,  room_number,

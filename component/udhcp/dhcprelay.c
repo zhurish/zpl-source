@@ -571,7 +571,7 @@ int dhcprelay_main(int argc, char **argv)
 			IPSTACK_FD_SET(ipstack_fd(fds[i]), &rfds);
 		tv.tv_sec = DHCP_RELAY_SELECT_TIMEOUT;
 		tv.tv_usec = 0;
-		if (ipstack_socketselect(IPCOM_STACK, max_socket + 1, &rfds, NULL, NULL, &tv) > 0) {
+		if (ipstack_socketselect(IPSTACK_IPCOM, max_socket + 1, &rfds, NULL, NULL, &tv) > 0) {
 			int packlen;
 			struct dhcp_packet dhcp_msg;
 

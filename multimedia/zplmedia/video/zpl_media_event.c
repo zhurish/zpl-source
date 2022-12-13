@@ -12,7 +12,7 @@
 
 static zpl_media_event_queue_t *_media_event_queue_default = NULL;
 
-static int zpl_media_event_task(void *p);
+static int media_event_task(void *p);
 
 
 static int zpl_media_eventcb_free(zpl_media_event_t *data)
@@ -75,7 +75,7 @@ int zpl_media_event_start(zpl_media_event_queue_t *queue)
 {
     if(queue && queue->taskid == 0)
         queue->taskid = os_task_create(queue->name, OS_TASK_DEFAULT_PRIORITY,
-	               0, zpl_media_event_task, queue, OS_TASK_DEFAULT_STACK);
+	               0, media_event_task, queue, OS_TASK_DEFAULT_STACK);
     return OK;               
 }
 
@@ -198,7 +198,7 @@ int zpl_media_event_scheduler(zpl_media_event_queue_t *queue)
     return zpl_media_event_distribute(queue);
 }
 
-static int zpl_media_event_task(void *p)
+static int media_event_task(void *p)
 {
     zpl_media_event_queue_t *queue = p;
 	host_waitting_loadconfig();

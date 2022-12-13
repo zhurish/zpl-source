@@ -77,7 +77,7 @@ nsm_irdp_sock_init (void)
   int save_errno;
   zpl_socket_t sock;
 
-  sock = ipstack_socket (IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
+  sock = ipstack_socket (IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_RAW, IPSTACK_IPPROTO_ICMP);
   save_errno = errno;
 
 

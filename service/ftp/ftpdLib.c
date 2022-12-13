@@ -663,7 +663,7 @@ int ftpdEnable(char *address, int port)
 	}
 	/* Create the FTP server control ipstack_socket. */
 
-	ftpd_config.ftpdServerSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+	ftpd_config.ftpdServerSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 	if (ipstack_invalid(ftpd_config.ftpdServerSock))
 		return (ERROR);
 
@@ -1554,7 +1554,7 @@ static int ftpdWorkTask
 			/* we need to open a ipstack_socket and start listening on it
 			 * to accommodate his request.
 			 */
-			pSlot->dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+			pSlot->dataSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 			if (ipstack_invalid(pSlot->dataSock))
 			{
 				if (ftpdCmdSend(pSlot, sock, FTP_BADSENDCONN, messages[MSG_PASSIVE_ERROR]) == ERROR)
@@ -1887,7 +1887,7 @@ static int ftpdDataConnGet
 		addr.sin_port = htons(FTP_DATA_PORT);
 
 		/* open a new data ipstack_socket */
-		pSlot->dataSock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
+		pSlot->dataSock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
 		if (ipstack_invalid(pSlot->dataSock))
 		{
 			return (ERROR);

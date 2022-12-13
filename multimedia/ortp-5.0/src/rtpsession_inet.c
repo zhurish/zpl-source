@@ -183,7 +183,7 @@ static ortp_socket_t create_and_bind(const char *addr, int port, int sock_family
     struct ipstack_sockaddr sa;
     socklen_t salen;
 
-    sock = ipstack_socket(IPCOM_STACK, sock_family, IPSTACK_SOCK_DGRAM, 0);
+    sock = ipstack_socket(IPSTACK_IPCOM, sock_family, IPSTACK_SOCK_DGRAM, 0);
     if (ipstack_invalid(sock)){
         ortp_error("Cannot create a socket with family=[%i] and socktype=[%i]: %s", sock_family, IPSTACK_SOCK_DGRAM, getSocketError());
         return sock;

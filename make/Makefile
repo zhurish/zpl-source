@@ -29,7 +29,7 @@ endif
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean packet debug prebuilts make_prepare
+.PHONY:	obj all demo lib clean rebuild install help usage objclean packet debug prebuilts make_prepare kernel_module
 #
 #
 help:usage
@@ -152,6 +152,14 @@ debug:
 	@$(ECHO) " ZPL_BUILD_OPENWRT: $(ZPL_BUILD_OPENWRT)"
 	@$(ECHO) " ARCH_DEBUG: $(ARCH_DEBUG)"	
 	@$(ECHO) " ZPL_COMPILE_OPTIONS: $(ZPL_COMPILE_OPTIONS)"
+
+
+kernel_module:
+	@for i in $(ZPLPRODS_KERNEL); do	\
+		$(MAKE) -C $$i all || exit "$$?"; 	\
+		$(MAKE) -C $$i install || exit "$$?"; 	\
+	done
+
 
 
 rebuild: clean all

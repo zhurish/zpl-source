@@ -808,7 +808,7 @@ static int netlink_socket(struct nlsock *nl, zpl_ulong groups,
 	int namelen;
 	int save_errno;
 	printf("%s open %s ipstack_socket\r\n", __func__, nl->name);
-	sock = ipstack_socket(IPCOM_STACK, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE);
+	sock = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_NETLINK, IPSTACK_SOCK_RAW, IPSTACK_NETLINK_ROUTE);
 	if (sock < 0)
 	{
 		zlog(MODULE_NSM, ZLOG_LEVEL_ERR, "Can't open %s ipstack_socket: %s", nl->name,

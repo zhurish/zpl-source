@@ -190,7 +190,7 @@ static struct vty * sshd_shell_new(int vty_sock)
 	vty = vty_new_init(tmp);
 	ipstack_fd(vty->fd) = vty_sock;
 	ipstack_fd(vty->wfd) = vty_sock;
-	ipstack_type(vty->fd) = ipstack_type(vty->wfd) = IPCOM_STACK;
+	ipstack_type(vty->fd) = ipstack_type(vty->wfd) = IPSTACK_IPCOM;
 
 	vty->type = VTY_TERM;
 	vty->node = ENABLE_NODE;

@@ -74,7 +74,7 @@ static zpl_socket_t pal_arp_sock_init(void)
 	zpl_socket_t skfd;
 	int onoff = 1;
 	/*创建原始套接字*/
-	skfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_RAW, htons(IPSTACK_ETH_P_ARP));
+	skfd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_PF_PACKET, IPSTACK_SOCK_RAW, htons(IPSTACK_ETH_P_ARP));
 	if (ipstack_invalid(skfd))
 	{
 		zlog_err(MODULE_PAL, "Can't open %s ipstack_socket: %s", "arp ipstack_socket",
@@ -228,7 +228,7 @@ static int pal_arp_request(struct interface *ifp, struct prefix *address)
 	memset(buf, 0x00, sizeof(buf));
 
 	/* 创建原始套接字 */
-	skfd = ipstack_socket(IPCOM_STACK, IPSTACK_PF_PACKET, IPSTACK_SOCK_RAW, htons(IPSTACK_ETH_P_ARP));
+	skfd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_PF_PACKET, IPSTACK_SOCK_RAW, htons(IPSTACK_ETH_P_ARP));
 	if (ipstack_invalid(skfd))
 	{
 		zlog_err(MODULE_PAL, "Can't open %s ipstack_socket: %s", "arp ipstack_socket",

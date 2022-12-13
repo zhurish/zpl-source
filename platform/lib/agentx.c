@@ -81,7 +81,7 @@ agentx_events_update(void)
   struct thread *thr;
   int fd, thr_fd;
   zpl_socket_t rfd;
-  rfd = ipstack_init(OS_STACK, -1);
+  rfd = ipstack_init(IPSTACK_OS, -1);
   THREAD_OFF (timeout_thr);
 
   FD_ZERO (&fds);
