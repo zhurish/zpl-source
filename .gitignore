@@ -37,6 +37,7 @@ externsions/readline
 externsions/libnl/*
 halpal/pal/linux/iproute2-5.9.0/*
 halpal/pal/linux/libiproute/*
+halpal/pal/linux/tests/*
 product/sdk-robo-5.9.2
 product/nsp/pal/linux/iproute2-5.9.0
 product/bsp/pal/linux/libiproute
@@ -53,7 +54,7 @@ bcm/
 hisidir/
 ikayaki/
 rtsp源码/
-zplmedia/bsp/*
-multimedia/*
+multimedia/ortp-5.0/src/tests/*
+multimedia/zplmedia/bsp/
 component/ssh/test/*
 component/onvif/onvifgen/xml/*

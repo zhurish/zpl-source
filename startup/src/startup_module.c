@@ -94,7 +94,7 @@ int zpl_stack_start(const char* progname, int localport)
 #endif
 	
 #ifdef ZPL_ZPLMEDIA_MODULE
-	zpl_media_cmd_init();
+	//zpl_media_cmd_init();
 #endif
 	ipcom_stack_init(localport);
 	return OK;

@@ -240,13 +240,13 @@ typedef struct
     char    *name;
 	void	*sem;
 	void	*mutex;
-
     void    *cond;
     
     zpl_uint32	max_num;
 	LIST	    list;			//add queue
 	LIST	    rlist;			//ready queue
 	LIST	    ulist;			//unuse queue
+    zpl_void    *privatedata;
 }zpl_skbqueue_t;
 
 
@@ -259,6 +259,9 @@ extern zpl_uint32 zpl_skb_timerstamp(void);
 /* zpl_skbqueue_t */
 extern zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem);
 extern int zpl_skbqueue_destroy(zpl_skbqueue_t *queue);
+
+extern int zpl_skbqueue_set_privatedata(zpl_skbqueue_t *queue, zpl_void *privatedata);
+extern zpl_void *zpl_skbqueue_get_privatedata(zpl_skbqueue_t *queue);
 
 extern int zpl_skbqueue_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern zpl_skbuffer_t * zpl_skbqueue_dequeue(zpl_skbqueue_t *queue);

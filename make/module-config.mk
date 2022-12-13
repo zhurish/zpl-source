@@ -3,7 +3,7 @@ include $(ZPL_MAKE_DIR)/module-dir.mk
 
 include $(ZPL_MAKE_DIR)/multimedia-config.mk
 include $(ZPL_MAKE_DIR)/pjsip-config.mk
-
+include $(ZPL_MAKE_DIR)/externsions-config.mk
 #
 # platform
 #
@@ -348,43 +348,6 @@ endif #($(strip $(ZPL_SERVICE_MODULE)),true)
 #
 # Externsion openssl
 #
-ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
-ifneq ($(ZPL_BUILD_ARCH),X86_64)
-ZPLEX_DIR += $(EXTERNSION_ROOT)/openssl/openssl-1.1.1/
-export PLATFORM=linux-armv4
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
-ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
-ZPLEX_LDLIBS += -lutil -lssl -lcrypto
-ZPLEX_DIR += $(EXTERNSION_ROOT)/zlib/zlib-1.2.11/
-ZPL_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
-ZPLEX_LDFLAGS += -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
-ZPLEX_LDLIBS += -lz
-else 
-ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(ZPL_BUILD_ARCH),X86_64)
-ZPL_DEFINE += -DZPL_OPENSSL_MODULE
-endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
-
-
-ifeq ($(strip $(ZPL_READLINE_MODULE)),true)
-ZPLEX_DEFINE	+= -DZPL_READLINE_MODULE
-ifneq ($(strip $(ZPL_BUILD_ARCH)),$(filter $(ZPL_BUILD_ARCH),X86_64 X86))
-ZPLEX_DIR += $(EXTERNSION_ROOT)/readline
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/readline
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/readline/_install/include
-ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/readline/_install/lib
-endif
-ZPLEX_LDLIBS += -lreadline -lhistory -lncurses
-endif
-
-ifeq ($(strip $(ZPL_LIBNL_MODULE)),true)
-ZPLEX_DEFINE	+= -DZPL_LIBNL_MODULE
-ZPLEX_DIR += $(EXTERNSION_ROOT)/libnl
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl
-ZPLEX_INCLUDE += -I$(EXTERNSION_ROOT)/libnl/_install/include/libnl3
-ZPLEX_LDFLAGS += -L$(EXTERNSION_ROOT)/libnl/_install/lib
-#ZPLEX_LDLIBS += -lnl-3 -lnl-genl-3 -lnl-route-3 -lnl-idiag-3 -lnl-nf -lnl-xfrm
-endif
 
 #
 # PRODUCT
@@ -395,7 +358,7 @@ ZPLPRODS += $(PRODUCT_ROOT)/bsp/hal
 ZPL_INCLUDE += -I$(PRODUCT_ROOT)/bsp/hal
 ZPL_DEFINE += -DZPL_BSP_MODULE
 
-ZPLPRODS += $(PRODUCT_ROOT)/bsp/kernel
+ZPLPRODS_KERNEL += $(PRODUCT_ROOT)/bsp/kernel
 
 ifeq ($(strip $(ZPL_SDK_MODULE)),true)
 ZPL_DEFINE += -DZPL_SDK_MODULE
@@ -415,7 +378,7 @@ endif #($(strip $(ZPL_SDK_USER)),true)
 ifeq ($(strip $(ZPL_SDK_KERNEL)),true)
 ZPL_DEFINE += -DZPL_SDK_KERNEL
 ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
-ZPLPRODS += $(PRODUCT_ROOT)/bsp/kernel
+ZPLPRODS_KERNEL += $(PRODUCT_ROOT)/bsp/kernel
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)
 endif #($(strip $(ZPL_SDK_KERNEL)),true)
@@ -491,7 +454,7 @@ endif
 
 
 ZPLPRODS += $(ZPLPRODS_LAST)
-
+ZPLPRODS += $(ZPLPRODS_KERNEL)
 #
 # 下面两个模块保持在最后
 # 

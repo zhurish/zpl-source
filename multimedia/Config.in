@@ -8,59 +8,19 @@ config ZPL_MULTIMEDIA_MODULE
 	bool "Multimedia Module"
 	default y
 
-config ZPL_LIVE555_MODULE
-	bool "Live555 of Multimedia Module"
+config ZPL_LIBRTSP_MODULE
+	bool "Librtsp Module"
 	default n
 	depends on ZPL_MULTIMEDIA_MODULE
 	help
-	Build Live555 Module.
+	Build Librtsp Module.
 
-config ZPL_SOFTCODEC_MODULE
-	bool "Soft codec of Multimedia Module"
+config ZPL_LIBORTP_MODULE
+	bool "Libortp Module"
 	default n
 	depends on ZPL_MULTIMEDIA_MODULE
 	help
-	Build Soft codec Module.
-
-choice
-	prompt "H264 Codec Library"
-	depends on ZPL_SOFTCODEC_MODULE
-	default ZPL_LIBX264_MODULE
-
-	config ZPL_LIBX264_MODULE
-		bool "Libx264 Library"
-	config ZPL_OPENH264_MODULE
-		bool "openh264 Library"
-
-endchoice
-#
-#config ZPL_LIBX264_MODULE
-#	bool "Libx264 of Multimedia Module"
-#	default n
-#	depends on ZPL_MULTIMEDIA_MODULE && !ZPL_OPENH264_MODULE
-#	help
-#	Build Libx264 Module.
-
-#config ZPL_OPENH264_MODULE
-#	bool "Libopenh264 of Multimedia Module"
-#	default n
-#	depends on ZPL_MULTIMEDIA_MODULE && !ZPL_LIBX264_MODULE
-#	help
-#	Build Libopenh264 Module.
-#
-config ZPL_LIBVPX_MODULE
-	bool "Libvpx of Multimedia Module"
-	default n
-	depends on ZPL_MULTIMEDIA_MODULE
-	help
-	Build Libvpx Module.
-
-config ZPL_FFMPEG_MODULE
-	bool "Ffmpeg of Multimedia Module"
-	default n
-	depends on ZPL_MULTIMEDIA_MODULE
-	help
-	Build Ffmpeg Module.
+	Build Libortp Module.
 
 config ZPL_EXOSIP_MODULE
 	bool "eXosip of Multimedia Module"
@@ -76,10 +36,39 @@ config ZPL_LIBRTMP_MODULE
 	help
 	Build Librtmp Module.
 
+config ZPL_LIBJPEG_MODULE
+	bool "Libjpeg Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Libjpeg Module.
+	
+
+config ZPL_ZPLMEDIA_MODULE
+	bool "Mimedia Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Mimedia Module.
+
+config ZPL_HISIMPP_MODULE
+	bool "Hisi MPP Module"
+	default n
+	depends on ZPL_ZPLMEDIA_MODULE
+	help
+	Build Hisi MPP Module.
+
+config ZPL_HISIMPP_HWDEBUG
+	bool "Hisi MPP Module HWDebug"
+	default n
+	depends on ZPL_HISIMPP_MODULE
+	help
+	Build Hisi MPP Module HWDebug.
+
 config ZPL_PJPROJECT_MODULE
 	bool "SIP of Pjproject Module"
 	default n
-	depends on ZPL_EXTERNSIONS_MODULE
+	depends on ZPL_MULTIMEDIA_MODULE
 	help
 	Build Pjproject Module.
 
@@ -227,6 +216,60 @@ menuconfig ZPL_PJPROJECT_OPTIONS
 			bool "PortAudio"
 	endchoice
 
+config ZPL_LIVE555_MODULE
+	bool "Live555 of Multimedia Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Live555 Module.
+
+config ZPL_SOFTCODEC_MODULE
+	bool "Soft codec of Multimedia Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Soft codec Module.
+
+choice
+	prompt "H264 Codec Library"
+	depends on ZPL_SOFTCODEC_MODULE
+	default ZPL_LIBX264_MODULE
+
+	config ZPL_LIBX264_MODULE
+		bool "Libx264 Library"
+	config ZPL_OPENH264_MODULE
+		bool "openh264 Library"
+
+endchoice
+#
+#config ZPL_LIBX264_MODULE
+#	bool "Libx264 of Multimedia Module"
+#	default n
+#	depends on ZPL_MULTIMEDIA_MODULE && !ZPL_OPENH264_MODULE
+#	help
+#	Build Libx264 Module.
+
+#config ZPL_OPENH264_MODULE
+#	bool "Libopenh264 of Multimedia Module"
+#	default n
+#	depends on ZPL_MULTIMEDIA_MODULE && !ZPL_LIBX264_MODULE
+#	help
+#	Build Libopenh264 Module.
+#
+config ZPL_LIBVPX_MODULE
+	bool "Libvpx of Multimedia Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Libvpx Module.
+
+config ZPL_FFMPEG_MODULE
+	bool "Ffmpeg of Multimedia Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Ffmpeg Module.
+
 config ZPL_MEDIAAPP_MODULE
 	bool "Multimedia app Module"
 	default n
@@ -241,26 +284,5 @@ config ZPL_LIBMEDIA_MODULE
 	help
 	Build Multimedia Lib Module.
 
-config ZPL_LIBRTSP_MODULE
-	bool "Librtsp Module"
-	default n
-	depends on ZPL_MULTIMEDIA_MODULE
-	help
-	Build Librtsp Module.
 
-
-config ZPL_LIBORTP_MODULE
-	bool "Libortp Module"
-	default n
-	depends on ZPL_MULTIMEDIA_MODULE
-	help
-	Build Libortp Module.
-
-config ZPL_LIBJPEG_MODULE
-	bool "Libjpeg Module"
-	default n
-	depends on ZPL_MULTIMEDIA_MODULE
-	help
-	Build Libjpeg Module.
-	
 endmenu

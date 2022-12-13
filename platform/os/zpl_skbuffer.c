@@ -78,6 +78,29 @@ int zpl_skbqueue_destroy(zpl_skbqueue_t *queue)
 	return OK;
 }
 
+int zpl_skbqueue_set_privatedata(zpl_skbqueue_t *queue, zpl_void *privatedata)
+{
+	assert(queue);
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+	queue->privatedata = privatedata;
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return OK;
+}
+
+zpl_void *zpl_skbqueue_get_privatedata(zpl_skbqueue_t *queue)
+{
+	zpl_void *privatedata = NULL;
+	assert(queue);
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+	privatedata = queue->privatedata;
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return privatedata;
+}
+
 int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 {
 	assert(queue);

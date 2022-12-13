@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 		intval++;
 		if(intval == 100)
 		{
-		task_mutex_graph_show();
+		//task_mutex_graph_show();
 		intval = 0;
 		}
 	}
