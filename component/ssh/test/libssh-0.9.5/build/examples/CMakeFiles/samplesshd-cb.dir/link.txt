@@ -1,1 +1,0 @@
-/usr/bin/cc   -rdynamic CMakeFiles/samplesshd-cb.dir/samplesshd-cb.c.o  -o samplesshd-cb -Wl,-rpath,/home/zhurish/workspace/working/SWPlatform/source/component/ssh/test/libssh-0.9.5/build/lib ../lib/libssh.so.4.8.6 

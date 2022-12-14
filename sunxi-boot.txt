@@ -1,0 +1,188 @@
+编译uboot
+make uboot
+
+ make distclean CROSS_COMPILE=arm-linux-gnueabihf-
+ make Lamobo_R1 CROSS_COMPILE=arm-linux-gnueabihf-
+编译后在tools目录找到mkimage工具
+cp tools/mkimage /usr/local/sbin
+
+需要支持uboot的网络
+
+
+
+编译kernel
+make kernel
+1:
+SUNXI 内核:
+git clone https://github.com/linux-sunxi/linux-sunxi.git -b sunxi-next --depth=1
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- sun7i_defconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 uImage modules
+
+2:
+开源内核
+git clone https://github.com/BPI-SINOVOIP/BPI-Kernel4.0.git （BPI官方内核）
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git --depth=1
+
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- sunxi_defconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
+//编译uImage 和设备树
+LOADARR=0X42000000 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- make uImage dtbs
+
+git clone https://github.com/BPI-SINOVOIP/BPI-Kernel4.0.git （BPI官方内核）
+ARCH=arm CROSS_COMPILE=/opt/toolchain/arm-cortexa9/4.9.3/bin/arm-cortexa9-linux-gnueabihf- INSTALL_MOD_PATH=./output/modules LOADADDR=0X42000000 make uImage modules modules_install -j4
+
+3:
+编译busybos
+制作根文件系统
+
+sunxi官方启动
+
+git clone git://github.com/linux-sunxi/sunxi-boards.git  （Lamobo_R1.fex）
+git clone git://github.com/linux-sunxi/sunxi-tools.git   （fex2bin）
+
+生成 boot.scr
+创建文件：
+boot.cmd:
+setenv bootargs console=ttyS0,115200 noinitrd init=/init root=/dev/mmcblk0p2 rootfstype=ext4 rootwait panic=10 ${extra}
+
+setenv bootm_boot_mode sec
+setenv bootargs console=ttyS0,115200 rootfstype=ext4 root=/dev/mmcblk0p2 rootwait panic=10
+fatload mmc 0:1 0x43000000 script.bin || fatload mmc 0:1 0x43000000 boot/script.bin
+fatload mmc 0:1 0x42000000 uImage || fatload mmc 0:1 0x42000000 boot/uImage
+bootm 0x42000000
+
+
+生成boot.scr
+mkimage -C none -A arm -T script -d boot.cmd boot.scr
+
+
+sunxi-tools/fex2bin Lamobo_R1.fex script.bin 
+
+SD卡烧写见后面描述。
+
+
+
+开源内核tftp启动
+手动启动：
+tftpboot 0x42000000 1.1.1.1:uImage 
+tftpboot 0x43000000 1.1.1.1:sun7i-a20-bananapi.dtb 
+env set fdt_high ffffffff
+bootm 0x42000000 - 0x43000000
+
+自动启动：
+设置根文件系统
+setenv nfsroot ${serverip}:/home/zhurish/_install
+setenv nfsdir /home/zhurish/_install
+setenv nfsdir /home/zhurish/Downloads/tftpboot/busybox-1.26.2/_install
+setenv nfsroot ${serverip}:/home/zhurish/Downloads/tftpboot/busybox-1.26.2/_install
+setenv nfsroot ${serverip}:${nfsdir}
+设置启动参数
+setenv fdtfile sun7i-a20-bananapi-r1.dtb
+setenv ipaddr 1.1.1.2
+setenv serverip 1.1.1.1
+setenv netmask 255.255.255.0
+setenv gatewayip 1.1.1.1
+setenv hostname root
+
+setenv nfsopt "proto=tcp,nfsvers=3,nolock"
+
+设置启动命令(设备树启动)
+setenv bootcmd "nfs 0x43000000 ${nfsroot}/${fdtfile}; nfs 0x42000000 ${nfsroot}/uImage; bootm 0x42000000 - 0x43000000"
+设置启动参数
+setenv bootargs "console=ttyS0,115200 rw root=/dev/nfs nfsroot=${nfsroot},proto=tcp,nfsvers=3,nolock ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:eth0"
+
+setenv bootargs "console=ttyS0,115200 rw root=/dev/nfs nfsroot=${nfsroot},${nfsopt} ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:eth0"
+
+
+
+
+U-BOOT命令
+                                                                                                    
+fatls mmc 0:2 /                                                                                                   
+fatwrite mmc 0:1 0x43000000 Image 897786
+
+
+
+
+
+SD卡启动制作
+make sd:
+
+dd if=/dev/zero of=/dev/mmcblk0 bs=1M count=1      # 把SD卡前1M的区域填充为0，预留给 u-boot
+sfdisk -R /dev/mmcblk0                            # 重新读取${card}
+fdisk /dev/mmcblk0                                 #使用fdisk进行分区
+
+建立第一个分区
+root@kubuntu:~/src/u-boot-sunxi# fdisk ${card}
+Device contains neither a valid DOS partition table, nor Sun, SGI or OSF disklabel
+Building a new DOS disklabel with disk identifier 0x911332e8.
+Changes will remain in memory only, until you decide to write them.
+After that, of course, the previous content won't be recoverable.
+
+Warning: invalid flag 0x0000 of partition table 4 will be corrected by w(rite)
+
+Command (m for help): n                                   #键入n然后回车
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p):                                       #直接回车
+Using default response p
+Partition number (1-4, default 1):                        #直接回车
+Using default value 1
+First sector (2048-15278079, default 2048):               #直接回车
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-15278079, default 15278079): +64M         #键入+64M后回车，即分区大小为64M
+建立第二个分区
+Command (m for help): n                                   #键入n然后回车
+Partition type:
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended
+Select (default p):                                       #直接回车
+Using default response p
+Partition number (1-4, default 2):                        #直接回车 
+Using default value 2
+First sector (133120-15278079, default 133120):           #直接回车
+Using default value 133120
+Last sector, +sectors or +size{K,M,G} (133120-15278079, default 15278079):      #直接回车，即第二个分区使用全部剩余空间
+Using default value 15278079
+
+接下来指定分区类型：
+
+Command (m for help): t                                   #键入t然后回车
+Partition number (1-4): 1                                 #键入1然后回车，即指定第一个分区
+Hex code (type L to list codes): c                        #键入c然后回车，即指定第一个分区为vfat
+Changed system type of partition 1 to c (W95 FAT32 (LBA))
+
+Command (m for help): w                                   #键入w然后回车,保存分区表
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+Syncing disks.
+
+格式化分区：
+
+mkfs.vfat ${card}1
+mkfs.ext4 ${card}2                                        #需要稍等片刻
+
+然后写入bootloader：
+
+cd $WORK_DIR/u-boot-sunxi
+dd if=u-boot-sunxi-with-spl.bin of=$card bs=1024 seek=8
+最后安装内核 uImage，设置启动参数：
+
+mount /dev/mmcblk0p2 /mnt
+mkdir /mnt/boot
+1:
+cp linux-sunxi/arch/arm/boot/uImage /mnt/boot
+cp sunxi-boards/sys_config/a20/script.bin /mnt/boot
+2:
+cp linux/arch/arm/boot/zImage /mnt/boot
+cp sun7i-a20-lamobo-r1.dtb.dtb /mnt/boot
+
+cp boot.scr /mnt/
+sync && umount /mnt
+
+gmp-6.2.1:
+./configure --host=arm-linux-gnueabihf --prefix=/home/zhurish/workspace/working/sunxi/gmp-6.2.1/output/arm
+gdb-11:
+./configure --host=arm-linux-gnueabihf  --prefix=$PWD/output/arm --without-ada --enable-termcap --with-shared --with-libgmp-prefix=/home/zhurish/workspace/working/sunxi/gmp-6.2.1/output/arm/ --without-x --disable-gdbtk --disable-tui

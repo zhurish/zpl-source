@@ -1,335 +1,219 @@
+# *DOCUMENTATION*
+# To see a list of typical targets execute "make help"
+# More info can be located in ./README
+# Comments in this file are targeted only to the developer, do not
+# expect to learn how to build the kernel reading this file.
+
+
+# If building an external module we do not care about the all: rule
+# but instead _all depend on modules
+PHONY += all
+
+_all: all
+
+
+srctree		:= $(CURDIR)
+objtree		:= $(CURDIR)
+
+export srctree objtree
+
+
+# SHELL used by kbuild
+CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
+	  else if [ -x /bin/bash ]; then echo /bin/bash; \
+	  else echo sh; fi ; fi)
+
+# 	Decide whether to build built-in, modular, or both.
+#	Normally, just do built-in.
+
+
+# Beautify output
+# ---------------------------------------------------------------------------
+# A simple variant is to prefix commands with $(Q) - that's useful
+# for commands that shall be hidden in non-verbose mode.
 #
+#	$(Q)ln $@ :<
 #
-#SHELL :=C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe
-SHELL := sh
-#
-export TOP_DIR =$(CURDIR)
-#export TOP_DIR =$(shell pwd)
-#export TOP_DIR=D:\source\SWPlatform\source
-#
-#
-#
-#
-#prepare:
-#	cd make;./version.sh $(TAGET)
-#
-#
-#export GITVERSION=$(shell cd make;./version.sh)
-#
-#GITVER_FILE=include/gitversion.h
-#include/gitversion.h: 
-#$(GITVER_FILE):
-#	@/bin/sh $(TOP_DIR)/make/version.sh
-#	#/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
-#
-#
-#
-#
-#
-#
-include make/makelinux.mk
-#
-#
-#
-#
-#
-TAGET=SWP-$(ZPLVER)
-#
-#
-#PLOS_MAP = -Wl,-Map,target-app.map
-ifneq ($(ZPLOS_MAP),)
-TAGETMAP=SWP-$(ZPLVER).map
-ZPLOS_MAP = -Wl,-Map=$(TAGETMAP)
+# If KBUILD_VERBOSE equals 0 then the above command will be hidden.
+# If KBUILD_VERBOSE equals 1 then the above command is displayed.
+
+ifeq ($(KBUILD_VERBOSE),1)
+  quiet =
+  Q =
+else
+  quiet=quiet_
+  Q = @
 endif
-#
-#
+
+# If the user is running make -s (silent mode), suppress echoing of
+# commands
+
+
+export quiet Q KBUILD_VERBOSE
+
+
+HOSTCC  	= gcc
+HOSTCXX  	= g++
+HOSTCFLAGS	:=
+HOSTCXXFLAGS	:=
+# We need some generic definitions
+include $(srctree)/scripts/Kbuild.include
+
+HOSTCFLAGS	+= $(call hostcc-option,-Wall -Wstrict-prototypes -O2 -fomit-frame-pointer,)
+HOSTCXXFLAGS	+= -O2
+
+# For maximum performance (+ possibly random breakage, uncomment
+# the following)
+
+CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise $(CF)
+
+export CONFIG_SHELL HOSTCC HOSTCFLAGS HOSTCXX HOSTCXXFLAGS CHECKFLAGS
+
+
+# Files to ignore in find ... statements
+
+RCS_FIND_IGNORE := \( -name SCCS -o -name BitKeeper -o -name .svn -o -name CVS -o -name .pc -o -name .hg -o -name .git -name app \) -prune -o
+export RCS_TAR_IGNORE := --exclude SCCS --exclude BitKeeper --exclude .svn --exclude CVS --exclude .pc --exclude .hg --exclude .git
+
+# ===========================================================================
+# ===========================================================================
+# *config targets only - make sure prerequisites are updated, and descend
+# in scripts/kconfig to make the *config target
+
+export SOURCE_ROOT=$(srctree)
+
+#-include $(srctree)/.config
+-include $(srctree)/Makefile.help
+-include $(srctree)/build/board.mk
+
+
+export MENUCONFIG_ZPL_BUILD=true
+export MENUCONFIG_ZPL_MODULE=$(srctree)/build/module-def.mk
+export MENUCONFIG_ZPL_CONFIG=$(srctree)/build/board.mk
+
+menuconfig: 
+	$(Q)mkdir -p include
+	$(Q)$(MAKE) $(build)=scripts/kconfig $@
+
+config: 
+	$(Q)mkdir -p include
+	$(Q)$(MAKE) $(build)=scripts/kconfig $@
+
+%config: 
+	$(Q)mkdir -p include
+	$(Q)$(MAKE) $(build)=scripts/kconfig $@
 #
 
-	
-#
-#
-#
-LIBS1 = $(shell $(CD) $(BASE_ROOT)/$(ZPL_LIB_DIR)/ && ls *.a)
-LIBS2 = $(subst .a,,$(LIBS1))
-LIBC += $(subst lib,-l,$(LIBS2))
-ifneq ($(ZPL_BUILD_ARCH),X86)
-LIBSO1 = $(shell $(CD) $(BASE_ROOT)/$(ZPL_LIB_DIR)/ && ls *.so)
-LIBSO2 = $(subst .so,,$(LIBSO1))
-LIBC += $(subst lib,-l,$(LIBSO2))
-endif
-#
-#
-#ZPL_LDCLFLAG=$(ZPLOS_LDLIBS) $(ZPLEX_LDLIBS) $(ZPL_LDLIBS) 
-ZPLLSLIBS += $(LIBC)
-ZPLLDSOLIBS = $(ZPLLDLIBS)
-#
-#ZPLINCLUDE += -I$(BASE_ROOT)/include
-#
-#ZPLINCLUDE += $(IPSTACK_INCLUDE)
-#IPSTACK_LIBDIR
-#
-ifeq ($(ZPL_IPCOM_MODULE),true)
-IPLIBS1 = $(shell $(CD) $(IPSTACK_LIBDIR)/ && ls *.a)
-IPLIBS2 = $(subst .a,,$(IPLIBS1))
-IPLIBC += $(subst lib,-l,$(IPLIBS2))
-
-ZPLLDFLAGS += -L$(IPSTACK_LIBDIR)
-endif
-#
-#
-#
-#ULIBSOFILE = $(shell $(CD) $(BASE_ROOT)/$(ZPL_ULIB_DIR)/ && ls *.so)
-#ULIBSOFILE += $(shell $(CD) $(BASE_ROOT)/$(ZPL_ULIB_DIR)/ && ls *.so*)
-#
-#
-#
-ZPLLDLIBS += $(IPLIBC)
-#ZPLLDLIBS += -lpj -lpjlib-util -lpjmedia -lpjmedia-audiodev -lpjmedia-codec\
-			 -lpjmedia-videodev -lpjnath -lpjsip -lpjsip-simple -lpjsip-ua \
-			 -lpjsua -lsrtp -lgsmcodec -lspeex -lilbccodec -lg7221codec \
-			 -lwebrtc -lyuv -lv4l2 -lopenh264 -lresample
-#
-#
-#export ZPLLDCLFLAG += -L$(BASE_ROOT)/$(ZPL_LIB_DIR)/  
-#$(ZPLDEFINE) $(ZPLINCLUDE) $(ZPL_DEBUG) -g #-lcrypto
-# $(ZPL_CFLAGS)
-#
-%.o: %.c 
-	$(ZPL_ECHO_CC)
-	$(ZPL_LIB_COMPILE)
+def_make_prepare:
+	if test -e ".config"; \
+	then \
+		cp .config build/module-def.mk; \
+		sed -i 's/^CONFIG_ZPL_/ZPL_/g' build/module-def.mk; \
+		sed -i 's/=y$$/=true/g' build/module-def.mk; \
+		cp include/autoconf.h source/include/plautoconf.h; \
+		sed -i 's/CONFIG_ZPL_/ZPL_/g' source/include/plautoconf.h; \
+	fi 
 #	
-#@$(CC) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDSOLIBS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
+#diff build/aa build/module-def.mk >/dev/null 2>&1 || break \
+#	echo "$? $@"
+#	tmp=$? \
+#	if test ${tmp} -nq 0; \
+#	then \
+#		mv build/module-deftmp.mk build/module-def.mk; \
+#		mv source/include/plautoconftmp.h source/include/plautoconf.h; \
+#	fi
+#
+# The all: target is the default when no target is given on the
+# command line.
+# This allow a user to issue only 'make' to build a kernel including modules
+# Defaults Platform but it is usually overridden in the arch makefile
+#all: Platform
 
 
-SOURCES = $(wildcard *.c *.cpp)
-OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
-#
-#
--include $(OBJS:.o=.d)
-#
-#
-#				
-#
-#
-#	
-.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install prebuilts
-#
-# awk -F= '/^NAME/{print $2}' /etc/os-release
-# ubuntu 系统要把链接库放在行的末尾处
-#
-#
-ifeq ($(ZPL_BUILD_DEBUG),YES)
-target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
-	$(CHMOD) a+x $(TAGET)
-	$(RM) -rf ./*.o ./*.d
-else
-target : $(OBJS) $(BASE_ROOT)/$(ZPL_LIB_DIR)/*.a 
-	$(CC) -o $(TAGET) $(OBJS) -Xlinker "-(" $(ZPLLSLIBS) -Xlinker "-)" $(ZPLOS_MAP) $(ZPLLDFLAGS) $(ZPLLDSOLIBS)
-	$(CHMOD) a+x $(TAGET)
-	$(STRIP) $(TAGET)
-	$(RM) -rf ./*.o ./*.d
-endif
+prebuilts: def_make_prepare
+	${MAKE} -C  source/ $@ 
 
-	
-#	
-#
-ifneq ($(APP_BIN_DIR),)
-app_bin_install:
-	$(INSTALL) -d $(APP_BIN_DIR)
-	$(INSTALL) -m 755 debug/bin/*bin* $(APP_BIN_DIR)
-	$(INSTALL) -m 755 debug/sbin/* $(APP_BIN_DIR)
-else
-app_bin_install:
-	@$(ECHO) " install -m 755 bin "
-endif
-#
-ifneq ($(APP_ETC_DIR),)
-app_etc_install:
-	$(INSTALL) -d $(APP_ETC_DIR)
-	$(INSTALL) -m 755 debug/etc/* $(APP_ETC_DIR)
-else
-app_etc_install:
-	@$(ECHO) " install -m 755 etc "
-endif
-#
-ifneq ($(APP_WEB_DIR),)
-app_web_install:
-	$(INSTALL) -d $(APP_WEB_DIR)
-	$(INSTALL) -m 755 debug/etc/web/* $(APP_WEB_DIR)
-else
-app_web_install:
-	@$(ECHO) " install -m 755 etc/web "
-endif
-#
-ifneq ($(APP_WWW_DIR),)
-app_www_install:
-	$(INSTALL) -d $(APP_WWW_DIR)
-	$(INSTALL) -m 755 debug/www/* $(APP_WWW_DIR)
-else
-app_www_install:
-	@$(ECHO) " install -m 755 www "
-endif
-#
-ifneq ($(APP_LIB_DIR),)
-app_lib_install:
-	$(INSTALL) -d $(APP_LIB_DIR)
-	$(INSTALL) -m 755 debug/usr/lib/*so* $(APP_LIB_DIR)
-else
-app_lib_install:
-	@$(ECHO) " install -m 755 lib "
-endif
-#
-#
-#
-#
-ifeq ($(BUILD_OPENWRT),true)
-openwrt_install:
-	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-	cd make;./setup.sh $(TAGET)
-else
-openwrt_install:
-	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-endif
-#
-#
-config_install: openwrt_install 
-	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-	$(INSTALL) -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
-	$(INSTALL) -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
-	$(INSTALL) -m 755 startup/etc/openconfig ${ZPL_INSTALL_ETC_DIR}
-	$(INSTALL) -m 755 startup/etc/product ${ZPL_INSTALL_ETC_DIR}
-	$(INSTALL) -m 755 startup/etc/voipconfig ${ZPL_INSTALL_ETC_DIR}
-#	
-#	$(INSTALL) -d ${ZPL_BIN_DIR}
-#	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
-#	$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
-#	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-#	cd make;./setup.sh $(TAGET)
-#	$(INSTALL) -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
-#	$(INSTALL) -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
-	#$(INSTALL) -m 755 startup/etc/default-config.cfg ${ZPL_INSTALL_ETC_DIR}
-	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
-#
-#
-#
-app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install  make_prepare kernel_module
-
-#
-#
-#
-help:usage
-#
-#
-usage:
-	@$(ECHO) ""
-	@$(ECHO) "Targets:"
-	@$(ECHO) "  obj        build objects"
-	@$(ECHO) "  clean      remove all"
-	@$(ECHO) "  objclean   remove all objects"
-	@$(ECHO) "  install    build all and install"
-	@$(ECHO) "  all        build all module"
-	@$(ECHO) "  lib        same as install"
-	@$(ECHO) "  rebuild    clean and install"
-	@$(ECHO) "  demo       build demo app"
-	@$(ECHO) "  app        build demo app"
-	@$(ECHO) "  usage      make usage"
-	@$(ECHO) "  help       make help"	
-	@$(ECHO) ""
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-#
-#
-#
-make_prepare:
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-#
-objclean:  
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-	@if test -f os_main.o ; \
-		then \
-		$(RM) os_main.o; \
-	fi
-	@if test -f os_main.d ; \
-		then \
-		$(RM) os_main.d; \
-	fi
-	@if test -f $(TAGET) ; \
-		then \
-		$(RM) $(TAGET); \
+make_prepare: def_make_prepare
+	${MAKE} -C  source/ $@ 
+	@if test  -f source/platform/moduletable.c ; \
+	then \
+		echo "-----------------------------------"; \
+		mv source/platform/moduletable.c source/startup/src/ ; \
 	fi
 
-clean: 
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-	@if test -f os_main.o ; \
-		then \
-		$(RM) os_main.o; \
-	fi
-	@if test -f os_main.d ; \
-		then \
-		$(RM) os_main.d; \
-	fi	
-	@if test -f $(TAGET) ; \
-		then \
-		$(RM) $(TAGET); \
-	fi
-	@if test -f $(TAGETMAP) ; \
-		then \
-		$(RM) $(TAGETMAP); \
-	fi
-	
-obj: 
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-
-#install: obj
-install: config_install
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-	$(INSTALL) -d ${ZPL_BIN_DIR}
-	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
-#
-#	$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
-	
-	#install -d ${ZPL_INSTALL_ULIB_DIR}
-	#$(CP) $(ULIBSOFILE) ${ZPL_INSTALL_ULIB_DIR}
-	
-	#install -d ${ZPL_INSTALL_ETC_DIR}
-	#cd make;./setup.sh $(TAGET)
-	#install -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
-	#install -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
-	#install -m 755 startup/etc/default-config.cfg ${ZPL_INSTALL_ETC_DIR}
-	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
-	
-#all: install $(TAGET)
+#def_make_prepare make_prepare
 all: 
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-#lib: install
-lib:
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  source/ $@ 
+
+lib:  
+	${MAKE} -C  source/ $@ 
+
+obj: 
+	${MAKE} -C  source/ $@ 	
 	
+app: 
+	${MAKE} -C  source/ $@ 	
+
 kernel_module:
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
-	
-rebuild: clean all $(TAGET)
+	${MAKE} -C  source/ $@ 			
+###
+# Cleaning is done on three levels.
+# make clean     Delete most generated files
+#                Leave enough to build external modules
+# make mrproper  Delete the current configuration, and all generated files
+# make distclean Remove editor backup files, patch leftover files and the like
 
-app: demo
+# Directories & files removed with 'make mrproper'
+MRPROPER_DIRS  += include/config
+MRPROPER_FILES += .config .config.old .version .old_version \
+		  .kconfig.d include/autoconf.h 
 
-demo: all
-	@if test -f os_main.o ; \
-		then \
-		$(RM) os_main.o; \
-	fi
-	@if test -f os_main.d ; \
-		then \
-		$(RM) os_main.d; \
-	fi	
-	@if test -f $(TAGET) ; \
-		then \
-		$(RM) $(TAGET); \
-	fi
-	${MAKE} target
+# clean - Delete most, but leave enough to build external modules
 #
+PHONY += clean menuconfig
+clean: 
+	rm source/include/plautoconf.h
+	${MAKE} -C  source/ clean
 #
-dist: all
-	@$(ECHO) 'packet...'
-	@$(CD) make; ./packet.sh $(TAGET)	
-	
-	
+#@find . $(RCS_FIND_IGNORE) \
+		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
+		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \) \
+		-type f -print | xargs rm -f
+
+
+# mrproper - Delete all generated files, including .config
+#
+PHONY += mrproper 
+
+mrproper:  
+	rm -rf $(MRPROPER_DIRS)
+	rm -rf $(MRPROPER_FILES)
+
+# distclean
+#
+PHONY += distclean
+
+distclean: mrproper
+	${MAKE} -C  source/ clean
+	@find $(srctree) $(RCS_FIND_IGNORE) \
+		\( -name '*.orig' -o -name '*.rej' -o -name '*~' \
+		-o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
+		-o -name '.*.rej' -o -name '*.tmp' -o -size 0 \
+		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
+		-type f -print | xargs rm -f
+
+
+
+install:
+	mkdir -p $(ZPL_INSTALL_PATH)
+	cp -arf source/debug/usr/lib $(ZPL_INSTALL_PATH)/
+	cp -arf source/debug/etc $(ZPL_INSTALL_PATH)/
+	cp -arf source/debug/www $(ZPL_INSTALL_PATH)/
+	cp -arf source/debug/sbin $(ZPL_INSTALL_PATH)/
+	cp -arf source/debug/bin $(ZPL_INSTALL_PATH)/
+
+help:
+	echo "make all make_prepare prebuilts"
+# Declare the contents of the .PHONY variable as phony.  We keep that
+# information in a variable se we can use it in if_changed and friends.
+.PHONY: $(PHONY) all lib obj app install prebuilts make_prepare help kernel_module

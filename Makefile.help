@@ -1,0 +1,23 @@
+# ==========================================================================
+# Build system
+# ==========================================================================
+
+help:
+	@echo 'Cleaning:'
+	@echo '  clean			- delete temporary files created by build'
+	@echo '  distclean		- delete all non-source files (including .config)'
+	@echo
+	@echo 'Build:'
+	@echo '  all			- Lib and Target'
+	@echo '  lib			- Lib'
+	@echo '  target			- Target'
+	@echo
+	@echo 'Configuration:'
+	@echo '  defconfig		- set .config to largest generic configuration'
+	@echo '  menuconfig		- interactive curses-based configurator'
+	@echo '  oldconfig		- resolve any unresolved symbols in .config'
+	@echo
+	@echo 'Installation:'
+	@echo '  install		- install Platform into CONFIG_PREFIX'
+	@echo '  uninstall'
+	@echo

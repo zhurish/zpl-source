@@ -1,0 +1,49 @@
+#
+# For a description of the syntax of this configuration file,
+# see scripts/kbuild/config-language.txt.
+#
+
+mainmenu "Configuration"
+
+config HAVE_DOT_CONFIG
+	bool
+	default y
+
+menu "Global Settings"
+
+config ZPL_RUNNING_BASE_PATH
+	string
+	prompt "Platform Program Running Path"
+	default "/tmp/app"
+	help
+		Specify directories Running for Program Running
+
+config ZPL_REAL_SYSCONFIG_PATH
+	string
+	prompt "Platform Program Real Sysconfig Path"
+	default "/dm/zhurish/work/busybox-1.28.4/SWPlatform/debug/etc"
+	help
+		Specify directories for Program config Real Sysconfig
+
+config ZPL_INSTALL_PATH
+	string
+	prompt "Platform Program Install path"
+	default "./_install"
+	help
+		Specify directories for Program Install
+
+endmenu
+
+source "source/PL-Arch.in"
+source "source/Toolchain.in"
+source "source/platform/Config.in"
+source "source/component/Config.in"
+source "source/halpal/Config.in"
+source "source/service/Config.in"
+#source "source/cli/Config.in"
+source "source/multimedia/Config.in"
+source "source/product/Config.in"
+source "source/externsions/Config.in"
+source "source/application/Config.in"
+source "source/tools/Config.in"
+
