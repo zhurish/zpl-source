@@ -179,11 +179,16 @@ zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue)
 	return skbuf;
 }
 
-int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p)
+int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int wait, int(*func)(zpl_skbuffer_t*, void *), void *p)
 {
 	NODE node;
 	zpl_skbuffer_t *skbuf = NULL;
 	assert(queue);
+	if(wait)
+	{
+		if (queue->sem)
+			os_sem_take(queue->sem, OS_WAIT_FOREVER);
+	}
 	if (queue->mutex)
 		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
 

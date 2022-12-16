@@ -22,8 +22,9 @@
 #define VIDEOBANDWIDTHESTIMATOR_H
 
 #include <ortp/port.h>
-#include <ortp/utils.h>
+#include <ortp/extremum.h>
 #include <ortp/ortp_list.h>
+#include "rtpsession_priv.h"
 
 typedef struct _OrtpVideoBandwidthEstimatorPacket{
 	uint32_t sent_timestamp;
@@ -35,7 +36,7 @@ typedef struct _OrtpVideoBandwidthEstimatorPacket{
 }OrtpVideoBandwidthEstimatorPacket;
 
 typedef struct _OrtpVideoBandwidthEstimator{
-	struct _RtpSession *session;
+	RtpSession *session;
 	unsigned int packet_count_min;
 	unsigned int packets_size_max;
 	unsigned int trust_percentage;
@@ -45,7 +46,7 @@ typedef struct _OrtpVideoBandwidthEstimator{
     int nb_packets_computed;
 }OrtpVideoBandwidthEstimator;
 
-OrtpVideoBandwidthEstimator * ortp_video_bandwidth_estimator_new(struct _RtpSession *session);
+OrtpVideoBandwidthEstimator * ortp_video_bandwidth_estimator_new(RtpSession *session);
 
 void ortp_video_bandwidth_estimator_destroy(OrtpVideoBandwidthEstimator *vbe);
 

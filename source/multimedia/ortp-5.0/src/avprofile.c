@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#include "rtpsession_priv.h"
 #include <ortp/payloadtype.h>
 #include <ortp/rtpprofile.h>
 #include <ortp/ortp.h>
@@ -80,6 +80,22 @@ char offset0[4] = {0x00, 0x00, 0x00, 0x00};
 #define FLAGS(val)		(val)
 
 #endif
+
+
+PayloadType payload_type_telephone_event={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("telephone-event"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
 
 PayloadType payload_type_pcmu8000={
 	TYPE(PAYLOAD_AUDIO_CONTINUOUS),
@@ -484,7 +500,7 @@ void av_profile_init(RtpProfile *profile)
 
 void rtp_profile_payload_update(int pt, PayloadType *type)
 {
-    extern RtpProfile av_profile;
+    //extern RtpProfile av_profile;
     rtp_profile_set_payload(&av_profile, pt, type);
 }
 

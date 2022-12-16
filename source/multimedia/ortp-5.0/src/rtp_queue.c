@@ -47,7 +47,7 @@ void mblk_meta_copy(const mblk_t *source, mblk_t *dest) {
 	dest->ttl_or_hl = source->ttl_or_hl;
 }
 
-dblk_t *datab_alloc(size_t size){
+static dblk_t *datab_alloc(size_t size){
     dblk_t *db = NULL;
 	size_t total_size=sizeof(dblk_t)+size;
 	db=(dblk_t *) ortp_malloc(total_size);

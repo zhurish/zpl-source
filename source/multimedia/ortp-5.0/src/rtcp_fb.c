@@ -18,10 +18,20 @@
  */
 
 
-#include "ortp/ortp.h"
-#include "ortp/rtpsession.h"
-#include "ortp/rtcp.h"
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
 #include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
+#include "ortp/rtcp.h"
+#include "utils.h"
+#include "jitterctl.h"
 
 
 static void rtp_session_add_fb_packet_to_send(RtpSession *session, mblk_t *m) {

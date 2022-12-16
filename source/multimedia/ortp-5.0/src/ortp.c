@@ -21,16 +21,25 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include "ortp/ortp.h"
+#include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
 #include "utils.h"
 #include <inttypes.h>
-#include "scheduler.h"
+#include "ortp/scheduler.h"
+
 
 rtp_stats_t ortp_global_stats;
 
 #ifdef ENABLE_MEMCHECK
 int ortp_allocations=0;
 #endif
+
 
 
 #ifdef HAVE_SRTP
@@ -41,11 +50,9 @@ int ortp_allocations=0;
 #include "ortp/ortp_srtp.h"
 #endif
 
-RtpScheduler *__ortp_scheduler;
+static RtpScheduler *__ortp_scheduler;
 
 
-
-extern void av_profile_init(RtpProfile *profile);
 
 static void init_random_number_generator(void){
 #ifndef _WIN32
@@ -79,7 +86,7 @@ static int ortp_initialized=0;
  *	Initialize the oRTP library. You should call this function first before using
  *	oRTP API.
 **/
-void ortp_init()
+void ortp_init(void)
 {
 	if (ortp_initialized++) return;
 
@@ -102,7 +109,7 @@ void ortp_init()
  *	scheduled mode of the RtpSession in your application.
  *
 **/
-void ortp_scheduler_init()
+void ortp_scheduler_init(void)
 {
 	static bool_t initialized=FALSE;
 	if (initialized) return;
@@ -126,7 +133,7 @@ void ortp_scheduler_init()
  * Gracefully uninitialize the library, including shutdowning the scheduler if it was started.
  *
 **/
-void ortp_exit()
+void ortp_exit(void)
 {
 	if (ortp_initialized==0) {
 		ortp_warning("ortp_exit() called without prior call to ortp_init(), ignored.");
@@ -145,7 +152,7 @@ void ortp_exit()
 	}
 }
 
-RtpScheduler * ortp_get_scheduler()
+RtpScheduler * ortp_get_scheduler(void)
 {
 	if (__ortp_scheduler==NULL) ortp_error("Cannot use the scheduled mode: the scheduler is not "
 									"started. Call ortp_scheduler_init() at the begginning of the application.");
@@ -156,7 +163,7 @@ RtpScheduler * ortp_get_scheduler()
 /**
  * Display global statistics (cumulative for all RtpSession)
 **/
-void ortp_global_stats_display()
+void ortp_global_stats_display(void)
 {
 	rtp_stats_display(&ortp_global_stats,"Global statistics");
 #ifdef ENABLE_MEMCHECK
@@ -187,11 +194,11 @@ void rtp_stats_display(const rtp_stats_t *stats, const char *header) {
 	ortp_log(ORTP_MESSAGE, "===========================================================");
 }
 
-void ortp_global_stats_reset(){
+void ortp_global_stats_reset(void){
 	memset(&ortp_global_stats,0,sizeof(rtp_stats_t));
 }
 
-rtp_stats_t *ortp_get_global_stats(){
+rtp_stats_t *ortp_get_global_stats(void){
 	return &ortp_global_stats;
 }
 

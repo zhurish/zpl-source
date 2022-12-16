@@ -17,10 +17,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "videobandwidthestimator.h"
+#include "rtpsession_priv.h"
 #include <ortp/logging.h>
 #include <math.h>
 #include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include "videobandwidthestimator.h"
 
 #define MIN_DIFFTIME 0.00001f
 

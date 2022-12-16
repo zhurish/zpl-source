@@ -13,14 +13,15 @@
 #include "zpl_rtsp_rtp.h"
 
 
-int rtsp_rtp_init()
+
+int rtsp_rtp_init(void)
 {
     ortp_init();
 
     return 0;
 }
 
-int rtsp_rtp_start()
+int rtsp_rtp_start(void)
 {
     ortp_scheduler_init();
     return 0;
@@ -54,7 +55,7 @@ int rtsp_rtp_handle_describe(rtsp_session_t* session, void *pUser)
 {
     return 0;
 }
-
+#define ortp_socketpair ipstack_socketpair
 static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool bcreate)
 {
     rtp_session_t   *_rtpsession = session->_rtpsession;
@@ -62,9 +63,9 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
         return -1;
     if(_rtpsession->rtp_session)
     {
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========rtp-port=%d rtcp-port=%d\n",_rtpsession->transport.rtp.unicast.rtp_port, _rtpsession->transport.rtp.unicast.rtcp_port);
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw===local=====rtp-port=%d rtcp-port=%d\n",_rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port);
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========payload=%d\n",_rtpsession->payload);
+        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========rtp-port=%d rtcp-port=%d\r\n",_rtpsession->transport.rtp.unicast.rtp_port, _rtpsession->transport.rtp.unicast.rtcp_port);
+        fprintf(stdout,"==================================rtsp_rtp_session_setuphw===local=====rtp-port=%d rtcp-port=%d\r\n",_rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port);
+        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========payload=%d\r\n",_rtpsession->payload);
         fflush(stdout);
 
         if(bcreate == false)
@@ -86,7 +87,7 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
                 ortp_socket_t rtcp_recv[2] = {0, 0};
                 if(_rtpsession->rtp_sock <= 0)
                 {
-                    ortp_socketpair(AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
+                    ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
                     if(rtp_recv[0] && rtp_recv[1])
                     {
                         _rtpsession->rtp_sock = rtp_recv[0];
@@ -94,7 +95,7 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
                 }
                 if(_rtpsession->rtcp_sock <= 0)
                 {
-                    ortp_socketpair(AF_INET, SOCK_STREAM, IPPROTO_TCP, rtcp_recv);
+                    ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtcp_recv);
                     if(rtcp_recv[0] && rtcp_recv[1])
                     {
                         _rtpsession->rtcp_sock = rtcp_recv[0];
@@ -149,7 +150,7 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
             ortp_socket_t rtcp_recv[2] = {0, 0};
             if(_rtpsession->rtp_sock <= 0)
             {
-                ortp_socketpair(AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
+                ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
                 if(rtp_recv[0] && rtp_recv[1])
                 {
                     _rtpsession->rtp_sock = rtp_recv[0];
@@ -157,7 +158,7 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
             }
             if(_rtpsession->rtcp_sock <= 0)
             {
-                ortp_socketpair(AF_INET, SOCK_STREAM, IPPROTO_TCP, rtcp_recv);
+                ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtcp_recv);
                 if(rtcp_recv[0] && rtcp_recv[1])
                 {
                     _rtpsession->rtcp_sock = rtcp_recv[0];
@@ -192,6 +193,7 @@ static void rtp_session_timestamp_jump(RtpSession *session)
 
 int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
 {
+    int ret = 0;
     bool    bcreate = false;
     rtp_session_t   *_rtpsession = session->_rtpsession;
     if(_rtpsession == NULL)
@@ -216,9 +218,7 @@ int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
         if(_rtpsession->local_ssrc == 0)
             _rtpsession->local_ssrc = (uint32_t)_rtpsession->rtp_session;
         //if(!bcreate && _rtpsession->local_ssrc)
-
-        rtp_session_set_scheduling_mode(_rtpsession->rtp_session, true);
-        rtp_session_set_blocking_mode(_rtpsession->rtp_session, true);
+        ORTP_SESSION_LOCK(_rtpsession->rtp_session);
         rtp_session_set_recv_buf_size(_rtpsession->rtp_session, 165530);
         rtp_session_set_send_buf_size(_rtpsession->rtp_session, 65530);
 
@@ -236,22 +236,30 @@ int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
         //else
         //    rtp_session_enable_rtcp(_rtpsession->rtp_session, false);
         //rtp_session_signal_connect(_rtpsession->rtp_session,"ssrc_changed",(RtpCallback)rtp_session_reset,0);
-
+        rtp_session_set_scheduling_mode(_rtpsession->rtp_session, true);
+        rtp_session_set_blocking_mode(_rtpsession->rtp_session, true);
         if(session->bsrv)
             rtp_session_set_remote_addr_and_port (_rtpsession->rtp_session,
                                               session->address,
                                               _rtpsession->transport.rtp.unicast.rtp_port,
                                               _rtpsession->transport.rtp.unicast.rtcp_port);
+        ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);                                      
     }
-    if(session->bsrv)
+    if(session->bsrv && _rtpsession->rtp_session)
     {
+        ORTP_SESSION_LOCK(_rtpsession->rtp_session);
         rtp_session_signal_connect(_rtpsession->rtp_session,"timestamp_jump",(RtpCallback)rtp_session_timestamp_jump,0);
         rtp_session_signal_connect(_rtpsession->rtp_session,"ssrc_changed",(RtpCallback)rtp_session_reset,0);
-        return rtsp_rtp_session_srv_setup(session, pUser, bcreate);
+        ret = rtsp_rtp_session_srv_setup(session, pUser, bcreate);
+        ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);
+        return ret;
     }
-    else //if(session->bsrv)
+    else if(_rtpsession->rtp_session)
     {
-        return rtsp_rtp_session_client_setup(session, pUser, bcreate);
+        ORTP_SESSION_LOCK(_rtpsession->rtp_session);
+        ret = rtsp_rtp_session_client_setup(session, pUser, bcreate);
+        ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);
+        return ret;
     }
     return -1;
 }
@@ -334,13 +342,13 @@ int rtsp_rtp_select(rtsp_session_t* session)
 
 int rtsp_rtp_tcp_forward(rtsp_session_t* session, const uint8_t *buffer, uint32_t len)
 {
-    int sock = 0;
+    zpl_socket_t sock;
     uint8_t  channel = buffer[1];
     if(session->video_session.transport.rtp_interleaved == channel)
         sock = session->video_session.rtp_sock;
     else if(session->video_session.transport.rtcp_interleaved == channel)
         sock = session->video_session.rtcp_sock;
-    else if(session->audio_session.transport.rtcp_interleaved == channel)
+    else if(session->audio_session.transport.rtp_interleaved == channel)
         sock = session->audio_session.rtp_sock;
     else if(session->audio_session.transport.rtcp_interleaved == channel)
         sock = session->audio_session.rtcp_sock;
@@ -352,36 +360,137 @@ int rtsp_rtp_tcp_forward(rtsp_session_t* session, const uint8_t *buffer, uint32_
 
 int rtsp_rtp_send(rtsp_session_t* session, bool bvideo, const uint8_t *buffer, uint32_t len, uint8_t flags)
 {
+    int ret = 0;
     uint8_t *pbuffer = (uint8_t *)(buffer);
     if(bvideo && session->video_session.rtp_session)
     {
-        return rtp_session_send_with_ts(session->video_session.rtp_session,
+        ORTP_SESSION_LOCK(session->video_session.rtp_session);
+        ret = rtp_session_send_with_ts(session->video_session.rtp_session,
                                             pbuffer, len,
                                             session->video_session.user_timestamp, flags);
+        ORTP_SESSION_UNLOCK(session->video_session.rtp_session); 
+        return ret;                                   
     }
     if(!bvideo && session->audio_session.rtp_session)
     {
-        return rtp_session_send_with_ts(session->audio_session.rtp_session,
+        ORTP_SESSION_LOCK(session->audio_session.rtp_session);
+        ret = rtp_session_send_with_ts(session->audio_session.rtp_session,
                                             pbuffer, len,
                                             session->audio_session.user_timestamp, flags);
+        ORTP_SESSION_UNLOCK(session->audio_session.rtp_session);   
+        return ret;                                 
     }
     return -1;
 }
+#if 0
+/**  发送rtp数据包   
+ *   主要用于发送rtp数据包   
+ *   @param:  RtpSession *session RTP会话对象的指针   
+ *   @param:  const char *buffer 要发送的数据的缓冲区地址   
+ *   @param: int len 要发送的数据长度   
+ *   @return:  int 实际发送的数据包数目   
+ *   @note:     如果要发送的数据包长度大于BYTES_PER_COUNT，本函数内部会进行分包处理   
+ */   
+int  rtpSend(RtpSession *session, char  *buffer,  int  len)
+{  
+    int  sendBytes = 0; 
+    int status;       
+    uint32_t valid_len=len-4;
+    unsigned char NALU=buffer[4];
+     
+    //如果数据小于MAX_RTP_PKT_LENGTH字节，直接发送：单一NAL单元模式
+    if(valid_len <= MAX_RTP_PKT_LENGTH)
+    {
+    	// 如果需要发送的数据长度小于等于阙值，则直接发送  
+        sendBytes = rtp_session_send_with_ts(session,
+                                             &buffer[4],
+                                             valid_len,
+                                             g_userts);
+    }
+    else if (valid_len > MAX_RTP_PKT_LENGTH)
+    {
+        //切分为很多个包发送，每个包前要对头进行处理，如第一个包
+        valid_len -= 1;
+        int k=0,l=0;
+        k=valid_len/MAX_RTP_PKT_LENGTH;//完整包的个数
+        l=valid_len%MAX_RTP_PKT_LENGTH;//最后一包的大小
+        int t=0;
+        int pos=5;
+        if(l!=0)
+            k=k+1;     //完整+非完整包的包的总数 = 发送的包的数量
+
+        while(t<k)    //发送序号<实际需要发送的包数量
+        {
+            if(t<(k-1))       //完整包（非尾包）
+            {
+-------设置FU_indicator和FU_header
+                buffer[pos-2]=(NALU & 0x60)|28;
+                //①NALU & 0x60→→FU_indicator的重要位NRI源自NALU_header的NRI
+                //②位与28→→确定FU_indicator的类型为FU-A分片
+                //③而FU_indicator的首位 禁止位则在①中被清零
+                buffer[pos-1]=(NALU & 0x1f);//FU header  只要NALU的低5位
+                if(0==t)
+                    buffer[pos-1]|=0x80;   				首包则FU_header的首位-开始位置位
+
+-------调用函数发送
+                sendBytes = rtp_session_send_with_ts(session,      //会话
+                                                     &buffer[pos-2],                   //发送内容
+                                                     MAX_RTP_PKT_LENGTH+2,     //发送长度
+                                                     g_userts);
+                                                     
+                t++;
+                pos+=MAX_RTP_PKT_LENGTH;   //每次发送都用pos定位到下面要发送的内容的大致位置
+            }
+            else     //尾包（完整or不完整包）
+            {
+--------计算尾包的长度
+                int iSendLen;
+                if(l>0){    //完整or不完整包→→计算尾包长度
+                    iSendLen=valid_len-t*MAX_RTP_PKT_LENGTH;
+                }else{
+                    iSendLen=MAX_RTP_PKT_LENGTH;
+				}
+-------设置FU_indicator和FU_header
+                buffer[pos-2]=(NALU & 0x60)|28;  //FU_indicator设置NRI 并设置类型位FU-A分片
+                buffer[pos-1]=(NALU & 0x1f);   //FU_header类型从NALU提取
+                buffer[pos-1]|=0x40;      //FU_header的结束位置位→表示是尾包
+-------调用函数发送
+                sendBytes = rtp_session_send_with_ts(session,    
+                                                     &buffer[pos-2],
+                                                     iSendLen+2,
+                                                     g_userts);
+                t++;
+            }
+        }
+    }
+
+    g_userts += DefaultTimestampIncrement;//timestamp increase    
+    //时间戳 同一帧内(不同包)时间戳相同
+    return  len;
+}
+#endif
 
 
 int rtsp_rtp_recv(rtsp_session_t* session, uint8_t *buffer, uint32_t len, bool bvideo, int *more)
 {
+    int ret = 0;
     if(bvideo && session->video_session.rtp_session)
     {
-        return rtp_session_recv_with_ts(session->video_session.rtp_session,
+        ORTP_SESSION_LOCK(session->video_session.rtp_session);
+        ret = rtp_session_recv_with_ts(session->video_session.rtp_session,
                                             buffer, len,
                                             session->video_session.user_timestamp, more);
+        ORTP_SESSION_UNLOCK(session->video_session.rtp_session);
+        return ret;
     }
     if(!bvideo && session->audio_session.rtp_session)
     {
-        return rtp_session_recv_with_ts(session->audio_session.rtp_session,
+        ORTP_SESSION_LOCK(session->audio_session.rtp_session);
+        ret = rtp_session_recv_with_ts(session->audio_session.rtp_session,
                                             buffer, len,
                                             session->audio_session.user_timestamp, more);
+        ORTP_SESSION_UNLOCK(session->audio_session.rtp_session);
+        return ret;
     }
     return -1;
 }
@@ -734,8 +843,8 @@ static int st_app_osd_point(unsigned short *yuv, int u32Width, int u32Height, ST
     *(++pc) = color & 0xff;
     return 0;
 }
-static unsigned char sasadsasads[] = {0x00,0x00,0x00,0x10,0x38,0x6C,0xC6,0xC6,0xFE,0xC6,0xC6,0xC6,0xC6,0x00,0x00,0x00};
-void display_font_ascii(char *asc)
+//static unsigned char sasadsasads[] = {0x00,0x00,0x00,0x10,0x38,0x6C,0xC6,0xC6,0xFE,0xC6,0xC6,0xC6,0xC6,0x00,0x00,0x00};
+static void display_font_ascii(char *asc)
 {
     int i, j;
     fprintf(stdout, "=================\n");
@@ -794,7 +903,7 @@ static void st_app_osd_text(unsigned short *yuv, int u32Width, int u32Height,
                             ST_Point_T stPoint, const char *szString, int u32Color)
 {
     int i = 0;
-    int j = 0;
+
     int num = 0, offset = 0;
     ST_Point_T pstPoint;
     if (szString == NULL)

@@ -1464,7 +1464,7 @@ static int os_task_show_head(struct vty *vty, int detail)
 
 	if (detail) {
 		if(_os_task_cli_show)
-			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-16s %-4s %-8s %-6s %-8s %-8s%s",
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-12s %-4s %-8s %-6s %-8s %-8s%s",
 				"taskNmae", "taskId", "entry", "LVPID","PTHREAD ID", "pri", "tacksize", "state",
 				"Real", "Total", VTY_NEWLINE);
 	}
@@ -1512,7 +1512,7 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 
 	sprintf(taskId, "%u", task->td_id);
 	sprintf(pri, "%d", task->td_priority);
-	sprintf(tacksize, "%x", task->td_stack_size);
+	sprintf(tacksize, "0x%x", task->td_stack_size);
 
 	if (total_cpu.total_realy)
 		sprintf(real, "%.2lf%%",
@@ -1536,7 +1536,7 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 		sprintf(lvpid, "%d", task->td_tid);
 		sprintf(pidstr, "%u", task->td_thread);
 		if(_os_task_cli_show)
-			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-16s %-4s %-8s %-6s %-8s %-8s%s",
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-12s %-4s %-8s %-6s %-8s %-8s%s",
 			task->td_name, taskId, task->td_entry_name, lvpid, pidstr, pri, tacksize, state,
 			real, total, VTY_NEWLINE);
 	}

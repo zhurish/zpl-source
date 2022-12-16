@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include "ortp/ortp.h"
+#include "rtpsession_priv.h"
+#include "ortp/logging.h"
 #include "rtptimer.h"
-#include "scheduler.h"
+#include "ortp/scheduler.h"
 
 void rtp_timer_set_interval(RtpTimer *timer, struct timeval *interval)
 {
@@ -47,6 +47,7 @@ int rtp_user_timer_add(int (*func)(void *), void *p, int interval)
                 sche->_UserTimer[i].pdata = p;
                 sche->_UserTimer[i].interval = interval;
                 ortp_gettimeofday(&sche->_UserTimer[i].timer, NULL);
+                sche->_UserTimerCnt++;
                 return 0;
             }
         }
@@ -68,6 +69,8 @@ int rtp_user_timer_del(int (*func)(void *), void *p)
                     sche->_UserTimer[i].pdata == p)
             {
                 sche->_UserTimer[i].state = 0;
+                if(sche->_UserTimerCnt)
+                    sche->_UserTimerCnt--;
                 return 0;
             }
         }
@@ -92,4 +95,5 @@ int rtp_user_timer_call(UserTimer *tt)
             tt[i].timer.tv_usec += (tt[i].interval%1000)*1000;
         }
     }
+    return 0;
 }

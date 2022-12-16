@@ -15,25 +15,28 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.cpp
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CXX '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
-	@$(CXX) -fPIC $(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
+	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)
+#@$(ECHO) CXX '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
+#	@$(CXX) -fPIC $(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
-	@$(ECHO) CC '$(PLFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
-	@$(CC) -fPIC $(PLFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
+	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
+# @$(ECHO) CC '$(PLFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
+# @$(CC) -fPIC $(PLFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
 
 
 
-files = $(patsubst %.o,%.cpp,$(OBJS))
+#files = $(patsubst %.o,%.cpp,$(OBJS))
+
 make_prepare:
-	@for i in $(files); do	\
+	@for i in $(patsubst %.o,%.c,$(OBJS)); do	\
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 
@@ -46,7 +49,7 @@ obj: $(MODULE_OBJS)
 install: $(LIBS) 
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
+#	@$(STRIP) $(ZPLSTRIP_CFLAGS) $(LIB_DIR)/$(LIBS)
 
 
 clean: objclean

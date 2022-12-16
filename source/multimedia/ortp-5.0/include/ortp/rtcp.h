@@ -20,8 +20,11 @@
 
 #ifndef RTCP_H
 #define RTCP_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #include <ortp/port.h>
+#include <ortp/rtp_queue.h>
 
 #define RTCP_MAX_RECV_BUFSIZE 1500
 
@@ -30,9 +33,7 @@
 #define RTCP_COMMON_HEADER_SIZE 4
 #define RTCP_SSRC_FIELD_SIZE 4
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+
 
 /* RTCP common header */
 
@@ -404,10 +405,9 @@ typedef struct rtcp_app{
 	char name[4];
 } rtcp_app_t;
 
-struct _RtpSession;
-struct _RtpStream;
-ORTP_PUBLIC void rtp_session_rtcp_process_send(struct _RtpSession *s);
-ORTP_PUBLIC void rtp_session_rtcp_process_recv(struct _RtpSession *s);
+
+ORTP_PUBLIC void rtp_session_rtcp_process_send(void *s);
+ORTP_PUBLIC void rtp_session_rtcp_process_recv(void *s);
 
 
 #define RTCP_DEFAULT_REPORT_INTERVAL 5000 /* in milliseconds */
@@ -546,9 +546,9 @@ typedef struct OrtpLossRateEstimator{
 }OrtpLossRateEstimator;
 
 
-ORTP_PUBLIC OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
+ORTP_PUBLIC OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, void *session);
 
-ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
+ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, void *session);
 
 
 /**
@@ -567,7 +567,7 @@ ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int m
  * @return TRUE if a new loss rate estimation is ready, FALSE otherwise.
  */
 ORTP_PUBLIC bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj,
-																 const struct _RtpSession *session,
+																 const void *session,
 																 const report_block_t *rb);
 /**
  * Get the latest loss rate in percentage estimation computed.
@@ -579,8 +579,11 @@ ORTP_PUBLIC float ortp_loss_rate_estimator_get_value(OrtpLossRateEstimator *obj)
 
 ORTP_PUBLIC void ortp_loss_rate_estimator_destroy(OrtpLossRateEstimator *obj);
 
-ORTP_PUBLIC void ortp_rtcp_msg_debug(const struct _RtpSession *session, unsigned char *ptr,
+ORTP_PUBLIC void ortp_rtcp_msg_debug(const void *session, unsigned char *ptr,
                          uint32_t len, const char *dest);
+
+void compute_rtcp_interval(void *session);
+						 
 #ifdef __cplusplus
 }
 #endif

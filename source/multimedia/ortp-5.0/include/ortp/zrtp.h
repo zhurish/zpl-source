@@ -19,7 +19,9 @@
 
 #ifndef ortp_zrtp_h
 #define ortp_zrtp_h
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <ortp/rtpsession.h>
 
 
@@ -30,21 +32,31 @@
 #undef PACKAGE_VERSION
 #include <srtp/srtp.h>
 #include <libzrtpcpp/ZrtpCWrapper.h>
-#endif
 
-
-
-#ifdef __cplusplus
-extern "C"{
+typedef struct _OrtpZrtpContext{
+	ortp_mutex_t mutex;
+	RtpSession *session;
+	uint32_t timerWillTriggerAt;
+	uint16_t last_recv_zrtp_seq_number;
+	uint16_t last_sent_zrtp_seq_number;
+	srtp_t srtpSend;
+	srtp_t srtpRecv;
+	zrtp_Callbacks zrtp_cb;
+	ZrtpContext *zrtpContext; // back link
+	RtpTransport rtpt;
+	RtpTransport rtcpt;
+}OrtpZrtpContext;
+#else
+typedef void * OrtpZrtpContext ;
 #endif
 
 typedef struct OrtpZrtpParams {
 	const char *zid_file; // File where to store secrets and other information
 } OrtpZrtpParams;
 
-typedef struct _OrtpZrtpContext OrtpZrtpContext ;
 
-ORTP_PUBLIC bool_t ortp_zrtp_available();
+
+ORTP_PUBLIC bool_t ortp_zrtp_available(void);
 
 ORTP_PUBLIC OrtpZrtpContext* ortp_zrtp_context_new(RtpSession *s, OrtpZrtpParams *params);
 ORTP_PUBLIC OrtpZrtpContext* ortp_zrtp_multistream_new(OrtpZrtpContext* activeContext, RtpSession *s, OrtpZrtpParams *params);

@@ -29,6 +29,8 @@
 
 char *payload_type_get_rtpmap(PayloadType *pt)
 {
+	if(pt == NULL || pt->mime_type)
+		return NULL;
 	int len=(int)strlen(pt->mime_type)+15;
 	char *rtpmap=(char *) ortp_malloc(len);
 	if (pt->channels>0)

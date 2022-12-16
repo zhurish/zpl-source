@@ -62,7 +62,7 @@ ORTP_PUBLIC void ortp_set_log_handler(OrtpLogFunc func);
 ORTP_PUBLIC OrtpLogFunc ortp_get_log_handler(void);
 
 ORTP_PUBLIC void ortp_set_log_level(int level);
-ORTP_PUBLIC unsigned int ortp_get_log_level();
+ORTP_PUBLIC unsigned int ortp_get_log_level(void);
 
 ORTP_PUBLIC void ortp_hdr_log_out(char *buf);
 

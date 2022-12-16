@@ -19,7 +19,7 @@
 
 #include "ortp/logging.h"
 #include "ortp/nack.h"
-
+#include "ortp/rtpsession.h"
 #define DECREASE_JITTER_DELAY 5000
 
 static mblk_t *find_packet_with_sequence_number(const rtp_queue_t *q, const uint16_t seq_number) {

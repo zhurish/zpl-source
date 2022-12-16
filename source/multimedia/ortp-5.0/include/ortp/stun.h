@@ -76,9 +76,6 @@
 #include <ortp/port.h>
 #include <ortp/stun_udp.h>
 
-#ifdef __APPLE__
-   #include "TargetConditionals.h"
-#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -95,17 +92,7 @@ extern "C"
 #define STUN_PORT 3478
 
 /* define some basic types */
-#if 0
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
 
-#if	defined(WIN32) || defined(_WIN32_WCE)
-typedef unsigned __int64 uint64_t;
-#else
-typedef unsigned long long uint64_t;
-#endif
-#endif
 typedef struct { unsigned char octet[12]; }  UInt96;
 
 /* define a structure to hold a stun address  */

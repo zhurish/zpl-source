@@ -129,7 +129,7 @@ static int _rtsp_set_ipv4_keepalive(zpl_socket_t sock)
   return 0;
 }
 
-
+#if 0
 static void _rtsp_set_ipv4_ignore_sig_pipe(zpl_socket_t socketNum) {
   #ifdef USE_SIGNALS
   #ifdef SO_NOSIGPIPE
@@ -140,7 +140,7 @@ static void _rtsp_set_ipv4_ignore_sig_pipe(zpl_socket_t socketNum) {
   #endif
   #endif
 }
-
+#endif
 static unsigned _rtsp_get_buffer_size(int bufOptName,zpl_socket_t sock) {
   unsigned curSize;
   socklen_t sizeSize = sizeof curSize;
@@ -182,6 +182,7 @@ static int rtsp_socket_close(zpl_socket_t s)
         ipstack_close(s);
 #endif
     }
+    return 0;
 }
 
 static int rtsp_socket_listen(zpl_socket_t s, int nb_connection)
@@ -222,7 +223,7 @@ static int rtsp_socket_bind(zpl_socket_t s, char *address, uint16_t port)
 }
 
 
-zpl_socket_t rtsp_socket_accept(zpl_socket_t s, char *address, uint16_t *port)
+static zpl_socket_t rtsp_socket_accept(zpl_socket_t s, char *address, uint16_t *port)
 {
     struct sockaddr_in addr;
     socklen_t addrlen;

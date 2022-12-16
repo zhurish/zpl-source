@@ -17,14 +17,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ORTP_UTILS_H
-#define ORTP_UTILS_H
+#ifndef ORTP_EXTREMUM_H
+#define ORTP_EXTREMUM_H
 
 #include "ortp/port.h"
-
+#if HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 /**
  * Utility object to determine a maximum or minimum (but not both at the same
@@ -36,6 +39,7 @@ typedef struct _OrtpExtremum{
 	uint64_t extremum_time;
 	int period;
 }OrtpExtremum;
+
 ORTP_PUBLIC void ortp_extremum_reset(OrtpExtremum *obj);
 ORTP_PUBLIC void ortp_extremum_init(OrtpExtremum *obj, int period);
 /**

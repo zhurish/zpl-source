@@ -20,13 +20,12 @@
 #ifndef STR_UTILS_H
 #define STR_UTILS_H
 
-
-#include <ortp/port.h>
-#include <ortp/rtp_queue.h>
-
 #ifdef __cplusplus
 extern "C"{
 #endif
+
+#include <ortp/port.h>
+#include <ortp/rtp_queue.h>
 
 ORTP_PUBLIC void ortp_recvaddr_to_sockaddr(ortp_recv_addr_t *recvaddr, struct ipstack_sockaddr *addr, socklen_t *socklen);
 ORTP_PUBLIC void ortp_sockaddr_to_recvaddr(const struct ipstack_sockaddr * addr, ortp_recv_addr_t * recvaddr);

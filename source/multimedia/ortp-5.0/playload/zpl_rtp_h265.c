@@ -8,7 +8,6 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
-
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_base64.h"
 #include "zpl_rtsp_rtp.h"
@@ -276,8 +275,8 @@ int _rtp_unpacket_h265(zpl_skbuffer_t *packet, uint8_t *payload,
     default:
         {
             uint8_t nal_start[4] = {0, 0, 0, 1};
-            ret = zpl_media_skb_data_append(packet, nal_start, 4);
-            ret = zpl_media_skb_data_append(packet, payload, payload_len);
+            ret = zpl_skbuffer_put(packet, nal_start, 4);
+            ret = zpl_skbuffer_put(packet, payload, payload_len);
         }
         break;
     }
@@ -344,7 +343,7 @@ int _rtsp_parse_sdp_h265(rtsp_session_t *session, uint8_t *attrval, uint32_t len
 
 
     _h265_sprop_parameterset_parse(h265.sprop_sps,
-                                   h265.sprop_sps, &extradata);
+                                   1, &extradata);
 
     zpl_media_channel_decode_spspps(extradata.fSPS, extradata.fSPSSize,
                                     &client->client_media.video_codec.vidsize.width,

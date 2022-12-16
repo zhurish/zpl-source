@@ -429,6 +429,93 @@ static int rtp_send_h264_nalu(rtsp_session_t *session, int type, const uint8_t *
     }
     return ret;
 }
+#if 0
+/**  发送rtp数据包   
+ *   主要用于发送rtp数据包   
+ *   @param:  RtpSession *session RTP会话对象的指针   
+ *   @param:  const char *buffer 要发送的数据的缓冲区地址   
+ *   @param: int len 要发送的数据长度   
+ *   @return:  int 实际发送的数据包数目   
+ *   @note:     如果要发送的数据包长度大于BYTES_PER_COUNT，本函数内部会进行分包处理   
+ */   
+int  rtpSend(RtpSession *session, char  *buffer,  int  len)
+{  
+    int  sendBytes = 0; 
+    int status;       
+    uint32_t valid_len=len-4;
+    unsigned char NALU=buffer[4];
+     
+    //如果数据小于MAX_RTP_PKT_LENGTH字节，直接发送：单一NAL单元模式
+    if(valid_len <= MAX_RTP_PKT_LENGTH)
+    {
+    	// 如果需要发送的数据长度小于等于阙值，则直接发送  
+        sendBytes = rtp_session_send_with_ts(session,
+                                             &buffer[4],
+                                             valid_len,
+                                             g_userts);
+    }
+    else if (valid_len > MAX_RTP_PKT_LENGTH)
+    {
+        //切分为很多个包发送，每个包前要对头进行处理，如第一个包
+        valid_len -= 1;
+        int k=0,l=0;
+        k=valid_len/MAX_RTP_PKT_LENGTH;//完整包的个数
+        l=valid_len%MAX_RTP_PKT_LENGTH;//最后一包的大小
+        int t=0;
+        int pos=5;
+        if(l!=0)
+            k=k+1;     //完整+非完整包的包的总数 = 发送的包的数量
+
+        while(t<k)    //发送序号<实际需要发送的包数量
+        {
+            if(t<(k-1))       //完整包（非尾包）
+            {
+-------设置FU_indicator和FU_header
+                buffer[pos-2]=(NALU & 0x60)|28;
+                //①NALU & 0x60→→FU_indicator的重要位NRI源自NALU_header的NRI
+                //②位与28→→确定FU_indicator的类型为FU-A分片
+                //③而FU_indicator的首位 禁止位则在①中被清零
+                buffer[pos-1]=(NALU & 0x1f);//FU header  只要NALU的低5位
+                if(0==t)
+                    buffer[pos-1]|=0x80;   				首包则FU_header的首位-开始位置位
+
+-------调用函数发送
+                sendBytes = rtp_session_send_with_ts(session,      //会话
+                                                     &buffer[pos-2],                   //发送内容
+                                                     MAX_RTP_PKT_LENGTH+2,     //发送长度
+                                                     g_userts);
+                                                     
+                t++;
+                pos+=MAX_RTP_PKT_LENGTH;   //每次发送都用pos定位到下面要发送的内容的大致位置
+            }
+            else     //尾包（完整or不完整包）
+            {
+--------计算尾包的长度
+                int iSendLen;
+                if(l>0){    //完整or不完整包→→计算尾包长度
+                    iSendLen=valid_len-t*MAX_RTP_PKT_LENGTH;
+                }else{
+                    iSendLen=MAX_RTP_PKT_LENGTH;
+				}
+-------设置FU_indicator和FU_header
+                buffer[pos-2]=(NALU & 0x60)|28;  //FU_indicator设置NRI 并设置类型位FU-A分片
+                buffer[pos-1]=(NALU & 0x1f);   //FU_header类型从NALU提取
+                buffer[pos-1]|=0x40;      //FU_header的结束位置位→表示是尾包
+-------调用函数发送
+                sendBytes = rtp_session_send_with_ts(session,    
+                                                     &buffer[pos-2],
+                                                     iSendLen+2,
+                                                     g_userts);
+                t++;
+            }
+        }
+    }
+
+    g_userts += DefaultTimestampIncrement;//timestamp increase    
+    //时间戳 同一帧内(不同包)时间戳相同
+    return  len;
+}
+#endif
 
 
 int _rtp_send_h264(rtsp_session_t *session, int type, const  uint8_t *buffer, uint32_t len)

@@ -17,16 +17,14 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#if defined(_MSC_VER)  && (defined(WIN32) || defined(_WIN32_WCE))
-#include "ortp-config-win32.h"
-#elif HAVE_CONFIG_H
+#if defined(HAVE_CONFIG_H)
 #include "ortp-config.h"
 #endif
 
 #include "ortp/ortp.h"
 #include "rtpsession_priv.h"
-
 #include "ortp/zrtp.h"
+#include <ortp/logging.h>
 
 #ifdef WIN32
 #include <malloc.h>
@@ -45,19 +43,7 @@
 //                                  1234567890123456
 static const char userAgentStr[] = "LINPHONE-ZRTPCPP"; // 16 chars max.
 
-struct _OrtpZrtpContext{
-	ortp_mutex_t mutex;
-	RtpSession *session;
-	uint32_t timerWillTriggerAt;
-	uint16_t last_recv_zrtp_seq_number;
-	uint16_t last_sent_zrtp_seq_number;
-	srtp_t srtpSend;
-	srtp_t srtpRecv;
-	zrtp_Callbacks zrtp_cb;
-	ZrtpContext *zrtpContext; // back link
-	RtpTransport rtpt;
-	RtpTransport rtcpt;
-};
+
 
 typedef enum {
 	rtp_stream,
@@ -881,7 +867,7 @@ OrtpZrtpContext* ortp_zrtp_multistream_new(OrtpZrtpContext* activeContext, RtpSe
 	return ortp_zrtp_configure_context(userData,s,params);
 }
 
-bool_t ortp_zrtp_available(){return TRUE;}
+bool_t ortp_zrtp_available(void){return TRUE;}
 
 
 
@@ -925,7 +911,7 @@ OrtpZrtpContext* ortp_zrtp_multistream_new(OrtpZrtpContext* activeContext, RtpSe
 	return NULL;
 }
 
-bool_t ortp_zrtp_available(){return FALSE;}
+bool_t ortp_zrtp_available(void){return FALSE;}
 void ortp_zrtp_sas_verified(OrtpZrtpContext* ctx){}
 void ortp_zrtp_sas_reset_verified(OrtpZrtpContext* ctx){}
 void ortp_zrtp_context_destroy(OrtpZrtpContext *ctx){}

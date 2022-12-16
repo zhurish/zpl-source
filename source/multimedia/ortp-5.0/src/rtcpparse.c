@@ -18,8 +18,20 @@
  */
 
 
-#include "ortp/ortp.h"
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
+#include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
+#include "ortp/rtcp.h"
 #include "utils.h"
+#include "jitterctl.h"
 
 size_t rtcp_get_size(const mblk_t *m) {
 	const rtcp_common_header_t *ch=rtcp_get_common_header(m);

@@ -63,14 +63,13 @@
 
 #ifndef ORTP_H
 #define ORTP_H
-#include "ortp/logging.h"
-#include "ortp/rtpsession.h"
-#include "ortp/sessionset.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#include "ortp/rtp.h"
 
 ORTP_PUBLIC bool_t ortp_min_version_required(int major, int minor, int micro);
 ORTP_PUBLIC void ortp_init(void);

@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ortp/utils.h"
+#include "ortp/extremum.h"
 #include "ortp/logging.h"
 
 void ortp_extremum_reset(OrtpExtremum *obj){

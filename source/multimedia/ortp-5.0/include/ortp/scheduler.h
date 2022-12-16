@@ -20,37 +20,12 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "ortp/rtpsession.h"
-#include "ortp/sessionset.h"
+#include "rtpsession_priv.h"
 #include "rtptimer.h"
 
 
-struct _RtpScheduler {
- 
-	RtpSession *list;	/* list of scheduled sessions*/
-	SessionSet	all_sessions;  /* mask of scheduled sessions */
-	int		all_max;		/* the highest pos in the all mask */
-	SessionSet  r_sessions;		/* mask of sessions that have a recv event */
-	int		r_max;
-	SessionSet	w_sessions;		/* mask of sessions that have a send event */
-	int 		w_max;
-	SessionSet	e_sessions;	/* mask of session that have error event */
-	int		e_max;
-	int max_sessions;		/* the number of position in the masks */
-  /* GMutex  *unblock_select_mutex; */
-	ortp_cond_t   unblock_select_cond;
-	ortp_mutex_t	lock;
-	ortp_thread_t thread;
-	int thread_running;
-	struct _RtpTimer *timer;
-	uint32_t time_;       /*number of miliseconds elapsed since the start of the thread */
-	uint32_t timer_inc;	/* the timer increment in milisec */
 
-    UserTimer   _UserTimer[USER_TIMER_MAX];
-};
-
-typedef struct _RtpScheduler RtpScheduler;
-	
+void rtp_scheduler_init(RtpScheduler *sched);
 RtpScheduler * rtp_scheduler_new(void);
 void rtp_scheduler_set_timer(RtpScheduler *sched,RtpTimer *timer);
 void rtp_scheduler_start(RtpScheduler *sched);

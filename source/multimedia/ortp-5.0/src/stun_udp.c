@@ -110,6 +110,8 @@
 
 #include <string.h>
 
+#include <ortp/port.h>
+#include <ortp/logging.h>
 #include "ortp/stun_udp.h"
 #include "ortp/ortp.h"
 

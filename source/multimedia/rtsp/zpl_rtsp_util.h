@@ -32,6 +32,7 @@ typedef int (*rtsp_log_callback)(int, char*);
  * rtsp://user:pass@192.168.1.1/media/channel=1&level=1
  * rtsp://192.168.1.1:9988/media/channel=1&level=1
  */
+#if 0
 typedef struct rtsp_urlpath_s
 {
     char        username[64];
@@ -47,6 +48,9 @@ typedef struct rtsp_urlpath_s
 
 
 RTSP_API void rtsp_url_stream_path(const char *url, rtsp_urlpath_t *);
+#else
+RTSP_API void rtsp_url_stream_path(const char *url, os_url_t *);
+#endif
 RTSP_API int rtsp_authenticate_option(const char *auth, const char *username, const char *password);
 
 RTSP_API void rtsp_log_cb(rtsp_log_callback);

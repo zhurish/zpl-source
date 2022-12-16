@@ -45,11 +45,11 @@ config ZPL_LIBJPEG_MODULE
 	
 
 config ZPL_ZPLMEDIA_MODULE
-	bool "Mimedia Module"
+	bool "Media Module"
 	default n
 	depends on ZPL_MULTIMEDIA_MODULE
 	help
-	Build Mimedia Module.
+	Build Media Module.
 
 config ZPL_HISIMPP_MODULE
 	bool "Hisi MPP Module"

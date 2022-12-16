@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <ortp/ortp.h>
-#include "utils.h"
-#include "scheduler.h"
 #include "rtpsession_priv.h"
+#include <ortp/logging.h>
+#include "utils.h"
+#include "ortp/scheduler.h"
 
+#include "rtptimer.h"
 // To avoid warning during compile
-extern void rtp_session_process (RtpSession * session, uint32_t time, RtpScheduler *sched);
+//extern void rtp_session_process (RtpSession * session, uint32_t time, RtpScheduler *sched);
 
 
 void rtp_scheduler_init(RtpScheduler *sched)
@@ -32,6 +32,16 @@ void rtp_scheduler_init(RtpScheduler *sched)
 	sched->time_=0;
 	/* default to the posix timer */
 #if !defined(ORTP_WINDOWS_UNIVERSAL)
+#ifndef POSIXTIMER_INTERVAL
+#define POSIXTIMER_INTERVAL 10000
+#endif
+	posix_timer.state = RTP_TIMER_STOPPED;
+	posix_timer.timer_init = posix_timer_init;
+	posix_timer.timer_do = posix_timer_do;
+	posix_timer.timer_uninit = posix_timer_uninit;
+	posix_timer.interval.tv_sec = 0;
+	posix_timer.interval.tv_usec = POSIXTIMER_INTERVAL;
+
 	rtp_scheduler_set_timer(sched,&posix_timer);
 #endif
 	ortp_mutex_init(&sched->lock,NULL);
@@ -47,7 +57,7 @@ void rtp_scheduler_init(RtpScheduler *sched)
 	sched->e_max=0;
 }
 
-RtpScheduler * rtp_scheduler_new()
+RtpScheduler * rtp_scheduler_new(void)
 {
 	RtpScheduler *sched=(RtpScheduler *) ortp_malloc(sizeof(RtpScheduler));
 	memset(sched,0,sizeof(RtpScheduler));
@@ -69,10 +79,10 @@ void rtp_scheduler_set_timer(RtpScheduler *sched,RtpTimer *timer)
 void rtp_scheduler_start(RtpScheduler *sched)
 {
 	if (sched->thread_running==0){
-		sched->thread_running=1;
+		//sched->thread_running=1;
 		ortp_mutex_lock(&sched->lock);
 		ortp_thread_create(&sched->thread, NULL, rtp_scheduler_schedule,(void*)sched);
-		ortp_cond_wait(&sched->unblock_select_cond,&sched->lock);
+		ortp_cond_wait(&sched->unblock_select_cond, &sched->lock);
 		ortp_mutex_unlock(&sched->lock);
 	}
 	else ortp_warning("Scheduler thread already running.");
@@ -96,7 +106,7 @@ void rtp_scheduler_destroy(RtpScheduler *sched)
 	ortp_cond_destroy(&sched->unblock_select_cond);
 	ortp_free(sched);
 }
-
+extern zpl_bool host_waitting_loadconfig(void);
 void * rtp_scheduler_schedule(void * psched)
 {
 	RtpScheduler *sched=(RtpScheduler*) psched;
@@ -108,20 +118,29 @@ void * rtp_scheduler_schedule(void * psched)
 	ortp_mutex_lock(&sched->lock);
 	ortp_cond_signal(&sched->unblock_select_cond);	/* unblock the starting thread */
 	ortp_mutex_unlock(&sched->lock);
+	host_waitting_loadconfig();
+	sched->thread_running=1;
 	timer->timer_init();
 	while(sched->thread_running)
 	{
+		if(sched->all_max == 0 || sched->_UserTimerCnt == 0 || sched->sessions_cnt == 0)
+		{
+			ortp_sleep_ms(1000);
+			continue;
+		}
 		/* do the processing here: */
 		ortp_mutex_lock(&sched->lock);
 		
 		current=sched->list;
 		/* processing all scheduled rtp sessions */
+		ortp_mutex_lock(&current->main_mutex);
 		while (current!=NULL)
 		{
-            //ortp_debug("scheduler: processing session=0x%p.\n",current);
+            ortp_debug("scheduler: processing session=0x%p.\n",current);
 			rtp_session_process(current,sched->time_,sched);
 			current=current->next;
 		}
+		ortp_mutex_unlock(&current->main_mutex);
 		/* wake up all the threads that are sleeping in _select()  */
 		ortp_cond_broadcast(&sched->unblock_select_cond);
 		ortp_mutex_unlock(&sched->lock);
@@ -148,10 +167,12 @@ void rtp_scheduler_add_session(RtpScheduler *sched, RtpSession *session)
 		return;
 	}
 	rtp_scheduler_lock(sched);
+	ortp_mutex_lock(&session->main_mutex);
 	/* enqueue the session to the list of scheduled sessions */
 	oldfirst=sched->list;
 	sched->list=session;
 	session->next=oldfirst;
+	sched->sessions_cnt++;
 	if (sched->max_sessions==0){
 		ortp_error("rtp_scheduler_add_session: max_session=0 !");
 	}
@@ -173,6 +194,7 @@ void rtp_scheduler_add_session(RtpScheduler *sched, RtpSession *session)
 	}
 	
 	rtp_session_set_flag(session,RTP_SESSION_IN_SCHEDULER);
+	ortp_mutex_unlock(&session->main_mutex);
 	rtp_scheduler_unlock(sched);
 }
 
@@ -187,11 +209,15 @@ void rtp_scheduler_remove_session(RtpScheduler *sched, RtpSession *session)
 	}
 
 	rtp_scheduler_lock(sched);
+	ortp_mutex_lock(&session->main_mutex);
 	tmp=sched->list;
 	if (tmp==session){
 		sched->list=tmp->next;
 		rtp_session_unset_flag(session,RTP_SESSION_IN_SCHEDULER);
 		session_set_clr(&sched->all_sessions,session);
+		if(sched->sessions_cnt)
+			sched->sessions_cnt--;
+		ortp_mutex_unlock(&session->main_mutex);	
 		rtp_scheduler_unlock(sched);
 		return;
 	}
@@ -212,5 +238,8 @@ void rtp_scheduler_remove_session(RtpScheduler *sched, RtpSession *session)
 	rtp_session_unset_flag(session,RTP_SESSION_IN_SCHEDULER);
 	/* delete the bit in the mask */
 	session_set_clr(&sched->all_sessions,session);
+	if(sched->sessions_cnt)
+		sched->sessions_cnt--;
+	ortp_mutex_unlock(&session->main_mutex);	
 	rtp_scheduler_unlock(sched);
 }

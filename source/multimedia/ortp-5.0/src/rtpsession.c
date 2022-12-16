@@ -17,20 +17,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-
+#include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
 #include "ortp/ortp.h"
 #include "ortp/telephonyevents.h"
 #include "ortp/rtcp.h"
 #include "jitterctl.h"
-#include "scheduler.h"
+
+#include "ortp/scheduler.h"
 #include "utils.h"
-#include "rtpsession_priv.h"
+
 #include "congestiondetector.h"
 #include "videobandwidthestimator.h"
+
 
 #if (_WIN32_WINNT >= 0x0600)
 #include <delayimp.h>
@@ -79,14 +84,14 @@ void wait_point_uninit(WaitPoint *wp){
 #define wait_point_lock(wp) ortp_mutex_lock(&(wp)->lock)
 #define wait_point_unlock(wp) ortp_mutex_unlock(&(wp)->lock)
 
-void wait_point_wakeup_at(WaitPoint *wp, uint32_t t, bool_t dosleep){
+static void wait_point_wakeup_at(WaitPoint *wp, uint32_t t, bool_t dosleep){
 	wp->time=t;
 	wp->wakeup=TRUE;
 	if (dosleep) ortp_cond_wait(&wp->cond,&wp->lock);
 }
 
 
-bool_t wait_point_check(WaitPoint *wp, uint32_t t){
+static bool_t wait_point_check(WaitPoint *wp, uint32_t t){
 	bool_t ok=FALSE;
 
 	if (wp->wakeup){
@@ -197,7 +202,7 @@ mblk_t *rtp_getq(rtp_queue_t *q,uint32_t timestamp, int *rejected)
 	return ret;
 }
 
-mblk_t *rtp_getq_permissive(rtp_queue_t *q,uint32_t timestamp, int *rejected)
+static mblk_t *rtp_getq_permissive(rtp_queue_t *q,uint32_t timestamp, int *rejected)
 {
 	mblk_t *tmp,*ret=NULL;
 	rtp_header_t *tmprtp;
@@ -235,6 +240,7 @@ rtp_session_init (RtpSession * session, int mode)
 	}
 	memset (session, 0, sizeof (RtpSession));
 	ortp_mutex_init(&session->main_mutex, NULL);
+	ortp_mutex_lock(&session->main_mutex);
 	session->mode = (RtpSessionMode) mode;
 	if ((mode == RTP_SESSION_RECVONLY) || (mode == RTP_SESSION_SENDRECV))
 	{
@@ -251,7 +257,6 @@ rtp_session_init (RtpSession * session, int mode)
 				NULL,NULL,"oRTP-" ORTP_VERSION, NULL);
 	}
 	rtp_session_set_profile (session, &av_profile); /*the default profile to work with */
-	
 	ipstack_bzero(session->rtp.gs.socket);
 	ipstack_bzero(session->rtcp.gs.socket);
 #ifndef _WIN32
@@ -274,7 +279,6 @@ rtp_session_init (RtpSession * session, int mode)
 	session->target_upload_bandwidth = 80000; /* 80kbits/s to have 4kbits/s dedicated to RTCP if rtp_session_set_target_upload_bandwidth() is not called. */
 	session->rtcp.send_algo.initial = TRUE;
 	session->rtcp.send_algo.allow_early = TRUE;
-
 	/* init signal tables */
 	rtp_signal_table_init (&session->on_ssrc_changed, session,"ssrc_changed");
 	rtp_signal_table_init (&session->on_payload_type_changed, session,"payload_type_changed");
@@ -330,6 +334,7 @@ rtp_session_init (RtpSession * session, int mode)
 	session->bundle = NULL;
 	session->is_primary = FALSE;
     session->use_pktinfo = TRUE;
+	ortp_mutex_unlock(&session->main_mutex);
 }
 
 void rtp_session_enable_congestion_detection(RtpSession *session, bool_t enabled){
@@ -348,13 +353,14 @@ void rtp_session_enable_congestion_detection(RtpSession *session, bool_t enabled
 }
 
 void rtp_session_enable_video_bandwidth_estimator(RtpSession *session, const OrtpVideoBandwidthEstimatorParams *params) {
+	struct _OrtpVideoBandwidthEstimator *video_bw_estimator = session->rtp.video_bw_estimator;
 	if (params->enabled) {
 		if (!session->rtp.video_bw_estimator) {
 			session->rtp.video_bw_estimator = ortp_video_bandwidth_estimator_new(session);
 		}
-		if (params->packet_count_min > 0) session->rtp.video_bw_estimator->packet_count_min = params->packet_count_min;
-		if (params->packets_size_max > 0) session->rtp.video_bw_estimator->packets_size_max = params->packets_size_max;
-		if (params->trust_percentage > 0) session->rtp.video_bw_estimator->trust_percentage = params->trust_percentage;
+		if (params->packet_count_min > 0) video_bw_estimator->packet_count_min = params->packet_count_min;
+		if (params->packets_size_max > 0) video_bw_estimator->packets_size_max = params->packets_size_max;
+		if (params->trust_percentage > 0) video_bw_estimator->trust_percentage = params->trust_percentage;
 		if (!session->video_bandwidth_estimator_enabled) ortp_video_bandwidth_estimator_reset(session->rtp.video_bw_estimator);
 	}
 	session->video_bandwidth_estimator_enabled = params->enabled;
@@ -424,7 +430,9 @@ rtp_session_set_scheduling_mode (RtpSession * session, int yesno)
 #ifndef _USER_ORTP_ADEP
 			session->sched = sched;
 #endif
+			ORTP_SESSION_UNLOCK(session);
 			rtp_scheduler_add_session (sched, session);
+			ORTP_SESSION_LOCK(session);
 		}
 		else
 			ortp_warning
@@ -468,10 +476,11 @@ rtp_session_set_blocking_mode (RtpSession * session, int yesno)
 **/
 
 void
-rtp_session_set_profile (RtpSession * session, RtpProfile * profile)
+rtp_session_set_profile (RtpSession * session, RtpProfile * p_profile)
 {
-	session->snd.profile = profile;
-	session->rcv.profile = profile;
+	session->snd.profile = p_profile;
+	session->rcv.profile = p_profile;
+	
 	rtp_session_telephone_events_supported(session);
 }
 
@@ -518,9 +527,9 @@ int rtp_session_get_target_upload_bandwidth(RtpSession *session) {
 **/
 
 void
-rtp_session_set_send_profile (RtpSession * session, RtpProfile * profile)
+rtp_session_set_send_profile (RtpSession * session, RtpProfile * p_profile)
 {
-	session->snd.profile = profile;
+	session->snd.profile = p_profile;
 	rtp_session_send_telephone_events_supported(session);
 }
 
@@ -536,9 +545,9 @@ rtp_session_set_send_profile (RtpSession * session, RtpProfile * profile)
 **/
 
 void
-rtp_session_set_recv_profile (RtpSession * session, RtpProfile * profile)
+rtp_session_set_recv_profile (RtpSession * session, RtpProfile * p_profile)
 {
-	session->rcv.profile = profile;
+	session->rcv.profile = p_profile;
 	rtp_session_recv_telephone_events_supported(session);
 }
 
@@ -1008,7 +1017,7 @@ mblk_t * rtp_session_create_packet_in_place(RtpSession *session,uint8_t *buffer,
 }
 
 
-ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, uint32_t packet_ts, uint32_t send_ts)
+static int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, uint32_t packet_ts, uint32_t send_ts)
 {
 	rtp_header_t *rtp;
 	uint32_t packet_time;
@@ -1632,15 +1641,15 @@ ortp_socket_t rtp_session_get_rtcp_socket(const RtpSession *session){
  * Register an event queue.
  * An application can use an event queue to get informed about various RTP events.
 **/
-void rtp_session_register_event_queue(RtpSession *session, OrtpEvQueue *q){
+void rtp_session_register_event_queue(RtpSession *session, void *q){
     session->eventqs=o_list_append(session->eventqs,q);
 }
 
-void rtp_session_unregister_event_queue(RtpSession *session, OrtpEvQueue *q){
+void rtp_session_unregister_event_queue(RtpSession *session, void *q){
     session->eventqs=o_list_remove(session->eventqs,q);
 }
 
-void rtp_session_dispatch_event(RtpSession *session, OrtpEvent *ev){
+void rtp_session_dispatch_event(RtpSession *session, void *ev){
 	OList *it;
 	int i;
 	for(i=0,it=session->eventqs;it!=NULL;it=it->next,++i){
@@ -1667,7 +1676,7 @@ void rtp_session_uninit (RtpSession * session)
 {	
 	RtpTransport *rtp_meta_transport = NULL;
 	RtpTransport *rtcp_meta_transport = NULL;
-
+	ORTP_SESSION_LOCK(session);
 	/* Stop and destroy network simulator first, as its thread must be stopped before we free anything else in the RtpSession. */
 	if (session->net_sim_ctx)
 		ortp_network_simulator_destroy(session->net_sim_ctx);
@@ -1689,7 +1698,9 @@ void rtp_session_uninit (RtpSession * session)
 	if (session->flags & RTP_SESSION_SCHEDULED)
 	{
 #ifndef _USER_ORTP_ADEP
+		ORTP_SESSION_UNLOCK(session);
 		rtp_scheduler_remove_session (session->sched,session);
+		ORTP_SESSION_LOCK(session);
 #endif
 	}
 	
@@ -1760,6 +1771,7 @@ void rtp_session_uninit (RtpSession * session)
 		freemsg(session->rtcp.tmmbr_info.received);
 	if (session->rtcp.send_algo.fb_packets)
 		freemsg(session->rtcp.send_algo.fb_packets);
+	ORTP_SESSION_UNLOCK(session);	
 	ortp_mutex_destroy(&session->main_mutex);
 }
 
@@ -2417,7 +2429,7 @@ typedef struct _MetaRtpTransportImpl{
 	bool_t has_set_session;
 } MetaRtpTransportImpl;
 
-ortp_socket_t meta_rtp_transport_getsocket(RtpTransport *t) {
+static ortp_socket_t meta_rtp_transport_getsocket(RtpTransport *t) {
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)t->data;
 
 	if (m->endpoint!=NULL){
@@ -2426,7 +2438,7 @@ ortp_socket_t meta_rtp_transport_getsocket(RtpTransport *t) {
 	return (m->is_rtp ? t->session->rtp.gs.socket : t->session->rtcp.gs.socket);
 }
 
-void meta_rtp_set_session(RtpSession *s,MetaRtpTransportImpl *m){
+static void meta_rtp_set_session(RtpSession *s,MetaRtpTransportImpl *m){
 	OList *elem;
 	/*if session has not been set yet, do nothing*/
 	if (s==NULL){
@@ -2601,7 +2613,7 @@ int meta_rtp_transport_modifier_inject_packet_to_recv(RtpTransport *t, RtpTransp
 }
 
 
-int meta_rtp_transport_recvfrom(RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen) {
+static int meta_rtp_transport_recvfrom(RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen) {
 	int ret;
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)t->data;
 	OList *elem;
@@ -2685,7 +2697,7 @@ int meta_rtp_transport_recvfrom(RtpTransport *t, mblk_t *msg, int flags, struct 
 	return ret;
 }
 
-void  meta_rtp_transport_close(RtpTransport *t) {
+static void  meta_rtp_transport_close(RtpTransport *t) {
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)t->data;
 	if (m->endpoint!=NULL){
 		m->endpoint->t_close(m->endpoint);

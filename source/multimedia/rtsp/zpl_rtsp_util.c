@@ -13,7 +13,7 @@
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_util.h"
-
+#include "zpl_rtsp_base64.h"
 
 static rtsp_log_callback rtsp_log_cb_default = NULL;
 
@@ -63,7 +63,9 @@ void rtsp_vlog(const char *file, const char *func, const int line, int livel, co
  * rtsp://user:pass@192.168.1.1/media/channel=1&level=1
  * rtsp://192.168.1.1:9988/media/channel=1&level=1
  * rtsp://192.168.1.1:9988/media.h264&multcast
+ * rtsp://192.168.1.1:9988/media.h264
  */
+#if 0
 void rtsp_url_stream_path(const char *url, rtsp_urlpath_t *urlpath)
 {
     int port = 0;
@@ -151,19 +153,94 @@ void rtsp_url_stream_path(const char *url, rtsp_urlpath_t *urlpath)
         }
         urlpath->channel = urlpath->level = -1;
     }
+} 
+#else
+
+
+static void rtsp_url_stream_path_split(const char *url, os_url_t *urlpath)
+{
+    char *p, *brk;
+    char filename[512];
+    p = strstr(url, "media");
+    if(p)
+        p+=6;
+    //if(url[0] == '/')
+    //    p++;  
+    if(p)
+    {
+        brk = strstr(p, "channel");
+        if(brk && strstr(p, "level"))
+        {
+            sscanf(brk, "channel=%d", &urlpath->channel);
+            p = brk + 8;
+            brk = strstr(p, "level");
+            if(brk)
+            {
+                sscanf(brk, "level=%d", &urlpath->level);
+                p = brk + 6;
+            }
+        }
+        else if(!strstr(p, "channel") && !strstr(p, "level"))
+        {
+            urlpath->channel = urlpath->level = -1;
+            memset(filename, 0, sizeof(filename));
+            if(strstr(p, "&"))
+            {
+                sscanf(p, "%[^&]", filename);
+            }
+            else
+                strcpy(filename, p);
+
+            if(strlen(filename))
+                urlpath->filename = strdup(filename);   
+        }
+        if(strstr(p, "&rtsp")||strstr(p, "&tcp"))
+        {
+            urlpath->mode = RTSP_TRANSPORT_RTP_TCP;
+        }
+        else if(strstr(p, "&multcast"))
+        {
+            urlpath->mode = RTSP_TRANSPORT_RTP_MULTCAST;
+        }
+        else if(strstr(p, "&tls"))
+        {
+            urlpath->mode = RTSP_TRANSPORT_RTP_TLS;
+        }
+        else
+        {
+            urlpath->mode = RTSP_TRANSPORT_RTP_UDP;
+        }
+    }    
 }
 
+void rtsp_url_stream_path(const char *url, os_url_t *urlpath)
+{
+    memset(urlpath, 0, sizeof(os_url_t));
+    if(os_url_split(url, urlpath) == OK)
+    {
+        char fullpath[1024];
+        if(urlpath->filename)
+        {
+            memset(fullpath, 0, sizeof(fullpath));
+            strcpy(fullpath, urlpath->filename);
+            free(urlpath->filename);
+            urlpath->filename = NULL;
+            rtsp_url_stream_path_split(fullpath, urlpath);
+        }
+    }
+}
+#endif
 #if defined(RTSP_DEBUG_ENABLE)
 int rtsp_urlpath_test(char *url)
 {
-    rtsp_urlpath_t urlpath;
-    memset(&urlpath, 0, sizeof(rtsp_urlpath_t));
+    os_url_t urlpath;
+    memset(&urlpath, 0, sizeof(os_url_t));
     rtsp_url_stream_path(url,  &urlpath);
 
     fprintf(stdout, "===========================================\r\n");
-    fprintf(stdout, "===============username   :%s\r\n", urlpath.username);
-    fprintf(stdout, "===============password   :%s\r\n", urlpath.password);
-    fprintf(stdout, "===============hostname   :%s\r\n", urlpath.hostname);
+    fprintf(stdout, "===============username   :%s\r\n", urlpath.user);
+    fprintf(stdout, "===============password   :%s\r\n", urlpath.pass);
+    fprintf(stdout, "===============hostname   :%s\r\n", urlpath.host);
     fprintf(stdout, "===============port       :%d\r\n", urlpath.port);
     fprintf(stdout, "===============channel    :%d\r\n", urlpath.channel);
     fprintf(stdout, "===============level      :%d\r\n", urlpath.level);
@@ -217,4 +294,5 @@ int rtsp_authenticate_option(const char *auth, const char *username, const char 
             }
         }
     }
+    return -1;
 }

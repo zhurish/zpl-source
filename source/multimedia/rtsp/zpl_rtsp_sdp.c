@@ -143,10 +143,12 @@ int sdp_token_crlf(struct sdp_session* sdp)
 {
     char c = sdp->misc.sdp_data[sdp->misc.sdp_offset];
     sdp->misc.sdp_start = &sdp->misc.sdp_data[sdp->misc.sdp_offset];
-    while('\t' == c || '\r' == c || '\n' == c)
+    while('\t' == c || '\r' == c || '\n' == c )
     {
         c = sdp->misc.sdp_data[++sdp->misc.sdp_offset];
         sdp->misc.sdp_start++;
+        if(sdp->misc.sdp_offset >= sdp->misc.sdp_len)
+            break;
     }
     // sdp end line
     if('\0' == sdp->misc.sdp_data[sdp->misc.sdp_offset])
@@ -318,7 +320,7 @@ static int _sdp_method_parse(char *src, uint32_t len, struct sdp_session *sessio
         if(session->misc.version == NULL)
         session->misc.version = strdup(version);
 
-        //fprintf(stdout, "=========%s==%s==%s=====\r\n", tmp, urltmp, version);
+        fprintf(stdout, "=========%s==%s==%s=====\r\n", tmp, urltmp, version);
         return 1;
     }
     return 0;
@@ -407,8 +409,8 @@ static int _sdp_text_prase(bool srv, struct sdp_session *session)
             }
         }
     }
-     fprintf(stdout, "==========gggggggggggggg============media_count=%d\r\n", session->media_count);
-    sdp_text_debug(session);
+    //fprintf(stdout, "==========gggggggggggggg============media_count=%d\r\n", session->media_count);
+    //sdp_text_debug(session);
     return 0;
 }
 

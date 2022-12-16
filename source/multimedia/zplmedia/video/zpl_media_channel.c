@@ -56,7 +56,7 @@ static int zpl_media_channel_default_free(zpl_media_channel_t *chn)
 	if (chn)
 	{
 		if (chn->buffer_queue)
-            zpl_skbqueue_destroy(chn->buffer_queue);
+            chn->buffer_queue = NULL;
 	}
 	return OK;
 }
@@ -168,7 +168,7 @@ int zpl_media_channel_hwdestroy(zpl_media_channel_t *chn)
         }
         lstDelete(media_channel_list, (NODE *)chn);
         if (chn->buffer_queue)
-            zpl_skbqueue_destroy(chn->buffer_queue);
+            chn->buffer_queue = NULL;
         free(chn);
     }
     return OK;
@@ -201,7 +201,7 @@ int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E chann
 
             lstDelete(media_channel_list, (NODE *)chn);
             if (chn->buffer_queue)
-                zpl_skbqueue_destroy(chn->buffer_queue);
+                chn->buffer_queue = NULL;
             free(chn);
             break;
         }
@@ -250,7 +250,7 @@ int zpl_media_channel_create(zpl_int32 channel,
 			if (zpl_media_hal_create(chn, chn->buffer_queue) != OK)
 			{
 				zpl_media_debugmsg_debug("can not create hal for media channel(%d/%d)", channel, channel_index);
-				zpl_skbqueue_destroy(chn->buffer_queue);
+				chn->buffer_queue = NULL;
 				os_free(chn);
 				return ERROR;
 			}
@@ -356,7 +356,7 @@ zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool 
         file = zpl_media_file_create(filename, rd?"r":"a+");
         if (file == NULL)
         {
-            zpl_skbqueue_destroy(chn->buffer_queue);
+            chn->buffer_queue = NULL;
             free(chn);
             return NULL;
         }
@@ -447,7 +447,7 @@ int zpl_media_channel_filedestroy(zpl_char *filename)
                     zpl_media_file_destroy(file);
                     lstDelete(media_channel_list, (NODE *)chn);
                     if (chn->buffer_queue)
-                        zpl_skbqueue_destroy(chn->buffer_queue);
+                        chn->buffer_queue = NULL;
                     free(chn);
                     break;
                 }
@@ -704,7 +704,7 @@ int zpl_media_channel_load(zpl_void *obj)
 		{
 			if (zpl_media_hal_create(chn, chn->buffer_queue) != OK)
 			{
-				zpl_skbqueue_destroy(chn->buffer_queue);
+				chn->buffer_queue = NULL;
 				os_free(chn);
 				return ERROR;
 			}

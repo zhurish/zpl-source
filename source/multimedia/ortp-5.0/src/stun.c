@@ -112,6 +112,8 @@
 #define NOSSL 1
 #endif
 
+#include <ortp/logging.h>
+
 #include "ortp/stun_udp.h"
 #include "ortp/stun.h"
 #include "ortp/ortp.h"
@@ -722,10 +724,10 @@ stunParseMessage( char* buf, unsigned int bufLen, StunMessage *msg)
       {
             msg->hasDontFragment = TRUE;
       }
-      else if (atrType == TA_DEPRECATEDTIMERVAL)
+      /*else if (atrType == TA_DEPRECATEDTIMERVAL)
       {
            ortp_warning("stun: deprecated attribute TA_DEPRECATEDTIMERVAL");
-      }
+      }*/
       else if (atrType == TA_RESERVATIONTOKEN)
       {
             msg->hasReservationToken = TRUE;
@@ -1256,7 +1258,7 @@ stunRand(void)
 
 /* return a random number to use as a port */
 static int
-randomPort()
+randomPort(void)
 {
    int min=0x4000;
    int max=0x7FFF;
@@ -2603,8 +2605,8 @@ stunOpenSocketPair(StunAddress4 *dest,
       port = randomPort();
    }
 	
-   *fd1=-1;
-   *fd2=-1;
+   //*fd1=-1;
+   //*fd2=-1;
 	
    if ( srcAddr )
    {

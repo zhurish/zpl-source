@@ -24,13 +24,21 @@
  *  Copyright  2004  Simon Morlat
  *  Email simon dot morlat at linphone dot org
  ****************************************************************************/
-
-#include "ortp/ortp.h"
-#include "ortp/rtpsession.h"
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
+#include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
 #include "ortp/rtcp.h"
 #include "utils.h"
-#include "rtpsession_priv.h"
 #include "jitterctl.h"
+
 
 #define rtcp_bye_set_ssrc(b,pos,ssrc)	(b)->ssrc[pos]=htonl(ssrc)
 #define rtcp_bye_get_ssrc(b,pos)		ntohl((b)->ssrc[pos])
@@ -494,11 +502,11 @@ static float rtcp_rand(float t) {
  * This is a simplified version with this limit of the algorithm described in
  * the appendix A.7 of RFC3550.
  */
-void compute_rtcp_interval(RtpSession *session) {
+void compute_rtcp_interval(void *p) {
 	float t;
 	float rtcp_min_time;
 	float rtcp_bw;
-
+	RtpSession *session = p;
 	if (session->target_upload_bandwidth == 0) return;
 
 	/* Compute target RTCP bandwidth in bits/s. */
@@ -627,11 +635,11 @@ void rtp_session_run_rtcp_send_scheduler(RtpSession *session) {
 	}
 }
 
-void rtp_session_rtcp_process_send(RtpSession *session) {
+void rtp_session_rtcp_process_send(void *session) {
 	rtp_session_run_rtcp_send_scheduler(session);
 }
 
-void rtp_session_rtcp_process_recv(RtpSession *session){
+void rtp_session_rtcp_process_recv(void *session){
 	rtp_session_run_rtcp_send_scheduler(session);
 }
 
@@ -682,13 +690,14 @@ int rtp_session_bye(RtpSession *session, const char *reason) {
     return ret;
 }
 
-OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, RtpSession *session){
+OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, void *session){
 	OrtpLossRateEstimator *obj=ortp_malloc(sizeof(OrtpLossRateEstimator));
 	ortp_loss_rate_estimator_init(obj,min_packet_count_interval, min_time_ms_interval, session);
 	return obj;
 }
 
-void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, RtpSession *session){
+void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, void *p){
+	RtpSession *session = p;
 	memset(obj,0,sizeof(*obj));
 	obj->min_packet_count_interval=min_packet_count_interval;
 	obj->last_ext_seq=rtp_session_get_seq_number(session);
@@ -699,9 +708,10 @@ void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_co
 	obj->last_estimate_time_ms=(uint64_t)-1;
 }
 
-bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj, const RtpSession *session, const report_block_t *rb){
+bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj, const void *p, const report_block_t *rb){
 	int32_t cum_loss=report_block_get_cum_packet_lost(rb);
 	int32_t extseq=report_block_get_high_ext_seq(rb);
+	RtpSession *session = p;
 	//int32_t diff_unique_outgoing=(int32_t)(session->stats.packet_sent-obj->last_packet_sent_count);
 	//int32_t diff_total_outgoing=diff_unique_outgoing+(int32_t)(session->stats.packet_dup_sent-obj->last_dup_packet_sent_count);
 	int32_t diff;
@@ -773,9 +783,10 @@ void ortp_loss_rate_estimator_destroy(OrtpLossRateEstimator *obj){
 	ortp_free(obj);
 }
 
-void ortp_rtcp_msg_debug(const struct _RtpSession *session, unsigned char *ptr,
+void ortp_rtcp_msg_debug(const void *p, unsigned char *ptr,
                          uint32_t len, const char *dest)
 {
+	//RtpSession *session = p;
     rtcp_common_header_t *ch = (rtcp_common_header_t *)ptr;
     rtcp_sr_t *rtcpsr = (rtcp_sr_t *)ptr;
     rtcp_rr_t *rtcprr = (rtcp_rr_t *)ptr;

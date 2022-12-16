@@ -439,7 +439,7 @@ RTSP_API int sdp_build_respone_option(uint8_t *src, const char *srvname, int cod
 
 
 
-RTSP_API int rtsp_sdp_hdr_prase_test();
+RTSP_API int rtsp_sdp_hdr_prase_test(void);
 
 RTSP_END_DECLS
 

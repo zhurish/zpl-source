@@ -22,97 +22,33 @@
 #define _GNU_SOURCE
 #endif
 
-#if __APPLE__
-#include "TargetConditionals.h"
-#endif
 
 #ifdef HAVE_CONFIG_H
-#include "ortp-config.h" /*needed for HAVE_SYS_UIO_H and HAVE_ARC4RANDOM */
+#include "ortp-config.h"
 #endif
-
-#include "ortp/ortp.h"
-#include "utils.h"
-#include "ortp/rtpsession.h"
 #include "rtpsession_priv.h"
-
-#if (_WIN32_WINNT >= 0x0600)
-#include <delayimp.h>
-#undef ExternC
-#ifdef ORTP_WINDOWS_DESKTOP
-#include <QOS2.h>
-#include <VersionHelpers.h>
-#endif
-#endif
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
+#include "ortp/rtcp.h"
+#include "utils.h"
+#include "jitterctl.h"
 
 #if (defined(_WIN32) || defined(_WIN32_WCE)) && defined(ORTP_WINDOWS_DESKTOP)
 #include <mswsock.h>
 #else
-#define HAVE_RECVMSG
-#define HAVE_SENDMSG
+#define USE_RECVMSG
+#define USE_SENDMSG
 #endif
 
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#ifdef HAVE_RECVMSG
-#define USE_RECVMSG 1
-#endif
-#ifdef HAVE_SENDMSG
-#define USE_SENDMSG 1
-#endif
-#endif
 
 #define can_connect(s)	( (s)->use_connect && !(s)->symmetric_rtp)
 
-#if defined(_WIN32) || defined(_WIN32_WCE)
-#ifndef WSAID_WSARECVMSG
-/* http://source.winehq.org/git/wine.git/blob/HEAD:/include/mswsock.h */
-#define WSAID_WSARECVMSG {0xf689d7c8,0x6f1f,0x436b,{0x8a,0x53,0xe5,0x4f,0xe3,0x51,0xc3,0x22}}
-#ifndef MAX_NATURAL_ALIGNMENT
-#define MAX_NATURAL_ALIGNMENT sizeof(DWORD)
-#endif
-#ifndef TYPE_ALIGNMENT
-#define TYPE_ALIGNMENT(t) FIELD_OFFSET(struct { char x; t test; },test)
-#endif
-typedef WSACMSGHDR *LPWSACMSGHDR;
-#ifndef WSA_CMSGHDR_ALIGN
-#define WSA_CMSGHDR_ALIGN(length) (((length) + TYPE_ALIGNMENT(WSACMSGHDR)-1) & (~(TYPE_ALIGNMENT(WSACMSGHDR)-1)))
-#endif
-#ifndef WSA_CMSGDATA_ALIGN
-#define WSA_CMSGDATA_ALIGN(length) (((length) + MAX_NATURAL_ALIGNMENT-1) & (~(MAX_NATURAL_ALIGNMENT-1)))
-#endif
-#ifndef WSA_CMSG_FIRSTHDR
-#define WSA_CMSG_FIRSTHDR(msg) (((msg)->Control.len >= sizeof(WSACMSGHDR)) ? (LPWSACMSGHDR)(msg)->Control.buf : (LPWSACMSGHDR)NULL)
-#endif
-#ifndef WSA_CMSG_NXTHDR
-#define WSA_CMSG_NXTHDR(msg,cmsg) ((!(cmsg)) ? WSA_CMSG_FIRSTHDR(msg) : ((((u_char *)(cmsg) + WSA_CMSGHDR_ALIGN((cmsg)->cmsg_len) + sizeof(WSACMSGHDR)) > (u_char *)((msg)->Control.buf) + (msg)->Control.len) ? (LPWSACMSGHDR)NULL : (LPWSACMSGHDR)((u_char *)(cmsg) + WSA_CMSGHDR_ALIGN((cmsg)->cmsg_len))))
-#endif
-#ifndef WSA_CMSG_DATA
-#define WSA_CMSG_DATA(cmsg) ((u_char *)(cmsg) + WSA_CMSGDATA_ALIGN(sizeof(WSACMSGHDR)))
-#endif
-#endif
-#undef IPSTACK_CMSG_FIRSTHDR
-#define IPSTACK_CMSG_FIRSTHDR WSA_CMSG_FIRSTHDR
-#undef IPSTACK_CMSG_NXTHDR
-#define IPSTACK_CMSG_NXTHDR WSA_CMSG_NXTHDR
-#undef IPSTACK_CMSG_DATA
-#define IPSTACK_CMSG_DATA WSA_CMSG_DATA
-typedef INT  (WINAPI * LPFN_WSARECVMSG)(SOCKET, LPWSAMSG, LPDWORD, LPWSAOVERLAPPED, LPWSAOVERLAPPED_COMPLETION_ROUTINE);
-static LPFN_WSARECVMSG ortp_WSARecvMsg = NULL;
 
-#endif
-
-#if defined(_WIN32) || defined(_WIN32_WCE) || defined(__QNX__)
-/* Mingw32 does not define AI_V4MAPPED, however it is supported starting from Windows Vista. QNX also does not define AI_V4MAPPED. */
-#	ifndef AI_V4MAPPED
-#	define AI_V4MAPPED 0x00000800
-#	endif
-#	ifndef AI_ALL
-#	define AI_ALL 0x00000100
-#	endif
-#	ifndef IPSTACK_IPV6_V6ONLY
-#	define IPSTACK_IPV6_V6ONLY 27
-#	endif
-#endif
 
 #ifndef IN6_IS_ADDR_MULTICAST
 #define IN6_IS_ADDR_MULTICAST(i)	(((uint8_t *) (i))[0] == 0xff)
@@ -632,53 +568,6 @@ int rtp_session_set_dscp(RtpSession *session, int dscp){
     // Don't do anything if socket hasn't been created yet
     if (ipstack_invalid(session->rtp.gs.socket)) return 0;
 
-#if (_WIN32_WINNT >= 0x0600) && defined(ORTP_WINDOWS_DESKTOP)
-#if !defined(ENABLE_MICROSOFT_STORE_APP) && !defined(ORTP_WINDOWS_UWP)
-    ortp_message("check OS support for qwave.lib");
-    if (IsWindowsVistaOrGreater()) {
-        if (session->dscp==0)
-            tos=QOSTrafficTypeBestEffort;
-        else if (session->dscp==0x8)
-            tos=QOSTrafficTypeBackground;
-        else if (session->dscp==0x28)
-            tos=QOSTrafficTypeAudioVideo;
-        else if (session->dscp==0x38)
-            tos=QOSTrafficTypeVoice;
-        else
-            tos=QOSTrafficTypeExcellentEffort; /* 0x28 */
-
-        if (session->rtp.QoSHandle==NULL) {
-            QOS_VERSION version;
-            BOOL QoSResult;
-
-            version.MajorVersion = 1;
-            version.MinorVersion = 0;
-
-            QoSResult = QOSCreateHandle(&version, &session->rtp.QoSHandle);
-
-            if (QoSResult != TRUE){
-                ortp_error("QOSCreateHandle failed to create handle with error %d", GetLastError());
-                retval=-1;
-            }
-        }
-        if (session->rtp.QoSHandle!=NULL) {
-            BOOL QoSResult;
-            QoSResult = QOSAddSocketToFlow(
-                        session->rtp.QoSHandle,
-                        session->rtp.gs.socket,
-                        (struct sockaddr*)&session->rtp.gs.rem_addr,
-                        tos,
-                        QOS_NON_ADAPTIVE_FLOW,
-                        &session->rtp.QoSFlowID);
-
-            if (QoSResult != TRUE){
-                ortp_error("QOSAddSocketToFlow failed to add a flow with error %d", GetLastError());
-                retval=-1;
-            }
-        }
-    } else {
-#endif //ENABLE_MICROSOFT_STORE_APP
-#endif
         // DSCP value is in the upper six bits of the TOS field
         tos = (session->dscp << 2) & 0xFC;
         switch (session->rtp.gs.sockfamily) {
@@ -706,11 +595,6 @@ int rtp_session_set_dscp(RtpSession *session, int dscp){
                 ortp_error("Fail to set DSCP value on rtcp socket: %s",getSocketError());
             }
         }
-#if (_WIN32_WINNT >= 0x0600) && defined(ORTP_WINDOWS_DESKTOP)
-#if !defined(ENABLE_MICROSOFT_STORE_APP) && !defined(ORTP_WINDOWS_UWP)
-    }
-#endif // ENABLE_MICROSOFT_STORE_APP
-#endif
     return retval;
 }
 
@@ -878,7 +762,7 @@ _rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, 
         }else if (session->flags & RTP_SOCKET_CONNECTED){
             /*must dissolve association done by connect().
             See connect(2) manpage*/
-            struct ipstack_sockaddr sa;
+            //struct ipstack_sockaddr sa;
             sa.sa_family=IPSTACK_AF_UNSPEC;
             if (ipstack_connect(session->rtp.gs.socket,&sa,sizeof(sa))<0){
                 ortp_error("Cannot dissolve connect() association for rtp socket: %s", getSocketError());
@@ -902,10 +786,8 @@ end:
             ortp_free(aux_rtp);
             ortp_free(aux_rtcp);
         }else{
-            ortp_mutex_lock(&session->main_mutex);
             session->rtp.gs.aux_destinations=o_list_append(session->rtp.gs.aux_destinations,aux_rtp);
             session->rtcp.gs.aux_destinations=o_list_append(session->rtcp.gs.aux_destinations,aux_rtcp);
-            ortp_mutex_unlock(&session->main_mutex);
         }
     }
     return err;
@@ -935,10 +817,8 @@ rtp_session_add_aux_remote_addr_full(RtpSession * session, const char * rtp_addr
 }
 
 void rtp_session_clear_aux_remote_addr(RtpSession * session){
-    ortp_mutex_lock(&session->main_mutex);
     ortp_stream_clear_aux_addresses(&session->rtp.gs);
     ortp_stream_clear_aux_addresses(&session->rtcp.gs);
-    ortp_mutex_unlock(&session->main_mutex);
 }
 
 void rtp_session_set_sockets(RtpSession *session, ortp_socket_t rtpfd, ortp_socket_t rtcpfd){
@@ -1016,92 +896,7 @@ void rtp_session_flush_sockets(RtpSession *session){
 }
 
 
-#if defined(_WIN32) || defined(_WIN32_WCE)
-#define MAX_BUF 64
-static int rtp_sendmsg(ortp_socket_t sock, mblk_t *m, const struct ipstack_sockaddr *rem_addr, socklen_t addr_len) {
-    WSAMSG msg = {0};
-    WSABUF wsabuf[MAX_BUF];
-    DWORD dwBytes = 0;
-    CHAR ctrlBuffer[512] = {0};
-    int error;
-    int controlSize = 0;
-    int wsabufLen;
-    mblk_t *mTrack = m;
-    PWSACMSGHDR cmsg = NULL;
-    struct sockaddr remote_address = {0};
-    struct addrinfo* feed_server = NULL;
 
-    for (wsabufLen = 0; wsabufLen < MAX_BUF && mTrack != NULL; mTrack = mTrack->b_cont, ++wsabufLen) {
-        wsabuf[wsabufLen].len = (ULONG)(mTrack->b_wptr - mTrack->b_rptr);
-        wsabuf[wsabufLen].buf = mTrack->b_rptr;
-    }
-    msg.lpBuffers = wsabuf; // contents
-    msg.dwBufferCount = wsabufLen;
-    if (wsabufLen == MAX_BUF) {
-        int count = 0;
-        while (mTrack != NULL) {
-            ++count;
-            mTrack = mTrack->b_cont;
-        }
-        ortp_error("Too long msgb (%i fragments) , didn't fit into iov, end discarded.", MAX_BUF + count);
-    }
-    if( addr_len == 0){
-        // Get the local host information
-        msg.namelen = 0;
-        msg.name = NULL;
-    }else{
-        msg.namelen = addr_len;
-        msg.name = (SOCKADDR *)rem_addr;
-    }
-    msg.Control.buf = ctrlBuffer;
-    msg.Control.len = sizeof(ctrlBuffer);
-    cmsg = WSA_CMSG_FIRSTHDR(&msg);
-#ifdef IPV6_PKTINFO
-    if (m->recv_addr.family == IPSTACK_AF_INET6 && !IN6_IS_ADDR_UNSPECIFIED(&m->recv_addr.addr.ipi6_addr) && !IN6_IS_ADDR_LOOPBACK(&m->recv_addr.addr.ipi6_addr)) {
-        {
-            IN6_PKTINFO *pPktInfo = NULL;
-            cmsg->cmsg_len = WSA_CMSG_LEN(sizeof(IN6_PKTINFO));
-            cmsg->cmsg_level = IPSTACK_IPPROTO_IPV6;
-            cmsg->cmsg_type = IPV6_PKTINFO;
-            pPktInfo = (IN6_PKTINFO*)WSA_CMSG_DATA(cmsg);
-            pPktInfo->ipi6_addr = m->recv_addr.addr.ipi6_addr;
-            controlSize += WSA_CMSG_SPACE(sizeof(IN6_PKTINFO));
-            cmsg = WSA_CMSG_NXTHDR(&msg, cmsg);
-        }
-    }
-#endif
-#ifdef IPSTACK_IP_PKTINFO
-    if (m->recv_addr.family == IPSTACK_AF_INET) { // Add IPV4 to the message control
-        IN_PKTINFO *pPktInfo = NULL;
-        cmsg->cmsg_len = WSA_CMSG_LEN(sizeof(IN_PKTINFO));
-        cmsg->cmsg_level = IPSTACK_IPPROTO_IP;
-        cmsg->cmsg_type = IPSTACK_IP_PKTINFO;
-        pPktInfo = (IN_PKTINFO*)WSA_CMSG_DATA(cmsg);
-        pPktInfo->ipi_addr = m->recv_addr.addr.ipi_addr;
-        controlSize += WSA_CMSG_SPACE(sizeof(IN_PKTINFO));
-    }
-#endif
-    msg.Control.len = controlSize;
-    if (controlSize == 0)
-        msg.Control.buf = NULL;
-    error = WSASendMsg((SOCKET)sock, &msg, 0, &dwBytes, NULL, NULL);
-    //fprintf(stdout, "============rtp_sendmsg=========%s\r\n", strerror(WSAGetLastError()));
-    if( error == SOCKET_ERROR && controlSize != 0){// Debug note : if unexpected WSAEFAULT, check the location of memory allocation of msg. It must be on ortp addresses space.
-        int errorCode = WSAGetLastError();
-        if( errorCode == WSAEINVAL || errorCode==WSAENETUNREACH || errorCode==WSAEFAULT)
-        {
-            msg.Control.len = 0;
-            msg.Control.buf = NULL;
-            error = WSASendMsg((SOCKET)sock, &msg, 0, &dwBytes, NULL, NULL);
-        }
-    }
-    mTrack = m;
-    if(error >= 0)
-        return dwBytes;// Return the bytes that have been sent
-    else
-        return error;
-}
-#else
 #ifdef USE_SENDMSG
 #if 1
 static int rtp_sendmsg(ortp_socket_t sock,mblk_t *m, const struct ipstack_sockaddr *rem_addr, socklen_t addr_len){
@@ -1267,7 +1062,7 @@ static int rtp_sendmsg(ortp_socket_t sock,mblk_t *m, const struct sockaddr *rem_
 }
 #endif
 #endif
-#endif
+
 
 ortp_socket_t rtp_session_get_socket(RtpSession *session, bool_t is_rtp){
     return is_rtp ? session->rtp.gs.socket : session->rtcp.gs.socket;
@@ -1550,14 +1345,12 @@ int rtp_session_rtp_send (RtpSession * session, mblk_t * m){
     /*first send to main destination*/
     error=rtp_session_rtp_sendto(session,m,destaddr,destlen,FALSE);
     /*then iterate over auxiliary destinations*/
-    ortp_mutex_lock(&session->main_mutex);
     for(elem=session->rtp.gs.aux_destinations;elem!=NULL;elem=elem->next){
         OrtpAddress *oaddr=(OrtpAddress*)elem->data;
         //fprintf(stdout, "============================rtp_session_rtp_send======aux_destinations=================seq=%d\r\n",ntohs(rtp_session_mblk_get_seq(m)));
         //fflush(stdout);
         rtp_session_rtp_sendto(session,m,(struct ipstack_sockaddr*)&oaddr->addr,oaddr->len,TRUE);
     }
-    ortp_mutex_unlock(&session->main_mutex);
     freemsg(m);
     return error;
 }
@@ -1658,47 +1451,6 @@ int rtp_session_rtp_recv_abstract(ortp_socket_t socket, mblk_t *msg, int flags, 
     int ret;
     int bufsz = (int) (msg->b_datap->db_lim - msg->b_datap->db_base);
     char control[512] = {0};
-#ifdef _WIN32
-    WSAMSG msghdr = {0};
-    WSACMSGHDR *cmsghdr;
-    WSABUF data_buf;
-    DWORD bytes_received=0;
-    //int error = 0;
-    /*fd_set rset;
-    FD_ZERO(&rset);
-    FD_SET(socket, &rset);
-    struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 2000;
-
-    ret = select(socket + 1, &rset, NULL, NULL, &tv);
-    if(ret <= 0)
-        return ret;*/
-    if (ortp_WSARecvMsg == NULL) {
-        ret = recvfrom(socket, (char *)msg->b_wptr, bufsz, flags, from, fromlen);
-        //fprintf(stdout, "%s[%d] recvfrom %d byte(%s-%s)\r\n", __func__, __LINE__, ret, strerror(errno), getSocketError());
-        return ret;//recvfrom(socket, (char *)msg->b_wptr, bufsz, flags, from, fromlen);
-    }
-
-    if(from != NULL && fromlen != NULL) {
-        msghdr.name = from;
-        msghdr.namelen = *fromlen;
-    }
-    data_buf.buf = (char *)msg->b_wptr;
-    data_buf.len = bufsz;
-    msghdr.dwBufferCount = 1;
-    msghdr.lpBuffers = &data_buf;
-    msghdr.Control.buf = control;
-    msghdr.Control.len = sizeof(control);
-    msghdr.dwFlags = flags;
-    //fprintf(stdout, "%s[%d] ortp_WSARecvMsg\r\n", __func__, __LINE__);
-    ret = ortp_WSARecvMsg(socket, &msghdr, &bytes_received, NULL, NULL);
-    if(fromlen != NULL)
-        *fromlen = msghdr.namelen;
-    if(ret >= 0) {
-        ret = bytes_received;
-        //fprintf(stdout, "%s[%d] ortp_WSARecvMsg %d byte\r\n", __func__, __LINE__, bytes_received);
-#else
     struct ipstack_msghdr msghdr = {0};
     msghdr.msg_control = control;
     msghdr.msg_controllen = sizeof(control);
@@ -1718,7 +1470,7 @@ int rtp_session_rtp_recv_abstract(ortp_socket_t socket, mblk_t *msg, int flags, 
 #endif
     if(ret >= 0) {
         struct ipstack_cmsghdr *cmsghdr;
-#endif
+
         for (cmsghdr = IPSTACK_CMSG_FIRSTHDR(&msghdr); cmsghdr != NULL ; cmsghdr = IPSTACK_CMSG_NXTHDR(&msghdr, cmsghdr)) {
 #ifdef IPSTACK_SO_TIMESTAMP
             if (cmsghdr->cmsg_level == IPSTACK_SOL_SOCKET && cmsghdr->cmsg_type == SCM_TIMESTAMP) {
@@ -1782,21 +1534,14 @@ int rtp_session_rtp_recv_abstract(ortp_socket_t socket, mblk_t *msg, int flags, 
         }
         //fprintf(stdout, "%s[%d] ========== %d byte\r\n", __func__, __LINE__, ret);
     }else{
-#ifdef _WIN32
-#ifdef WSAEWOULDBLOCK
-        if(errno != WSAEWOULDBLOCK)
-#elif defined(EWOULDBLOCK)
-        if(errno != EWOULDBLOCK)
-#endif
-#else
+
         if(errno != EAGAIN)
-#endif
             fprintf(stdout, "%s[%d] ============== errno %d(%s)\r\n", __func__, __LINE__, errno, strerror(errno));
     }
     return ret;
 }
 
-void rtp_session_notify_inc_rtcp(RtpSession *session, mblk_t *m, bool_t received_via_rtcp_mux){
+static void rtp_session_notify_inc_rtcp(RtpSession *session, mblk_t *m, bool_t received_via_rtcp_mux){
     if (session->eventqs!=NULL){
         OrtpEvent *ev=ortp_event_new(ORTP_EVENT_RTCP_PACKET_RECEIVED);
         OrtpEventData *d=ortp_event_get_data(ev);
@@ -2049,37 +1794,13 @@ void rtp_session_process_incoming(RtpSession * session, mblk_t *mp, bool_t is_rt
     }
 }
 
-void* rtp_session_recvfrom_async(void* obj) {
+static void* rtp_session_recvfrom_async(void* obj) {
     RtpSession *session = (RtpSession*) obj;
     int error;
     struct ipstack_sockaddr remaddr;
     socklen_t addrlen = sizeof (remaddr);
     mblk_t *mp;
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-#else
-#if (_WIN32_WINNT >= 0x0600)
-    WSAPOLLFD fdarray = {0};
-    fdarray.fd = session->rtp.gs.socket;
-    fdarray.events = POLLRDNORM;
-#endif
-    if(!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST)){
-        ortp_warning("Error rtp recv async thread for windows: SetThreadPriority() failed [%d]\n", (int)GetLastError());
-    }
 
-    while(session->rtp.is_win_thread_running)
-    {
-#if (_WIN32_WINNT >= 0x0600)
-        int ret = WSAPoll(&fdarray, 1, 10);
-
-        if (ret == SOCKET_ERROR) {
-            ortp_warning("Error rtp recv async thread for windows: error while polling [%i]", WSAGetLastError());
-        } else if (ret > 0) {
-#else
-        {
-#endif
-#endif
-#endif
             bool_t sock_connected=!!(session->flags & RTP_SOCKET_CONNECTED);
 
             mp = msgb_allocator_alloc(&session->rtp.gs.allocator, session->recv_buf_size);
@@ -2111,30 +1832,17 @@ void* rtp_session_recvfrom_async(void* obj) {
 
                 mp->b_wptr+=error;
 
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-#else
-                ortp_mutex_lock(&session->rtp.winrq_lock);
-#endif
-#endif
+
                 putq(&session->rtp.sockrq, mp);
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-#else
-                ortp_mutex_unlock(&session->rtp.winrq_lock);
-#endif
-#endif
+
             } else {
                 int errnum;
                 if (error==-1 && !is_would_block_error((errnum=getSocketErrorCode())) )
                 {
                     if (session->on_network_error.count>0){
                         rtp_signal_table_emit3(&session->on_network_error,"Error receiving RTP packet",ORTP_INT_TO_POINTER(getSocketErrorCode()));
-#ifdef _WIN32
-                    }else if(errnum!=WSAECONNRESET) ortp_warning("Error receiving RTP packet err num [%i], error [%i]: %s",errnum,error,getSocketError());// Windows spam WSAECONNRESET and is not useful
-#else
+
                     }else ortp_warning("Error receiving RTP packet err num [%i], error [%i]: %s",errnum,error,getSocketError());
-#endif
 #if TARGET_OS_IPHONE
                     /*hack for iOS and non-working socket because of background mode*/
                     if (errnum==ENOTCONN){
@@ -2145,13 +1853,7 @@ void* rtp_session_recvfrom_async(void* obj) {
                 }
                 freemsg(mp);
             }
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-#else
-        }
-    }
-#endif
-#endif
+
 
     return NULL;
 }
@@ -2165,42 +1867,15 @@ int rtp_session_rtp_recv (RtpSession * session, uint32_t user_ts) {
     {
         bool_t packet_is_rtp = TRUE;
         if (!session->bundle || (session->bundle && session->is_primary)) {
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-            rtp_session_recvfrom_async((void*)session);
-#else
-            ortp_mutex_lock(&session->rtp.winthread_lock);
-            if (!session->rtp.is_win_thread_running) {
-                int errnum;
 
-                session->rtp.is_win_thread_running = TRUE;
-                if ((errnum = ortp_thread_create(&session->rtp.win_t, NULL, rtp_session_recvfrom_async, (void*)session)) != 0) {
-                    ortp_warning("Error creating rtp recv async thread for windows: error [%i]", errnum);
-                    session->rtp.is_win_thread_running = FALSE;
-                    return -1;
-                }
-            }
-            ortp_mutex_unlock(&session->rtp.winthread_lock);
-#endif
-#else
             rtp_session_recvfrom_async((void*)session);
-#endif
+
         }
 
         if (!session->bundle || (session->bundle && session->is_primary)) {
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-#else
-            ortp_mutex_lock(&session->rtp.winrq_lock);
-#endif
-#endif
+
             mp = getq(&session->rtp.sockrq);
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-#ifdef ORTP_WINDOWS_SAMELINUX
-#else
-            ortp_mutex_unlock(&session->rtp.winrq_lock);
-#endif
-#endif
+
         } else {
             ortp_mutex_lock(&session->bundleq_lock);
             mp = getq(&session->bundleq);
@@ -2287,11 +1962,8 @@ int rtp_session_rtcp_recv (RtpSession * session) {
             {
                 if (session->on_network_error.count>0){
                     rtp_signal_table_emit3(&session->on_network_error,"Error receiving RTCP packet",ORTP_INT_TO_POINTER(getSocketErrorCode()));
-#ifdef _WIN32
-                }else if(errnum!=WSAECONNRESET) ortp_warning("Error receiving RTCP packet: %s, err num  [%i],error [%i]",getSocketError(),errnum,error);// Windows spam WSAECONNRESET and is not useful
-#else
+
                 }else ortp_warning("Error receiving RTCP packet: %s, err num  [%i],error [%i]",getSocketError(),errnum,error);
-#endif
 #if TARGET_OS_IPHONE
                 /*hack for iOS and non-working socket because of background mode*/
                 if (errnum==ENOTCONN){

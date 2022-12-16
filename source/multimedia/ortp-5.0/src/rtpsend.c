@@ -32,7 +32,7 @@
 
 int runcond = 1;
 static RtpSession *session = NULL;
-void stophandler(int signum)
+static void stophandler(int signum)
 {
 	runcond = 0;
 }

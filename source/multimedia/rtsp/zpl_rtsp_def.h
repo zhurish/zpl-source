@@ -7,6 +7,12 @@
 #ifndef __RTSP_DEF_H__
 #define __RTSP_DEF_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+
 #ifdef  __cplusplus
 # define RTSP_BEGIN_DECLS  extern "C" {
 # define RTSP_END_DECLS    }
@@ -14,10 +20,6 @@
 # define RTSP_BEGIN_DECLS
 # define RTSP_END_DECLS
 #endif
-# define PJ_DECL(v) v
-
-# define PJ_BEGIN_DECL RTSP_BEGIN_DECLS
-# define PJ_END_DECL RTSP_END_DECLS
 
 #if defined(_MSC_VER)
 # if defined(DLLBUILD)

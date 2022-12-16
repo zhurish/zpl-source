@@ -22,9 +22,9 @@
 #define CONGESTIONDETECTOR_H
 
 #include <ortp/port.h>
-#include <ortp/utils.h>
+#include <ortp/extremum.h>
 #include <ortp/ortp_list.h>
-struct _JitterControl;
+#include <rtpsession_priv.h>
 
 typedef enum _OrtpCongestionState {
 	CongestionStateNormal,
@@ -46,7 +46,7 @@ typedef struct _OrtpCongestionDetector{
 	struct _RtpSession *session;
 }OrtpCongestionDetector;
 
-OrtpCongestionDetector * ortp_congestion_detector_new(struct _RtpSession *session);
+OrtpCongestionDetector * ortp_congestion_detector_new(RtpSession *session);
 
 /*
  * Returns TRUE if the congestion state is changed.

@@ -49,7 +49,7 @@ make_prepare:
 lib: $(LIBS)
 
 
-obj: $(BUILT_SOURCES) $(MODULE_OBJS)
+obj: $(MODULE_OBJS)
 
 install: $(LIBS)
 	@install -d $(LIB_DIR)

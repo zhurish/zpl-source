@@ -25,12 +25,13 @@
 
 #ifndef RTPPROFILE_H
 #define RTPPROFILE_H
-#include <ortp/port.h>
+
 
 #ifdef __cplusplus
 extern "C"{
 #endif
-
+#include <ortp/port.h>
+#include <ortp/payloadtype.h>
 #define RTP_PROFILE_MAX_PAYLOADS 128
 
 /**
@@ -38,14 +39,13 @@ extern "C"{
  * between RTP payload type number and the PayloadType that defines the type of
  * media.
 **/
-struct _RtpProfile
+typedef struct _RtpProfile
 {
 	char *name;
 	PayloadType *payload[RTP_PROFILE_MAX_PAYLOADS];
-};
+}RtpProfile;
 
 
-typedef struct _RtpProfile RtpProfile;
 
 ORTP_VAR_PUBLIC RtpProfile av_profile;
 
@@ -98,6 +98,7 @@ ORTP_PUBLIC RtpProfile * rtp_profile_clone(RtpProfile *prof);
 ORTP_PUBLIC RtpProfile * rtp_profile_clone_full(RtpProfile *prof);
 /* frees the profile and all its PayloadTypes*/
 ORTP_PUBLIC void rtp_profile_destroy(RtpProfile *prof);
+ORTP_PUBLIC void av_profile_init(RtpProfile *profile);
 
 #ifdef __cplusplus
 }

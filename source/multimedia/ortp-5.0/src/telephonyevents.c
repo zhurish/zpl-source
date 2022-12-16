@@ -16,13 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <ortp/telephonyevents.h>
-#include "utils.h"
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
 #include "rtpsession_priv.h"
-#include <ortp/ortp.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include "utils.h"
 
-
+#if 0
 PayloadType	payload_type_telephone_event={
 	PAYLOAD_AUDIO_PACKETIZED, /*type */
 	8000,	/*clock rate */
@@ -34,6 +40,8 @@ PayloadType	payload_type_telephone_event={
 	1,		/* Audio Channels */
 	0		/*flags */
 };
+#endif
+
 
 /**
  * Tells whether telephony events payload type is supported within the
@@ -44,8 +52,10 @@ PayloadType	payload_type_telephone_event={
 **/
 int rtp_session_telephone_events_supported(RtpSession *session)
 {
+	int ret = 0;
 	/* search for a telephony event payload in the current profile */
-	return rtp_profile_get_payload_number_from_mime(session->snd.profile,"telephone-event");
+	ret = rtp_profile_get_payload_number_from_mime(session->snd.profile,"telephone-event");
+	return ret;
 }
 
 bool_t rtp_profile_is_telephone_event(const RtpProfile *prof, int pt_num){
@@ -73,7 +83,8 @@ int rtp_session_send_telephone_events_supported(RtpSession *session)
  * @param session a rtp session
  *
  * @return the payload type number used for telephony events if found, -1 if not found.
-**/int rtp_session_recv_telephone_events_supported(RtpSession *session)
+**/
+int rtp_session_recv_telephone_events_supported(RtpSession *session)
 {
 	/* search for a telephony event payload in the current profile */
 	return rtp_profile_get_payload_number_from_mime(session->rcv.profile,"telephone-event");

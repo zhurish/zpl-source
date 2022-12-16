@@ -38,6 +38,14 @@
  * scp -P 9225 root@183.63.84.114:/root/ipran_u3-w.tat.bz ./
  * rtsp://admin:abc123456@192.168.3.64:554/av0_0
  * rtsp://admin:abc123456@192.168.1.64/av0_0
+ * rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1
+ * rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&rtsp
+ * rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&multcast
+ * rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&tls
+ * rtsp://user:pass@192.168.1.1/media/channel=1&level=1
+ * rtsp://192.168.1.1:9988/media/channel=1&level=1
+ * rtsp://192.168.1.1:9988/media/test.h264&multcast
+ * rtsp://192.168.1.1:9988/media/test.h264
  */
 int os_url_split(const zpl_char * URL, os_url_t *spliurl)
 {
@@ -69,7 +77,16 @@ split_agent:
 		if(p)
 		{
 			p++;
-			spliurl->filename = strdup(p);
+			if(p[0] == '/')
+			{
+				char *bp = strrchr(p, '/');
+				spliurl->filename = strdup(bp+1);
+				memset(tmp, 0, sizeof(tmp));
+				strncpy(tmp, p, bp - p);
+				spliurl->path = strdup(tmp);
+			}
+			else
+				spliurl->filename = strdup(p);
 			memset(buf, 0, sizeof(buf));
 			strncpy(buf, p_slash, p - p_slash);
 			p_slash = buf;
@@ -121,7 +138,18 @@ split_agent:
 				}
 			}
 			if(p_slash)
-				spliurl->filename = strdup(p_slash);
+			{
+				if(p_slash[0] == '/')
+				{
+					char *bp = strrchr(p_slash, '/');
+					spliurl->filename = strdup(bp+1);
+					memset(tmp, 0, sizeof(tmp));
+					strncpy(tmp, p_slash, bp - p_slash);
+					spliurl->path = strdup(tmp);
+				}
+				else
+					spliurl->filename = strdup(p_slash);
+			}
 		}
 	}
 	else
@@ -158,18 +186,26 @@ split_agent:
 			}*/
 		}
 	}
+
 	if(strstr(spliurl->proto, "ssh"))
 	{
 		if(spliurl->proto && spliurl->host)
+		{
+			strcpy(spliurl->url, URL);
 			return OK;
+		}
 		return ERROR;
 	}
 	if(spliurl->proto && spliurl->host && spliurl->filename)
+	{
+		strcpy(spliurl->url, URL);
 		return OK;
+	}
 	return ERROR;
 }
 
 #if 1
+
 static int os_url_debug_test(zpl_char *URL)
 {
 	os_url_t spliurl;
@@ -179,6 +215,7 @@ static int os_url_debug_test(zpl_char *URL)
 		//os_url_free(&spliurl);
 		//return -1;
 	}
+
 	fprintf(stdout, "================================================== \r\n");
 	fprintf(stdout, "URL            :%s\r\n", URL);
 	if(spliurl.proto)
@@ -245,8 +282,17 @@ int os_url_test(void)
 
 	// copy url-string ftp://zhurish:centos@127.0.0.1/home/zhurish/fsdd.pdf aa.pdf
 
-	//os_url_debug_test("rtsp://admin:abc123456@192.168.3.64:554/av0_0");
-	//os_url_debug_test("rtsp://admin:abc123456@192.168.1.64/av0_0");
+
+	os_url_debug_test("rtsp://admin:abc123456@192.168.3.64:554/av0_0");
+	os_url_debug_test("rtsp://admin:abc123456@192.168.1.64/av0_0");
+	os_url_debug_test("rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1");
+	os_url_debug_test("rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&rtsp");
+	os_url_debug_test("rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&multcast");
+	os_url_debug_test("rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&tls");
+	os_url_debug_test("rtsp://user:pass@192.168.1.1/media/channel=1&level=1");
+	os_url_debug_test("rtsp://192.168.1.1:9988/media/channel=1&level=1");
+	os_url_debug_test("rtsp://192.168.1.1:9988/media/test.h264&multcast");
+	os_url_debug_test("rtsp://192.168.1.1:9988/media/test.h264");
 	return 0;
 }
 #endif

@@ -24,12 +24,16 @@
  *  Email simon.morlat@linphone.org
  ****************************************************************************/
 
-#include "ortp/rtpsession.h"
-#include "ortp/payloadtype.h"
-#include "ortp/ortp.h"
-#include "utils.h"
-#include "rtpsession_priv.h"
 #include <math.h>
+#include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include "utils.h"
+
 
 #define JC_BETA .01
 #define JC_GAMMA (JC_BETA)
@@ -67,7 +71,6 @@ void jitter_control_set_payload(JitterControl *ctl, PayloadType *pt){
 	ctl->adapt_jitt_comp_ts=ctl->jitt_comp_ts;
 	ctl->clock_rate=pt->clock_rate;
 }
-
 
 void jitter_control_dump_stats(JitterControl *ctl){
 	ortp_message("JitterControl:\n\tslide=%g,jitter=%g,adapt_jitt_comp_ts=%i,corrective_slide=%i, count=%i",

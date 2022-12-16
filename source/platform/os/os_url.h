@@ -28,11 +28,15 @@ typedef struct os_url_s
 	zpl_char 		*pass;
 	zpl_char 		*path;
 	zpl_char 		*filename;
+    zpl_int32     	channel;
+    zpl_int32     	level;
+    zpl_char        url[128];
+    zpl_uint16    	mode;
 }os_url_t;
 
 extern int os_url_split(const zpl_char * URL, os_url_t *spliurl);
-//extern int os_url_show(os_url_t *spliurl);
 extern int os_url_free(os_url_t *spliurl);
+
 extern int os_url_test(void);
 
 #ifdef __cplusplus

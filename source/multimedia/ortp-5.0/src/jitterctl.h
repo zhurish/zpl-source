@@ -27,7 +27,7 @@
 #ifndef JITTERCTL_H
 #define JITTERCTL_H
 
-#include <ortp/rtpsession.h>
+#include "rtpsession_priv.h"
 
 void jitter_control_init(JitterControl *ctl, PayloadType *pt);
 void jitter_control_enable_adaptive(JitterControl *ctl, bool_t val);
@@ -42,5 +42,5 @@ void jitter_control_new_packet_basic(JitterControl *ctl, uint32_t packet_ts, uin
 void jitter_control_new_packet_rls(JitterControl *ctl, uint32_t packet_ts, uint32_t cur_str_ts);
 
 uint32_t jitter_control_get_compensated_timestamp(JitterControl *obj , uint32_t user_ts);
-
+void jitter_control_dump_stats(JitterControl *ctl);
 #endif

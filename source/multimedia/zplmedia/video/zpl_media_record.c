@@ -85,6 +85,7 @@ int zpl_media_channel_record_enable(zpl_media_channel_t *mediachn, zpl_bool enab
         if (record->record_file == NULL)
         {
             zpl_skbqueue_destroy(record->buffer_queue);
+            record->buffer_queue = NULL;
             free(record);
             return ERROR;
         }
@@ -109,6 +110,7 @@ int zpl_media_channel_record_enable(zpl_media_channel_t *mediachn, zpl_bool enab
             zpl_media_file_close(record->record_file);
             zpl_media_file_destroy(record->record_file);
             zpl_skbqueue_destroy(record->buffer_queue);
+            record->buffer_queue = NULL;
             free(record);
             mediachn->p_record.param = NULL;
             return OK;

@@ -21,8 +21,11 @@
 #ifndef RTP_H
 #define RTP_H
 
-#include <ortp/port.h>
-#include <ortp/str_utils.h>
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+#include <ortp/rtp_queue.h>
 
 #define IPMAXLEN 20
 #define UDP_MAX_SIZE 1500
@@ -124,9 +127,7 @@ typedef struct jitter_stats
 #define TIME_IS_STRICTLY_NEWER_THAN(t1,t2) RTP_TIMESTAMP_IS_STRICTLY_NEWER_THAN(t1,t2)
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+
 
 /* packet api */
 /* the first argument is a mblk_t. The header is supposed to be not splitted  */

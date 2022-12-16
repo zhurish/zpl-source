@@ -136,9 +136,15 @@ typedef struct rtsp_session_s {
 
     //int (*_rtp_over_rtsp_send)(rtsp_session_t *, uint8_t *, uint32_t );
     //int (*_rtp_over_rtsp_recv)(rtsp_session_t *, uint8_t *, uint32_t );
+
+    void            *mutex;
 }rtsp_session_t;
 
 
+//#define RTSP_SESSION_LOCK(x)    if(x && x->mutex) os_mutex_lock(x->mutex, OS_WAIT_FOREVER)
+//#define RTSP_SESSION_UNLOCK(x)  if(x && x->mutex) os_mutex_unlock(x->mutex)
+#define RTSP_SESSION_LOCK(x)    
+#define RTSP_SESSION_UNLOCK(x)  
 
 RTSP_API char * rtsp_session_dataptr(uint8_t *req, uint32_t offset);
 RTSP_API int rtsp_session_default(rtsp_session_t * newNode, bool srv);

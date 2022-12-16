@@ -31,6 +31,7 @@ typedef struct rtsp_srv_s {
     void            *t_accept;
     void            *t_read;
     int             t_sock;
+    zpl_taskid_t		t_taskid;
 #endif
     zpl_socket_t             listen_sock;
     uint16_t        listen_port;
@@ -63,8 +64,13 @@ typedef struct rtsp_srv_s {
     uint32_t        _send_length;
 
     uint32_t        debug;
+    void            *mutex;
 }rtsp_srv_t;
 
+//#define RTSP_SRV_LOCK(x)    if(x && x->mutex) os_mutex_lock(x->mutex, OS_WAIT_FOREVER)
+//#define RTSP_SRV_UNLOCK(x)  if(x && x->mutex) os_mutex_unlock(x->mutex)
+#define RTSP_SRV_LOCK(x)    
+#define RTSP_SRV_UNLOCK(x)  
 
 RTSP_API void rtsp_srv_destroy(rtsp_srv_t *ctx);
 #ifdef ZPL_WORKQUEUE

@@ -57,23 +57,23 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
     client = (rtsp_client_t *)malloc(sizeof(rtsp_client_t));
     if(client)
     {
-        rtsp_urlpath_t urlpath;
+        os_url_t urlpath;
         memset(client, 0, sizeof(rtsp_client_t));
 
-        memset(&urlpath, 0, sizeof(rtsp_urlpath_t));
+        memset(&urlpath, 0, sizeof(os_url_t));
         rtsp_url_stream_path(url,  &urlpath);
 
-        if(strstr(urlpath.hostname,":"))
+        if(strstr(urlpath.host,":"))
         {
-            char *p = strstr(urlpath.hostname,":");
+            char *p = strstr(urlpath.host,":");
             *p = '\0';
         }
         //if(strlen(proto))
         //    client->proto = strdup(proto);
-        if(strlen(urlpath.username))
-            client->authorization = strdup(urlpath.username);
-        if(strlen(urlpath.hostname))
-            client->hostname = strdup(urlpath.hostname);
+        if(strlen(urlpath.user))
+            client->authorization = strdup(urlpath.user);
+        if(strlen(urlpath.host))
+            client->hostname = strdup(urlpath.host);
         if(strlen(urlpath.path))
             client->path = strdup(urlpath.path);
 
@@ -90,7 +90,7 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
             client->rtsp_session->session = 0;//(int)client->rtsp_session;
 
             client->rtsp_session->bsrv = false;
-            client->rtsp_session->address = strdup(urlpath.hostname);
+            client->rtsp_session->address = strdup(urlpath.host);
 
             client->rtsp_session->port = (urlpath.port==0)?554:urlpath.port;
 

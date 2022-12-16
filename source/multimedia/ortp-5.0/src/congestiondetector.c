@@ -30,7 +30,7 @@ static const float absolute_congested_clock_ratio = 0.93f;
 static const float relative_congested_clock_ratio = 0.96f;
 static const float rls_forgetting_factor = 0.97f;
 
-const char *ortp_congestion_detector_state_to_string(OrtpCongestionState state){
+static const char *ortp_congestion_detector_state_to_string(OrtpCongestionState state){
 	switch (state){
 		case CongestionStateNormal:
 			return "CongestionStateNormal";

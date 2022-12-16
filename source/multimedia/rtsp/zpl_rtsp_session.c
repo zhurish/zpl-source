@@ -81,6 +81,7 @@ int rtsp_session_destroy(rtsp_session_t *session)
 {
     if(session)
     {
+        RTSP_SESSION_LOCK(session);
 #ifdef ZPL_WORKQUEUE
         if(session->t_read)
             eloop_cancel(session->t_read);
@@ -115,6 +116,13 @@ int rtsp_session_destroy(rtsp_session_t *session)
             free(session->mfilepath);
             session->mfilepath = NULL;
         }
+        RTSP_SESSION_UNLOCK(session);
+        if (session->mutex)
+        {
+            os_mutex_exit(session->mutex);
+            session->mutex = NULL;
+        }        
+        
         free(session);
         //session = NULL;
     }
@@ -124,6 +132,7 @@ int rtsp_session_destroy(rtsp_session_t *session)
 
 int rtsp_session_install(rtsp_session_t * newNode, rtsp_method method, rtsp_session_call func, void *p)
 {
+    //RTSP_SESSION_LOCK(newNode);
     switch(method)
     {
     case RTSP_METHOD_OPTIONS:
@@ -165,12 +174,14 @@ int rtsp_session_install(rtsp_session_t * newNode, rtsp_method method, rtsp_sess
     default:
         break;
     }
+    //RTSP_SESSION_UNLOCK(newNode);
     return 0;
 }
 
 int rtsp_session_callback(rtsp_session_t * newNode, rtsp_method method)
 {
     int ret = 0;
+    //RTSP_SESSION_LOCK(newNode);
     switch(method)
     {
     case RTSP_METHOD_OPTIONS:
@@ -212,11 +223,13 @@ int rtsp_session_callback(rtsp_session_t * newNode, rtsp_method method)
     default:
         break;
     }
+    //RTSP_SESSION_UNLOCK(newNode);
     return ret;
 }
 
 int rtsp_session_pdata(rtsp_session_t * newNode, bool bvideo, void *pdata)
 {
+    //RTSP_SESSION_LOCK(newNode);
     if(bvideo && newNode)
     {
         newNode->video_session.pdata = pdata;
@@ -225,11 +238,13 @@ int rtsp_session_pdata(rtsp_session_t * newNode, bool bvideo, void *pdata)
     {
         newNode->audio_session.pdata = pdata;
     }
+    //RTSP_SESSION_UNLOCK(newNode);
     return 0;
 }
 
 int rtsp_session_default(rtsp_session_t * newNode, bool srv)
 {
+    RTSP_SESSION_LOCK(newNode);
     newNode->_rtpsession = NULL;
     newNode->state = RTSP_SESSION_STATE_CONNECT;
     newNode->rtsp_callback._options_func = NULL;//rtsp_rtp_after_options;
@@ -246,8 +261,8 @@ int rtsp_session_default(rtsp_session_t * newNode, bool srv)
     newNode->audio_session.local_rtcp_port = AUDIO_RTCP_PORT_DEFAULT;
 
     newNode->audio_session.b_enable = false;       //使能
-    newNode->audio_session.rtp_sock = -1;
-    newNode->audio_session.rtcp_sock = -1;
+    //newNode->audio_session.rtp_sock = -1;
+    //newNode->audio_session.rtcp_sock = -1;
     newNode->audio_session.i_trackid = -1;      //视频通道
     newNode->audio_session.b_issetup = false;      //视频是否设置
     newNode->audio_session.transport.type = RTSP_TRANSPORT_UNICAST;        //对端期待的传输模式
@@ -276,8 +291,8 @@ int rtsp_session_default(rtsp_session_t * newNode, bool srv)
     newNode->video_session.local_rtcp_port = VIDEO_RTCP_PORT_DEFAULT;
 
     newNode->video_session.b_enable = true;       //使能
-    newNode->video_session.rtp_sock = -1;
-    newNode->video_session.rtcp_sock = -1;
+    //newNode->video_session.rtp_sock = -1;
+    //newNode->video_session.rtcp_sock = -1;
     newNode->video_session.i_trackid = 0;      //视频通道
     newNode->video_session.b_issetup = false;      //视频是否设置
     newNode->video_session.transport.type = RTSP_TRANSPORT_UNICAST;        //对端期待的传输模式
@@ -305,6 +320,7 @@ int rtsp_session_default(rtsp_session_t * newNode, bool srv)
     newNode->mchannel = newNode->mlevel = -1;
     newNode->_sendto = rtsp_session__sendto;
     newNode->_recvfrom = rtsp_session__recvfrom;
+    RTSP_SESSION_UNLOCK(newNode);
     return 0;
 }
 
@@ -315,15 +331,19 @@ rtsp_session_t * rtsp_session_add(struct osker_list_head * list, zpl_socket_t so
     if(newNode)
     {
         memset(newNode, 0, sizeof(rtsp_session_t));
+        newNode->mutex = os_mutex_name_init("rtspsession");
         if(address)
             newNode->address = strdup(address);
         newNode->sock = sock;
         newNode->port = port;
         newNode->bsrv = true;
         newNode->parent = parent;
+ 
         rtsp_session_default(newNode, true);
+        //RTSP_SESSION_LOCK(newNode);
         newNode->session = (int)newNode;
         osker_list_add_tail(&newNode->node, list); //调用list.h中的添加节点的函数osker_list_add_tail
+        //RTSP_SESSION_UNLOCK(newNode);
         return newNode;
     }
     return newNode;
@@ -332,7 +352,7 @@ rtsp_session_t * rtsp_session_add(struct osker_list_head * list, zpl_socket_t so
 
 
 
-int rtsp_session_del(struct osker_list_head * list,zpl_socket_t sock)
+int rtsp_session_del(struct osker_list_head * list, zpl_socket_t sock)
 {
     struct osker_list_head *pos = NULL, *n = NULL;
     rtsp_session_t *p = NULL;
@@ -456,7 +476,7 @@ int rtsp_session_update_maxfd(struct osker_list_head * list)
         p = (rtsp_session_t*)osker_list_entry(pos, rtsp_session_t, node);
         if(p && p->sock)
         {
-            maxfd = max(maxfd, p->sock);
+            maxfd = MAX(maxfd, ipstack_fd(p->sock));
         }
     }
     return maxfd;

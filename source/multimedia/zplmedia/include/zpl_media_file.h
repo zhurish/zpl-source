@@ -11,7 +11,7 @@ extern "C" {
 #include <zpl_media_buffer.h>
 #include <zpl_media_codec.h>
 #ifdef ZPL_BUILD_LINUX
-#define     RTP_MEDIA_BASE_PATH     "/home/zhurish/workspace/qt-project/live555-test/"
+#define     RTP_MEDIA_BASE_PATH     "/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/"
 //#define     RTP_MEDIA_BASE_PATH     "/mnt/hgfs/ubuntu-share/qt-project/live555-test/"
 #else
 #define     RTP_MEDIA_BASE_PATH     "D:/qt-project/live555-test/"

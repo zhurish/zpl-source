@@ -29,16 +29,7 @@
 void ortp_init_logger(void);
 void ortp_uninit_logger(void);
 
-struct datab {
-	unsigned char *db_base;
-	unsigned char *db_lim;
-	void (*db_freefn)(void*);
-#if HAVE_STDATOMIC_H
-	atomic_int db_ref;
-#else
-	int db_ref;
-#endif
-};
+
 
 #define OList ortp_list_t
 

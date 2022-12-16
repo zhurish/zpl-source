@@ -127,7 +127,7 @@ static void iterate_cbs(OrtpEvDispatcher *disp, OrtpEvent *ev) {
 	do {
 		/*for each packet part, if ANY iterate through the whole callback list to see if
 		anyone is interested in it*/
-		OrtpEventData *d = ortp_event_get_data(ev);
+		d = ortp_event_get_data(ev);
 		OList* it;
 		OrtpEventType evt = ortp_event_get_type(ev);
 		for (it=disp->cbs;it!=NULL;it=it->next){

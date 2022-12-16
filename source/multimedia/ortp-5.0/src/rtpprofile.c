@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include "ortp/ortp.h"
-
-
+#include "ortp/port.h"
+#include "ortp/rtpprofile.h"
+#include "ortp/payloadtype.h"
+#include "ortp/logging.h"
 
 int rtp_profile_get_payload_number_from_mime(RtpProfile *profile, const char *mime)
 {

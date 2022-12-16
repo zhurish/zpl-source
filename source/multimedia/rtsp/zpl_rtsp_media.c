@@ -134,7 +134,7 @@ int rtsp_media_start(rtsp_session_t* session, rtsp_media_t *media, bool start)
             //if(start && rtsp_test_taskid == 0)
             //    pthread_create(&rtsp_test_taskid, NULL, rtsp_srvread, session);
             printf("===================rtsp_media_start===================\r\n");
-            return zpl_media_channel_filestart(media, start);
+            return zpl_media_channel_filestart(media, true);
         }
     }
     return 0;

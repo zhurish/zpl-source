@@ -21,11 +21,18 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-
-#include "ortp/ortp.h"
-#include "jitterctl.h"
-#include "utils.h"
 #include "rtpsession_priv.h"
+#include <ortp/rtp_queue.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/logging.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
+#include "ortp/rtcp.h"
+#include "utils.h"
+#include "jitterctl.h"
+
 #include "congestiondetector.h"
 #include "videobandwidthestimator.h"
 
@@ -144,10 +151,11 @@ static void check_for_seq_number_gap_immediate(RtpSession *session, rtp_header_t
 		for (i = 0; i <= (diff / 16); i++) {
 			uint16_t seq;
 			uint16_t blp = 0;
+			struct _OrtpCongestionDetector *congdetect = session->rtp.congdetect;
 			for (seq = pid + 1; (seq < rtp->seq_number) && ((seq - pid) < 16); seq++) {
 				blp |= (1 << (seq - pid - 1));
 			}
-			if (session->rtp.congdetect != NULL && session->rtp.congdetect->state == CongestionStateDetected) {
+			if (congdetect != NULL && congdetect->state == CongestionStateDetected) {
 				/*
 				* Do not send NACK in IMMEDIATE_NACK mode in congestion, because the retransmission by the other party of the missing packets
 				* will necessarily increase or at least sustain the congestion.
@@ -338,7 +346,8 @@ void rtp_session_rtp_parse(RtpSession *session, mblk_t *mp, uint32_t local_str_t
 		if (ortp_congestion_detector_record(session->rtp.congdetect,rtp->timestamp,local_str_ts)) {
 			OrtpEvent *ev=ortp_event_new(ORTP_EVENT_CONGESTION_STATE_CHANGED);
 			OrtpEventData *ed=ortp_event_get_data(ev);
-			ed->info.congestion_detected = session->rtp.congdetect->state == CongestionStateDetected;
+			struct _OrtpCongestionDetector *congdetect = session->rtp.congdetect;
+			ed->info.congestion_detected = congdetect->state == CongestionStateDetected;
 			rtp_session_dispatch_event(session,ev);
 		}
 	}

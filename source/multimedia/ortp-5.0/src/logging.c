@@ -17,11 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ortp/utils.h"
+
 #include "ortp/logging.h"
-#include "ortp/ortp.h"
-#include "ortp/telephonyevents.h"
-#include "ortp/rtcp.h"
+
 
 
 
@@ -43,7 +41,7 @@ void ortp_set_log_level(int level)
     _ortp_log_level = level;
 }
 
-unsigned int ortp_get_log_level()
+unsigned int ortp_get_log_level(void)
 {
     return _ortp_log_level;
 }

@@ -27,38 +27,19 @@
 #include "winsock2.h"
 #endif
 
-#include <ortp/port.h>
+#include "rtpsession_priv.h"
 
 
-typedef void (*RtpTimerFunc)(void);
-	
-struct _RtpTimer
-{
-	int state;
-#define RTP_TIMER_RUNNING 1
-#define RTP_TIMER_STOPPED 0
-	RtpTimerFunc timer_init;
-	RtpTimerFunc timer_do;
-	RtpTimerFunc timer_uninit;
-	struct timeval interval;
-};
 
-typedef struct _RtpTimer RtpTimer;
 
 ORTP_PUBLIC void rtp_timer_set_interval(RtpTimer *timer, struct timeval *interval);
 
 ORTP_VAR_PUBLIC RtpTimer posix_timer;
 
 
-#define USER_TIMER_MAX  32
-typedef struct
-{
-    int state;
-    struct timeval timer;
-    unsigned int interval;
-    int (*timer_func)(void *);
-    void    *pdata;
-}UserTimer;
+void posix_timer_init(void);
+void posix_timer_do(void);
+void posix_timer_uninit(void);
 
 ORTP_PUBLIC int rtp_user_timer_call(UserTimer *tt);
 ORTP_PUBLIC int rtp_user_timer_add(int (*func)(void *), void *p, int interval);

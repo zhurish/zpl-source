@@ -20,7 +20,13 @@
 #ifndef RTP_QUEUE_H
 #define RTP_QUEUE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#if HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#endif
 #include <ortp/port.h>
 #if defined(ORTP_TIMESTAMP)
 #include <time.h>
@@ -64,9 +70,19 @@ typedef struct msgb
 	uint8_t ttl_or_hl;
 } mblk_t;
 
+typedef struct datab {
+	unsigned char *db_base;
+	unsigned char *db_lim;
+	void (*db_freefn)(void*);
+#if HAVE_STDATOMIC_H
+	atomic_int db_ref;
+#else
+	int db_ref;
+#endif
+}dblk_t;
 
 
-typedef struct datab dblk_t;
+
 
 typedef struct _rtp_queue
 {
@@ -74,9 +90,7 @@ typedef struct _rtp_queue
 	int q_mcount;	/*number of packet in the q */
 } rtp_queue_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 ORTP_PUBLIC void dblk_ref(dblk_t *d);
 ORTP_PUBLIC void dblk_unref(dblk_t *d);

@@ -179,7 +179,7 @@ static int media_queue_task(void *p)
 	host_waitting_loadconfig();
 	while(OS_TASK_TRUE())
 	{
-        zpl_skbqueue_distribute(_media_bufqueue.media_queue, zpl_media_client_foreach, NULL);
+        zpl_skbqueue_distribute(_media_bufqueue.media_queue, 1, zpl_media_client_foreach, NULL);
 	}
 	return OK;
 }

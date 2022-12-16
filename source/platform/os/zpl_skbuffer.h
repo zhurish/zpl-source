@@ -270,7 +270,7 @@ extern int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern int zpl_skbqueue_add(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue);
 
-extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p);
+extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int wait, int(*func)(zpl_skbuffer_t*, void *), void *p);
 
 /* zpl_skbuffer_t */
 /* 在报文offset前面添加数据 */

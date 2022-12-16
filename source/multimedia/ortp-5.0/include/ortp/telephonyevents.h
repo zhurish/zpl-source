@@ -26,11 +26,12 @@
 
 #ifndef TELEPHONYEVENTS_H
 #define TELEPHONYEVENTS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <ortp/rtpsession.h>
 
-
-struct _telephone_event
+typedef struct _telephone_event
 {
 #ifdef ORTP_BIGENDIAN
 	uint32_t event:8;
@@ -45,13 +46,10 @@ struct _telephone_event
 	uint32_t E:1;
 	uint32_t duration:16;
 #endif
-};
+}telephone_event_t;
 
-typedef struct _telephone_event telephone_event_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 /* tell if the session supports telephony events. For this the telephony events payload_type 
 	must be present in the rtp profile used by the session */

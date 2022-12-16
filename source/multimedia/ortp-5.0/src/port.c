@@ -99,16 +99,7 @@ char * ortp_strdup(const char *tmp){
  * int retrun the result of the system method
  */
 int set_non_blocking_socket (ortp_socket_t sock){
-#ifdef ZPL_LIBORTP_MODULE
 	return ipstack_set_nonblocking(sock);
-#else /* ZPL_LIBORTP_MODULE */
-#if	!defined(_WIN32) && !defined(_WIN32_WCE)
-	return fcntl (sock, F_SETFL, fcntl(sock,F_GETFL) | O_NONBLOCK);
-#else
-	unsigned long nonBlock = 1;
-	return ioctlsocket(sock, FIONBIO , &nonBlock);
-#endif
-#endif /* ZPL_LIBORTP_MODULE */	
 }
 
 /*
@@ -117,16 +108,7 @@ int set_non_blocking_socket (ortp_socket_t sock){
  * int retrun the result of the system method
  */
 int set_blocking_socket (ortp_socket_t sock){
-#ifdef ZPL_LIBORTP_MODULE
 	return ipstack_set_blocking(sock);
-#else /* ZPL_LIBORTP_MODULE */	
-#if	!defined(_WIN32) && !defined(_WIN32_WCE)
-	return fcntl (sock, F_SETFL, fcntl(sock, F_GETFL) & ~O_NONBLOCK);
-#else
-	unsigned long nonBlock = 0;
-	return ioctlsocket(sock, FIONBIO , &nonBlock);
-#endif
-#endif /* ZPL_LIBORTP_MODULE */	
 }
 
 
@@ -136,15 +118,7 @@ int set_blocking_socket (ortp_socket_t sock){
  * int retrun the result of the system method
  */
 int close_socket(ortp_socket_t sock){
-#ifdef ZPL_LIBORTP_MODULE
 	return ipstack_close(sock);
-#else /* ZPL_LIBORTP_MODULE */	
-#if	!defined(_WIN32) && !defined(_WIN32_WCE)
-	return close (sock);
-#else
-	return closesocket(sock);
-#endif
-#endif /* ZPL_LIBORTP_MODULE */	
 }
 
 
@@ -267,18 +241,6 @@ bool_t ortp_sockaddr_equals(const struct ipstack_sockaddr * sa, const struct ips
 
 
 
-#if	!defined(_WIN32) && !defined(_WIN32_WCE)
-	/* Use UNIX inet_aton method */
-#else
-	int inet_aton (const char * cp, struct in_addr * addr)
-	{
-		int retval;
-
-		retval = inet_pton (AF_INET, cp, addr);
-
-		return retval == 1 ? 1 : 0;
-	}
-#endif
 
 char *ortp_strndup(const char *str,int n){
 	int min=MIN((int)strlen(str),n)+1;
@@ -312,8 +274,8 @@ int __ortp_thread_create(ortp_thread_t *thread, pthread_attr_t *attr, void * (*r
 unsigned long __ortp_thread_self(void) {
 	return (unsigned long)pthread_self();
 }
-
 #endif
+
 #if	defined(_WIN32) || defined(_WIN32_WCE)
 
 int WIN_mutex_init(ortp_mutex_t *mutex, void *attr)

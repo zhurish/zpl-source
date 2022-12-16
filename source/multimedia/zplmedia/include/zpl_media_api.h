@@ -23,6 +23,7 @@ int zpl_media_cmd_init(void);
 void cmd_video_init(void);
 #endif
 
+
 #ifdef __cplusplus
 }
 #endif

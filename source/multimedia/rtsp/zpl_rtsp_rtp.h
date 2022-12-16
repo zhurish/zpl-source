@@ -12,14 +12,14 @@
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_sdpfmtp.h"
 #include "ortp/ortp.h"
-
+#include "ortp/rtpsession.h"
 RTSP_BEGIN_DECLS
 
 
 
 
-RTSP_API int rtsp_rtp_init();
-RTSP_API int rtsp_rtp_start();
+RTSP_API int rtsp_rtp_init(void);
+RTSP_API int rtsp_rtp_start(void);
 
 
 RTSP_API int rtsp_rtp_handle_options(rtsp_session_t*, void *);
@@ -50,6 +50,7 @@ typedef struct
 } ST_Point_T;
 
 int st_app_osd_DrawText(unsigned short *yuv, int u32Width, int u32Height, ST_Point_T stPoint, const char *szString, int u32Color);
+
 RTSP_END_DECLS
 
 #endif /* __RTSP_RTP_H__ */

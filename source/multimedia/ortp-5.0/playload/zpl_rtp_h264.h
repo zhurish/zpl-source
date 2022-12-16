@@ -192,7 +192,7 @@ RTSP_API int _rtsp_parse_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_
 
 //RTSP_API int rtp_build_sdp_pcm(rtsp_session_t *session, uint8_t *src, uint32_t len);
 
-RTSP_API int rtp_send_h264_test();
+RTSP_API int rtp_send_h264_test(void);
 
 RTSP_END_DECLS
 

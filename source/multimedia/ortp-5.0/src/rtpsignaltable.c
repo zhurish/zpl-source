@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
+#include "rtpsession_priv.h"
+#include <ortp/rtpsignaltable.h>
 #include <ortp/rtpsession.h>
 #include "utils.h"
 

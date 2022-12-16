@@ -136,7 +136,7 @@ ortp_list_t * ortp_list_free_with_data(ortp_list_t *list, ortp_list_free_func fr
 }
 
 
-ortp_list_t*  _ortp_list_remove(ortp_list_t* first, void *data, int warn_if_not_found){
+static ortp_list_t*  _ortp_list_remove(ortp_list_t* first, void *data, int warn_if_not_found){
 	ortp_list_t* it;
 	it=ortp_list_find(first,data);
 	if (it) return ortp_list_erase_link(first,it);
@@ -231,7 +231,7 @@ ortp_list_t* ortp_list_find_custom(const ortp_list_t* list, ortp_compare_func co
 	}
 	return NULL;
 }
-
+/*
 ortp_list_t *ortp_list_delete_custom(ortp_list_t *list, ortp_compare_func compare_func, const void *user_data){
 	ortp_list_t *elem=ortp_list_find_custom(list,compare_func,user_data);
 	if (elem!=NULL){
@@ -239,6 +239,7 @@ ortp_list_t *ortp_list_delete_custom(ortp_list_t *list, ortp_compare_func compar
 	}
 	return list;
 }
+*/
 
 void * ortp_list_nth_data(const ortp_list_t* list, int index){
 	int i;

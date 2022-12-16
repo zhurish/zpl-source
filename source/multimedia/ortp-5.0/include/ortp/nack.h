@@ -20,15 +20,14 @@
 #ifndef NACK_H
 #define NACK_H
 
-#include <ortp/ortp_list.h>
-#include <ortp/port.h>
-#include <ortp/rtpsession.h>
 
+#include <rtpsession_priv.h>
+#include <ortp/event.h>
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-struct _OrtpNackContext {
+typedef struct _OrtpNackContext {
 	RtpSession *session;
 	OrtpEvDispatcher *ev_dispatcher;
 	RtpTransportModifier *rtp_modifier;
@@ -39,9 +38,8 @@ struct _OrtpNackContext {
 	int min_jitter_before_nack;
 	bool_t decrease_jitter_timer_running;
 	uint64_t decrease_jitter_timer_start;
-};
+} OrtpNackContext;
 
-typedef struct _OrtpNackContext OrtpNackContext;
 
 ORTP_PUBLIC OrtpNackContext *ortp_nack_context_new(OrtpEvDispatcher *evt);
 ORTP_PUBLIC void ortp_nack_context_destroy(OrtpNackContext *ctx);

@@ -343,7 +343,7 @@ int os_sem_give(os_sem_t *ossem)
 
 #define OS_SEM_DEBUG 	0x01
 #define OS_MUTEX_DEBUG 	0x02
-static int _sem_debug = OS_MUTEX_DEBUG;
+static int _sem_debug = 0;
 
 int os_sem_module_debug(int val)
 {

@@ -19,10 +19,13 @@
 
 #ifndef ortp_events_h
 #define ortp_events_h
-
-#include "ortp/str_utils.h"
-#include "ortp/rtcp.h"
+#ifdef __cplusplus
+extern "C"{
+#endif
+#include "ortp/port.h"
 #include <ortp/ortp_list.h>
+#include <ortp/rtp_queue.h>
+#include "rtpsession_priv.h"
 
 typedef mblk_t OrtpEvent;
 
@@ -33,7 +36,14 @@ typedef enum {
 	OrtpRTCPSocket
 } OrtpSocketType;
 
-struct _OrtpEventData{
+typedef struct _ZrtpInfo{
+			char sas[32]; // up to 31 + null characters
+			bool_t verified;
+			bool_t cache_mismatch;
+			bool_t pad[2];
+		} ZrtpInfo ;
+
+typedef struct _OrtpEventData{
 	mblk_t *packet;	/* most events are associated to a received packet */
     OrtpAddress source_addr;
 	ortpTimeSpec ts;
@@ -43,26 +53,17 @@ struct _OrtpEventData{
 		bool_t dtls_stream_encrypted;
 		bool_t zrtp_stream_encrypted;
 		bool_t ice_processing_successful;
-		struct _ZrtpInfo{
-			char sas[32]; // up to 31 + null characters
-			bool_t verified;
-			bool_t cache_mismatch;
-			bool_t pad[2];
-		} zrtp_info;
+		ZrtpInfo zrtp_info;
 		OrtpSocketType socket_type;
 		uint32_t received_rtt_character;
 		bool_t congestion_detected;
 		float video_bandwidth_available;
 		int jitter_min_size_for_nack;
 	} info;
-};
-
-typedef struct _OrtpEventData OrtpEventData;
+}OrtpEventData;
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+
 
 ORTP_PUBLIC OrtpEvent * ortp_event_new(OrtpEventType tp);
 ORTP_PUBLIC OrtpEventType ortp_event_get_type(const OrtpEvent *ev);
@@ -102,7 +103,7 @@ ORTP_PUBLIC void ortp_ev_queue_destroy(OrtpEvQueue *q);
 ORTP_PUBLIC OrtpEvent * ortp_ev_queue_get(OrtpEvQueue *q);
 ORTP_PUBLIC void ortp_ev_queue_flush(OrtpEvQueue * qp);
 
-struct _RtpSession;
+
 
 /**
  * Callback function when a RTCP packet of the interested type is found.
@@ -121,7 +122,7 @@ typedef struct OrtpEvDispatcherData{
 
 typedef struct OrtpEvDispatcher{
 	OrtpEvQueue *q;
-	struct _RtpSession* session;
+	RtpSession* session;
 	ortp_list_t *cbs;
 } OrtpEvDispatcher;
 
@@ -134,7 +135,7 @@ typedef struct OrtpEvDispatcher{
  *
  * @return OrtpEvDispatcher object newly created.
  */
-ORTP_PUBLIC OrtpEvDispatcher * ortp_ev_dispatcher_new(struct _RtpSession* session);
+ORTP_PUBLIC OrtpEvDispatcher * ortp_ev_dispatcher_new(RtpSession* session);
 /**
  * Frees the memory for the given dispatcher. Note that user_data must be freed
  * by caller, and so does the OrtpEvQueue.

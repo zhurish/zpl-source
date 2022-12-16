@@ -61,12 +61,15 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
     if (file)
     {
         memset(file, 0, sizeof(zpl_media_file_t));
-        file->fp = fopen(zpl_media_file_basename(name), op);
+        if(name[0] == '/')
+            file->fp = fopen(name, op);
+        else
+            file->fp = fopen(zpl_media_file_basename(name), op);
         if (file->fp)
         {
             if (strstr(op, "r"))
             {
-                file->file_size = zpl_media_file_size(zpl_media_file_basename(name));
+                file->file_size = zpl_media_file_size((name[0] == '/')?name:zpl_media_file_basename(name));
                 if (file->file_size <= 0)
                 {
                     free(file);
@@ -83,7 +86,10 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
 
                 file->filedesc.begintime = file->filedesc.endtime = time(NULL);
             }
-            strcpy(file->filename, name);
+            if(name[0] == '/')
+                strcpy(file->filename, name);
+            else
+                strcpy(file->filename, zpl_media_file_basename(name));    
 #ifndef ZPL_MEDIA_FILE_TASK
             file->t_master = NULL;
             file->t_read = NULL;
@@ -666,8 +672,8 @@ static int zpl_media_file_thread(void *t)
                 //timerstamp = 5;
                 if(timerstamp > 0U && timerstamp <= media->msec)
                 {
-                    //fprintf(stdout, "================timerstamp=%u\r\n", timerstamp);
-                    //fflush(stdout);
+                    fprintf(stdout, "================timerstamp=%u\r\n", timerstamp);
+                    fflush(stdout);
                     zpl_media_msleep(timerstamp);
                 }
             }

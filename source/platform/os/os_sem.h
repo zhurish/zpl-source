@@ -16,7 +16,7 @@ extern "C" {
 #include "semaphore.h"
 
 //#define OS_SEM_PROCESS
-//#define OS_LOCK_ERR_CHECK 
+#define OS_LOCK_ERR_CHECK 
 //#define OS_LOCK_ERR_CHECK_GRAPH_VIEW
 
 #ifdef OS_SEM_PROCESS

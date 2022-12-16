@@ -23,6 +23,7 @@ typedef enum {
   MODULE_SNTPS, 
   MODULE_UTILS, 
   MODULE_SDK, 
+  MODULE_RTSP,
   MODULE_ZPLMEDIA,
 	MODULE_MAX,
 } module_t;

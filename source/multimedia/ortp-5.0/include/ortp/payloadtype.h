@@ -62,15 +62,16 @@ extern "C"{
 #define PAYLOAD_TYPE_AVPF_SLI (1 << 2)
 #define PAYLOAD_TYPE_AVPF_RPSI (1 << 3)
 
-struct _PayloadTypeAvpfParams {
+typedef struct _PayloadTypeAvpfParams 
+{
 	unsigned char features; /**< A bitmask of PAYLOAD_TYPE_AVPF_* macros. */
 	bool_t rpsi_compatibility; /*< Linphone uses positive feeback for RPSI. However first versions handling
 		AVPF wrongly declared RPSI as negative feedback, so this is kept for compatibility
 		with these versions but will probably be removed at some point in time. */
 	uint16_t trr_interval; /**< The interval in milliseconds between regular RTCP packets. */
-};
+}PayloadTypeAvpfParams;
 
-struct _OrtpPayloadType
+typedef struct _OrtpPayloadType
 {
 	int type; /**< one of PAYLOAD_* macros*/
 	int clock_rate; /**< rtp clock rate*/
@@ -83,17 +84,11 @@ struct _OrtpPayloadType
 	int channels; /**< number of channels of audio */
 	char *recv_fmtp; /* various format parameters for the incoming stream */
 	char *send_fmtp; /* various format parameters for the outgoing stream */
-	struct _PayloadTypeAvpfParams avpf; /* AVPF parameters */
+	PayloadTypeAvpfParams avpf; /* AVPF parameters */
 	int flags;
 	void *user_data;
-};
+} PayloadType;
 
-#ifndef PayloadType_defined
-#define PayloadType_defined
-typedef struct _OrtpPayloadType OrtpPayloadType;
-typedef OrtpPayloadType PayloadType;
-typedef struct _PayloadTypeAvpfParams PayloadTypeAvpfParams;
-#endif
 
 #define payload_type_set_flag(pt,flag) (pt)->flags|=((int)flag)
 #define payload_type_unset_flag(pt,flag) (pt)->flags&=(~(int)flag)

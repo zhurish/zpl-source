@@ -19,7 +19,7 @@
 
 #include <ortp/ortp.h>
 #include <ortp/sessionset.h>
-#include "scheduler.h"
+#include "ortp/scheduler.h"
 
 
 /**
@@ -44,7 +44,7 @@ void session_set_destroy(SessionSet *set)
 {
 	ortp_free(set);
 }
-
+/*
 int count_power_items_simple(uint32_t v)
 {
 	int c = 0,j;
@@ -55,8 +55,8 @@ int count_power_items_simple(uint32_t v)
 	}
 	return c;
 }
-
-int count_power_items_fast(uint32_t v)
+*/
+static int count_power_items_fast(uint32_t v)
 {
 	int c = 0;
 	while (v) {
@@ -66,7 +66,7 @@ int count_power_items_fast(uint32_t v)
 	return c;
 }
 
-int session_set_and(SessionSet *sched_set, int maxs, SessionSet *user_set, SessionSet *result_set)
+static int session_set_and(SessionSet *sched_set, int maxs, SessionSet *user_set, SessionSet *result_set)
 {
 	uint32_t *mask1,*mask2,*mask3;
 	int i=0;

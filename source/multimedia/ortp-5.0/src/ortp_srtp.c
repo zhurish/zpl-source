@@ -17,12 +17,11 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#if defined(_MSC_VER)  && (defined(WIN32) || defined(_WIN32_WCE))
-#include "ortp-config-win32.h"
-#elif HAVE_CONFIG_H
+#if defined(HAVE_CONFIG_H)
 #include "ortp-config.h"
 #endif
 #include "ortp/ortp.h"
+#include <ortp/logging.h>
 
 #undef PACKAGE_NAME 
 #undef PACKAGE_STRING

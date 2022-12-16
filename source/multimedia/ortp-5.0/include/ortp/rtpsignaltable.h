@@ -19,23 +19,17 @@
 
 #ifndef rtpsignaltable_h
 #define rtpsignaltable_h
-
-#define RTP_CALLBACK_TABLE_MAX_ENTRIES	5
-
-typedef void (*RtpCallback)(struct _RtpSession *, void *arg1, void *arg2, void *arg3);
-
-struct _RtpSignalTable
+#ifdef __cplusplus
+extern "C"
 {
-	RtpCallback callback[RTP_CALLBACK_TABLE_MAX_ENTRIES];
-	void * user_data[RTP_CALLBACK_TABLE_MAX_ENTRIES];
-	struct _RtpSession *session;
-	const char *signal_name;
-	int count;
-};
+#endif
+#include "rtpsession_priv.h"
 
-typedef struct _RtpSignalTable RtpSignalTable;
 
-void rtp_signal_table_init(RtpSignalTable *table,struct _RtpSession *session, const char *signal_name);
+
+
+
+void rtp_signal_table_init(RtpSignalTable *table, RtpSession *session, const char *signal_name);
 
 int rtp_signal_table_add(RtpSignalTable *table,RtpCallback cb, void *user_data);
 
@@ -49,5 +43,8 @@ void rtp_signal_table_emit3(RtpSignalTable *table, void *arg1, void *arg2);
 
 int rtp_signal_table_remove_by_callback(RtpSignalTable *table,RtpCallback cb);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 

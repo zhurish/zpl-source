@@ -19,7 +19,7 @@ static int rtsp_srv_read_eloop(struct eloop *ctx);
 
 void rtsp_srv_destroy(rtsp_srv_t *ctx)
 {
-
+    RTSP_SRV_LOCK(ctx);
     rtsp_session_lstexit(&ctx->rtsp_session);
 #ifdef ZPL_WORKQUEUE
 
@@ -67,6 +67,12 @@ void rtsp_srv_destroy(rtsp_srv_t *ctx)
         free(ctx->listen_address);
         ctx->listen_address = NULL;
     }
+    RTSP_SRV_UNLOCK(ctx);
+    if (ctx->mutex)
+    {
+        os_mutex_exit(ctx->mutex);
+        ctx->mutex = NULL;
+    }
     free(ctx);
 }
 #ifdef ZPL_WORKQUEUE
@@ -75,12 +81,12 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port, int pro)
 rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
 #endif
 {
-    zpl_socket_t listen_sock = 0;
+    zpl_socket_t listen_sock;
     rtsp_srv_t *ctx = NULL;
     if (rtsp_socket._socket)
     {
         listen_sock = (rtsp_socket._socket)(IPSTACK_OS, AF_INET, SOCK_STREAM, 0);
-        if (listen_sock)
+        if (!ipstack_invalid(listen_sock))
         {
             if (rtsp_socket._bind)
             {
@@ -88,7 +94,6 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
                 {
                     if (rtsp_socket._close)
                         (rtsp_socket._close)(listen_sock);
-                    listen_sock = -1;
                     printf("%s [%d]  _bind\r\n", __func__, __LINE__);
                     return NULL;
                 }
@@ -99,7 +104,6 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
                 {
                     if (rtsp_socket._close)
                         (rtsp_socket._close)(listen_sock);
-                    listen_sock = -1;
                     printf("%s [%d]  _listen\r\n", __func__, __LINE__);
                     return NULL;
                 }
@@ -139,6 +143,7 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
     ctx->audio_sock.local_rtcp_port = AUDIO_RTCP_PORT_DEFAULT;
     ctx->video_sock.local_rtp_port = VIDEO_RTP_PORT_DEFAULT;
     ctx->video_sock.local_rtcp_port = VIDEO_RTCP_PORT_DEFAULT;
+    ctx->mutex = os_mutex_name_init("rtspsrv");
     /*
         ctx->audio_sock._rtp_sock = (rtsp_socket._socket)(AF_INET, SOCK_DGRAM, 0);
         ctx->audio_sock._rtcp_sock = (rtsp_socket._socket)(AF_INET, SOCK_DGRAM, 0);
@@ -153,12 +158,14 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
         if(ctx->video_sock._rtcp_sock)
             (rtsp_socket._bind)(ctx->video_sock._rtcp_sock, NULL, ctx->video_sock.local_rtcp_port);
     */
+    RTSP_SRV_LOCK(ctx);
     rtsp_session_lstinit(&ctx->rtsp_session);
 #ifdef ZPL_WORKQUEUE
     ctx->t_master = eloop_master_module_create(pro);
     if (ctx->t_master)
         ctx->t_accept = eloop_add_read(ctx->t_master, rtsp_srv_accept_eloop, ctx, ctx->listen_sock);
 #endif
+    RTSP_SRV_UNLOCK(ctx);
     return ctx;
 }
 
@@ -196,10 +203,12 @@ static int rtsp_session_read_handler(rtsp_session_t *session, rtsp_srv_t *ctx)
     {
         if (session->_recvfrom)
         {
+            RTSP_SRV_LOCK(ctx);
             memset(ctx->_recv_buf, 0, sizeof(ctx->_recv_buf));
             ctx->_recv_length = (session->_recvfrom)(session, ctx->_recv_buf, sizeof(ctx->_recv_buf));
             if (ctx->_recv_length <= 0)
             {
+                fprintf(stdout, "------------------------------2-----------need close(%s)\r\n", strerror(errno));
                 session->state = RTSP_SESSION_STATE_CLOSE;
                 if (rtsp_socket._close)
                     (rtsp_socket._close)(session->sock);
@@ -217,6 +226,7 @@ static int rtsp_session_read_handler(rtsp_session_t *session, rtsp_srv_t *ctx)
                     rtsp_srv_session_event_handle(ctx, session);
                 }
             }
+            RTSP_SRV_UNLOCK(ctx);
         }
     }
     return 0;
@@ -224,13 +234,18 @@ static int rtsp_session_read_handler(rtsp_session_t *session, rtsp_srv_t *ctx)
 static int rtsp_srv_read_eloop(struct eloop *ctx)
 {
     rtsp_session_t *session = ELOOP_ARG(ctx);
+    rtsp_srv_t *srv = (rtsp_srv_t *)session->parent;
     if (session)
     {
+        RTSP_SESSION_LOCK(session);
         session->t_read = NULL;
         rtsp_session_read_handler(session, session->parent);
         if (session->state != RTSP_SESSION_STATE_CLOSE)
             session->t_read = eloop_add_read(session->t_master, rtsp_srv_read_eloop, session, session->sock);
-        rtsp_session_cleancache(&((rtsp_srv_t *)session->parent)->rtsp_session);
+        RTSP_SESSION_UNLOCK(session);    
+        RTSP_SRV_LOCK(srv);    
+        rtsp_session_cleancache(&srv->rtsp_session);
+        RTSP_SRV_UNLOCK(srv); 
     }
     return 0;
 }
@@ -258,6 +273,7 @@ static int rtsp_session_read_callback(rtsp_session_t *session, rtsp_srv_t *ctx)
                 if (ctx->_recv_length <= 0)
                 {
                     session->state = RTSP_SESSION_STATE_CLOSE;
+                     fprintf(stdout, "------------------------------1-----------need close(%s)\r\n", strerror(errno));
                     if (rtsp_socket._close)
                         (rtsp_socket._close)(session->sock);
                 }
@@ -318,13 +334,16 @@ int rtsp_srv_select(rtsp_srv_t *ctx)
 int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_address, uint16_t port)
 {
 #ifdef ZPL_WORKQUEUE
+    RTSP_SRV_LOCK(ctx);
     rtsp_session_t *session = rtsp_session_add(&ctx->rtsp_session, sock, ip_address, port, ctx);
     if (session)
     {
         session->t_master = ctx->t_master;
         session->t_read = eloop_add_read(ctx->t_master, rtsp_srv_read_eloop, session, sock);
+        RTSP_SRV_UNLOCK(ctx);
         return 0;
     }
+    RTSP_SRV_UNLOCK(ctx);
     return -1;
 #else
     if (rtsp_session_add(&ctx->rtsp_session, sock, ip_address, port, ctx))
@@ -335,43 +354,66 @@ int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_a
 
 int rtsp_srv_session_destroy(rtsp_srv_t *ctx, zpl_socket_t sock)
 {
-    return rtsp_session_del(&ctx->rtsp_session, sock);
+    int ret = 0;
+    RTSP_SRV_LOCK(ctx);
+    ret = rtsp_session_del(&ctx->rtsp_session, sock);
+    RTSP_SRV_UNLOCK(ctx);
+    return ret;
 }
 
 rtsp_session_t *rtsp_srv_session_lookup(rtsp_srv_t *ctx, zpl_socket_t sock)
 {
-    return rtsp_session_lookup(&ctx->rtsp_session, sock);
+    rtsp_session_t *ret = NULL;
+    RTSP_SRV_LOCK(ctx);
+    ret = rtsp_session_lookup(&ctx->rtsp_session, sock);
+    RTSP_SRV_UNLOCK(ctx);
+    return ret;
 }
 
 static int rtsp_srv_session_url_split(rtsp_srv_t *ctx, rtsp_session_t *session)
 {
     if (session->rtsp_url == NULL && session->sdptext.misc.url)
     {
-        rtsp_urlpath_t urlpath;
-        memset(&urlpath, 0, sizeof(rtsp_urlpath_t));
-        rtsp_url_stream_path(session->sdptext.misc.url, &urlpath);
+        char miscurl[1024];
+        os_url_t urlpath;
+        memset(miscurl, 0, sizeof(miscurl));
+        memset(&urlpath, 0, sizeof(os_url_t));
+        strcpy(miscurl, session->sdptext.misc.url);
+        rtsp_url_stream_path(miscurl, &urlpath);
 
         if (strlen(urlpath.url))
             session->rtsp_url = strdup(urlpath.url);
 
-        RTSP_TRACE("===========================================\r\n");
-        RTSP_TRACE("===============username   :%s\r\n", urlpath.username);
-        RTSP_TRACE("===============password   :%s\r\n", urlpath.password);
-        RTSP_TRACE("===============hostname   :%s\r\n", urlpath.hostname);
+        RTSP_TRACE("=======================%s====================\r\n",miscurl);
+        RTSP_TRACE("===============username   :%s\r\n", urlpath.user?urlpath.user:"null");
+        RTSP_TRACE("===============password   :%s\r\n", urlpath.pass?urlpath.pass:"null");
+        RTSP_TRACE("===============hostname   :%s\r\n", urlpath.host?urlpath.host:"null");
         RTSP_TRACE("===============port       :%d\r\n", urlpath.port);
         RTSP_TRACE("===============channel    :%d\r\n", urlpath.channel);
         RTSP_TRACE("===============level      :%d\r\n", urlpath.level);
-        RTSP_TRACE("===============path       :%s\r\n", urlpath.path);
+        RTSP_TRACE("===============path       :%s\r\n", urlpath.filename?urlpath.filename:"null");
         RTSP_TRACE("===============url        :%s\r\n", urlpath.url);
         RTSP_TRACE("===============mode       :%d\r\n", urlpath.mode);
         RTSP_TRACE("===========================================\r\n");
 
         //解析URL，确定访问的码流还是文件
-        if (strlen(urlpath.path))
-            session->mfilepath = strdup(urlpath.path);
+        if (urlpath.filename && strlen(urlpath.filename))
+        {
+            if(urlpath.path)
+            {
+                char fullpath[256];
+                memset(fullpath, 0, sizeof(fullpath));
+                sprintf(fullpath, "%s/%s", urlpath.path, urlpath.filename);
+                session->mfilepath = strdup(fullpath);
+            }
+            else
+                session->mfilepath = strdup(urlpath.filename);
+        }
 
         session->mchannel = urlpath.channel;
         session->mlevel = urlpath.level;
+
+        os_url_free(&urlpath);
 
         if ((session->mchannel != -1 || (session->mfilepath)))
             return 0;
