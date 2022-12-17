@@ -48,6 +48,21 @@ typedef struct
     uint8_t *buf;
 } H264_NALU_T;
 
+
+typedef struct mpeg_rational_s {
+    int num;
+    int den;
+} zpl_mpeg_rational_t;
+ 
+
+typedef struct {
+    zpl_video_size_t vidsize;
+    zpl_mpeg_rational_t pixel_aspect;
+    uint8_t   profile;
+    uint8_t   level;
+} zpl_h264_sps_data_t;
+
+
 typedef struct 
 {
     uint8_t* 			fSEI;
@@ -59,6 +74,9 @@ typedef struct
     uint8_t* 			fPPS;
     unsigned 			fPPSSize;
     uint32_t 			profileLevelId;
+
+    zpl_h264_sps_data_t h264spsdata;
+
 }zpl_video_extradata_t __attribute__ ((aligned (4)));
 
 extern bool is_nalu3_start(zpl_uint8 *buffer);
@@ -78,6 +96,9 @@ extern int zpl_media_channel_extradata_get(void *chn, zpl_video_extradata_t *ext
 extern int zpl_media_channel_extradata_delete(zpl_video_extradata_t *extradata);
 
 extern int zpl_media_channel_decode_spspps(uint8_t *bufdata, uint32_t nLen,int *width,int *height,int *fps);
+
+extern int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_t *sps);
+
 
 #ifdef __cplusplus
 }

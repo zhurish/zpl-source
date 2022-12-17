@@ -364,8 +364,16 @@ zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool 
         file->parent = chn;
         file->cnt = 0;
 
-        //file->hdr.video.format = ZPL_VIDEO_FORMAT_NONE;
-        //file->hdr.audio.enctype = ZPL_AUDIO_CODEC_NONE;
+        file->filedesc.video.format = ZPL_VIDEO_FORMAT_720P;
+
+	file->filedesc.video.vidsize.width = 1280;		//视频大小
+	file->filedesc.video.vidsize.height = 720;
+	file->filedesc.video.enctype = RTP_MEDIA_PAYLOAD_H264;		//编码类型
+	file->filedesc.video.framerate = 30;		//帧率
+	file->filedesc.video.bitrate = 16;		//码率
+    file->filedesc.video.profile = 1;        //编码等级
+	file->filedesc.video.bitrate_type = ZPL_BIT_RATE_CBR;	//码率类型
+
 
         if(file->b_video && !file->b_audio)
         {
@@ -813,12 +821,32 @@ int zpl_media_channel_show(void *pvoid)
 					chn->video_media.halparam ? ((zpl_video_encode_t *)chn->video_media.halparam)->venc_channel : -1,
 					chn->video_media.codec.vidsize.width, chn->video_media.codec.vidsize.height, VTY_NEWLINE);
 		}
-		/*else if (chn && chn->channel_type == ZPL_MEDIA_CHANNEL_FILE)
+		else if (chn && chn->channel_type == ZPL_MEDIA_CHANNEL_FILE)
 		{
+			if(chn->video_media.halparam)
+			{
+				zpl_media_file_t *fdesc = (zpl_media_file_t*)chn->video_media.halparam;
+				/*fdesc->filedesc.video.format;	
+				fdesc->filedesc.video.vidsize;		//视频大小
+				fdesc->filedesc.video.enctype;		//编码类型
+				fdesc->filedesc.video.framerate;		//帧率
+				fdesc->filedesc.video.bitrate;		//码率
+    			fdesc->filedesc.video.profile;        //编码等级
+				fdesc->filedesc.video.bitrate_type;	//码率类型
+				*/
+				vty_out(vty, "%-4d  %-4d %-6d %-8d %dx%d%s", chn->channel, chn->channel_index, chn->channel_type, 
+					chn->video_media.halparam?((zpl_media_file_t*)chn->video_media.halparam)->file_size:-1, 
+					fdesc->filedesc.video.vidsize.width, fdesc->filedesc.video.vidsize.height, VTY_NEWLINE);
+				vty_out(vty, "%-4d  %-4d %-6d %-8d %dx%d%s", fdesc->filedesc.video.format, 
+					fdesc->filedesc.video.enctype, fdesc->filedesc.video.framerate,
+					fdesc->filedesc.video.bitrate, fdesc->filedesc.video.profile, 
+					fdesc->filedesc.video.bitrate_type, VTY_NEWLINE);
+			}
+			else
 			vty_out(vty, "%-4d  %-4d %-6d %-8d %dx%d%s", chn->channel, chn->channel_index, chn->channel_type, 
-					chn->video_media.halparam?((zpl_media_file_t*)chn->halparam)->file_len:-1, 
+					chn->video_media.halparam?((zpl_media_file_t*)chn->video_media.halparam)->file_size:-1, 
 					0, 0, VTY_NEWLINE);
-		}*/
+		}
 	}
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);

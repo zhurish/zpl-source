@@ -88,6 +88,11 @@
         "zpl_rtsp_transport.h": "c",
         "zpl_rtsp.h": "c",
         "string.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "auto_include.h": "c",
+        "os_log.h": "c",
+        "os_sem.h": "c",
+        "os_list.h": "c",
+        "zpl_type.h": "c"
     }
 }

@@ -20,7 +20,7 @@ static int rtsp_srv_read_eloop(struct eloop *ctx);
 void rtsp_srv_destroy(rtsp_srv_t *ctx)
 {
     RTSP_SRV_LOCK(ctx);
-    rtsp_session_lstexit(&ctx->rtsp_session);
+    rtsp_session_lstexit(&ctx->session_list_head);
 #ifdef ZPL_WORKQUEUE
 
     if (ctx->t_accept)
@@ -159,7 +159,7 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
             (rtsp_socket._bind)(ctx->video_sock._rtcp_sock, NULL, ctx->video_sock.local_rtcp_port);
     */
     RTSP_SRV_LOCK(ctx);
-    rtsp_session_lstinit(&ctx->rtsp_session);
+    rtsp_session_lstinit(&ctx->session_list_head);
 #ifdef ZPL_WORKQUEUE
     ctx->t_master = eloop_master_module_create(pro);
     if (ctx->t_master)
@@ -198,7 +198,7 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
     return 0;
 }
 
-static int rtsp_session_read_handler(rtsp_session_t *session, rtsp_srv_t *ctx)
+static int rtsp_session_read_handler(rtsp_srv_t *ctx, rtsp_session_t *session)
 {
     if (session->sock)
     {
@@ -240,18 +240,18 @@ static int rtsp_srv_read_eloop(struct eloop *ctx)
     {
         RTSP_SESSION_LOCK(session);
         session->t_read = NULL;
-        rtsp_session_read_handler(session, session->parent);
+        rtsp_session_read_handler(srv, session);
         if (session->state != RTSP_SESSION_STATE_CLOSE)
             session->t_read = eloop_add_read(session->t_master, rtsp_srv_read_eloop, session, session->sock);
         RTSP_SESSION_UNLOCK(session);    
         RTSP_SRV_LOCK(srv);    
-        rtsp_session_cleancache(&srv->rtsp_session);
+        rtsp_session_cleancache(&srv->session_list_head);
         RTSP_SRV_UNLOCK(srv); 
     }
     return 0;
 }
 #else
-static int rtsp_session_set_rfd(rtsp_session_t *session, rtsp_srv_t *ctx)
+static int rtsp_session_set_rfd(rtsp_session_t *session, rtsp_srv_t *ctx, )
 {
     if (session->sock)
     {
@@ -307,9 +307,9 @@ int rtsp_srv_select(rtsp_srv_t *ctx)
         tv.tv_usec = 0;
         FD_ZERO(&ctx->rset);
         FD_SET(ctx->listen_sock, &ctx->rset);
-        maxfd = rtsp_session_update_maxfd(&ctx->rtsp_session);
+        maxfd = rtsp_session_update_maxfd(&ctx->session_list_head);
         maxfd = max(maxfd, ctx->listen_sock);
-        rtsp_session_foreach(&ctx->rtsp_session, rtsp_session_set_rfd, ctx);
+        rtsp_session_foreach(&ctx->session_list_head, rtsp_session_set_rfd, ctx);
         //(rtsp_socket._select)(maxfd + 1, &rset, &wset, struct timeval *tv);
         ret = (rtsp_socket._select)(maxfd + 1, &ctx->rset, NULL, &tv);
         if (ret)
@@ -321,8 +321,8 @@ int rtsp_srv_select(rtsp_srv_t *ctx)
             }
             else
             {
-                rtsp_session_foreach(&ctx->rtsp_session, rtsp_session_read_callback, ctx);
-                rtsp_session_cleancache(&ctx->rtsp_session);
+                rtsp_session_foreach(&ctx->session_list_head, rtsp_session_read_callback, ctx);
+                rtsp_session_cleancache(&ctx->session_list_head);
             }
             return 0;
         }
@@ -337,7 +337,7 @@ int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_a
 #ifdef ZPL_WORKQUEUE
     RTSP_SRV_LOCK(ctx);
     fprintf(stdout, "----------------------------rtsp_srv_session_create----------rtsp_session_add fd=%d\r\n", ipstack_fd(sock));
-    rtsp_session_t *session = rtsp_session_add(&ctx->rtsp_session, sock, ip_address, port, ctx);
+    rtsp_session_t *session = rtsp_session_add(&ctx->session_list_head, sock, ip_address, port, ctx);
     if (session)
     {
         session->t_master = ctx->t_master;
@@ -348,7 +348,7 @@ int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_a
     RTSP_SRV_UNLOCK(ctx);
     return -1;
 #else
-    if (rtsp_session_add(&ctx->rtsp_session, sock, ip_address, port, ctx))
+    if (rtsp_session_add(&ctx->session_list_head, sock, ip_address, port, ctx))
         return 0;
     return -1;
 #endif
@@ -358,7 +358,7 @@ int rtsp_srv_session_destroy(rtsp_srv_t *ctx, zpl_socket_t sock)
 {
     int ret = 0;
     RTSP_SRV_LOCK(ctx);
-    ret = rtsp_session_del(&ctx->rtsp_session, sock);
+    ret = rtsp_session_del(&ctx->session_list_head, sock);
     RTSP_SRV_UNLOCK(ctx);
     return ret;
 }
@@ -367,7 +367,7 @@ rtsp_session_t *rtsp_srv_session_lookup(rtsp_srv_t *ctx, zpl_socket_t sock)
 {
     rtsp_session_t *ret = NULL;
     RTSP_SRV_LOCK(ctx);
-    ret = rtsp_session_lookup(&ctx->rtsp_session, sock);
+    ret = rtsp_session_lookup(&ctx->session_list_head, sock);
     RTSP_SRV_UNLOCK(ctx);
     return ret;
 }

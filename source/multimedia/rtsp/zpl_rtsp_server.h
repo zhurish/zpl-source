@@ -40,7 +40,6 @@ typedef struct rtsp_srv_s {
     char            *listen_address;
 
     fd_set          rset;
-
     char            *username;
     char            *password;
     char            *realm;
@@ -51,7 +50,7 @@ typedef struct rtsp_srv_s {
     uint16_t        rtp_port;
     uint16_t        rtcp_port;
 
-    osker_list_head_t     rtsp_session;
+    osker_list_head_t     session_list_head;
 
     rtp_socket_t    video_sock;
     rtp_socket_t    audio_sock;

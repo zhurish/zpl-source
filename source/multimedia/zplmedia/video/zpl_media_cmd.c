@@ -58,6 +58,32 @@ DEFUN (media_channel_enable,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+DEFUN (media_channel_file_enable,
+		media_channel_file_enable_cmd,
+		"media channel FILENAME (enable|disable)" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Media File Name Configure\n"
+		"Enable\n"
+		"Disable\n")
+{
+	int ret = ERROR;
+
+	if(strstr(argv[1],"enable"))
+	{
+		if(zpl_media_channel_filelookup(argv[0]) == NULL)
+			zpl_media_channel_filecreate(argv[0], 1);
+	}
+	else if(strstr(argv[1],"disable"))
+	{
+		if(zpl_media_channel_filelookup(argv[0]) != NULL)
+			ret = zpl_media_channel_filedestroy(argv[0]);
+		else
+			ret = ERROR;	
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
 DEFUN (media_channel_active,
 		media_channel_active_cmd,
 		"media channel <0-1> (main|sub) (active|inactive)" ,
@@ -264,7 +290,7 @@ DEFUN (show_video_encode_info,
 	ret = zpl_video_encode_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-
+//extern int rtp_send_h264_test(void);
 DEFUN (show_video_channel_info,
 		show_video_channel_info_cmd,
 		"show media channel info" ,
@@ -274,6 +300,7 @@ DEFUN (show_video_channel_info,
 {
 	int ret = ERROR;
 	ret = zpl_media_channel_show(vty);
+	//	rtp_send_h264_test();
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -432,6 +459,7 @@ static void cmd_mediaservice_init(void)
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mediaservice_template_cmd);
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mediaservice_template_cmd);
 
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_file_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_active_cmd);
 

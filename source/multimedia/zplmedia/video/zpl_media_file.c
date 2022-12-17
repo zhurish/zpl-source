@@ -96,7 +96,7 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
 #endif
             file->cnt = 0;
             file->flags = 0;
-            zpl_media_bufcache_create(&file->tmppacket, 1500);
+            //zpl_media_bufcache_create(&file->tmppacket, 1500);
 
             rewind(file->fp);
 
@@ -131,7 +131,10 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
                     }
                 }
                 else
+                {
+                    memset(&file->filedesc, 0, sizeof(zpl_media_filedesc_t));
                     rewind(file->fp);
+                }
             }
             else
             {
@@ -202,7 +205,7 @@ int zpl_media_file_destroy(zpl_media_file_t *file)
             fclose(file->fp);
             file->fp = NULL;
         }
-        zpl_media_bufcache_destroy (&file->tmppacket);
+        //zpl_media_bufcache_destroy (&file->tmppacket);
         free(file);
     }
     return 0;
@@ -366,7 +369,7 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
                             zpl_media_channel_nalu_show(&nalu);
                             if (zpl_media_channel_nalu2extradata(&nalu, extradata))
                             {
-                                file->tmppacket.len = 0;
+                                //file->tmppacket.len = 0;
                                 tmp.len = 0;
                                 if(offset >= 0)
                                     fseek(file->fp, offset, SEEK_SET);
@@ -426,7 +429,7 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
                         zpl_media_channel_nalu_show(&nalu);
                         if (zpl_media_channel_nalu2extradata(&nalu, extradata))
                         {
-                            file->tmppacket.len = 0;
+                            //file->tmppacket.len = 0;
                             tmp.len = 0;
                             if(offset >= 0)
                                 fseek(file->fp, offset, SEEK_SET);

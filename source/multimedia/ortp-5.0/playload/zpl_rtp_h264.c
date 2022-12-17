@@ -239,12 +239,12 @@ static int _h264_file_read_data(zpl_media_file_t *file, zpl_media_bufcache_t *ou
         if(zpl_media_channel_isnaluhdr(p, &naluhdr))
         {
             p+=naluhdr.hdr_len;
-            file->flags |= NALU_START_FLAG;
+            file->flags |= NALU_START_FLAG;/* 找到开始的标志 */
             outpacket->len = 0;
             //zpl_media_channel_nalu_show(&naluhdr);
         }
         nalulen = 0;
-        nalulen = zpl_media_channel_get_nextnalu(p, H264_SPLIT_SIZE(packetsize));
+        nalulen = zpl_media_channel_get_nextnalu(p, H264_SPLIT_SIZE(packetsize));/* 查找下一个标志位 */
         if(nalulen)
         {
             if(file->flags & NALU_START_FLAG)
@@ -806,21 +806,30 @@ int _rtsp_build_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_t len)
 
 
 
-int rtp_send_h264_test()
+int rtp_send_h264_test(void)
 {
+            int width = 0;
+        int height = 0;
+        int fps = 0;
+        int ret = 0;
     zpl_video_extradata_t extradata;
-    zpl_media_file_t * rfile = zpl_media_file_create("aa.h264", "r");
-    zpl_media_file_t * wfile = zpl_media_file_create("testoutfiledesc.h264", "a+");
+    char bufdda[] = {0x00,0x00,0x00,0x01,0x67,0x64,0x00,0x28,0xac,0xd9,0x40,0x78,0x02,0x27,0xe5,0xff
+,0xc0,0x02,0x40,0x02,0x84,0x00,0x00,0x03,0x00,0x04,0x00,0x00,0x03,0x00,0xf0,0x3c
+,0x60,0xc6,0x58};
+ zpl_h264_sps_data_t sps;
+zpl_media_channel_decode_sps(bufdda, sizeof(bufdda), &sps);
+     zpl_media_channel_decode_spspps(bufdda+4, sizeof(bufdda)-1, &width, &height, &fps);
+
+    zpl_media_file_t * rfile = zpl_media_file_create("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", "r");
+    zpl_media_file_t * wfile = zpl_media_file_create("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/testoutfiledesc.h264", "a+");
     if(rfile && wfile)
     {
         rfile->get_frame = _h264_file_get_frame;
         memset(&extradata, 0, sizeof(zpl_video_extradata_t));
         zpl_media_file_extradata(rfile, &extradata);
-        int width = 0;
-        int height = 0;
-        int fps = 0;
-        int ret = 0;
+
 zpl_skbuffer_t packet;
+
         zpl_media_channel_decode_spspps(extradata.fSPS, extradata.fSPSSize, &width, &height, &fps);
 zpl_media_file_open(rfile);
         wfile->filedesc.video.vidsize.width = width;

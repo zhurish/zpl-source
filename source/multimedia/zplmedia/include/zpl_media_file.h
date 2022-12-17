@@ -59,6 +59,7 @@ struct zpl_media_file_s
     uint8_t     filename[128];
     FILE        *fp;
     int         file_size;      //! 4 for parameter sets and first slice in picture, 3 for everything else (suggested)
+    uint32_t    offset_len;
     int         msec;           //定时间隔
 #ifndef ZPL_MEDIA_FILE_TASK
     void        *t_master;
