@@ -6,14 +6,16 @@
 
 #ifndef __RTSP_SERVER_H__
 #define __RTSP_SERVER_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "osker_list.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_auth.h"
 
-RTSP_BEGIN_DECLS
+
 
 #define RTSP_PACKET_MAX     2048
 
@@ -60,8 +62,8 @@ typedef struct rtsp_srv_s {
 
     uint32_t        _recv_offset;
     uint32_t        _send_offset;
-    uint32_t        _recv_length;
-    uint32_t        _send_length;
+    int32_t        _recv_length;
+    int32_t        _send_length;
 
     uint32_t        debug;
     void            *mutex;
@@ -84,6 +86,8 @@ RTSP_API int rtsp_srv_session_destroy(rtsp_srv_t *ctx, zpl_socket_t sock);
 RTSP_API rtsp_session_t * rtsp_srv_session_lookup(rtsp_srv_t *ctx, zpl_socket_t sock);
 
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SERVER_H__ */

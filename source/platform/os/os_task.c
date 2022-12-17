@@ -1142,7 +1142,7 @@ static void *os_task_entry_running(void *pVoid)
 		os_task_entry_destroy(task);
 	}
 	OS_TASK_ENTRY_UNLOCK(task);
-	return;
+	return NULL;
 }
 
 static int os_task_entry_start(os_task_t *task)

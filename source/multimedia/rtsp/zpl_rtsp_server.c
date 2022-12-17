@@ -182,6 +182,7 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
         {
             return -1;
         }
+        fprintf(stdout, "------------------------------2-----------rtsp_srv_accept\r\n");
         return rtsp_srv_session_create(ctx, sock, address, port);
     }
     return -1;
@@ -208,7 +209,7 @@ static int rtsp_session_read_handler(rtsp_session_t *session, rtsp_srv_t *ctx)
             ctx->_recv_length = (session->_recvfrom)(session, ctx->_recv_buf, sizeof(ctx->_recv_buf));
             if (ctx->_recv_length <= 0)
             {
-                fprintf(stdout, "------------------------------2-----------need close(%s)\r\n", strerror(errno));
+                fprintf(stdout, "------------------------------2-----------need close fd=%d(%s)\r\n", ipstack_fd(session->sock),strerror(errno));
                 session->state = RTSP_SESSION_STATE_CLOSE;
                 if (rtsp_socket._close)
                     (rtsp_socket._close)(session->sock);
@@ -335,6 +336,7 @@ int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_a
 {
 #ifdef ZPL_WORKQUEUE
     RTSP_SRV_LOCK(ctx);
+    fprintf(stdout, "----------------------------rtsp_srv_session_create----------rtsp_session_add fd=%d\r\n", ipstack_fd(sock));
     rtsp_session_t *session = rtsp_session_add(&ctx->rtsp_session, sock, ip_address, port, ctx);
     if (session)
     {
@@ -927,6 +929,8 @@ static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *sessio
         break;
     default:
     {
+        static int adsdadsada = 0;
+        adsdadsada++;
         fprintf(stdout, "===============:%s -> default\r\n", __func__);
         int length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL,
                                               RTSP_STATE_CODE_405, session->cseq, session->session);
@@ -934,8 +938,15 @@ static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *sessio
         {
             length += sprintf(ctx->_send_build + length, "\r\n");
             if ((session->_sendto))
-                return (session->_sendto)(session, ctx->_send_build, length);
+                ret = (session->_sendto)(session, ctx->_send_build, length);
         }
+        if(adsdadsada == 10)
+        {
+            session->state = RTSP_SESSION_STATE_CLOSE;
+            if (rtsp_socket._close)
+                (rtsp_socket._close)(session->sock);
+        }
+
     }
     break;
     }

@@ -6,11 +6,13 @@
 
 #ifndef __RTSP_SDP_FMTP_H__
 #define __RTSP_SDP_FMTP_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp.h"
 
-RTSP_BEGIN_DECLS
+
 // H.264
 enum {
         SDP_A_FMTP_H264_PROFILE_LEVEL_ID			= 0x00000001,
@@ -136,6 +138,8 @@ struct sdp_attr_fmtp_mpeg4_t
 
 RTSP_API int sdp_attr_fmtp_mpeg4(const char* fmtp, int *format, struct sdp_attr_fmtp_mpeg4_t *mpeg4);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SDP_FMTP_H__ */

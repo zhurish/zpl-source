@@ -1,13 +1,15 @@
 ﻿#ifndef __RTSP_SESSION_H__
 #define __RTSP_SESSION_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "osker_list.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_transport.h"
 
 
-RTSP_BEGIN_DECLS
+
 
 #define VIDEO_RTP_PORT_DEFAULT            28964
 #define VIDEO_RTCP_PORT_DEFAULT           28965
@@ -150,6 +152,7 @@ RTSP_API char * rtsp_session_dataptr(uint8_t *req, uint32_t offset);
 RTSP_API int rtsp_session_default(rtsp_session_t * newNode, bool srv);
 RTSP_API int rtsp_session_lstinit(struct osker_list_head * list);
 RTSP_API int rtsp_session_lstexit(struct osker_list_head * list);
+RTSP_API rtsp_session_t * rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *parent);
 RTSP_API int rtsp_session_destroy(rtsp_session_t *session);
 RTSP_API rtsp_session_t * rtsp_session_add(struct osker_list_head * list, zpl_socket_t sock, const char *address, uint16_t port, void *parent);
 RTSP_API int rtsp_session_del(struct osker_list_head * list,zpl_socket_t sock);
@@ -166,6 +169,8 @@ RTSP_API int rtsp_session_install(rtsp_session_t * newNode, rtsp_method method, 
 RTSP_API int rtsp_session_callback(rtsp_session_t * newNode, rtsp_method method);
 RTSP_API int rtsp_session_pdata(rtsp_session_t * newNode, bool bvideo, void *pdata);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SESSION_H__ */

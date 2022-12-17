@@ -1,5 +1,8 @@
 ﻿#ifndef __RTSP_MEDIA_H__
 #define __RTSP_MEDIA_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef ZPL_LIBRTSP_MODULE
 #include "zpl_media.h"
@@ -24,7 +27,7 @@
 #endif
 #endif
 
-RTSP_BEGIN_DECLS
+
 
 //rtp_h264_cfg h264;
 //rtp_h264_cfg h265;
@@ -135,6 +138,8 @@ RTSP_API rtsp_code rtsp_media_handle_set_parameter(rtsp_session_t * session, rts
 
 
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_MEDIA_H__ */

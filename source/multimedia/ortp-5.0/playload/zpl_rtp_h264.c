@@ -758,8 +758,8 @@ int _rtsp_build_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_t len)
 
     extradata = &zpl_media_getptr(session->rtsp_media)->video_media.extradata;
 
-    if (rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_H264))
-        sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_H264, rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_H264));
+    if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264))
+        sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_H264, rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264));
     else
         sdplength += sprintf(src + sdplength, "a=rtpmap:%d H264/90000\r\n", RTP_MEDIA_PAYLOAD_H264);
 

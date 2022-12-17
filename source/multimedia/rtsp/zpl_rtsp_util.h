@@ -6,7 +6,9 @@
 
 #ifndef __RTSP_SDP_UTIL_H__
 #define __RTSP_SDP_UTIL_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp.h"
 #ifdef ZPL_BUILD_LINUX
@@ -21,7 +23,7 @@
 #define	LOG_INFO	6	/* informational */
 #define	LOG_DEBUG	7	/* debug-level messages */
 #endif
-RTSP_BEGIN_DECLS
+
 
 typedef int (*rtsp_log_callback)(int, char*);
 /*
@@ -72,6 +74,8 @@ RTSP_API void rtsp_vlog(const char *file, const char *func, const int line, int 
 RTSP_API int rtsp_urlpath_test(char *url);
 #endif
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SDP_H__ */

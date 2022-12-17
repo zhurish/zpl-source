@@ -1,5 +1,6 @@
 ##ZPLOS_LDLIBS += -std=c99 
-ZPLOS_CFLAGS += -std=gnu99 -fgnu89-inline
+ZPLOS_CFLAGS += -std=gnu99
+#ZPLOS_CFLAGS += -std=gnu99 -fgnu99-inline
 ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 ## -D_GLIBCXX_USE_CXX11_ABI=0
 # 
@@ -8,11 +9,11 @@ ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
 #	
 ZPLOS_CFLAGS += -MMD -MP 
 ZPLOS_CFLAGS += -fmessage-length=0 
-ZPLOS_CFLAGS += -fsigned-char -fstack-protector 
-ZPLOS_CFLAGS += -Wstack-protector -Wfatal-errors -Wall -Wextra -Wunused
+ZPLOS_CFLAGS += -fsigned-char #-fstack-protector 
+ZPLOS_CFLAGS += -Wfatal-errors -Wall -Wextra -Wunused #-Wstack-protector 
 #
-ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra -Wfatal-errors -fsigned-char -fstack-protector
-
+ZPLOS_CPPFLAGS += -MMD -MP -Wall -Wextra -Wfatal-errors -fsigned-char #-fstack-protector
+#ZPLOS_CFLAGS += thread-jumps #:使用跳转线程优化,避免跳转到另一个跳转;
 #
 #-Wall
 #ZPLOS_GCC_WALL += -Waddress -Wbool-compare -Wbool-operation -Wc++11-compat  -Wc++14-compat  -Wchar-subscripts -Wcomment \
@@ -59,7 +60,6 @@ ZPLOS_GNU_WERROR += -Werror=format-extra-args #当传递给格式字符串的参
 #ZPLOS_GNU_WERROR += -Werror=format-nonliteral #当格式字符串不是字面值时给出警告  
 ZPLOS_GNU_WERROR += -Werror=format-security #当使用格式字符串的函数可能导致安全问题时给出警告   
 ZPLOS_GNU_WERROR += -Werror=format-zero-length #对长度为 0 的格式字符串给出警告 	
-ZPLOS_GNU_WERROR += -Werror=format-security
 #ZPLOS_GNU_WERROR += -Werror=double-promotion    #对从“float”到“double”的隐式转换给出警告
 
 #ZPLOS_GNU_WERROR += -Werror=vla                     #使用变长数组时警告  

@@ -20,27 +20,16 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-
+#include "ortp/port.h"
 #include "ortp/logging.h"
+#include "ortp/rtpprofile.h"
 #include "ortp/payloadtype.h"
 #include "ortp/str_utils.h"
 
 
 
-char *payload_type_get_rtpmap(PayloadType *pt)
-{
-	if(pt == NULL || pt->mime_type)
-		return NULL;
-	int len=(int)strlen(pt->mime_type)+15;
-	char *rtpmap=(char *) ortp_malloc(len);
-	if (pt->channels>0)
-		snprintf(rtpmap,len,"%s/%i/%i",pt->mime_type,pt->clock_rate,pt->channels);
-	else
-		snprintf(rtpmap,len,"%s/%i",pt->mime_type,pt->clock_rate);
-	return rtpmap;
-}
 
-PayloadType *payload_type_new()
+PayloadType *payload_type_new(void)
 {
 	PayloadType *newpayload=(PayloadType *)ortp_new0(PayloadType,1);
 	newpayload->flags|=PAYLOAD_TYPE_ALLOCATED;

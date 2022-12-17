@@ -10,23 +10,12 @@ LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
 
-$(OBJS_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@if test ! -d $(OBJS_DIR) ; \
-		then \
-		$(MKDIR) -p $(OBJS_DIR) ; \
-	fi
-	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)
-#@$(ECHO) CXX '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
-#	@$(CXX) -fPIC $(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
-
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
-# @$(ECHO) CC '$(PLFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
-# @$(CC) -fPIC $(PLFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)

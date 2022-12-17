@@ -599,7 +599,7 @@ ssize_t ipstack_recv (zpl_socket_t _sock, void *__buf, size_t __n, int __flags)
 	return ret;
 #else
 	int ret = recv(ipstack_fd(_sock), __buf, __n, __flags);
-	OSSTACK_DEBUG_DETAIL("socket recv: %s" ,ipstack_sockstr(_sock));
+	os_log_debug("socket recv: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }

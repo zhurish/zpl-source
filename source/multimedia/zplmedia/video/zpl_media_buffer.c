@@ -149,7 +149,7 @@ int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel,
 }
 
 
-void * zpl_media_bufqueue_get(void)
+zpl_skbqueue_t * zpl_media_bufqueue_get(void)
 {
 	return _media_bufqueue.media_queue;
 }

@@ -275,14 +275,21 @@ export ZPLSTRIP_CFLAGS= --strip-unneeded
 #	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
 #	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 #
-ifneq ($(strip $(V)),)
+ifeq ($(strip $(V)),2)
+ZPL_ECHO_FLAG=
 ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS)';
 ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS)';
 ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLASFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS)';
-else
+else ifeq ($(strip $(V)),1)
+ZPL_ECHO_FLAG=
 ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG)';
 ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG)';
 ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLASFLAGS) $(ZPLDEFINE) $(ZPLDEBUG)';
+else
+ZPL_ECHO_FLAG= > /dev/null 2>&1
+ZPL_ECHO_CC = $(ECHO) "building "   $@;
+ZPL_ECHO_CXX = $(ECHO) "building "   $@;   
+ZPL_ECHO_AS = $(ECHO) "building "   $@;   
 endif
 #
 #
@@ -291,7 +298,7 @@ endif
 
 #
 #
-ZPL_LIB_COMPILE = $(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
+ZPL_LIB_COMPILE = $(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_ECHO_FLAG)
 #ZPL_OBJ_COMPILE = @$(CC) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 #ZPL_LIB_COMPILE = $(CC) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCFLAGS) $(ZPLLDFLAGS) $^ -o $@ $(ZPLINCLUDE)
 #
@@ -299,8 +306,9 @@ ZPL_LIB_COMPILE = $(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS
 #
 #ZPL_CXX_OBJ_COMPILE = @$(CXX) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCPPFLAGS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 #ZPL_CXX_LIB_COMPILE = $(CXX) -fPIC $(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $^ -o $@ $(ZPLINCLUDE)
-ZPL_CXX_LIB_COMPILE = $(CXX) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCPPFLAGS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
+ZPL_CXX_LIB_COMPILE = $(CXX) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCPPFLAGS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_ECHO_FLAG)
 #
+ZPL_AS_LIB_COMPILE = $(AS) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLASFLAGS) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_ECHO_FLAG)
 
 #ZPL_CXX_MAKE_LIBSO = $(CXX) -shared -o 
 #
@@ -309,4 +317,31 @@ ZPL_CXX_LIB_COMPILE = $(CXX) -fPIC $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLCPPFLAGS) $(ZPL
 # files = $(patsubst %.o,%.c,$(objects))
 #
 #
+#
+
+define ZPL_GCC_COMPILE
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
+endef
+
+define ZPL_GXX_COMPILE
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)	
+endef
+
+define ZPL_GAS_COMPILE
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_AS) $(ZPL_AS_LIB_COMPILE)	
+endef
+#
+# $(call func1)
 #

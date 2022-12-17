@@ -15,7 +15,7 @@ typedef struct zpl_media_record_s
 {
     zpl_uint32          cbid;
     void                *event_queue;
-    void                *buffer_queue;
+    zpl_skbqueue_t                *buffer_queue;
     zpl_media_file_t    *record_file;
 }zpl_media_record_t;
 

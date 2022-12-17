@@ -41,21 +41,21 @@ int _rtsp_build_sdp_g7xx(rtsp_session_t *session, uint8_t *src, uint32_t len)
     switch (session->audio_session.payload)
     {
     case RTP_MEDIA_PAYLOAD_G722:
-        if (rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_G722))
-            sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_G722, rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_G722));
+        if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_G722))
+            sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_G722, rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_G722));
         else
             sdplength += sprintf(src + sdplength, "a=rtpmap:%d G722/8000\r\n", RTP_MEDIA_PAYLOAD_G722);
         break;
 
     case RTP_MEDIA_PAYLOAD_G711A:
-        if (rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_G711A))
-            sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_G711A, rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_G711A));
+        if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_G711A))
+            sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_G711A, rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_G711A));
         else
             sdplength += sprintf(src + sdplength, "a=rtpmap:%d PCMA/8000\r\n", RTP_MEDIA_PAYLOAD_G711A);
         break;
     case RTP_MEDIA_PAYLOAD_G711U:
-        if (rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_G711U))
-            sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_G711U, rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_G711U));
+        if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_G711U))
+            sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_G711U, rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_G711U));
         else
             sdplength += sprintf(src + sdplength, "a=rtpmap:%d PCMU/8000\r\n", RTP_MEDIA_PAYLOAD_G711U);
         break;

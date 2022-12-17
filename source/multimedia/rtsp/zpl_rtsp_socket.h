@@ -6,10 +6,12 @@
 
 #ifndef __RTSP_SOCKET_H__
 #define __RTSP_SOCKET_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 
-RTSP_BEGIN_DECLS
+
 
 typedef struct rtsp_socket_s {
     zpl_socket_t (*_socket)(zpl_ipstack, int, int, int );
@@ -31,6 +33,8 @@ typedef struct rtsp_socket_s {
 
 extern rtsp_socket_t  rtsp_socket;
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SOCKET_H__ */

@@ -245,6 +245,8 @@ int rtsp_session_pdata(rtsp_session_t * newNode, bool bvideo, void *pdata)
 int rtsp_session_default(rtsp_session_t * newNode, bool srv)
 {
     RTSP_SESSION_LOCK(newNode);
+    newNode->bsrv = srv;
+    newNode->session = (int)newNode;
     newNode->_rtpsession = NULL;
     newNode->state = RTSP_SESSION_STATE_CONNECT;
     newNode->rtsp_callback._options_func = NULL;//rtsp_rtp_after_options;
@@ -275,6 +277,7 @@ int rtsp_session_default(rtsp_session_t * newNode, bool srv)
     newNode->audio_session.rtpmode = 2;//RTP_SESSION_SENDRECV;
     if(!srv)
     {
+        newNode->session = 0;
         newNode->audio_session.transport.rtp.unicast.local_rtp_port = newNode->audio_session.local_rtp_port;
         newNode->audio_session.transport.rtp.unicast.local_rtcp_port = newNode->audio_session.local_rtcp_port;
         newNode->audio_session.transport.proto = RTSP_TRANSPORT_RTP_UDP;      // RTSP_TRANSPORT_xxx
@@ -324,6 +327,40 @@ int rtsp_session_default(rtsp_session_t * newNode, bool srv)
     return 0;
 }
 
+rtsp_session_t * rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *parent)
+{
+    rtsp_session_t * newNode = NULL; //每次申请链表结点时所使用的指针
+    newNode = (rtsp_session_t *)malloc(sizeof(rtsp_session_t));
+    if(newNode)
+    {
+        memset(newNode, 0, sizeof(rtsp_session_t));
+        newNode->mutex = os_mutex_name_init("rtspsession");
+        if(address)
+            newNode->address = strdup(address);
+        newNode->sock = sock;
+        newNode->port = port;
+        newNode->parent = parent;
+        return newNode;
+    }
+    return newNode;
+}
+#if 1
+rtsp_session_t * rtsp_session_add(struct osker_list_head * list, zpl_socket_t sock, const char *address, uint16_t port, void *parent)
+{
+    rtsp_session_t * newNode = rtsp_session_create( sock, address,  port, parent);
+    if(newNode)
+    {
+        newNode->bsrv = true;
+
+        rtsp_session_default(newNode, true);
+
+        osker_list_add_tail(&newNode->node, list); //调用list.h中的添加节点的函数osker_list_add_tail
+
+        return newNode;
+    }
+    return newNode;
+}
+#else
 rtsp_session_t * rtsp_session_add(struct osker_list_head * list, zpl_socket_t sock, const char *address, uint16_t port, void *parent)
 {
     rtsp_session_t * newNode = NULL; //每次申请链表结点时所使用的指针
@@ -348,9 +385,7 @@ rtsp_session_t * rtsp_session_add(struct osker_list_head * list, zpl_socket_t so
     }
     return newNode;
 }
-
-
-
+#endif
 
 int rtsp_session_del(struct osker_list_head * list, zpl_socket_t sock)
 {

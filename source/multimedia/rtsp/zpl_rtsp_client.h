@@ -1,13 +1,15 @@
 ﻿#ifndef __RTSP_CLIENT_H__
 #define __RTSP_CLIENT_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "osker_list.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_session.h"
 
-RTSP_BEGIN_DECLS
+
 
 
 #define RTSP_REQUEST_TIMEOUT    2
@@ -69,14 +71,12 @@ RTSP_API int rtsp_client_close(rtsp_client_t * client);
 
 RTSP_API int rtsp_client_thread(rtsp_client_t * client);
 
-/*
-RTSP_API int rtsp_client_rtpselect(rtsp_client_t * client);
-RTSP_API int rtsp_client_rtprecv(rtsp_client_t * client, uint8_t *buffer, uint32_t len, int *type);
-*/
 
 RTSP_API int rtsp_client_rtpread(rtsp_client_t * client);
 RTSP_API int rtsp_client_task_init(void* argv);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_CLIENT_H__ */

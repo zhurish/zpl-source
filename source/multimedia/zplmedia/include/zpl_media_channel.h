@@ -77,7 +77,7 @@ typedef struct zpl_media_channel_s
     zpl_media_video_t           video_media;
     zpl_media_audio_t           audio_media;
 
-    zpl_void                    *buffer_queue;      //通道对应的编码数据缓冲区
+    zpl_skbqueue_t              *buffer_queue;      //通道对应的编码数据缓冲区
 
     ZPL_MEDIA_STATE_E           state;
     zpl_media_client_t          media_client[ZPL_MEDIA_CLIENT_MAX];

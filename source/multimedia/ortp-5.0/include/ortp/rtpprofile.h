@@ -51,9 +51,9 @@ ORTP_VAR_PUBLIC RtpProfile av_profile;
 
 #define rtp_profile_get_name(profile) 	(const char*)((profile)->name)
 
-ORTP_PUBLIC void rtp_profile_set_payload(RtpProfile *prof, int idx, PayloadType *pt);
+ORTP_PUBLIC void rtp_profile_set_payload(RtpProfile *prof, int idx, const PayloadType *pt);
 
-ORTP_PUBLIC void rtp_profile_payload_update(int pt, PayloadType *type);
+ORTP_PUBLIC void rtp_profile_payload_update(int pt, const PayloadType *type);
 /**
  *	Set payload type number \a index unassigned in the profile.
  *
@@ -99,6 +99,10 @@ ORTP_PUBLIC RtpProfile * rtp_profile_clone_full(RtpProfile *prof);
 /* frees the profile and all its PayloadTypes*/
 ORTP_PUBLIC void rtp_profile_destroy(RtpProfile *prof);
 ORTP_PUBLIC void av_profile_init(RtpProfile *profile);
+
+ORTP_PUBLIC char *payload_type_get_rtpmap(PayloadType *pt);
+ORTP_PUBLIC char *rtp_profile_get_rtpmap(int payload);
+ORTP_PUBLIC uint32_t rtp_profile_get_clock_rate(int payload);
 
 #ifdef __cplusplus
 }

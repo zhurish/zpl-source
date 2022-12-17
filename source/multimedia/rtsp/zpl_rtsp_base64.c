@@ -86,8 +86,8 @@ int av_base64_decode(uint8_t *out, const char *in_str, uint32_t out_size)
     uint8_t *end = out + out_size;
     // no sign extension
     const uint8_t *in = (const uint8_t *)in_str;
-    unsigned bits = 0xff;
-    unsigned v;
+    unsigned int bits = 0xff;
+    unsigned int v = 0;
 
     while (end - dst > 3) {
         BASE64_DEC_STEP(0);

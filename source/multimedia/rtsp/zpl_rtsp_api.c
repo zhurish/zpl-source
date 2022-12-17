@@ -65,7 +65,7 @@ static int zpl_media_rtsp_task(void* argv)
 int rtsp_module_init(void)
 {
 #ifdef ZPL_WORKQUEUE
-    rtsp_srv = rtsp_srv_create(NULL, 9554, MODULE_RTSP);
+    rtsp_srv = rtsp_srv_create(NULL, 554, MODULE_RTSP);
 #else
     rtsp_srv = rtsp_srv_create(NULL, 9554);
 #endif
@@ -96,7 +96,7 @@ int rtsp_module_task_init(void)
         //rtsp_rtp_start();
 #ifdef ZPL_WORKQUEUE
 		rtsp_srv->t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
-								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK);
+								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK*2);
 #else
         if(rtsp_srv_taskid == 0)
             pthread_create(&rtsp_srv_taskid, NULL, zpl_media_rtsp_task, (void *) NULL);

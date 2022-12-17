@@ -1,6 +1,8 @@
 #ifndef ZPL_RTP_G7XX_H
 #define ZPL_RTP_G7XX_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +18,6 @@
 #include "zpl_rtsp_media.h"
 
 
-RTSP_BEGIN_DECLS
 
 /*
  * 读取一帧数据
@@ -41,7 +42,9 @@ RTSP_API int _rtsp_build_sdp_g7xx(rtsp_session_t *session, uint8_t *src, uint32_
 RTSP_API int _rtsp_parse_sdp_g7xx(rtsp_session_t *session, uint8_t *src, uint32_t len);
 
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif // ZPL_RTP_G7XX_H

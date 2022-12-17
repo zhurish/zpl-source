@@ -44,7 +44,7 @@ rtsp_media_t * rtsp_media_create(rtsp_session_t * session, int channel, int leve
         return NULL;
     if(path)
     {
-        fprintf(stdout, " rtsp_media_create path=%s\r\n", path);
+        fprintf(stdout, " ============================rtsp_media_create path=%s\r\n", path);
         fflush(stdout);
         zpl_media_channel_t *chn = zpl_media_channel_filecreate(path, zpl_true);
         //zpl_media_channel_t *chn = zpl_media_channel_filelookup(path);
@@ -255,12 +255,12 @@ static int rtsp_media_srv_setup(rtsp_media_t *media, rtsp_session_t *session)
 
     if(zpl_media_getptr(media)->video_media.enable && zpl_media_getptr(media)->video_media.halparam)
     {
-        session->video_session.timestamp_interval = rtsp_rtp_get_clock_rate(session->video_session.payload)/session->video_session.framerate;
+        session->video_session.timestamp_interval = rtp_profile_get_clock_rate(session->video_session.payload)/session->video_session.framerate;
         fprintf(stdout, " rtsp_media_srv_setup video timestamp_interval=%d\r\n", session->video_session.timestamp_interval);
     }
     else if(zpl_media_getptr(media)->audio_media.enable && zpl_media_getptr(media)->audio_media.halparam)
     {
-        session->audio_session.timestamp_interval = rtsp_rtp_get_clock_rate(session->audio_session.payload)/session->audio_session.framerate;
+        session->audio_session.timestamp_interval = rtp_profile_get_clock_rate(session->audio_session.payload)/session->audio_session.framerate;
         fprintf(stdout, " rtsp_media_srv_setup audio timestamp_interval=%d\r\n", session->audio_session.timestamp_interval);
     }
 
@@ -401,7 +401,7 @@ static int _rtsp_media_fmtp_attr_analysis(struct sdp_media *m, rtsp_session_t *s
             }
         }
         if(rtpsession->timestamp_interval == 0 && rtpsession->framerate)
-            rtpsession->timestamp_interval = rtsp_rtp_get_clock_rate(rtpsession->payload)/rtpsession->framerate;
+            rtpsession->timestamp_interval = rtp_profile_get_clock_rate(rtpsession->payload)/rtpsession->framerate;
 
         RTSP_TRACE(" %s        :%d\r\n", bvideo?"video":"audio", rtpsession->b_enable);
         RTSP_TRACE(" trackid      :%d\r\n", rtpsession->i_trackid);
@@ -467,10 +467,10 @@ int rtsp_media_build_sdptext(rtsp_session_t * session, rtsp_media_t *media, uint
         ret = rtsp_media_adap_build_sdp(session->video_session.payload, session, sdp + sdplength, 0);
         if(ret == 0)
         {
-            if (rtsp_rtp_get_rtpmap(session->video_session.payload))
+            if (rtp_profile_get_rtpmap(session->video_session.payload))
             {
                 sdplength += sprintf(sdp + sdplength, "a=rtpmap:%d %s\r\n", session->video_session.payload,
-                                     rtsp_rtp_get_rtpmap(session->video_session.payload));
+                                     rtp_profile_get_rtpmap(session->video_session.payload));
 
                 sdplength += sprintf((char*)sdp + sdplength, "a=framesize:%d %d-%d\r\n",
                                      session->video_session.payload,
@@ -524,10 +524,10 @@ int rtsp_media_build_sdptext(rtsp_session_t * session, rtsp_media_t *media, uint
         ret = rtsp_media_adap_build_sdp(session->audio_session.payload, session, sdp + sdplength, 0);
         if(ret == 0)
         {
-            if (rtsp_rtp_get_rtpmap(session->audio_session.payload))
+            if (rtp_profile_get_rtpmap(session->audio_session.payload))
             {
                 sdplength += sprintf(sdp + sdplength, "a=rtpmap:%d %s\r\n", session->audio_session.payload,
-                                     rtsp_rtp_get_rtpmap(session->audio_session.payload));
+                                     rtp_profile_get_rtpmap(session->audio_session.payload));
                 sdplength += sprintf((char*)sdp + sdplength, "a=framerate:%d\r\n", session->audio_session.framerate);
                 if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
                 {

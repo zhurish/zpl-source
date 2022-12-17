@@ -27,24 +27,7 @@ int rtsp_rtp_start(void)
     return 0;
 }
 
-char * rtsp_rtp_get_rtpmap(int payload)
-{
-    PayloadType *pt = rtp_profile_get_payload(&av_profile, payload);
-    if(pt)
-        return payload_type_get_rtpmap(pt);
-    return NULL;
-}
 
-
-//rtp_profile_get_payload_number_from_mime(RtpProfile *profile, const char *mime)
-
-uint32_t rtsp_rtp_get_clock_rate(int payload)
-{
-    PayloadType *pt = rtp_profile_get_payload(&av_profile, payload);
-    if(pt)
-        return (uint32_t)pt->clock_rate;
-    return 0;
-}
 
 int rtsp_rtp_handle_options(rtsp_session_t* session, void *pUser)
 {

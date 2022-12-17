@@ -436,8 +436,8 @@ int _rtsp_build_sdp_h265(rtsp_session_t *session, uint8_t *src, uint32_t len)
     else
         return 0;
 
-    if (rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_H265))
-        sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_H265, rtsp_rtp_get_rtpmap(RTP_MEDIA_PAYLOAD_H265));
+    if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H265))
+        sdplength += sprintf(src + sdplength, "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_H265, rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H265));
     else
         sdplength += sprintf(src + sdplength, "a=rtpmap:%d H265/90000\r\n", RTP_MEDIA_PAYLOAD_H265);
 

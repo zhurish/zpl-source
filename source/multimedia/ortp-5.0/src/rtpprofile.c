@@ -21,6 +21,37 @@
 #include "ortp/payloadtype.h"
 #include "ortp/logging.h"
 
+
+char *payload_type_get_rtpmap(PayloadType *pt)
+{
+	if(pt == NULL || pt->mime_type == NULL)
+		return NULL;
+	int len=(int)strlen(pt->mime_type)+15;
+	char *rtpmap=(char *) ortp_malloc(len);
+	if (pt->channels>0)
+		snprintf(rtpmap,len,"%s/%i/%i",pt->mime_type,pt->clock_rate,pt->channels);
+	else
+		snprintf(rtpmap,len,"%s/%i",pt->mime_type,pt->clock_rate);
+	return rtpmap;
+}
+
+
+char * rtp_profile_get_rtpmap(int payload)
+{
+    PayloadType *pt = rtp_profile_get_payload(&av_profile, payload);
+    if(pt)
+        return payload_type_get_rtpmap(pt);
+    return NULL;
+}
+
+uint32_t rtp_profile_get_clock_rate(int payload)
+{
+    PayloadType *pt = rtp_profile_get_payload(&av_profile, payload);
+    if(pt)
+        return (uint32_t)pt->clock_rate;
+    return 0;
+}
+
 int rtp_profile_get_payload_number_from_mime(RtpProfile *profile, const char *mime)
 {
 	return rtp_profile_get_payload_number_from_mime_and_flag(profile, mime, -1);
@@ -156,12 +187,37 @@ RtpProfile * rtp_profile_new(const char *name)
  * @param pt the payload type description
  *
 **/
-void rtp_profile_set_payload(RtpProfile *profile, int idx, PayloadType *pt){
+//#define RTP_PROFILE_DEBUG
+void rtp_profile_set_payload(RtpProfile *profile, int idx, const PayloadType *pt){
 	if (idx<0 || idx>=RTP_PROFILE_MAX_PAYLOADS) {
 		ortp_error("Bad index %i",idx);
 		return;
 	}
-	profile->payload[idx]=pt;
+	#ifndef RTP_PROFILE_DEBUG
+	profile->payload[idx]= pt;
+	#else
+	profile->payload[idx]= payload_type_new();
+	if(profile->payload[idx])
+	{
+		memset(profile->payload[idx], 0, sizeof(PayloadType));
+		profile->payload[idx]->type = pt->type; /**< one of PAYLOAD_* macros*/
+		profile->payload[idx]->clock_rate = pt->clock_rate; /**< rtp clock rate*/
+		profile->payload[idx]->bits_per_sample = pt->bits_per_sample;	/* in case of continuous audio data */
+		profile->payload[idx]->zero_pattern = pt->zero_pattern?ortp_strdup(pt->zero_pattern):NULL;
+		profile->payload[idx]->pattern_length = pt->pattern_length;
+		/* other useful information for the application*/
+		profile->payload[idx]->normal_bitrate = pt->normal_bitrate;	/*in bit/s */
+		profile->payload[idx]->mime_type = pt->mime_type?ortp_strdup(pt->mime_type):NULL; /**<actually the submime, ex: pcm, pcma, gsm*/
+		profile->payload[idx]->channels = pt->channels; /**< number of channels of audio */
+		profile->payload[idx]->recv_fmtp = pt->recv_fmtp?ortp_strdup(pt->recv_fmtp):NULL; /* various format parameters for the incoming stream */
+		profile->payload[idx]->send_fmtp = pt->send_fmtp?ortp_strdup(pt->send_fmtp):NULL; /* various format parameters for the outgoing stream */
+		profile->payload[idx]->avpf.features = pt->avpf.features; /* AVPF parameters */
+		profile->payload[idx]->avpf.rpsi_compatibility = pt->avpf.rpsi_compatibility;
+		profile->payload[idx]->avpf.trr_interval = pt->avpf.trr_interval;
+		profile->payload[idx]->flags = pt->flags;
+		profile->payload[idx]->user_data = pt->user_data;
+	}
+	#endif
 }
 
 /**
@@ -172,7 +228,35 @@ void rtp_profile_set_payload(RtpProfile *profile, int idx, PayloadType *pt){
 void rtp_profile_clear_all(RtpProfile *profile){
 	int i;
 	for (i=0;i<RTP_PROFILE_MAX_PAYLOADS;i++){
-		profile->payload[i]=0;
+		#ifndef RTP_PROFILE_DEBUG
+		profile->payload[i] = NULL;
+		#else
+		if(profile->payload[i])
+		{
+			if(profile->payload[i]->zero_pattern)
+			{
+				ortp_free(profile->payload[i]->zero_pattern);
+				profile->payload[i]->zero_pattern = NULL;
+			}
+			if(profile->payload[i]->mime_type)
+			{
+				ortp_free(profile->payload[i]->mime_type);
+				profile->payload[i]->mime_type = NULL;
+			}
+			if(profile->payload[i]->recv_fmtp)
+			{
+				ortp_free(profile->payload[i]->recv_fmtp);
+				profile->payload[i]->recv_fmtp = NULL;
+			}
+			if(profile->payload[i]->send_fmtp)
+			{
+				ortp_free(profile->payload[i]->send_fmtp);
+				profile->payload[i]->send_fmtp = NULL;
+			}
+			ortp_free(profile->payload[i]);
+			profile->payload[i] = NULL;
+		}
+		#endif
 	}
 }
 

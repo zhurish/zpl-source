@@ -1,6 +1,10 @@
 ﻿#ifndef __RTSP_MEDIA_ADAP_H__
 #define __RTSP_MEDIA_ADAP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef ZPL_LIBRTSP_MODULE
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
@@ -9,7 +13,6 @@
 #include "zpl_rtsp_session.h"
 
 
-RTSP_BEGIN_DECLS
 
 typedef struct rtsp_media_adap_s
 {
@@ -33,6 +36,8 @@ RTSP_API int rtsp_media_adap_rtp_sendto(uint32_t ptid, rtsp_session_t *session, 
 RTSP_API int rtsp_media_adap_rtp_recv(uint32_t ptid, rtsp_session_t *session, int type, uint8_t *buf, uint32_t len);
 
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_MEDIA_ADAP_H__ */

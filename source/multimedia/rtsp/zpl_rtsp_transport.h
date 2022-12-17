@@ -6,11 +6,13 @@
 
 #ifndef __RTSP_TRANSPORT_H__
 #define __RTSP_TRANSPORT_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp.h"
 
-RTSP_BEGIN_DECLS
+
 // Transport: RTP/AVP/TCP;interleaved=0-1
 // Transport: RTP/AVP;unicast;client_port=4588-4589;server_port=6256-6257
 // Transport: RTP/AVP;multicast;destination=224.2.0.1;port=3456-3457;ttl=16
@@ -62,6 +64,8 @@ typedef struct rtsp_transport_s
 RTSP_API int rtsp_header_transport(zpl_bool srv, const char* field, rtsp_transport_t* transport);
 RTSP_API int rtsp_header_transport_destroy(rtsp_transport_t* t);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_TRANSPORT_H__ */

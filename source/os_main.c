@@ -89,8 +89,6 @@ static struct option zpllongopts[] =
 		{"vty_addr", required_argument, NULL, 'A'},
 		{"vty_port", required_argument, NULL, 'P'},
 		{"tty", required_argument, NULL, 't'},
-		{"user", required_argument, NULL, 'u'},
-		{"group", required_argument, NULL, 'g'},
 		{"none", no_argument, NULL, 'n'},
 		{"version", no_argument, NULL, 'v'},
 		{0}};
@@ -112,8 +110,6 @@ usage(char *progname, int status)
 			   "-A, --vty_addr     Set vty's bind address\n"
 			   "-P, --vty_port     Set vty's port number\n"
 			   "-t, --tty          Set tty Device Name for shell\n"
-			   "-u, --user         User to run as\n"
-			   "-g, --group	  Group to run as\n"
 			   "-n, --none	  none stdin for shell\n",
 			   progname);
 		printf("-v, --version      Print program version\n"
@@ -130,7 +126,7 @@ static int zplmain_getopt(int argc, char **argv)
 {
 	while (1)
 	{
-		int opt = getopt_long(argc, argv, "df:i:z:hA:P:t:u:g:nv", zpllongopts, NULL);
+		int opt = getopt_long(argc, argv, "df:i:z:hA:P:t:nv", zpllongopts, NULL);
 		if (opt == EOF || opt == -1)
 		{
 			break;
@@ -181,12 +177,7 @@ static int zplmain_getopt(int argc, char **argv)
 			if (startup_option.vty_port <= 0 || startup_option.vty_port > 0xffff)
 				startup_option.vty_port = PLCLI_VTY_PORT;
 			break;
-		case 'u':
-			startup_option.user = optarg;
-			break;
-		case 'g':
-			startup_option.group = optarg;
-			break;
+
 		case 't':
 			if (startup_option.tty)
 				free(startup_option.tty);
@@ -219,6 +210,17 @@ extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
 extern int ip_main(int argc, char **argv);
 extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
                  char *passwd, char *localfileName);
+#include "zpl_media.h"
+#include "zpl_media_api.h"
+#include "zpl_media_internal.h"
+#include "zpl_media_event.h"				 
+#include "zpl_rtsp_def.h"
+#include "zpl_rtsp_session.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_client.h"
+#include "zpl_rtsp_server.h"
+#include "zpl_rtsp_api.h"
+#include "zpl_rtsp_rtp.h"
 
 /* Main startup routine. */
 int main(int argc, char **argv)
@@ -249,8 +251,19 @@ int main(int argc, char **argv)
 	startup_module_load();
 
 	startup_module_waitting();
+#if 1
+	rtsp_client_t * saa = rtsp_client_create("test", "rtsp://34.227.104.115/vod/mp4");
+	if(saa)
+	{
+		if(rtsp_client_connect(saa, 15) == 0)
+		{
+			if(rtsp_client_open(saa) == 0)
+				;//rtsp_client_task_init(saa);
+		}
+	}
 
-
+	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", 1);
+#endif
 	zpl_base_start_pid(MODULE_DEFAULT, startup_option.pid_file, &startup_option.pid);
 
 	/*

@@ -6,14 +6,17 @@
 
 #ifndef __RTSP_RTP_H__
 #define __RTSP_RTP_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_sdpfmtp.h"
 #include "ortp/ortp.h"
 #include "ortp/rtpsession.h"
-RTSP_BEGIN_DECLS
+
+
 
 
 
@@ -33,8 +36,7 @@ RTSP_API int rtsp_rtp_handle_set_parameter(rtsp_session_t*, void *);
 RTSP_API int rtsp_rtp_handle_get_parameter(rtsp_session_t*, void *);
 
 
-RTSP_API char *rtsp_rtp_get_rtpmap(int payload);
-RTSP_API uint32_t rtsp_rtp_get_clock_rate(int payload);
+
 RTSP_API int rtsp_rtp_select(rtsp_session_t* session);
 
 RTSP_API int rtsp_rtp_tcp_forward(rtsp_session_t* session,  const uint8_t *buffer, uint32_t len);
@@ -51,6 +53,8 @@ typedef struct
 
 int st_app_osd_DrawText(unsigned short *yuv, int u32Width, int u32Height, ST_Point_T stPoint, const char *szString, int u32Color);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_RTP_H__ */

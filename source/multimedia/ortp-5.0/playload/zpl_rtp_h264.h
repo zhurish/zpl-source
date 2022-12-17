@@ -1,6 +1,8 @@
 ﻿#ifndef ZPL_RTP_H264_H
 #define ZPL_RTP_H264_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +17,6 @@
 #include "zpl_rtsp_media.h"
 
 
-RTSP_BEGIN_DECLS
 
 /**
  * Enumeration of H.264 packetization modes.
@@ -194,7 +195,9 @@ RTSP_API int _rtsp_parse_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_
 
 RTSP_API int rtp_send_h264_test(void);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif // ZPL_RTP_H264_H

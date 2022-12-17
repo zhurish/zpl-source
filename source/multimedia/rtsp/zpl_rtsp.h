@@ -6,10 +6,12 @@
 
 #ifndef __RTSP_H__
 #define __RTSP_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 
-RTSP_BEGIN_DECLS
+
 
 typedef enum
 {
@@ -122,6 +124,8 @@ typedef enum
 #endif
 
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SDP_H__ */

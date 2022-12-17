@@ -6,11 +6,14 @@
 
 #ifndef __RTSP_AUTH_H__
 #define __RTSP_AUTH_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp.h"
 
-RTSP_BEGIN_DECLS
+
 
 typedef enum {
     RTSP_AUTH_NONE = 0,
@@ -49,6 +52,8 @@ RTSP_API int rtsp_auth_getbase(rtsp_auth_t*);
 RTSP_API int rtsp_auth_getdigest(rtsp_auth_t*);
 RTSP_API int rtsp_auth_destroy(rtsp_auth_t*);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_AUTH_H__ */

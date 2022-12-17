@@ -53,6 +53,7 @@ static zpl_socket_t rtsp_client_connect_socket(zpl_socket_t client_sock, const c
 
 rtsp_client_t * rtsp_client_create(const char *name, const char *url)
 {
+    zpl_socket_t sock;
     rtsp_client_t * client = NULL; //每次申请链表结点时所使用的指针
     client = (rtsp_client_t *)malloc(sizeof(rtsp_client_t));
     if(client)
@@ -63,36 +64,28 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
         memset(&urlpath, 0, sizeof(os_url_t));
         rtsp_url_stream_path(url,  &urlpath);
 
-        if(strstr(urlpath.host,":"))
+        if(urlpath.host && strstr(urlpath.host,":"))
         {
             char *p = strstr(urlpath.host,":");
             *p = '\0';
         }
         //if(strlen(proto))
         //    client->proto = strdup(proto);
-        if(strlen(urlpath.user))
+        if(urlpath.user && strlen(urlpath.user))
             client->authorization = strdup(urlpath.user);
-        if(strlen(urlpath.host))
+        if(urlpath.host && strlen(urlpath.host))
             client->hostname = strdup(urlpath.host);
-        if(strlen(urlpath.path))
+        if(urlpath.path && strlen(urlpath.path))
             client->path = strdup(urlpath.path);
 
         client->url = strdup(url);
         client->clientname = strdup(name);
+        sock = rtsp_client_create_socket(NULL, (urlpath.port==0)?554:urlpath.port);
 
-        client->rtsp_session = (rtsp_session_t *)malloc(sizeof(rtsp_session_t));
+        client->rtsp_session = rtsp_session_create( sock, urlpath.host, (urlpath.port==0)?554:urlpath.port, client);
         if(client->rtsp_session)
         {
-            memset(client->rtsp_session, 0, sizeof(rtsp_session_t));
-
-            client->rtsp_session->parent = client;
             rtsp_session_default(client->rtsp_session, false);
-            client->rtsp_session->session = 0;//(int)client->rtsp_session;
-
-            client->rtsp_session->bsrv = false;
-            client->rtsp_session->address = strdup(urlpath.host);
-
-            client->rtsp_session->port = (urlpath.port==0)?554:urlpath.port;
 
             sdp_text_init(&client->rtsp_session->sdptext, (const char *)(client->_recv_sdpbuf+client->_recv_offset),
                           client->_recv_length-client->_recv_offset);
@@ -100,9 +93,8 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
             client->_send_offset = 4;
             client->_send_build = client->_send_buf + client->_send_offset;
             client->timeout = RTSP_REQUEST_TIMEOUT;
-            client->rtsp_session->sock = rtsp_client_create_socket(NULL, client->rtsp_session->port);
 
-            client->wait_sock = client->rtsp_session->sock;
+            client->wait_sock = sock;
             client->istcp = false;
             fprintf(stdout, "%s [%d]  rtsp client connect:%s:%d\r\n", __func__, __LINE__,
                     client->rtsp_session->address, client->rtsp_session->port);
@@ -113,25 +105,60 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
             free(client);
             client = NULL;
         }
+        os_url_free(&urlpath);
         return client;
     }
     return NULL;
 }
 
-
-int rtsp_client_destroy(rtsp_client_t * client)
+int rtsp_client_destroy(rtsp_client_t *client)
 {
-    if(!ipstack_invalid(client->rtsp_session->sock))
-    {
-        if(rtsp_socket._close)
-            (rtsp_socket._close)(client->rtsp_session->sock);
-    }
-    sdp_text_free(&client->rtsp_session->sdptext);
-    if(client->rtsp_session->state != RTSP_SESSION_STATE_NONE)
+    if(client == NULL)
+        return -1;
+    // if(client->rtsp_session->state != RTSP_SESSION_STATE_NONE)
+    if(client->rtsp_session)
     {
         rtsp_session_destroy(client->rtsp_session);
-        client->rtsp_session->state = RTSP_SESSION_STATE_NONE;
+        client->rtsp_session = NULL;
+        // client->rtsp_session->state = RTSP_SESSION_STATE_NONE;
     }
+    if (!ipstack_invalid(client->wait_sock))
+    {
+        if (rtsp_socket._close)
+            (rtsp_socket._close)(client->wait_sock);
+    }
+    if (client->clientname)
+    {
+        free(client->clientname);
+        client->clientname = NULL;
+    }
+    if (client->url)
+    {
+        free(client->url);
+        client->url = NULL;
+    }
+    if (client->proto)
+    {
+        free(client->proto);
+        client->proto = NULL;
+    }
+    if (client->authorization)
+    {
+        free(client->authorization);
+        client->authorization = NULL;
+    }
+    if (client->hostname)
+    {
+        free(client->hostname);
+        client->hostname = NULL;
+    }
+    if (client->path)
+    {
+        free(client->path);
+        client->path = NULL;
+    }
+    free(client);
+    client = NULL;
     return 0;
 }
 

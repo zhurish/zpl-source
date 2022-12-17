@@ -35,6 +35,9 @@ static sdp_method_tbl_t _sdp_method_cb[] = {
     {"SCALE",       RTSP_METHOD_SCALE,          sdp_method_get_value},
     {"GET_PARAMETER", RTSP_METHOD_GET_PARAMETER, sdp_method_get_value},
     {"SET_PARAMETER", RTSP_METHOD_SET_PARAMETER, sdp_method_get_value},
+    {"ANNOUNCE", RTSP_METHOD_SET_PARAMETER, sdp_method_get_value},
+    {"RECORD", RTSP_METHOD_SET_PARAMETER, sdp_method_get_value},
+    {"REDIRECT", RTSP_METHOD_SET_PARAMETER, sdp_method_get_value},
 };
 
 typedef struct sdp_code_tbl_s {

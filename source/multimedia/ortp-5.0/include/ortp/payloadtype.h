@@ -64,11 +64,11 @@ extern "C"{
 
 typedef struct _PayloadTypeAvpfParams 
 {
-	unsigned char features; /**< A bitmask of PAYLOAD_TYPE_AVPF_* macros. */
-	bool_t rpsi_compatibility; /*< Linphone uses positive feeback for RPSI. However first versions handling
+	unsigned char  features; /**< A bitmask of PAYLOAD_TYPE_AVPF_* macros. */
+	bool_t  rpsi_compatibility; /*< Linphone uses positive feeback for RPSI. However first versions handling
 		AVPF wrongly declared RPSI as negative feedback, so this is kept for compatibility
 		with these versions but will probably be removed at some point in time. */
-	uint16_t trr_interval; /**< The interval in milliseconds between regular RTCP packets. */
+	uint16_t  trr_interval; /**< The interval in milliseconds between regular RTCP packets. */
 }PayloadTypeAvpfParams;
 
 typedef struct _OrtpPayloadType
@@ -76,17 +76,17 @@ typedef struct _OrtpPayloadType
 	int type; /**< one of PAYLOAD_* macros*/
 	int clock_rate; /**< rtp clock rate*/
 	char bits_per_sample;	/* in case of continuous audio data */
-	char *zero_pattern;
+	char  *zero_pattern;
 	int pattern_length;
 	/* other useful information for the application*/
 	int normal_bitrate;	/*in bit/s */
-	char *mime_type; /**<actually the submime, ex: pcm, pcma, gsm*/
+	char  *mime_type; /**<actually the submime, ex: pcm, pcma, gsm*/
 	int channels; /**< number of channels of audio */
-	char *recv_fmtp; /* various format parameters for the incoming stream */
-	char *send_fmtp; /* various format parameters for the outgoing stream */
+	char  *recv_fmtp; /* various format parameters for the incoming stream */
+	char  *send_fmtp; /* various format parameters for the outgoing stream */
 	PayloadTypeAvpfParams avpf; /* AVPF parameters */
 	int flags;
-	void *user_data;
+	void  *user_data;
 } PayloadType;
 
 
@@ -97,7 +97,7 @@ typedef struct _OrtpPayloadType
 
 ORTP_PUBLIC PayloadType *payload_type_new(void);
 ORTP_PUBLIC PayloadType *payload_type_clone(const PayloadType *payload);
-ORTP_PUBLIC char *payload_type_get_rtpmap(PayloadType *pt);
+
 ORTP_PUBLIC void payload_type_destroy(PayloadType *pt);
 ORTP_PUBLIC void payload_type_set_recv_fmtp(PayloadType *pt, const char *fmtp);
 ORTP_PUBLIC void payload_type_set_send_fmtp(PayloadType *pt, const char *fmtp);
@@ -116,7 +116,7 @@ ORTP_PUBLIC bool_t fmtp_get_value(const char *fmtp, const char *param_name, char
 #define payload_type_set_user_data(pt,p)	(pt)->user_data=(p)
 #define payload_type_get_user_data(pt)		((pt)->user_data)
 
-
+#if 0
 /* some payload types */
 /* audio */
 ORTP_VAR_PUBLIC PayloadType payload_type_pcmu8000;
@@ -190,6 +190,10 @@ ORTP_VAR_PUBLIC PayloadType payload_type_x_udpftp;
 /* telephone-event */
 ORTP_VAR_PUBLIC PayloadType payload_type_telephone_event;
 
+
+
+#endif
+ORTP_VAR_PUBLIC PayloadType payload_type_h264;
 #ifdef __cplusplus
 }
 #endif

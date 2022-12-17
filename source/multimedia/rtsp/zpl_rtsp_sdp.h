@@ -6,10 +6,11 @@
 
 #ifndef __RTSP_SDP_H__
 #define __RTSP_SDP_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp.h"
-RTSP_BEGIN_DECLS
 
 
 enum {
@@ -441,6 +442,8 @@ RTSP_API int sdp_build_respone_option(uint8_t *src, const char *srvname, int cod
 
 RTSP_API int rtsp_sdp_hdr_prase_test(void);
 
-RTSP_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RTSP_SDP_H__ */

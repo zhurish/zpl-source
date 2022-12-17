@@ -407,6 +407,8 @@ static void sps_get_profile(int profile_idc, char* profile_str){
 static uint32_t sps_get_ue(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
 {
     uint32_t nZeroNum = 0;
+    uint32_t i = 0;
+    uint32_t dwRet = 0;
     while (*nStartBit < nLen * 8)
     {
         if (pBuff[*nStartBit / 8] & (0x80 >> (*nStartBit % 8)))
@@ -418,8 +420,8 @@ static uint32_t sps_get_ue(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
     }
     (*nStartBit)++;
 
-    uint32_t dwRet = 0;
-    for (uint32_t i=0; i<nZeroNum; i++)
+    
+    for ( i=0; i<nZeroNum; i++)
     {
         dwRet <<= 1;
         if (pBuff[*nStartBit / 8] & (0x80 >> (*nStartBit % 8)))
@@ -445,7 +447,8 @@ static int sps_get_se(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
 static uint32_t sps_get_u(uint32_t BitCount,uint8_t * buf,uint32_t *nStartBit)
 {
     uint32_t dwRet = 0;
-    for (uint32_t i=0; i<BitCount; i++)
+    uint32_t i=0;
+    for ( i=0; i<BitCount; i++)
     {
         dwRet <<= 1;
         if (buf[*nStartBit / 8] & (0x80 >> (*nStartBit % 8)))
@@ -489,7 +492,7 @@ static void de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
 static bool h264_decode_sps(uint8_t * buf, uint32_t nLen, int *width,int *height,int *fps)
 {
     uint32_t StartBit=0;
-    uint32_t dddnLen = nLen;
+    uint32_t dddnLen = nLen, i = 0;
     *fps=0;
     de_emulation_prevention(buf,&dddnLen);
     uint32_t residual_colour_transform_flag=0;
@@ -526,7 +529,7 @@ static bool h264_decode_sps(uint8_t * buf, uint32_t nLen, int *width,int *height
             uint32_t seq_scaling_list_present_flag[8];
             if( seq_scaling_matrix_present_flag )
             {
-                for( uint32_t i = 0; i < 8; i++ ) {
+                for(  i = 0; i < 8; i++ ) {
                     seq_scaling_list_present_flag[i]=sps_get_u(1,buf,&StartBit);
                 }
             }
@@ -543,7 +546,7 @@ static bool h264_decode_sps(uint8_t * buf, uint32_t nLen, int *width,int *height
             uint32_t num_ref_frames_in_pic_order_cnt_cycle=sps_get_ue(buf,nLen,&StartBit);
 
             int *offset_for_ref_frame=malloc(4*num_ref_frames_in_pic_order_cnt_cycle);
-            for( uint32_t i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++ )
+            for(  i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++ )
                 offset_for_ref_frame[i]=sps_get_se(buf,nLen,&StartBit);
             free(offset_for_ref_frame);
         }

@@ -47,8 +47,8 @@ static int ipcom_stack_init(int localport)
 
 int zpl_stack_init(void)
 {
-	os_limit_stack_size(10240);
-
+	//os_limit_stack_size(10240);
+	os_limit_stack_size(819200);
 	zpl_base_env_init();
 	zpl_base_env_load();
 	

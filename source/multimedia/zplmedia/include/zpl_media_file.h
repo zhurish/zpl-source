@@ -79,7 +79,7 @@ struct zpl_media_file_s
     uint32_t    pack_seq;
     uint32_t    cnt;
     void        *pdata;                     //稀有数据
-    zpl_void    *buffer_queue;              //消息队列
+    zpl_skbqueue_t    *buffer_queue;              //消息队列
     zpl_void    *parent;                    //父节点
     
     zpl_packet_head_t tmphead;

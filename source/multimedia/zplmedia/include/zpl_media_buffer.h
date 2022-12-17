@@ -22,7 +22,7 @@ extern "C" {
 //Scheduler
 #define ZPL_MEDIA_BUFFER_FRAME_MAXSIZE		(1920*1080*3)//(BMP位图)
 #define ZPL_MEDIA_BUFFER_FRAME_CACHESIZE	(16)//(临时缓存2帧)
-#define ZPL_MEDIA_BUFQUEUE_SIZE	(256)//(临时缓存2帧)
+#define ZPL_MEDIA_BUFQUEUE_SIZE	(2)//(临时缓存2帧)
 typedef enum
 {
     ZPL_BUFFER_DATA_ENCODE      = 0x00,           //编码后
@@ -60,7 +60,7 @@ extern char *zpl_media_timerstring(void);
 extern zpl_uint32 zpl_media_timerstamp(void);
 extern void zpl_media_msleep(zpl_uint32 msec);
 
-void * zpl_media_bufqueue_get(void);
+zpl_skbqueue_t * zpl_media_bufqueue_get(void);
 int zpl_media_bufqueue_init(void);
 int zpl_media_bufqueue_exit(void);
 int zpl_media_bufqueue_start(void);
