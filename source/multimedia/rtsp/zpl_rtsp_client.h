@@ -49,7 +49,7 @@ typedef struct rtsp_client_s {
     uint32_t        flags;
 
     rtsp_session_t  *rtsp_session;
-    zpl_socket_t    wait_sock;           //rtsp wait socket
+//    zpl_socket_t    wait_sock;           //rtsp wait socket
     bool            istcp;
     int             (*_rtsp_client_rtpdata)(void *,  zpl_skbuffer_t *);
 

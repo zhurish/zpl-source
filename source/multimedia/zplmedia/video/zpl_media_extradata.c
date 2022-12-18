@@ -198,11 +198,9 @@ int zpl_media_channel_nalu_show(H264_NALU_T *nalu)
             sprintf(type_str, "SEI");
             break;
         case NALU_TYPE_SPS:
-
             sprintf(type_str, "SPS");
             break;
         case NALU_TYPE_PPS:
-
             sprintf(type_str, "PPS");
             break;
         case NALU_TYPE_AUD:
@@ -217,6 +215,9 @@ int zpl_media_channel_nalu_show(H264_NALU_T *nalu)
         case NALU_TYPE_FILL:
             sprintf(type_str, "FILL");
             break;
+        default:
+            sprintf(type_str, "TYPE-%d", nalu->nal_unit_type);
+            break;    
         }
         char idc_str[20] = {0};
         switch (nalu->nal_idc >> 5)
@@ -233,6 +234,9 @@ int zpl_media_channel_nalu_show(H264_NALU_T *nalu)
         case NALU_PRIORITY_HIGHEST:
             sprintf(idc_str, "HIGHEST");
             break;
+        default:
+            sprintf(idc_str, "IDC-%d", nalu->nal_idc);
+            break;  
         }
         zlog_debug(MODULE_ZPLMEDIA, "-------- NALU Table ------+---------+");
         zlog_debug(MODULE_ZPLMEDIA, "       IDC |  TYPE |   LEN   |");
@@ -770,13 +774,12 @@ static void br_skip_golomb(br_state *br)
 #define br_skip_ue_golomb(br) br_skip_golomb(br)
 #define br_skip_se_golomb(br) br_skip_golomb(br)
 
-int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_t *sps)
+int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *height,int *fps)
 {
-    br_state br = BR_INIT(buf, len);
-    int profile_idc, pic_order_cnt_type;
-    int frame_mbs_only;
-    int i, j;
-
+    int profile_idc = 0, pic_order_cnt_type = 0;
+    int frame_mbs_only = 0;
+    int i = 0, j = 0;
+    zpl_h264_sps_data_t sps;
     // find sps
     bool findSPS = false;
     if (buf[2] == 0)
@@ -808,16 +811,16 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_
     }
     if(findSPS == false)
         return -1;
-
+    br_state br = BR_INIT(buf, len);
     profile_idc = br_get_u8(&br);
-    sps->profile = profile_idc;
+    sps.profile = profile_idc;
     printf("H.264 SPS: profile_idc %d\r\n", profile_idc);
     /* constraint_set0_flag = br_get_bit(br);    */
     /* constraint_set1_flag = br_get_bit(br);    */
     /* constraint_set2_flag = br_get_bit(br);    */
     /* constraint_set3_flag = br_get_bit(br);    */
     /* reserved             = br_get_bits(br,4); */
-    sps->level = br_get_u8(&br);
+    sps.level = br_get_u8(&br);
     br_skip_bits(&br, 8);
     br_skip_ue_golomb(&br); /* seq_parameter_set_id */
     if (profile_idc >= 100)
@@ -857,15 +860,15 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_
     }
     br_skip_ue_golomb(&br); /* ref_frames                      */
     br_skip_bit(&br);       /* gaps_in_frame_num_allowed       */
-    sps->vidsize.width /* mbs */ = br_get_ue_golomb(&br) + 1;
-    sps->vidsize.height /* mbs */ = br_get_ue_golomb(&br) + 1;
+    sps.vidsize.width /* mbs */ = br_get_ue_golomb(&br) + 1;
+    sps.vidsize.height /* mbs */ = br_get_ue_golomb(&br) + 1;
     frame_mbs_only = br_get_bit(&br);
-    printf("H.264 SPS: pic_width:  %u mbs\r\n", (unsigned)sps->vidsize.width);
-    printf("H.264 SPS: pic_height: %u mbs\r\n", (unsigned)sps->vidsize.height);
+    printf("H.264 SPS: pic_width:  %u mbs\r\n", (unsigned)sps.vidsize.width);
+    printf("H.264 SPS: pic_height: %u mbs\r\n", (unsigned)sps.vidsize.height);
     printf("H.264 SPS: frame only flag: %d\r\n", frame_mbs_only);
 
-    sps->vidsize.width *= 16;
-    sps->vidsize.height *= 16 * (2 - frame_mbs_only);
+    sps.vidsize.width *= 16;
+    sps.vidsize.height *= 16 * (2 - frame_mbs_only);
 
     if (!frame_mbs_only)
         if (br_get_bit(&br)) /* mb_adaptive_frame_field_flag */
@@ -881,14 +884,14 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_
         printf("H.264 SPS: cropping %d %d %d %d\r\n",
                crop_left, crop_top, crop_right, crop_bottom);
 
-        sps->vidsize.width -= 2 * (crop_left + crop_right);
+        sps.vidsize.width -= 2 * (crop_left + crop_right);
         if (frame_mbs_only)
-            sps->vidsize.height -= 2 * (crop_top + crop_bottom);
+            sps.vidsize.height -= 2 * (crop_top + crop_bottom);
         else
-            sps->vidsize.height -= 4 * (crop_top + crop_bottom);
+            sps.vidsize.height -= 4 * (crop_top + crop_bottom);
     }
     /* VUI parameters */
-    sps->pixel_aspect.num = 0;
+    sps.pixel_aspect.num = 0;
     if (br_get_bit(&br))
     {
         /* vui_parameters_present flag */
@@ -900,9 +903,9 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_
 
             if (aspect_ratio_idc == 255 /* Extended_SAR */)
             {
-                sps->pixel_aspect.num = br_get_u16(&br); /* sar_width */
-                sps->pixel_aspect.den = br_get_u16(&br); /* sar_height */
-                printf("H.264 SPS: -> sar %dx%d\r\n", sps->pixel_aspect.num, sps->pixel_aspect.den);
+                sps.pixel_aspect.num = br_get_u16(&br); /* sar_width */
+                sps.pixel_aspect.den = br_get_u16(&br); /* sar_height */
+                printf("H.264 SPS: -> sar %dx%d\r\n", sps.pixel_aspect.num, sps.pixel_aspect.den);
             }
             else
             {
@@ -932,8 +935,8 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_
 
                 if (aspect_ratio_idc < sizeof(aspect_ratios) / sizeof(aspect_ratios[0]))
                 {
-                    memcpy(&sps->pixel_aspect, &aspect_ratios[aspect_ratio_idc], sizeof(zpl_mpeg_rational_t));
-                    printf("H.264 SPS: -> aspect ratio %d / %d\r\n", sps->pixel_aspect.num, sps->pixel_aspect.den);
+                    memcpy(&sps.pixel_aspect, &aspect_ratios[aspect_ratio_idc], sizeof(zpl_mpeg_rational_t));
+                    printf("H.264 SPS: -> aspect ratio %d / %d\r\n", sps.pixel_aspect.num, sps.pixel_aspect.den);
                 }
                 else
                 {
@@ -942,7 +945,16 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_
             }
         }
     }
+    //sps.vidsize.width = width;
+    //sps.vidsize.height = height;
+    if(width)
+        *width = sps.vidsize.width;
+    if(height)
+        *height = sps.vidsize.height;
+    if(fps)
+        *fps = 25;
+
     printf("H.264 SPS: -> video size %dx%d, aspect %d:%d\r\n",
-           sps->vidsize.width, sps->vidsize.height, sps->pixel_aspect.num, sps->pixel_aspect.den);
+           sps.vidsize.width, sps.vidsize.height, sps.pixel_aspect.num, sps.pixel_aspect.den);
     return 1;
 }

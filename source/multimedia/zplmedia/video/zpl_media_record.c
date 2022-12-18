@@ -12,21 +12,6 @@ static int media_buffer_data_record_handle(zpl_media_event_t *event)
     {
         //memcpy(&record->record_file->packet.data, bufdata, sizeof(zpl_skbuffer_t));
         //record->record_file->packet.data.buffer_data = bufdata->buffer_data;
-        memset(&record->record_file->tmphead, 0, sizeof(zpl_packet_head_t));
-        if(bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_VIDEO)
-        {
-            record->record_file->tmphead.video = 1;
-            record->record_file->tmphead.audio = 0;
-            record->record_file->tmphead.video_len = bufdata->skb_len;
-            record->record_file->tmphead.audio_len = 0;
-        }
-        else if(bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_AUDIO)
-        {
-            record->record_file->tmphead.video = 0;
-            record->record_file->tmphead.audio = 1;
-            record->record_file->tmphead.video_len = 0;
-            record->record_file->tmphead.audio_len = bufdata->skb_len;
-        } 
         zpl_media_file_write(record->record_file, bufdata);
         zpl_skbqueue_finsh(record->buffer_queue, bufdata);
         bufdata = zpl_skbqueue_get(record->buffer_queue);

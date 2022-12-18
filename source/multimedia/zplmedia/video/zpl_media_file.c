@@ -45,6 +45,13 @@ static char *zpl_media_file_basename(const char *name)
     zpl_media_debugmsg_debug(" basename=%s", basename);
     return basename;
 }
+static char *zpl_media_filedesc_name(const char *name)
+{
+    static char basename[128];
+    memset(basename, 0, sizeof(basename));
+    snprintf(basename, sizeof(basename), "%s.desc", name);
+    return basename;
+}
 
 static int zpl_media_filedesc_check(zpl_media_file_t *file)
 {
@@ -53,6 +60,36 @@ static int zpl_media_filedesc_check(zpl_media_file_t *file)
         return 1;
     }
     return 0;
+}
+
+int zpl_media_filedesc_create(zpl_media_file_t *file)
+{
+    FILE *fp = NULL;
+    if(file->filename[0] == '/')
+        fp = fopen(zpl_media_filedesc_name(file->filename), "w+");
+    else
+        fp = fopen(zpl_media_filedesc_name(zpl_media_file_basename(file->filename)), "w+");
+    if(fp)
+    {
+       fwrite(&file->filedesc, 1, sizeof(zpl_media_filedesc_t), fp);
+       fclose(fp);
+    }   
+    return 0; 
+}
+
+static int zpl_media_filedesc_load(zpl_media_file_t *file)
+{
+    FILE *fp = NULL;
+    if(file->filename[0] == '/')
+        fp = fopen(zpl_media_filedesc_name(file->filename), "r");
+    else
+        fp = fopen(zpl_media_filedesc_name(zpl_media_file_basename(file->filename)), "r");
+    if(fp)
+    {
+       fread(&file->filedesc, 1, sizeof(zpl_media_filedesc_t), fp);
+       fclose(fp);
+    }   
+    return 0; 
 }
 
 zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
@@ -96,6 +133,7 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
 #endif
             file->cnt = 0;
             file->flags = 0;
+            file->offset_len = 0;
             //zpl_media_bufcache_create(&file->tmppacket, 1500);
 
             rewind(file->fp);
@@ -109,8 +147,7 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
 
                 file->filedesc.begintime = file->filedesc.endtime = time(NULL);
                 file->filedesc.endtime += 60;
-
-                zpl_media_file_readhdr(file, &file->filedesc);
+                zpl_media_filedesc_load(file);
                 if(zpl_media_filedesc_check(file))
                 {
                     if(file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
@@ -188,7 +225,7 @@ int zpl_media_file_close(zpl_media_file_t *file)
     if (file && file->fp)
     {
         file->filedesc.endtime = time(NULL);
-        zpl_media_file_writehdr(file, &file->filedesc);
+        zpl_media_filedesc_create(file);
         fclose(file->fp);
         file->fp = NULL;
         return 0;
@@ -215,44 +252,7 @@ int zpl_media_file_write(zpl_media_file_t *file, zpl_skbuffer_t *bufdata)
 {
     if (file)
     {
-        if(bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_VIDEO)
-        {
-            file->tmphead.video = 1;
-            file->tmphead.audio = 0;
-            file->tmphead.video_len = bufdata->skb_len;  //缓冲区大小
-            file->tmphead.audio_len = 0;  //缓冲区大小
-            file->filedesc.videoframe++;
-        }
-        if(bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_AUDIO)
-        {
-            file->tmphead.video = 0;
-            file->tmphead.audio = 1;
-            file->tmphead.video_len = 0;  //缓冲区大小
-            file->tmphead.audio_len = bufdata->skb_len;  //缓冲区大小
-            file->filedesc.audioframe++;
-        }
-        int ret = fwrite(&file->tmphead, 1, sizeof(zpl_packet_head_t), file->fp);
-        ret += fwrite(ZPL_SKB_DATA(bufdata), 1, ZPL_SKB_DATA_LEN(bufdata), file->fp);
-        fflush(file->fp);
-        return ret;
-    }
-    return -1;
-}
-
-int zpl_media_file_write_data(zpl_media_file_t *file, uint8_t *data, uint32_t len)
-{
-    if (file && len)
-    {
-        file->tmphead.video = 1;
-        file->tmphead.audio = 0;
-        file->tmphead.video_len = len;  //缓冲区大小
-        file->tmphead.audio_len = 0;  //缓冲区大小
-        if(file->tmphead.video)
-            file->filedesc.videoframe++;
-        if(file->tmphead.audio)
-            file->filedesc.audioframe++;
-        int ret = fwrite(&file->tmphead, 1, sizeof(zpl_packet_head_t), file->fp);
-        ret += fwrite(data, 1, len, file->fp);
+        int ret = fwrite(ZPL_SKB_DATA(bufdata), 1, ZPL_SKB_DATA_LEN(bufdata), file->fp);
         fflush(file->fp);
         return ret;
     }
@@ -340,51 +340,41 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
     zpl_media_bufcache_t tmp;
     int offset = ftell(file->fp);
     zpl_media_bufcache_create(&tmp, 1500);
-    if(zpl_media_filedesc_check(file))
-    {
-        while(1)
-        {
-            if (feof(file->fp) != 0)
-            {
-                zpl_media_bufcache_destroy(&tmp);
-                return -1;
-            }
-            memset(&file->tmphead, 0, sizeof(zpl_packet_head_t));
-            ret = fread(&file->tmphead, 1, sizeof(zpl_packet_head_t), file->fp);
-            if (ret == sizeof(zpl_packet_head_t))
-            {
-                uint32_t len = file->tmphead.audio_len + file->tmphead.video_len;
-                zpl_media_bufcache_resize(&tmp, len);
-                if (tmp.data && tmp.maxsize >= len)
-                {
-                    ret = fread(tmp.data, 1, len, file->fp);
-                    if (ret)
-                    {
-                        H264_NALU_T nalu;
-                        tmp.len = ret;
-                        memset(&nalu, 0, sizeof(H264_NALU_T));
-                        if(zpl_media_channel_isnaluhdr(tmp.data, &nalu) == true)
-                        {
-                            nalu.len = tmp.len;
-                            zpl_media_channel_nalu_show(&nalu);
-                            if (zpl_media_channel_nalu2extradata(&nalu, extradata))
-                            {
-                                //file->tmppacket.len = 0;
-                                tmp.len = 0;
-                                if(offset >= 0)
-                                    fseek(file->fp, offset, SEEK_SET);
 
-                                zpl_media_bufcache_destroy(&tmp);
-                                return 0;
-                            }
-                        }
-                    }
-                    else
+    if (file && file->get_extradata)
+    {
+        ret = (file->get_extradata)(file, extradata);
+        zpl_media_bufcache_destroy(&tmp);
+        return ret;
+    }
+    else if (file && file->get_frame)
+    {
+        int n = 0;
+        while (1)
+        {
+            if (n > 10)
+                break;
+            n++;
+            tmp.len = 0;
+            ret = (file->get_frame)(file, &tmp);
+            fprintf(stdout, " zpl_media_file_extradata _get_frame ret=%d %d\r\n", ret, tmp.len);
+            fflush(stdout);
+            if (ret && tmp.len)
+            {
+                H264_NALU_T nalu;
+                memset(&nalu, 0, sizeof(H264_NALU_T));
+                if (zpl_media_channel_isnaluhdr(tmp.data, &nalu) == true)
+                {
+                    nalu.len = tmp.len;
+                    zpl_media_channel_nalu_show(&nalu);
+                    if (zpl_media_channel_nalu2extradata(&nalu, extradata))
                     {
-                        if(offset >= 0)
+                        // file->tmppacket.len = 0;
+                        tmp.len = 0;
+                        if (offset >= 0)
                             fseek(file->fp, offset, SEEK_SET);
                         zpl_media_bufcache_destroy(&tmp);
-                        return ret;
+                        return 0;
                     }
                 }
             }
@@ -392,65 +382,14 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
             {
                 break;
             }
-
         }
-        if(offset >= 0)
+        if (offset >= 0)
             fseek(file->fp, offset, SEEK_SET);
         zpl_media_bufcache_destroy(&tmp);
-        return -1;
+        return ret;
     }
-    else
-    {
-        if (file && file->get_extradata)
-        {
-            ret = (file->get_extradata)(file, extradata);
-            zpl_media_bufcache_destroy(&tmp);
-            return ret;
-        }
-        else if (file && file->get_frame)
-        {
-            int n = 0;
-            while(1)
-            {
-                if(n > 10)
-                    break;
-                n++;
-                tmp.len = 0;
-                ret = (file->get_frame)(file, &tmp);
-                fprintf(stdout, " zpl_media_file_extradata _get_frame ret=%d %d\r\n", ret, tmp.len);
-                fflush(stdout);
-                if (ret && tmp.len)
-                {
-                    H264_NALU_T nalu;
-                    memset(&nalu, 0, sizeof(H264_NALU_T));
-                    if(zpl_media_channel_isnaluhdr(tmp.data, &nalu) == true)
-                    {
-                        nalu.len = tmp.len;
-                        zpl_media_channel_nalu_show(&nalu);
-                        if (zpl_media_channel_nalu2extradata(&nalu, extradata))
-                        {
-                            //file->tmppacket.len = 0;
-                            tmp.len = 0;
-                            if(offset >= 0)
-                                fseek(file->fp, offset, SEEK_SET);
-                            zpl_media_bufcache_destroy(&tmp);
-                            return 0;
-                        }
-                    }
-                }
-                else
-                {
-                    break;
-                }
 
-            }
-            if(offset >= 0)
-                fseek(file->fp, offset, SEEK_SET);
-            zpl_media_bufcache_destroy(&tmp);
-            return ret;
-        }
-    }
-    if(offset >= 0)
+    if (offset >= 0)
         fseek(file->fp, offset, SEEK_SET);
     zpl_media_bufcache_destroy(&tmp);
     return -1;
@@ -466,131 +405,32 @@ int zpl_media_file_read(zpl_media_file_t *file, zpl_skbuffer_t *pbufdata)
         return -1;
     }
     chn = file->parent;
-    if(zpl_media_filedesc_check(file))
-    {
-        if (feof(file->fp) != 0)
-            return -1;
-        memset(&file->tmphead, 0, sizeof(zpl_packet_head_t));
-        ret = fread(&file->tmphead, 1, sizeof(zpl_packet_head_t), file->fp);
-        if (ret == sizeof(zpl_packet_head_t))
-        {
-            if(file->b_video && file->tmphead.video && file->tmphead.video_len)
-            {
-                bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, file->buffer_queue, file->tmphead.video_len);
-                if (bufdata && bufdata->skb_data && bufdata->skb_maxsize >= file->tmphead.video_len)
-                {
-                    ret = fread(ZPL_SKB_DATA(bufdata), 1, file->tmphead.video_len, file->fp);
-                    if(ret > 0)
-                    {
-                        file->last_ts = zpl_media_timerstamp();
-                        bufdata->skb_header.media_header.ID = ZPL_MEDIA_CHANNEL_SET(chn->channel, chn->channel_index, chn->channel_type);               //ID 通道号
-                        bufdata->skb_header.media_header.buffer_type = ZPL_MEDIA_VIDEO;        //音频视频
-                        bufdata->skb_header.media_header.buffer_flags = ZPL_BUFFER_DATA_ENCODE;
-                        bufdata->skb_header.media_header.buffer_codec = file->filedesc.video.enctype;       //编码类型
-                        //bufdata->buffer_key;         //帧类型
-                        //bufdata->buffer_priv;
-                        bufdata->skb_header.media_header.buffer_timetick = zpl_media_timerstamp();		//时间戳
-                        //bufdata->buffer_seq = file->pack_seq++;
-                        bufdata->skb_len = ret; //当前缓存帧的长度
-    
-                        zpl_skbqueue_enqueue(file->buffer_queue, bufdata);
-                    }
-                }
-            }
-            if(file->b_audio && file->tmphead.audio && file->tmphead.audio_len)
-            {
-                bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, file->buffer_queue, file->tmphead.audio_len);
-                if (bufdata && bufdata->skb_data && bufdata->skb_maxsize >= file->tmphead.audio_len)
-                {
-                    ret = fread(ZPL_SKB_DATA(bufdata), 1, file->tmphead.audio_len, file->fp);
-                    if(ret > 0)
-                    {
-                        file->last_ts = zpl_media_timerstamp();
-                        bufdata->skb_header.media_header.ID = ZPL_MEDIA_CHANNEL_SET(chn->channel, chn->channel_index, chn->channel_type);                //ID 通道号
-                        bufdata->skb_header.media_header.buffer_type = ZPL_MEDIA_AUDIO;        //音频视频
-                        bufdata->skb_header.media_header.buffer_flags = ZPL_BUFFER_DATA_ENCODE;
-                        bufdata->skb_header.media_header.buffer_codec = file->filedesc.audio.enctype;       //编码类型
-                        bufdata->skb_header.media_header.buffer_timetick = zpl_media_timerstamp();		//时间戳
-                        //bufdata->buffer_seq = file->pack_seq++;
-                        bufdata->skb_len = ret; //当前缓存帧的长度
-                        zpl_skbqueue_enqueue(file->buffer_queue, bufdata);
-                    }
 
-                }
-            }
+    if (file && file->get_frame)
+    {
+        zpl_media_bufcache_t tmp;
+        zpl_media_bufcache_create(&tmp, 1500);
+        ret = (file->get_frame)(file, &tmp);
+        uint32_t len = tmp.len;
+        bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, file->buffer_queue, len);
+        if (len > 0 && bufdata && bufdata->skb_data && bufdata->skb_maxsize >= len && tmp.data)
+        {
+            file->last_ts = zpl_media_timerstamp();
+            bufdata->skb_header.media_header.ID = ZPL_MEDIA_CHANNEL_SET(chn->channel, chn->channel_index, chn->channel_type);
+            bufdata->skb_header.media_header.buffer_timetick = zpl_media_timerstamp(); // 时间戳
+            // bufdata->buffer_seq = file->pack_seq++;
+            bufdata->skb_header.media_header.buffer_flags = ZPL_BUFFER_DATA_ENCODE;
+            bufdata->skb_len = len; // 当前缓存帧的长度
+
+            memcpy(ZPL_SKB_DATA(bufdata), tmp.data, len);
+
+            fflush(stdout);
+            zpl_skbqueue_enqueue(file->buffer_queue, bufdata);
             return ret;
         }
-        return -1;
-    }
-    else
-    {
-        if (file && file->get_frame)
-        {
-            zpl_media_bufcache_t tmp;
-            zpl_media_bufcache_create(&tmp, 1500);
-            ret = (file->get_frame)(file, &tmp);
-            uint32_t len = tmp.len;
-            bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, file->buffer_queue, len);
-            if (len > 0 && bufdata && bufdata->skb_data && bufdata->skb_maxsize >= len && tmp.data)
-            {
-                file->last_ts = zpl_media_timerstamp();
-                bufdata->skb_header.media_header.ID = ZPL_MEDIA_CHANNEL_SET(chn->channel, chn->channel_index, chn->channel_type); 
-                bufdata->skb_header.media_header.buffer_timetick = zpl_media_timerstamp();		//时间戳
-                //bufdata->buffer_seq = file->pack_seq++;
-                bufdata->skb_header.media_header.buffer_flags = ZPL_BUFFER_DATA_ENCODE;
-                bufdata->skb_len = len; //当前缓存帧的长度
-
-                memcpy(ZPL_SKB_DATA(bufdata), tmp.data, len);
-
-                fflush(stdout);
-                zpl_skbqueue_enqueue(file->buffer_queue, bufdata);
-                return ret;
-            }
-            return ret;
-        }
+        return ret;
     }
     return -1;
-}
-
-int zpl_media_file_writehdr(zpl_media_file_t *file, zpl_media_filedesc_t *hdr)
-{
-    int ret = 0;
-    int offset = ftell(file->fp);
-    if(offset > 0)
-        fseek(file->fp, 0, SEEK_SET);
-    hdr->hdrstr[0] = '$';
-    hdr->hdrstr[1] = '$';
-    hdr->hdrstr[2] = '$';
-    hdr->hdrstr[3] = '$';
-    if(hdr->video.format != ZPL_VIDEO_FORMAT_NONE)
-        file->b_audio = zpl_true;
-    if(hdr->audio.enctype != ZPL_AUDIO_CODEC_NONE)
-        file->b_audio = zpl_true;
-    file->filedesc.endtime = time(NULL);
-    fprintf(stdout," ========= ");
-    fprintf(stdout," =========enctype=%u  \r\n", hdr->video.enctype);
-    fprintf(stdout," =========enctype=%u  \r\n", hdr->audio.enctype);
-    fprintf(stdout," =========begintime=%u \r\n", hdr->begintime);
-    fprintf(stdout," =========endtime=%u  \r\n", hdr->endtime);
-    fprintf(stdout," =========videoframe=%u  \r\n", hdr->videoframe);
-    fprintf(stdout," =========audioframe=%u  \r\n", hdr->audioframe);
-
-    ret = fwrite(hdr, 1, sizeof(zpl_media_filedesc_t), file->fp);
-    if(offset > 0)
-        fseek(file->fp, offset, SEEK_SET);
-    return ret;
-}
-
-int zpl_media_file_readhdr(zpl_media_file_t *file, zpl_media_filedesc_t *hdr)
-{
-    int ret = 0;
-    int offset = ftell(file->fp);
-    if(offset > 0)
-        fseek(file->fp, 0, SEEK_SET);
-    ret = fread(hdr, 1, sizeof(zpl_media_filedesc_t), file->fp);
-    if(offset > 0)
-        fseek(file->fp, offset, SEEK_SET);
-    return ret;
 }
 
 int zpl_media_file_update(zpl_media_file_t *channel, bool add)
@@ -605,7 +445,90 @@ int zpl_media_file_update(zpl_media_file_t *channel, bool add)
     return 0;
 }
 
+int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *outpacket)
+{
+    int ret = 0;
+    uint32_t packetsize = 1400, packet_offset = 0;
+    uint32_t nalulen = 0;
+    uint8_t *p = NULL;
+    H264_NALU_T naluhdr;
+    char buftmp[1400 + 16];
+    char tmpdata[8];
+    memset(&naluhdr, 0, sizeof(H264_NALU_T));
+    outpacket->len = 0;
+    fprintf(stdout, "============_h264_file_read_data=============\n");
+    while(1)
+    {
+        packetsize = 1400 - packet_offset;
+        ret = fread(buftmp + packet_offset, 1, packetsize, file->fp);
+        if(ret > 0)
+        {
+            if (is_nalu4_start(buftmp))
+            {
+                naluhdr.hdr_len = 4;
+                naluhdr.len = naluhdr.hdr_len;
+                naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
+                naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
+                naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
+                naluhdr.buf = buftmp;
+                file->flags |= 0x01;/* 找到开始的标志 */
+                fprintf(stdout, "============_h264_file_read_data==head 4===========\n");
+            }
+            else if (is_nalu3_start(buftmp))
+            {
+                naluhdr.hdr_len = 3;
+                naluhdr.len = naluhdr.hdr_len;
+                naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
+                naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
+                naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
+                naluhdr.buf = buftmp;
+                file->flags |= 0x01;/* 找到开始的标志 */
+                fprintf(stdout, "============_h264_file_read_data==head 3===========\n");
+            }
+            if(file->flags & 0x01)
+            {
+                p = buftmp + naluhdr.len;
+                nalulen = zpl_media_channel_get_nextnalu(p, (ret)-4);
+                if(nalulen)
+                {
+                    naluhdr.len += nalulen;
+                    zpl_media_bufcache_add(outpacket, buftmp, naluhdr.len);
 
+                    file->offset_len += (naluhdr.len);
+                    fseek(file->fp, file->offset_len, SEEK_SET);
+
+                    file->flags = 0;
+                    zpl_media_channel_nalu_show(&naluhdr);
+                    return outpacket->len;
+                }
+                else
+                {
+                    if(ret > 8)
+                    {
+                        zpl_media_bufcache_add(outpacket, buftmp, ret - 8);
+                        memcpy(tmpdata, buftmp+ret-8, 8);
+                        memmove(buftmp, tmpdata, 8);
+                        packet_offset = 8;
+                    }
+                    else
+                    {
+                        zpl_media_bufcache_add(outpacket, buftmp, ret);
+                        naluhdr.len += ret;
+                        file->offset_len = 0;
+                        file->flags = 0;
+                        fprintf(stdout, "============_h264_file_read_data==end===========\n");
+                        zpl_media_channel_nalu_show(&naluhdr);
+                        return outpacket->len;
+                    }
+                }
+            }
+        }
+        else
+            break;
+    }
+    file->offset_len = 0;
+    return -1;
+}
 #ifndef ZPL_MEDIA_FILE_TASK
 static int zpl_media_file_thread(struct eloop *t)
 {

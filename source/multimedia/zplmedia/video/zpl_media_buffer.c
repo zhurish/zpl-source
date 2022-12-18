@@ -148,6 +148,26 @@ int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel,
 	return OK;
 }
 
+int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
+{
+	zpl_media_channel_t *media_channel = channel;
+	if (bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_VIDEO)
+	{
+		switch(bufdata->skb_header.media_header.buffer_key)
+		{
+    		case ZPL_VIDEO_FRAME_TYPE_SEI:                         /* H264/H265 SEI types */
+    		case ZPL_VIDEO_FRAME_TYPE_SPS:                         /* H264/H265 SPS types */
+    		case ZPL_VIDEO_FRAME_TYPE_PPS:                         /* H264/H265 PPS types */
+    		case ZPL_VIDEO_FRAME_TYPE_VPS:                        /* H265 VPS types */
+			case ZPL_VIDEO_FRAME_TYPE_ISLICE:
+			zpl_media_channel_extradata_import(media_channel, ZPL_SKB_DATA(bufdata), ZPL_SKB_DATA_LEN(bufdata));
+			break;
+			default:
+			break;
+		}
+	}
+	return OK;
+}
 
 zpl_skbqueue_t * zpl_media_bufqueue_get(void)
 {

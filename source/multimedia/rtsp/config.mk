@@ -11,7 +11,6 @@ OBJS += 	\
 			zpl_rtsp_session.o \
 			zpl_rtsp_server.o \
 			zpl_rtsp_media.o \
-			zpl_rtsp_socket.o \
 			zpl_rtsp_sdp.o \
 			zpl_rtsp_sdp_attr.o \
 			zpl_rtsp_sdp_hdr.o \
@@ -22,7 +21,7 @@ OBJS += 	\
 			zpl_rtsp_adap.o \
 			zpl_rtsp_auth.o \
 			zpl_rtsp_api.o
-#OBJS +=list.o  
+#OBJS +=list.o   			zpl_rtsp_socket.o \
 #############################################################################
 # LIB
 ###########################################################################

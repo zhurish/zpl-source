@@ -84,7 +84,7 @@ extern int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, 
 
 extern int ipstack_write_iov(zpl_socket_t fd, int type, struct iovec *iov, int iovcnt);
 
-extern int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms);
+extern int ipstack_select_wait(int type, int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms);
 
 #ifdef __cplusplus
 }

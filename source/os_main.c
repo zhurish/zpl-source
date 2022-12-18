@@ -221,7 +221,7 @@ extern int ftp_download(void *v, char *hostName, int port, char *path, char *fil
 #include "zpl_rtsp_server.h"
 #include "zpl_rtsp_api.h"
 #include "zpl_rtsp_rtp.h"
-
+extern int rtp_send_h264_test(void);
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -245,13 +245,7 @@ int main(int argc, char **argv)
 	zpl_stack_init();
 	zpl_stack_start(startup_option.progname, 8890);
 	
-
-	startup_module_init(1);
-
-	startup_module_load();
-
-	startup_module_waitting();
-#if 1
+#if 0
 	rtsp_client_t * saa = rtsp_client_create("test", "rtsp://34.227.104.115/vod/mp4");
 	if(saa)
 	{
@@ -264,6 +258,13 @@ int main(int argc, char **argv)
 
 	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", 1);
 #endif
+	rtp_send_h264_test();
+	startup_module_init(1);
+
+	startup_module_load();
+
+	startup_module_waitting();
+
 	zpl_base_start_pid(MODULE_DEFAULT, startup_option.pid_file, &startup_option.pid);
 
 	/*

@@ -33,13 +33,13 @@ typedef struct rtsp_srv_s {
     void            *t_accept;
     void            *t_read;
     int             t_sock;
-    zpl_taskid_t		t_taskid;
+    zpl_taskid_t    t_taskid;
 #endif
-    zpl_socket_t             listen_sock;
+    zpl_socket_t    listen_sock;
     uint16_t        listen_port;
     char            *listen_address;
 
-    fd_set          rset;
+    ipstack_fd_set  rset;
     char            *username;
     char            *password;
     char            *realm;

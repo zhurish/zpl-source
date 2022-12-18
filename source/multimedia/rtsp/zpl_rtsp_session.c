@@ -9,24 +9,65 @@
 #include <errno.h>
 
 #include "zpl_rtsp_def.h"
-#include "zpl_rtsp_socket.h"
+//#include "zpl_rtsp_socket.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_rtp.h"
 
 
-static int rtsp_session__recvfrom(rtsp_session_t * session, uint8_t *req, uint32_t req_length)
+int rtsp_session_recvfrom(rtsp_session_t * session, uint8_t *req, uint32_t req_length)
 {
-    if(session->sock && rtsp_socket._recvfrom)
-        return (rtsp_socket._recvfrom)(session->sock, req, req_length);
+    if(!ipstack_invalid(session->sock))
+        return ipstack_recv(session->sock, req, req_length, 0);
     return -1;
 }
 
-static int rtsp_session__sendto(rtsp_session_t * session, uint8_t *req, uint32_t req_length)
+int rtsp_session_sendto(rtsp_session_t * session, uint8_t *req, uint32_t req_length)
 {
-    if(session->sock && rtsp_socket._sendto)
-        return (rtsp_socket._sendto)(session->sock, req, req_length);
+    if(!ipstack_invalid(session->sock))
+        return ipstack_send(session->sock, req, req_length, 0);
     return -1;
 }
+
+int rtsp_session_close(rtsp_session_t * session)
+{
+    if(!ipstack_invalid(session->sock))
+    {
+        ipstack_close(session->sock);
+        session->sock = ZPL_SOCKET_INVALID;
+    }
+    return OK;
+}
+
+zpl_socket_t rtsp_session_listen(const char *lip, uint16_t port)
+{
+    zpl_socket_t sock = ipstack_sock_create(IPSTACK_OS, zpl_true);
+    if(!ipstack_invalid(sock))
+    {
+        int enable = 1;
+        ipstack_sock_bind( sock, lip,  port);
+        ipstack_sock_listen( sock,  5);
+        ipstack_set_nonblocking(sock); 
+        ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
+                        (void *)&enable, sizeof (enable));
+    }
+    return sock;
+}
+
+
+int rtsp_session_connect(rtsp_session_t * session, const char *ip, uint16_t port, int timeout_ms)
+{
+    int enable = 1, ret = 0;
+    session->sock = ipstack_sock_create(IPSTACK_OS, zpl_true);
+    if(!ipstack_invalid(session->sock))
+    {
+        ret = ipstack_sock_connect_timeout(session->sock, ip,  port, timeout_ms);
+        ipstack_set_nonblocking(session->sock);    
+        ret = ipstack_setsockopt(session->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
+                        (void *)&enable, sizeof (enable));
+    }
+    return ret;                    
+}
+
 
 
 int rtp_over_rtsp_session_sendto(rtsp_session_t * session, uint8_t chn, uint8_t *data, uint32_t length)
@@ -35,9 +76,7 @@ int rtp_over_rtsp_session_sendto(rtsp_session_t * session, uint8_t chn, uint8_t 
     data[0] = '$';
     data[1] = chn;
     *dlen = htons(length);
-    if(session->sock && rtsp_socket._sendto)
-        return (rtsp_socket._sendto)(session->sock, data, length + 4);
-    return -1;
+    return rtsp_session_sendto(session, data, length + 4);
     /*
     | magic number | channel number | embedded data length | data |
     magic number - 1 byte value of hex 0x24
@@ -86,6 +125,11 @@ int rtsp_session_destroy(rtsp_session_t *session)
         if(session->t_read)
             eloop_cancel(session->t_read);
 #endif
+        if (session && !ipstack_invalid(session->sock))
+        {
+            ipstack_close(session->sock);
+            session->sock = ZPL_SOCKET_INVALID;
+        }
         if(session->rtsp_media)
         {
             rtsp_media_destroy(session, session->rtsp_media);
@@ -321,8 +365,8 @@ int rtsp_session_default(rtsp_session_t * newNode, bool srv)
 
     newNode->mfilepath = NULL;
     newNode->mchannel = newNode->mlevel = -1;
-    newNode->_sendto = rtsp_session__sendto;
-    newNode->_recvfrom = rtsp_session__recvfrom;
+    //newNode->_sendto = rtsp_session_sendto;
+    //newNode->_recvfrom = rtsp_session_recvfrom;
     RTSP_SESSION_UNLOCK(newNode);
     return 0;
 }

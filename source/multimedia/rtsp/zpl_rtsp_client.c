@@ -10,50 +10,15 @@
 
 #include "zpl_rtsp_def.h"
 #include "zpl_rtsp_client.h"
-#include "zpl_rtsp_socket.h"
+//#include "zpl_rtsp_socket.h"
 #include "zpl_rtsp_rtp.h"
 #include "zpl_rtsp_util.h"
 
 static int rtsp_client_event_handle(rtsp_client_t * client);
 
 
-static zpl_socket_t rtsp_client_create_socket(const char *lip, uint16_t port)
-{
-    zpl_socket_t client_sock;
-    if(rtsp_socket._socket)
-    {
-        client_sock = (rtsp_socket._socket)(IPSTACK_OS, IPSTACK_AF_INET, IPSTACK_SOCK_STREAM, 0);
-        if(!ipstack_invalid(client_sock))
-        {
-            return client_sock;
-        }
-    }
-    return ZPL_SOCKET_INVALID;
-}
-
-static zpl_socket_t rtsp_client_connect_socket(zpl_socket_t client_sock, const char *ip, uint16_t port)
-{
-    if(!ipstack_invalid(client_sock))
-    {
-        if(rtsp_socket._connect)
-        {
-            if((rtsp_socket._connect)(client_sock, ip, port) != 0)
-            {
-                fprintf(stdout,"%s [%d]  _connect(%s)\r\n", __func__, __LINE__, strerror(errno));
-                fflush(stdout);
-                return ZPL_SOCKET_INVALID;
-            }
-            fprintf(stdout, "%s [%d]  rtsp client connect:%s:%d ok\r\n", __func__, __LINE__, ip, port);
-            fflush(stdout);
-            return client_sock;
-        }
-    }
-    return ZPL_SOCKET_INVALID;
-}
-
 rtsp_client_t * rtsp_client_create(const char *name, const char *url)
 {
-    zpl_socket_t sock;
     rtsp_client_t * client = NULL; //每次申请链表结点时所使用的指针
     client = (rtsp_client_t *)malloc(sizeof(rtsp_client_t));
     if(client)
@@ -80,9 +45,8 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
 
         client->url = strdup(url);
         client->clientname = strdup(name);
-        sock = rtsp_client_create_socket(NULL, (urlpath.port==0)?554:urlpath.port);
 
-        client->rtsp_session = rtsp_session_create( sock, urlpath.host, (urlpath.port==0)?554:urlpath.port, client);
+        client->rtsp_session = rtsp_session_create( NULL, urlpath.host, (urlpath.port==0)?554:urlpath.port, client);
         if(client->rtsp_session)
         {
             rtsp_session_default(client->rtsp_session, false);
@@ -94,7 +58,6 @@ rtsp_client_t * rtsp_client_create(const char *name, const char *url)
             client->_send_build = client->_send_buf + client->_send_offset;
             client->timeout = RTSP_REQUEST_TIMEOUT;
 
-            client->wait_sock = sock;
             client->istcp = false;
             fprintf(stdout, "%s [%d]  rtsp client connect:%s:%d\r\n", __func__, __LINE__,
                     client->rtsp_session->address, client->rtsp_session->port);
@@ -116,16 +79,12 @@ int rtsp_client_destroy(rtsp_client_t *client)
     if(client == NULL)
         return -1;
     // if(client->rtsp_session->state != RTSP_SESSION_STATE_NONE)
+
     if(client->rtsp_session)
     {
         rtsp_session_destroy(client->rtsp_session);
         client->rtsp_session = NULL;
         // client->rtsp_session->state = RTSP_SESSION_STATE_NONE;
-    }
-    if (!ipstack_invalid(client->wait_sock))
-    {
-        if (rtsp_socket._close)
-            (rtsp_socket._close)(client->wait_sock);
     }
     if (client->clientname)
     {
@@ -165,27 +124,11 @@ int rtsp_client_destroy(rtsp_client_t *client)
 int rtsp_client_connect(rtsp_client_t * client, int timeout)
 {
     int i = 5;
-    ipstack_fd_set  rset;
-    IPSTACK_FD_ZERO(&rset);
-    IPSTACK_FD_SET(ipstack_fd(client->rtsp_session->sock), &rset);
-    struct timeval tv;
-    tv.tv_sec = timeout;
-    tv.tv_usec = 0;
-    rtsp_client_connect_socket(client->rtsp_session->sock,
-                               client->rtsp_session->address, client->rtsp_session->port);
     while(i)
     {
-        int ret = (rtsp_socket._select)(ipstack_type(client->rtsp_session->sock), ipstack_fd(client->rtsp_session->sock) + 1, NULL, &rset, &tv);
-        if(ret > 0)
+        if(rtsp_session_connect(client->rtsp_session, client->rtsp_session->address, client->rtsp_session->port, timeout) != OK)
         {
-            if(IPSTACK_FD_ISSET(ipstack_fd(client->rtsp_session->sock), &rset))
-            {
-                fprintf(stdout, "%s [%d]  rtsp client connect:%s:%d select\r\n", __func__, __LINE__,
-                        client->rtsp_session->address, client->rtsp_session->port);
-                fflush(stdout);
-                client->rtsp_session->state = RTSP_SESSION_STATE_CONNECT;
-                return 0;
-            }
+            continue;
         }
         i--;
     }
@@ -196,23 +139,19 @@ static int rtsp_client_tcpthread(rtsp_client_t * client)
 {
     int ret = 0;
     ipstack_fd_set rset;
-    if(client->rtsp_session->sock && rtsp_socket._select)
+    if(client->rtsp_session && !ipstack_invalid(client->rtsp_session->sock))
     {
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
         IPSTACK_FD_ZERO(&rset);
         IPSTACK_FD_SET(ipstack_fd(client->rtsp_session->sock), &rset);
 
-        ret = (rtsp_socket._select)(ipstack_type(client->rtsp_session->sock), ipstack_fd(client->rtsp_session->sock) + 1, &rset, NULL, &tv);
+        ret = ipstack_select_wait(ipstack_type(client->rtsp_session->sock), ipstack_fd(client->rtsp_session->sock) + 1, &rset, NULL, 1);
         if(ret > 0)
         {
             if(IPSTACK_FD_ISSET(ipstack_fd(client->rtsp_session->sock), &rset))
             {
                 IPSTACK_FD_CLR(ipstack_fd(client->rtsp_session->sock), &rset);
-                if(client->rtsp_session->_recvfrom)
                 {
-                    ret = (client->rtsp_session->_recvfrom)(client->rtsp_session, client->_recv_buf, sizeof(client->_recv_buf));
+                    ret = rtsp_session_recvfrom(client->rtsp_session, client->_recv_buf, sizeof(client->_recv_buf));
                     if(ret)
                     {
                         if(client->_recv_buf[0] == '$')
@@ -222,9 +161,9 @@ static int rtsp_client_tcpthread(rtsp_client_t * client)
                         }
                         else
                         {
-                            if(!ipstack_invalid(client->wait_sock))
+                            if(!ipstack_invalid(client->rtsp_session->sock))
                             {
-                                return ipstack_send(client->wait_sock, client->_recv_buf, ret, 0);
+                                return ipstack_send(client->rtsp_session->sock, client->_recv_buf, ret, 0);
                             }
                         }
                     }
@@ -257,20 +196,17 @@ static int rtsp_client_wait_respone(rtsp_client_t * client, int timeout)
 {
     int ret = 0;
     ipstack_fd_set rset;
-    if(!ipstack_invalid(client->wait_sock) && rtsp_socket._select)
+    if(client->rtsp_session && !ipstack_invalid(client->rtsp_session->sock))
     {
-        struct timeval tv;
-        tv.tv_sec = timeout;
-        tv.tv_usec = 0;
         IPSTACK_FD_ZERO(&rset);
-        IPSTACK_FD_SET(ipstack_fd(client->wait_sock), &rset);
+        IPSTACK_FD_SET(ipstack_fd(client->rtsp_session->sock), &rset);
 
-        ret = (rtsp_socket._select)(ipstack_type(client->wait_sock), ipstack_fd(client->wait_sock) + 1, &rset, NULL, &tv);
+        ret = ipstack_select_wait(ipstack_type(client->rtsp_session->sock), ipstack_fd(client->rtsp_session->sock) + 1, &rset, NULL, timeout);
         if(ret > 0)
         {
-            if(IPSTACK_FD_ISSET(ipstack_fd(client->wait_sock), &rset))
+            if(IPSTACK_FD_ISSET(ipstack_fd(client->rtsp_session->sock), &rset))
             {
-                IPSTACK_FD_CLR(ipstack_fd(client->wait_sock), &rset);
+                IPSTACK_FD_CLR(ipstack_fd(client->rtsp_session->sock), &rset);
                 fprintf(stdout, "%s [%d]  rtsp client select\r\n", __func__, __LINE__);
                 fflush(stdout);
                 return 0;
@@ -294,10 +230,10 @@ static int rtsp_client_wait_respone(rtsp_client_t * client, int timeout)
 
 static int rtsp_client_read_respone(rtsp_client_t * client)
 {
-    if(!ipstack_invalid(client->wait_sock))
+    if(client->rtsp_session && !ipstack_invalid(client->rtsp_session->sock))
     {
         memset(client->_recv_sdpbuf, 0, sizeof(client->_recv_sdpbuf));
-        client->_recv_length = ipstack_recv(client->wait_sock, client->_recv_sdpbuf, sizeof(client->_recv_sdpbuf), 0);
+        client->_recv_length = ipstack_recv(client->rtsp_session->sock, client->_recv_sdpbuf, sizeof(client->_recv_sdpbuf), 0);
         if(client->_recv_length <= 0)
         {
             client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
@@ -319,8 +255,7 @@ static int rtsp_client_request_and_wait_respone(rtsp_client_t * client, rtsp_ses
 {
     int ret = 0;
     client->_send_length += sprintf(client->_send_build + client->_send_length, "\r\n");
-    if((session->_sendto))
-        ret = (session->_sendto)(session, client->_send_buf + client->_send_offset,
+    ret = rtsp_session_sendto(session, client->_send_buf + client->_send_offset,
                                  client->_send_length);
     if(ret)
     {

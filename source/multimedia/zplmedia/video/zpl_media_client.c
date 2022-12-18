@@ -80,6 +80,7 @@ int zpl_media_client_foreach(zpl_skbuffer_t *buffer_data, void *p)
 	if(media_channel)
 	{
 		client = (media_channel)->media_client;
+		zpl_media_channel_extradata_update(buffer_data, media_channel);
 	}	
 
 	if(client)

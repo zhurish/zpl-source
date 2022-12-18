@@ -52,9 +52,9 @@ rtsp_media_t * rtsp_media_create(rtsp_session_t * session, int channel, int leve
         {
             //int zpl_media_file_get_frame_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_framedata_t *))
             if(chn->video_media.enable && chn->video_media.halparam)
-                zpl_media_file_get_frame_callback(chn->video_media.halparam, _h264_file_get_frame);
+                zpl_media_file_get_frame_callback(chn->video_media.halparam, zpl_media_file_get_frame_h264);
             else if(chn->audio_media.enable && chn->audio_media.halparam)
-                zpl_media_file_get_frame_callback(chn->audio_media.halparam, _h264_file_get_frame);
+                zpl_media_file_get_frame_callback(chn->audio_media.halparam, zpl_media_file_get_frame_h264);
             rtsp_media_srv_setup(chn, session);
         }
         return chn;
@@ -270,13 +270,13 @@ static int rtsp_media_srv_setup(rtsp_media_t *media, rtsp_session_t *session)
         {
             zpl_media_file_master(zpl_media_getptr(media)->video_media.halparam, eloop_master_module_lookup(MODULE_ZPLMEDIA), 1000/25);
             zpl_media_file_pdata(zpl_media_getptr(media)->video_media.halparam, session);
-            zpl_media_file_get_frame_callback(zpl_media_getptr(media)->video_media.halparam, _h264_file_get_frame);
+            zpl_media_file_get_frame_callback(zpl_media_getptr(media)->video_media.halparam, zpl_media_file_get_frame_h264);
         }
         else if(zpl_media_getptr(media)->audio_media.enable && zpl_media_getptr(media)->audio_media.halparam)
         {
             zpl_media_file_master(zpl_media_getptr(media)->audio_media.halparam, eloop_master_module_lookup(MODULE_ZPLMEDIA), 1000/25);
             zpl_media_file_pdata(zpl_media_getptr(media)->audio_media.halparam, session);
-            zpl_media_file_get_frame_callback(zpl_media_getptr(media)->audio_media.halparam, _h264_file_get_frame);
+            zpl_media_file_get_frame_callback(zpl_media_getptr(media)->audio_media.halparam, zpl_media_file_get_frame_h264);
         }
         zpl_media_channel_client_add(media, rtsp_media_rtp_sendto, session);
     }

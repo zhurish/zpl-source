@@ -19,7 +19,7 @@
 
 
 
-#define H264_SPLIT_SIZE(n)  ((n)+4)
+#define H264_SPLIT_SIZE(n)  ((n)-4)
 
 static int rtp_send_h264_nalu(rtsp_session_t *session, int type, const uint8_t *buffer, uint32_t len);
 
@@ -184,145 +184,92 @@ static int zpl_media_channel_nalu_show(H264_NALU_T *nalu)
 #endif
 
 
-
-static int _h264_file_read_more_data(zpl_media_file_t *file)
-{
-    int ret = 0;
-    if(feof(file->fp) != 0)
-    {
-        if(file->tmppacket.len <= 0)
-            return -1;
-    }
-    else
-    {
-        memset(file->tmppacket.data + file->tmppacket.len, 0, file->tmppacket.maxsize - file->tmppacket.len);
-        ret = fread(file->tmppacket.data + file->tmppacket.len, 1, file->tmppacket.maxsize - file->tmppacket.len, file->fp);
-        if(ret <= 0)
-        {
-            if(file->tmppacket.len <= 0)
-                return -1;
-        }
-        file->tmppacket.len += ret;
-        return file->tmppacket.len;
-    }
-    return 0;
-}
-
-static int _h264_file_data_append_finsh(zpl_media_file_t *file, int packetsize)
-{
-    file->tmppacket.len = file->tmppacket.len - packetsize;
-    if(file->tmppacket.len && file->tmppacket.len < file->tmppacket.maxsize)
-        memmove(file->tmppacket.data, file->tmppacket.data + packetsize, file->tmppacket.len);
-    return 0;
-}
-
+#if 0
 static int _h264_file_read_data(zpl_media_file_t *file, zpl_media_bufcache_t *outpacket)
 {
-    int finsh = 0;
-    uint32_t packetsize = MAX_RTP_PAYLOAD_LENGTH;
+    int ret = 0;
+    uint32_t packetsize = MAX_RTP_PAYLOAD_LENGTH, packet_offset = 0;
     uint32_t nalulen = 0;
     uint8_t *p = NULL;
     H264_NALU_T naluhdr;
+    char buftmp[MAX_RTP_PAYLOAD_LENGTH + 16];
+    char tmpdata[8];
     memset(&naluhdr, 0, sizeof(H264_NALU_T));
-
+    outpacket->len = 0;
+    fprintf(stdout, "============_h264_file_read_data=============\n");
     while(1)
     {
-        if(_h264_file_read_more_data(file) == -1)
-            return -1;
-        p = file->tmppacket.data;
-
-        if(packetsize > file->tmppacket.len)
-            packetsize = file->tmppacket.len;
-        else
-            packetsize = MAX_RTP_PAYLOAD_LENGTH;
-
-        if(zpl_media_channel_isnaluhdr(p, &naluhdr))
+        packetsize = MAX_RTP_PAYLOAD_LENGTH - packet_offset;
+        ret = fread(buftmp + packet_offset, 1, packetsize, file->fp);
+        if(ret > 0)
         {
-            p+=naluhdr.hdr_len;
-            file->flags |= NALU_START_FLAG;/* 找到开始的标志 */
-            outpacket->len = 0;
-            //zpl_media_channel_nalu_show(&naluhdr);
-        }
-        nalulen = 0;
-        nalulen = zpl_media_channel_get_nextnalu(p, H264_SPLIT_SIZE(packetsize));/* 查找下一个标志位 */
-        if(nalulen)
-        {
+            if (is_nalu4_start(buftmp))
+            {
+                naluhdr.hdr_len = 4;
+                naluhdr.len = naluhdr.hdr_len;
+                naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
+                naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
+                naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
+                naluhdr.buf = buftmp;
+                file->flags |= NALU_START_FLAG;/* 找到开始的标志 */
+                fprintf(stdout, "============_h264_file_read_data==head 4===========\n");
+            }
+            else if (is_nalu3_start(buftmp))
+            {
+                naluhdr.hdr_len = 3;
+                naluhdr.len = naluhdr.hdr_len;
+                naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
+                naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
+                naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
+                naluhdr.buf = buftmp;
+                file->flags |= NALU_START_FLAG;/* 找到开始的标志 */
+                fprintf(stdout, "============_h264_file_read_data==head 3===========\n");
+            }
             if(file->flags & NALU_START_FLAG)
             {
-                if(file->flags & NALU_MAX_FLAG)
+                p = buftmp + naluhdr.len;
+                nalulen = zpl_media_channel_get_nextnalu(p, H264_SPLIT_SIZE(ret));
+                if(nalulen)
                 {
-                    naluhdr.len += (nalulen);
-                    zpl_media_bufcache_add(outpacket, file->tmppacket.data, nalulen);
-                    _h264_file_data_append_finsh(file, nalulen);
+                    naluhdr.len += nalulen;
+                    zpl_media_bufcache_add(outpacket, buftmp, naluhdr.len);
+
+                    file->offset_len += (naluhdr.len);
+                    fseek(file->fp, file->offset_len, SEEK_SET);
+
                     file->flags = 0;
-                    //zpl_media_channel_nalu_show(&naluhdr);
+                    zpl_media_channel_nalu_show(&naluhdr);
                     return outpacket->len;
                 }
                 else
                 {
-
-                    naluhdr.len += nalulen;
-                    //packetsize = nalulen + naluhdr.hdr_len;
-                    zpl_media_bufcache_add(outpacket, file->tmppacket.data, nalulen + naluhdr.hdr_len);
-                    file->flags |= NALU_MAX_FLAG;
-                    _h264_file_data_append_finsh(file, nalulen + naluhdr.hdr_len);
-                    file->flags = 0;
-                    //zpl_media_channel_nalu_show(&naluhdr);
-                    return outpacket->len;
-
+                    if(ret > 8)
+                    {
+                        zpl_media_bufcache_add(outpacket, buftmp, ret - 8);
+                        memcpy(tmpdata, buftmp+ret-8, 8);
+                        memmove(buftmp, tmpdata, 8);
+                        packet_offset = 8;
+                    }
+                    else
+                    {
+                        zpl_media_bufcache_add(outpacket, buftmp, ret);
+                        naluhdr.len += ret;
+                        file->offset_len = 0;
+                        file->flags = 0;
+                        fprintf(stdout, "============_h264_file_read_data==end===========\n");
+                        zpl_media_channel_nalu_show(&naluhdr);
+                        return outpacket->len;
+                    }
                 }
-            }
-            else
-            {
-                fprintf(stdout, "===========================\n");
             }
         }
         else
-        {
-            if(packetsize < MAX_RTP_PAYLOAD_LENGTH)
-            {
-                if((file->flags & NALU_MAX_FLAG))
-                {
-                    naluhdr.len += file->tmppacket.len;
-                    packetsize = file->tmppacket.len;
-                    finsh = 1;
-                }
-                else
-                {
-                    naluhdr.len = file->tmppacket.len;
-                    packetsize = file->tmppacket.len;
-                    finsh = 1;
-                }
-            }
-            else
-            {
-                if((file->flags & NALU_MAX_FLAG))
-                {
-                    naluhdr.len += MAX_RTP_PAYLOAD_LENGTH;
-                    packetsize = MAX_RTP_PAYLOAD_LENGTH;
-                }
-                else
-                {
-                    naluhdr.len += MAX_RTP_PAYLOAD_LENGTH;
-                    packetsize = MAX_RTP_PAYLOAD_LENGTH + naluhdr.hdr_len;
-                    file->flags |= NALU_MAX_FLAG;
-                }
-            }
-
-            zpl_media_bufcache_add(outpacket, file->tmppacket.data, packetsize);
-
-            _h264_file_data_append_finsh(file, packetsize);
-            if(finsh)
-            {
-                file->flags = 0;
-                //zpl_media_channel_nalu_show(&naluhdr);
-                return outpacket->len;
-            }
-        }
+            break;
     }
+    file->offset_len = 0;
     return -1;
 }
-
+#endif
 /*
  * 多个nalu组成一个包
  */
@@ -355,16 +302,6 @@ int _rtp_packet_h264(zpl_skbuffer_t *nalu, uint8_t *out)
     return -1;
 }
 
-
-int _h264_file_get_frame(void *fi, void *p)
-{
-    int ret = 0;
-    zpl_media_file_t *file = fi;
-    ret = _h264_file_read_data(file, p);
-    fprintf(stdout, " rtp_h264_get_frame ret=%d\r\n", ret);
-    fflush(stdout);
-    return ret;
-}
 
 
 
@@ -702,7 +639,7 @@ int _rtsp_parse_sdp_h264(rtsp_session_t *session, uint8_t *attrval, uint32_t len
 
     _h264_sprop_parameterset_parse(h264.sprop_parameter_sets,
                                    h264.sprop_parameter_sets_len, &extradata);
-    zpl_media_channel_decode_spspps(extradata.fSPS, extradata.fSPSSize,
+    zpl_media_channel_decode_sps(extradata.fSPS, extradata.fSPSSize,
                                     &client->client_media.video_codec.vidsize.width,
                                     &client->client_media.video_codec.vidsize.height,
                                     &client->client_media.video_codec.framerate);
@@ -751,7 +688,7 @@ int _rtsp_build_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_t len)
     extradata = &zpl_media_getptr(session->rtsp_media)->video_media.extradata;
 */
     if(extradata->fSPSSize && extradata->fSPS != NULL)
-        zpl_media_channel_decode_spspps(extradata->fSPS, extradata->fSPSSize,
+        zpl_media_channel_decode_sps(extradata->fSPS, extradata->fSPSSize,
                                     &zpl_media_getptr(session->rtsp_media)->video_media.codec.vidsize.width,
                                     &zpl_media_getptr(session->rtsp_media)->video_media.codec.vidsize.height,
                                     &zpl_media_getptr(session->rtsp_media)->video_media.codec.framerate);
@@ -808,54 +745,32 @@ int _rtsp_build_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_t len)
 
 int rtp_send_h264_test(void)
 {
-            int width = 0;
-        int height = 0;
-        int fps = 0;
-        int ret = 0;
+    int width = 0;
+    int height = 0;
+    int fps = 0;
     zpl_video_extradata_t extradata;
     char bufdda[] = {0x00,0x00,0x00,0x01,0x67,0x64,0x00,0x28,0xac,0xd9,0x40,0x78,0x02,0x27,0xe5,0xff
-,0xc0,0x02,0x40,0x02,0x84,0x00,0x00,0x03,0x00,0x04,0x00,0x00,0x03,0x00,0xf0,0x3c
-,0x60,0xc6,0x58};
- zpl_h264_sps_data_t sps;
-zpl_media_channel_decode_sps(bufdda, sizeof(bufdda), &sps);
-     zpl_media_channel_decode_spspps(bufdda+4, sizeof(bufdda)-1, &width, &height, &fps);
+        ,0xc0,0x02,0x40,0x02,0x84,0x00,0x00,0x03,0x00,0x04,0x00,0x00,0x03,0x00,0xf0,0x3c
+        ,0x60,0xc6,0x58};
+    zpl_media_channel_decode_sps(bufdda, sizeof(bufdda), &width, &height, &fps);
+    zpl_media_channel_decode_sps(bufdda+4, sizeof(bufdda)-1, &width, &height, &fps);
 
     zpl_media_file_t * rfile = zpl_media_file_create("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", "r");
-    zpl_media_file_t * wfile = zpl_media_file_create("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/testoutfiledesc.h264", "a+");
-    if(rfile && wfile)
+    if(rfile)
     {
-        rfile->get_frame = _h264_file_get_frame;
+        rfile->get_frame = zpl_media_file_get_frame_h264;
         memset(&extradata, 0, sizeof(zpl_video_extradata_t));
         zpl_media_file_extradata(rfile, &extradata);
 
-zpl_skbuffer_t packet;
+        rfile->filedesc.video.vidsize.width = width;
+        rfile->filedesc.video.vidsize.height = height;
+        rfile->filedesc.video.enctype = ZPL_VIDEO_CODEC_H264;
+        rfile->filedesc.video.format = ZPL_VIDEO_FORMAT_720P;
+        rfile->filedesc.video.framerate = fps;		//帧率
+        rfile->filedesc.audio.enctype = ZPL_AUDIO_CODEC_NONE;
 
-        zpl_media_channel_decode_spspps(extradata.fSPS, extradata.fSPSSize, &width, &height, &fps);
-zpl_media_file_open(rfile);
-        wfile->filedesc.video.vidsize.width = width;
-        wfile->filedesc.video.vidsize.height = height;
-        wfile->filedesc.video.enctype = ZPL_VIDEO_CODEC_H264;
-        wfile->filedesc.video.format = ZPL_VIDEO_FORMAT_720P;
-        wfile->filedesc.video.framerate = fps;		//帧率
-        wfile->filedesc.audio.enctype = ZPL_AUDIO_CODEC_NONE;
-
-        zpl_media_file_writehdr(wfile, &wfile->filedesc);
-
-        while(1)
-        {
-            ret = _h264_file_get_frame(rfile, &packet);
-            if(ret > 0)
-            {
-                ret = zpl_media_file_write_data(wfile, packet.skb_data, packet.skb_len);
-                fprintf(stdout, " zpl_media_file_write_data ret=%d\r\n", ret);
-            }
-            else
-                break;
-        }
         zpl_media_file_close(rfile);
-        zpl_media_file_close(wfile);
         zpl_media_file_destroy(rfile);
-        zpl_media_file_destroy(wfile);
     }
     return 0;
 }

@@ -54,6 +54,7 @@ int zpl_media_bufcache_destroy(zpl_media_bufcache_t * bufdata);
 int zpl_media_buffer_header(zpl_skbuffer_t * bufdata, int type,int flag, int timetick, int datalen);
 int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel, int key);
 
+int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel);
 
 
 extern char *zpl_media_timerstring(void);

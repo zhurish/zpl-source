@@ -93,6 +93,8 @@
         "os_log.h": "c",
         "os_sem.h": "c",
         "os_list.h": "c",
-        "zpl_type.h": "c"
+        "zpl_type.h": "c",
+        "condition_variable": "c",
+        "zpl_rtsp_util.h": "c"
     }
 }

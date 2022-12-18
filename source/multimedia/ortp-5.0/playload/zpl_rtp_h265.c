@@ -345,7 +345,7 @@ int _rtsp_parse_sdp_h265(rtsp_session_t *session, uint8_t *attrval, uint32_t len
     _h265_sprop_parameterset_parse(h265.sprop_sps,
                                    1, &extradata);
 
-    zpl_media_channel_decode_spspps(extradata.fSPS, extradata.fSPSSize,
+    zpl_media_channel_decode_sps(extradata.fSPS, extradata.fSPSSize,
                                     &client->client_media.video_codec.vidsize.width,
                                     &client->client_media.video_codec.vidsize.height,
                                     &client->client_media.video_codec.framerate);

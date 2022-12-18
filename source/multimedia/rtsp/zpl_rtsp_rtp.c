@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 #include "zpl_rtsp_server.h"
-#include "zpl_rtsp_socket.h"
+//#include "zpl_rtsp_socket.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_util.h"
 #include "zpl_rtsp_media.h"

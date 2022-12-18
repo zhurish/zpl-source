@@ -97,7 +97,7 @@ extern int zpl_media_channel_extradata_delete(zpl_video_extradata_t *extradata);
 
 extern int zpl_media_channel_decode_spspps(uint8_t *bufdata, uint32_t nLen,int *width,int *height,int *fps);
 
-extern int zpl_media_channel_decode_sps(const uint8_t *buf, int len, zpl_h264_sps_data_t *sps);
+extern int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *height,int *fps);
 
 
 #ifdef __cplusplus

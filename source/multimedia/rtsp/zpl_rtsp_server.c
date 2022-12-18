@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 #include "zpl_rtsp_server.h"
-#include "zpl_rtsp_socket.h"
+//#include "zpl_rtsp_socket.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_util.h"
 #include "zpl_rtsp_media.h"
@@ -31,17 +31,32 @@ void rtsp_srv_destroy(rtsp_srv_t *ctx)
         eloop_master_free(ctx->t_master);
 #endif
 
-    if (ctx->audio_sock._rtp_sock)
-        (rtsp_socket._close)(ctx->audio_sock._rtp_sock);
-    if (ctx->audio_sock._rtcp_sock)
-        (rtsp_socket._close)(ctx->audio_sock._rtcp_sock);
-    if (ctx->video_sock._rtp_sock)
-        (rtsp_socket._close)(ctx->video_sock._rtp_sock);
-    if (ctx->video_sock._rtcp_sock)
-        (rtsp_socket._close)(ctx->video_sock._rtcp_sock);
+    if (!ipstack_invalid(ctx->audio_sock._rtp_sock))
+    {
+        ipstack_close(ctx->audio_sock._rtp_sock);
+        ctx->audio_sock._rtp_sock = ZPL_SOCKET_INVALID;
+    }
+    if (!ipstack_invalid(ctx->audio_sock._rtcp_sock))
+    {
+        ipstack_close(ctx->audio_sock._rtcp_sock);
+        ctx->audio_sock._rtcp_sock = ZPL_SOCKET_INVALID;
+    }
+    if (!ipstack_invalid(ctx->video_sock._rtp_sock))
+    {
+        ipstack_close(ctx->video_sock._rtp_sock);
+        ctx->video_sock._rtp_sock = ZPL_SOCKET_INVALID;
+    }
+    if (!ipstack_invalid(ctx->video_sock._rtcp_sock))
+    {
+        ipstack_close(ctx->video_sock._rtcp_sock);
+        ctx->video_sock._rtcp_sock = ZPL_SOCKET_INVALID;
+    }
 
-    if (ctx->listen_sock)
-        (rtsp_socket._close)(ctx->listen_sock);
+    if (!ipstack_invalid(ctx->listen_sock))
+    {
+        ipstack_close(ctx->listen_sock);
+        ctx->listen_sock = ZPL_SOCKET_INVALID;
+    }
     if (ctx->srvname)
     {
         free(ctx->srvname);
@@ -83,39 +98,8 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
 {
     zpl_socket_t listen_sock;
     rtsp_srv_t *ctx = NULL;
-    if (rtsp_socket._socket)
-    {
-        listen_sock = (rtsp_socket._socket)(IPSTACK_OS, AF_INET, SOCK_STREAM, 0);
-        if (!ipstack_invalid(listen_sock))
-        {
-            if (rtsp_socket._bind)
-            {
-                if ((rtsp_socket._bind)(listen_sock, ip, port) != 0)
-                {
-                    if (rtsp_socket._close)
-                        (rtsp_socket._close)(listen_sock);
-                    printf("%s [%d]  _bind\r\n", __func__, __LINE__);
-                    return NULL;
-                }
-            }
-            if (rtsp_socket._listen)
-            {
-                if ((rtsp_socket._listen)(listen_sock, 5) != 0)
-                {
-                    if (rtsp_socket._close)
-                        (rtsp_socket._close)(listen_sock);
-                    printf("%s [%d]  _listen\r\n", __func__, __LINE__);
-                    return NULL;
-                }
-            }
-        }
-        else
-        {
-            printf("%s [%d]  _socket\r\n", __func__, __LINE__);
-            return NULL;
-        }
-    }
-    else
+    listen_sock = rtsp_session_listen(ip, port);
+    if(ipstack_invalid(listen_sock))
     {
         printf("%s [%d]  _socket null\r\n", __func__, __LINE__);
         return NULL;
@@ -144,20 +128,7 @@ rtsp_srv_t *rtsp_srv_create(const char *ip, uint16_t port)
     ctx->video_sock.local_rtp_port = VIDEO_RTP_PORT_DEFAULT;
     ctx->video_sock.local_rtcp_port = VIDEO_RTCP_PORT_DEFAULT;
     ctx->mutex = os_mutex_name_init("rtspsrv");
-    /*
-        ctx->audio_sock._rtp_sock = (rtsp_socket._socket)(AF_INET, SOCK_DGRAM, 0);
-        ctx->audio_sock._rtcp_sock = (rtsp_socket._socket)(AF_INET, SOCK_DGRAM, 0);
-        ctx->video_sock._rtp_sock = (rtsp_socket._socket)(AF_INET, SOCK_DGRAM, 0);
-        ctx->video_sock._rtcp_sock = (rtsp_socket._socket)(AF_INET, SOCK_DGRAM, 0);
-        if(ctx->audio_sock._rtp_sock)
-            (rtsp_socket._bind)(ctx->audio_sock._rtp_sock, NULL, ctx->audio_sock.local_rtp_port);
-        if(ctx->audio_sock._rtcp_sock)
-            (rtsp_socket._bind)(ctx->audio_sock._rtcp_sock, NULL, ctx->audio_sock.local_rtcp_port);
-        if(ctx->video_sock._rtp_sock)
-            (rtsp_socket._bind)(ctx->video_sock._rtp_sock, NULL, ctx->video_sock.local_rtp_port);
-        if(ctx->video_sock._rtcp_sock)
-            (rtsp_socket._bind)(ctx->video_sock._rtcp_sock, NULL, ctx->video_sock.local_rtcp_port);
-    */
+
     RTSP_SRV_LOCK(ctx);
     rtsp_session_lstinit(&ctx->session_list_head);
 #ifdef ZPL_WORKQUEUE
@@ -173,22 +144,25 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
 {
     char address[128];
     zpl_socket_t sock = 0;
-    uint16_t port = 0;
-    if (ctx->listen_sock && rtsp_socket._accept)
+    int enable = 0;
+    struct ipstack_sockaddr_in client;
+    if(!ipstack_invalid(ctx->listen_sock))
     {
         memset(address, 0, sizeof(address));
-        sock = (rtsp_socket._accept)(ctx->listen_sock, address, &port);
-        if (sock <= 0)
+        sock = ipstack_sock_accept (ctx->listen_sock, &client);
+        if(ipstack_invalid(sock))
         {
             return -1;
         }
+        ipstack_set_nonblocking(sock); 
+        ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
+                        (void *)&enable, sizeof (enable));
         fprintf(stdout, "------------------------------2-----------rtsp_srv_accept\r\n");
-        return rtsp_srv_session_create(ctx, sock, address, port);
+        return rtsp_srv_session_create(ctx, sock, address, ntohs(client.sin_port));
     }
     return -1;
 }
 
-#ifdef ZPL_WORKQUEUE
 static int rtsp_srv_accept_eloop(struct eloop *ctx)
 {
     rtsp_srv_t *pctx = ELOOP_ARG(ctx);
@@ -200,19 +174,18 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
 
 static int rtsp_session_read_handler(rtsp_srv_t *ctx, rtsp_session_t *session)
 {
-    if (session->sock)
+    if(!ipstack_invalid(session->sock))
     {
-        if (session->_recvfrom)
+
         {
             RTSP_SRV_LOCK(ctx);
             memset(ctx->_recv_buf, 0, sizeof(ctx->_recv_buf));
-            ctx->_recv_length = (session->_recvfrom)(session, ctx->_recv_buf, sizeof(ctx->_recv_buf));
+            ctx->_recv_length = rtsp_session_recvfrom(session, ctx->_recv_buf, sizeof(ctx->_recv_buf));
             if (ctx->_recv_length <= 0)
             {
                 fprintf(stdout, "------------------------------2-----------need close fd=%d(%s)\r\n", ipstack_fd(session->sock),strerror(errno));
                 session->state = RTSP_SESSION_STATE_CLOSE;
-                if (rtsp_socket._close)
-                    (rtsp_socket._close)(session->sock);
+                rtsp_session_close(session);
             }
             else
             {
@@ -250,87 +223,7 @@ static int rtsp_srv_read_eloop(struct eloop *ctx)
     }
     return 0;
 }
-#else
-static int rtsp_session_set_rfd(rtsp_session_t *session, rtsp_srv_t *ctx, )
-{
-    if (session->sock)
-    {
-        FD_SET(session->sock, &ctx->rset);
-    }
-    return 0;
-}
 
-static int rtsp_session_read_callback(rtsp_session_t *session, rtsp_srv_t *ctx)
-{
-    if (session->sock)
-    {
-        if (FD_ISSET(session->sock, &ctx->rset))
-        {
-            FD_CLR(session->sock, &ctx->rset);
-            if (session->_recvfrom)
-            {
-                memset(ctx->_recv_buf, 0, sizeof(ctx->_recv_buf));
-                ctx->_recv_length = (session->_recvfrom)(session, ctx->_recv_buf, sizeof(ctx->_recv_buf));
-                if (ctx->_recv_length <= 0)
-                {
-                    session->state = RTSP_SESSION_STATE_CLOSE;
-                     fprintf(stdout, "------------------------------1-----------need close(%s)\r\n", strerror(errno));
-                    if (rtsp_socket._close)
-                        (rtsp_socket._close)(session->sock);
-                }
-                else
-                {
-                    if (ctx->_recv_buf[0] == '$')
-                    {
-                        ctx->_recv_offset = 4;
-                        rtsp_media_tcp_forward(session, ctx->_recv_buf, ctx->_recv_length);
-                    }
-                    else
-                    {
-                        ctx->_recv_offset = 0;
-                        rtsp_srv_session_event_handle(ctx, session);
-                    }
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-int rtsp_srv_select(rtsp_srv_t *ctx)
-{
-    int ret = 0, maxfd = 0;
-    if (ctx->listen_sock && rtsp_socket._select)
-    {
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        FD_ZERO(&ctx->rset);
-        FD_SET(ctx->listen_sock, &ctx->rset);
-        maxfd = rtsp_session_update_maxfd(&ctx->session_list_head);
-        maxfd = max(maxfd, ctx->listen_sock);
-        rtsp_session_foreach(&ctx->session_list_head, rtsp_session_set_rfd, ctx);
-        //(rtsp_socket._select)(maxfd + 1, &rset, &wset, struct timeval *tv);
-        ret = (rtsp_socket._select)(maxfd + 1, &ctx->rset, NULL, &tv);
-        if (ret)
-        {
-            if (FD_ISSET(ctx->listen_sock, &ctx->rset))
-            {
-                FD_CLR(ctx->listen_sock, &ctx->rset);
-                rtsp_srv_accept(ctx);
-            }
-            else
-            {
-                rtsp_session_foreach(&ctx->session_list_head, rtsp_session_read_callback, ctx);
-                rtsp_session_cleancache(&ctx->session_list_head);
-            }
-            return 0;
-        }
-        return -1;
-    }
-    return -1;
-}
-#endif
 
 int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_address, uint16_t port)
 {
@@ -452,8 +345,7 @@ static int rtsp_srv_session_handle_option(rtsp_srv_t *ctx, rtsp_session_t *sessi
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -478,8 +370,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
             if (length)
             {
                 length += sprintf(ctx->_send_build + length, "\r\n");
-                if ((session->_sendto))
-                    return (session->_sendto)(session, ctx->_send_build, length);
+                return rtsp_session_sendto(session, ctx->_send_build, length);
             }
             return 0;
         }
@@ -488,12 +379,11 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
         (session->audio_session.b_enable && session->audio_session.payload == RTP_MEDIA_PAYLOAD_NONE))
     {
         length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, RTSP_STATE_CODE_415, session->cseq, session->session);
-        ;
+
         if (length)
         {
             length += sprintf(ctx->_send_build + length, "\r\n");
-            if ((session->_sendto))
-                return (session->_sendto)(session, ctx->_send_build, length);
+            return rtsp_session_sendto(session, ctx->_send_build, length);
         }
         return 0;
     }
@@ -540,8 +430,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -556,8 +445,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
         if (length)
         {
             length += sprintf(ctx->_send_build + length, "\r\n");
-            if ((session->_sendto))
-                return (session->_sendto)(session, ctx->_send_build, length);
+            return rtsp_session_sendto(session, ctx->_send_build, length);
         }
         return 0;
     }
@@ -664,8 +552,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
             if (length)
             {
                 length += sprintf(ctx->_send_build + length, "\r\n");
-                if ((session->_sendto))
-                    return (session->_sendto)(session, ctx->_send_build, length);
+                return rtsp_session_sendto(session, ctx->_send_build, length);
             }
             return 0;
         }
@@ -675,8 +562,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -707,8 +593,7 @@ static int rtsp_srv_session_handle_teardown(rtsp_srv_t *ctx, rtsp_session_t *ses
     {
         int ret = 0;
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            ret = (session->_sendto)(session, ctx->_send_build, length);
+        rtsp_session_sendto(session, ctx->_send_build, length);
         session->state = RTSP_SESSION_STATE_CLOSE;
         return ret;
     }
@@ -756,8 +641,7 @@ static int rtsp_srv_session_handle_play(rtsp_srv_t *ctx, rtsp_session_t *session
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -784,8 +668,7 @@ static int rtsp_srv_session_handle_pause(rtsp_srv_t *ctx, rtsp_session_t *sessio
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -796,8 +679,7 @@ static int rtsp_srv_session_handle_scale(rtsp_srv_t *ctx, rtsp_session_t *sessio
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -808,8 +690,7 @@ static int rtsp_srv_session_handle_set_parameter(rtsp_srv_t *ctx, rtsp_session_t
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -820,8 +701,7 @@ static int rtsp_srv_session_handle_get_parameter(rtsp_srv_t *ctx, rtsp_session_t
     if (length)
     {
         length += sprintf(ctx->_send_build + length, "\r\n");
-        if ((session->_sendto))
-            return (session->_sendto)(session, ctx->_send_build, length);
+        return rtsp_session_sendto(session, ctx->_send_build, length);
     }
     return 0;
 }
@@ -937,14 +817,12 @@ static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *sessio
         if (length)
         {
             length += sprintf(ctx->_send_build + length, "\r\n");
-            if ((session->_sendto))
-                ret = (session->_sendto)(session, ctx->_send_build, length);
+            return rtsp_session_sendto(session, ctx->_send_build, length);
         }
         if(adsdadsada == 10)
         {
             session->state = RTSP_SESSION_STATE_CLOSE;
-            if (rtsp_socket._close)
-                (rtsp_socket._close)(session->sock);
+            rtsp_session_close(session);
         }
 
     }

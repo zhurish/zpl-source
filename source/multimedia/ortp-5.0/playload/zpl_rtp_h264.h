@@ -70,7 +70,6 @@ enum
     HEADER_SIZE_STAP_A = 3,
 };
 
-#define NALU_MAX_FLAG       0X00400000
 #define NALU_START_FLAG     0X00200000
 #define NALU_END_FLAG       0X00100000
 #define NALU_LEN_GET(n)     0X0000ffff

@@ -133,8 +133,8 @@ typedef struct rtsp_session_s {
     uint32_t        rtp_payload_size;       //去掉RTP头后负载最大长度
     uint32_t        max_packet_size;        //整个RTP报文大小（函RTP头）
 
-    int (*_sendto)(rtsp_session_t *, uint8_t *, uint32_t );
-    int (*_recvfrom)(rtsp_session_t *, uint8_t *, uint32_t );
+    //int (*_sendto)(rtsp_session_t *, uint8_t *, uint32_t );
+    //int (*_recvfrom)(rtsp_session_t *, uint8_t *, uint32_t );
 
     //int (*_rtp_over_rtsp_send)(rtsp_session_t *, uint8_t *, uint32_t );
     //int (*_rtp_over_rtsp_recv)(rtsp_session_t *, uint8_t *, uint32_t );
@@ -148,7 +148,14 @@ typedef struct rtsp_session_s {
 #define RTSP_SESSION_LOCK(x)    
 #define RTSP_SESSION_UNLOCK(x)  
 
-RTSP_API char * rtsp_session_dataptr(uint8_t *req, uint32_t offset);
+
+RTSP_API zpl_socket_t rtsp_session_listen(const char *lip, uint16_t port);
+RTSP_API int rtsp_session_connect(rtsp_session_t * session, const char *ip, uint16_t port, int tomeout_ms);
+RTSP_API int rtsp_session_close(rtsp_session_t * session);
+RTSP_API int rtsp_session_sendto(rtsp_session_t * session, uint8_t *data, uint32_t length);
+RTSP_API int rtsp_session_recvfrom(rtsp_session_t * session, uint8_t *data, uint32_t length);
+
+
 RTSP_API int rtsp_session_default(rtsp_session_t * newNode, bool srv);
 RTSP_API int rtsp_session_lstinit(struct osker_list_head * list);
 RTSP_API int rtsp_session_lstexit(struct osker_list_head * list);
@@ -163,7 +170,7 @@ RTSP_API rtsp_session_t *rtsp_session_lookup_byid(struct osker_list_head * list,
 RTSP_API int rtsp_session_count(struct osker_list_head * list);
 RTSP_API int rtsp_session_update_maxfd(struct osker_list_head * list);
 RTSP_API int rtsp_session_foreach(struct osker_list_head * list, int (*calback)(rtsp_session_t *, void *), void * pVoid);
-//RTSP_API int rtsp_session_sendto(rtsp_session_t * session, uint8_t *data, uint32_t length);
+
 RTSP_API int rtp_over_rtsp_session_sendto(rtsp_session_t * session, uint8_t chn, uint8_t *data, uint32_t length);
 RTSP_API int rtsp_session_install(rtsp_session_t * newNode, rtsp_method method, rtsp_session_call func, void *p);
 RTSP_API int rtsp_session_callback(rtsp_session_t * newNode, rtsp_method method);

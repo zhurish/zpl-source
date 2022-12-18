@@ -101,7 +101,7 @@ struct zpl_media_file_s
 #endif
 
 
-typedef void  rtsp_media_t;//服务端指向zpl_media_channel_t， 客户端指向zpl_client_media_t
+typedef void rtsp_media_t;//服务端指向zpl_media_channel_t， 客户端指向zpl_client_media_t
 
 
 RTSP_API char *rtsp_media_name(int channel, int level);

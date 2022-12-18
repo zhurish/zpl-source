@@ -766,7 +766,7 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 			fd_set writefds;
 			FD_ZERO(&writefds);
 			FD_SET(ipstack_fd(sock), &writefds);
-			ret = ipstack_select_wait(ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
+			ret = ipstack_select_wait(ipstack_type(sock), ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
 			// use select to check write event, if the socket is writable, then
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
@@ -800,7 +800,7 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 			ipstack_fd_set writefds;
 			IPSTACK_FD_ZERO(&writefds);
 			IPSTACK_FD_SET(ipstack_fd(sock), &writefds);
-			ret = ipstack_select_wait(ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
+			ret = ipstack_select_wait(ipstack_type(sock), ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
 			// use select to check write event, if the socket is writable, then
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
@@ -1099,7 +1099,7 @@ int ipstack_sock_unix_client_write(zpl_socket_t fd, char *name, char *buf, zpl_u
 
 
 
-int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms)
+int ipstack_select_wait(int type, int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdset, zpl_uint32 timeout_ms)
 {
 	zpl_int32 num = 0;
 	struct ipstack_timeval timer_tmp1,timer_tmp2;
@@ -1109,7 +1109,7 @@ int ipstack_select_wait(int maxfd, ipstack_fd_set *rfdset, ipstack_fd_set *wfdse
 	os_gettime (OS_CLK_REALTIME, &timer_tmp1);
 	while (1)
 	{
-		num = ipstack_select(IPSTACK_IPCOM, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
+		num = ipstack_select(type, maxfd, rfdset, wfdset, NULL, timeout_ms ? &timer_wait : NULL);
 		if (num < 0)
 		{
 			if (ipstack_errno == EINTR || ipstack_errno == EAGAIN)
@@ -1161,7 +1161,7 @@ int ipstack_write_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_ui
 		ipstack_fd_set writefds;
 		IPSTACK_FD_ZERO(&writefds);
 		IPSTACK_FD_SET(ipstack_fd(fd), &writefds);
-		ret = ipstack_select_wait(ipstack_fd(fd) + 1, NULL, &writefds, timeout_ms);
+		ret = ipstack_select_wait(ipstack_type(fd), ipstack_fd(fd) + 1, NULL, &writefds, timeout_ms);
 		if (ret == OS_TIMEOUT)
 		{
 			_OS_ERROR("ipstack_select_wait timeout on write(%d)\n",ipstack_fd(fd));
@@ -1210,7 +1210,7 @@ int ipstack_read_timeout(zpl_socket_t fd, zpl_char *buf, zpl_uint32 len, zpl_uin
 		ipstack_fd_set readfds;
 		IPSTACK_FD_ZERO(&readfds);
 		IPSTACK_FD_SET(ipstack_fd(fd), &readfds);
-		ret = ipstack_select_wait(ipstack_fd(fd) + 1, &readfds, NULL, timeout_ms);
+		ret = ipstack_select_wait(ipstack_type(fd), ipstack_fd(fd) + 1, &readfds, NULL, timeout_ms);
 		if (ret == OS_TIMEOUT)
 		{
 			return OS_TIMEOUT;
