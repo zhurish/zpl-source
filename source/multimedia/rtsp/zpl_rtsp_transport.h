@@ -9,8 +9,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_rtsp_def.h"
-#include "zpl_rtsp.h"
+
+
 
 
 // Transport: RTP/AVP/TCP;interleaved=0-1

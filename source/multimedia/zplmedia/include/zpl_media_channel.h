@@ -40,8 +40,8 @@ typedef struct zpl_media_video_s
     zpl_bool                enable;
     zpl_video_codec_t	    codec;	    //视频编码参数
     zpl_video_extradata_t   extradata;
-    zpl_void                *halparam;  //通道绑定的硬件资源
     zpl_media_area_t        *m_areas[ZPL_MEDIA_AREA_CHANNEL_MAX];
+    zpl_void                *halparam;  //通道绑定的硬件资源
 }zpl_media_video_t;
 
 typedef struct zpl_media_audio_s
@@ -102,7 +102,7 @@ extern int zpl_media_channel_hwdestroy(zpl_media_channel_t *);
 extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 
-extern zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd);
+extern int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd);
 extern int zpl_media_channel_filedestroy(zpl_char *filename);
 extern zpl_media_channel_t * zpl_media_channel_filelookup(zpl_char *filename);
 extern int zpl_media_channel_filestart(zpl_media_channel_t *mchannel, bool start);

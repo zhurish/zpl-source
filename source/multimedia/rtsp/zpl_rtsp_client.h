@@ -3,14 +3,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_rtsp_def.h"
-#include "osker_list.h"
-#include "zpl_rtsp_sdp.h"
-#include "zpl_rtsp_media.h"
-#include "zpl_rtsp_session.h"
 
 
 
+typedef int (*zpl_client_media_data_callback)(void *,  uint8_t *, uint32_t );
 
 #define RTSP_REQUEST_TIMEOUT    2
 
@@ -51,7 +47,7 @@ typedef struct rtsp_client_s {
     rtsp_session_t  *rtsp_session;
 //    zpl_socket_t    wait_sock;           //rtsp wait socket
     bool            istcp;
-    int             (*_rtsp_client_rtpdata)(void *,  zpl_skbuffer_t *);
+    zpl_client_media_data_callback         client_rtpdata_callback;
 
     zpl_skbuffer_t video_bufdata;
     zpl_skbuffer_t audio_bufdata;
@@ -60,20 +56,17 @@ typedef struct rtsp_client_s {
 
 }rtsp_client_t;
 
-
+/* create  -> connect  -> open  ->  read thread  close  -> destroy  -> */
 RTSP_API rtsp_client_t * rtsp_client_create(const char *name, const char *url);
 RTSP_API int rtsp_client_destroy(rtsp_client_t * client);
 RTSP_API int rtsp_client_connect(rtsp_client_t * client, int timeout);
 
 RTSP_API int rtsp_client_request(rtsp_client_t * client, rtsp_method method);
-RTSP_API int rtsp_client_open(rtsp_client_t * client);
+RTSP_API int rtsp_client_open(rtsp_client_t * client, zpl_client_media_data_callback cb);
 RTSP_API int rtsp_client_close(rtsp_client_t * client);
 
 RTSP_API int rtsp_client_thread(rtsp_client_t * client);
 
-
-RTSP_API int rtsp_client_rtpread(rtsp_client_t * client);
-RTSP_API int rtsp_client_task_init(void* argv);
 
 #ifdef __cplusplus
 }

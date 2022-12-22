@@ -4,19 +4,6 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include "zpl_media.h"
-#include "zpl_rtsp_def.h"
-#include "zpl_rtsp_session.h"
-#ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media_internal.h"
-#include "zpl_media_extradata.h"
-#endif
-#include "zpl_rtsp_media.h"
-
 
 
 /*

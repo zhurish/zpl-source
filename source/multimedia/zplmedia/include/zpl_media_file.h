@@ -76,33 +76,33 @@ struct zpl_media_file_s
     int         (*put_extradata)(zpl_media_file_t*, zpl_video_extradata_t *);
 };
 
-
+extern char *zpl_media_file_basename(const char *name);
 extern int zpl_media_file_update(zpl_media_file_t * channel, bool add);
 
 extern int zpl_media_file_start(zpl_media_file_t *media, bool start);
-extern int zpl_media_file_master(zpl_media_file_t *file, void *master, int msec);
+extern int zpl_media_file_master(zpl_media_file_t *media_file, void *master, int msec);
 
 extern zpl_media_file_t *zpl_media_file_create(const char *name, const char *op);
-extern int zpl_media_file_destroy(zpl_media_file_t *file);
-extern int zpl_media_file_open(zpl_media_file_t *file);
-extern int zpl_media_file_close(zpl_media_file_t *file);
-extern int zpl_media_file_write(zpl_media_file_t *file, zpl_skbuffer_t *bufdata);
-extern int zpl_media_file_read(zpl_media_file_t *file, zpl_skbuffer_t *bufdata);
+extern int zpl_media_file_destroy(zpl_media_file_t *media_file);
+extern int zpl_media_file_open(zpl_media_file_t *media_file);
+extern int zpl_media_file_close(zpl_media_file_t *media_file);
+extern int zpl_media_file_write(zpl_media_file_t *media_file, zpl_skbuffer_t *bufdata);
+extern int zpl_media_file_read(zpl_media_file_t *media_file, zpl_skbuffer_t *bufdata);
 
-extern int zpl_media_filedesc_create(zpl_media_file_t *file);
-extern int zpl_media_file_codecdata(zpl_media_file_t *file, zpl_bool video, void *codec);
+extern int zpl_media_filedesc_create(zpl_media_file_t *media_file);
+extern int zpl_media_file_codecdata(zpl_media_file_t *media_file, zpl_bool video, void *codec);
 
-extern int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extradata);
-extern int zpl_media_file_pdata(zpl_media_file_t *file, void *pdata);
-extern int zpl_media_file_interval(zpl_media_file_t *file, int interval);
+extern int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extradata_t *extradata);
+extern int zpl_media_file_pdata(zpl_media_file_t *media_file, void *pdata);
+extern int zpl_media_file_interval(zpl_media_file_t *media_file, int interval);
 
-extern int zpl_media_file_get_frame_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *));
-extern int zpl_media_file_get_extradata_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *));
+extern int zpl_media_file_get_frame_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *));
+extern int zpl_media_file_get_extradata_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *));
 
-extern int zpl_media_file_put_frame_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *));
-extern int zpl_media_file_put_extradata_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *));
+extern int zpl_media_file_put_frame_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *));
+extern int zpl_media_file_put_extradata_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *));
 
-extern int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *outpacket);
+extern int zpl_media_file_get_frame_h264(zpl_media_file_t *media_file, zpl_media_bufcache_t *outpacket);
 
 #ifdef __cplusplus
 }

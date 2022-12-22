@@ -9,17 +9,18 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#include "zpl_rtsp_def.h"
+#include "zpl_rtsp.h"
+#include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_rtp.h"
-#include "zpl_rtp_h264.h"
-#ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#endif
 
 static int rtsp_media_srv_setup(rtsp_media_t *media, rtsp_session_t *session);
 
@@ -44,13 +45,21 @@ rtsp_media_t * rtsp_media_create(rtsp_session_t * session, int channel, int leve
         return NULL;
     if(path)
     {
+        zpl_media_channel_t *chn = NULL;
         fprintf(stdout, " ============================rtsp_media_create path=%s\r\n", path);
         fflush(stdout);
-        zpl_media_channel_t *chn = zpl_media_channel_filecreate(path, zpl_true);
+        chn = zpl_media_channel_filelookup(path);
+        if(chn == NULL)
+        {
+            if(zpl_media_channel_filecreate(path, zpl_true) == OK)
+            {
+                chn = zpl_media_channel_filelookup(path);
+            }
+        }
         //zpl_media_channel_t *chn = zpl_media_channel_filelookup(path);
         if(chn)
         {
-            //int zpl_media_file_get_frame_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_framedata_t *))
+            //int zpl_media_file_get_frame_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_framedata_t *))
             if(chn->video_media.enable && chn->video_media.halparam)
                 zpl_media_file_get_frame_callback(chn->video_media.halparam, zpl_media_file_get_frame_h264);
             else if(chn->audio_media.enable && chn->audio_media.halparam)
@@ -480,10 +489,13 @@ int rtsp_media_build_sdptext(rtsp_session_t * session, rtsp_media_t *media, uint
 
                 if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
                 {
-                    zpl_media_file_t * file = (zpl_media_file_t *)chn->video_media.halparam;
-                    uint32_t npttime = file->filedesc.endtime - file->filedesc.begintime;
-                    if(npttime)
-                        sdplength += sprintf((char*)sdp + sdplength, "a=range:npt=0.000-%d.%d\r\n", npttime/1000, npttime%1000);
+                    zpl_media_file_t * media_file = (zpl_media_file_t *)chn->video_media.halparam;
+                    if(media_file)
+                    {
+                        uint32_t npttime = media_file->filedesc.endtime - media_file->filedesc.begintime;
+                        if(npttime)
+                            sdplength += sprintf((char*)sdp + sdplength, "a=range:npt=0.000-%d.%d\r\n", npttime/1000, npttime%1000);
+                    }
                     else
                         sdplength += sprintf((char*)sdp + sdplength, "a=range:npt=now-\r\n");
                 }
@@ -504,8 +516,8 @@ int rtsp_media_build_sdptext(rtsp_session_t * session, rtsp_media_t *media, uint
             sdplength += sprintf((char*)sdp + sdplength, "a=framerate:%u\r\n", session->video_session.framerate);
             if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
             {
-                zpl_media_file_t * file = (zpl_media_file_t *)chn->video_media.halparam;
-                uint32_t npttime = file->filedesc.endtime - file->filedesc.begintime;
+                zpl_media_file_t * media_file = (zpl_media_file_t *)chn->video_media.halparam;
+                uint32_t npttime = media_file?media_file->filedesc.endtime - media_file->filedesc.begintime:0;
                 if(npttime)
                     sdplength += sprintf((char*)sdp + sdplength, "a=range:npt=0.000-%d.%d\r\n", npttime/1000, npttime%1000);
                 else
@@ -531,8 +543,8 @@ int rtsp_media_build_sdptext(rtsp_session_t * session, rtsp_media_t *media, uint
                 sdplength += sprintf((char*)sdp + sdplength, "a=framerate:%d\r\n", session->audio_session.framerate);
                 if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
                 {
-                    zpl_media_file_t * file = (zpl_media_file_t *)chn->audio_media.halparam;
-                    uint32_t npttime = file->filedesc.endtime - file->filedesc.begintime;
+                    zpl_media_file_t * media_file = (zpl_media_file_t *)chn->audio_media.halparam;
+                    uint32_t npttime = media_file?media_file->filedesc.endtime - media_file->filedesc.begintime:0;
                     if(npttime)
                         sdplength += sprintf((char*)sdp + sdplength, "a=range:npt=0.000-%d.%d\r\n", npttime/1000, npttime%1000);
                     else
@@ -550,8 +562,8 @@ int rtsp_media_build_sdptext(rtsp_session_t * session, rtsp_media_t *media, uint
             sdplength += sprintf((char*)sdp + sdplength, "a=framerate:%d\r\n", session->audio_session.framerate);
             if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
             {
-                zpl_media_file_t * file = (zpl_media_file_t *)chn->audio_media.halparam;
-                uint32_t npttime = file->filedesc.endtime - file->filedesc.begintime;
+                zpl_media_file_t * media_file = (zpl_media_file_t *)chn->audio_media.halparam;
+                uint32_t npttime = media_file?media_file->filedesc.endtime - media_file->filedesc.begintime:0;
                 if(npttime)
                     sdplength += sprintf((char*)sdp + sdplength, "a=range:npt=0.000-%d.%d\r\n", npttime/1000, npttime%1000);
                 else

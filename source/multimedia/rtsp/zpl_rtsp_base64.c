@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "zpl_rtsp_def.h"
+#include "zpl_rtsp.h"
 #include "zpl_rtsp_base64.h"
 
 /* ---------------- private code */

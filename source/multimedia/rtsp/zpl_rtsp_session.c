@@ -8,9 +8,17 @@
 #include <string.h>
 #include <errno.h>
 
-#include "zpl_rtsp_def.h"
-//#include "zpl_rtsp_socket.h"
+#include "zpl_rtsp.h"
+#include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
+#include "zpl_rtsp_client.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_rtp.h"
 
 
@@ -56,14 +64,15 @@ zpl_socket_t rtsp_session_listen(const char *lip, uint16_t port)
 
 int rtsp_session_connect(rtsp_session_t * session, const char *ip, uint16_t port, int timeout_ms)
 {
-    int enable = 1, ret = 0;
+    int ret = 0;
     session->sock = ipstack_sock_create(IPSTACK_OS, zpl_true);
     if(!ipstack_invalid(session->sock))
     {
         ret = ipstack_sock_connect_timeout(session->sock, ip,  port, timeout_ms);
-        ipstack_set_nonblocking(session->sock);    
-        ret = ipstack_setsockopt(session->sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
-                        (void *)&enable, sizeof (enable));
+        //ipstack_set_nonblocking(session->sock);  
+        ret = sockopt_reuseaddr(session->sock);
+        //ipstack_tcp_nodelay(session->sock, 1);  
+        sockopt_keepalive(session->sock);
     }
     return ret;                    
 }

@@ -95,6 +95,17 @@
         "os_list.h": "c",
         "zpl_type.h": "c",
         "condition_variable": "c",
-        "zpl_rtsp_util.h": "c"
+        "zpl_rtsp_util.h": "c",
+        "zpl_media_area.h": "c",
+        "zpl_media_proxy.h": "c",
+        "zpl_media_codec.h": "c",
+        "zpl_rtsp_sdp.h": "c",
+        "zpl_rtp_h264.h": "c",
+        "zpl_rtp_g7xx.h": "c",
+        "zpl_rtp_h265.h": "c",
+        "zpl_rtsp_adap.h": "c",
+        "zpl_rtsp_auth.h": "c",
+        "zpl_rtsp_api.h": "c",
+        "zpl_rtsp_sdpfmtp.h": "c"
     }
 }

@@ -10,18 +10,20 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "module.h"
-#include "zpl_rtsp_def.h"
+#include "zpl_rtsp.h"
+#include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
-#include "zpl_rtsp_media.h"
 #include "zpl_rtsp_client.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_server.h"
-#ifdef ZPL_BUILD_LINUX
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#endif
-#include "zpl_rtsp_api.h"
 #include "zpl_rtsp_rtp.h"
-
+#include "zpl_rtsp_api.h"
 
 static rtsp_srv_t *rtsp_srv = NULL;
 #ifndef ZPL_WORKQUEUE

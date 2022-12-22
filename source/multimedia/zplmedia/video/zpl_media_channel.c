@@ -115,6 +115,7 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
             chn->video_media.codec.enRcMode = ZPL_VENC_RC_CBR;
             chn->video_media.codec.gopmode = ZPL_VENC_GOPMODE_NORMALP;
 		}
+ #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE
     chn->video_media.extradata.fSEI = NULL;
     chn->video_media.extradata.fSEISize = 0;
     chn->video_media.extradata.fVPS = NULL;
@@ -124,7 +125,7 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
     chn->video_media.extradata.fPPS = NULL;
     chn->video_media.extradata.fPPSSize = 0;
     chn->video_media.extradata.profileLevelId = 0;
-
+#endif
     chn->audio_media.codec.framerate = ZPL_AUDIO_FRAMERATE_DEFAULT; //帧率
     chn->audio_media.codec.enctype = ZPL_AUDIO_CODEC_PCMU;		//编码类型
     chn->audio_media.codec.bitrate = 64;		//码率
@@ -329,13 +330,13 @@ ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_I
 	return state;
 }
 
-zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
+int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
 {
 	zpl_media_channel_t *chn = os_malloc(sizeof(zpl_media_channel_t));
 	zpl_video_assert(chn);
 	if (chn)
 	{
-        zpl_media_file_t *file = NULL;
+        zpl_media_file_t *media_file = NULL;
 		memset(chn, 0, sizeof(zpl_media_channel_t));
 		chn->channel = 32;
 		chn->channel_index = 32;
@@ -350,62 +351,63 @@ zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool 
 		if (chn->buffer_queue == NULL)
 		{
 			os_free(chn);
-            return NULL;
+            return ERROR;
         }
 
-        file = zpl_media_file_create(filename, rd?"r":"a+");
-        if (file == NULL)
+        media_file = zpl_media_file_create(filename, rd?"r":"a+");
+        if (media_file == NULL)
         {
             chn->buffer_queue = NULL;
             free(chn);
-            return NULL;
+            return ERROR;
         }
-        file->buffer_queue = chn->buffer_queue;
-        file->parent = chn;
-        file->cnt = 0;
+        media_file->buffer_queue = chn->buffer_queue;
+        media_file->parent = chn;
+        media_file->cnt = 0;
 
-        file->filedesc.video.format = ZPL_VIDEO_FORMAT_720P;
+        media_file->filedesc.video.format = ZPL_VIDEO_FORMAT_720P;
 
-	file->filedesc.video.vidsize.width = 1280;		//视频大小
-	file->filedesc.video.vidsize.height = 720;
-	file->filedesc.video.enctype = RTP_MEDIA_PAYLOAD_H264;		//编码类型
-	file->filedesc.video.framerate = 30;		//帧率
-	file->filedesc.video.bitrate = 16;		//码率
-    file->filedesc.video.profile = 1;        //编码等级
-	file->filedesc.video.bitrate_type = ZPL_BIT_RATE_CBR;	//码率类型
+		media_file->filedesc.video.vidsize.width = 1280;		//视频大小
+		media_file->filedesc.video.vidsize.height = 720;
+		media_file->filedesc.video.enctype = RTP_MEDIA_PAYLOAD_H264;		//编码类型
+		media_file->filedesc.video.framerate = 30;		//帧率
+		media_file->filedesc.video.bitrate = 16;		//码率
+		media_file->filedesc.video.profile = 1;        //编码等级
+		media_file->filedesc.video.bitrate_type = ZPL_BIT_RATE_CBR;	//码率类型
 
-
-        if(file->b_video && !file->b_audio)
+        if(media_file->b_video && !media_file->b_audio)
         {
             chn->video_media.enable = zpl_true;
-            chn->video_media.halparam = file;
+            chn->video_media.halparam = media_file;
             if(rd)
-                zpl_media_file_extradata(file, &chn->video_media.extradata);
+                zpl_media_file_extradata(media_file, &chn->video_media.extradata);
         }
-        else if(!file->b_video && file->b_audio)
+        else if(!media_file->b_video && media_file->b_audio)
         {
             chn->audio_media.enable = zpl_true;
-            chn->audio_media.halparam = file;
-
+            chn->audio_media.halparam = media_file;
         }
-        else if(file->b_video && file->b_audio)
+        else if(media_file->b_video && media_file->b_audio)
         {
+			fprintf(stdout, " zpl_media_channel_filecreate video autio filedesc=%p\r\n", media_file);
+			fflush(stdout);
             chn->video_media.enable = zpl_true;
-            chn->video_media.halparam = file;
+            chn->video_media.halparam = media_file;
             chn->audio_media.enable = zpl_true;
             chn->audio_media.halparam = NULL;
             if(rd)
-                zpl_media_file_extradata(file, &chn->video_media.extradata);
+                zpl_media_file_extradata(media_file, &chn->video_media.extradata);
         }
+			fprintf(stdout, " zpl_media_channel_filecreate filedesc=%p\r\n", media_file);
+			fflush(stdout);
         if(chn->video_media.enable)
         {
-            zpl_media_file_codecdata(file, zpl_true, &chn->video_media.codec);
+            zpl_media_file_codecdata(media_file, zpl_true, &chn->video_media.codec);
         }
         if(chn->audio_media.enable)
         {
-            zpl_media_file_codecdata(file, zpl_false, &chn->audio_media.codec);
+            zpl_media_file_codecdata(media_file, zpl_false, &chn->audio_media.codec);
         }
-
 
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
@@ -417,9 +419,9 @@ zpl_media_channel_t * zpl_media_channel_filecreate(zpl_char *filename, zpl_bool 
 
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
-        return chn;
+        return OK;
     }
-    return NULL;
+    return ERROR;
 
 }
 
@@ -427,7 +429,7 @@ int zpl_media_channel_filedestroy(zpl_char *filename)
 {
 	NODE node;
 	zpl_media_channel_t *chn = NULL;
-    zpl_media_file_t *file = NULL;
+    zpl_media_file_t *media_file = NULL;
 	if (media_channel_mutex)
 		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
 
@@ -439,20 +441,20 @@ int zpl_media_channel_filedestroy(zpl_char *filename)
         {
             if(chn->video_media.enable)
             {
-                file = chn->video_media.halparam;
+                media_file = chn->video_media.halparam;
             }
             else if(chn->audio_media.enable)
             {
-                file = chn->audio_media.halparam;
+                media_file = chn->audio_media.halparam;
             }
-            if(file)
+            if(media_file)
             {
-                if (strcmp(file->filename, filename) == 0)
+                if (strcmp(media_file->filename, filename) == 0)
                 {
                     if(chn->video_media.enable)
                         zpl_media_channel_extradata_delete(&chn->video_media.extradata);
 
-                    zpl_media_file_destroy(file);
+                    zpl_media_file_destroy(media_file);
                     lstDelete(media_channel_list, (NODE *)chn);
                     if (chn->buffer_queue)
                         chn->buffer_queue = NULL;
@@ -471,7 +473,7 @@ zpl_media_channel_t *zpl_media_channel_filelookup(zpl_char *filename)
 {
     NODE node;
     zpl_media_channel_t *chn = NULL;
-    zpl_media_file_t *file = NULL;
+    zpl_media_file_t *media_file = NULL;
     fprintf(stdout, " zpl_media_channel_filelookup filename=%s\r\n", filename);
     fflush(stdout);
 	if (media_channel_mutex)
@@ -481,28 +483,39 @@ zpl_media_channel_t *zpl_media_channel_filelookup(zpl_char *filename)
     {
         node = chn->node;
 
-
         if (chn && chn->channel_type == ZPL_MEDIA_CHANNEL_FILE)
         {
             if(chn->video_media.enable)
             {
-                file = chn->video_media.halparam;
+                media_file = chn->video_media.halparam;
             }
             else if(chn->audio_media.enable)// && chn->video_media.halparam
             {
-                file = chn->audio_media.halparam;
+                media_file = chn->audio_media.halparam;
             }
-            if(file)
+            if(media_file)
             {
-                if (strcmp(file->filename, filename) == 0)
-                {
-                    break;
-                }
+				if(filename[0] == '/')
+				{
+					if (strcmp(media_file->filename, filename) == 0)
+					{
+						break;
+					}
+				}
+            	else
+				{
+					if (strcmp(media_file->filename, zpl_media_file_basename(filename)) == 0)
+					{
+						break;
+					}
+				}
             }
         }
     }
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);
+	fprintf(stdout, " zpl_media_channel_filelookup filedesc=%p\r\n", media_file);
+	fflush(stdout);
     return chn;
 }
 

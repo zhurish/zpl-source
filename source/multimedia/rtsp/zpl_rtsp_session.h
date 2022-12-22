@@ -3,13 +3,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_rtsp_def.h"
-#include "osker_list.h"
-#include "zpl_rtsp_sdp.h"
-#include "zpl_rtsp_transport.h"
 
-
-
+#include "ortp/ortp.h"
+#include "ortp/rtpsession.h"
 
 #define VIDEO_RTP_PORT_DEFAULT            28964
 #define VIDEO_RTCP_PORT_DEFAULT           28965
@@ -49,7 +45,7 @@ typedef struct rtp_session_s
     zpl_socket_t             rtp_sock;           //rtp socket
     zpl_socket_t             rtcp_sock;          //rtcp socket
     uint8_t         rtpmode;
-    void            *rtp_session;       //rtp session
+    RtpSession      *rtp_session;       //rtp session
     rtp_session_state rtp_state;        //RTP流状态
     int             i_trackid;          //视频通道
     bool            b_issetup;          //视频是否设置
@@ -111,7 +107,7 @@ typedef struct rtsp_session_s {
     int32_t         mchannel;
     int32_t         mlevel;
 
-    void            *rtsp_media;    //流媒体
+    rtsp_media_t    *rtsp_media;    //流媒体
 
     rtp_session_t   video_session;
     rtp_session_t   audio_session;

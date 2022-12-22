@@ -1099,3 +1099,28 @@ int ipstack_socketselect (zpl_ipstack stack, int width, ipstack_fd_set *rfds, ip
 }
 
 
+
+int ipstack_tcp_nodelay(zpl_socket_t sock, int onoff)
+{
+	zpl_uint32 on = onoff;
+	if(ipstack_invalid(sock))
+		return ERROR;
+#ifdef ZPL_IPCOM_MODULE
+	if(ipstack_type(sock) == IPSTACK_OS)
+	{
+		return ipstack_setsockopt(sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (zpl_char *)&on, sizeof(on));
+	}
+	else
+	{
+		int a = 1;
+		if (ipstack_setsockopt(sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (zpl_char *)&on, sizeof(on)) != 0)
+		{
+			return ERROR;
+		}
+		return OK;
+	}
+	return ERROR;
+#else
+	return ipstack_setsockopt(sock, IPSTACK_IPPROTO_TCP, IPSTACK_TCP_NODELAY, (zpl_char *)&on, sizeof(on));	
+#endif	
+}

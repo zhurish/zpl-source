@@ -3,18 +3,20 @@
 #include <string.h>
 #include <errno.h>
 
-#include "zpl_rtsp_def.h"
-
 
 #ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#include "zpl_rtsp_media.h"
+#include "zpl_rtsp.h"
+#include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
 #include "zpl_rtsp_base64.h"
-#include "zpl_rtsp_rtp.h"
+#include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
-#include "zpl_rtsp_server.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_adap.h"
+#include "zpl_rtsp_rtp.h"
 #include "zpl_rtp_h264.h"
 
 
@@ -600,8 +602,12 @@ static int _h264_sprop_parameterset_parse(uint8_t *buffer, uint32_t len, zpl_vid
                 uint8_t nal_unit_type = (tmp[0])&0x1F;
                 if (nal_unit_type == 7/*SPS*/)
                 {
+                    #ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE
+                    if(out_size <= ZPL_VIDEO_EXTRADATA_MAXSIZE)
+                    #else 
                     extradata->fSPS = malloc(out_size);
                     if(extradata->fSPS)
+                    #endif
                     {
                         memset(extradata->fSPS, 0, out_size);
                         memcpy(extradata->fSPS, tmp, out_size);
@@ -610,8 +616,12 @@ static int _h264_sprop_parameterset_parse(uint8_t *buffer, uint32_t len, zpl_vid
                 }
                 else if (nal_unit_type == 8/*PPS*/)
                 {
+                    #ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE
+                    if(out_size <= ZPL_VIDEO_EXTRADATA_MAXSIZE)
+                    #else 
                     extradata->fPPS = malloc(out_size);
                     if(extradata->fPPS)
+                    #endif
                     {
                         memset(extradata->fPPS, 0, out_size);
                         memcpy(extradata->fPPS, tmp, out_size);
@@ -643,11 +653,12 @@ int _rtsp_parse_sdp_h264(rtsp_session_t *session, uint8_t *attrval, uint32_t len
                                     &client->client_media.video_codec.vidsize.width,
                                     &client->client_media.video_codec.vidsize.height,
                                     &client->client_media.video_codec.framerate);
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE
     if(extradata.fPPS)
         free(extradata.fPPS);
     if(extradata.fSPS)
         free(extradata.fSPS);
-
+#endif
     return 0;
 }
 
@@ -687,7 +698,11 @@ int _rtsp_build_sdp_h264(rtsp_session_t *session, uint8_t *src, uint32_t len)
 
     extradata = &zpl_media_getptr(session->rtsp_media)->video_media.extradata;
 */
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE
     if(extradata->fSPSSize && extradata->fSPS != NULL)
+#else
+    if(extradata->fSPSSize)
+#endif    
         zpl_media_channel_decode_sps(extradata->fSPS, extradata->fSPSSize,
                                     &zpl_media_getptr(session->rtsp_media)->video_media.codec.vidsize.width,
                                     &zpl_media_getptr(session->rtsp_media)->video_media.codec.vidsize.height,

@@ -3,13 +3,18 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
-#include "zpl_rtsp_server.h"
-//#include "zpl_rtsp_socket.h"
-#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
-#include "zpl_rtsp_media.h"
-#include "zpl_rtsp_base64.h"
 #include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
+#include "zpl_rtsp_session.h"
+#include "zpl_rtsp_client.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_adap.h"
+#include "zpl_rtsp_server.h"
 
 static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *session);
 #ifdef ZPL_WORKQUEUE
@@ -144,7 +149,6 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
 {
     char address[128];
     zpl_socket_t sock = 0;
-    int enable = 0;
     struct ipstack_sockaddr_in client;
     if(!ipstack_invalid(ctx->listen_sock))
     {
@@ -154,9 +158,10 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
         {
             return -1;
         }
-        ipstack_set_nonblocking(sock); 
-        ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
-                        (void *)&enable, sizeof (enable));
+        //ipstack_set_nonblocking(sock); 
+        sockopt_reuseaddr(sock);
+        ipstack_tcp_nodelay(sock, 1);  
+        sockopt_keepalive(sock);              
         fprintf(stdout, "------------------------------2-----------rtsp_srv_accept\r\n");
         return rtsp_srv_session_create(ctx, sock, address, ntohs(client.sin_port));
     }
@@ -357,7 +362,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
     int code = RTSP_STATE_CODE_200;
     if (rtsp_srv_session_url_split(ctx, session) == 0)
     {
-        if (session->rtsp_media == NULL)
+        //if (session->rtsp_media == NULL)
         {
             session->rtsp_media = rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath);
             if (session->rtsp_media == NULL)

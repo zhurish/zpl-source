@@ -180,7 +180,7 @@ extern int ipstack_copy_pst(zpl_socket_t *src, zpl_socket_t *dst);
 extern int ipstack_get_blocking(zpl_socket_t _sock);
 extern int ipstack_set_nonblocking(zpl_socket_t _sock);
 extern int ipstack_set_blocking(zpl_socket_t _sock);
-
+extern int ipstack_tcp_nodelay(zpl_socket_t sock, int onoff);
 extern char * ipstack_sockstr(zpl_socket_t _sock);
 
 #ifdef ZPL_SOCKET_T_POINT

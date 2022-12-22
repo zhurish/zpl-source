@@ -4,17 +4,6 @@
 extern "C" {
 #endif
 
-#ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#endif
-#include "zpl_rtsp_def.h"
-#include "zpl_rtsp_session.h"
-#ifdef ORTP_VERSION
-#include "ortp/ortp.h"
-#endif
-//#include "zpl_rtp_h264.h"
-
 
 #ifdef ZPL_BUILD_LINUX
 #ifndef RTP_MEDIA_BASE_PATH
@@ -101,7 +90,6 @@ struct zpl_media_file_s
 #endif
 
 
-typedef void rtsp_media_t;//服务端指向zpl_media_channel_t， 客户端指向zpl_client_media_t
 
 
 RTSP_API char *rtsp_media_name(int channel, int level);

@@ -210,16 +210,17 @@ extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
 extern int ip_main(int argc, char **argv);
 extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
                  char *passwd, char *localfileName);
-#include "zpl_media.h"
-#include "zpl_media_api.h"
-#include "zpl_media_internal.h"
-#include "zpl_media_event.h"				 
-#include "zpl_rtsp_def.h"
+#include "zpl_rtsp.h"
+#include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
-#include "zpl_rtsp_media.h"
 #include "zpl_rtsp_client.h"
-#include "zpl_rtsp_server.h"
-#include "zpl_rtsp_api.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_rtp.h"
 extern int rtp_send_h264_test(void);
 /* Main startup routine. */

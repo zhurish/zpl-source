@@ -9,14 +9,18 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#endif
-#include "zpl_rtsp_def.h"
+#include "zpl_rtsp.h"
+#include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
+#include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_adap.h"
+
 #include "zpl_rtp_h264.h"
 #include "zpl_rtp_g7xx.h"
 #include "zpl_rtp_h265.h"

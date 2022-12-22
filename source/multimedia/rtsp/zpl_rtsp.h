@@ -9,8 +9,32 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_rtsp_def.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "lib_include.h"
 
+#ifdef ZPL_LIBRTSP_MODULE
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
+typedef zpl_media_channel_t rtsp_media_t;//服务端指向zpl_media_channel_t， 客户端指向zpl_client_media_t
+#endif
+
+#if defined(_MSC_VER)
+# if defined(DLLBUILD)
+/* define DLLBUILD when building the DLL */
+#  define RTSP_API __declspec(dllexport)
+# else
+#  define RTSP_API extern //__declspec(dllimport)
+# endif
+#else
+# define RTSP_API extern
+#endif
+
+
+
+#ifndef max
+#define max(a,b)    (a)>(b)?(a):(b)
+#endif
 
 
 typedef enum

@@ -28,7 +28,7 @@
 #define AVUTIL_BASE64_H
 
 #include <stdint.h>
-#include "zpl_rtsp_def.h"
+
 /**
  * @defgroup lavu_base64 Base64
  * @ingroup lavu_crypto

@@ -28,9 +28,9 @@ bool is_nalu4_start(zpl_uint8 *buffer) {
     }
 }
 
-int zpl_media_channel_get_nextnalu(uint8_t *bufdata, uint32_t len)
+int zpl_media_channel_get_nextnalu(zpl_uint8 *bufdata, zpl_uint32 len)
 {
-    uint32_t pos = 0;
+    zpl_uint32 pos = 0;
     pos = 0;
     while (pos < len)
     {
@@ -50,9 +50,9 @@ int zpl_media_channel_get_nextnalu(uint8_t *bufdata, uint32_t len)
     return 0; // if file is end
 }
 
-unsigned zpl_media_channel_get_profileLevelId(uint8_t const* from, unsigned fromSize, uint8_t* to, unsigned toMaxSize) {
-    unsigned toSize = 0;
-    unsigned i = 0;
+zpl_uint32 zpl_media_channel_get_profileLevelId(zpl_uint8 const* from, zpl_uint32 fromSize, zpl_uint8* to, zpl_uint32 toMaxSize) {
+    zpl_uint32 toSize = 0;
+    zpl_uint32 i = 0;
     while (i < fromSize && toSize+1 < toMaxSize) {
         if (i+2 < fromSize && from[i] == 0 && from[i+1] == 0 && from[i+2] == 3) {
             to[toSize] = to[toSize+1] = 0;
@@ -67,7 +67,7 @@ unsigned zpl_media_channel_get_profileLevelId(uint8_t const* from, unsigned from
     return toSize;
 }
 
-bool zpl_media_channel_isnaluhdr(uint8_t *bufdata, H264_NALU_T *nalu)
+bool zpl_media_channel_isnaluhdr(zpl_uint8 *bufdata, H264_NALU_T *nalu)
 {
     if (bufdata)
     {
@@ -101,12 +101,14 @@ bool zpl_media_channel_isnaluhdr(uint8_t *bufdata, H264_NALU_T *nalu)
 int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *extradata)
 {
     zpl_uint8 tmp[512];
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE    
     if (extradata->fSPS != NULL && extradata->fPPS != NULL/* && extradata->fSEI != NULL*/)
     {
         //fprintf(stdout, " _zpl_media_file_get_extradata already\r\n");
         fflush(stdout);
         return 1;
     }
+#endif    
     if (nalu->nal_unit_type)
     {
         switch (nalu->nal_unit_type)
@@ -122,6 +124,7 @@ int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *e
         case NALU_TYPE_IDR:
             break;
         case NALU_TYPE_SEI:
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE
             if (extradata->fSEI == NULL)
             {
                 extradata->fSEI = malloc(nalu->len);
@@ -131,8 +134,27 @@ int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *e
                     memcpy(extradata->fSEI, nalu->buf + nalu->hdr_len, nalu->len);
                 }
             }
+#else
+            if (nalu->len <= ZPL_VIDEO_EXTRADATA_MAXSIZE)
+            {
+                extradata->fSEISize = nalu->len;
+                memcpy(extradata->fSEI, nalu->buf + nalu->hdr_len, nalu->len);
+            }
+#endif
             break;
         case NALU_TYPE_SPS:
+#ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE
+            if (nalu->len <= ZPL_VIDEO_EXTRADATA_MAXSIZE)
+            {
+                memset(tmp, 0, sizeof(tmp));
+                memcpy(extradata->fSPS, nalu->buf+nalu->hdr_len, nalu->len);
+                extradata->fSPSSize = nalu->len;
+
+                if(zpl_media_channel_get_profileLevelId(nalu->buf+nalu->hdr_len, nalu->len,
+                                                            tmp, sizeof(tmp)) >= 4)
+                extradata->profileLevelId = (tmp[1]<<16) | (tmp[2]<<8) | tmp[3];
+            }
+#else        
             if (extradata->fSPS == NULL)
             {
                 extradata->fSPS = malloc(nalu->len);
@@ -147,8 +169,16 @@ int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *e
                         extradata->profileLevelId = (tmp[1]<<16) | (tmp[2]<<8) | tmp[3];
                 }
             }
+#endif
             break;
         case NALU_TYPE_PPS:
+#ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE
+            if (nalu->len <= ZPL_VIDEO_EXTRADATA_MAXSIZE)
+            {
+                extradata->fPPSSize = nalu->len;
+                memcpy(extradata->fPPS, nalu->buf + nalu->hdr_len, nalu->len);
+            }
+#else
             if (extradata->fPPS == NULL)
             {
                 extradata->fPPS = malloc(nalu->len);
@@ -158,6 +188,7 @@ int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *e
                     memcpy(extradata->fPPS, nalu->buf + nalu->hdr_len, nalu->len);
                 }
             }
+#endif
             break;
         case NALU_TYPE_AUD:
             break;
@@ -259,11 +290,13 @@ int zpl_media_channel_extradata_import(void *p, zpl_uint8 *Buf, int len)
     zpl_media_channel_t *chn = (zpl_media_channel_t *)p;
     zpl_uint8 *tmpbuf = Buf;
     int data_offset=0, pos = 0;
+#ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE  
+#else
     if(chn && chn->video_media.extradata.fSPS != NULL && 
         chn->video_media.extradata.fPPS != NULL /*&& 
         chn->video_media.extradata.fSEI != NULL*/)
         return 1;
-
+#endif
     memset(&nalu, 0, sizeof(H264_NALU_T));
     while(data_offset <(len-4))
     {
@@ -311,25 +344,33 @@ int zpl_media_channel_extradata_get(void *p, zpl_video_extradata_t *extradata)
     zpl_media_channel_t *chn = (zpl_media_channel_t *)p;
     if(chn && (chn->video_media.halparam))
     {
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE         
         if(chn->video_media.extradata.fPPS && extradata->fPPS)
+ #endif
         {
 			n++;
             memcpy(extradata->fPPS, chn->video_media.extradata.fPPS, chn->video_media.extradata.fPPSSize);
             extradata->fPPSSize = chn->video_media.extradata.fPPSSize;
         }
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
         if(chn->video_media.extradata.fVPS && extradata->fVPS)
+ #endif
         {
 			n++;
             memcpy(extradata->fVPS, chn->video_media.extradata.fVPS, chn->video_media.extradata.fVPSSize);
             extradata->fVPSSize = chn->video_media.extradata.fVPSSize;
         }
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
         if(chn->video_media.extradata.fSPS && extradata->fSPS)
+ #endif
         {
 			n++;
             memcpy(extradata->fSPS, chn->video_media.extradata.fSPS, chn->video_media.extradata.fSPSSize);
             extradata->fSPSSize = chn->video_media.extradata.fSPSSize;
         }
+#ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
         if(chn->video_media.extradata.fSEI && extradata->fSEI)
+ #endif
         {
 			n++;
             memcpy(extradata->fSEI, chn->video_media.extradata.fSEI, chn->video_media.extradata.fSEISize);
@@ -351,6 +392,12 @@ int zpl_media_channel_extradata_delete(zpl_video_extradata_t *extradata)
 {
     if(extradata)
     {
+ #ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE
+        extradata->fPPSSize = 0;
+        extradata->fVPSSize = 0;
+        extradata->fSPSSize = 0;
+        extradata->fSEISize = 0;
+ #else
         if(extradata->fPPS)
         {
             free(extradata->fPPS);
@@ -371,6 +418,7 @@ int zpl_media_channel_extradata_delete(zpl_video_extradata_t *extradata)
 			free(extradata->fSEI);
 			extradata->fSEISize = 0;
         }
+#endif
         if(extradata->profileLevelId)
         {
             extradata->profileLevelId = 0;
@@ -408,11 +456,11 @@ static void sps_get_profile(int profile_idc, char* profile_str){
     }
 }
 
-static uint32_t sps_get_ue(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
+static zpl_uint32 sps_get_ue(zpl_uint8 *pBuff, zpl_uint32 nLen, zpl_uint32 *nStartBit)
 {
-    uint32_t nZeroNum = 0;
-    uint32_t i = 0;
-    uint32_t dwRet = 0;
+    zpl_uint32 nZeroNum = 0;
+    zpl_uint32 i = 0;
+    zpl_uint32 dwRet = 0;
     while (*nStartBit < nLen * 8)
     {
         if (pBuff[*nStartBit / 8] & (0x80 >> (*nStartBit % 8)))
@@ -437,9 +485,9 @@ static uint32_t sps_get_ue(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
     return (1 << nZeroNum) - 1 + dwRet;
 }
 
-static int sps_get_se(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
+static int sps_get_se(zpl_uint8 *pBuff, zpl_uint32 nLen, zpl_uint32 *nStartBit)
 {
-    uint32_t UeVal=sps_get_ue(pBuff,nLen,nStartBit);
+    zpl_uint32 UeVal=sps_get_ue(pBuff,nLen,nStartBit);
     double k=UeVal;
     int nValue=ceil(k/2);
     if (UeVal % 2==0)
@@ -448,10 +496,10 @@ static int sps_get_se(uint8_t *pBuff, uint32_t nLen, uint32_t *nStartBit)
 }
 
 
-static uint32_t sps_get_u(uint32_t BitCount,uint8_t * buf,uint32_t *nStartBit)
+static zpl_uint32 sps_get_u(zpl_uint32 BitCount,zpl_uint8 * buf,zpl_uint32 *nStartBit)
 {
-    uint32_t dwRet = 0;
-    uint32_t i=0;
+    zpl_uint32 dwRet = 0;
+    zpl_uint32 i=0;
     for ( i=0; i<BitCount; i++)
     {
         dwRet <<= 1;
@@ -464,11 +512,11 @@ static uint32_t sps_get_u(uint32_t BitCount,uint8_t * buf,uint32_t *nStartBit)
     return dwRet;
 }
 
-static void de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
+static void de_emulation_prevention(zpl_uint8* buf, zpl_uint32* buf_size)
 {
-    uint32_t i=0,j=0;
-    uint8_t* tmp_ptr=NULL;
-    uint32_t tmp_buf_size=0;
+    zpl_uint32 i=0,j=0;
+    zpl_uint8* tmp_ptr=NULL;
+    zpl_uint32 tmp_buf_size=0;
     int val=0;
 
     tmp_ptr=buf;
@@ -492,44 +540,44 @@ static void de_emulation_prevention(uint8_t* buf, uint32_t* buf_size)
     }
 }
 
-static bool h264_decode_sps(uint8_t * buf, uint32_t nLen, int *width,int *height,int *fps)
+static bool h264_decode_sps(zpl_uint8 * buf, zpl_uint32 nLen, int *width,int *height,int *fps)
 {
-    uint32_t StartBit=0;
-    uint32_t dddnLen = nLen, i = 0;
+    zpl_uint32 StartBit=0;
+    zpl_uint32 dddnLen = nLen, i = 0;
     *fps=0;
     de_emulation_prevention(buf,&dddnLen);
-    uint32_t residual_colour_transform_flag=0;
-    uint32_t log2_max_pic_order_cnt_lsb_minus4=0;
-    uint32_t mb_adaptive_frame_field_flag=0;
-    uint32_t overscan_appropriate_flagu=0;
-    uint32_t timing_info_present_flag = 0;
-    //uint32_t forbidden_zero_bit=sps_get_u(1,buf,&StartBit);
-    //uint32_t nal_ref_idc=sps_get_u(2,buf,&StartBit);
-    uint32_t nal_unit_type=sps_get_u(5,buf,&StartBit);
+    zpl_uint32 residual_colour_transform_flag=0;
+    zpl_uint32 log2_max_pic_order_cnt_lsb_minus4=0;
+    zpl_uint32 mb_adaptive_frame_field_flag=0;
+    zpl_uint32 overscan_appropriate_flagu=0;
+    zpl_uint32 timing_info_present_flag = 0;
+    //zpl_uint32 forbidden_zero_bit=sps_get_u(1,buf,&StartBit);
+    //zpl_uint32 nal_ref_idc=sps_get_u(2,buf,&StartBit);
+    zpl_uint32 nal_unit_type=sps_get_u(5,buf,&StartBit);
     if(nal_unit_type==7)
     {
-        uint32_t profile_idc=sps_get_u(8,buf,&StartBit);
-        //uint32_t constraint_set0_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x80)>>7;
-        //uint32_t constraint_set1_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x40)>>6;
-        //uint32_t constraint_set2_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x20)>>5;
-        //uint32_t constraint_set3_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x10)>>4;
-        //uint32_t reserved_zero_4bits=sps_get_u(4,buf,&StartBit);
-        //uint32_t level_idc=sps_get_u(8,buf,&StartBit);
+        zpl_uint32 profile_idc=sps_get_u(8,buf,&StartBit);
+        //zpl_uint32 constraint_set0_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x80)>>7;
+        //zpl_uint32 constraint_set1_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x40)>>6;
+        //zpl_uint32 constraint_set2_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x20)>>5;
+        //zpl_uint32 constraint_set3_flag=sps_get_u(1,buf,&StartBit);//(buf[1] & 0x10)>>4;
+        //zpl_uint32 reserved_zero_4bits=sps_get_u(4,buf,&StartBit);
+        //zpl_uint32 level_idc=sps_get_u(8,buf,&StartBit);
 
-        //uint32_t seq_parameter_set_id=sps_get_ue(buf,nLen,&StartBit);
+        //zpl_uint32 seq_parameter_set_id=sps_get_ue(buf,nLen,&StartBit);
 
         if( profile_idc == 100 || profile_idc == 110 ||
                 profile_idc == 122 || profile_idc == 144 )
         {
-            uint32_t chroma_format_idc=sps_get_ue(buf,nLen,&StartBit);
+            zpl_uint32 chroma_format_idc=sps_get_ue(buf,nLen,&StartBit);
             if( chroma_format_idc == 3 )
                 residual_colour_transform_flag=sps_get_u(1,buf,&StartBit);
-            //uint32_t bit_depth_luma_minus8=sps_get_ue(buf,nLen,&StartBit);
-            //uint32_t bit_depth_chroma_minus8=sps_get_ue(buf,nLen,&StartBit);
-            //uint32_t qpprime_y_zero_transform_bypass_flag=sps_get_u(1,buf,&StartBit);
-            uint32_t seq_scaling_matrix_present_flag=sps_get_u(1,buf,&StartBit);
+            //zpl_uint32 bit_depth_luma_minus8=sps_get_ue(buf,nLen,&StartBit);
+            //zpl_uint32 bit_depth_chroma_minus8=sps_get_ue(buf,nLen,&StartBit);
+            //zpl_uint32 qpprime_y_zero_transform_bypass_flag=sps_get_u(1,buf,&StartBit);
+            zpl_uint32 seq_scaling_matrix_present_flag=sps_get_u(1,buf,&StartBit);
 
-            uint32_t seq_scaling_list_present_flag[8];
+            zpl_uint32 seq_scaling_list_present_flag[8];
             if( seq_scaling_matrix_present_flag )
             {
                 for(  i = 0; i < 8; i++ ) {
@@ -537,87 +585,87 @@ static bool h264_decode_sps(uint8_t * buf, uint32_t nLen, int *width,int *height
                 }
             }
         }
-        //uint32_t log2_max_frame_num_minus4=sps_get_ue(buf,nLen,&StartBit);
-        uint32_t pic_order_cnt_type=sps_get_ue(buf,nLen,&StartBit);
+        //zpl_uint32 log2_max_frame_num_minus4=sps_get_ue(buf,nLen,&StartBit);
+        zpl_uint32 pic_order_cnt_type=sps_get_ue(buf,nLen,&StartBit);
         if( pic_order_cnt_type == 0 )
             log2_max_pic_order_cnt_lsb_minus4=sps_get_ue(buf,nLen,&StartBit);
         else if( pic_order_cnt_type == 1 )
         {
-            //uint32_t delta_pic_order_always_zero_flag=sps_get_u(1,buf,&StartBit);
+            //zpl_uint32 delta_pic_order_always_zero_flag=sps_get_u(1,buf,&StartBit);
             //int offset_for_non_ref_pic=sps_get_se(buf,nLen,&StartBit);
             //int offset_for_top_to_bottom_field=sps_get_se(buf,nLen,&StartBit);
-            uint32_t num_ref_frames_in_pic_order_cnt_cycle=sps_get_ue(buf,nLen,&StartBit);
+            zpl_uint32 num_ref_frames_in_pic_order_cnt_cycle=sps_get_ue(buf,nLen,&StartBit);
 
             int *offset_for_ref_frame=malloc(4*num_ref_frames_in_pic_order_cnt_cycle);
             for(  i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++ )
                 offset_for_ref_frame[i]=sps_get_se(buf,nLen,&StartBit);
             free(offset_for_ref_frame);
         }
-        //uint32_t num_ref_frames=sps_get_ue(buf,nLen,&StartBit);
-        //uint32_t gaps_in_frame_num_value_allowed_flag=sps_get_u(1,buf,&StartBit);
-        uint32_t pic_width_in_mbs_minus1=sps_get_ue(buf,nLen,&StartBit);
-        uint32_t pic_height_in_map_units_minus1=sps_get_ue(buf,nLen,&StartBit);
+        //zpl_uint32 num_ref_frames=sps_get_ue(buf,nLen,&StartBit);
+        //zpl_uint32 gaps_in_frame_num_value_allowed_flag=sps_get_u(1,buf,&StartBit);
+        zpl_uint32 pic_width_in_mbs_minus1=sps_get_ue(buf,nLen,&StartBit);
+        zpl_uint32 pic_height_in_map_units_minus1=sps_get_ue(buf,nLen,&StartBit);
 
         *width=(pic_width_in_mbs_minus1+1)*16;
         *height=(pic_height_in_map_units_minus1+1)*16;
 
-        uint32_t frame_mbs_only_flag=sps_get_u(1,buf,&StartBit);
+        zpl_uint32 frame_mbs_only_flag=sps_get_u(1,buf,&StartBit);
         if(!frame_mbs_only_flag)
             mb_adaptive_frame_field_flag=sps_get_u(1,buf,&StartBit);
 
-        //uint32_t direct_8x8_inference_flag=sps_get_u(1,buf,&StartBit);
-        uint32_t frame_cropping_flag=sps_get_u(1,buf,&StartBit);
+        //zpl_uint32 direct_8x8_inference_flag=sps_get_u(1,buf,&StartBit);
+        zpl_uint32 frame_cropping_flag=sps_get_u(1,buf,&StartBit);
         if(frame_cropping_flag)
         {
             /*
-            uint32_t frame_crop_left_offset=sps_get_ue(buf,nLen,&StartBit);
-            uint32_t frame_crop_right_offset=sps_get_ue(buf,nLen,&StartBit);
-            uint32_t frame_crop_top_offset=sps_get_ue(buf,nLen,&StartBit);
-            uint32_t frame_crop_bottom_offset=sps_get_ue(buf,nLen,&StartBit);*/
+            zpl_uint32 frame_crop_left_offset=sps_get_ue(buf,nLen,&StartBit);
+            zpl_uint32 frame_crop_right_offset=sps_get_ue(buf,nLen,&StartBit);
+            zpl_uint32 frame_crop_top_offset=sps_get_ue(buf,nLen,&StartBit);
+            zpl_uint32 frame_crop_bottom_offset=sps_get_ue(buf,nLen,&StartBit);*/
         }
-        uint32_t vui_parameter_present_flag=sps_get_u(1,buf,&StartBit);
+        zpl_uint32 vui_parameter_present_flag=sps_get_u(1,buf,&StartBit);
         if(vui_parameter_present_flag)
         {
-            uint32_t aspect_ratio_info_present_flag=sps_get_u(1,buf,&StartBit);
+            zpl_uint32 aspect_ratio_info_present_flag=sps_get_u(1,buf,&StartBit);
             if(aspect_ratio_info_present_flag)
             {
-                uint32_t aspect_ratio_idc=sps_get_u(8,buf,&StartBit);
+                zpl_uint32 aspect_ratio_idc=sps_get_u(8,buf,&StartBit);
                 if(aspect_ratio_idc==255)
                 {
-                    //uint32_t sar_width=sps_get_u(16,buf,&StartBit);
-                    //uint32_t sar_height=sps_get_u(16,buf,&StartBit);
+                    //zpl_uint32 sar_width=sps_get_u(16,buf,&StartBit);
+                    //zpl_uint32 sar_height=sps_get_u(16,buf,&StartBit);
                 }
             }
-            uint32_t overscan_info_present_flag=sps_get_u(1,buf,&StartBit);
+            zpl_uint32 overscan_info_present_flag=sps_get_u(1,buf,&StartBit);
             if(overscan_info_present_flag)
                 overscan_appropriate_flagu=sps_get_u(1,buf,&StartBit);
-            uint32_t video_signal_type_present_flag=sps_get_u(1,buf,&StartBit);
+            zpl_uint32 video_signal_type_present_flag=sps_get_u(1,buf,&StartBit);
             if(video_signal_type_present_flag)
             {
-                //uint32_t video_format=sps_get_u(3,buf,&StartBit);
-                //uint32_t video_full_range_flag=sps_get_u(1,buf,&StartBit);
-                uint32_t colour_description_present_flag=sps_get_u(1,buf,&StartBit);
+                //zpl_uint32 video_format=sps_get_u(3,buf,&StartBit);
+                //zpl_uint32 video_full_range_flag=sps_get_u(1,buf,&StartBit);
+                zpl_uint32 colour_description_present_flag=sps_get_u(1,buf,&StartBit);
                 if(colour_description_present_flag)
                 {
-                    //uint32_t colour_primaries=sps_get_u(8,buf,&StartBit);
-                    //uint32_t transfer_characteristics=sps_get_u(8,buf,&StartBit);
-                    //uint32_t matrix_coefficients=sps_get_u(8,buf,&StartBit);
+                    //zpl_uint32 colour_primaries=sps_get_u(8,buf,&StartBit);
+                    //zpl_uint32 transfer_characteristics=sps_get_u(8,buf,&StartBit);
+                    //zpl_uint32 matrix_coefficients=sps_get_u(8,buf,&StartBit);
                 }
             }
-            uint32_t chroma_loc_info_present_flag=sps_get_u(1,buf,&StartBit);
+            zpl_uint32 chroma_loc_info_present_flag=sps_get_u(1,buf,&StartBit);
             if(chroma_loc_info_present_flag)
             {
-                //uint32_t chroma_sample_loc_type_top_field=sps_get_ue(buf,nLen,&StartBit);
-                //uint32_t chroma_sample_loc_type_bottom_field=sps_get_ue(buf,nLen,&StartBit);
+                //zpl_uint32 chroma_sample_loc_type_top_field=sps_get_ue(buf,nLen,&StartBit);
+                //zpl_uint32 chroma_sample_loc_type_bottom_field=sps_get_ue(buf,nLen,&StartBit);
             }
             timing_info_present_flag=sps_get_u(1,buf,&StartBit);
 
             if(timing_info_present_flag)
             {
-                uint32_t num_units_in_tick=sps_get_u(32,buf,&StartBit);
-                uint32_t time_scale=sps_get_u(32,buf,&StartBit);
+                zpl_uint32 num_units_in_tick=sps_get_u(32,buf,&StartBit);
+                zpl_uint32 time_scale=sps_get_u(32,buf,&StartBit);
                 *fps=time_scale/num_units_in_tick;
-                uint32_t fixed_frame_rate_flag=sps_get_u(1,buf,&StartBit);
+                zpl_uint32 fixed_frame_rate_flag=sps_get_u(1,buf,&StartBit);
                 if(fixed_frame_rate_flag)
                 {
                     *fps=(*fps)/2;
@@ -643,7 +691,7 @@ static bool h264_decode_sps(uint8_t * buf, uint32_t nLen, int *width,int *height
 }
 
 
-int zpl_media_channel_decode_spspps(uint8_t *bufdata, uint32_t nLen,int *width,int *height,int *fps)
+int zpl_media_channel_decode_spspps(zpl_uint8 *bufdata, zpl_uint32 nLen,int *width,int *height,int *fps)
 {
     fprintf(stdout, " 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\r\n",
             bufdata[0],bufdata[1],bufdata[2],bufdata[3],bufdata[4],bufdata[5]);
@@ -656,16 +704,16 @@ int zpl_media_channel_decode_spspps(uint8_t *bufdata, uint32_t nLen,int *width,i
 
 typedef struct {
  
-    uint8_t *data;
-    uint8_t *data_end;
-    uint32_t cache;
-    uint32_t cache_bits;
+    zpl_uint8 *data;
+    zpl_uint8 *data_end;
+    zpl_uint32 cache;
+    zpl_uint32 cache_bits;
  
 } br_state;
  
 #define BR_INIT(data,bytes) {(data), (data)+(bytes), 0, 0}
 /*
-static void br_init(br_state *br, const uint8_t *data, int bytes)
+static void br_init(br_state *br, const zpl_uint8 *data, int bytes)
 {
     br->data = data;
     br->data_end = data + bytes;
@@ -676,7 +724,7 @@ static void br_init(br_state *br, const uint8_t *data, int bytes)
 #define BR_GET_BYTE(br) (br->data < br->data_end ? *br->data++ : 0xff)
 #define BR_EOF(br) ((br)->data >= (br)->data_end)
 
-static uint32_t br_get_bits(br_state *br, uint32_t n)
+static zpl_uint32 br_get_bits(br_state *br, zpl_uint32 n)
 {
     if (n > 24)
         return (br_get_bits(br, 16) << 16) | br_get_bits(br, n - 16);
@@ -747,7 +795,7 @@ static void br_skip_bits(br_state *br, int n)
 #define br_get_u8(br) br_get_bits(br, 8)
 #define br_get_u16(br) ((br_get_bits(br, 8) << 8) | br_get_bits(br, 8))
 
-static uint32_t br_get_ue_golomb(br_state *br)
+static zpl_uint32 br_get_ue_golomb(br_state *br)
 {
     int n = 0;
     while (!br_get_bit(br) && n < 32)
@@ -759,7 +807,7 @@ static uint32_t br_get_ue_golomb(br_state *br)
 
 static int32_t br_get_se_golomb(br_state *br)
 {
-    uint32_t r = br_get_ue_golomb(br) + 1;
+    zpl_uint32 r = br_get_ue_golomb(br) + 1;
     return (r & 1) ? -(r >> 1) : (r >> 1);
 }
 
@@ -774,13 +822,15 @@ static void br_skip_golomb(br_state *br)
 #define br_skip_ue_golomb(br) br_skip_golomb(br)
 #define br_skip_se_golomb(br) br_skip_golomb(br)
 
-int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *height,int *fps)
+int zpl_media_channel_decode_sps(const zpl_uint8 *buf, int len, int *width,int *height,int *fps)
 {
     int profile_idc = 0, pic_order_cnt_type = 0;
     int frame_mbs_only = 0;
     int i = 0, j = 0;
     zpl_h264_sps_data_t sps;
     // find sps
+    if(len <= 0)
+        return -1;
     bool findSPS = false;
     if (buf[2] == 0)
     {
@@ -814,14 +864,15 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *he
     br_state br = BR_INIT(buf, len);
     profile_idc = br_get_u8(&br);
     sps.profile = profile_idc;
-    printf("H.264 SPS: profile_idc %d\r\n", profile_idc);
     /* constraint_set0_flag = br_get_bit(br);    */
     /* constraint_set1_flag = br_get_bit(br);    */
     /* constraint_set2_flag = br_get_bit(br);    */
     /* constraint_set3_flag = br_get_bit(br);    */
     /* reserved             = br_get_bits(br,4); */
-    sps.level = br_get_u8(&br);
     br_skip_bits(&br, 8);
+    sps.level = br_get_u8(&br);
+    printf("H.264 SPS: profile_idc %d level %d\r\n", profile_idc, sps.level);
+    //br_skip_bits(&br, 8);
     br_skip_ue_golomb(&br); /* seq_parameter_set_id */
     if (profile_idc >= 100)
     {
@@ -863,8 +914,8 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *he
     sps.vidsize.width /* mbs */ = br_get_ue_golomb(&br) + 1;
     sps.vidsize.height /* mbs */ = br_get_ue_golomb(&br) + 1;
     frame_mbs_only = br_get_bit(&br);
-    printf("H.264 SPS: pic_width:  %u mbs\r\n", (unsigned)sps.vidsize.width);
-    printf("H.264 SPS: pic_height: %u mbs\r\n", (unsigned)sps.vidsize.height);
+    printf("H.264 SPS: pic_width:  %u mbs\r\n", (zpl_uint32)sps.vidsize.width);
+    printf("H.264 SPS: pic_height: %u mbs\r\n", (zpl_uint32)sps.vidsize.height);
     printf("H.264 SPS: frame only flag: %d\r\n", frame_mbs_only);
 
     sps.vidsize.width *= 16;
@@ -877,10 +928,10 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *he
     if (br_get_bit(&br))
     {
         /* frame_cropping_flag */
-        uint32_t crop_left = br_get_ue_golomb(&br);
-        uint32_t crop_right = br_get_ue_golomb(&br);
-        uint32_t crop_top = br_get_ue_golomb(&br);
-        uint32_t crop_bottom = br_get_ue_golomb(&br);
+        zpl_uint32 crop_left = br_get_ue_golomb(&br);
+        zpl_uint32 crop_right = br_get_ue_golomb(&br);
+        zpl_uint32 crop_top = br_get_ue_golomb(&br);
+        zpl_uint32 crop_bottom = br_get_ue_golomb(&br);
         printf("H.264 SPS: cropping %d %d %d %d\r\n",
                crop_left, crop_top, crop_right, crop_bottom);
 
@@ -898,7 +949,7 @@ int zpl_media_channel_decode_sps(const uint8_t *buf, int len, int *width,int *he
         if (br_get_bit(&br))
         {
             /* aspect_ratio_info_present */
-            uint32_t aspect_ratio_idc = br_get_u8(&br);
+            zpl_uint32 aspect_ratio_idc = br_get_u8(&br);
             printf("H.264 SPS: aspect_ratio_idc %d\r\n", aspect_ratio_idc);
 
             if (aspect_ratio_idc == 255 /* Extended_SAR */)

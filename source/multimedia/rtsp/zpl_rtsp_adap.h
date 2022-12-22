@@ -5,12 +5,6 @@
 extern "C" {
 #endif
 
-#ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#endif
-#include "zpl_rtsp_def.h"
-#include "zpl_rtsp_session.h"
 
 
 

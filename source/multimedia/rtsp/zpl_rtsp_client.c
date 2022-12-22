@@ -8,11 +8,18 @@
 #include <string.h>
 #include <errno.h>
 
-#include "zpl_rtsp_def.h"
-#include "zpl_rtsp_client.h"
-//#include "zpl_rtsp_socket.h"
-#include "zpl_rtsp_rtp.h"
+#include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
+#include "zpl_rtsp_transport.h"
+#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp_sdpfmtp.h"
+#include "zpl_rtsp_base64.h"
+#include "zpl_rtsp_auth.h"
+#include "zpl_rtsp_session.h"
+#include "zpl_rtsp_client.h"
+#include "zpl_rtsp_media.h"
+#include "zpl_rtsp_adap.h"
+#include "zpl_rtsp_rtp.h"
 
 static int rtsp_client_event_handle(rtsp_client_t * client);
 
@@ -642,37 +649,36 @@ int rtsp_client_request(rtsp_client_t * client, rtsp_method method)
     return ret;
 }
 
-int rtsp_client_open(rtsp_client_t * client)
+int rtsp_client_open(rtsp_client_t * client, zpl_client_media_data_callback cb)
 {
     int ret = 0;
+    client->client_rtpdata_callback = cb;
     ret = rtsp_client_request(client, RTSP_METHOD_OPTIONS);
     if(ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
-        goto outgo;
+        rtsp_client_destroy(client);
+        return -1;
     }
     ret = rtsp_client_request(client, RTSP_METHOD_DESCRIBE);
     if(ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
-        goto outgo;
+        rtsp_client_destroy(client);
+        return -1;
     }
     ret = rtsp_client_request(client, RTSP_METHOD_SETUP);
     if(ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
-        goto outgo;
+        rtsp_client_destroy(client);
+        return -1;
     }
-    rtsp_client_task_init(client);
+
     ret = rtsp_client_request(client, RTSP_METHOD_PLAY);
     if(ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
-        goto outgo;
-    }
-    outgo:
-    if(client->rtsp_session->state == RTSP_SESSION_STATE_CLOSE)
-    {
         rtsp_client_destroy(client);
         return -1;
     }
@@ -690,26 +696,7 @@ int rtsp_client_close(rtsp_client_t * client)
 }
 
 
-int rtsp_client_thread(rtsp_client_t * client)
-{
-    if(client->istcp)
-        rtsp_client_tcpthread(client);
-    else
-    {
-        int ret = rtsp_client_rtpread(client);
-        if(ret && client->_rtsp_client_rtpdata)
-        {
-            if(client->video_bufdata.skb_len)
-                (client->_rtsp_client_rtpdata)(client, &client->video_bufdata);
-
-            if(client->audio_bufdata.skb_len)
-                (client->_rtsp_client_rtpdata)(client, &client->audio_bufdata);
-        }
-    }
-    return 1;
-}
-
-int rtsp_client_rtpread(rtsp_client_t * client)
+static int rtsp_client_rtpread(rtsp_client_t * client)
 {
     int flag = 0;
     rtsp_session_t  *rtsp_session = client->rtsp_session;
@@ -750,33 +737,25 @@ int rtsp_client_rtpread(rtsp_client_t * client)
     return -1;
 }
 
-
-static zpl_uint32 rtsp_client_taskid = 0;
-
-static int rtsp_client_task(void* argv)
+int rtsp_client_thread(rtsp_client_t * client)
 {
-
-    if(argv)
+    if(client->istcp)
+        rtsp_client_tcpthread(client);
+    else
     {
-        while(1)
+        zpl_skbuffer_t *skbdata = NULL;
+        int ret = rtsp_client_rtpread(client);
+        if(ret && client->client_rtpdata_callback)
         {
-            if(rtsp_client_thread(argv))
-            {
+            skbdata = &client->video_bufdata;
+            if(ZPL_SKB_DATA_LEN(skbdata))
+                (client->client_rtpdata_callback)(client, ZPL_SKB_DATA(skbdata), ZPL_SKB_DATA_LEN(skbdata));
 
-            }
+           skbdata = &client->audio_bufdata;
+            if(ZPL_SKB_DATA_LEN(skbdata))
+                (client->client_rtpdata_callback)(client, ZPL_SKB_DATA(skbdata), ZPL_SKB_DATA_LEN(skbdata));
         }
     }
-    return OK;
+    return 1;
 }
 
-
-int rtsp_client_task_init(void* argv)
-{
-    if(argv)
-    {
-        if(rtsp_client_taskid == 0)
-            pthread_create(&rtsp_client_taskid, NULL, rtsp_client_task, (void *) argv);
-        return OK;
-    }
-    return OK;
-}

@@ -8,13 +8,9 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include "zpl_rtsp_def.h"
-#ifdef ZPL_LIBRTSP_MODULE
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#endif
-#include "zpl_rtsp_sdp.h"
+#include "zpl_rtsp.h"
 #include "zpl_rtsp_auth.h"
+
 
 
 int rtsp_auth_init(rtsp_auth_t* auth)

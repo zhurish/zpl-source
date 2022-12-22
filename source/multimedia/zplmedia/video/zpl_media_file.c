@@ -37,7 +37,7 @@ static int zpl_media_file_size(const char *name)
     return (int)filesize;
 }
 
-static char *zpl_media_file_basename(const char *name)
+char *zpl_media_file_basename(const char *name)
 {
     static char basename[128];
     memset(basename, 0, sizeof(basename));
@@ -53,40 +53,40 @@ static char *zpl_media_filedesc_name(const char *name)
     return basename;
 }
 
-static int zpl_media_filedesc_check(zpl_media_file_t *file)
+static int zpl_media_filedesc_check(zpl_media_file_t *media_file)
 {
-    if(file->filedesc.hdrstr[0] == '$' && file->filedesc.hdrstr[1] == '$' && file->filedesc.hdrstr[2] == '$' && file->filedesc.hdrstr[3] == '$')
+    if(media_file->filedesc.hdrstr[0] == '$' && media_file->filedesc.hdrstr[1] == '$' && media_file->filedesc.hdrstr[2] == '$' && media_file->filedesc.hdrstr[3] == '$')
     {
         return 1;
     }
     return 0;
 }
 
-int zpl_media_filedesc_create(zpl_media_file_t *file)
+int zpl_media_filedesc_create(zpl_media_file_t *media_file)
 {
     FILE *fp = NULL;
-    if(file->filename[0] == '/')
-        fp = fopen(zpl_media_filedesc_name(file->filename), "w+");
+    if(media_file->filename[0] == '/')
+        fp = fopen(zpl_media_filedesc_name(media_file->filename), "w+");
     else
-        fp = fopen(zpl_media_filedesc_name(zpl_media_file_basename(file->filename)), "w+");
+        fp = fopen(zpl_media_filedesc_name(zpl_media_file_basename(media_file->filename)), "w+");
     if(fp)
     {
-       fwrite(&file->filedesc, 1, sizeof(zpl_media_filedesc_t), fp);
+       fwrite(&media_file->filedesc, 1, sizeof(zpl_media_filedesc_t), fp);
        fclose(fp);
     }   
     return 0; 
 }
 
-static int zpl_media_filedesc_load(zpl_media_file_t *file)
+static int zpl_media_filedesc_load(zpl_media_file_t *media_file)
 {
     FILE *fp = NULL;
-    if(file->filename[0] == '/')
-        fp = fopen(zpl_media_filedesc_name(file->filename), "r");
+    if(media_file->filename[0] == '/')
+        fp = fopen(zpl_media_filedesc_name(media_file->filename), "r");
     else
-        fp = fopen(zpl_media_filedesc_name(zpl_media_file_basename(file->filename)), "r");
+        fp = fopen(zpl_media_filedesc_name(zpl_media_file_basename(media_file->filename)), "r");
     if(fp)
     {
-       fread(&file->filedesc, 1, sizeof(zpl_media_filedesc_t), fp);
+       fread(&media_file->filedesc, 1, sizeof(zpl_media_filedesc_t), fp);
        fclose(fp);
     }   
     return 0; 
@@ -94,260 +94,260 @@ static int zpl_media_filedesc_load(zpl_media_file_t *file)
 
 zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
 {
-    zpl_media_file_t *file = (zpl_media_file_t *)malloc(sizeof(zpl_media_file_t));
-    if (file)
+    zpl_media_file_t *media_file = (zpl_media_file_t *)malloc(sizeof(zpl_media_file_t));
+    if (media_file)
     {
-        memset(file, 0, sizeof(zpl_media_file_t));
+        memset(media_file, 0, sizeof(zpl_media_file_t));
         if(name[0] == '/')
-            file->fp = fopen(name, op);
+            media_file->fp = fopen(name, op);
         else
-            file->fp = fopen(zpl_media_file_basename(name), op);
-        if (file->fp)
+            media_file->fp = fopen(zpl_media_file_basename(name), op);
+        if (media_file->fp)
         {
             if (strstr(op, "r"))
             {
-                file->file_size = zpl_media_file_size((name[0] == '/')?name:zpl_media_file_basename(name));
-                if (file->file_size <= 0)
+                media_file->file_size = zpl_media_file_size((name[0] == '/')?name:zpl_media_file_basename(name));
+                if (media_file->file_size <= 0)
                 {
-                    free(file);
+                    free(media_file);
                     return NULL;
                 }
             }
             else
             {
-                file->filedesc.hdrstr[0] = '$';
-                file->filedesc.hdrstr[1] = '$';
-                file->filedesc.hdrstr[2] = '$';
-                file->filedesc.hdrstr[3] = '$';
-                file->file_size = 0;
+                media_file->filedesc.hdrstr[0] = '$';
+                media_file->filedesc.hdrstr[1] = '$';
+                media_file->filedesc.hdrstr[2] = '$';
+                media_file->filedesc.hdrstr[3] = '$';
+                media_file->file_size = 0;
 
-                file->filedesc.begintime = file->filedesc.endtime = time(NULL);
+                media_file->filedesc.begintime = media_file->filedesc.endtime = time(NULL);
             }
             if(name[0] == '/')
-                strcpy(file->filename, name);
+                strcpy(media_file->filename, name);
             else
-                strcpy(file->filename, zpl_media_file_basename(name));    
+                strcpy(media_file->filename, zpl_media_file_basename(name));    
 #ifndef ZPL_MEDIA_FILE_TASK
-            file->t_master = NULL;
-            file->t_read = NULL;
+            media_file->t_master = NULL;
+            media_file->t_read = NULL;
 #endif
-            file->cnt = 0;
-            file->flags = 0;
-            file->offset_len = 0;
-            //zpl_media_bufcache_create(&file->tmppacket, 1500);
+            media_file->cnt = 0;
+            media_file->flags = 0;
+            media_file->offset_len = 0;
+            //zpl_media_bufcache_create(&media_file->tmppacket, 1500);
 
-            rewind(file->fp);
+            rewind(media_file->fp);
 
             if (strstr(op, "r"))
             {
-                memset(&file->filedesc, 0, sizeof(zpl_media_filedesc_t));
+                memset(&media_file->filedesc, 0, sizeof(zpl_media_filedesc_t));
 
-                file->filedesc.video.format = ZPL_VIDEO_FORMAT_NONE;
-                file->filedesc.audio.enctype = ZPL_AUDIO_CODEC_NONE;
+                media_file->filedesc.video.format = ZPL_VIDEO_FORMAT_NONE;
+                media_file->filedesc.audio.enctype = ZPL_AUDIO_CODEC_NONE;
 
-                file->filedesc.begintime = file->filedesc.endtime = time(NULL);
-                file->filedesc.endtime += 60;
-                zpl_media_filedesc_load(file);
-                if(zpl_media_filedesc_check(file))
+                media_file->filedesc.begintime = media_file->filedesc.endtime = time(NULL);
+                media_file->filedesc.endtime += 60;
+                zpl_media_filedesc_load(media_file);
+                if(zpl_media_filedesc_check(media_file))
                 {
-                    if(file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
+                    if(media_file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
                     {
-                        if(file->filedesc.video.framerate)
-                            file->msec = 1000U/file->filedesc.video.framerate;
-                        file->b_video = zpl_true;
-                        if(file->msec == 0)
-                            file->msec = 1000U/25;
+                        if(media_file->filedesc.video.framerate)
+                            media_file->msec = 1000U/media_file->filedesc.video.framerate;
+                        media_file->b_video = zpl_true;
+                        if(media_file->msec == 0)
+                            media_file->msec = 1000U/25;
                     }
-                    if(file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
+                    if(media_file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
                     {
-                        if(file->filedesc.audio.framerate)
-                            file->msec = 1000U/file->filedesc.audio.framerate;
-                        file->b_audio = zpl_true;
-                        if(file->msec == 0)
-                            file->msec = 1000U/25;
+                        if(media_file->filedesc.audio.framerate)
+                            media_file->msec = 1000U/media_file->filedesc.audio.framerate;
+                        media_file->b_audio = zpl_true;
+                        if(media_file->msec == 0)
+                            media_file->msec = 1000U/25;
                     }
                 }
                 else
                 {
-                    memset(&file->filedesc, 0, sizeof(zpl_media_filedesc_t));
-                    rewind(file->fp);
+                    memset(&media_file->filedesc, 0, sizeof(zpl_media_filedesc_t));
+                    rewind(media_file->fp);
                 }
             }
             else
             {
-                if(file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
+                if(media_file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
                 {
-                    if(file->filedesc.video.framerate)
-                        file->msec = 1000U/file->filedesc.video.framerate;
-                    file->b_video = zpl_true;
-                    if(file->msec == 0)
-                        file->msec = 1000U/25;
+                    if(media_file->filedesc.video.framerate)
+                        media_file->msec = 1000U/media_file->filedesc.video.framerate;
+                    media_file->b_video = zpl_true;
+                    if(media_file->msec == 0)
+                        media_file->msec = 1000U/25;
                 }
-                if(file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
+                if(media_file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
                 {
-                    if(file->filedesc.audio.framerate)
-                        file->msec = 1000U/file->filedesc.audio.framerate;
-                    file->b_audio = zpl_true;
-                    if(file->msec == 0)
-                        file->msec = 1000U/25;
+                    if(media_file->filedesc.audio.framerate)
+                        media_file->msec = 1000U/media_file->filedesc.audio.framerate;
+                    media_file->b_audio = zpl_true;
+                    if(media_file->msec == 0)
+                        media_file->msec = 1000U/25;
                 }
             }
-            file->filedesc.video.enctype = ZPL_VIDEO_CODEC_H264;
-            file->b_video = zpl_true;
-            //file->msec -= 60;
+            media_file->filedesc.video.enctype = ZPL_VIDEO_CODEC_H264;
+            media_file->b_video = zpl_true;
+            //media_file->msec -= 60;
 
-            return file;
+            return media_file;
         }
         else
         {
-            free(file);
+            free(media_file);
         }
     }
     return NULL;
 }
 
-int zpl_media_file_open(zpl_media_file_t *file)
+int zpl_media_file_open(zpl_media_file_t *media_file)
 {
-    if (file && file->fp == NULL)
+    if (media_file && media_file->fp == NULL)
     {
-        file->fp = fopen(zpl_media_file_basename(file->filename), "r");
+        media_file->fp = fopen(zpl_media_file_basename(media_file->filename), "r");
     }
-    if (file && file->fp)
+    if (media_file && media_file->fp)
     {
-        rewind(file->fp);
+        rewind(media_file->fp);
         return 0;
     }
     return -1;
 }
 
-int zpl_media_file_close(zpl_media_file_t *file)
+int zpl_media_file_close(zpl_media_file_t *media_file)
 {
-    if (file && file->fp)
+    if (media_file && media_file->fp)
     {
-        file->filedesc.endtime = time(NULL);
-        zpl_media_filedesc_create(file);
-        fclose(file->fp);
-        file->fp = NULL;
+        media_file->filedesc.endtime = time(NULL);
+        zpl_media_filedesc_create(media_file);
+        fclose(media_file->fp);
+        media_file->fp = NULL;
         return 0;
     }
     return -1;
 }
 
-int zpl_media_file_destroy(zpl_media_file_t *file)
+int zpl_media_file_destroy(zpl_media_file_t *media_file)
 {
-    if (file)
+    if (media_file)
     {
-        if (file->fp)
+        if (media_file->fp)
         {
-            fclose(file->fp);
-            file->fp = NULL;
+            fclose(media_file->fp);
+            media_file->fp = NULL;
         }
-        //zpl_media_bufcache_destroy (&file->tmppacket);
-        free(file);
+        //zpl_media_bufcache_destroy (&media_file->tmppacket);
+        free(media_file);
     }
     return 0;
 }
 
-int zpl_media_file_write(zpl_media_file_t *file, zpl_skbuffer_t *bufdata)
+int zpl_media_file_write(zpl_media_file_t *media_file, zpl_skbuffer_t *bufdata)
 {
-    if (file)
+    if (media_file)
     {
-        int ret = fwrite(ZPL_SKB_DATA(bufdata), 1, ZPL_SKB_DATA_LEN(bufdata), file->fp);
-        fflush(file->fp);
+        int ret = fwrite(ZPL_SKB_DATA(bufdata), 1, ZPL_SKB_DATA_LEN(bufdata), media_file->fp);
+        fflush(media_file->fp);
         return ret;
     }
     return -1;
 }
 
-int zpl_media_file_codecdata(zpl_media_file_t *file, zpl_bool video, void *codec)
+int zpl_media_file_codecdata(zpl_media_file_t *media_file, zpl_bool video, void *codec)
 {
-    if (file)
+    if (media_file)
     {
-        if(file->b_video && video)
+        if(media_file->b_video && video)
         {
-            memcpy(codec, &file->filedesc.video, sizeof(zpl_video_codec_t));
+            memcpy(codec, &media_file->filedesc.video, sizeof(zpl_video_codec_t));
         }
-        else if(file->b_audio && !video)
+        else if(media_file->b_audio && !video)
         {
-            memcpy(codec, &file->filedesc.audio, sizeof(zpl_audio_codec_t));
+            memcpy(codec, &media_file->filedesc.audio, sizeof(zpl_audio_codec_t));
         }
     }
     return 0;
 }
 
-int zpl_media_file_interval(zpl_media_file_t *file, int interval)
+int zpl_media_file_interval(zpl_media_file_t *media_file, int interval)
 {
-    if (file)
+    if (media_file)
     {
-        file->msec = interval;
+        media_file->msec = interval;
     }
     return 0;
 }
 
-int zpl_media_file_get_frame_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *))
+int zpl_media_file_get_frame_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *))
 {
-    if (file)
+    if (media_file)
     {
-        file->get_frame = func;
+        media_file->get_frame = func;
     }
     return 0;
 }
 
-int zpl_media_file_get_extradata_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *))
+int zpl_media_file_get_extradata_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *))
 {
-    if (file)
+    if (media_file)
     {
-        file->get_extradata = func;
+        media_file->get_extradata = func;
     }
     return 0;
 }
 
-int zpl_media_file_put_frame_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *))
+int zpl_media_file_put_frame_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_media_bufcache_t *))
 {
-    if (file)
+    if (media_file)
     {
-        file->put_frame = func;
+        media_file->put_frame = func;
     }
     return 0;
 }
 
-int zpl_media_file_put_extradata_callback(zpl_media_file_t *file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *))
+int zpl_media_file_put_extradata_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_video_extradata_t *))
 {
-    if (file)
+    if (media_file)
     {
-        file->put_extradata = func;
+        media_file->put_extradata = func;
     }
     return 0;
 }
 
 
-int zpl_media_file_pdata(zpl_media_file_t *file, void *pdata)
+int zpl_media_file_pdata(zpl_media_file_t *media_file, void *pdata)
 {
-    if (file)
+    if (media_file)
     {
-        file->pdata = pdata;
+        media_file->pdata = pdata;
     }
     return 0;
 }
 
-int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extradata)
+int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extradata_t *extradata)
 {
     int ret = 0;
-    if (!file || !extradata)
+    if (!media_file || !extradata)
     {
         return -1;
     }
     zpl_media_bufcache_t tmp;
-    int offset = ftell(file->fp);
+    int offset = ftell(media_file->fp);
     zpl_media_bufcache_create(&tmp, 1500);
 
-    if (file && file->get_extradata)
+    if (media_file && media_file->get_extradata)
     {
-        ret = (file->get_extradata)(file, extradata);
+        ret = (media_file->get_extradata)(media_file, extradata);
         zpl_media_bufcache_destroy(&tmp);
         return ret;
     }
-    else if (file && file->get_frame)
+    else if (media_file && media_file->get_frame)
     {
         int n = 0;
         while (1)
@@ -356,7 +356,7 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
                 break;
             n++;
             tmp.len = 0;
-            ret = (file->get_frame)(file, &tmp);
+            ret = (media_file->get_frame)(media_file, &tmp);
             fprintf(stdout, " zpl_media_file_extradata _get_frame ret=%d %d\r\n", ret, tmp.len);
             fflush(stdout);
             if (ret && tmp.len)
@@ -369,10 +369,10 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
                     zpl_media_channel_nalu_show(&nalu);
                     if (zpl_media_channel_nalu2extradata(&nalu, extradata))
                     {
-                        // file->tmppacket.len = 0;
+                        // media_file->tmppacket.len = 0;
                         tmp.len = 0;
                         if (offset >= 0)
-                            fseek(file->fp, offset, SEEK_SET);
+                            fseek(media_file->fp, offset, SEEK_SET);
                         zpl_media_bufcache_destroy(&tmp);
                         return 0;
                     }
@@ -384,48 +384,48 @@ int zpl_media_file_extradata(zpl_media_file_t *file, zpl_video_extradata_t *extr
             }
         }
         if (offset >= 0)
-            fseek(file->fp, offset, SEEK_SET);
+            fseek(media_file->fp, offset, SEEK_SET);
         zpl_media_bufcache_destroy(&tmp);
         return ret;
     }
 
     if (offset >= 0)
-        fseek(file->fp, offset, SEEK_SET);
+        fseek(media_file->fp, offset, SEEK_SET);
     zpl_media_bufcache_destroy(&tmp);
     return -1;
 }
 
-int zpl_media_file_read(zpl_media_file_t *file, zpl_skbuffer_t *pbufdata)
+int zpl_media_file_read(zpl_media_file_t *media_file, zpl_skbuffer_t *pbufdata)
 {
     int ret = 0;
     zpl_skbuffer_t *bufdata = NULL;
     zpl_media_channel_t *chn = NULL;
-    if (!file || !file->parent)
+    if (!media_file || !media_file->parent)
     {
         return -1;
     }
-    chn = file->parent;
+    chn = media_file->parent;
 
-    if (file && file->get_frame)
+    if (media_file && media_file->get_frame)
     {
         zpl_media_bufcache_t tmp;
         zpl_media_bufcache_create(&tmp, 1500);
-        ret = (file->get_frame)(file, &tmp);
+        ret = (media_file->get_frame)(media_file, &tmp);
         uint32_t len = tmp.len;
-        bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, file->buffer_queue, len);
+        bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, media_file->buffer_queue, len);
         if (len > 0 && bufdata && bufdata->skb_data && bufdata->skb_maxsize >= len && tmp.data)
         {
-            file->last_ts = zpl_media_timerstamp();
+            media_file->last_ts = zpl_media_timerstamp();
             bufdata->skb_header.media_header.ID = ZPL_MEDIA_CHANNEL_SET(chn->channel, chn->channel_index, chn->channel_type);
             bufdata->skb_header.media_header.buffer_timetick = zpl_media_timerstamp(); // 时间戳
-            // bufdata->buffer_seq = file->pack_seq++;
+            // bufdata->buffer_seq = media_file->pack_seq++;
             bufdata->skb_header.media_header.buffer_flags = ZPL_BUFFER_DATA_ENCODE;
             bufdata->skb_len = len; // 当前缓存帧的长度
 
             memcpy(ZPL_SKB_DATA(bufdata), tmp.data, len);
 
             fflush(stdout);
-            zpl_skbqueue_enqueue(file->buffer_queue, bufdata);
+            zpl_skbqueue_enqueue(media_file->buffer_queue, bufdata);
             return ret;
         }
         return ret;
@@ -445,7 +445,7 @@ int zpl_media_file_update(zpl_media_file_t *channel, bool add)
     return 0;
 }
 
-int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *outpacket)
+int zpl_media_file_get_frame_h264(zpl_media_file_t *media_file, zpl_media_bufcache_t *outpacket)
 {
     int ret = 0;
     uint32_t packetsize = 1400, packet_offset = 0;
@@ -460,7 +460,7 @@ int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *
     while(1)
     {
         packetsize = 1400 - packet_offset;
-        ret = fread(buftmp + packet_offset, 1, packetsize, file->fp);
+        ret = fread(buftmp + packet_offset, 1, packetsize, media_file->fp);
         if(ret > 0)
         {
             if (is_nalu4_start(buftmp))
@@ -471,7 +471,7 @@ int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *
                 naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
                 naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
                 naluhdr.buf = buftmp;
-                file->flags |= 0x01;/* 找到开始的标志 */
+                media_file->flags |= 0x01;/* 找到开始的标志 */
                 fprintf(stdout, "============_h264_file_read_data==head 4===========\n");
             }
             else if (is_nalu3_start(buftmp))
@@ -482,10 +482,10 @@ int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *
                 naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
                 naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
                 naluhdr.buf = buftmp;
-                file->flags |= 0x01;/* 找到开始的标志 */
+                media_file->flags |= 0x01;/* 找到开始的标志 */
                 fprintf(stdout, "============_h264_file_read_data==head 3===========\n");
             }
-            if(file->flags & 0x01)
+            if(media_file->flags & 0x01)
             {
                 p = buftmp + naluhdr.len;
                 nalulen = zpl_media_channel_get_nextnalu(p, (ret)-4);
@@ -494,10 +494,10 @@ int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *
                     naluhdr.len += nalulen;
                     zpl_media_bufcache_add(outpacket, buftmp, naluhdr.len);
 
-                    file->offset_len += (naluhdr.len);
-                    fseek(file->fp, file->offset_len, SEEK_SET);
+                    media_file->offset_len += (naluhdr.len);
+                    fseek(media_file->fp, media_file->offset_len, SEEK_SET);
 
-                    file->flags = 0;
+                    media_file->flags = 0;
                     zpl_media_channel_nalu_show(&naluhdr);
                     return outpacket->len;
                 }
@@ -514,8 +514,8 @@ int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *
                     {
                         zpl_media_bufcache_add(outpacket, buftmp, ret);
                         naluhdr.len += ret;
-                        file->offset_len = 0;
-                        file->flags = 0;
+                        media_file->offset_len = 0;
+                        media_file->flags = 0;
                         fprintf(stdout, "============_h264_file_read_data==end===========\n");
                         zpl_media_channel_nalu_show(&naluhdr);
                         return outpacket->len;
@@ -526,7 +526,7 @@ int zpl_media_file_get_frame_h264(zpl_media_file_t *file, zpl_media_bufcache_t *
         else
             break;
     }
-    file->offset_len = 0;
+    media_file->offset_len = 0;
     return -1;
 }
 #ifndef ZPL_MEDIA_FILE_TASK
@@ -556,24 +556,24 @@ int zpl_media_file_start(zpl_media_file_t *media, bool start)
     return 0;
 }
 
-int zpl_media_file_master(zpl_media_file_t *file, void *master, int msec)
+int zpl_media_file_master(zpl_media_file_t *media_file, void *master, int msec)
 {
-    if(file)
+    if(media_file)
     {
-        if (file->t_master && file->t_read)
+        if (media_file->t_master && media_file->t_read)
         {
-            thread_cancel(file->t_read);
-            file->t_read = NULL;
-            file->t_master = master;
-            file->msec = 1000U/30;
-            //file->msec = msec;
-            file->t_read = thread_add_timer_msec(file->t_master, zpl_media_file_thread, file, file->msec);
+            thread_cancel(media_file->t_read);
+            media_file->t_read = NULL;
+            media_file->t_master = master;
+            media_file->msec = 1000U/30;
+            //media_file->msec = msec;
+            media_file->t_read = thread_add_timer_msec(media_file->t_master, zpl_media_file_thread, media_file, media_file->msec);
         }
         else
         {
-            file->t_master = master;
-            //file->msec = msec;
-            file->msec = 1000U/30;
+            media_file->t_master = master;
+            //media_file->msec = msec;
+            media_file->msec = 1000U/30;
         }
     }
     return 0;
@@ -640,15 +640,15 @@ int zpl_media_file_start(zpl_media_file_t *media, bool start)
     return 0;
 }
 
-int zpl_media_file_master(zpl_media_file_t *file, void *master, int msec)
+int zpl_media_file_master(zpl_media_file_t *media_file, void *master, int msec)
 {
-    if(file)
+    if(media_file)
     {
-        file->msec = 1000U/30 - 10;
-        //file->msec = msec;
-        file->run = 1;
-        if(file->taskid == 0)
-            pthread_create(&file->taskid, NULL, zpl_media_file_thread, file);
+        media_file->msec = 1000U/30 - 10;
+        //media_file->msec = msec;
+        media_file->run = 1;
+        if(media_file->taskid == 0)
+            pthread_create(&media_file->taskid, NULL, zpl_media_file_thread, media_file);
     }
     return 0;
 }
