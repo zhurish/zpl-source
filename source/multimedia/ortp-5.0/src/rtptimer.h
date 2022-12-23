@@ -27,8 +27,6 @@
 #include "winsock2.h"
 #endif
 
-#include "rtpsession_priv.h"
-
 
 
 

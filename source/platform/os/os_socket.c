@@ -92,7 +92,7 @@ int os_tcp_sock_state(int sock)
 int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	if (ipaddress)
+	if (ipaddress && sock)
 	{
 		struct sockaddr_in serv;
 		/* bind local server port */
@@ -113,7 +113,7 @@ int os_sock_connect(int sock, char *ipaddress, zpl_uint16 port)
 int os_sock_connect_nonblock(int sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	if (ipaddress)
+	if (ipaddress && sock)
 	{
 		struct sockaddr_in serv;
 		/* bind local server port */
@@ -148,48 +148,31 @@ int os_sock_connect_nonblock(int sock, char *ipaddress, zpl_uint16 port)
 	return ERROR;
 }
 
-int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint32 timeout_ms)
+int os_sock_connect_check(int sock)
 {
 	int ret = 0;
 
-	if (ipaddress && sock > 0)
+	if (sock > 0)
 	{
 		fd_set writefds;
 		int sockerror = 0;
 		socklen_t length = sizeof(sockerror);
-		struct sockaddr_in serv;
-		/* bind local server port */
-		serv.sin_family = AF_INET;
-		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
-		serv.sin_port = htons(port);
-		if (os_get_blocking(sock) == 1)
-			os_set_nonblocking(sock);
-		ret = connect(sock, (struct sockaddr *)&serv, sizeof(serv));
-		if (ret < 0)
-		{
-			// unblock mode --> connect return immediately! ret = -1 & ipstack_errno=EINPROGRESS
-			if (ipstack_errno != EINPROGRESS)
-			{
-				_OS_ERROR("unblock connect(%d) failed!\n", sock);
-				return ERROR;
-			}
-			if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockerror, &length) < 0)
-			{
-				_OS_ERROR("get socket(%d) option failed\n",sock);
-				return ERROR;
-			}
 
-			if (sockerror != 0)
-			{
-				_OS_ERROR("connection failed after select(%d) with the error: %d \n", sock, sockerror);
-				return ERROR;
-			}
+		if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockerror, &length) < 0)
+		{
+			_OS_ERROR("get socket(%d) option failed\n",sock);
+			return ERROR;
 		}
+
+		if (sockerror != 0)
+		{
+			_OS_ERROR("connection failed after select(%d) with the error: %d \n", sock, sockerror);
+			return ERROR;
+		}
+
 		FD_ZERO(&writefds);
 		FD_SET(sock, &writefds);
-		ret = os_select_wait(sock + 1, NULL, &writefds, timeout_ms);
-		// use select to check write event, if the socket is writable, then
-		// connect is complete successfully!
+		ret = os_select_wait(sock + 1, NULL, &writefds, 1);
 		if (ret == OS_TIMEOUT)
 		{
 			_OS_WARN("connect(%d) timeout:%s\n", sock, ipaddress);
@@ -203,17 +186,6 @@ int os_sock_connect_timeout(int sock, char *ipaddress, zpl_uint16 port, zpl_uint
 		if (!FD_ISSET(sock, &writefds))
 		{
 			_OS_ERROR("no events on sockfd(%d) found\n", sock);
-			return ERROR;
-		}
-		if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockerror, &length) < 0)
-		{
-			_OS_ERROR("get socket(%d) option failed\n",sock);
-			return ERROR;
-		}
-
-		if (sockerror != 0)
-		{
-			_OS_ERROR("connection failed after select(%d) with the error: %d \n", sock, sockerror);
 			return ERROR;
 		}
 		return OK;
@@ -691,7 +663,7 @@ int ipstack_sock_connect(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 int ipstack_sock_connect_nonblock(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 {
 	int ret = 0;
-	if (ipaddress)
+	if (ipaddress && !ipstack_invalid(sock))
 	{
 		struct ipstack_sockaddr_in serv;
 		/* bind local server port */
@@ -726,47 +698,30 @@ int ipstack_sock_connect_nonblock(zpl_socket_t sock, char *ipaddress, zpl_uint16
 	return ERROR;
 }
 
-int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 port, zpl_uint32 timeout_ms)
+int ipstack_sock_connect_check(zpl_socket_t sock)
 {
 	int ret = 0;
-
-	if (ipaddress && !ipstack_invalid(sock))
+	if (!ipstack_invalid(sock))
 	{
 		int sockerror = 0;
 		socklen_t length = sizeof(sockerror);
-		struct ipstack_sockaddr_in serv;
-		/* bind local server port */
-		serv.sin_family = AF_INET;
-		serv.sin_addr.s_addr = ipstack_inet_addr(ipaddress);
-		serv.sin_port = htons(port);
-		if (ipstack_get_blocking(sock) == 1)
-			ipstack_set_nonblocking(sock);
-		ret = ipstack_connect(sock, (struct ipstack_sockaddr *)&serv, sizeof(serv));
-		if (ret < 0)
+
+		if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
 		{
-			// unblock mode --> connect return immediately! ret = -1 & ipstack_errno=EINPROGRESS
-			if (ipstack_errno != EINPROGRESS)
-			{
-				_OS_ERROR("ipstack sock(%d) unblock connect failed!\n",ipstack_fd(sock));
-				return ERROR;
-			}
-			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
-			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
-				return ERROR;
-			}
-			if (sockerror != 0)
-			{
-				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
-				return ERROR;
-			}
+			_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
+			return ERROR;
+		}
+		if (sockerror != 0)
+		{
+			_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
+			return ERROR;
 		}
 		if(is_os_stack(sock))
 		{
 			fd_set writefds;
 			FD_ZERO(&writefds);
 			FD_SET(ipstack_fd(sock), &writefds);
-			ret = ipstack_select_wait(ipstack_type(sock), ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
+			ret = ipstack_select_wait(ipstack_type(sock), ipstack_fd(sock) + 1, NULL, &writefds, 1);
 			// use select to check write event, if the socket is writable, then
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
@@ -784,23 +739,13 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 				_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(sock));
 				return ERROR;
 			}
-			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
-			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
-				return ERROR;
-			}
-			if (sockerror != 0)
-			{
-				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
-				return ERROR;
-			}
 		}
 		else if(is_ipcom_stack(sock))
 		{
 			ipstack_fd_set writefds;
 			IPSTACK_FD_ZERO(&writefds);
 			IPSTACK_FD_SET(ipstack_fd(sock), &writefds);
-			ret = ipstack_select_wait(ipstack_type(sock), ipstack_fd(sock) + 1, NULL, &writefds, timeout_ms);
+			ret = ipstack_select_wait(ipstack_type(sock), ipstack_fd(sock) + 1, NULL, &writefds, 1);
 			// use select to check write event, if the socket is writable, then
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
@@ -816,16 +761,6 @@ int ipstack_sock_connect_timeout(zpl_socket_t sock, char *ipaddress, zpl_uint16 
 			if (!IPSTACK_FD_ISSET(ipstack_fd(sock), &writefds))
 			{
 				_OS_ERROR("no events on sockfd(%d) found\n",ipstack_fd(sock));
-				return ERROR;
-			}
-			if (ipstack_getsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_ERROR, &sockerror, &length) < 0)
-			{
-				_OS_ERROR("ipstack sock(%d) get socket option failed\n",ipstack_fd(sock));
-				return ERROR;
-			}
-			if (sockerror != 0)
-			{
-				_OS_ERROR("ipstack sock(%d) connection failed after select with the error: %d \n",ipstack_fd(sock), sockerror);
 				return ERROR;
 			}
 		}

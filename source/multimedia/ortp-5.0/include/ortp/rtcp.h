@@ -23,8 +23,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
-#include <ortp/port.h>
-#include <ortp/rtp_queue.h>
+
 
 #define RTCP_MAX_RECV_BUFSIZE 1500
 

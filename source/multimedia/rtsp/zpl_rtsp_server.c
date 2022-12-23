@@ -161,8 +161,9 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
         //ipstack_set_nonblocking(sock); 
         sockopt_reuseaddr(sock);
         ipstack_tcp_nodelay(sock, 1);  
-        sockopt_keepalive(sock);              
-        fprintf(stdout, "------------------------------2-----------rtsp_srv_accept\r\n");
+        sockopt_keepalive(sock);  
+        ipstack_inet_ntop (IPSTACK_AF_INET, &client.sin_addr, address, sizeof(address));            
+        //fprintf(stdout, "------------------------------2-----------rtsp_srv_accept\r\n");
         return rtsp_srv_session_create(ctx, sock, address, ntohs(client.sin_port));
     }
     return -1;
@@ -188,7 +189,7 @@ static int rtsp_session_read_handler(rtsp_srv_t *ctx, rtsp_session_t *session)
             ctx->_recv_length = rtsp_session_recvfrom(session, ctx->_recv_buf, sizeof(ctx->_recv_buf));
             if (ctx->_recv_length <= 0)
             {
-                fprintf(stdout, "------------------------------2-----------need close fd=%d(%s)\r\n", ipstack_fd(session->sock),strerror(errno));
+                //fprintf(stdout, "------------------------------2-----------need close fd=%d(%s)\r\n", ipstack_fd(session->sock),strerror(errno));
                 session->state = RTSP_SESSION_STATE_CLOSE;
                 rtsp_session_close(session);
             }
@@ -234,7 +235,7 @@ int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_a
 {
 #ifdef ZPL_WORKQUEUE
     RTSP_SRV_LOCK(ctx);
-    fprintf(stdout, "----------------------------rtsp_srv_session_create----------rtsp_session_add fd=%d\r\n", ipstack_fd(sock));
+    //fprintf(stdout, "----------------------------rtsp_srv_session_create----------rtsp_session_add fd=%d\r\n", ipstack_fd(sock));
     rtsp_session_t *session = rtsp_session_add(&ctx->session_list_head, sock, ip_address, port, ctx);
     if (session)
     {
@@ -749,7 +750,7 @@ static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *sessio
 
     RTSP_TRACE("===========================================\r\n");
     RTSP_TRACE("Client from %s:%d socket=%d session=%u\r\n", session->address ? session->address : " ",
-               session->port, session->sock, session->session);
+               session->port, ipstack_fd(session->sock), session->session);
     RTSP_TRACE("===========================================\r\n");
 
     fprintf(stdout, "\r\n");

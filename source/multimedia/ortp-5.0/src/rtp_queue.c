@@ -21,9 +21,13 @@
 #include "ortp-config.h"
 #endif
 
-#include "ortp/ortp.h"
-#include "ortp/rtp_queue.h"
-#include "utils.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+
+//#include "utils.h"
 
 
 void qinit(rtp_queue_t *q){

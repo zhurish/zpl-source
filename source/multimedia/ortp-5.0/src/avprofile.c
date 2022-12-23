@@ -17,11 +17,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rtpsession_priv.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
 #include <ortp/payloadtype.h>
 #include <ortp/rtpprofile.h>
-#include <ortp/ortp.h>
-#include <ortp/rtcp.h>
+
+
+
+
 
 static char offset127=127;
 static char offset0xD5=(char)0xD5;

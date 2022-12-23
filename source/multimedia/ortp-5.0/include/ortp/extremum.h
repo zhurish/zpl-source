@@ -20,7 +20,7 @@
 #ifndef ORTP_EXTREMUM_H
 #define ORTP_EXTREMUM_H
 
-#include "ortp/port.h"
+
 #if HAVE_STDATOMIC_H
 #include <stdatomic.h>
 #endif

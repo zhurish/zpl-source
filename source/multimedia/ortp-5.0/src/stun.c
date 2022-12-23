@@ -112,11 +112,12 @@
 #define NOSSL 1
 #endif
 
+#include <ortp/port.h>
 #include <ortp/logging.h>
+
 
 #include "ortp/stun_udp.h"
 #include "ortp/stun.h"
-#include "ortp/ortp.h"
 
 static char *ipaddr(const StunAddress4 *addr)
 {

@@ -24,9 +24,6 @@ extern "C"{
 #endif
 
 
-#include "rtpsession_priv.h"
-
-
 #ifdef HAVE_SRTP
 #include <srtp/srtp.h>
 #else

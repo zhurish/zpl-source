@@ -21,10 +21,7 @@
 #ifndef CONGESTIONDETECTOR_H
 #define CONGESTIONDETECTOR_H
 
-#include <ortp/port.h>
-#include <ortp/extremum.h>
-#include <ortp/ortp_list.h>
-#include <rtpsession_priv.h>
+
 
 typedef enum _OrtpCongestionState {
 	CongestionStateNormal,
@@ -43,7 +40,7 @@ typedef struct _OrtpCongestionDetector{
 	bool_t skip;
 	bool_t too_much_loss;
 	OrtpCongestionState state;
-	struct _RtpSession *session;
+	RtpSession *session;
 }OrtpCongestionDetector;
 
 OrtpCongestionDetector * ortp_congestion_detector_new(RtpSession *session);

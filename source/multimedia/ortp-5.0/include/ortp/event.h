@@ -22,10 +22,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
-#include "ortp/port.h"
-#include <ortp/ortp_list.h>
-#include <ortp/rtp_queue.h>
-#include "rtpsession_priv.h"
+
 
 typedef mblk_t OrtpEvent;
 

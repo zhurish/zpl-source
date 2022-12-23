@@ -16,13 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include "congestiondetector.h"
-
-#include <ortp/logging.h>
 #include <math.h>
 
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+
+#include <ortp/rtpsession_priv.h>
 #include <ortp/rtpsession.h>
+#include "congestiondetector.h"
+
 
 static const unsigned int congestion_pending_duration_ms = 5000;
 static const float return_from_suspected_max_loss_rate = 5.0;

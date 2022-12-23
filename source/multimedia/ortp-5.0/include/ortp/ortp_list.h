@@ -19,7 +19,7 @@
 #ifndef ORTP_LIST_H_
 #define ORTP_LIST_H_
 
-#include "ortp/port.h"
+
 
 #ifdef __cplusplus
 extern "C"{

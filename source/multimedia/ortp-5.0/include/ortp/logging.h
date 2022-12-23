@@ -25,10 +25,7 @@
 
 #ifndef ORTP_LOGGING_H
 #define ORTP_LOGGING_H
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <ortp/port.h>
+
 
 #define ORTP_LOG_DOMAIN "aa"//BCTBX_LOG_DOMAIN
 

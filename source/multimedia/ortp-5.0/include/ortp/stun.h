@@ -71,11 +71,6 @@
 #ifndef __STUN_H__
 #define __STUN_H__
 
-#include <stdio.h>
-#include <time.h>
-#include <ortp/port.h>
-#include <ortp/stun_udp.h>
-
 
 #ifdef __cplusplus
 extern "C"

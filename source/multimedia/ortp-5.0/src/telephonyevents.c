@@ -19,15 +19,23 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include "rtpsession_priv.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
 #include <ortp/rtp_queue.h>
-#include <ortp/telephonyevents.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+
+#include <ortp/rtpsession_priv.h>
 #include <ortp/rtpsession.h>
 #include <ortp/event.h>
-#include <ortp/logging.h>
+#include <ortp/telephonyevents.h>
 #include <ortp/rtpsignaltable.h>
 #include "utils.h"
-
 #if 0
 PayloadType	payload_type_telephone_event={
 	PAYLOAD_AUDIO_PACKETIZED, /*type */

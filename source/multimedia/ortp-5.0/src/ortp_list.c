@@ -33,9 +33,10 @@
 #include <direct.h>
 #endif
 
-#include "ortp/ortp_list.h"
-#include "ortp/port.h"
-#include "ortp/logging.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+
 
 
 ortp_list_t* ortp_list_new(void *data){

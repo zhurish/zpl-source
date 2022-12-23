@@ -17,7 +17,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ortp/extremum.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+
 
 
 void ortp_kalman_rls_init(OrtpKalmanRLS *rls, double m0, double b0) {

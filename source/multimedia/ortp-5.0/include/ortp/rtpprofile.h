@@ -30,8 +30,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
-#include <ortp/port.h>
-#include <ortp/payloadtype.h>
+
 #define RTP_PROFILE_MAX_PAYLOADS 128
 
 /**

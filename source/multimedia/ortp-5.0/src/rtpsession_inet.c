@@ -26,15 +26,24 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include "rtpsession_priv.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
 #include <ortp/rtp_queue.h>
-#include <ortp/telephonyevents.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+
+#include <ortp/rtpsession_priv.h>
 #include <ortp/rtpsession.h>
 #include <ortp/event.h>
-#include <ortp/logging.h>
 #include <ortp/rtpsignaltable.h>
+#include <ortp/telephonyevents.h>
 #include <ortp/ortp.h>
-#include "ortp/rtcp.h"
+
 #include "utils.h"
 #include "jitterctl.h"
 
@@ -112,7 +121,7 @@ static ortp_socket_t create_and_bind(const char *addr, int port, int sock_family
                                      bool_t reuse_addr){
     int err;
     int optval = 1;
-    ortp_socket_t sock;
+    ortp_socket_t sock = ZPL_SOCKET_INVALID;
     ipstack_bzero(sock);
     if (port==0)
         reuse_addr=FALSE;
@@ -262,7 +271,6 @@ void _rtp_session_apply_socket_sizes(RtpSession * session){
 int
 rtp_session_set_local_addr (RtpSession * session, const char * addr, int rtp_port, int rtcp_port)
 {
-    ortp_socket_t sock;
     int sockfamily = IPSTACK_AF_INET;
 
     // Stop async rtp recv thread before recreating the socket
@@ -275,17 +283,17 @@ rtp_session_set_local_addr (RtpSession * session, const char * addr, int rtp_por
     /* try to bind the rtp port */
     ortp_address_to_sockaddr(sockfamily, addr, rtp_port, (struct ipstack_sockaddr *)&session->rtp.gs.loc_addr.addr, &session->rtp.gs.loc_addr.len);
 
-    sock=create_and_bind(addr, rtp_port,sockfamily,session->reuseaddr);
-    if (!ipstack_invalid(sock)){
+    session->rtp.gs.socket=create_and_bind(addr, rtp_port,sockfamily,session->reuseaddr);
+    if (!ipstack_invalid(session->rtp.gs.socket)){
         session->rtp.gs.sockfamily=sockfamily;
-        session->rtp.gs.socket=sock;
+        //session->rtp.gs.socket=sock;
         session->rtp.gs.loc_port=rtp_port;
         _rtp_session_apply_socket_sizes(session);
         /*try to bind rtcp port */
-        sock=create_and_bind(addr, rtcp_port,sockfamily,session->reuseaddr);
-        if (!ipstack_invalid(sock)){
+        session->rtcp.gs.socket=create_and_bind(addr, rtcp_port,sockfamily,session->reuseaddr);
+        if (!ipstack_invalid(session->rtcp.gs.socket)){
             session->rtcp.gs.sockfamily=sockfamily;
-            session->rtcp.gs.socket=sock;
+            //session->rtcp.gs.socket=sock;
             session->rtcp.gs.loc_port=rtcp_port;
         }else {
             ortp_error("Could not create and bind rtcp socket for session [%p]",session);
@@ -296,7 +304,8 @@ rtp_session_set_local_addr (RtpSession * session, const char * addr, int rtp_por
         rtp_session_set_multicast_ttl( session, -1 );
         rtp_session_set_multicast_loopback( session, -1 );
         if (session->use_pktinfo) rtp_session_set_pktinfo(session, TRUE);
-        ortp_message("RtpSession bound to [%s] ports [%i] [%i] [%i %i]", addr, rtp_port, rtcp_port, session->rtp.gs.socket, session->rtcp.gs.socket);
+        ortp_message("RtpSession bound to [%s] ports [%i] [%i] [%i %i]", addr, rtp_port, rtcp_port, 
+            ipstack_fd(session->rtp.gs.socket), ipstack_fd(session->rtcp.gs.socket));
         rtp_session_set_dscp(session, session->dscp);
         return 0;
     }

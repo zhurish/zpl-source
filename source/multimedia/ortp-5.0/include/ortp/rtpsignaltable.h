@@ -23,8 +23,6 @@
 extern "C"
 {
 #endif
-#include "rtpsession_priv.h"
-
 
 
 

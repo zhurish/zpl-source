@@ -25,14 +25,20 @@
  ****************************************************************************/
 
 #include <math.h>
-#include "rtpsession_priv.h"
-#include <ortp/rtp_queue.h>
-#include <ortp/telephonyevents.h>
-#include <ortp/rtpsession.h>
-#include <ortp/event.h>
+#include <ortp/port.h>
 #include <ortp/logging.h>
-#include <ortp/rtpsignaltable.h>
-#include "utils.h"
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+
+#include <ortp/rtpsession_priv.h>
+#include <ortp/rtpsession.h>
+
 
 
 #define JC_BETA .01

@@ -27,7 +27,7 @@ extern "C" {
 #if HAVE_STDATOMIC_H
 #include <stdatomic.h>
 #endif
-#include <ortp/port.h>
+
 #if defined(ORTP_TIMESTAMP)
 #include <time.h>
 #endif
@@ -44,14 +44,6 @@ extern "C" {
 #define return_val_if_fail(expr,ret) if (!(expr)) {printf("%s:%i- assertion" #expr "failed\n",__FILE__,__LINE__); return (ret);}
 
 
-typedef struct ortp_recv_addr {
-	int family;
-	union {
-		struct ipstack_in_addr ipi_addr;
-		struct ipstack_in6_addr ipi6_addr;
-	} addr;
-	unsigned short port;
-} ortp_recv_addr_t;
 
 
 typedef struct msgb

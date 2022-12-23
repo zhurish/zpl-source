@@ -106,6 +106,9 @@
         "zpl_rtsp_adap.h": "c",
         "zpl_rtsp_auth.h": "c",
         "zpl_rtsp_api.h": "c",
-        "zpl_rtsp_sdpfmtp.h": "c"
+        "zpl_rtsp_sdpfmtp.h": "c",
+        "ortp_srtp.h": "c",
+        "math.h": "c",
+        "os_ipstack.h": "c"
     }
 }

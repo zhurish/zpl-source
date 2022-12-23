@@ -210,19 +210,7 @@ extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
 extern int ip_main(int argc, char **argv);
 extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
                  char *passwd, char *localfileName);
-#include "zpl_rtsp.h"
-#include "zpl_rtsp_util.h"
-#include "zpl_rtsp_transport.h"
-#include "zpl_rtsp_sdp.h"
-#include "zpl_rtsp_sdpfmtp.h"
-#include "zpl_rtsp_base64.h"
-#include "zpl_rtsp_auth.h"
-#include "zpl_rtsp_session.h"
-#include "zpl_rtsp_client.h"
-#include "zpl_rtsp_media.h"
-#include "zpl_rtsp_adap.h"
-#include "zpl_rtsp_rtp.h"
-extern int rtp_send_h264_test(void);
+
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -259,7 +247,7 @@ int main(int argc, char **argv)
 
 	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", 1);
 #endif
-	rtp_send_h264_test();
+
 	startup_module_init(1);
 
 	startup_module_load();

@@ -20,8 +20,6 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "rtpsession_priv.h"
-#include "rtptimer.h"
 
 
 

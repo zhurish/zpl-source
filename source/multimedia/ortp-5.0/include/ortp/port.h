@@ -26,19 +26,17 @@ extern "C"{
 #endif
 
 
-#include "zpl_type.h"
-#include "os_ipstack.h"
+#include "auto_include.h"
+
 
 #undef min
 #undef max
 
 
 
-#ifndef ZPL_LIBORTP_MODULE
-typedef int ortp_socket_t;
-#else /* ZPL_LIBORTP_MODULE */
+
 typedef zpl_socket_t ortp_socket_t;
-#endif /* ZPL_LIBORTP_MODULE */
+
 typedef pthread_t ortp_thread_t;
 typedef pthread_mutex_t ortp_mutex_t;
 typedef pthread_cond_t ortp_cond_t;
@@ -94,6 +92,14 @@ typedef unsigned char bool_t;
 #define TRUE 1
 #define FALSE 0
 
+typedef struct ortp_recv_addr {
+	int family;
+	union {
+		struct ipstack_in_addr ipi_addr;
+		struct ipstack_in6_addr ipi6_addr;
+	} addr;
+	unsigned short port;
+} ortp_recv_addr_t;
 
 typedef struct ortpTimeSpec{
 	int64_t tv_sec;

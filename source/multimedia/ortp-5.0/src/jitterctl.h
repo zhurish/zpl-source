@@ -27,7 +27,7 @@
 #ifndef JITTERCTL_H
 #define JITTERCTL_H
 
-#include "rtpsession_priv.h"
+
 
 void jitter_control_init(JitterControl *ctl, PayloadType *pt);
 void jitter_control_enable_adaptive(JitterControl *ctl, bool_t val);

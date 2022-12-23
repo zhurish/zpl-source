@@ -32,9 +32,6 @@ extern "C"
 
 
 
-#include <ortp/port.h>
-
-
 
 typedef zpl_socket_t Socket;
 

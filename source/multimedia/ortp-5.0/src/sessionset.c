@@ -17,9 +17,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ortp/ortp.h>
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
 #include <ortp/sessionset.h>
-#include "ortp/scheduler.h"
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+
+#include <ortp/rtpsession_priv.h>
+#include <ortp/rtpsession.h>
+#include <ortp/scheduler.h>
 
 
 /**

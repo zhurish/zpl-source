@@ -3,6 +3,23 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
+
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+#include <ortp/rtpsession_priv.h>
+#include <ortp/rtpsession.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
+
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
 #include "zpl_rtsp_transport.h"
@@ -72,23 +89,23 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
             {
                 ortp_socket_t rtp_recv[2] = {0, 0};
                 ortp_socket_t rtcp_recv[2] = {0, 0};
-                if(_rtpsession->rtp_sock <= 0)
+                if(ipstack_invalid(_rtpsession->rtp_sock))
                 {
                     ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
-                    if(rtp_recv[0] && rtp_recv[1])
+                    if(!ipstack_invalid(rtp_recv[0]) && !ipstack_invalid(rtp_recv[1]))
                     {
                         _rtpsession->rtp_sock = rtp_recv[0];
                     }
                 }
-                if(_rtpsession->rtcp_sock <= 0)
+                if(ipstack_invalid(_rtpsession->rtcp_sock))
                 {
                     ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtcp_recv);
-                    if(rtcp_recv[0] && rtcp_recv[1])
+                    if(!ipstack_invalid(rtcp_recv[0]) && !ipstack_invalid(rtcp_recv[1]))
                     {
                         _rtpsession->rtcp_sock = rtcp_recv[0];
                     }
                 }
-                if(rtp_recv[1] && rtcp_recv[1])
+                if(!ipstack_invalid(rtp_recv[1]) && !ipstack_invalid(rtcp_recv[1]))
                 {
                     rtp_session_set_sockets(_rtpsession->rtp_session,
                                             rtp_recv[1], rtcp_recv[1]);
@@ -100,7 +117,7 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
             }
             else
             {
-                if(_rtpsession->rtp_sock > 0 && _rtpsession->rtcp_sock > 0)
+                if(!ipstack_invalid(_rtpsession->rtp_sock) && !ipstack_invalid(_rtpsession->rtcp_sock))
                 {
                     rtp_session_set_sockets(_rtpsession->rtp_session,
                                             _rtpsession->rtp_sock,
@@ -135,23 +152,23 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
         {
             ortp_socket_t rtp_recv[2] = {0, 0};
             ortp_socket_t rtcp_recv[2] = {0, 0};
-            if(_rtpsession->rtp_sock <= 0)
+            if(ipstack_invalid(_rtpsession->rtp_sock))
             {
                 ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
-                if(rtp_recv[0] && rtp_recv[1])
+                if(!ipstack_invalid(rtp_recv[0]) && !ipstack_invalid(rtp_recv[1]))
                 {
                     _rtpsession->rtp_sock = rtp_recv[0];
                 }
             }
-            if(_rtpsession->rtcp_sock <= 0)
+            if(ipstack_invalid(_rtpsession->rtcp_sock))
             {
                 ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtcp_recv);
-                if(rtcp_recv[0] && rtcp_recv[1])
+                if(!ipstack_invalid(rtcp_recv[0]) && !ipstack_invalid(rtcp_recv[1]))
                 {
                     _rtpsession->rtcp_sock = rtcp_recv[0];
                 }
             }
-            if(rtp_recv[1] && rtcp_recv[1])
+            if(!ipstack_invalid(rtp_recv[1]) && !ipstack_invalid(rtcp_recv[1]))
             {
                 rtp_session_set_sockets(_rtpsession->rtp_session,
                                         rtp_recv[1], rtcp_recv[1]);

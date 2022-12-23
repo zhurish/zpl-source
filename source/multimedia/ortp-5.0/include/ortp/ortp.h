@@ -68,8 +68,15 @@
 extern "C"
 {
 #endif
-
-#include "ortp/rtp.h"
+#include <ortp/port.h>
+#include <ortp/ortp_list.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+#include <ortp/sessionset.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/str_utils.h>
+#include <ortp/extremum.h>
 
 ORTP_PUBLIC bool_t ortp_min_version_required(int major, int minor, int micro);
 ORTP_PUBLIC void ortp_init(void);

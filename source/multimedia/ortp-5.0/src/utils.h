@@ -20,8 +20,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "ortp/event.h"
-#include "ortp/rtpsession.h"
+
 #if HAVE_STDATOMIC_H
 #include <stdatomic.h>
 #endif

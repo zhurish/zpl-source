@@ -34,8 +34,8 @@
 extern "C"
 {
 #endif
-#include <ortp/port.h>
-#include "rtpsession_priv.h"
+
+
 
 #define ORTP_AVPF_FEATURE_NONE 0
 #define ORTP_AVPF_FEATURE_TMMBR (1 << 0)

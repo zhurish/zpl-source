@@ -21,10 +21,9 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include "ortp/logging.h"
-#include "ortp/port.h"
-#include "ortp/str_utils.h"
-#include "utils.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+
 
 
 #if	defined(_WIN32) && !defined(_WIN32_WCE)

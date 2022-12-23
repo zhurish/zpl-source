@@ -68,13 +68,30 @@ int rtsp_session_connect(rtsp_session_t * session, const char *ip, uint16_t port
     session->sock = ipstack_sock_create(IPSTACK_OS, zpl_true);
     if(!ipstack_invalid(session->sock))
     {
-        ret = ipstack_sock_connect_timeout(session->sock, ip,  port, timeout_ms);
-        //ipstack_set_nonblocking(session->sock);  
-        ret = sockopt_reuseaddr(session->sock);
-        //ipstack_tcp_nodelay(session->sock, 1);  
-        sockopt_keepalive(session->sock);
+        ret = ipstack_sock_connect_nonblock(session->sock, ip,  port);
+        if(ret == OK)
+        {
+            int cnt = timeout_ms/500;
+            if(cnt <= 0)
+                cnt = 1;
+            while(cnt)
+            {
+                os_msleep(500);
+                if(ipstack_sock_connect_check(session->sock) == OK)
+                {
+                    //ipstack_set_nonblocking(session->sock);  
+                    ret = sockopt_reuseaddr(session->sock);
+                    //ipstack_tcp_nodelay(session->sock, 1);  
+                    sockopt_keepalive(session->sock);
+                    return OK;
+                }
+                cnt--;
+            }
+        }
+        ipstack_close(session->sock);
+        session->sock = ZPL_SOCKET_INVALID;
     }
-    return ret;                    
+    return ERROR;                    
 }
 
 

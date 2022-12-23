@@ -11,7 +11,7 @@
 #include <sys/un.h>
 
 #ifdef ZPL_SOCKET_T_POINT
-#define IPSTACK_CHECK(n, v)	if(n == NULL) {return v;}
+#define IPSTACK_CHECK(n, v)	if(n == ZPL_SOCKET_INVALID) {return v;}
 #else
 #define IPSTACK_CHECK(n, v)	
 #endif

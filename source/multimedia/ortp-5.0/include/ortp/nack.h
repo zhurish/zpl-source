@@ -21,8 +21,7 @@
 #define NACK_H
 
 
-#include <rtpsession_priv.h>
-#include <ortp/event.h>
+
 #ifdef __cplusplus
 extern "C"{
 #endif

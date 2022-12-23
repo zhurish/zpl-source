@@ -24,17 +24,6 @@
 extern "C"
 {
 #endif
-#include <ortp/ortp_list.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-#include <ortp/sessionset.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/str_utils.h>
-#include <ortp/extremum.h>
-//#include <ortp/rtpsignaltable.h>
-//#include <ortp/event.h>
-#include <ortp/rtp_queue.h>
 
 
 

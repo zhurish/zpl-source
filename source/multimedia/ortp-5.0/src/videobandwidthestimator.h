@@ -21,10 +21,7 @@
 #ifndef VIDEOBANDWIDTHESTIMATOR_H
 #define VIDEOBANDWIDTHESTIMATOR_H
 
-#include <ortp/port.h>
-#include <ortp/extremum.h>
-#include <ortp/ortp_list.h>
-#include "rtpsession_priv.h"
+
 
 typedef struct _OrtpVideoBandwidthEstimatorPacket{
 	uint32_t sent_timestamp;

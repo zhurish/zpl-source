@@ -5,6 +5,23 @@
 
 
 #ifdef ZPL_LIBRTSP_MODULE
+
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+#include <ortp/rtpsession_priv.h>
+#include <ortp/rtpsession.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsignaltable.h>
+#include <ortp/ortp.h>
+
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
 #include "zpl_rtsp_transport.h"

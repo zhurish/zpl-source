@@ -15,17 +15,129 @@
 #include "prefix.h"
 //#include "sigevent.h"
 #include "sockunion.h"
-//#include "version.h"
-//#include "nsm_ipvrf.h"
+#include "eloop.h"
+#include "stream.h"
 //#include "filter.h"
 //#include "plist.h"
 #include "vty.h"
-//#include "nsm_vlan.h"
+#include "network.h"
 
 #include "startup_start.h"
 #include "startup_module.h"
 #include "os_util.h"
 
+#if 0
+struct nsm_ctrl_client
+{
+	int sock;
+	struct stream *ibuf;
+	struct stream *obuf;
+	struct eloop	*t_read;
+	struct eloop	*t_hello;
+	int slot;
+	int type;
+	struct sockaddr_in	remote;
+};
+struct nsm_ctrl_server
+{
+	int sock;
+	int rpt_sock;
+	struct stream *ibuf;
+	struct stream *obuf;
+	struct eloop	*t_accept;
+	struct eloop	*t_rpt_accept;
+	struct nsm_ctrl_client *client[8];
+	struct nsm_ctrl_client *rpt_client[8];
+};
+
+struct nsm_ctrl_server nsm_ctrl_server;
+struct eloop_master *eloop_master;
+static int nsm_ctrl_client_close(struct nsm_ctrl_client *);
+static int nsm_ctrl_client_read(struct eloop *);
+static int nsm_ctrl_client_hello(struct eloop *);
+
+
+static int nsm_ctrl_client_send_message(struct nsm_ctrl_client *client)
+{
+	int ret = 0;
+	int len = stream_get_endp(client->obuf);
+	char *buf = STREAM_DATA(client->obuf);
+	while(1)
+	{
+		ret = write(client->sock, buf, len);
+		if(ret)
+		{
+			len -= ret;
+			buf += ret;
+		}
+		else
+		{
+			if(ERRNO_IO_RETRY(errno))
+			{
+				continue;
+			}
+			nsm_ctrl_client_close(client);
+			return -1;
+		}
+		if(len == 0)
+			return 0;
+	}
+	return -1;
+}
+
+static int nsm_ctrl_client_close(struct nsm_ctrl_client *client)
+{
+	ELOOP_OFF(client->t_read);
+	ELOOP_OFF(client->t_hello);
+	if(client->sock)
+	{
+		close(client->sock);
+	}
+	if(client->type)
+	{
+		nsm_ctrl_server.rpt_client[client->slot] = NULL;
+	}
+	else
+	{
+		nsm_ctrl_server.client[client->slot] = NULL;
+	}
+	free(client);
+	return 0;
+}
+
+static int nsm_ctrl_client_create(int type, int sock, struct sockaddr_in *remote)
+{
+	struct nsm_ctrl_client *client = malloc(sizeof(struct nsm_ctrl_client));
+	if(client == NULL)
+		return -1;
+	memset(client, 0,sizeof(struct nsm_ctrl_client));	
+	client->t_hello = NULL;
+	client->t_read = NULL;
+	client->slot = 1;
+	if(type)
+	{
+		if(nsm_ctrl_server.rpt_client[client->slot]);
+			nsm_ctrl_client_close(nsm_ctrl_server.rpt_client[client->slot]);
+		nsm_ctrl_server.rpt_client[client->slot] = client;
+	}
+	else
+	{
+		if(nsm_ctrl_server.client[client->slot]);
+			nsm_ctrl_client_close(nsm_ctrl_server.client[client->slot]);
+		nsm_ctrl_server.client[client->slot] = client;
+	}
+	client->type = type;
+	client->sock = sock;
+	client->ibuf = nsm_ctrl_server.ibuf;
+	client->obuf = nsm_ctrl_server.obuf;
+	memcpy(&client->remote, remote, sizeof(struct sockaddr_in));
+	if(type)
+		client->t_read = eloop_add_read(eloop_master, nsm_ctrl_client_read, client, sock);
+	else
+		client->t_hello = eloop_add_timer(eloop_master, nsm_ctrl_client_read, client, 1);	
+	return 0;	
+}
+#endif
 
 DEFUN (i_iusp_test,
 		i_iusp_test_cmd,

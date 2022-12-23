@@ -17,9 +17,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ortp/logging.h"
-#include "ortp/nack.h"
-#include "ortp/rtpsession.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+
+#include <ortp/rtpsession_priv.h>
+#include <ortp/rtpsession.h>
+#include <ortp/event.h>
+#include <ortp/nack.h>
+
 #define DECREASE_JITTER_DELAY 5000
 
 static mblk_t *find_packet_with_sequence_number(const rtp_queue_t *q, const uint16_t seq_number) {

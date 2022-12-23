@@ -22,8 +22,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <ortp/rtpsession.h>
-
 
 #ifdef HAVE_zrtp
 #undef PACKAGE_NAME

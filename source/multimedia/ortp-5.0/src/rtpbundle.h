@@ -24,7 +24,7 @@
 #include <mutex>
 #include <string>
 
-#include "ortp/rtpsession.h"
+
 
 /* Need to declare this function so the class can be friend with it */
 static void checkForSessionSdesCallback(void *, uint32_t, rtcp_sdes_type_t, const char *, uint8_t);

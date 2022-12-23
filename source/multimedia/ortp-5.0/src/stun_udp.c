@@ -112,8 +112,9 @@
 
 #include <ortp/port.h>
 #include <ortp/logging.h>
+
 #include "ortp/stun_udp.h"
-#include "ortp/ortp.h"
+
 
 #if !defined(WIN32) && !defined(_WIN32_WCE)
 int getErrno() { return errno; }
