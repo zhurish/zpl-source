@@ -88,7 +88,9 @@ int zpl_stack_start(const char* progname, int localport)
 #ifdef ZPL_IPCOM_MODULE
 	cmd_os_eloop_init();
 #endif
-
+#ifdef ZPL_ACTIVE_STANDBY
+	zplib_module_cmd_init(MODULE_STANDBY);
+#endif
 #ifdef ZPL_NSM_MODULE
 	nsm_module_cmd_init();
 #endif
@@ -97,6 +99,7 @@ int zpl_stack_start(const char* progname, int localport)
 	//zpl_media_cmd_init();
 #endif
 	ipcom_stack_init(localport);
+
 	return OK;
 }
 
@@ -106,6 +109,7 @@ int zpl_stack_start(const char* progname, int localport)
 int startup_module_init(int console_enable)
 {
 	zplib_module_name_show();
+	_global_host.slot = os_netservice_port_get("slot");
 	#ifdef ZPL_NSM_MODULE
 	unit_board_init();
 	#endif
@@ -131,6 +135,10 @@ int startup_module_init(int console_enable)
 	zplib_module_task_init(MODULE_SDK);
 	#endif
 	os_msleep(50);
+#ifdef ZPL_ACTIVE_STANDBY
+	zplib_module_init(MODULE_STANDBY);
+	zplib_module_task_init(MODULE_STANDBY);
+#endif
 	return OK;
 }
 
@@ -164,9 +172,13 @@ int startup_module_start(void)
 */
 int startup_module_waitting(void)
 {
-	os_msleep(2000);
+	os_msleep(100);
 
-	host_waitting_bspinit(15);
+#ifdef ZPL_ACTIVE_STANDBY
+	ipcstandby_done(10);
+#endif
+
+	host_waitting_bspinit(10);
 
 #ifdef ZPL_NSM_MODULE
 	nsm_module_start();

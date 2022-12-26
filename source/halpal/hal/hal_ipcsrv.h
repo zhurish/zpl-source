@@ -27,7 +27,7 @@ struct hal_ipcsrv
     struct thread *u_accept;
    
     struct hal_ipcmsg output_msg;
-    struct hal_ipcmsg input_msg;
+    //struct hal_ipcmsg input_msg;
     zpl_uint32  debug;
     os_mutex_t *mutex;
     zpl_bool    b_init;
@@ -43,6 +43,7 @@ struct hal_ipcclient
     zpl_socket_t   sock;
 
     struct thread *t_read;
+    struct thread *t_hello;
     struct ipstack_sockaddr_in clientaddr;
     enum hal_client_state state;
     enum hal_ipctype_e ipctype;
@@ -53,7 +54,7 @@ struct hal_ipcclient
     zpl_int8 slot;
     zpl_int8 portnum;
     char     version[128];
-
+    struct hal_ipcmsg input_msg;
     struct hal_ipcsrv *ipcsrv;
     void *board;
 };
@@ -72,6 +73,7 @@ extern int hal_ipcsrv_init(void *m, int port, const char *path);
 extern int hal_ipcsrv_exit(void);
 #ifdef ZPL_SHELL_MODULE
 extern int hal_ipcsrv_show(void *pvoid);
+extern void hal_ipcsrv_cli(void);
 #endif
 
 #ifdef __cplusplus

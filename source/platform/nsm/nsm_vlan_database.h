@@ -16,7 +16,9 @@ extern "C" {
 #include "zplos_include.h"
 
 #ifdef PRODUCT_PORT_MAX
+#ifndef PHY_PORT_MAX
 #define PHY_PORT_MAX 	PRODUCT_PORT_MAX
+#endif
 #endif
 
 #define VLAN_ID_RANGE(n)    (((n)>=1)&&((n) <= VLAN_TABLE_MAX))

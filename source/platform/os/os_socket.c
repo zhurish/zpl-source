@@ -7,8 +7,6 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include <log.h>
-#include <sys/un.h>
 
 int os_sock_create(zpl_bool tcp)
 {
@@ -368,7 +366,7 @@ int os_sock_unix_client_create(zpl_bool tcp, const char *name)
 	/* First of all, unlink existing socket */
 
 	os_memset(path, 0, sizeof(path));
-	os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+	os_snprintf(path, sizeof(path), "%s/%s-%d.sock", OS_SOCKET_BASE, name, getpid());
 
 	/* Stat socket to see if we have permission to access it. */
 	ret = stat(path, &s_stat);
@@ -429,7 +427,7 @@ int os_sock_unix_client_write(int fd, char *name, char *buf, zpl_uint32 len)
 		/* First of all, unlink existing socket */
 
 		os_memset(path, 0, sizeof(path));
-		os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+		os_snprintf(path, sizeof(path), "%s/%s-%d.sock", OS_SOCKET_BASE, name, getpid());
 
 		memset(&serv, 0, sizeof(struct sockaddr_un));
 		serv.sun_family = AF_UNIX;
@@ -474,7 +472,7 @@ int os_select_wait(int maxfd, fd_set *rfdset, fd_set *wfdset, zpl_uint32 timeout
 				fprintf(stdout, "%s (ipstack_errno=%d -> %s)", __func__, ipstack_errno, strerror(ipstack_errno));
 				continue;
 			}
-			zlog_err(MODULE_LIB, "===========os_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));
+			//zlog_err(MODULE_LIB, "===========os_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));
 			return ERROR;
 		}
 		else if (num == 0)
@@ -875,7 +873,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 	/* First of all, unlink existing socket */
 
 	os_memset(path, 0, sizeof(path));
-	os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+	os_snprintf(path, sizeof(path), "%s/%s-%d.sock", OS_SOCKET_BASE, name, getpid());
 	/* Set umask */
 	old_mask = umask(0007);
 	unlink(path);
@@ -949,7 +947,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	/* First of all, unlink existing socket */
 
 	os_memset(path, 0, sizeof(path));
-	os_snprintf(path, sizeof(path), "%s/%s.sock", OS_SOCKET_BASE, name);
+	os_snprintf(path, sizeof(path), "%s/%s-%d.sock", OS_SOCKET_BASE, name, getpid());
 
 	/* Stat socket to see if we have permission to access it. */
 	ret = stat(path, &s_stat);
@@ -1054,7 +1052,7 @@ int ipstack_select_wait(int type, int maxfd, ipstack_fd_set *rfdset, ipstack_fd_
 				timer_wait = os_timeval_subtract(timer_wait, timer_tmp1);
 				continue;
 			}
-			zlog_err(MODULE_LIB, "===========ipstack_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));			
+			//zlog_err(MODULE_LIB, "===========ipstack_select_wait is ERROR:%d:%s", ipstack_errno, ipstack_strerror(ipstack_errno));			
 			return ERROR;
 		}
 		else if (num == 0)

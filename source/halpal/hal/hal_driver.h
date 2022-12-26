@@ -35,6 +35,8 @@ int hal_module_exit(void);
 int hal_module_task_init(void);
 int hal_module_task_exit(void);
 
+int hal_module_cmd_init(void);
+
 int hal_test_init(void);
 
 

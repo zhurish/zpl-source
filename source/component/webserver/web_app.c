@@ -46,10 +46,10 @@ web_app_module_init ()
 
 #if ME_COM_SSL
 	web_app->proto = WEB_PROTO_HTTPS;
-	web_app->ssl_port = WEB_LISTEN_SSL_PORT;
+	web_app->ssl_port = os_netservice_port_get("web_sslport");
 #else
 	web_app->proto = WEB_PROTO_HTTP;
-	web_app->port = WEB_LISTEN_PORT;
+	web_app->port = os_netservice_port_get("web_port");
 #endif
 
 	if (web_app->documents)
@@ -74,7 +74,7 @@ web_app_module_init ()
 			char tmp[128];
 			memset (tmp, 0, sizeof(tmp));
 			snprintf (tmp, sizeof(tmp), "http://%s:%d", web_app->address,
-			WEB_LISTEN_PORT);
+			os_netservice_port_get("web_port"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->port)
@@ -103,7 +103,7 @@ web_app_module_init ()
 			char tmp[128];
 			memset (tmp, 0, sizeof(tmp));
 			snprintf (tmp, sizeof(tmp), "https://%s:%d", web_app->address,
-			WEB_LISTEN_SSL_PORT);
+			os_netservice_port_get("web_sslport"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->ssl_port)

@@ -83,7 +83,7 @@ int web_app_proto_set_api(web_proto proto)
 			char tmp[128];
 			memset(tmp, 0, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "http://%s:%d", web_app->address,
-					WEB_LISTEN_PORT);
+					os_netservice_port_get("web_port"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->port)
@@ -112,7 +112,7 @@ int web_app_proto_set_api(web_proto proto)
 			char tmp[128];
 			memset(tmp, 0, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "https://%s:%d", web_app->address,
-					WEB_LISTEN_SSL_PORT);
+					os_netservice_port_get("web_sslport"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->ssl_port)
@@ -168,7 +168,7 @@ int web_app_address_set_api(char *address)
 			char tmp[128];
 			memset(tmp, 0, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "http://%s:%d", web_app->address,
-					WEB_LISTEN_PORT);
+					os_netservice_port_get("web_port"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->port)
@@ -197,7 +197,7 @@ int web_app_address_set_api(char *address)
 			char tmp[128];
 			memset(tmp, 0, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "https://%s:%d", web_app->address,
-					WEB_LISTEN_SSL_PORT);
+					os_netservice_port_get("web_sslport"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->ssl_port)
@@ -225,10 +225,10 @@ int web_app_port_set_api(zpl_bool ssl, zpl_uint16 port)
 	}
 #if ME_COM_SSL
 	if(ssl)
-		web_app->ssl_port = port ? port:WEB_LISTEN_SSL_PORT;
+		web_app->ssl_port = port ? port:os_netservice_port_get("web_sslport");
 	else
 #endif
-		web_app->port = port ? port:WEB_LISTEN_PORT;
+		web_app->port = port ? port:os_netservice_port_get("web_port");
 
 	if (web_app->proto == WEB_PROTO_HTTP)
 	{
@@ -245,7 +245,7 @@ int web_app_port_set_api(zpl_bool ssl, zpl_uint16 port)
 			char tmp[128];
 			memset(tmp, 0, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "http://%s:%d", web_app->address,
-					WEB_LISTEN_PORT);
+					os_netservice_port_get("web_port"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->port)
@@ -274,7 +274,7 @@ int web_app_port_set_api(zpl_bool ssl, zpl_uint16 port)
 			char tmp[128];
 			memset(tmp, 0, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "https://%s:%d", web_app->address,
-					WEB_LISTEN_SSL_PORT);
+					os_netservice_port_get("web_sslport"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->ssl_port)

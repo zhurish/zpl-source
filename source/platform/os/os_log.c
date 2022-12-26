@@ -71,7 +71,7 @@ static int os_log_file_printf(zpl_char *func, int line, FILE *fp, const zpl_char
 
 void os_log_entry(zpl_char *func, int line, zpl_char *file, const zpl_char *format, ...)
 {
-	FILE *fp = fopen(file, "a+");
+	FILE *fp = fopen(os_netservice_sockpath_get(file), "a+");
 	if(fp)
 	{
 		va_list args;

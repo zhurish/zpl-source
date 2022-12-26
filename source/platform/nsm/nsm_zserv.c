@@ -1736,7 +1736,7 @@ nsm_zserv_accept(struct thread *thread)
 #ifdef NSM_MSG_TCP
 /* Make zebra's server ipstack_socket. */
 static void
-nsm_zserv_serv()
+nsm_zserv_serv(void)
 {
   int ret;
   zpl_socket_t accept_sock;
@@ -1755,7 +1755,7 @@ nsm_zserv_serv()
   memset(&route_type_oaths, 0, sizeof(route_type_oaths));
   memset(&addr, 0, sizeof(struct ipstack_sockaddr_in));
   addr.sin_family = IPSTACK_AF_INET;
-  addr.sin_port = htons(NSM_ZSERV_PORT);
+  addr.sin_port = htons(os_netservice_port_get("zclient_port"));
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
@@ -2126,7 +2126,7 @@ void nsm_zserv_init(void)
 #ifdef NSM_MSG_TCP
   nsm_zserv_serv();
 #else
-  nsm_zserv_serv_un(NSM_SERV_PATH);
+  nsm_zserv_serv_un(os_netservice_sockpath_get(NSM_SERV_PATH));
 #endif /* NSM_MSG_TCP */
   nsm_srv->client_list = list_new();
 }

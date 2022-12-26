@@ -25,6 +25,12 @@ enum ipcstanby_cmd
 	ZPL_IPCSTANBY_RES,
 };
 
+struct ipcstanby_negotiate
+{
+	int slot;
+	int active;
+	int negotiate;
+};
 
 struct ipcstanby_result
 {
@@ -81,9 +87,14 @@ extern int ipcstandby_request_res(int type, struct ipcstanby_reskey *reskey);
 extern zpl_bool ipcstandby_done(int waitime);
 extern int ipcstandby_switch_master(zpl_bool master);
 
-extern void ipcstandby_cmd_init(void);
-extern void ipcstandby_init(void *m, zpl_uint32 slot);
-extern void ipcstandby_exit(void);
+extern int ipcstandby_cmd_init(void);
+extern int ipcstandby_init(void);
+extern int ipcstandby_exit(void);
+
+extern int ipcstandby_task_init(void);
+extern int ipcstandby_task_exit(void);
+
+
 
 
 #ifdef __cplusplus

@@ -7,6 +7,7 @@
 #include "auto_include.h"
 #include <zplos_include.h>
 #include "module.h"
+#include "getopt.h"
 #include "if.h"
 #include "zmemory.h"
 #include "log.h"
@@ -159,15 +160,111 @@ int startup_option_default(void)
 	os_memset(&startup_option, 0, sizeof(struct startup_option));
 	startup_option.progname = NULL;
 	startup_option.config_file = DEFAULT_CONFIG_FILE;
-	startup_option.pid_file = OSPL_PATH_PID;
+	startup_option.service_file = SERVICE_CONFIG_FILE;
 	startup_option.vty_addr = NULL;
-	// startup_option.zserv_path = "/var/run/ProcessMU.sock";//NSM_VTYSH_PATH;
-	startup_option.zserv_path = NSM_VTYSH_PATH;
-	startup_option.vty_port = PLCLI_VTY_PORT;
 	startup_option.daemon_mode = 0;
-	startup_option.pid = 0;
 	startup_option.tty = NULL;
-
+	
 	return OK;
 }
 
+
+/* Command line options. */
+static struct option zpllongopts[] =
+	{
+		// df:i:z:hA:P:t:u:g:v
+		{"daemon", no_argument, NULL, 'd'},
+		{"config_file", required_argument, NULL, 'f'},
+		{"service_file", required_argument, NULL, 's'},
+		{"help", no_argument, NULL, 'h'},
+		{"vty_addr", required_argument, NULL, 'A'},
+		{"tty", required_argument, NULL, 't'},
+		{"none", no_argument, NULL, 'n'},
+		{"version", no_argument, NULL, 'v'},
+		{0}};
+/* Help information display. */
+static void
+usage(char *progname, int status)
+{
+	if (status != 0)
+		fprintf(stderr, "Try `%s --help' for more information.\n", progname);
+	else
+	{
+		printf("Usage : %s [OPTION...]\n\n"
+			   "Daemon which manages kernel routing table management and "
+			   "redistribution between different routing protocols.\n\n"
+			   "-d, --daemon       Runs in daemon mode\n"
+			   "-f, --config_file  Set configuration file name\n"
+			   "-s, --service_file  Set Service file name\n"
+			   "-A, --vty_addr     Set vty's bind address\n"
+			   "-t, --tty          Set tty Device Name for shell\n"
+			   "-n, --none	  none stdin for shell\n",
+			   progname);
+		printf("-v, --version      Print program version\n"
+			   "-h, --help         Display this help and exit\n"
+			   "\n"
+			   "Report bugs to %s\n",
+			   OEM_BUG_ADDRESS);
+	}
+
+	exit(status);
+}
+
+int zplmain_getopt(int argc, char **argv)
+{
+	while (1)
+	{
+		int opt = getopt_long(argc, argv, "df:hA:t:s:nv", zpllongopts, NULL);
+		if (opt == EOF || opt == -1)
+		{
+			break;
+		}
+		switch (opt)
+		{
+		case 0:
+			break;
+		case 'd':
+			startup_option.daemon_mode = 1;
+			break;
+		case 's':
+			startup_option.service_file = optarg;
+			break;
+
+		case 'f':
+			startup_option.config_file = optarg;
+			break;
+
+		case 'A':
+			// if(startup_option.vty_addr)
+			//   os_free(startup_option.vty_addr);
+			// startup_option.vty_addr = os_strdup(optarg);
+			startup_option.vty_addr = optarg;
+			//	    	  vty_addr = optarg;
+			break;
+
+		case 't':
+			if (startup_option.tty)
+				free(startup_option.tty);
+			// startup_option.tty = strdup("/dev/ttyS0");
+			startup_option.tty = (optarg);
+			break;
+		case 'n':
+			if (startup_option.tty)
+				free(startup_option.tty);
+			startup_option.tty = NULL;
+			break;
+		case 'v':
+  			printf("%s version %s\n", startup_option.progname, OEM_VERSION);
+  			printf("%s\n", OEM_PACKAGE_COPYRIGHT);
+			exit(0);
+			break;
+		case 'h':
+			usage(startup_option.progname, 0);
+			break;
+		default:
+			usage(startup_option.progname, 1);
+			break;
+		}
+	}
+	return OK;
+}

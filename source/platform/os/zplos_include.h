@@ -27,6 +27,7 @@ extern "C" {
 #include "os_signal.h"
 #include "os_file.h"
 #include "os_url.h"
+#include "os_netservice.h"
 
 #include "os_util.h"
 #include "os_backtrace.h"

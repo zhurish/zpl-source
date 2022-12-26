@@ -17,7 +17,7 @@ int os_pipe_create(zpl_char *name, zpl_uint32 mode)
 	int fd = 0;
 	zpl_char path[128];
 	os_memset(path, 0, sizeof(path));
-	os_snprintf(path, sizeof(path), "%s/%s.pipe", OS_PIPE_BASE, name);
+	os_snprintf(path, sizeof(path), "%s/%s-%d.pipe", OS_PIPE_BASE, name, getpid());
 	if (access(path, 0) != 0)
 	{
 		if (mkfifo(path, 0655) != 0)

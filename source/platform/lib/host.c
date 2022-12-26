@@ -124,6 +124,7 @@ int host_config_init(zpl_char *motd)
 	_global_host.default_config = XSTRDUP(MTYPE_HOST, DEFAULT_CONFIG_FILE);
 	_global_host.factory_config = XSTRDUP(MTYPE_HOST, FACTORY_CONFIG_FILE);
 	_global_host.lines = -1;
+	_global_host.slot = 1;
 	_global_host.motd = motd; //default_motd;
 	_global_host.motdfile = NULL;
 	#ifdef ZPL_SHELL_MODULE

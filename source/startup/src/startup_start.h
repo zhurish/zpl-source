@@ -14,12 +14,13 @@ extern "C" {
 
 #define OS_START_TEST
 
-#define PLCLI_VTY_PORT 2610
+
 
 struct startup_option
 {
 	char *progname;
 	char *config_file;
+	char *service_file;
 	char *pid_file;
 	char *vty_addr;
 	char *zserv_path;
@@ -39,8 +40,8 @@ extern struct startup_option startup_option;
 extern int zpl_base_signal_init(int daemon_mode);
 extern int zpl_base_signal_reload(void);
 extern int startup_option_default(void);
-
-
+extern int zplmain_getopt(int argc, char **argv);
+extern int os_test(void);
 #ifdef __cplusplus
 }
 #endif

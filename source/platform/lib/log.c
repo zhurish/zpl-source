@@ -924,6 +924,8 @@ static int open_crashlog(void) {
 #define LOC s,buf+sizeof(buf)-s
 			s = str_append(LOC, CRASHLOG_PREFIX);
 			s = str_append(LOC, zlog_default->ident);
+			s = str_append(LOC, "-");
+			s = num_append(LOC, getpid());
 			s = str_append(LOC, ".");
 			s = str_append(LOC, CRASHLOG_SUFFIX);
 #undef LOC

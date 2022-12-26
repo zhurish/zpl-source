@@ -32,7 +32,9 @@
 
 /*
  handle SIGUSR2 nostop noprint
- */
+   r -s /home/zhurish/workspace/working/zpl-source/netservice1.txt
+     r -s /home/zhurish/workspace/working/zpl-source/netservice2.txt
+*/
 /*
 sudo ip link add link enp0s25 name enp0s25.200 type vlan id 200
 sudo ip link set enp0s25.200 up
@@ -77,139 +79,13 @@ c
 #endif
 /******************************************************/
 
-/* Command line options. */
-static struct option zpllongopts[] =
-	{
-		// df:i:z:hA:P:t:u:g:v
-		{"daemon", no_argument, NULL, 'd'},
-		{"config_file", required_argument, NULL, 'f'},
-		{"pid_file", required_argument, NULL, 'i'},
-		{"socket", required_argument, NULL, 'z'},
-		{"help", no_argument, NULL, 'h'},
-		{"vty_addr", required_argument, NULL, 'A'},
-		{"vty_port", required_argument, NULL, 'P'},
-		{"tty", required_argument, NULL, 't'},
-		{"none", no_argument, NULL, 'n'},
-		{"version", no_argument, NULL, 'v'},
-		{0}};
-/* Help information display. */
-static void
-usage(char *progname, int status)
-{
-	if (status != 0)
-		fprintf(stderr, "Try `%s --help' for more information.\n", progname);
-	else
-	{
-		printf("Usage : %s [OPTION...]\n\n"
-			   "Daemon which manages kernel routing table management and "
-			   "redistribution between different routing protocols.\n\n"
-			   "-d, --daemon       Runs in daemon mode\n"
-			   "-f, --config_file  Set configuration file name\n"
-			   "-i, --pid_file     Set process identifier file name\n"
-			   "-z, --socket       Set path of zebra socket\n"
-			   "-A, --vty_addr     Set vty's bind address\n"
-			   "-P, --vty_port     Set vty's port number\n"
-			   "-t, --tty          Set tty Device Name for shell\n"
-			   "-n, --none	  none stdin for shell\n",
-			   progname);
-		printf("-v, --version      Print program version\n"
-			   "-h, --help         Display this help and exit\n"
-			   "\n"
-			   "Report bugs to %s\n",
-			   OEM_BUG_ADDRESS);
-	}
-
-	exit(status);
-}
-
-static int zplmain_getopt(int argc, char **argv)
-{
-	while (1)
-	{
-		int opt = getopt_long(argc, argv, "df:i:z:hA:P:t:nv", zpllongopts, NULL);
-		if (opt == EOF || opt == -1)
-		{
-			break;
-		}
-		switch (opt)
-		{
-		case 0:
-			break;
-		case 'd':
-			startup_option.daemon_mode = 1;
-			break;
-
-		case 'f':
-			// if(startup_option.config_file)
-			//	  os_free(startup_option.config_file);
-			// startup_option.config_file = os_strdup(optarg);
-			startup_option.config_file = optarg;
-			break;
-
-		case 'A':
-			// if(startup_option.vty_addr)
-			//   os_free(startup_option.vty_addr);
-			// startup_option.vty_addr = os_strdup(optarg);
-			startup_option.vty_addr = optarg;
-			//	    	  vty_addr = optarg;
-			break;
-		case 'i':
-			// if(startup_option.pid_file)
-			//   os_free(startup_option.pid_file);
-			startup_option.pid_file = optarg;
-			//	          pid_file = optarg;
-			break;
-		case 'z':
-			// if(startup_option.zserv_path)
-			//   os_free(startup_option.zserv_path);
-			startup_option.zserv_path = optarg;
-			//	    	  zserv_path = optarg;
-			break;
-		case 'P':
-			/* Deal with atoi() returning 0 on failure, and zebra not
-		   listening on zebra port... */
-			if (strcmp(optarg, "0") == 0)
-			{
-				startup_option.vty_port = 0;
-				break;
-			}
-			startup_option.vty_port = atoi(optarg);
-			if (startup_option.vty_port <= 0 || startup_option.vty_port > 0xffff)
-				startup_option.vty_port = PLCLI_VTY_PORT;
-			break;
-
-		case 't':
-			if (startup_option.tty)
-				free(startup_option.tty);
-			// startup_option.tty = strdup("/dev/ttyS0");
-			startup_option.tty = (optarg);
-			break;
-		case 'n':
-			if (startup_option.tty)
-				free(startup_option.tty);
-			startup_option.tty = NULL;
-			break;
-		case 'v':
-  			printf("%s version %s\n", startup_option.progname, OEM_VERSION);
-  			printf("%s\n", OEM_PACKAGE_COPYRIGHT);
-			exit(0);
-			break;
-		case 'h':
-			usage(startup_option.progname, 0);
-			break;
-		default:
-			usage(startup_option.progname, 1);
-			break;
-		}
-	}
-	return OK;
-}
 
 extern const char *nl_strerror_l(int err);
 extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
 extern int ip_main(int argc, char **argv);
 extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
                  char *passwd, char *localfileName);
+
 
 /* Main startup routine. */
 int main(int argc, char **argv)
@@ -231,6 +107,9 @@ int main(int argc, char **argv)
 	os_signal_default(zlog_signal, zlog_signal);
 	zpl_base_signal_init(startup_option.daemon_mode);
 
+	//"/home/zhurish/workspace/working/zpl-source/os_netservice.txt"
+	os_netservice_config_load(startup_option.service_file);
+
 	zpl_stack_init();
 	zpl_stack_start(startup_option.progname, 8890);
 	
@@ -248,18 +127,20 @@ int main(int argc, char **argv)
 	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", 1);
 #endif
 
+	
 	startup_module_init(1);
 
 	startup_module_load();
 
 	startup_module_waitting();
 
-	zpl_base_start_pid(MODULE_DEFAULT, startup_option.pid_file, &startup_option.pid);
+	zpl_base_start_pid(MODULE_DEFAULT, os_netservice_sockpath_get(PL_PID), NULL);
 
 	/*
 	 * os shell start
 	 */
-	zpl_base_shell_start(startup_option.zserv_path, startup_option.vty_addr, startup_option.vty_port, startup_option.tty);
+	zpl_base_shell_start(os_netservice_sockpath_get(SHELL_SOCKET_PATH), 
+		startup_option.vty_addr, os_netservice_port_get("vty_port"), startup_option.tty);
 
 	/*
 	 * load config file
@@ -269,7 +150,7 @@ int main(int argc, char **argv)
 
 	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
 	os_task_sigexecute(0, NULL);
-	
+	os_test();
 	//os_url_test();
 	//ftp_download(NULL, "127.0.0.1", 0, NULL, "fsdd.pdf", "zhurish", "centos", "aa.pdf");
 

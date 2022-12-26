@@ -9,12 +9,14 @@ extern "C" {
 #include "zplos_include.h"
 #include "module.h"
 #include "zmemory.h"
+#include "host.h"
 #include "ipcstandby.h"
 
 /* Structure for the ipcstandby client. */
 struct ipcstandby_client
 {
    zpl_uint32 slot;
+   struct ipcstanby_negotiate ipcstanby;
   /* Socket to ipcstandby daemon. */
   zpl_socket_t sock;
 
@@ -33,11 +35,13 @@ struct ipcstandby_client
   zpl_void *master;  
   zpl_void *t_connect;
   zpl_void *t_timeout;
+  zpl_bool is_connect;
   zpl_bool state;
   /* Thread to write buffered data to ipcstandby. */
   zpl_void *t_write;
 
-  struct prefix remote;
+  zpl_uint8 *remote;
+  zpl_uint32 port;
   int debug;
 
   zpl_time_t connect_time;
@@ -56,8 +60,7 @@ struct ipcstandby_client
 
 /* Prototypes of ipcstandby client service functions. */
 extern struct ipcstandby_client *ipcstandby_client_new (void*m);
-extern void ipcstandby_client_init (struct ipcstandby_client *, zpl_uint32);
-extern int ipcstandby_client_start (struct ipcstandby_client *);
+extern void ipcstandby_client_start(struct ipcstandby_client *client, zpl_uint32 slot, char *remote, int port);
 extern void ipcstandby_client_stop (struct ipcstandby_client *);
 extern void ipcstandby_client_reset (struct ipcstandby_client *);
 extern void ipcstandby_client_free (struct ipcstandby_client *);

@@ -78,7 +78,7 @@ config ZPL_OS_XYZ_MODEM
 config ZPL_OS_CPPJSON
 	bool "Platform OS CPPJSON Module"
 	depends on ZPL_OS_MODULE
-	default y
+	default n
 	help
 	Build CPPJSON Module.
 

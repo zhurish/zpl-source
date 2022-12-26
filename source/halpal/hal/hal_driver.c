@@ -26,7 +26,7 @@ struct module_list module_list_hal =
 	.module_exit=hal_module_exit, 
 	.module_task_init=hal_module_task_init, 
 	.module_task_exit=hal_module_task_exit, 
-	.module_cmd_init=NULL, 
+	.module_cmd_init=hal_module_cmd_init, 
 	.taskid=0,
 };
 
@@ -50,7 +50,7 @@ int hal_module_init(void)
 {
 	memset(&hal_driver, 0, sizeof(hal_driver_t));
 	hal_driver.master = thread_master_module_create(MODULE_HAL);
-	hal_ipcsrv_init(hal_driver.master, -1, HAL_IPCMSG_CMD_PATH);
+	hal_ipcsrv_init(hal_driver.master, os_netservice_port_get("hal_port"), os_netservice_sockpath_get(HAL_IPCMSG_CMD_PATH)/*HAL_IPCMSG_CMD_PATH*/);
 	return OK;
 }
 
@@ -91,6 +91,12 @@ int hal_module_task_exit(void)
 		thread_master_free(hal_driver.master);	
 		hal_driver.master = NULL;
 	}
+	return OK;
+}
+
+int hal_module_cmd_init(void)
+{
+	hal_ipcsrv_cli();
 	return OK;
 }
 

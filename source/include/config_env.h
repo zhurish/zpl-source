@@ -71,124 +71,39 @@ extern "C" {
 #define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
+#define SERVICE_CONFIG_FILE	SYSCONFDIR "/os_netservice.cfg"
 #else
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 #define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"
+#define SERVICE_CONFIG_FILE	PLSYSCONFDIR "/os_netservice.cfg"
 #else
 #define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
+#define SERVICE_CONFIG_FILE	SYSCONFDIR "/os_netservice.cfg"
 #endif
 #endif
 
 
 
+
+#define PLCLI_VTY_PORT 2610
 
 
 
 
 /* bgpd vty socket */
-#define BGP_VTYSH_PATH DAEMON_VTY_DIR "/bgpd.sock"
+#define SHELL_SOCKET_PATH  DAEMON_VTY_DIR "/bgpd.sock"
 
-/* frpd vty socket */
-#define FRP_VTYSH_PATH DAEMON_VTY_DIR "/frpd.sock"
-
-/* IMI Mdoule socket */
-#define IMISH_UNIX_PATH DAEMON_VTY_DIR "/imi-cli.sock"
-/* isisd vty socket */
-#define ISIS_VTYSH_PATH DAEMON_VTY_DIR "/isisd.sock"
-/* ldpd vty socket */
-#define LDP_VTYSH_PATH DAEMON_VTY_DIR "/ldpd.sock"
-/* lldpd vty socket */
-#define LLDP_VTYSH_PATH DAEMON_VTY_DIR "/lldpd.sock"
-/* olsrd vty socket */
-#define OLSR_VTYSH_PATH DAEMON_VTY_DIR "/olsrd.sock"
-/* nhrpd vty socket */
-#define NHRP_VTYSH_PATH DAEMON_VTY_DIR "/nhrpd.sock"
-/* ospf6d vty socket */
-#define OSPF6_VTYSH_PATH DAEMON_VTY_DIR "/ospf6d.sock"
-/* ospfd vty socket */
-#define OSPF_VTYSH_PATH DAEMON_VTY_DIR "/ospfd.sock"
-/* pimd vty socket */
-#define PIM_VTYSH_PATH DAEMON_VTY_DIR "/pimd.sock"
-/* ripng vty socket */
-#define RIPNG_VTYSH_PATH DAEMON_VTY_DIR "/ripngd.sock"
-/* rip vty socket */
-#define RIP_VTYSH_PATH DAEMON_VTY_DIR "/ripd.sock"
-/* utils vty socket */
-#define UTILS_VTYSH_PATH DAEMON_VTY_DIR "/utils.sock"
-/* vrrpd vty socket */
-#define VRRP_VTYSH_PATH DAEMON_VTY_DIR "/vrrpd.sock"
-/* zebra vty socket */
-#define NSM_VTYSH_PATH DAEMON_VTY_DIR "/zebra.sock"
+#define NSM_SERV_PATH      DAEMON_VTY_DIR "/zserv.sock"
 
 
-
-
-
-/* bfdd PID */
-/* #undef PATH_BFDD_PID */
-
-/* bgpd PID */
-#define PATH_BGPD_PID DAEMON_VTY_DIR "/bgpd.pid"
-
-/* frpd PID */
-#define PATH_FRPD_PID DAEMON_VTY_DIR "/frpd.pid"
-
-/* IMI Mdoule PID */
-#define PATH_IMISH_PID DAEMON_VTY_DIR "/imi-cli.pid"
-
-/* isisd PID */
-#define PATH_ISISD_PID DAEMON_VTY_DIR "/isisd.pid"
-
-/* ldpd PID */
-#define PATH_LDPD_PID DAEMON_VTY_DIR "/ldpd.pid"
-
-/* lldpd PID */
-#define PATH_LLDPD_PID DAEMON_VTY_DIR "/lldpd.pid"
-
-/* nhrpd PID */
-#define PATH_NHRPD_PID DAEMON_VTY_DIR "/nhrpd.pid"
-
-/* olsrd PID */
-#define PATH_OLSRD_PID DAEMON_VTY_DIR "/olsrd.pid"
-
-/* ospf6d PID */
-#define PATH_OSPF6D_PID DAEMON_VTY_DIR "/ospf6d.pid"
-
-/* ospfd PID */
-#define PATH_OSPFD_PID DAEMON_VTY_DIR "/ospfd.pid"
-
-/* pimd PID */
-#define PATH_PIMD_PID DAEMON_VTY_DIR "/pimd.pid"
-
-/* ripd PID */
-#define PATH_RIPD_PID DAEMON_VTY_DIR "/ripd.pid"
-
-/* ripngd PID */
-#define PATH_RIPNGD_PID DAEMON_VTY_DIR "/ripngd.pid"
-
-/* utils PID */
-#define PATH_UTILS_PID DAEMON_VTY_DIR "/utils.pid"
-
-/* vrrpd PID */
-#define PATH_VRRPD_PID DAEMON_VTY_DIR "/vrrpd.pid"
-
-/* watchquagga PID */
-#define PATH_WATCHQUAGGA_PID DAEMON_VTY_DIR "/watchquagga.pid"
-
-/* zebra PID */
-#define OSPL_PATH_PID DAEMON_VTY_DIR "/zebra.pid"
-
-
-
-
-
+#define PL_PID DAEMON_VTY_DIR "/bgpd.pid"
 
 /* zebra api socket */
-#define NSM_SERV_PATH DAEMON_VTY_DIR "/zserv.api"
+
 
 /* default oem file */
 #define HOST_DEFAULT_OEM_FILE SYSCONFDIR "/oem.bin"

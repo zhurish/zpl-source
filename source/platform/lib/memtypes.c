@@ -596,6 +596,7 @@ struct memory_list memory_list_ipcbus[] =
 	{ MTYPE_HALIPCSRV,			"HAL IPCSrv information"			},
 	{ MTYPE_HALIPCCLIENT,			"HAL IPC Client information"			},
 	{ MTYPE_HALIPCMSG,			"HAL IPC Msg information"			},
+	{ MTYPE_HALPHYPORT,			"HAL PHY Port"			},
   { MTYPE_HALEVENT,			"HAL Event information"			},
 	{ MTYPE_IPCBC,			"IPCBC information"			},
 	{ MTYPE_IPCBCCLIENT,			"IPCBC Client information"		},

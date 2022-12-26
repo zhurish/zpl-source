@@ -241,7 +241,7 @@ static int bsp_driver_task(void *p)
 
 int bsp_driver_init(bsp_driver_t *bspdriver)
 {
-  struct hal_client *bsp = hal_client_create(MODULE_BSP, 0, 0);
+  struct hal_client *bsp = hal_client_create(MODULE_BSP, 0, 0, "V0.0.0.1");
   if (bsp)
   {
 	bspdriver->mac_cache_max = ETH_MAC_CACHE_MAX;
@@ -254,9 +254,11 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 	}
 
     bsp->debug = 0xffff;
-    bsp->master = bspdriver->master = thread_master_module_create(MODULE_BSP);
+    bsp->thread_master = bspdriver->master = thread_master_module_create(MODULE_BSP);
     bspdriver->hal_client = bsp;
-    hal_client_start(bsp, HAL_IPCMSG_CMD_PATH, -1/*HAL_IPCMSG_CMD_PORT*/, 0);
+    //hal_client_hwport_register(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_hwport *tbl);
+    hal_client_start(bsp, "127.0.0.1", os_netservice_port_get("hal_port")/*HAL_IPCMSG_CMD_PORT*/, 0);
+    //hal_client_start(bsp, os_netservice_sockpath_get(HAL_IPCMSG_CMD_PATH), os_netservice_port_get("hal_port")/*HAL_IPCMSG_CMD_PORT*/, 0);
     return OK;
   }
   return ERROR;
@@ -400,22 +402,17 @@ int bsp_module_start(void)
 					label = "lan1";
 				};
         */
-	os_sleep(1);
+	//os_sleep(1);
 	zlog_debug(MODULE_BSP, "BSP Init");
-	if(bsp_driver.hal_client)
-  	hal_client_bsp_register(bsp_driver.hal_client, 0,
-        0, 0, 5, "V0.0.0.1");
 
-	os_sleep(1);
+	//os_sleep(1);
 	zlog_debug(MODULE_BSP, "SDK Init, waitting...");
 
 
 	zlog_debug(MODULE_BSP, "SDK Register Port Table Info.");
 	if(bsp_driver.hal_client)
-  	hal_client_bsp_hwport_register(bsp_driver.hal_client, 5, porttbl);
+  	    hal_client_hwport_register(bsp_driver.hal_client, 5, porttbl);
 
-	if(bsp_driver.hal_client)
-		hal_client_event(HAL_EVENT_REGISTER, bsp_driver.hal_client, 1, 0);
 	zlog_debug(MODULE_BSP, "SDK Init, Done.");
 	return OK;
 }

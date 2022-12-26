@@ -143,7 +143,7 @@ extern void zclient_reset (struct zclient *);
 extern void zclient_free (struct zclient *);
 
 extern zpl_socket_t  zclient_socket_connect (struct zclient *);
-extern void zclient_serv_path_set  (zpl_char *path);
+
 extern const char * zclient_serv_path_get (void);
 
 extern void zclient_send_requests (struct zclient *, vrf_id_t);

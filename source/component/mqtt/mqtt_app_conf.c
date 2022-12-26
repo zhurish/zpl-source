@@ -48,7 +48,7 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 	//cfg->bind_address;//服务绑定的IP地址
 
 	//mqtt_connect_host_api(cfg, "192.168.3.222");
-	mqtt_connect_port_api(cfg, MQTT_PORT_DETAULT);
+	mqtt_connect_port_api(cfg, os_netservice_port_get("mqtt_port")/*MQTT_PORT_DETAULT*/);
 
 	cfg->qos = 0;
 	cfg->retain = zpl_true;//如果指定该选项，该条消息将被保留做为最后一条收到的消息。下一个订阅消息者将能至少收到该条消息。

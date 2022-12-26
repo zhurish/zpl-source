@@ -35,8 +35,6 @@ extern "C" {
 #include "route_types.h"
 /* Default port information. */
 
-/* Default configuration filename. */
-//#define DEFAULT_CONFIG_FILE "zebra.conf"
 
 /* Client structure. */
 struct zserv

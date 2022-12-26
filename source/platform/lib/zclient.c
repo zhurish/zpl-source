@@ -47,7 +47,6 @@ static void zclient_event(enum event, struct zclient *);
 
 extern struct thread_master *master;
 
-zpl_char *zclient_serv_path = NULL;
 
 /* This file local debug flag. */
 int zclient_debug = 0;
@@ -172,7 +171,7 @@ zclient_socket(void)
   /* Make server socket. */
   memset(&serv, 0, sizeof(struct ipstack_sockaddr_in));
   serv.sin_family = IPSTACK_AF_INET;
-  serv.sin_port = htons(NSM_ZSERV_PORT);
+  serv.sin_port = htons(os_netservice_port_get("zclient_port"));
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   serv.sin_len = sizeof(struct ipstack_sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
@@ -1122,29 +1121,6 @@ zclient_event(enum event event, struct zclient *zclient)
 
 const char * zclient_serv_path_get()
 {
-  return (const char *)zclient_serv_path ? zclient_serv_path : NSM_SERV_PATH;
+  return (const char *)os_netservice_sockpath_get(NSM_SERV_PATH);
 }
 
-void zclient_serv_path_set(zpl_char *path)
-{
-  struct stat sb;
-
-  /* reset */
-  zclient_serv_path = NULL;
-
-  /* test if `path' is socket. don't set it otherwise. */
-  if (stat(path, &sb) == -1)
-  {
-    zlog_warn(MODULE_DEFAULT, "%s: zebra socket `%s' does not exist", __func__, path);
-    return;
-  }
-
-  if ((sb.st_mode & S_IFMT) != S_IFSOCK)
-  {
-    zlog_warn(MODULE_DEFAULT, "%s: `%s' is not unix socket, sir", __func__, path);
-    return;
-  }
-
-  /* it seems that path is unix socket */
-  zclient_serv_path = path;
-}

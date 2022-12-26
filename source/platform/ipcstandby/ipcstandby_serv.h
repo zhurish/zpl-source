@@ -9,6 +9,7 @@ extern "C" {
 #include "zplos_include.h"
 #include "module.h"
 #include "zmemory.h"
+#include "host.h"
 #include "ipcstandby.h"
 
 
@@ -26,14 +27,14 @@ struct ipcstandby_serv
   zpl_void *t_read;
   zpl_void *t_timeout;
 
-  zpl_uint32 slot;
+  struct ipcstanby_negotiate ipcstanby;
   zpl_uint32 hello;
   zpl_bool  state;
 
   char version[64];
-  struct prefix remote;
-  int debug;
-
+  char remote[32];
+  int port;
+  
   struct ipcstandby_server_t  *ipcserver;
 
   zpl_time_t connect_time;
@@ -54,15 +55,17 @@ struct ipcstandby_server_t
   zpl_void *master;    
   zpl_void *t_accept;  
   zpl_socket_t serv_sock; 
+  int port;
   struct ipcstandby_callback cli_callback;
   struct ipcstandby_callback msg_callback;
   struct ipcstandby_callback res_callback;
-
+  int (*ipcstandby_negotiate_callback)(struct ipcstanby_negotiate *);
   struct ipcstandby_serv *client;
   struct vty *vty;
+  int debug;
 };
 
-extern struct ipcstandby_server_t *ipcstandby_serv_init(void * m);
+extern struct ipcstandby_server_t *ipcstandby_serv_init(void * m, int port);
 extern void ipcstandby_serv_exit(struct ipcstandby_server_t *);
 
 extern int ipcstandby_serv_callback(struct ipcstandby_server_t *, struct ipcstandby_callback cli, struct ipcstandby_callback msg, struct ipcstandby_callback res);

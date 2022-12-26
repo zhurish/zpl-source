@@ -26,6 +26,192 @@
 #include "startup_module.h"
 #include "os_util.h"
 
+struct nsm_rule
+{
+	int slot;
+	int type;
+	int cfg_type;
+	int flag;
+	int ttl;
+	int reset;
+};
+struct nsm_rule _nsm_rule1 = {1, 1, 1, 0, 0, 0};
+struct nsm_rule _nsm_rule2 = {2, 1, 2, 0, 0, 0};
+
+static int nsm_rule_detault(int slot, int type, int cfg_type)
+{
+	if(slot==1)
+	{
+		_nsm_rule1.slot = 1;
+		_nsm_rule1.type = type;
+		_nsm_rule1.cfg_type = cfg_type;
+		_nsm_rule1.flag = 0;
+		_nsm_rule1.ttl = 0;
+		_nsm_rule1.reset = 15;
+	}
+	else if(slot==2)
+	{
+		_nsm_rule2.slot = 1;
+		_nsm_rule2.type = type;
+		_nsm_rule2.cfg_type = cfg_type;
+		_nsm_rule2.flag = 0;
+		_nsm_rule2.ttl = 0;
+		_nsm_rule2.reset = 15;
+	}	
+	return 0;
+}
+static int nsm_rule_update(int slot, struct nsm_rule *rule)
+{
+	if(slot == 2)
+	{
+		if(_nsm_rule2.slot < rule->slot)//对端槽位号 比本地大
+		{
+			if(_nsm_rule2.type != 1)
+			{
+				_nsm_rule2.type = 1;//master
+				fprintf(stdout, "slot 2 change to master\r\n");
+			}
+		}
+		else
+		{
+			if(_nsm_rule2.type != 2)
+			{
+				if(_nsm_rule2.flag == 1)
+				{
+
+				}
+				else
+				{
+					_nsm_rule2.type = 2;//standby
+					fprintf(stdout, "slot 2 change to standby\r\n");
+				}
+			}
+		}
+		_nsm_rule2.ttl = 3;
+	}
+	else if(slot == 1)
+	{
+		if(_nsm_rule1.slot < rule->slot)
+		{
+			if(_nsm_rule1.type != 1 && _nsm_rule2.flag == 0)
+			{
+				_nsm_rule1.type = 1;//master
+				fprintf(stdout, "slot 1 change to master\r\n");
+			}
+			if(_nsm_rule2.flag == 1)
+			{
+				if(_nsm_rule1.type != 2)
+				{
+					_nsm_rule1.type = 2;//standby
+					fprintf(stdout, "slot 1 change to standby\r\n");
+				}
+			}
+		}
+		else
+		{
+			if(_nsm_rule1.type != 2)
+			{
+				_nsm_rule1.type = 2;//standby
+				fprintf(stdout, "slot 1 change to standby\r\n");
+			}
+		}
+		_nsm_rule1.ttl = 3;
+	}
+	return 0;
+}
+
+static int nsm_rule_test1(void *p)
+{
+	while(1)
+	{
+		sleep(1);
+		if(_nsm_rule1.ttl)
+			_nsm_rule1.ttl--;
+		if(_nsm_rule1.ttl == 0)
+		{
+			if(_nsm_rule1.type != 1)
+				fprintf(stdout, "slot 1 timeout change to master\r\n");
+			_nsm_rule1.type = 1;//master
+			_nsm_rule1.flag = 1;
+		}	
+		if(_nsm_rule2.reset)
+			_nsm_rule2.reset--;
+		if(_nsm_rule2.reset == 0)
+		{
+			nsm_rule_update(1, &_nsm_rule2);
+		}
+	}
+	return 0;
+}
+static int nsm_rule_test2(void *p)
+{
+	while(1)
+	{
+		sleep(1);
+		if(_nsm_rule2.ttl)
+			_nsm_rule2.ttl--;
+		if(_nsm_rule2.ttl == 0)
+		{
+			if(_nsm_rule2.type != 1)
+				fprintf(stdout, "slot 2 timeout change to master\r\n");
+			_nsm_rule2.type = 1;//master
+			_nsm_rule2.flag = 1;
+		}	
+		if(_nsm_rule1.reset)
+			_nsm_rule1.reset--;
+		if(_nsm_rule1.reset == 0)
+		{
+			nsm_rule_update(2, &_nsm_rule1);
+		}
+	}
+	return 0;
+}
+
+DEFUN (rule_test_start,
+		rule_test_start_cmd,
+       "rule_test_start",
+       "Select an interface to configure\n")
+{
+	pthread_t pid1;
+	pthread_t pid2;
+	pthread_create(&pid1, NULL, nsm_rule_test1, NULL);
+	pthread_create(&pid2, NULL, nsm_rule_test2, NULL);
+	return CMD_SUCCESS;
+}
+
+DEFUN (rule_test_reset,
+		rule_test_reset_cmd,
+       "rule_test_reset <1-2> <0-2> <0-2>",
+       "Select an interface to configure\n"
+	   "slot\n"
+	   "type\n"
+	   "cfg type\n")
+{
+	nsm_rule_detault(atoi(argv[0]), atoi(argv[1]), atoi(argv[2]));
+	return CMD_SUCCESS;
+}
+
+DEFUN (rule_test_show,
+		rule_test_show_cmd,
+       "rule_test_show",
+       "Select an interface to configure\n")
+{
+		if(_nsm_rule1.type == 2)
+			vty_out(vty, "slot 1 is standby\r\n");
+		else if(_nsm_rule1.type == 1)
+			vty_out(vty, "slot 1 is master\r\n");
+		else
+			vty_out(vty, "slot 1 is sadada\r\n");
+		if(_nsm_rule2.type == 2)
+			vty_out(vty, "slot 2 is standby\r\n");
+		else if(_nsm_rule2.type == 1)
+			vty_out(vty, "slot 2 is master\r\n");
+		else
+			vty_out(vty, "slot 2 is sadada\r\n");
+	return CMD_SUCCESS;
+}
+
+
 #if 0
 struct nsm_ctrl_client
 {
@@ -501,6 +687,13 @@ int os_test(void)
 	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &i_iusp_test_cmd);
 	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &i_mac_test_cmd);
 	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &syslog_debug_test_cmd);
+
+
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &rule_test_start_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &rule_test_reset_cmd);
+	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &rule_test_show_cmd);
+	
+	
 
 #if 0
 	install_element (ENABLE_NODE, CMD_CONFIG_LEVEL, &wifi_list_cmd);

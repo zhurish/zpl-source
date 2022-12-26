@@ -74,7 +74,7 @@ struct zpl_host
 	zpl_uint8	sysmac[6];
 
 	struct ipmc_slot ipmctable[IPMC_SLOT_MAX];
-
+	int slot;
 #ifdef ZPL_ACTIVE_STANDBY
 	zpl_bool active_standby;	//主:0;备:1
 #endif

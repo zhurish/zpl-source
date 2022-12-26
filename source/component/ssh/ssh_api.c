@@ -262,7 +262,7 @@ int ssh_bind_port_api(zpl_uint16 port)
 		return OK;
 	ssh_config.bindport = port;
 	if(ssh_config.bindport == 0)
-		ssh_config.bindport = SSH_PORT_DEFAULT;
+		ssh_config.bindport = os_netservice_port_get("sshd_port");//SSH_PORT_DEFAULT;
 	return OK;
 }
 

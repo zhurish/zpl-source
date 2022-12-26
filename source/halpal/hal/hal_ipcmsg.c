@@ -231,6 +231,7 @@ int hal_ipcmsg_msg_clone(struct hal_ipcmsg *dst_ipcmsg, struct hal_ipcmsg *src_i
 {
     memcpy(dst_ipcmsg->buf, src_ipcmsg->buf, src_ipcmsg->setp);
     dst_ipcmsg->setp = src_ipcmsg->setp;
+    dst_ipcmsg->getp = src_ipcmsg->getp;
     return OK;
 }
 

@@ -334,7 +334,7 @@ static int os_nvram_env_loadall(void)
 		return ERROR;
 	if(ret == 0)
 	{
-		fd = open(MTD_NVRAM_INFILE, O_RDONLY);
+		fd = open(os_netservice_sockpath_get(MTD_NVRAM_INFILE), O_RDONLY);
 		if(fd <= 0)
 		{
 			return ERROR;
@@ -376,8 +376,8 @@ static int os_nvram_env_update_save(void)
 		return ERROR;
 	if(lstCount(env_table) == 0)
 	{
-		if(access(MTD_NVRAM_INFILE, F_OK) == 0)
-			remove(MTD_NVRAM_INFILE);
+		if(access(os_netservice_sockpath_get(MTD_NVRAM_INFILE), F_OK) == 0)
+			remove(os_netservice_sockpath_get(MTD_NVRAM_INFILE));
 		sync();
 		return OK;
 	}
@@ -396,7 +396,7 @@ static int os_nvram_env_update_save(void)
 			return ERROR;
 		}
 		close(fd);
-		rename(MTD_NVRAM_INFILE".tmp", MTD_NVRAM_INFILE);
+		rename(MTD_NVRAM_INFILE".tmp", os_netservice_sockpath_get(MTD_NVRAM_INFILE));
 		sync();
 		return OK;
 	}

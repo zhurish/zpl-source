@@ -17,22 +17,26 @@
 struct hal_ipcsrv _ipcsrv;
 
 static int hal_ipcsrv_client_read(struct thread *thread);
+static int hal_client_msg_hello_thread(struct thread *thread);
+static int hal_ipcsrv_msg_write(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg,
+                                struct hal_ipcmsg_result *getvalue,
+                                struct hal_ipcmsg_callback *callback, int timeout_ms);
 
-#ifdef ZPL_SHELL_MODULE
-static void hal_ipcsrv_cli(void);
-#endif
 /* Close zebra client. */
 static void hal_ipcclient_client_free(struct hal_ipcclient *client)
 {
-    if (client->t_read)
-        thread_cancel(client->t_read);
+    THREAD_OFF(client->t_read);
+    THREAD_OFF(client->t_hello);
     if (!ipstack_invalid(client->sock))
     {
         ipstack_close(client->sock);
     }
+    hal_ipcmsg_destroy(&client->input_msg);   
 }
 static void hal_ipcclient_client_close(struct hal_ipcsrv *ipcsrv, struct hal_ipcclient *client)
 {
+    THREAD_OFF(client->t_read);
+    THREAD_OFF(client->t_hello);
     if (IS_HAL_IPCMSG_DEBUG_EVENT(ipcsrv->debug))
     {
         zlog_debug(MODULE_HAL, "Client unit %d slot %d portnum %d close [%d]", client->unit, client->slot, client->portnum, ipstack_fd(client->sock));
@@ -64,7 +68,8 @@ hal_ipcclient_client_create(struct hal_ipcsrv *ipcsrv, struct ipstack_sockaddr_i
     client->unit = -1;
     client->slot = -1;
     client->portnum = -1;
-
+    client->input_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
+    hal_ipcmsg_create(&client->input_msg);
     /* Add this client to linked list. */
 
     listnode_add(ipcsrv->client_list, client);
@@ -101,7 +106,7 @@ static int hal_ipcsrv_accept(struct thread *thread)
         zlog_err(MODULE_HAL, "Can't ipstack_accept hal_ipcclient ipstack_socket: %s", ipstack_strerror(ipstack_errno));
         return -1;
     }
-    zlog_force_trap(MODULE_HAL, "hal_client_start client_sock sock = %d", ipstack_fd(client_sock));
+    //zlog_force_trap(MODULE_HAL, "hal_client_start client_sock sock = %d", ipstack_fd(client_sock));
     /* Make client ipstack_socket non-blocking.  */
     ipstack_set_nonblocking(client_sock);
 
@@ -211,15 +216,12 @@ static zpl_socket_t hal_ipcsrv_socket(int port)
     return sock;
 }
 
-static void hal_ipcsrv_msg_hello(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
+static void hal_ipcsrv_msg_read_hello(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
 {
     struct hal_ipcmsg_hello *hello = (struct hal_ipcmsg_hello *)(ipcmsg->buf + ipcmsg->getp);
     client->ipctype = (enum hal_ipctype_e)hello->stype;
-    client->module = hello->module;
     client->unit = hello->unit;
     client->slot = hello->slot;
-    client->portnum = hello->portnum;
-    client->board = unit_board_add(hello->unit, hello->slot);
     strcpy(client->version, hello->version);
     client->state = HAL_CLIENT_CONNECT;
     if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
@@ -232,10 +234,18 @@ static void hal_ipcsrv_msg_hello(struct hal_ipcclient *client, struct hal_ipcmsg
     }
 }
 
-static void hal_ipcsrv_msg_register(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
+static void hal_ipcsrv_msg_read_register(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
 {
-    zpl_int32 value = 0;
-    hal_ipcmsg_getl(ipcmsg, &value);
+    zpl_uint8 unit;
+    zpl_uint8 slot;
+    zpl_uint8 portnum;
+    hal_ipcmsg_getc(ipcmsg, &unit);
+    hal_ipcmsg_getc(ipcmsg, &slot);
+    hal_ipcmsg_getc(ipcmsg, &portnum);
+    client->portnum = portnum;
+    client->board = unit_board_lookup(unit, slot);
+    if (client->board == NULL)
+        client->board = unit_board_add(unit, slot);
 
     if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug) && IS_HAL_IPCMSG_DEBUG_RECV(client->ipcsrv->debug))
     {
@@ -245,14 +255,17 @@ static void hal_ipcsrv_msg_register(struct hal_ipcclient *client, struct hal_ipc
     client->state = HAL_CLIENT_INIT;
     if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
         zlog_debug(MODULE_HAL, "client state change to init");
-    return;
 }
 
-static void hal_ipcsrv_msg_hwport(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
+static void hal_ipcsrv_msg_read_hwport(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
 {
     zpl_uint32 i = 0;
     zpl_uint8 portnum = 0;
     struct hal_ipcmsg_hwport porttbl;
+    if (client->board == NULL)
+        client->board = unit_board_lookup(client->unit, client->slot);
+    if (client->board == NULL)
+        client->board = unit_board_add(client->unit, client->slot);
     hal_ipcmsg_getc(ipcmsg, &portnum);
     for (i = 0; i < portnum; i++)
     {
@@ -271,7 +284,7 @@ static void hal_ipcsrv_msg_hwport(struct hal_ipcclient *client, struct hal_ipcms
     return;
 }
 
-static void hal_ipcsrv_msg_start_done(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
+static void hal_ipcsrv_msg_read_start_done(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
 {
     zpl_int32 value = 0;
     hal_ipcmsg_getl(ipcmsg, &value);
@@ -284,13 +297,12 @@ static void hal_ipcsrv_msg_start_done(struct hal_ipcclient *client, struct hal_i
     if (IS_HAL_IPCMSG_DEBUG_EVENT(client->ipcsrv->debug))
         zlog_debug(MODULE_HAL, "client state change to register");
 
-
+    client->t_hello = thread_add_timer(client->ipcsrv->master, hal_client_msg_hello_thread, client, HAL_IPCMSG_HELLO_TIME);
     host_bspinit_done();
-
     return OK;
 }
 
-static void hal_ipcsrv_msg_report(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
+static void hal_client_msg_read_report(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)
 {
     struct hal_ipcmsg_event report;
     hal_ipcmsg_getc(ipcmsg, &report.unit);
@@ -307,6 +319,33 @@ static void hal_ipcsrv_msg_report(struct hal_ipcclient *client, struct hal_ipcms
     return;
 }
 
+static int hal_client_msg_send_hello(struct hal_ipcclient *client)
+{
+    struct hal_ipcmsg *outmsg = NULL;
+    outmsg = &client->ipcsrv->output_msg;
+    hal_ipcmsg_reset(outmsg);
+    hal_ipcmsg_create_header(outmsg, IPCCMD_SET(HAL_MODULE_MGT, HAL_MODULE_CMD_HELLO, 0));
+    hal_ipcmsg_putc(outmsg, client->unit);
+    hal_ipcmsg_putc(outmsg, client->slot);
+
+    if (client->state == HAL_CLIENT_CONNECT)
+    {
+        hal_ipcmsg_hdr_unit_set(outmsg, client->unit);
+        return hal_ipcsrv_msg_write(client, outmsg, NULL, NULL, 1000);
+    }
+    return -1;
+}
+
+static int hal_client_msg_hello_thread(struct thread *thread)
+{
+    struct hal_ipcclient *client = NULL;
+    client = THREAD_ARG(thread);
+    client->t_hello = NULL;
+    if(hal_client_msg_send_hello(client) == OK)
+        client->t_hello = thread_add_timer(client->ipcsrv->master, hal_client_msg_hello_thread, client, HAL_IPCMSG_HELLO_TIME);
+    return OK;
+}
+
 /* Handler of zebra service request. */
 static int hal_ipcsrv_client_read(struct thread *thread)
 {
@@ -320,7 +359,7 @@ static int hal_ipcsrv_client_read(struct thread *thread)
     zpl_assert(client);
     zpl_assert(client->ipcsrv);
     client->t_read = NULL;
-    input_ipcmsg = &client->ipcsrv->input_msg;
+    input_ipcmsg = &client->input_msg;
     hdr = (struct hal_ipcmsg_header *)input_ipcmsg->buf;
 
     /* Read length and command (if we don't have it already). */
@@ -414,23 +453,24 @@ static int hal_ipcsrv_client_read(struct thread *thread)
     case HAL_MODULE_MGT:
         if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_HELLO)
         {
-            hal_ipcsrv_msg_hello(client, input_ipcmsg);
+            hal_ipcsrv_msg_read_hello(client, input_ipcmsg);
         }
         else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_STARTONDE) //初始化完毕
         {
-            hal_ipcsrv_msg_start_done(client, input_ipcmsg);
+            hal_ipcsrv_msg_read_start_done(client, input_ipcmsg);
         }
         else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_REGISTER) //初始化
         {
-            hal_ipcsrv_msg_register(client, input_ipcmsg);
+            //if(hdr->length == 1)
+            hal_ipcsrv_msg_read_register(client, input_ipcmsg);
         }
         else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_HWPORTTBL) //板卡端口信息
         {
-            hal_ipcsrv_msg_hwport(client, input_ipcmsg);
+            hal_ipcsrv_msg_read_hwport(client, input_ipcmsg);
         }
         else if (IPCCMD_CMD_GET(hdr->command) == HAL_MODULE_CMD_REPORT) //上报信息
         {
-            hal_ipcsrv_msg_report(client, input_ipcmsg);
+            hal_client_msg_read_report(client, input_ipcmsg);
         }
         
 #if defined(HAL_IPCSRV_SYNC_ACK)
@@ -466,7 +506,7 @@ static int hal_ipcsrv_client_read(struct thread *thread)
 }
 
 #ifdef HAL_IPCSRV_SYNC_ACK
-static int hal_ipcsrv_recv_message_client(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_result *getvalue,
+static int hal_ipcsrv_msg_read(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_result *getvalue,
                                           struct hal_ipcmsg_callback *callback, int timeout_ms)
 {
     int bytes = 0, timeoutval = timeout_ms;
@@ -541,7 +581,7 @@ static int hal_ipcsrv_recv_message_client(struct hal_ipcclient *client, struct h
     return ERROR;
 }
 #else
-static int hal_ipcsrv_recv_message_client(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_result *getvalue,
+static int hal_ipcsrv_msg_read(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg, struct hal_ipcmsg_result *getvalue,
                                           struct hal_ipcmsg_callback *callback, int timeout_ms)
 {
     int bytes = 0, timeoutval = timeout_ms;
@@ -654,7 +694,7 @@ static int hal_ipcsrv_recv_message_client(struct hal_ipcclient *client, struct h
 }
 #endif
 
-static int hal_ipcsrv_send_message_client(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg, 
+static int hal_ipcsrv_msg_write(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg, 
                 struct hal_ipcmsg_result *getvalue,
                 struct hal_ipcmsg_callback *callback, int timeout_ms)
 {
@@ -680,6 +720,7 @@ static int hal_ipcsrv_send_message_client(struct hal_ipcclient *client, struct h
 #else
     hal_ipcmsg_reset(&client->ipcsrv->ack_msg);
 #endif
+    hal_ipcmsg_hdrlen_set(ipcmsg);
     while (1)
     {
         bytes = ipstack_write_timeout(client->sock, ipcmsg->buf + already, ipcmsg->setp - already, timeout_ms);
@@ -702,13 +743,13 @@ static int hal_ipcsrv_send_message_client(struct hal_ipcclient *client, struct h
     os_get_monotonic(&client->ipcsrv->wait_timeval);
     client->ipcsrv->wait_timeval.tv_sec += (timeout_ms/1000);
     client->ipcsrv->wait_timeval.tv_usec += ((timeout_ms%1000)*1000);
-    return hal_ipcsrv_recv_message_client(client, &client->ipcsrv->ack_msg, getvalue, callback, timeout_ms);
+    return hal_ipcsrv_msg_read(client, &client->ipcsrv->ack_msg, getvalue, callback, timeout_ms);
 #else
-    return hal_ipcsrv_recv_message_client(client, &client->ipcsrv->input_msg, getvalue, callback, timeout_ms);
+    return hal_ipcsrv_msg_read(client, &client->input_msg, getvalue, callback, timeout_ms);
 #endif
 }
 
-static int __hal_ipcsrv_send_raw_ipcmsg(int unit, struct hal_ipcmsg *src_ipcmsg, struct hal_ipcmsg_result *getvalue,
+static int __hal_ipcsrv_msg_write_raw(int unit, struct hal_ipcmsg *src_ipcmsg, struct hal_ipcmsg_result *getvalue,
                                         struct hal_ipcmsg_callback *callback, int timeout_ms)
 {
     int ret = 0;
@@ -716,7 +757,7 @@ static int __hal_ipcsrv_send_raw_ipcmsg(int unit, struct hal_ipcmsg *src_ipcmsg,
     struct hal_ipcclient *client = NULL;
     HAL_ENTER_FUNC();
 
-    hal_ipcmsg_hdrlen_set(src_ipcmsg);
+    //hal_ipcmsg_hdrlen_set(src_ipcmsg);
 
     for (ALL_LIST_ELEMENTS_RO(_ipcsrv.client_list, node, client))
     {
@@ -725,13 +766,13 @@ static int __hal_ipcsrv_send_raw_ipcmsg(int unit, struct hal_ipcmsg *src_ipcmsg,
         if (unit >= 0 && unit != IF_UNIT_ALL && unit == client->unit)
         {
             hal_ipcmsg_hdr_unit_set(src_ipcmsg, client->unit);
-            ret = hal_ipcsrv_send_message_client(client, src_ipcmsg, getvalue, callback, timeout_ms);
+            ret = hal_ipcsrv_msg_write(client, src_ipcmsg, getvalue, callback, timeout_ms);
             return ret;
         }
         else
         {
             hal_ipcmsg_hdr_unit_set(src_ipcmsg, client->unit);
-            ret = hal_ipcsrv_send_message_client(client, src_ipcmsg, getvalue, callback, timeout_ms);
+            ret = hal_ipcsrv_msg_write(client, src_ipcmsg, getvalue, callback, timeout_ms);
             if (ret != OK)
                 break;
         }
@@ -745,7 +786,7 @@ int hal_ipcsrv_send_ipcmsg(int unit, struct hal_ipcmsg *src_ipcmsg)
     HAL_ENTER_FUNC();
     if (_ipcsrv.mutex)
         os_mutex_lock(_ipcsrv.mutex, OS_WAIT_FOREVER);
-    ret = __hal_ipcsrv_send_raw_ipcmsg(unit, src_ipcmsg, NULL, NULL, HAL_IPCSRV_ACK_TIMEOUT);
+    ret = __hal_ipcsrv_msg_write_raw(unit, src_ipcmsg, NULL, NULL, HAL_IPCSRV_ACK_TIMEOUT);
     if (_ipcsrv.mutex)
         os_mutex_unlock(_ipcsrv.mutex);
     return ret;
@@ -763,7 +804,7 @@ int hal_ipcsrv_copy_send_ipcmsg(int unit, zpl_uint32 command, struct hal_ipcmsg 
     if (src_ipcmsg && src_ipcmsg->buf)
         hal_ipcmsg_msg_copy(&_ipcsrv.output_msg, src_ipcmsg);
 
-    ret = __hal_ipcsrv_send_raw_ipcmsg(unit, &_ipcsrv.output_msg, NULL, NULL, HAL_IPCSRV_ACK_TIMEOUT);
+    ret = __hal_ipcsrv_msg_write_raw(unit, &_ipcsrv.output_msg, NULL, NULL, HAL_IPCSRV_ACK_TIMEOUT);
 
     if (_ipcsrv.mutex)
         os_mutex_unlock(_ipcsrv.mutex);
@@ -781,7 +822,7 @@ int hal_ipcsrv_send_message(int unit, zpl_uint32 command, void *msg, int len)
     if (len)
         hal_ipcmsg_put(&_ipcsrv.output_msg, msg, len);
 
-    ret = __hal_ipcsrv_send_raw_ipcmsg(unit, &_ipcsrv.output_msg, NULL, NULL, HAL_IPCSRV_ACK_TIMEOUT);
+    ret = __hal_ipcsrv_msg_write_raw(unit, &_ipcsrv.output_msg, NULL, NULL, HAL_IPCSRV_ACK_TIMEOUT);
 
     if (_ipcsrv.mutex)
         os_mutex_unlock(_ipcsrv.mutex);
@@ -799,7 +840,7 @@ int hal_ipcsrv_send_and_get_message(int unit, zpl_uint32 command, void *msg, int
     if (len)
         hal_ipcmsg_put(&_ipcsrv.output_msg, msg, len);
 
-    ret = __hal_ipcsrv_send_raw_ipcmsg(unit, &_ipcsrv.output_msg, getvalue, NULL, HAL_IPCSRV_ACK_TIMEOUT);
+    ret = __hal_ipcsrv_msg_write_raw(unit, &_ipcsrv.output_msg, getvalue, NULL, HAL_IPCSRV_ACK_TIMEOUT);
 
     if (_ipcsrv.mutex)
         os_mutex_unlock(_ipcsrv.mutex);
@@ -818,7 +859,7 @@ int hal_ipcsrv_getmsg_callback(int unit, zpl_uint32 command, void *msg, int len,
     if (len)
         hal_ipcmsg_put(&_ipcsrv.output_msg, msg, len);
 
-    ret = __hal_ipcsrv_send_raw_ipcmsg(unit, &_ipcsrv.output_msg, getvalue, callback, HAL_IPCSRV_ACK_TIMEOUT);
+    ret = __hal_ipcsrv_msg_write_raw(unit, &_ipcsrv.output_msg, getvalue, callback, HAL_IPCSRV_ACK_TIMEOUT);
 
     if (_ipcsrv.mutex)
         os_mutex_unlock(_ipcsrv.mutex);
@@ -903,9 +944,9 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
         }
     }
     _ipcsrv.output_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
-    _ipcsrv.input_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
+    //_ipcsrv.input_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
     hal_ipcmsg_create(&_ipcsrv.output_msg);
-    hal_ipcmsg_create(&_ipcsrv.input_msg);
+    //hal_ipcmsg_create(&_ipcsrv.input_msg);
 #ifdef HAL_IPCSRV_SYNC_ACK
     _ipcsrv.ack_msg.length_max = HAL_IPCMSG_MAX_PACKET_SIZ;
     hal_ipcmsg_create(&_ipcsrv.ack_msg);
@@ -916,9 +957,6 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
     if (!ipstack_invalid(_ipcsrv.sock))
         _ipcsrv.t_accept = thread_add_read(_ipcsrv.master, hal_ipcsrv_accept, &_ipcsrv, _ipcsrv.sock);
 
-#ifdef ZPL_SHELL_MODULE
-    hal_ipcsrv_cli();
-#endif
     _ipcsrv.debug = 0xffff;
     _ipcsrv.b_init = zpl_true;
     return OK;
@@ -937,7 +975,7 @@ int hal_ipcsrv_exit(void)
 
     list_delete(_ipcsrv.client_list);
     hal_ipcmsg_destroy(&_ipcsrv.output_msg);
-    hal_ipcmsg_destroy(&_ipcsrv.input_msg);
+    //hal_ipcmsg_destroy(&_ipcsrv.input_msg);
     if (_ipcsrv.mutex)
     {
         os_mutex_exit(_ipcsrv.mutex);
@@ -999,7 +1037,7 @@ DEFUN_HIDDEN(show_ipcsrv_information,
     return CMD_SUCCESS;
 }
 
-static void hal_ipcsrv_cli(void)
+void hal_ipcsrv_cli(void)
 {
     install_element(VIEW_NODE, CMD_VIEW_LEVEL, &show_ipcsrv_information_cmd);
 }

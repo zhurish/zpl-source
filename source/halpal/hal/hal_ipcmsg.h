@@ -14,6 +14,8 @@ extern "C"
 #define HAL_IPCMSG_CMD_PORT 65300
 #define HAL_IPCMSG_EVENT_PORT 65301
 
+#define HAL_IPCMSG_HELLO_TIME 2
+
 #define HAL_ENTER_FUNC() 
 //zlog_debug(MODULE_HAL, "Into %s line %d", __func__, __LINE__)
 #define HAL_LEAVE_FUNC() 
@@ -62,10 +64,8 @@ struct hal_ipcmsg_result
 struct hal_ipcmsg_hello
 {
     zpl_uint8 stype;
-    zpl_uint8 module;
     zpl_uint8 unit;
     zpl_uint8 slot;
-    zpl_uint8 portnum;
     zpl_int8 version[128];
 };
   
@@ -82,7 +82,9 @@ struct hal_ipcmsg_hwport
 //注册信息
 struct hal_ipcmsg_register
 {
-    zpl_int32 value;
+    zpl_uint8 unit;
+    zpl_uint8 slot;
+    zpl_uint8 portnum;
 };
   
 //全局信息

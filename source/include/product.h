@@ -20,7 +20,11 @@ extern "C" {
 
 
 #define PRODUCT_PORT_MAX	16
-
+#ifdef PRODUCT_PORT_MAX
+#ifndef PHY_PORT_MAX
+#define PHY_PORT_MAX 	PRODUCT_PORT_MAX
+#endif
+#endif
 
 #ifdef ZPL_KERNEL_MODULE
 /*

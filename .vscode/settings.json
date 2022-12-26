@@ -109,6 +109,19 @@
         "zpl_rtsp_sdpfmtp.h": "c",
         "ortp_srtp.h": "c",
         "math.h": "c",
-        "os_ipstack.h": "c"
+        "os_ipstack.h": "c",
+        "chrono": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "memory": "c",
+        "optional": "c",
+        "cjson.h": "c",
+        "sstream": "c",
+        "buffer.h": "c",
+        "ipcstandby_client.h": "c",
+        "ipcstandby.h": "c",
+        "hal_ipcmsg.h": "c",
+        "product.h": "c"
     }
 }
