@@ -85,8 +85,9 @@ extern void _nl_socket_used_ports_release_all(const uint32_t *used_ports);
 extern int ip_main(int argc, char **argv);
 extern int ftp_download(void *v, char *hostName, int port, char *path, char *fileName, char *usr,
                  char *passwd, char *localfileName);
-
-
+extern int ortp_create_init(void);
+extern int testmain(int argc, char **argv);
+extern int testmain111(int argc, char **argv);
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -151,10 +152,13 @@ int main(int argc, char **argv)
 	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
 	os_task_sigexecute(0, NULL);
 	os_test();
-	//os_url_test();
-	//ftp_download(NULL, "127.0.0.1", 0, NULL, "fsdd.pdf", "zhurish", "centos", "aa.pdf");
+    //testmain(0, NULL);
 
-	while (1)
+    // ortp_create_init();
+    //  os_url_test();
+    //  ftp_download(NULL, "127.0.0.1", 0, NULL, "fsdd.pdf", "zhurish", "centos", "aa.pdf");
+
+    while (1)
 	{
 		//os_ansync_empty_running(NULL, NULL, 1000);
 		os_signal_process(200);

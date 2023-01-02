@@ -49,6 +49,7 @@ typedef enum
     RTSP_METHOD_SCALE           = 7,
     RTSP_METHOD_GET_PARAMETER   = 8,
     RTSP_METHOD_SET_PARAMETER   = 9,
+    RTSP_METHOD_MAX
 } rtsp_method;
 
 
@@ -131,21 +132,19 @@ typedef enum
 
 #define RTSP_DEBUG_ENABLE
 
-#if defined(RTSP_DEBUG_ENABLE)
-#define RTSP_DEBUG(format, ...) {fprintf (stdout, "%s [%d]", __func__, __LINE__);fprintf (stdout, format, ##__VA_ARGS__);fflush(stdout);}
-#define RTSP_INFO(format, ...)  {fprintf (stdout, "%s [%d]", __func__, __LINE__);fprintf (stdout, format, ##__VA_ARGS__);fflush(stdout);}
-#define RTSP_WARN(format, ...)  {fprintf (stdout, "%s [%d]", __func__, __LINE__);fprintf (stdout, format, ##__VA_ARGS__);fflush(stdout);}
-#define RTSP_ERROR(format, ...) {fprintf (stdout, "%s [%d]", __func__, __LINE__);fprintf (stdout, format, ##__VA_ARGS__);fflush(stdout);}
-#define RTSP_TRACE(format, ...) {fprintf (stdout, "%s [%d]", __func__, __LINE__);fprintf (stdout, format, ##__VA_ARGS__);fflush(stdout);}
-#define RTSP_INTER_FUNC()       {fprintf (stdout, "%s [%d]", __func__, __LINE__);fflush(stdout);}
-#define RTSP_LEVEL_FUNC()       {fprintf (stdout, "%s [%d]", __func__, __LINE__);fflush(stdout);}
-#else
-#define RTSP_DEBUG(format, ...)
-#define RTSP_INFO(format, ...)
-#define RTSP_WARN(format, ...)
-#define RTSP_ERROR(format, ...)
-#define RTSP_TRACE(format, ...)
-#endif
+#define RTSP_DEBUG_DEBUG        0x01
+#define RTSP_DEBUG_ERROR        0x02
+#define RTSP_DEBUG_WARN         0x04
+#define RTSP_DEBUG_EVENT        0x08
+#define RTSP_DEBUG_RTPSEND      0x10
+#define RTSP_DEBUG_RTPRECV      0x20
+#define RTSP_DEBUG_DETAIL       0x100
+
+#define RTSP_DEBUG_FLAG_ON(f, v)	  ( (f) |= (RTSP_DEBUG_ ##v ) )
+#define RTSP_DEBUG_FLAG_OFF(f, v)	  ( (f) &= ~(RTSP_DEBUG_ ##v ) )
+#define RTSP_DEBUG_FLAG(f, v)	      ( (f) & (RTSP_DEBUG_ ##v ) )
+
+
 
 
 #ifdef __cplusplus

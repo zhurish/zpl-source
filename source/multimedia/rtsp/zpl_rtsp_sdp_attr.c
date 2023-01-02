@@ -143,7 +143,7 @@ struct sdp_media * sdp_media_find(struct sdp_media *media, uint32_t n, const cha
     {
         for(; i < n; i++)
         {
-            RTSP_TRACE(" ================== sdp_media_find :%s<->%s\r\n", media[i].desc.media, name);
+            //RTSP_TRACE(" ================== sdp_media_find :%s<->%s\r\n", media[i].desc.media, name);
             if(media[i].desc.media && strstr(media[i].desc.media, name))
             {
                 if(step)

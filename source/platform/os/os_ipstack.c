@@ -240,7 +240,7 @@ zpl_socket_t ipstack_max(zpl_socket_t src, zpl_socket_t dst)
 zpl_socket_t ipstack_open (zpl_ipstack stack, const char *__path, int __oflag)
 {
 	zpl_socket_t tmp = ipstack_create(stack);
-	IPSTACK_CHECK(tmp, tmp);
+	IPSTACK_CHECK(tmp, ZPL_SOCKET_INVALID);
 	ipstack_fd(tmp) = open(__path, __oflag);
 	if(ipstack_fd(tmp) <= 0)
 	{

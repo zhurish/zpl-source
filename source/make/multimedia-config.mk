@@ -2,6 +2,19 @@
 
 ifeq ($(strip $(ZPL_MULTIMEDIA_MODULE)),true)
 
+ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
+
+LIVE555_ROOT=$(MULTIMEDIA_ROOT)/live555
+ZPLEX_DIR += $(MULTIMEDIA_ROOT)/live555
+ZPL_DEFINE += -DZPL_LIVE555_MODULE -DUSE_RTSP_OPT
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/liveMedia
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/groupsock
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/UsageEnvironment
+ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/BasicUsageEnvironment
+ZPL_LDLIBS += -lBasicUsageEnvironment  -lgroupsock  -lliveMedia  -lUsageEnvironment 
+endif #($(strip $(ZPL_PJSIP_MODULE)),true)
+
 
 ifeq ($(strip $(ZPL_LIBRTSP_MODULE)),true)
 LIBORTP_ROOT=$(MULTIMEDIA_ROOT)/rtsp
@@ -10,6 +23,7 @@ ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/rtsp
 ZPL_DEFINE += -DZPL_LIBRTSP_MODULE
 endif
 
+ifneq ($(strip $(ZPL_LIVE555_MODULE)),true)
 ifeq ($(strip $(ZPL_LIBORTP_MODULE)),true)
 LIBORTP_ROOT=$(MULTIMEDIA_ROOT)/ortp-5.0
 ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/ortp-5.0
@@ -19,6 +33,7 @@ ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0/src
 ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0/playload
 ZPL_DEFINE += -DZPL_LIBORTP_MODULE
 #ZPL_LDLIBS += -L/home/zhurish/workspace/working/zpl-source/source/multimedia/ortp-5.0/include/lib -lbcunit  -lbctoolbox
+endif
 endif
 
 ifeq ($(strip $(ZPL_EXOSIP_MODULE)),true)
@@ -128,25 +143,7 @@ ZPL_DEFINE += -DZPL_MEDIAAPP_MODULE
 endif	 
 
 
-ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 
-LIVE555_ROOT=$(MULTIMEDIA_ROOT)/live555
-ZPLEX_DIR += $(MULTIMEDIA_ROOT)/live555
-ZPL_DEFINE += -DZPL_LIVE555_MODULE -DUSE_RTSP_OPT
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/liveMedia
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/groupsock
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/UsageEnvironment
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/BasicUsageEnvironment
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include/liveMediaUtil
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/liveMedia
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/groupsock
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/UsageEnvironment
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/BasicUsageEnvironment
-ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/liveMediaUtil
-ZPL_LDLIBS += -lBasicUsageEnvironment  -lgroupsock  -lliveMedia  -lUsageEnvironment -lliveMediaUtil
-endif #($(strip $(ZPL_PJSIP_MODULE)),true)
 
 ifeq ($(strip $(ZPL_LIBX264_MODULE)),true)
 LIBX264_ROOT=$(MULTIMEDIA_ROOT)/x264

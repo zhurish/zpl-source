@@ -561,7 +561,7 @@ zpl_socket_t ipstack_sock_create(zpl_ipstack stack, zpl_bool tcp)
 	if (ipstack_invalid(rc))
 	{
 		_OS_ERROR( "cannot open ipstack socket\n");
-		return rc;
+		return ZPL_SOCKET_INVALID;
 	}
 	return rc;
 }
@@ -584,7 +584,6 @@ int ipstack_sock_bind(zpl_socket_t sock, char *ipaddress, zpl_uint16 port)
 		_OS_ERROR( "ipstack sock(%d) cannot bind port number %d(%s) \n",ipstack_fd(sock), port,
 				strerror(ipstack_errno));
 		return ERROR;
-		;
 	}
 	return OK;
 }
@@ -598,7 +597,6 @@ int ipstack_sock_listen(zpl_socket_t sock, zpl_uint32 listennum)
 		_OS_ERROR( "ipstack sock(%d) cannot listen %s \n",ipstack_fd(sock),
 				strerror(ipstack_errno));
 		return ERROR;
-		;
 	}
 	return OK;
 }
@@ -784,7 +782,6 @@ int ipstack_sock_client_write(zpl_socket_t fd, char *ipaddress, zpl_uint16 port,
 			_OS_ERROR( "ipstack sock(%d) cannot sendto to %s:%d(%s) \n",ipstack_fd(fd), ipaddress, port,
 					strerror(ipstack_errno));
 			return ERROR;
-			;
 		}
 		return ret;
 	}
@@ -798,7 +795,7 @@ zpl_socket_t ipstack_sock_raw_create(zpl_ipstack stack, zpl_int style, zpl_uint1
 	if (ipstack_invalid(fd))
 	{
 		_OS_ERROR( "ipstack sock failed to open raw socket(%d) (%s)",ipstack_fd(fd), strerror(ipstack_errno));
-		return (fd);
+		return ZPL_SOCKET_INVALID;
 	}
 	return fd;
 }
@@ -883,7 +880,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 	{
 		_OS_ERROR( "ipstack sock Cannot create unix stream socket: %s",
 				strerror(ipstack_errno));
-		return sock;
+		return ZPL_SOCKET_INVALID;
 	}
 
 	/* Make server socket. */
@@ -901,7 +898,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 	{
 		_OS_ERROR( "ipstack sock Cannot bind path %s: %s", path, strerror(ipstack_errno));
 		ipstack_close(sock); /* Avoid sd leak. */
-		return sock;
+		return ZPL_SOCKET_INVALID;
 	}
 	if (tcp)
 	{
@@ -910,7 +907,7 @@ zpl_socket_t ipstack_sock_unix_server_create(zpl_ipstack stack, zpl_bool tcp, co
 		{
 			_OS_ERROR( "ipstack sock listen(fd %d) failed: %s", ipstack_fd(sock), strerror(ipstack_errno));
 			ipstack_close(sock); /* Avoid sd leak. */
-			return sock;
+			return ZPL_SOCKET_INVALID;
 		}
 	}
 	umask(old_mask);
@@ -955,7 +952,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	{
 		_OS_ERROR( "ipstack sock (%s): stat = %s\n", path,
 				strerror(ipstack_errno));
-		return sock;
+		return ZPL_SOCKET_INVALID;
 	}
 
 	if (ret >= 0)
@@ -963,7 +960,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 		if (!S_ISSOCK(s_stat.st_mode))
 		{
 			_OS_ERROR( "ipstack sock(%s): Not a socket\n", path);
-			return sock;
+			return ZPL_SOCKET_INVALID;
 		}
 	}
 
@@ -971,7 +968,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 	if (ipstack_invalid(sock))
 	{
 		_OS_ERROR( "ipstack sock(%d) (%s): socket = %s\n",ipstack_fd(sock), path, strerror(ipstack_errno));
-		return sock;
+		return ZPL_SOCKET_INVALID;
 	}
 
 	memset(&addr, 0, sizeof(struct ipstack_sockaddr_un));
@@ -989,7 +986,7 @@ zpl_socket_t ipstack_sock_unix_client_create(zpl_ipstack stack, zpl_bool tcp, co
 		_OS_ERROR( "ipstack sock(%d) (%s): connect = %s\n",ipstack_fd(sock), path,
 				strerror(ipstack_errno));
 		ipstack_close(sock);
-		return sock;
+		return ZPL_SOCKET_INVALID;
 	}
 	return sock;
 }

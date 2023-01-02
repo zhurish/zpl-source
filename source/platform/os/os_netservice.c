@@ -130,6 +130,8 @@ static int os_netservice_default(struct zpl_osnet_service *ua)
 
 int os_netservice_port_get(char *name)
 {
+    if (strcasecmp(name, "vty_port") == 0)
+        return _os_netservice.vty_port;
     if (strcasecmp(name, "slot") == 0)
         return _os_netservice.slot;
     if (strcasecmp(name, "telnet_port") == 0)

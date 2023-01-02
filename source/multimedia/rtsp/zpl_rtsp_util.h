@@ -57,6 +57,7 @@ RTSP_API int rtsp_authenticate_option(const char *auth, const char *username, co
 
 RTSP_API void rtsp_log_cb(rtsp_log_callback);
 
+#ifndef ZPL_LIBRTSP_MODULE
 RTSP_API void rtsp_vlog(const char *file, const char *func, const int line, int livel, const char *fmt,...);
 
 
@@ -67,6 +68,17 @@ RTSP_API void rtsp_vlog(const char *file, const char *func, const int line, int 
 #define rtsp_log_info(format, ...)          rtsp_vlog (__FILE__, __FUNCTION__, __LINE__, LOG_INFO, format, ##__VA_ARGS__)
 #define rtsp_log_warn(format, ...)          rtsp_vlog (__FILE__, __FUNCTION__, __LINE__, LOG_WARNING, format, ##__VA_ARGS__)
 #define rtsp_log_error(format, ...)         rtsp_vlog (__FILE__, __FUNCTION__, __LINE__, LOG_ERR, format, ##__VA_ARGS__)
+#define RTSP_DEBUG_TRACE(format, ...) 		rtsp_vlog (__FILE__, __FUNCTION__, __LINE__, LOG_DEBUG+1, format, ##__VA_ARGS__)
+#else
+#define rtsp_log_error(format, ...) 		zlog_err (MODULE_RTSP, format, ##__VA_ARGS__)
+#define rtsp_log_warn(format, ...) 		zlog_warn (MODULE_RTSP, format, ##__VA_ARGS__)
+#define rtsp_log_info(format, ...) 		zlog_info (MODULE_RTSP, format, ##__VA_ARGS__)
+#define rtsp_log_notice(format, ...) 	    zlog_notice (MODULE_RTSP, format, ##__VA_ARGS__)
+#define rtsp_log_debug(format, ...) 		zlog_debug (MODULE_RTSP, format, ##__VA_ARGS__)
+#define rtsp_log_trace(format, ...) 		zlog_trap (MODULE_RTSP, format, ##__VA_ARGS__)
+#define RTSP_DEBUG_TRACE(format, ...)   zlog_force_trap (MODULE_RTSP, format, ##__VA_ARGS__)
+#endif
+
 
 
 

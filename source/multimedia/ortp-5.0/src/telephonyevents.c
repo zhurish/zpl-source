@@ -29,26 +29,13 @@
 #include <ortp/sessionset.h>
 #include <ortp/payloadtype.h>
 #include <ortp/rtpprofile.h>
-
 #include <ortp/rtpsession_priv.h>
 #include <ortp/rtpsession.h>
 #include <ortp/event.h>
 #include <ortp/telephonyevents.h>
 #include <ortp/rtpsignaltable.h>
 #include "utils.h"
-#if 0
-PayloadType	payload_type_telephone_event={
-	PAYLOAD_AUDIO_PACKETIZED, /*type */
-	8000,	/*clock rate */
-	0,		/* bytes per sample N/A */
-	NULL,	/* zero pattern N/A*/
-	0,		/*pattern_length N/A */
-	0,		/*	normal_bitrate */
-	"telephone-event",	/* MIME subtype */
-	1,		/* Audio Channels */
-	0		/*flags */
-};
-#endif
+
 
 
 /**

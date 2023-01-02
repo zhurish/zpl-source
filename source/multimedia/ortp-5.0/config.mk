@@ -46,8 +46,8 @@ OBJS += 	avprofile.o  \
 			zpl_rtp_h264.o \
 			zpl_rtp_h265.o \
 			zpl_rtp_g7xx.o \
-			rtpbundle.o 
-#rtpsend.o rtprecv.o 
+			rtpbundle.o rtpsend.o 
+#rtprecv.o 
 #############################################################################
 # LIB 		
 ###########################################################################

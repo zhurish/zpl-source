@@ -71,12 +71,7 @@ ORTP_PUBLIC void rtp_profile_payload_update(int pt, const PayloadType *type);
  *@param idx	the payload type number
  *@return the payload description (a PayloadType object)
 **/
-static ORTP_INLINE PayloadType * rtp_profile_get_payload(const RtpProfile *prof, int idx){
-	if (idx<0 || idx>=RTP_PROFILE_MAX_PAYLOADS) {
-		return NULL;
-	}
-	return prof->payload[idx];
-}
+ORTP_PUBLIC PayloadType *rtp_profile_get_payload(const RtpProfile *prof, int idx);
 ORTP_PUBLIC void rtp_profile_clear_all(RtpProfile *prof);
 ORTP_PUBLIC void rtp_profile_set_name(RtpProfile *prof, const char *name);
 ORTP_PUBLIC PayloadType * rtp_profile_get_payload_from_mime(RtpProfile *profile,const char *mime);

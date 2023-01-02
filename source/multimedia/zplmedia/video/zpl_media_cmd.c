@@ -60,7 +60,7 @@ DEFUN (media_channel_enable,
 
 DEFUN (media_channel_file_enable,
 		media_channel_file_enable_cmd,
-		"media channel FILENAME (enable|disable)" ,
+		"media channel FILENAME (enable|disable|start|stop)" ,
 		MEDIA_CHANNEL_STR
 		"Channel Number Select\n"
 		"Media File Name Configure\n"
@@ -68,11 +68,13 @@ DEFUN (media_channel_file_enable,
 		"Disable\n")
 {
 	int ret = ERROR;
-
-	if(strstr(argv[1],"enable"))
-	{
+    zpl_media_channel_t *chn = NULL;
+    if (strstr(argv[1], "enable"))
+    {
 		if(zpl_media_channel_filelookup(argv[0]) == NULL)
-			zpl_media_channel_filecreate(argv[0], 1);
+			ret = zpl_media_channel_filecreate(argv[0], 1);
+        else
+            ret = OK;    
 	}
 	else if(strstr(argv[1],"disable"))
 	{
@@ -81,8 +83,29 @@ DEFUN (media_channel_file_enable,
 		else
 			ret = ERROR;	
 	}
+	else if(strstr(argv[1],"start"))
+	{
+        chn  = zpl_media_channel_filelookup(argv[0]);
+        if (chn != NULL)
+        {
+            ret = zpl_media_channel_filestart(chn, zpl_true);
+        }
+        else
+            ret = OK; 
+    }
+	else if(strstr(argv[1],"stop"))
+	{
+        chn  = zpl_media_channel_filelookup(argv[0]);
+        if (chn != NULL)
+        {
+            ret = zpl_media_channel_filestart(chn, zpl_false);
+        }
+        else
+            ret = OK; 
+	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
+
 
 DEFUN (media_channel_active,
 		media_channel_active_cmd,

@@ -32,7 +32,9 @@
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_rtp.h"
+#include "zpl_rtsp_server.h"
 
+#define rtsp_srv_getptr(m)             (((rtsp_srv_t*)m))
 
 
 int rtsp_rtp_init(void)
@@ -67,11 +69,6 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
         return -1;
     if(_rtpsession->rtp_session)
     {
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========rtp-port=%d rtcp-port=%d\r\n",_rtpsession->transport.rtp.unicast.rtp_port, _rtpsession->transport.rtp.unicast.rtcp_port);
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw===local=====rtp-port=%d rtcp-port=%d\r\n",_rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port);
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========payload=%d\r\n",_rtpsession->payload);
-        fflush(stdout);
-
         if(bcreate == false)
         {
             rtp_session_add_aux_remote_addr_full(_rtpsession->rtp_session,
@@ -80,6 +77,13 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
                                                  session->address,
                                                  _rtpsession->transport.rtp.unicast.rtcp_port);
             //ORTP_PUBLIC int rtp_session_del_aux_remote_addr_full(RtpSession * session, const char * rtp_addr, int rtp_port, const char * rtcp_addr, int rtcp_port);
+            if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
+            {
+                rtsp_log_debug("RTSP Media set remote rtp-port %d rtcp-port %d local rtp-port %d rtcp-port %d payload %d for %d/%d or %s", 
+                    _rtpsession->transport.rtp.unicast.rtp_port, _rtpsession->transport.rtp.unicast.rtcp_port,
+                    _rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port,
+                    _rtpsession->payload, session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
+            } 
             return 0;
         }
         else
@@ -124,9 +128,17 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
                                             _rtpsession->rtcp_sock);
                 }
                 else
-                    rtp_session_set_local_addr(_rtpsession->rtp_session, "0.0.0.0",
+                {
+                    rtp_session_set_local_addr(_rtpsession->rtp_session, NULL,
                                                _rtpsession->transport.rtp.unicast.local_rtp_port,
                                                _rtpsession->transport.rtp.unicast.local_rtcp_port);
+                    if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
+                    {
+                        rtsp_log_debug("RTSP Media set local rtp-port %d rtcp-port %d for %d/%d or %s", 
+                            _rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port,
+                            session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
+                    } 
+                }
             }
         }
         return 0;
@@ -142,11 +154,6 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
 
     if(_rtpsession->rtp_session)
     {
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========rtp-port=%d rtcp-port=%d\n",_rtpsession->transport.rtp.unicast.rtp_port, _rtpsession->transport.rtp.unicast.rtcp_port);
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw===local=====rtp-port=%d rtcp-port=%d\n",_rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port);
-        fprintf(stdout,"==================================rtsp_rtp_session_setuphw========payload=%d\n",_rtpsession->payload);
-        fflush(stdout);
-
         if(_rtpsession->transport.proto == RTSP_TRANSPORT_RTP_RTPOVERRTSP ||
                 _rtpsession->transport.proto == RTSP_TRANSPORT_RTP_TCP)
         {
@@ -181,9 +188,15 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
         else
         {
             //rtp_session_set_connected_mode(_rtpsession->rtp_session, true);
-            rtp_session_set_local_addr(_rtpsession->rtp_session, "0.0.0.0",
+            rtp_session_set_local_addr(_rtpsession->rtp_session, NULL,
                                        _rtpsession->transport.rtp.unicast.local_rtp_port,
                                        _rtpsession->transport.rtp.unicast.local_rtcp_port);
+            if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
+            {
+                rtsp_log_debug("RTSP Media set local rtp-port %d rtcp-port %d for %d/%d or %s", 
+                    _rtpsession->transport.rtp.unicast.local_rtp_port, _rtpsession->transport.rtp.unicast.local_rtcp_port,
+                    session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
+            } 
         }
         return 0;
     }
@@ -192,7 +205,7 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
 
 static void rtp_session_timestamp_jump(RtpSession *session)
 {
-    printf("======================rtp_session_timestamp_jump !\n");
+    rtsp_log_debug("======================rtp_session_timestamp_jump !\n");
 }
 
 int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
@@ -243,10 +256,12 @@ int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
         rtp_session_set_scheduling_mode(_rtpsession->rtp_session, true);
         rtp_session_set_blocking_mode(_rtpsession->rtp_session, true);
         if(session->bsrv)
+        {
             rtp_session_set_remote_addr_and_port (_rtpsession->rtp_session,
                                               session->address,
                                               _rtpsession->transport.rtp.unicast.rtp_port,
                                               _rtpsession->transport.rtp.unicast.rtcp_port);
+        }
         ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);                                      
     }
     if(session->bsrv && _rtpsession->rtp_session)
@@ -273,14 +288,14 @@ int rtsp_rtp_handle_teardown(rtsp_session_t* session, void *pUser)
     if(session->audio_session.rtp_session)
     {
         session->audio_session.rtp_state = RTP_SESSION_STATE_CLOSE;
-        rtp_session_destroy(session->audio_session.rtp_session);
-        session->audio_session.rtp_session = NULL;
+        //rtp_session_destroy(session->audio_session.rtp_session);
+        //session->audio_session.rtp_session = NULL;
     }
     if(session->video_session.rtp_session)
     {
         session->video_session.rtp_state = RTP_SESSION_STATE_CLOSE;
-        rtp_session_destroy(session->video_session.rtp_session);
-        session->video_session.rtp_session = NULL;
+        //rtp_session_destroy(session->video_session.rtp_session);
+        //session->video_session.rtp_session = NULL;
     }
     return 0;
 }
@@ -368,6 +383,7 @@ int rtsp_rtp_send(rtsp_session_t* session, bool bvideo, const uint8_t *buffer, u
     uint8_t *pbuffer = (uint8_t *)(buffer);
     if(bvideo && session->video_session.rtp_session)
     {
+        //rtsp_log_debug("rtsp_rtp_send===============video");
         ORTP_SESSION_LOCK(session->video_session.rtp_session);
         ret = rtp_session_send_with_ts(session->video_session.rtp_session,
                                             pbuffer, len,

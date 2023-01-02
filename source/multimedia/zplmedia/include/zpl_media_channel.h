@@ -101,6 +101,7 @@ extern int zpl_media_channel_create(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
 extern int zpl_media_channel_hwdestroy(zpl_media_channel_t *);
 extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID);
 
 extern int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd);
 extern int zpl_media_channel_filedestroy(zpl_char *filename);

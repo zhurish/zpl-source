@@ -16,29 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-#include "vty_include.h"
+#include <ortp/port.h>
+#include <ortp/logging.h>
+#include <ortp/ortp_list.h>
+#include <ortp/extremum.h>
+#include <ortp/rtp_queue.h>
+#include <ortp/rtp.h>
+#include <ortp/rtcp.h>
+#include <ortp/sessionset.h>
+#include <ortp/payloadtype.h>
+#include <ortp/rtpprofile.h>
+#include <ortp/rtpsession_priv.h>
+#include <ortp/rtpsession.h>
+#include <ortp/telephonyevents.h>
+#include <ortp/rtpsignaltable.h>
 #include <ortp/ortp.h>
-#include <signal.h>
-#include <stdlib.h>
+#include "zpl_rtsp.h"
 
-#ifndef _WIN32
-#include <sys/types.h>
-#include <sys/time.h>
-#include <stdio.h>
-#endif
+#include "zpl_rtsp_api.h"
 
 int runcond = 1;
 static RtpSession *session = NULL;
-static void stophandler(int signum)
-{
-	runcond = 0;
-}
 
-static const char *help = "usage: rtpsend	filename dest_ip4addr dest_port [ --with-clockslide <value> ] [ --with-jitter <milliseconds>]\n";
+//static const char *help = "usage: rtpsend	filename dest_ip4addr dest_port [ --with-clockslide <value> ] [ --with-jitter <milliseconds>]\n";
 
+#if 0
 int rtpsend_main(int argc, char *argv[])
 {
 	//RtpSession *session;
@@ -135,14 +137,13 @@ int rtpsend_main(int argc, char *argv[])
 
 	return 0;
 }
-
+#endif
 #define MAX_RTP_PKT_LENGTH 1400
 //#define DefaultTimestampIncrement 3600 //(90000/25)
 #define DefaultTimestampIncrement 90000/30 //(90000/25)
 
 uint32_t g_userts = 0;
-
-
+static int ortp_create_send(char *buffer, int len);
 
 static int zpl_media_rtp_task(void* argv)
 {
@@ -151,7 +152,8 @@ static int zpl_media_rtp_task(void* argv)
 	buf[1] = 0;
 	buf[2] = 0;
 	buf[3] = 1;
-	host_config_load_waitting();
+    sleep(3);
+  //  host_config_load_waitting();
     os_sleep(1);
 		char *ssrc = NULL;
 		rtp_session_set_scheduling_mode(session, 1);
@@ -173,13 +175,13 @@ static int zpl_media_rtp_task(void* argv)
 	}
 	return 0;
 }
-int ortp_create_init()
+int ortp_create_init(void)
 {
 	//char *ssrc = NULL;
 	ortp_init();
 	ortp_scheduler_init();
 	//av_profile_init(&av_profile);
-	ortp_set_log_level_mask(ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR);
+	//ortp_set_log_level_mask(ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR);
 	session = rtp_session_new(RTP_SESSION_SENDONLY);
 	if (session)
 	{
@@ -207,7 +209,7 @@ int ortp_create_init()
 	return -1;
 }
 
-int ortp_create_exit()
+int ortp_create_exit(void)
 {
 	if (session)
 	{
@@ -218,10 +220,10 @@ int ortp_create_exit()
 	return 0;
 }
 
-int ortp_create_send(char *buffer, int len)
+static int ortp_create_send(char *buffer, int len)
 {
 	int sendBytes = 0;
-	int status;
+	//int status;
 	uint32_t valid_len = len - 4;
 	unsigned char NALU = buffer[4];
 

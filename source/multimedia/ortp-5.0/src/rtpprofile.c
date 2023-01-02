@@ -24,6 +24,13 @@
 
 
 
+PayloadType * rtp_profile_get_payload(const RtpProfile *prof, int idx)
+{
+	if (idx<0 || idx>=RTP_PROFILE_MAX_PAYLOADS) {
+		return NULL;
+	}
+	return prof->payload[idx];
+}
 
 char *payload_type_get_rtpmap(PayloadType *pt)
 {

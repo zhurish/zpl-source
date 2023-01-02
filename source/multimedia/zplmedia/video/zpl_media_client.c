@@ -45,8 +45,7 @@ int zpl_media_client_add(zpl_media_client_t *client, zpl_media_buffer_handler cb
 			client[i].enable = zpl_true;
 			client[i]._pmedia_buffer_handler = cb_handler;
 			client[i].pVoidUser = pUser;
-            fprintf(stdout, " =============================================zpl_media_client_add %p %p \r\n", cb_handler, pUser);
-            fflush(stdout);
+
             return ZPL_MEDIA_CLIENT_INDEX_SET(i);
 		}
 	}
@@ -77,6 +76,10 @@ int zpl_media_client_foreach(zpl_skbuffer_t *buffer_data, void *p)
 
 	media_channel = zpl_media_channel_lookup(ZPL_MEDIA_CHANNEL_GET_C(buffer_data->skb_header.media_header.ID), 
 		ZPL_MEDIA_CHANNEL_GET_I(buffer_data->skb_header.media_header.ID));
+    if(media_channel == NULL)
+    {
+        media_channel = zpl_media_channel_lookup_sessionID(buffer_data->skb_header.media_header.sessionID);
+    }    
 	if(media_channel)
 	{
 		client = (media_channel)->media_client;
@@ -85,14 +88,18 @@ int zpl_media_client_foreach(zpl_skbuffer_t *buffer_data, void *p)
 
 	if(client)
 	{
+        //zpl_media_debugmsg_debug("======== zpl_media_client_foreach");
 		for(i = 0; i < ZPL_MEDIA_CLIENT_MAX; i++)
 		{
 			if(client[i].enable == zpl_true && client[i]._pmedia_buffer_handler != NULL)
 			{
+                //zpl_media_debugmsg_debug("======== zpl_media_client_foreach _pmedia_buffer_handler");
                 client[i]._pmedia_buffer_handler(media_channel,  buffer_data, client[i].pVoidUser);
 			}
 		}
 	}
+    else
+        zpl_media_debugmsg_debug("========zpl_media_client_foreach NULL");
 	return OK;
 }
 

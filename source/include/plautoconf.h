@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2022-12-25 19:02:34 CST"
+#define AUTOCONF_TIMESTAMP "2023-01-01 18:29:31 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -84,7 +84,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#define ZPL_ACTIVE_STANDBY 1
+#undef ZPL_ACTIVE_STANDBY
 #undef ZPL_NSM_SNMP
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1
@@ -221,7 +221,7 @@
 #define ZPL_PJ_SDL_LIB_PATH ""
 #undef ZPL_PJ_AUDIO_ALSA
 #undef ZPL_PJ_AUDIO_PORTAUDIO
-#undef ZPL_LIVE555_MODULE
+#define ZPL_LIVE555_MODULE 1
 #undef ZPL_SOFTCODEC_MODULE
 #undef ZPL_LIBX264_MODULE
 #undef ZPL_OPENH264_MODULE

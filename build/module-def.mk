@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 
-# Sun Dec 25 19:02:34 2022
+# Sun Jan  1 18:29:31 2023
 #
 CONFIG_HAVE_DOT_CONFIG=true
 
@@ -83,7 +83,7 @@ ZPL_IP_PLIST=true
 ZPL_WORKQUEUE=true
 ZPL_SHELL_MODULE=true
 # CONFIG_ZPL_SHRL_MODULE is not set
-ZPL_ACTIVE_STANDBY=true
+# CONFIG_ZPL_ACTIVE_STANDBY is not set
 # CONFIG_ZPL_NSM_SNMP is not set
 ZPL_NSM_MODULE=true
 ZPL_VRF_MODULE=true
@@ -220,7 +220,7 @@ ZPL_PJ_FFMPEG_LIB_PATH=""
 ZPL_PJ_SDL_LIB_PATH=""
 # CONFIG_ZPL_PJ_AUDIO_ALSA is not set
 # CONFIG_ZPL_PJ_AUDIO_PORTAUDIO is not set
-# CONFIG_ZPL_LIVE555_MODULE is not set
+ZPL_LIVE555_MODULE=true
 # CONFIG_ZPL_SOFTCODEC_MODULE is not set
 # CONFIG_ZPL_LIBX264_MODULE is not set
 # CONFIG_ZPL_OPENH264_MODULE is not set

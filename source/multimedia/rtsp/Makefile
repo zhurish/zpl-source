@@ -9,6 +9,7 @@ LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
+ZPLOS_CPPFLAGS +=-Wno-error=shadow
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
@@ -16,6 +17,13 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
+
+$(OBJS_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)	
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)

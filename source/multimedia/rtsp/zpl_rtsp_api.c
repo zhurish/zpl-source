@@ -10,7 +10,10 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "module.h"
-
+#include "host.h"
+#ifdef ZPL_LIVE555_MODULE
+#include "livertsp_server.h"
+#else
 #include <ortp/port.h>
 #include <ortp/rtp_queue.h>
 #include <ortp/ortp.h>
@@ -28,14 +31,11 @@
 #include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_server.h"
 #include "zpl_rtsp_rtp.h"
+#endif
 #include "zpl_rtsp_api.h"
 
 static rtsp_srv_t *rtsp_srv = NULL;
-#ifndef ZPL_WORKQUEUE
-static zpl_uint32 rtsp_srv_taskid = 0;
-#endif
 
-#ifdef ZPL_WORKQUEUE
 struct module_list module_list_rtsp = {
 		.module = MODULE_RTSP,
 		.name = "ZPLRTSP\0",
@@ -46,53 +46,66 @@ struct module_list module_list_rtsp = {
 		.module_cmd_init = NULL,
 		.taskid = 0,
 };
-#endif
+
 static int zpl_media_rtsp_task(void* argv)
-{
-#ifndef ZPL_WORKQUEUE
-    if(rtsp_srv)
-    {
-        while(1)
-        {
-            rtsp_srv_select(rtsp_srv);
-        }
-    }
-#else    
+{   
+#ifdef ZPL_LIVE555_MODULE
+    host_waitting_loadconfig();
+    livertsp_server_loop(argv);
+#else
     if(rtsp_srv)
     {
 		rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
         host_waitting_loadconfig();
         eloop_mainloop(rtsp_srv->t_master);
     }
-
 #endif
     return OK;
 }
-
+#ifdef ZPL_LIVE555_MODULE
+static int rtsp_logcb(const char *fmt,...)
+{
+    char lbuf[1024];
+    int len = 0;
+    va_list args;
+    va_start (args, fmt);    
+    memset(lbuf, 0, sizeof(lbuf));
+    len += vsnprintf(lbuf+len, sizeof(lbuf)-len, fmt, args);
+    va_end (args);
+    zlog_debug(MODULE_RTSP,"%s\r\n", lbuf);
+    //fprintf(stdout, "%s\r\n", lbuf);
+    //fflush(stdout);
+    return 0;
+}
+#endif
 int rtsp_module_init(void)
 {
-#ifdef ZPL_WORKQUEUE
-    rtsp_srv = rtsp_srv_create(NULL, 554, MODULE_RTSP);
+#ifdef ZPL_LIVE555_MODULE
+    rtsp_srv = malloc(sizeof(rtsp_srv_t));
+    livertsp_server_init(8554, BASEUSAGEENV_BASE_DIR, rtsp_logcb);
 #else
-    rtsp_srv = rtsp_srv_create(NULL, 9554);
-#endif
+    rtsp_srv = rtsp_srv_create(NULL, 9554, MODULE_RTSP);
     if(rtsp_srv)
     {
-        #ifdef ZPL_WORKQUEUE
         rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
-        #endif
         rtsp_rtp_init();
+        rtsp_rtp_start();
     }
+#endif    
     return OK;
 }
 
 int rtsp_module_exit(void)
 {
+#ifdef ZPL_LIVE555_MODULE
+    livertsp_server_exit();
+#else
     if(rtsp_srv)
     {
         rtsp_srv_destroy(rtsp_srv);
         ortp_exit();
     }
+#endif    
     return OK;
 }
 
@@ -100,15 +113,9 @@ int rtsp_module_task_init(void)
 {
     if(rtsp_srv)
     {
-        //rtsp_rtp_start();
-#ifdef ZPL_WORKQUEUE
 		rtsp_srv->t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
-								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK*2);
-#else
-        if(rtsp_srv_taskid == 0)
-            pthread_create(&rtsp_srv_taskid, NULL, zpl_media_rtsp_task, (void *) NULL);
-#endif
-        rtsp_rtp_start();
+								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK*8);
+        //pthread_create(&rtsp_srv->t_taskid, NULL, zpl_media_rtsp_task, NULL);
         return OK;
     }
     return OK;

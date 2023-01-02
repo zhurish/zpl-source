@@ -22,6 +22,7 @@ void rtsp_log_cb(rtsp_log_callback cb)
     return;
 }
 
+#ifndef ZPL_LIBRTSP_MODULE
 void rtsp_vlog(const char *file, const char *func, const int line, int livel, const char *fmt,...)
 {
     va_list args;
@@ -54,6 +55,7 @@ void rtsp_vlog(const char *file, const char *func, const int line, int livel, co
     fprintf(stdout, "\r\n");
     fflush(stdout);
 }
+#endif
 /*
  * rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1
  * rtsp://user:pass@192.168.1.1:9988/media/channel=1&level=1&rtsp

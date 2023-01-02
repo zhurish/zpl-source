@@ -200,6 +200,7 @@ typedef struct
     zpl_uint32 	buffer_timetick;    //时间戳毫秒
     zpl_uint32 	buffer_seq;         //序列号底层序列号
     zpl_int32	buffer_len;         //帧长度
+    zpl_uint32  sessionID;             //just for file media    
 }__attribute__ ((packed)) zpl_media_hdr_t ;
 
 

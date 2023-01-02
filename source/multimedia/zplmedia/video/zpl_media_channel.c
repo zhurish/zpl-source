@@ -222,9 +222,9 @@ int zpl_media_channel_create(zpl_int32 channel,
 		memset(chn, 0, sizeof(zpl_media_channel_t));
 		chn->channel = channel;
 		chn->channel_index = channel_index;
-
-		if (ZPL_MEDIA_ISNORMAL_CHANNEL(chn->channel))
-			chn->channel_type = ZPL_MEDIA_CHANNEL_NORMAL;
+ 
+        if (ZPL_MEDIA_ISNORMAL_CHANNEL(chn->channel))
+            chn->channel_type = ZPL_MEDIA_CHANNEL_NORMAL;
 		else if (ZPL_MEDIA_ISCAPTURE_CHANNEL(chn->channel))
 			chn->channel_type = ZPL_MEDIA_CHANNEL_CAPTURE;
 		else if (ZPL_MEDIA_ISRECORED_CHANNEL(chn->channel))
@@ -240,8 +240,7 @@ int zpl_media_channel_create(zpl_int32 channel,
 		chn->buffer_queue = zpl_media_bufqueue_get();	
 		if (chn->buffer_queue == NULL)
 		{
-			zpl_media_debugmsg_debug("can not create buffer for media channel(%d/%d)", channel, channel_index);
-
+			zpl_media_debugmsg_error("can not create buffer for media channel(%d/%d)", channel, channel_index);
 			os_free(chn);
 			return ERROR;
 		}
@@ -250,7 +249,7 @@ int zpl_media_channel_create(zpl_int32 channel,
 		{
 			if (zpl_media_hal_create(chn, chn->buffer_queue) != OK)
 			{
-				zpl_media_debugmsg_debug("can not create hal for media channel(%d/%d)", channel, channel_index);
+				zpl_media_debugmsg_error("can not create hal for media channel(%d/%d)", channel, channel_index);
 				chn->buffer_queue = NULL;
 				os_free(chn);
 				return ERROR;
@@ -278,7 +277,6 @@ int zpl_media_channel_create(zpl_int32 channel,
 		if (media_channel_list)
 			lstAdd(media_channel_list, (NODE *)chn);
 		zpl_media_client_add(chn->media_client, zpl_media_proxy_buffer_data_distribute, NULL);
-		//zpl_media_rtsp_channel_add( channel, channel_index, chn->video_media.codec.enctype, chn);
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
 		return OK;
@@ -306,7 +304,26 @@ zpl_media_channel_t *zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANN
 		os_mutex_unlock(media_channel_mutex);
 	return chn;
 }
+zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID)
+{
+	NODE node;
+	zpl_media_channel_t *chn = NULL;
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
 
+	for (chn = (zpl_media_channel_t *)lstFirst(media_channel_list);
+		 chn != NULL; chn = (zpl_media_channel_t *)lstNext(&node))
+	{
+		node = chn->node;
+		if (chn && (zpl_uint32)chn == sessionID)
+		{
+			break;
+		}
+	}
+	if (media_channel_mutex)
+		os_mutex_unlock(media_channel_mutex);
+	return chn;
+}
 ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index)
 {
 	NODE node;
@@ -343,6 +360,7 @@ int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
 
 		chn->channel_type = ZPL_MEDIA_CHANNEL_FILE;
 		chn->bindcount = 0;
+
 		/*
 		chn->buffer_queue = zpl_skbqueue_create(os_name_format("media-%s", filename),
 			ZPL_MEDIA_BUFFER_FRAME_CACHESIZE, zpl_false);
@@ -350,6 +368,7 @@ int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
 		chn->buffer_queue = zpl_media_bufqueue_get();
 		if (chn->buffer_queue == NULL)
 		{
+  			zpl_media_debugmsg_error("can not create buffer for media channel(%s)", filename);
 			os_free(chn);
             return ERROR;
         }
@@ -357,6 +376,7 @@ int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
         media_file = zpl_media_file_create(filename, rd?"r":"a+");
         if (media_file == NULL)
         {
+            zpl_media_debugmsg_error("can not create media file for media channel(%s)", filename);
             chn->buffer_queue = NULL;
             free(chn);
             return ERROR;
@@ -389,8 +409,6 @@ int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
         }
         else if(media_file->b_video && media_file->b_audio)
         {
-			fprintf(stdout, " zpl_media_channel_filecreate video autio filedesc=%p\r\n", media_file);
-			fflush(stdout);
             chn->video_media.enable = zpl_true;
             chn->video_media.halparam = media_file;
             chn->audio_media.enable = zpl_true;
@@ -398,8 +416,7 @@ int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
             if(rd)
                 zpl_media_file_extradata(media_file, &chn->video_media.extradata);
         }
-			fprintf(stdout, " zpl_media_channel_filecreate filedesc=%p\r\n", media_file);
-			fflush(stdout);
+
         if(chn->video_media.enable)
         {
             zpl_media_file_codecdata(media_file, zpl_true, &chn->video_media.codec);
@@ -412,7 +429,6 @@ int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd)
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
 		zpl_media_client_add(chn->media_client, zpl_media_proxy_buffer_data_distribute, NULL);
-		//zpl_media_rtsp_channel_add( 0, 0, 0, chn);
 
 		if (media_channel_list)
 			lstAdd(media_channel_list, (NODE *)chn);
@@ -474,8 +490,7 @@ zpl_media_channel_t *zpl_media_channel_filelookup(zpl_char *filename)
     NODE node;
     zpl_media_channel_t *chn = NULL;
     zpl_media_file_t *media_file = NULL;
-    fprintf(stdout, " zpl_media_channel_filelookup filename=%s\r\n", filename);
-    fflush(stdout);
+  
 	if (media_channel_mutex)
 		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
     for (chn = (zpl_media_channel_t *)lstFirst(media_channel_list);
@@ -514,8 +529,6 @@ zpl_media_channel_t *zpl_media_channel_filelookup(zpl_char *filename)
     }
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);
-	fprintf(stdout, " zpl_media_channel_filelookup filedesc=%p\r\n", media_file);
-	fflush(stdout);
     return chn;
 }
 
@@ -582,6 +595,7 @@ int zpl_media_channel_active(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channe
 		{
 			if (zpl_media_hal_active(chn) != OK)
 			{
+                zpl_media_debugmsg_error("can not active media channel(%d/%d)", channel,channel_index);
 				if (media_channel_mutex)
 					os_mutex_unlock(media_channel_mutex);
 				return ERROR;
@@ -610,6 +624,7 @@ int zpl_media_channel_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel
 		{
 			if (zpl_media_hal_start(chn) != OK)
 			{
+                zpl_media_debugmsg_error("can not start media channel(%d/%d)", channel,channel_index);
 				if (media_channel_mutex)
 					os_mutex_unlock(media_channel_mutex);
 				return ERROR;
@@ -640,6 +655,7 @@ int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_
 		{
 			if (zpl_media_hal_stop(chn) != OK)
 			{
+                zpl_media_debugmsg_error("can not stop media channel(%d/%d)", channel,channel_index);
 				if (media_channel_mutex)
 					os_mutex_unlock(media_channel_mutex);
 				return ERROR;
@@ -670,6 +686,7 @@ int zpl_media_channel_inactive(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E chan
 		{
 			if (zpl_media_hal_inactive(chn) != OK)
 			{
+                zpl_media_debugmsg_error("can not inactive media channel(%d/%d)", channel,channel_index);
 				if (media_channel_mutex)
 					os_mutex_unlock(media_channel_mutex);
 				return ERROR;
@@ -725,6 +742,7 @@ int zpl_media_channel_load(zpl_void *obj)
 		{
 			if (zpl_media_hal_create(chn, chn->buffer_queue) != OK)
 			{
+                zpl_media_debugmsg_error("can not create hal media channel(%d/%d)", chn->channel, chn->channel_index);
 				chn->buffer_queue = NULL;
 				os_free(chn);
 				return ERROR;
