@@ -115,7 +115,6 @@ int rtsp_module_task_init(void)
     {
 		rtsp_srv->t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
 								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK*8);
-        //pthread_create(&rtsp_srv->t_taskid, NULL, zpl_media_rtsp_task, NULL);
         return OK;
     }
     return OK;

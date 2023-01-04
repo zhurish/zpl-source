@@ -189,20 +189,8 @@ typedef struct
 
 } __attribute__ ((packed)) zpl_netpkt_hdr_t ;
 
-typedef struct
-{
-    zpl_uint16 	ID;                 //ID 通道号
-    zpl_uint8 	buffer_type;        //音频视频
-    zpl_uint8 	buffer_codec;       //编码类型
-    zpl_uint8 	buffer_key;         //帧类型
-    zpl_uint8 	buffer_rev;         //
-    zpl_uint16 	buffer_flags;       //ZPL_BUFFER_DATA_E
-    zpl_uint32 	buffer_timetick;    //时间戳毫秒
-    zpl_uint32 	buffer_seq;         //序列号底层序列号
-    zpl_int32	buffer_len;         //帧长度
-    zpl_uint32  sessionID;             //just for file media    
-}__attribute__ ((packed)) zpl_media_hdr_t ;
 
+#define ZPL_SKB_HDR_MAX 64
 
 typedef enum zpl_skbuf_type_s 
 {
@@ -228,9 +216,9 @@ typedef struct zpl_skbuffer_s
 
     union 
     {
-        zpl_netpkt_hdr_t    net_header;
-        zpl_media_hdr_t     media_header;
-    }skb_header;
+        zpl_netpkt_hdr_t   net_hdr;
+        zpl_char other_hdr[ZPL_SKB_HDR_MAX];
+    }skb_hdr;
 
     zpl_void    *device;
 

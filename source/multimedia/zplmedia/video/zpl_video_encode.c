@@ -138,14 +138,14 @@ int zpl_video_encode_vpss_set(zpl_int32 venc_channel, void *halparam)
 	return OK;
 }
 
-int zpl_video_encode_buffer_queue_set(zpl_int32 venc_channel, void *buffer_queue)
+int zpl_video_encode_frame_queue_set(zpl_int32 venc_channel, void *frame_queue)
 {
 	zpl_video_encode_t * t = zpl_video_encode_lookup( venc_channel);
 	if (video_encode_mutex)
 		os_mutex_lock(video_encode_mutex, OS_WAIT_FOREVER);
 	if(t)
 	{
-		t->buffer_queue = buffer_queue;
+		t->frame_queue = frame_queue;
 	}	
 	if(video_encode_mutex)
 		os_mutex_unlock(video_encode_mutex);
@@ -211,10 +211,10 @@ static int zpl_video_encode_read(struct thread *t)
 			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
 #ifdef ZPL_VENC_READ_DEBUG
 #else /* ZPL_VENC_READ_DEBUG */
-		if(encode->buffer_queue)
+		if(encode->frame_queue)
 		{
 			//zpl_media_debugmsg_warn(" =====================zpl_video_encode_read:zpl_media_buffer_distribute");
-			//zpl_media_buffer_distribute(encode->buffer_queue);
+			//zpl_media_buffer_distribute(encode->frame_queue);
 		}
 #endif /* ZPL_VENC_READ_DEBUG */
         if(!ipstack_invalid(encode->vencfd))

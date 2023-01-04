@@ -363,9 +363,9 @@ DEFUN (video_h264_test,
 	extern int SAMPLE_VENC_H264_TEST(void);
 	extern int SAMPLE_VENC_H264_TEST_STOP(void);
 	if(strncmp(argv[0],"sta", 3) == 0)
-		SAMPLE_VENC_H264_TEST();
-	if(strncmp(argv[0],"sto", 3) == 0)
-		SAMPLE_VENC_H264_TEST_STOP();
+        ;// SAMPLE_VENC_H264_TEST();
+    if(strncmp(argv[0],"sto", 3) == 0)
+		;//SAMPLE_VENC_H264_TEST_STOP();
 	return CMD_SUCCESS;
 }
 #endif

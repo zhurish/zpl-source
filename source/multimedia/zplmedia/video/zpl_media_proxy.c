@@ -44,7 +44,7 @@ int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn,
     proxy_client_t *client = NULL;
     if(mediachn == NULL)
         return 0;
-
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
     if(proxy_server.initalition == 0 || proxy_server.mutex == NULL)
         return OK;
     if (proxy_server.mutex)
@@ -70,7 +70,7 @@ int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn,
 
                 //bufdata->buffer_data;       //buffer
 #endif
-                zpl_media_proxy_buffer_write(client->sock, &bufdata->skb_header.media_header, sizeof(zpl_media_hdr_t), ZPL_SKB_DATA(bufdata), ZPL_SKB_DATA_LEN(bufdata));
+                zpl_media_proxy_buffer_write(client->sock, media_header, sizeof(zpl_media_hdr_t), ZPL_SKB_DATA(bufdata), ZPL_SKB_DATA_LEN(bufdata));
                 //write(client->sock, &hdr, sizeof(hdr));
                 //write(client->sock, bufdata->buffer_data, bufdata->buffer_len);
             }

@@ -106,7 +106,11 @@ int livertsp_server::livertsp_server_start(Port ourPort, unsigned int reclamatio
     if (m_livertsp_server == NULL)
         m_livertsp_server = DynamicRTSPServer::createNew(*m_env, ourPort, m_auth_db, reclamationTestSeconds);
     if (m_livertsp_server != NULL)
+    {
+        m_livertsp_server->setLocalIPAddress("127.0.0.1", False);
+        m_env->UsageEnvironmentStart("127.0.0.1", True);
         return 0;
+    }
     return -1;
 }
 

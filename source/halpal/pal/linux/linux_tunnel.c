@@ -28,7 +28,10 @@
 #include "linux/sockios.h"
 
 #ifdef ZPL_KERNEL_NETLINK
-
+#ifndef VTI_ISVTI
+/* VTI-mode i_flags */
+#define VTI_ISVTI ((__be16)0x0001)
+#endif
 static int _if_tunnel_create(const char *dev, struct ip_tunnel_parm *p)
 {
 	struct ipstack_ifreq ifr;

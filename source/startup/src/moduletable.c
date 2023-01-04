@@ -15,8 +15,6 @@ extern struct module_list module_list_bsp;
 extern struct module_list module_list_txrx;
 extern struct module_list module_list_hal;
 extern struct module_list module_list_pal;
-extern struct module_list module_list_webserver;
-extern struct module_list module_list_libssh;
 extern struct module_list module_list_sntpc;
 extern struct module_list module_list_sntps;
 extern struct module_list module_list_utils;
@@ -38,8 +36,6 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_txrx,
   &module_list_hal,
   &module_list_pal,
-  &module_list_webserver,
-  &module_list_libssh,
   &module_list_sntpc,
   &module_list_sntps,
   &module_list_utils,

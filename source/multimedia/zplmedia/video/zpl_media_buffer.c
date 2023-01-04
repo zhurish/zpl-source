@@ -124,10 +124,11 @@ int zpl_media_bufcache_destroy(zpl_media_bufcache_t * bufdata)
 
 int zpl_media_buffer_header(zpl_skbuffer_t * bufdata, int type,int flag, int timetick, int datalen)
 {
-    bufdata->skb_header.media_header.buffer_type = type;     //音频视频
-    bufdata->skb_header.media_header.buffer_flags = flag;
-    bufdata->skb_header.media_header.buffer_timetick = timetick;    //时间戳 毫秒
-    //bufdata->skb_header.media_header.buffer_seq  = stStream.u32Seq;                        //序列号 底层序列号
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+    media_header->frame_type = type;     //音频视频
+    media_header->frame_flags = flag;
+    media_header->frame_timetick = timetick;    //时间戳 毫秒
+    //media_header->buffer_seq  = stStream.u32Seq;                        //序列号 底层序列号
     bufdata->skb_len = datalen;             //当前缓存帧的长度
 	return OK;
 }
@@ -135,15 +136,16 @@ int zpl_media_buffer_header(zpl_skbuffer_t * bufdata, int type,int flag, int tim
 int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel, int key)
 {
 	zpl_media_channel_t *media_channel = channel;
-	bufdata->skb_header.media_header.ID = ZPL_MEDIA_CHANNEL_SET(media_channel->channel, media_channel->channel_index, media_channel->channel_type);
-    bufdata->skb_header.media_header.buffer_key = key;    //时间戳 毫秒
-	if (bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_VIDEO)
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+    media_header->ID = ZPL_MEDIA_CHANNEL_SET(media_channel->channel, media_channel->channel_index, media_channel->channel_type);
+    media_header->frame_key = key;    //时间戳 毫秒
+	if (media_header->frame_type == ZPL_MEDIA_VIDEO)
 	{
-		bufdata->skb_header.media_header.buffer_codec = media_channel->video_media.codec.enctype;
+		media_header->frame_codec = media_channel->video_media.codec.enctype;
 	}
-	else if (bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_AUDIO)
+	else if (media_header->frame_type == ZPL_MEDIA_AUDIO)
 	{
-		bufdata->skb_header.media_header.buffer_codec = media_channel->audio_media.codec.enctype;
+		media_header->frame_codec = media_channel->audio_media.codec.enctype;
 	}
 	return OK;
 }
@@ -151,9 +153,10 @@ int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel,
 int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
 {
 	zpl_media_channel_t *media_channel = channel;
-	if (bufdata->skb_header.media_header.buffer_type == ZPL_MEDIA_VIDEO)
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+	if (media_header->frame_type == ZPL_MEDIA_VIDEO)
 	{
-		switch(bufdata->skb_header.media_header.buffer_key)
+		switch(media_header->frame_key)
 		{
     		case ZPL_VIDEO_FRAME_TYPE_SEI:                         /* H264/H265 SEI types */
     		case ZPL_VIDEO_FRAME_TYPE_SPS:                         /* H264/H265 SPS types */

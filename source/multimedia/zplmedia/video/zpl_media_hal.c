@@ -194,7 +194,7 @@ zpl_media_hal_sys_init();
             zpl_video_encode_destroy(venc_channel);
             return ERROR;
         }
-        if (zpl_video_encode_buffer_queue_set(venc_channel, buffer_queue) != OK)
+        if (zpl_video_encode_frame_queue_set(venc_channel, buffer_queue) != OK)
         {
             zpl_media_debugmsg_error("can not set buffer queue for video_encode channel(%d)", venc_channel);
             zpl_video_encode_destroy(venc_channel);

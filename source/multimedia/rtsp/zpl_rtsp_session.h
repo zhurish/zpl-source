@@ -41,8 +41,8 @@ typedef int(*rtsp_session_call) (rtsp_session_t*, void *);
 typedef struct rtp_session_s
 {
     bool            b_enable;           //使能
-    zpl_socket_t             rtp_sock;           //rtp socket
-    zpl_socket_t             rtcp_sock;          //rtcp socket
+    zpl_socket_t    rtp_sock;           //rtp socket
+    zpl_socket_t    rtcp_sock;          //rtcp socket
     uint8_t         rtpmode;
     void      *rtp_session;       //rtp session
     rtp_session_state rtp_state;        //RTP流状态
@@ -111,7 +111,7 @@ typedef struct rtsp_session_s {
     rtp_session_t   video_session;
     rtp_session_t   audio_session;
     rtp_session_t   *_rtpsession;
-    void            *session_set;
+    void      *session_set;
 #ifdef ZPL_WORKQUEUE
     void            *t_master;
     void            *t_read;

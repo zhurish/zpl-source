@@ -33,6 +33,7 @@ typedef enum
     ZPL_BUFFER_DATA_BMP         = 0x10,           //
 } ZPL_BUFFER_DATA_E;
 
+
 typedef struct zpl_media_bufcache_s
 {
     uint8_t     *data;

@@ -146,6 +146,18 @@
         "iosfwd": "cpp",
         "mutex": "cpp",
         "cfenv": "cpp",
-        "livertsp_server.h": "c"
+        "livertsp_server.h": "c",
+        "in.h": "c",
+        "zpl_vidhal_venc.h": "c",
+        "zpl_media_format.h": "c",
+        "sysinfo.h": "c",
+        "if.h": "c",
+        "if_arp.h": "c",
+        "icmp6.h": "c",
+        "igmp.h": "c",
+        "if_packet.h": "c",
+        "filter.h": "c",
+        "ether.h": "c",
+        "if_tunnel.h": "c"
     }
 }

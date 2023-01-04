@@ -50,7 +50,9 @@ static struct net_proto_key eth_proto_str[] =
         {ETH_P_LOOP, "loop"},           //	0x0060		/* Ethernet Loopback packet	*/
         {ETH_P_PUP, "pup"},             //	0x0200		/* Xerox PUP packet		*/
         {ETH_P_PUPAT, "pupat"},         //	0x0201		/* Xerox PUP Addr Trans packet	*/
+        #ifdef ETH_P_TSN
         {ETH_P_TSN, "tsn"},             //	0x22F0		/* TSN (IEEE 1722) packet	*/
+        #endif
         #ifdef ETH_P_ERSPAN2
         {ETH_P_ERSPAN2, "erspan2"},     //	0x22EB		/* ERSPAN version 2 (type III)	*/
         #endif
@@ -60,7 +62,9 @@ static struct net_proto_key eth_proto_str[] =
         {ETH_P_BPQ, "bpq"},             //	0x08FF		/* G8BPQ AX.25 Ethernet Packet	[ NOT AN OFFICIALLY REGISTERED ID ] */
         {ETH_P_IEEEPUP, "ieeepup"},     //	0x0a00		/* Xerox IEEE802.3 PUP packet */
         {ETH_P_IEEEPUPAT, "ieeepupat"}, //	0x0a01		/* Xerox IEEE802.3 PUP Addr Trans packet */
+        #ifdef ETH_P_BATMAN
         {ETH_P_BATMAN, "batman"},       //	0x4305		/* B.A.T.M.A.N.-Advanced packet [ NOT AN OFFICIALLY REGISTERED ID ] */
+        #endif
         {ETH_P_DEC, "dec"},             //       0x6000          /* DEC Assigned proto           */
         {ETH_P_DNA_DL, "dnadl"},        //    0x6001          /* DEC DNA Dump/Load            */
         {ETH_P_DNA_RC, "dnarc"},        //    0x6002          /* DEC DNA Remote Console       */
@@ -100,24 +104,38 @@ static struct net_proto_key eth_proto_str[] =
         #ifdef ETH_P_LLDP
         {ETH_P_LLDP, "lldp"},           //	0x88CC		/* Link Layer Discovery Protocol */
         #endif
+        #ifdef ETH_P_MACSEC
         {ETH_P_MACSEC, "macsec"},       //	0x88E5		/* 802.1ae MACsec */
+        #endif
         {ETH_P_8021AH, "8021ah"},       //	0x88E7          /* 802.1ah Backbone Service Tag */
+        #ifdef ETH_P_MVRP
         {ETH_P_MVRP, "mvrp"},           //	0x88F5          /* 802.1Q MVRP                  */
+        #endif
         {ETH_P_1588, "1588"},           //	0x88F7		/* IEEE 1588 Timesync */
+        #ifdef ETH_P_NCSI
         {ETH_P_NCSI, "ncsi"},           //	0x88F8		/* NCSI protocol		*/
+        #endif
+        #ifdef ETH_P_PRP
         {ETH_P_PRP, "prp"},             //	0x88FB		/* IEC 62439-3 PRP/HSRv0	*/
+        #endif
         {ETH_P_FCOE, "fcoe"},           //	0x8906		/* Fibre Channel over Ethernet  */
         #ifdef ETH_P_IBOE
         {ETH_P_IBOE, "iboe"},           //	0x8915		/* Infiniband over Ethernet	*/
         #endif
         {ETH_P_TDLS, "tdls"},           //	0x890D          /* TDLS */
         {ETH_P_FIP, "fip"},             //	0x8914		/* FCoE Initialization Protocol */
+        #ifdef ETH_P_80221
         {ETH_P_80221, "80221"},         //	0x8917		/* IEEE 802.21 Media Independent Handover Protocol */
+        #endif
+        #ifdef ETH_P_HSR
         {ETH_P_HSR, "hsr"},             //	0x892F		/* IEC 62439-3 HSRv1	*/
+        #endif
         #ifdef ETH_P_NSH
         {ETH_P_NSH, "nsh"},             //	0x894F		/* Network Service Header */
         #endif
+        #ifdef ETH_P_LOOPBACK
         {ETH_P_LOOPBACK, "loopback"},   //	0x9000		/* Ethernet loopback packet, per IEEE 802.3 */
+        #endif
         {ETH_P_QINQ1, "qinq1"},         //	0x9100		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
         {ETH_P_QINQ2, "qinq2"},         //	0x9200		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
         {ETH_P_QINQ3, "qinq3"},         //	0x9300		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
@@ -126,9 +144,9 @@ static struct net_proto_key eth_proto_str[] =
         {ETH_P_IFE, "ife"},             //	0xED3E		/* ForCES inter-FE LFB type */
         #endif
         {ETH_P_AF_IUCV, "afiucv"},      //   0xFBFB		/* IBM af_iucv [ NOT AN OFFICIALLY REGISTERED ID ] */
-
+        #ifdef ETH_P_802_3_MIN
         {ETH_P_802_3_MIN, "8023min"}, //	0x0600		/* If the value in the ethernet type is less than this value then the frame is Ethernet II. Else it is 802.3 */
-
+        #endif
         /*
          *	Non DIX types. Won't clash for 1500 types.
          */
@@ -143,7 +161,9 @@ static struct net_proto_key eth_proto_str[] =
         {ETH_P_PPP_MP, "pppmp"},          //   0x0008          /* Dummy type for PPP MP frames */
         {ETH_P_LOCALTALK, "localtalk"},   // 0x0009		/* Localtalk pseudo type 	*/
         {ETH_P_CAN, "can"},               //	0x000C		/* CAN: Controller Area Network */
+        #ifdef ETH_P_CANFD
         {ETH_P_CANFD, "canfd"},           //	0x000D		/* CANFD: CAN flexible data rate*/
+        #endif
         {ETH_P_PPPTALK, "ppptalk"},       //	0x0010		/* Dummy type for Atalk over PPP*/
         {ETH_P_TR_802_2, "tr8022"},       //	0x0011		/* 802.2 frames 		*/
         {ETH_P_MOBITEX, "mobitex"},       //	0x0015		/* Mobitex (kaz@cafe.net)	*/
@@ -157,7 +177,9 @@ static struct net_proto_key eth_proto_str[] =
         {ETH_P_PHONET, "phonet"},         //	0x00F5		/* Nokia Phonet frames          */
         {ETH_P_IEEE802154, "ieee802154"}, // 0x00F6		/* IEEE802.15.4 frame		*/
         {ETH_P_CAIF, "caif"},             //	0x00F7		/* ST-Ericsson CAIF protocol	*/
+        #ifdef ETH_P_XDSA
         {ETH_P_XDSA, "xdsa"},             //	0x00F8		/* Multiplexed DSA protocol	*/
+        #endif
         #ifdef ETH_P_MAP
         {ETH_P_MAP, "map"},               //	0x00F9		/* Qualcomm multiplexing and aggregation protocol */
         #endif

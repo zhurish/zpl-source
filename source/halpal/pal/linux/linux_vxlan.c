@@ -29,8 +29,13 @@
 #include "nsm_vlaneth.h"
 #include "linux_driver.h"
 
-
-
+#ifdef ZPL_HISIMPP_MODULE
+int vxlan_parse_opt(int v6, struct vxlan_param *param,
+						   struct nlmsghdr *n)
+{
+    return - 1;
+}
+#else
 int vxlan_parse_opt(int v6, struct vxlan_param *param,
 						   struct nlmsghdr *n)
 {
@@ -144,3 +149,4 @@ int vxlan_parse_opt(int v6, struct vxlan_param *param,
 	}
 	return 0;
 }
+#endif

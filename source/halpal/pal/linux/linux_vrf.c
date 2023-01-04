@@ -46,7 +46,9 @@
 #include "nsm_firewalld.h"
 #include "nsm_vlaneth.h"
 #include "linux_driver.h"
-
+#ifndef IFLA_VRF_TABLE
+#define IFLA_VRF_TABLE 1
+#endif
 #ifdef ZPL_NETNS_ENABLE
 
 #ifndef CLONE_NEWNET

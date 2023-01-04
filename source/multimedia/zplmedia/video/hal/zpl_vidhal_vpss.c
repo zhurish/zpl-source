@@ -438,7 +438,7 @@ int zpl_vidhal_vpss_channel_start(zpl_video_vpss_channel_t *vpss)
     }
 #ifdef ZPL_HISIMPP_MODULE
     if (vpss->vpss_channel >= 0)
-        vpss->vpssfd = HI_MPI_VPSS_GetChnFd(vpss->vpssgrp->vpss_group, vpss->vpss_channel);
+        ipstack_fd(vpss->vpssfd) = HI_MPI_VPSS_GetChnFd(vpss->vpssgrp->vpss_group, vpss->vpss_channel);
 #endif
     return OK;
 }

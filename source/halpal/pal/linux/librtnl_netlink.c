@@ -42,7 +42,9 @@
 
 #include "librtnl_netlink.h"
 
-
+#ifndef RTEXT_FILTER_SKIP_STATS
+#define RTEXT_FILTER_SKIP_STATS (1<<3)
+#endif
 struct nlsock netlink_cmd;
 
 #ifdef ZPL_KERNEL_NETLINK

@@ -38,7 +38,7 @@ typedef struct
 
     zpl_void            *t_read;
 	zpl_void            *t_master;
-    zpl_void            *buffer_queue;      //编码后数据队列
+    zpl_void            *frame_queue;      //编码后数据队列
 
 	zpl_void			*video_vpss;		//绑定的VPSS
 	zpl_void			*media_channel;		//
@@ -46,8 +46,8 @@ typedef struct
     zpl_bool            hwbind;         //硬件绑定
     zpl_uint32          res_flag;       //资源标志 
 #ifdef ZPL_VENC_READ_DEBUG
-	zpl_uint8           *buffer_data;        
-    zpl_uint32          buffer_size;       
+	zpl_uint8           *frame_data;        
+    zpl_uint32          frame_size;       
 #endif
 #ifdef ZPL_HISIMPP_HWDEBUG
     zpl_uint32              dbg_send_count;
@@ -63,8 +63,7 @@ int zpl_video_encode_create(zpl_int32 channel);
 int zpl_video_encode_destroy(zpl_int32 channel);
 zpl_video_encode_t * zpl_video_encode_lookup(zpl_int32 channel);
 int zpl_video_encode_vpss_set(zpl_int32 channel, void *halparam);
-
-int zpl_video_encode_buffer_queue_set(zpl_int32 channel, void *buffer_queue);
+int zpl_video_encode_frame_queue_set(zpl_int32 venc_channel, void *frame_queue);
 int zpl_video_encode_online_set(zpl_video_encode_t *encode, zpl_bool online);
 int zpl_video_encode_online_get(zpl_video_encode_t *encode, zpl_bool *online);
 

@@ -736,7 +736,16 @@ int zpl_vidhal_hdmi_HdmiConvertSync(VO_INTF_SYNC_E enIntfSync,
 }
 
 
-
+#define CHECK_RET(express,name)\
+    do{\
+        HI_S32 Ret;\
+        Ret = express;\
+        if (HI_SUCCESS != Ret)\
+        {\
+            printf("\033[0;31m%s failed at %s: LINE: %d with %#x!\033[0;39m\n", name, __FUNCTION__, __LINE__, Ret);\
+            return Ret;\
+        }\
+    }while(0)
 int zpl_vidhal_hdmi_HdmiStart(VO_INTF_SYNC_E enIntfSync)
 {
     HI_HDMI_ATTR_S      stAttr;

@@ -54,7 +54,7 @@ extern "C" {
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-//#include <netinet/igmp.h>
+#include <netinet/igmp.h>
 #include <netinet/ether.h>
 #include <netinet/if_ether.h>
 #ifdef ZPL_BUILD_IPV6
@@ -65,6 +65,7 @@ extern "C" {
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_arp.h>
+//#include <net/if_packet.h>
 
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -73,7 +74,7 @@ extern "C" {
 
 
 #include <linux/sysinfo.h>
-#include <linux/if.h>
+//#include <linux/if.h>
 #include <linux/igmp.h>
 #include <linux/types.h>
 #include <linux/version.h>

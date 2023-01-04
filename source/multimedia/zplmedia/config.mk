@@ -58,16 +58,16 @@ OSOBJ	+= zpl_vidhal.o
 
 ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 #OSOBJ	+= sample_comm_audio.o
-OSOBJ	+= sample_comm_isp.o
+##OSOBJ	+= sample_comm_isp.o
 #OSOBJ	+= sample_comm_region.o	
-OSOBJ	+= sample_comm_sys.o
+##OSOBJ	+= sample_comm_sys.o
 #OSOBJ	+= sample_comm_vdec.o
-OSOBJ	+= sample_comm_venc.o
-OSOBJ	+= sample_comm_vi.o
+##OSOBJ	+= sample_comm_venc.o
+##OSOBJ	+= sample_comm_vi.o
 #OSOBJ	+= sample_comm_vo.o
-OSOBJ	+= sample_comm_vpss.o
+##OSOBJ	+= sample_comm_vpss.o
 #OSOBJ	+= loadbmp.o
-OSOBJ	+= sample_venc.o
+##OSOBJ	+= sample_venc.o
 endif
 #############################################################################
 # LIB

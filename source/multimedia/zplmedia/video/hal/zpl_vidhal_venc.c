@@ -931,7 +931,7 @@ int zpl_vidhal_venc_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_i
         return HI_FAILURE;
     }
     zpl_media_debugmsg_err(" ==========VENC Channel (%d) zpl_vidhal_venc_start", venc->venc_channel);
-    venc->vencfd = HI_MPI_VENC_GetFd(venc->venc_channel);
+    ipstack_fd(venc->vencfd) = HI_MPI_VENC_GetFd(venc->venc_channel);
     return HI_SUCCESS;
 #else
     return OK;
@@ -1265,7 +1265,7 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E 
     zpl_uint32 offset = 0;
     zpl_skbuffer_t * bufdata = NULL;
     zpl_video_assert(venc);
-    zpl_video_assert(venc->buffer_queue);
+    zpl_video_assert(venc->frame_queue);
     memset(&stStat, 0, sizeof(stStat));
     memset(&stStream, 0, sizeof(stStream));
     memset(&venc_pack, 0, sizeof(venc_pack));
@@ -1319,9 +1319,10 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E 
 	venc->dbg_recv_count++;
 #endif
 
-    bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->buffer_queue, packsize);
+    bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->frame_queue, packsize);
     if(bufdata && bufdata->skb_data && bufdata->skb_maxsize >= packsize)
     {
+        zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
         zpl_media_buffer_header(bufdata, ZPL_MEDIA_VIDEO, ZPL_BUFFER_DATA_ENCODE, stStream.pstPack->u64PTS / 1000U, packsize);
 
         for (i = 0; i < (zpl_int32)(stStream.u32PackCount); i++)
@@ -1332,17 +1333,17 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E 
             
             if ((stStream.pstPack[i].DataType.enH264EType == H264E_NALU_IDRSLICE) || (stStream.pstPack[i].DataType.enH265EType == H265E_NALU_IDRSLICE))
             {
-                bufdata->skb_header.media_header.buffer_key = ZPL_VIDEO_FRAME_TYPE_KEY;
+                media_header->frame_key = ZPL_VIDEO_FRAME_TYPE_KEY;
             }
             else if((stStream.pstPack[i].DataType.enH264EType == H264E_NALU_PSLICE) || (stStream.pstPack[i].DataType.enH265EType == H265E_NALU_PSLICE))
             {
-                bufdata->skb_header.media_header.buffer_key = ZPL_VIDEO_FRAME_TYPE_PSLICE;
+                media_header->frame_key = ZPL_VIDEO_FRAME_TYPE_PSLICE;
             }
             else
             {
-                bufdata->skb_header.media_header.buffer_key = ZPL_VIDEO_FRAME_TYPE_BSLICE;
+                media_header->frame_key = ZPL_VIDEO_FRAME_TYPE_BSLICE;
             }
-            bufdata->skb_header.media_header.buffer_key = zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType);
+            media_header->frame_key = zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType);
             zpl_media_buffer_header_channel_key(bufdata, venc->media_channel, zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType));
         
         }
@@ -1352,13 +1353,13 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E 
 			venc->dbg_recv_count = 0;
 			if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
 			{
-				zpl_media_debugmsg_debug(" VENC Channel (%d) Add Stream To buffer_queue Total Size=%d", venc->venc_channel, packsize);
+				zpl_media_debugmsg_debug(" VENC Channel (%d) Add Stream To frame_queue Total Size=%d", venc->venc_channel, packsize);
 			}
 		}
 		venc->dbg_recv_count++;
 #endif
 
-		zpl_skbqueue_enqueue(venc->buffer_queue, bufdata);
+		zpl_skbqueue_enqueue(venc->frame_queue, bufdata);
     }
     /*******************************************************
      step 5 : release stream
@@ -1393,7 +1394,7 @@ int zpl_vidhal_venc_frame_recvfrom_one(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDE
     memset(&venc_pack, 0, sizeof(venc_pack));
 
     zpl_video_assert(venc);
-    zpl_video_assert(venc->buffer_queue);
+    zpl_video_assert(venc->frame_queue);
     
     /*******************************************************
      step 1 : query how many packs in one-frame stream.
@@ -1476,12 +1477,13 @@ int zpl_vidhal_venc_frame_recvfrom_one(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDE
         }       
 #else/* ZPL_VENC_READ_DEBUG */
 
-        bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->buffer_queue, packsize);
+        bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->frame_queue, packsize);
         offset = 0;
 		if(bufdata != NULL
             && bufdata->skb_data != NULL 
             && bufdata->skb_maxsize >= packsize)
 		{
+            zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
             zpl_media_buffer_header(bufdata, ZPL_MEDIA_VIDEO, ZPL_BUFFER_DATA_ENCODE, stStream.pstPack->u64PTS / 1000U, packsize);
  
 			//packsize = (stStream.pstPack[i].u32Len - stStream.pstPack[i].u32Offset);
@@ -1495,18 +1497,18 @@ int zpl_vidhal_venc_frame_recvfrom_one(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDE
 			if ((stStream.pstPack[i].DataType.enH264EType == H264E_NALU_IDRSLICE) || 
                 (stStream.pstPack[i].DataType.enH265EType == H265E_NALU_IDRSLICE))
 			{
-				bufdata->skb_header.media_header.buffer_key = ZPL_VIDEO_FRAME_TYPE_KEY;
+				media_header->frame_key = ZPL_VIDEO_FRAME_TYPE_KEY;
 			}
 			else if((stStream.pstPack[i].DataType.enH264EType == H264E_NALU_PSLICE) || 
                 (stStream.pstPack[i].DataType.enH265EType == H265E_NALU_PSLICE))
 			{
-				bufdata->skb_header.media_header.buffer_key = ZPL_VIDEO_FRAME_TYPE_PSLICE;
+				media_header->frame_key = ZPL_VIDEO_FRAME_TYPE_PSLICE;
 			}
 			else
 			{
-				bufdata->skb_header.media_header.buffer_key = ZPL_VIDEO_FRAME_TYPE_BSLICE;
+				media_header->frame_key = ZPL_VIDEO_FRAME_TYPE_BSLICE;
 			}
-            bufdata->skb_header.media_header.buffer_key = zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType);
+            media_header->frame_key = zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType);
             zpl_media_buffer_header_channel_key(bufdata, venc->media_channel, zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType));
 
 	#ifdef ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL
@@ -1515,12 +1517,12 @@ int zpl_vidhal_venc_frame_recvfrom_one(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDE
 				venc->dbg_recv_count = 0;
 				if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
 				{
-					zpl_media_debugmsg_debug(" VENC Channel (%d) Add Stream To buffer_queue Total Size=%d", venc->venc_channel, packsize);
+					zpl_media_debugmsg_debug(" VENC Channel (%d) Add Stream To frame_queue Total Size=%d", venc->venc_channel, packsize);
 				}
 			}
 			venc->dbg_recv_count++;
 	#endif
-			zpl_skbqueue_enqueue(venc->buffer_queue, bufdata);    
+			zpl_skbqueue_enqueue(venc->frame_queue, bufdata);    
 		}
 #endif /* ZPL_VENC_READ_DEBUG */
 	}

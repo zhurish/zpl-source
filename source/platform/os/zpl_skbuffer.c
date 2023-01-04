@@ -294,7 +294,7 @@ zpl_skbuffer_t *zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 	skbuftmp = zpl_skbuffer_create_raw(skbuf->skbtype, queue, skbuf->skb_maxsize);
 	if (skbuftmp)
 	{
-		memcpy(&skbuftmp->skb_header, &skbuf->skb_header, sizeof(skbuf->skb_header));
+		memcpy(&skbuftmp->skb_hdr, &skbuf->skb_hdr, sizeof(skbuf->skb_hdr));
 		skbuftmp->skb_timetick = skbuf->skb_timetick; //时间戳 毫秒
 		skbuftmp->skb_len = skbuf->skb_len;			//当前缓存帧的长度
 		skbuftmp->skb_maxsize = skbuf->skb_maxsize; //buffer 的长度
@@ -474,56 +474,56 @@ zpl_skbuffer_t * zpl_skbuffer_prev_get(zpl_skbuffer_t *head)
 /* net pkt */
 int zpl_skbuffer_source_set(zpl_skbuffer_t *skbuf, zpl_uint8 unit, ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid)
 {
-	skbuf->skb_header.net_header.unit = unit;
-    skbuf->skb_header.net_header.ifindex = ifindex;
-    skbuf->skb_header.net_header.trunk = trunk;          /* Source trunk group ID used in header/tag, -1 if src_port set . */
-    skbuf->skb_header.net_header.phyid = phyid;          /* Source port used in header/tag. */
+	skbuf->skb_hdr.net_hdr.unit = unit;
+    skbuf->skb_hdr.net_hdr.ifindex = ifindex;
+    skbuf->skb_hdr.net_hdr.trunk = trunk;          /* Source trunk group ID used in header/tag, -1 if src_port set . */
+    skbuf->skb_hdr.net_hdr.phyid = phyid;          /* Source port used in header/tag. */
 	return OK;
 }
 
 int zpl_skbuffer_reason_set(zpl_skbuffer_t *skbuf, zpl_uint32 reason)
 {
-	skbuf->skb_header.net_header.reason = reason;         /* Opcode from packet. */
+	skbuf->skb_hdr.net_hdr.reason = reason;         /* Opcode from packet. */
 	return OK;
 }
 
 int zpl_skbuffer_timestamp_set(zpl_skbuffer_t *skbuf, zpl_uint32 timestamp)
 {
-	skbuf->skb_header.net_header.timestamp = timestamp;         /* Opcode from packet. */
+	skbuf->skb_hdr.net_hdr.timestamp = timestamp;         /* Opcode from packet. */
 	return OK;
 }
 
 static int zpl_skbuffer_netpkt_parse_header(zpl_skbuffer_t *skbuf, uint8_t *data)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)data;
-    //skbuf->skb_header.net_header.unit = unit;                         /* Unit number. */
-    skbuf->skb_header.net_header.cos = 0;                          /* The local COS queue to use. */
-	skbuf->skb_header.net_header.prio_int = 0;                     /* Internal priority of the packet. */
+    //skbuf->skb_hdr.net_hdr.unit = unit;                         /* Unit number. */
+    skbuf->skb_hdr.net_hdr.cos = 0;                          /* The local COS queue to use. */
+	skbuf->skb_hdr.net_hdr.prio_int = 0;                     /* Internal priority of the packet. */
 	if(ntohs(hdr->ethhdr.ethtype) == 0x8100 || ntohs(hdr->ethhdr.ethtype) == 0x9100 || ntohs(hdr->ethhdr.ethtype) == 0x9200)
 	{
-    	skbuf->skb_header.net_header.tpid = ntohs(hdr->ethhdr.ethtype);
-    	skbuf->skb_header.net_header.vlan = hdr->ethhdr.vlanhdr.vid;                    /* 802.1q VID or VSI or VPN. */
-    	skbuf->skb_header.net_header.vlan_pri = hdr->ethhdr.vlanhdr.pri;                     /* Vlan tag priority . */
-    	skbuf->skb_header.net_header.vlan_cfi = hdr->ethhdr.vlanhdr.cfi;                     /* Vlan tag CFI bit. */
-		skbuf->skb_header.net_header.ethtype = ntohs(hdr->ethhdr.vlanhdr.ethtype);
+    	skbuf->skb_hdr.net_hdr.tpid = ntohs(hdr->ethhdr.ethtype);
+    	skbuf->skb_hdr.net_hdr.vlan = hdr->ethhdr.vlanhdr.vid;                    /* 802.1q VID or VSI or VPN. */
+    	skbuf->skb_hdr.net_hdr.vlan_pri = hdr->ethhdr.vlanhdr.pri;                     /* Vlan tag priority . */
+    	skbuf->skb_hdr.net_hdr.vlan_cfi = hdr->ethhdr.vlanhdr.cfi;                     /* Vlan tag CFI bit. */
+		skbuf->skb_hdr.net_hdr.ethtype = ntohs(hdr->ethhdr.vlanhdr.ethtype);
 		if(ntohs(hdr->ethhdr.vlanhdr.ethtype) == 0x8100)
 		{
 			hdr = (zpl_skb_ethvlan_t *)(data + 4);
-			skbuf->skb_header.net_header.inner_tpid = ntohs(hdr->ethhdr.ethtype);
-			skbuf->skb_header.net_header.inner_vlan = hdr->ethhdr.vlanhdr.vid;                    /* 802.1q VID or VSI or VPN. */
-			skbuf->skb_header.net_header.inner_vlan_pri = hdr->ethhdr.vlanhdr.pri;                     /* Vlan tag priority . */
-			skbuf->skb_header.net_header.inner_vlan_cfi = hdr->ethhdr.vlanhdr.cfi;                     /* Vlan tag CFI bit. */
-			skbuf->skb_header.net_header.ethtype = ntohs(hdr->ethhdr.vlanhdr.ethtype);
+			skbuf->skb_hdr.net_hdr.inner_tpid = ntohs(hdr->ethhdr.ethtype);
+			skbuf->skb_hdr.net_hdr.inner_vlan = hdr->ethhdr.vlanhdr.vid;                    /* 802.1q VID or VSI or VPN. */
+			skbuf->skb_hdr.net_hdr.inner_vlan_pri = hdr->ethhdr.vlanhdr.pri;                     /* Vlan tag priority . */
+			skbuf->skb_hdr.net_hdr.inner_vlan_cfi = hdr->ethhdr.vlanhdr.cfi;                     /* Vlan tag CFI bit. */
+			skbuf->skb_hdr.net_hdr.ethtype = ntohs(hdr->ethhdr.vlanhdr.ethtype);
 		}
-		skbuf->skb_header.net_header.untagged = 0;
+		skbuf->skb_hdr.net_hdr.untagged = 0;
 	}
 	else
 	{
-		skbuf->skb_header.net_header.ethtype = ntohs(hdr->ethhdr.ethtype);
-		skbuf->skb_header.net_header.untagged = 1;       /* The packet was untagged on ingress. */
+		skbuf->skb_hdr.net_hdr.ethtype = ntohs(hdr->ethhdr.ethtype);
+		skbuf->skb_hdr.net_hdr.untagged = 1;       /* The packet was untagged on ingress. */
 	}
-    skbuf->skb_header.net_header.color = 0;                  /* Packet color. */
-    skbuf->skb_header.net_header.reference = 0;	
+    skbuf->skb_hdr.net_hdr.color = 0;                  /* Packet color. */
+    skbuf->skb_hdr.net_hdr.reference = 0;	
 	return OK;
 }
 

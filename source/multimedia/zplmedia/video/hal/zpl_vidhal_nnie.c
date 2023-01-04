@@ -355,11 +355,11 @@ static zpl_int32 ZPL_VIDHAL_SVP_NNIE_ParamInit(ZPL_VIDHAL_SVP_NNIE_CFG_S *pstNni
 		"Error,ZPL_VIDHAL_SVP_NNIE_GetTaskAndBlobBufSize failed!\n");
 
 	/*Malloc mem*/
-	s32Ret = SAMPLE_COMM_SVP_MallocCached("SAMPLE_NNIE_TASK",NULL,(zpl_uint64*)&u64PhyAddr,(void**)&pu8VirAddr,u32TotalSize);
+	s32Ret = zpl_vidhal_svp_MallocCached("SAMPLE_NNIE_TASK",NULL,(zpl_uint64*)&u64PhyAddr,(void**)&pu8VirAddr,u32TotalSize);
 	ZPL_VIDHAL_SVP_CHECK_EXPR_RET(HI_SUCCESS != s32Ret,s32Ret,ZPL_VIDHAL_SVP_ERR_LEVEL_ERROR,
 		"Error,Malloc memory failed!\n");
 	memset(pu8VirAddr, 0, u32TotalSize);
-	SAMPLE_COMM_SVP_FlushCache(u64PhyAddr,(void*)pu8VirAddr,u32TotalSize);
+	zpl_vidhal_svp_FlushCache(u64PhyAddr,(void*)pu8VirAddr,u32TotalSize);
 
 	/*fill taskinfo mem addr*/
 	pstNnieParam->stTaskBuf.u32Size = u32TotalTaskBufSize;
@@ -547,7 +547,7 @@ int zpl_vidhal_svp_nnie_LoadModel(zpl_char * pszModelFile,
 	ZPL_VIDHAL_SVP_CHECK_EXPR_GOTO(-1 == s32Ret,FAIL_0,ZPL_VIDHAL_SVP_ERR_LEVEL_ERROR,"Error, fseek failed!\n");
 
 	/*malloc model file mem*/
-	s32Ret = SAMPLE_COMM_SVP_MallocMem("SAMPLE_NNIE_MODEL",NULL,(zpl_uint64*)&u64PhyAddr,(void**)&pu8VirAddr,slFileSize);
+	s32Ret = zpl_vidhal_svp_MallocMem("SAMPLE_NNIE_MODEL",NULL,(zpl_uint64*)&u64PhyAddr,(void**)&pu8VirAddr,slFileSize);
 	ZPL_VIDHAL_SVP_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret,FAIL_0,ZPL_VIDHAL_SVP_ERR_LEVEL_ERROR,
 		"Error(%#x),Malloc memory failed!\n",s32Ret);
 

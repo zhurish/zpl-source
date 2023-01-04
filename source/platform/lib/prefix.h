@@ -36,7 +36,7 @@ extern "C" {
 #  include <netinet/if_ether.h>
 # endif
 #endif
-#include <linux/mpls.h>
+//#include <linux/mpls.h>
 #include "sockunion.h"
 
 #ifndef ETHER_ADDR_LEN

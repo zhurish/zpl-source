@@ -1225,11 +1225,11 @@ stunRand(void)
 	if (e <= 0)
 	{
            ortp_error("stun: Failed to get data from random device\n");
-           closesocket(fd);
+           close(fd);
 	   return random();
 	}
 	e=read(fd,&tick,sizeof(tick));
-	closesocket(fd);
+	close(fd);
       }
 #else
 #     error Need some way to seed the random number generator 

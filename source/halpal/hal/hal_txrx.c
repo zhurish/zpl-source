@@ -134,14 +134,14 @@ static int hal_txrx_thread(os_ansync_t *thread)
       if (rx_skb)
       {
         // TODO
-        ifp = if_lookup_by_index(rx_skb->skb_header.net_header.ifindex);
+        ifp = if_lookup_by_index(rx_skb->skb_hdr.net_hdr.ifindex);
         if(ifp)
         {
           if(if_is_l3intf(ifp))
-            hal_txrx_sendto_netdevice(0, ZPL_SKB_DATA(rx_skb), ZPL_SKB_DATA_LEN(rx_skb), ifindex2ifkernel(rx_skb->skb_header.net_header.ifindex));
+            hal_txrx_sendto_netdevice(0, ZPL_SKB_DATA(rx_skb), ZPL_SKB_DATA_LEN(rx_skb), ifindex2ifkernel(rx_skb->skb_hdr.net_hdr.ifindex));
           else
           {
-            ifp = if_lookup_by_index(vlanif2ifindex(rx_skb->skb_header.net_header.vlan));
+            ifp = if_lookup_by_index(vlanif2ifindex(rx_skb->skb_hdr.net_hdr.vlan));
             if(ifp && if_is_vlan(ifp))
               hal_txrx_sendto_netdevice(0, ZPL_SKB_DATA(rx_skb), ZPL_SKB_DATA_LEN(rx_skb), ifp->ker_ifindex);
           }  

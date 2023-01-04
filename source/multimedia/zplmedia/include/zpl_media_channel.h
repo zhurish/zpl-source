@@ -77,7 +77,7 @@ typedef struct zpl_media_channel_s
     zpl_media_video_t           video_media;
     zpl_media_audio_t           audio_media;
 
-    zpl_skbqueue_t              *buffer_queue;      //通道对应的编码数据缓冲区
+    zpl_skbqueue_t              *frame_queue;      //通道对应的编码数据缓冲区
 
     ZPL_MEDIA_STATE_E           state;
     zpl_media_client_t          media_client[ZPL_MEDIA_CLIENT_MAX];
@@ -86,7 +86,12 @@ typedef struct zpl_media_channel_s
 
     zpl_media_unit_t            p_record;//通道使能录像
     zpl_media_unit_t            p_capture;//通道使能抓拍
+
+    os_mutex_t  *_mutex;
 }zpl_media_channel_t;
+
+#define ZPL_MEDIA_CHANNEL_LOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_lock(((zpl_media_channel_t*)m)->_mutex, OS_WAIT_FOREVER)
+#define ZPL_MEDIA_CHANNEL_UNLOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_unlock(((zpl_media_channel_t*)m)->_mutex)
 
 
 #define zpl_media_channel_gettype(m)    (((zpl_media_channel_t*)m)->channel_type)

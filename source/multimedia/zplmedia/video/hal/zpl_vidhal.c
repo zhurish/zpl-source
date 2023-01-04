@@ -27,7 +27,7 @@ int zpl_video_hal_scale(void *inframe, void *outframe, zpl_video_size_t vidsize)
     s32Ret = zpl_vidhal_vgs_scale_job(in_frame, out_frame, VGS_SCLCOEF_NORMAL, vidsize.width, vidsize.height);
     if (s32Ret != HI_SUCCESS)
     {
-        if (VIDEO_ISDEBUG(ERROR))
+        //if (VIDEO_ISDEBUG(ERROR))
         {
             zpl_media_debugmsg_debug("vgs scale error:%s", zpl_syshal_strerror(s32Ret));
         }
@@ -48,7 +48,7 @@ int zpl_video_hal_exchange(void *inframe, zpl_video_size_t vidsize)
     s32Ret = zpl_vidhal_vgs_scale_job(in_frame, out_frame, VGS_SCLCOEF_NORMAL, vidsize.width, vidsize.height);
     if (s32Ret != HI_SUCCESS)
     {
-        if (VIDEO_ISDEBUG(ERROR))
+        if (ZPL_MEDIA_DEBUG(IVE, ERROR))
         {
             zpl_media_debugmsg_debug("vgs scale error:%s", zpl_syshal_strerror(s32Ret));
         }
@@ -228,7 +228,7 @@ void * zpl_video_hal_frame_clone(void *inframe, zpl_media_memblock_t *memblk)
                               video_frame->base_info.enPixelFormat,
                               DATA_BITWIDTH_8, video_frame->base_info.enCompressMode, 0, &video_frame->stCalConfig);
                               */
-    s32Ret = zpl_video_memblock_init(memblk,  memblk->uBlkSize);
+    //s32Ret = zpl_video_memblock_init(memblk,  memblk->uBlkSize);
     if(s32Ret != OK)
     {
         if(clone_frame)
@@ -247,7 +247,7 @@ void * zpl_video_hal_frame_clone(void *inframe, zpl_media_memblock_t *memblk)
     clone_frame->stVFrame.u64PhyAddr[1]  = clone_frame->stVFrame.u64PhyAddr[0] + (srcframe->stVFrame.u64PhyAddr[1] - srcframe->stVFrame.u64PhyAddr[0]);
     clone_frame->stVFrame.u64PhyAddr[2]  = clone_frame->stVFrame.u64PhyAddr[0] + (srcframe->stVFrame.u64PhyAddr[2] - srcframe->stVFrame.u64PhyAddr[0]);
     
-    clone_frame->stVFrame.u64VirAddr[0]    = memblk->pVirAddr;
+    clone_frame->stVFrame.u64VirAddr[0]    = (HI_U64)memblk->pVirAddr;
     clone_frame->stVFrame.u64VirAddr[1]    = clone_frame->stVFrame.u64VirAddr[0] + (srcframe->stVFrame.u64VirAddr[1] - srcframe->stVFrame.u64VirAddr[0]);
     clone_frame->stVFrame.u64VirAddr[3]    = clone_frame->stVFrame.u64VirAddr[0] + (srcframe->stVFrame.u64VirAddr[2] - srcframe->stVFrame.u64VirAddr[0]);
 
@@ -280,7 +280,7 @@ void * zpl_video_hal_frame_clone(void *inframe, zpl_media_memblock_t *memblk)
         return clone_frame;
     else
     {
-        zpl_video_memblock_deinit(memblk);
+        //zpl_video_memblock_deinit(memblk);
         free(clone_frame);
         clone_frame = NULL;
         return NULL;

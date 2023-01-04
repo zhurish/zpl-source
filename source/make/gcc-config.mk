@@ -45,9 +45,9 @@ ZPLOS_GCC_WALL += -Winit-self # (only for C++)
 #ZPLOS_GCC_WEXTRA += -Wsign-compare # (C only) 	
 
 ZPLOS_GCC_WARNING += -Wcast-align
-ZPLOS_GCC_WARNING += -Walloc-zero
+#ZPLOS_GCC_WARNING += -Walloc-zero
+#ZPLOS_GCC_WARNING += -Wshadow=compatible-local
 ZPLOS_GCC_WARNING += -Wduplicated-cond
-ZPLOS_GCC_WARNING += -Wshadow=compatible-local
 ZPLOS_GCC_WARNING += -Wundef
 ZPLOS_GCC_WARNING += -Wsizeof-pointer-memaccess
 ZPLOS_GCC_WARNING += -Wmemset-transposed-args
@@ -66,9 +66,9 @@ ZPLOS_GNU_WERROR += -Werror=format-zero-length #对长度为 0 的格式字符�
 ZPLOS_GNU_WERROR += -Werror=volatile-register-var   #当一个寄存器变量被声明为 volatile
 
 ZPLOS_GNU_WERROR += -Werror=div-by-zero
-ZPLOS_GNU_WERROR += -Werror=alloc-zero
+#ZPLOS_GNU_WERROR += -Werror=alloc-zero
 ZPLOS_GNU_WERROR += -Werror=duplicated-cond
-ZPLOS_GNU_WERROR += -Werror=shadow=compatible-local
+#ZPLOS_GNU_WERROR += -Werror=shadow=compatible-local
 #ZPLOS_GNU_WERROR += -Werror=undef
 #ZPLOS_GNU_WERROR += -Werror=sizeof-pointer-memaccess
 #ZPLOS_GNU_WERROR += -Werror=memset-transposed-args

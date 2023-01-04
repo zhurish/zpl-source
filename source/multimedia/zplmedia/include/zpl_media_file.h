@@ -18,9 +18,6 @@ extern "C" {
 #endif
 
 
-#define ZPL_MEDIA_FILE_TASK
-
-
 #pragma pack(1)
 
 typedef struct
@@ -48,10 +45,7 @@ struct zpl_media_file_s
     int         file_size;      //! 4 for parameter sets and first slice in picture, 3 for everything else (suggested)
     uint32_t    offset_len;
     int         msec;           //定时间隔
-#ifndef ZPL_MEDIA_FILE_TASK
-    void        *t_master;
-    void        *t_read;
-#endif
+
     zpl_media_filedesc_t filedesc;
 
     zpl_bool     b_video;
@@ -60,17 +54,17 @@ struct zpl_media_file_s
     uint32_t    flags;
 
     zpl_uint32  last_ts;
-#ifdef ZPL_MEDIA_FILE_TASK
+
     zpl_taskid_t    taskid;
-    uint32_t    run;
-#endif
+    zpl_uint32    run;
+
     uint32_t    pack_seq;
     uint32_t    cnt;
     void        *pdata;                     //稀有数据
-    zpl_skbqueue_t    *buffer_queue;              //消息队列
+    zpl_skbqueue_t    *frame_queue;              //消息队列
     zpl_void    *parent;                    //父节点
-    
-    int         (*get_frame)(zpl_media_file_t*, zpl_media_bufcache_t *);//读取一帧数据回调函数
+    os_mutex_t *_mutex;
+    int (*get_frame)(zpl_media_file_t *, zpl_media_bufcache_t *);            // 读取一帧数据回调函数
     int         (*get_extradata)(zpl_media_file_t*, zpl_video_extradata_t *);//读取额外数据回调函数
     int         (*put_frame)(zpl_media_file_t*, zpl_media_bufcache_t *);
     int         (*put_extradata)(zpl_media_file_t*, zpl_video_extradata_t *);
@@ -79,8 +73,8 @@ struct zpl_media_file_s
 extern char *zpl_media_file_basename(const char *name);
 extern int zpl_media_file_update(zpl_media_file_t * channel, bool add);
 
-extern int zpl_media_file_start(zpl_media_file_t *media, bool start);
-extern int zpl_media_file_master(zpl_media_file_t *media_file, void *master, int msec);
+extern int zpl_media_file_play_start(zpl_media_file_t *media, bool start);
+extern int zpl_media_file_play_destroy(zpl_media_file_t *media_file);
 
 extern zpl_media_file_t *zpl_media_file_create(const char *name, const char *op);
 extern int zpl_media_file_destroy(zpl_media_file_t *media_file);

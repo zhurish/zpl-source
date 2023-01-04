@@ -120,6 +120,21 @@ typedef struct
 }__attribute__ ((packed)) zpl_media_head_t ;
 
 
+typedef struct
+{
+    zpl_uint16 	ID;                //ID 通道号
+    zpl_uint8 	frame_type;        //音频/视频 ZPL_MEDIA_E
+    zpl_uint8 	frame_codec;       //编码类型 ZPL_VIDEO_CODEC_E
+    zpl_uint8 	frame_key;         //帧类型  ZPL_VIDEO_FRAME_TYPE_E
+    zpl_uint8 	frame_rev;         //
+    zpl_uint16 	frame_flags;       //ZPL_BUFFER_DATA_E
+    zpl_uint32 	frame_timetick;    //时间戳毫秒
+    zpl_uint32 	frame_seq;         //序列号底层序列号
+    zpl_int32	frame_len;         //帧长度
+    zpl_uint32  sessionID;         //just for file media    
+}__attribute__ ((packed)) zpl_media_hdr_t ;
+
+
 #endif
 
 #ifdef __cplusplus
