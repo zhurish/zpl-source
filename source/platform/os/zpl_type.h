@@ -149,6 +149,14 @@ typedef long long int           zpl_int64;
 typedef unsigned long long int  zpl_uint64;
 #endif
 #endif
+
+#ifndef _M_IX86
+    typedef unsigned long long  HI_U64;
+    typedef long long           HI_S64;
+#else
+    typedef unsigned __int64    HI_U64;
+    typedef __int64             HI_S64;
+#endif
 */
 #endif /* WIN32 */
 

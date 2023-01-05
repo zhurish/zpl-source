@@ -449,18 +449,13 @@ int _rtsp_build_sdp_h265(rtsp_session_t *session, uint8_t *src, uint32_t len)
     uint8_t base64pps[AV_BASE64_DECODE_SIZE(1024)];
     uint8_t base64vps[AV_BASE64_DECODE_SIZE(1024)];
     uint8_t tmpflag = 0;
-    zpl_video_extradata_t *extradata = NULL;
+    zpl_video_extradata_t extradata;
 
     int profile = 0, sdplength = 0;
-
-    if(session->rtsp_media)
+    if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
     {
-        extradata = &zpl_media_getptr(session->rtsp_media)->video_media.extradata;
-
-        profile = extradata->profileLevelId;
-        fprintf(stdout, " _rtp_build_sdp_h265 fPPSSize=%d fSPSSize=%d\r\n", extradata->fPPSSize, extradata->fSPSSize);
-        fflush(stdout);
-
+        rtsp_media_extradata_get(session, session->mchannel, session->mlevel, session->mfilepath, &extradata);
+        profile = extradata.profileLevelId;
     }
     else
         return 0;
@@ -473,12 +468,12 @@ int _rtsp_build_sdp_h265(rtsp_session_t *session, uint8_t *src, uint32_t len)
     memset(base64pps, 0, sizeof(base64pps));
     memset(base64sps, 0, sizeof(base64sps));
     memset(base64vps, 0, sizeof(base64vps));
-    if(extradata->fPPSSize)
-        av_base64_encode(base64pps, sizeof(base64pps), extradata->fPPS, extradata->fPPSSize);
-    if(extradata->fSPSSize)
-        av_base64_encode(base64sps, sizeof(base64sps), extradata->fSPS, extradata->fSPSSize);
-    if(extradata->fVPSSize)
-        av_base64_encode(base64vps, sizeof(base64vps), extradata->fVPS, extradata->fVPSSize);
+    if(extradata.fPPSSize)
+        av_base64_encode(base64pps, sizeof(base64pps), extradata.fPPS, extradata.fPPSSize);
+    if(extradata.fSPSSize)
+        av_base64_encode(base64sps, sizeof(base64sps), extradata.fSPS, extradata.fSPSSize);
+    if(extradata.fVPSSize)
+        av_base64_encode(base64vps, sizeof(base64vps), extradata.fVPS, extradata.fVPSSize);
 
     sdplength += sprintf(src + sdplength, "a=fmtp:%d", RTP_MEDIA_PAYLOAD_H265);
 

@@ -163,10 +163,9 @@ int rtsp_session_destroy(rtsp_session_t *session)
             ipstack_close(session->sock);
             session->sock = ZPL_SOCKET_INVALID;
         }
-        if (session->rtsp_media)
+        if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
         {
-            rtsp_media_destroy(session, session->rtsp_media);
-            session->rtsp_media = NULL;
+            rtsp_media_destroy(session, NULL);
         }
         rtsp_header_transport_destroy(&session->video_session.transport);
         rtsp_header_transport_destroy(&session->audio_session.transport);

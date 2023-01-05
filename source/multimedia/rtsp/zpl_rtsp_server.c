@@ -334,19 +334,7 @@ static int rtsp_srv_session_handle_option(rtsp_srv_t *ctx, rtsp_session_t *sessi
 
     if (rtsp_srv_session_url_split(ctx, session) == 0)
     {
-        if (session->rtsp_media == NULL)
-        {
-            session->rtsp_media = rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath);
-            if (session->rtsp_media == NULL)
-            {
-                session->rtsp_media = rtsp_media_create(session, session->mchannel, session->mlevel, session->mfilepath);
-                if(RTSP_DEBUG_FLAG(ctx->debug, EVENT))
-                {
-                    rtsp_log_debug("RTSP Create Media for %d/%d or %s", session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
-                }
-            }
-        }
-        if (session->rtsp_media)
+        if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
         {
             length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, RTSP_STATE_CODE_200, session->cseq, session->session);
 
@@ -372,13 +360,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
     int code = RTSP_STATE_CODE_200;
     if (rtsp_srv_session_url_split(ctx, session) == 0)
     {
-        // if (session->rtsp_media == NULL)
-        {
-            session->rtsp_media = rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath);
-            if (session->rtsp_media == NULL)
-                session->rtsp_media = rtsp_media_create(session, session->mchannel, session->mlevel, session->mfilepath);
-        }
-        if (!session->rtsp_media)
+        if (!rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
         {
             length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->session);
             ;
@@ -408,7 +390,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
     length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, session->rtsp_url,
                                       code, session->cseq, session->session);
 
-    code = rtsp_media_handle_describe(session, session->rtsp_media);
+    code = rtsp_media_handle_describe(session, NULL);
 
     if (code == RTSP_STATE_CODE_200)
     {
@@ -435,7 +417,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
                 sdplength += sprintf(buftmp + sdplength, "a=control:trackID=%d\r\n", session->audio_session.i_trackid);
         }
         */
-        sdplength += rtsp_media_build_sdptext(session, session->rtsp_media, buftmp + sdplength);
+        sdplength += rtsp_media_build_sdptext(session, NULL, buftmp + sdplength);
 
         length += sprintf(ctx->_send_build + length, "Content-Type: application/sdp\r\n");
         length += sprintf(ctx->_send_build + length, "Content-Length: %d\r\n", sdplength);
@@ -454,7 +436,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
 {
     int length = 0;
     int code = RTSP_STATE_CODE_200;
-    if (!session->rtsp_media)
+    if (!rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
     {
         length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->session);
         if (length)
@@ -467,7 +449,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
 
     if (code == RTSP_STATE_CODE_200)
     {
-        rtsp_media_update(session, session->rtsp_media, true);
+        rtsp_media_update(session, NULL, true);
         session->_rtpsession = &session->video_session;
         if (session->sdptext.misc.url)
         {
@@ -560,7 +542,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
         else
             length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->session);
 
-        code = rtsp_media_handle_setup(session, session->rtsp_media);
+        code = rtsp_media_handle_setup(session, NULL);
         if (code != RTSP_STATE_CODE_200)
         {
             length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, code, session->cseq, session->session);
@@ -586,14 +568,14 @@ static int rtsp_srv_session_handle_teardown(rtsp_srv_t *ctx, rtsp_session_t *ses
 {
     int length = 0;
     int code = RTSP_STATE_CODE_200;
-    if (session->rtsp_media)
+    if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
     {
         code = RTSP_STATE_CODE_200;
     }
     else
-        code = RTSP_STATE_CODE_404;
+       code = RTSP_STATE_CODE_404;
 
-    code = rtsp_media_handle_teardown(session, session->rtsp_media);
+    code = rtsp_media_handle_teardown(session, NULL);
 
     if (code != RTSP_STATE_CODE_200)
     {
@@ -620,14 +602,14 @@ static int rtsp_srv_session_handle_play(rtsp_srv_t *ctx, rtsp_session_t *session
 {
     int length = 0;
     int code = RTSP_STATE_CODE_200;
-    if (session->rtsp_media)
+    if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
     {
         code = RTSP_STATE_CODE_200;
     }
     else
-        code = RTSP_STATE_CODE_404;
+       code = RTSP_STATE_CODE_404;
 
-    code = rtsp_media_handle_play(session, session->rtsp_media);
+    code = rtsp_media_handle_play(session, NULL);
 
     if (code != RTSP_STATE_CODE_200)
     {
@@ -665,14 +647,14 @@ static int rtsp_srv_session_handle_pause(rtsp_srv_t *ctx, rtsp_session_t *sessio
 {
     int length = 0;
     int code = RTSP_STATE_CODE_200;
-    if (session->rtsp_media)
+    if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
     {
         code = RTSP_STATE_CODE_200;
     }
     else
-        code = RTSP_STATE_CODE_404;
+       code = RTSP_STATE_CODE_404;
 
-    code = rtsp_media_handle_pause(session, session->rtsp_media);
+    code = rtsp_media_handle_pause(session, NULL);
 
     if (code != RTSP_STATE_CODE_200)
         length = sdp_build_respone_header(ctx->_send_build, ctx->srvname, NULL, code, session->cseq, session->session);

@@ -99,6 +99,7 @@ RTSP_API rtsp_media_t* rtsp_media_lookup(rtsp_session_t * session, int channel, 
 RTSP_API rtsp_media_t* rtsp_media_create(rtsp_session_t * session, int channel, int level, const char *path);
 RTSP_API int rtsp_media_destroy(rtsp_session_t * session, rtsp_media_t *media);
 
+RTSP_API int rtsp_media_extradata_get(rtsp_session_t * session, int channel, int level, const char *path, void *p);
 RTSP_API int rtsp_media_update(rtsp_session_t * session, rtsp_media_t * channel, bool add);
 RTSP_API int rtsp_media_start(rtsp_session_t* session, rtsp_media_t *media, bool start);
 

@@ -228,7 +228,7 @@ void * zpl_video_hal_frame_clone(void *inframe, zpl_media_memblock_t *memblk)
                               video_frame->base_info.enPixelFormat,
                               DATA_BITWIDTH_8, video_frame->base_info.enCompressMode, 0, &video_frame->stCalConfig);
                               */
-    //s32Ret = zpl_video_memblock_init(memblk,  memblk->uBlkSize);
+    s32Ret = zpl_video_hal_memblock_init(memblk,  memblk->uBlkSize);
     if(s32Ret != OK)
     {
         if(clone_frame)
@@ -280,7 +280,7 @@ void * zpl_video_hal_frame_clone(void *inframe, zpl_media_memblock_t *memblk)
         return clone_frame;
     else
     {
-        //zpl_video_memblock_deinit(memblk);
+        zpl_video_hal_memblock_deinit(memblk);
         free(clone_frame);
         clone_frame = NULL;
         return NULL;

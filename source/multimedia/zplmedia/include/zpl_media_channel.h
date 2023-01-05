@@ -102,35 +102,35 @@ extern int zpl_media_channel_exit(void);
 
 extern int zpl_media_channel_count(void);
 extern int zpl_media_channel_load_default(void);
-extern int zpl_media_channel_create(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern int zpl_media_channel_hwdestroy(zpl_media_channel_t *);
-extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_create(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename);
+extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
 extern zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID);
 
-extern int zpl_media_channel_filecreate(zpl_char *filename, zpl_bool rd);
-extern int zpl_media_channel_filedestroy(zpl_char *filename);
-extern zpl_media_channel_t * zpl_media_channel_filelookup(zpl_char *filename);
-extern int zpl_media_channel_filestart(zpl_media_channel_t *mchannel, bool start);
-extern ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 
-extern int zpl_media_channel_recvcallback(zpl_media_channel_t *, int (*func)(zpl_media_channel_t*, zpl_void *, uint8_t *, uint32_t *));
-extern int zpl_media_channel_sendcallback(zpl_media_channel_t *, int (*func)(zpl_media_channel_t*, zpl_void *, uint8_t *, uint32_t *));
+extern ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
 
+extern zpl_bool zpl_media_channel_isvideo(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern zpl_bool zpl_media_channel_isaudio(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern zpl_bool zpl_media_channel_islocalfile(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern int zpl_media_channel_video_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, zpl_video_codec_t *);
+extern int zpl_media_channel_audio_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, zpl_audio_codec_t *);
+extern int zpl_media_channel_bindcount_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern int zpl_media_channel_bindcount_set(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, int addsub);
 
 extern int zpl_media_channel_halparam_set(zpl_int32 channel, 
     ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool video, void *halparam);
 
-extern int zpl_media_channel_client_add(zpl_media_channel_t *mchannel, zpl_media_buffer_handler cb_handler, void *pUser);
-extern int zpl_media_channel_client_del(zpl_media_channel_t *mchannel, zpl_int32 index);
+extern int zpl_media_channel_client_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename, zpl_media_buffer_handler cb_handler, void *pUser);
+extern int zpl_media_channel_client_del(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename, zpl_int32 index);
 
 
 /* 激活通道 -> 创建底层资源 */
 extern int zpl_media_channel_active(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 /* 开始通道 -> 底层开始 */
-extern int zpl_media_channel_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
 /* 暂停通道 -> 底层结束 */
-extern int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
 /* 销毁通道 -> 销毁底层资源 */
 extern int zpl_media_channel_inactive(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 

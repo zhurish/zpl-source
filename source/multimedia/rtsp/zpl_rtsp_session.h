@@ -106,8 +106,6 @@ typedef struct rtsp_session_s {
     int32_t         mchannel;
     int32_t         mlevel;
 
-    rtsp_media_t    *rtsp_media;    //流媒体
-
     rtp_session_t   video_session;
     rtp_session_t   audio_session;
     rtp_session_t   *_rtpsession;

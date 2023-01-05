@@ -42,16 +42,16 @@ DEFUN (media_channel_enable,
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 	if(strstr(argv[2],"enable"))
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
-			ret = zpl_media_channel_create( channel,  channel_index);
-		if(zpl_media_channel_lookup(channel,  channel_index) != NULL)
+		if(zpl_media_channel_lookup(channel,  channel_index, NULL) == NULL)
+			ret = zpl_media_channel_create( channel,  channel_index, NULL);
+		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL)
 			ret = zpl_media_channel_active(channel,  channel_index);
 	}
 	else if(strstr(argv[2],"disable"))
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
-			zpl_media_channel_state(channel,  channel_index) != ZPL_MEDIA_STATE_ACTIVE)
-			ret = zpl_media_channel_destroy( channel,  channel_index);
+		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL && 
+			zpl_media_channel_state(channel,  channel_index, NULL) != ZPL_MEDIA_STATE_ACTIVE)
+			ret = zpl_media_channel_destroy( channel,  channel_index, NULL);
 		else
 			ret = ERROR;	
 	}
@@ -71,34 +71,34 @@ DEFUN (media_channel_file_enable,
     zpl_media_channel_t *chn = NULL;
     if (strstr(argv[1], "enable"))
     {
-		if(zpl_media_channel_filelookup(argv[0]) == NULL)
-			ret = zpl_media_channel_filecreate(argv[0], 1);
+		if(zpl_media_channel_lookup(-1, -1, argv[0]) == NULL)
+			ret = zpl_media_channel_create(-1, -1, argv[0]);
         else
             ret = OK;    
 	}
 	else if(strstr(argv[1],"disable"))
 	{
-		if(zpl_media_channel_filelookup(argv[0]) != NULL)
-			ret = zpl_media_channel_filedestroy(argv[0]);
+		if(zpl_media_channel_lookup(-1, -1, argv[0]) != NULL)
+			ret = zpl_media_channel_destroy( -1,  -1, argv[0]);
 		else
 			ret = ERROR;	
 	}
 	else if(strstr(argv[1],"start"))
 	{
-        chn  = zpl_media_channel_filelookup(argv[0]);
+        chn  = zpl_media_channel_lookup(-1, -1, argv[0]);
         if (chn != NULL)
         {
-            ret = zpl_media_channel_filestart(chn, zpl_true);
+            ret = zpl_media_channel_start(-1, -1, argv[0]);
         }
         else
             ret = OK; 
     }
 	else if(strstr(argv[1],"stop"))
 	{
-        chn  = zpl_media_channel_filelookup(argv[0]);
+        chn  = zpl_media_channel_lookup(-1, -1, argv[0]);
         if (chn != NULL)
         {
-            ret = zpl_media_channel_filestart(chn, zpl_false);
+            ret = zpl_media_channel_stop(-1, -1, argv[0]);
         }
         else
             ret = OK; 
@@ -128,15 +128,15 @@ DEFUN (media_channel_active,
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 	if(strncmp(argv[2],"active", 4) == 0)
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
-			zpl_media_channel_state(channel,  channel_index) != ZPL_MEDIA_STATE_ACTIVE)
-			ret = zpl_media_channel_start(channel,  channel_index);
+		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL && 
+			zpl_media_channel_state(channel,  channel_index, NULL) != ZPL_MEDIA_STATE_ACTIVE)
+			ret = zpl_media_channel_start(channel,  channel_index, NULL);
 	}
 	else if(strncmp(argv[2],"inactive", 4) == 0)
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
-			zpl_media_channel_state(channel,  channel_index) == ZPL_MEDIA_STATE_ACTIVE)
-			ret = zpl_media_channel_stop( channel,  channel_index);
+		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL && 
+			zpl_media_channel_state(channel,  channel_index, NULL) == ZPL_MEDIA_STATE_ACTIVE)
+			ret = zpl_media_channel_stop( channel,  channel_index, NULL);
 		else
 			ret = ERROR;	
 	}
@@ -165,18 +165,18 @@ DEFUN (media_channel_record,
 	else if(strstr(argv[1],"sub"))
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 
-	chn = zpl_media_channel_lookup(channel,  channel_index);
+	chn = zpl_media_channel_lookup(channel,  channel_index, NULL);
 	if(chn && strncmp(argv[2],"enable", 4) == 0)
 	{
-		if(!zpl_media_channel_record_state(chn))
-			ret = zpl_media_channel_record_enable(chn,  zpl_true);
+		if(!zpl_media_channel_record_state(channel,  channel_index))
+			ret = zpl_media_channel_record_enable(channel,  channel_index,  zpl_true);
 		else
 			ret = OK;	
 	}
 	else if(chn && strncmp(argv[2],"disable", 4) == 0)
 	{
-		if(zpl_media_channel_record_state(chn))
-			ret = zpl_media_channel_record_enable(chn,  zpl_false);
+		if(zpl_media_channel_record_state(channel,  channel_index))
+			ret = zpl_media_channel_record_enable(channel,  channel_index,  zpl_false);
 		else
 			ret = OK;	
 	}
@@ -205,18 +205,18 @@ DEFUN (media_channel_alarm_capture,
 	else if(strstr(argv[1],"sub"))
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 
-	chn = zpl_media_channel_lookup(channel,  channel_index);
+	chn = zpl_media_channel_lookup(channel,  channel_index, NULL);
 	if(chn && strncmp(argv[2],"enable", 4) == 0)
 	{
-		if(!zpl_media_channel_capture_state(chn))
-			ret = zpl_media_channel_capture_enable(chn,  zpl_true);
+		if(!zpl_media_channel_capture_state(channel,  channel_index))
+			ret = zpl_media_channel_capture_enable(channel,  channel_index,  zpl_true);
 		else
 			ret = OK;	
 	}
 	else if(chn && strncmp(argv[2],"disable", 4) == 0)
 	{
-		if(zpl_media_channel_capture_state(chn))
-			ret = zpl_media_channel_capture_enable(chn,  zpl_false);
+		if(zpl_media_channel_capture_state(channel,  channel_index))
+			ret = zpl_media_channel_capture_enable(channel,  channel_index,  zpl_false);
 		else
 			ret = OK;	
 	}

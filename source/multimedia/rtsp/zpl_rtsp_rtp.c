@@ -310,12 +310,12 @@ int rtsp_rtp_handle_pause(rtsp_session_t* session, void *pUser)
     if(session->audio_session.rtp_session)
     {
         session->audio_session.rtp_state = RTP_SESSION_STATE_STOP;
-        rtsp_media_start(session, session->rtsp_media, false);
+        rtsp_media_start(session, NULL, false);
     }
     if(session->video_session.rtp_session)
     {
         session->video_session.rtp_state = RTP_SESSION_STATE_STOP;
-        rtsp_media_start(session, session->rtsp_media, false);
+        rtsp_media_start(session, NULL, false);
     }
     return 0;
 }

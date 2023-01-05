@@ -19,8 +19,8 @@ typedef struct zpl_media_record_s
     zpl_media_file_t    *record_file;
 }zpl_media_record_t;
 
-int zpl_media_channel_record_enable(zpl_media_channel_t *mediachn, zpl_bool enable);
-zpl_bool zpl_media_channel_record_state(zpl_media_channel_t *mediachn);
+int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool enable);
+zpl_bool zpl_media_channel_record_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 
 #ifdef __cplusplus
 }

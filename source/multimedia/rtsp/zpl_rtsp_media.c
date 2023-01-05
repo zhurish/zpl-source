@@ -54,8 +54,8 @@ int rtsp_media_destroy(rtsp_session_t * session, rtsp_media_t *media)
     }
     if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
     {
-        if(zpl_media_getptr(media)->bindcount < 1)
-            zpl_media_channel_hwdestroy(media);
+        if(zpl_media_channel_bindcount_get(session->mchannel, session->mlevel, session->mfilepath) < 1)
+            zpl_media_channel_destroy(session->mchannel, session->mlevel, session->mfilepath);
         return OK;
     }
     return 0;
@@ -68,19 +68,19 @@ rtsp_media_t * rtsp_media_create(rtsp_session_t * session, int channel, int leve
     if(path)
     {
         zpl_media_channel_t *chn = NULL;
-        chn = zpl_media_channel_filelookup(path);
+        chn = zpl_media_channel_lookup(channel, level, path);
         if(chn == NULL)
         {
-            if(zpl_media_channel_filecreate(path, zpl_true) == OK)
+            if(zpl_media_channel_create(channel, level, path) == OK)
             {
-                chn = zpl_media_channel_filelookup(path);
+                chn = zpl_media_channel_lookup(channel, level, path);
             }
         }
         //zpl_media_channel_t *chn = zpl_media_channel_filelookup(path);
         if(chn)
         {
             //int zpl_media_file_get_frame_callback(zpl_media_file_t *media_file, int (*func)(zpl_media_file_t*, zpl_framedata_t *))
-            if(chn->video_media.enable && chn->video_media.halparam)
+            if(zpl_media_channel_isvideo(session->mchannel, session->mlevel, session->mfilepath))
             {
                 //zpl_media_file_get_frame_callback(chn->video_media.halparam, zpl_media_file_get_frame_h264);
                 if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
@@ -88,7 +88,7 @@ rtsp_media_t * rtsp_media_create(rtsp_session_t * session, int channel, int leve
                     rtsp_log_debug("RTSP Media is Video for %d/%d or %s", session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
                 }
             }
-            else if(chn->audio_media.enable && chn->audio_media.halparam)
+            else if(zpl_media_channel_isaudio(session->mchannel, session->mlevel, session->mfilepath))
             {
                 //zpl_media_file_get_frame_callback(chn->audio_media.halparam, zpl_media_file_get_frame_h264);
                 if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
@@ -106,16 +106,9 @@ rtsp_media_t * rtsp_media_create(rtsp_session_t * session, int channel, int leve
 
 int rtsp_media_update(rtsp_session_t * session, rtsp_media_t * channel, bool add)
 {
-    zpl_media_channel_t *chn = channel;
     if(!session->bsrv)
         return 0;
-    if(chn)
-    {
-        if(add)
-            chn->bindcount++;
-        else
-            chn->bindcount--;
-    }
+    zpl_media_channel_bindcount_set(session->mchannel, session->mlevel, session->mfilepath, add);
     return 0;
 }
 
@@ -132,20 +125,11 @@ rtsp_media_t * rtsp_media_lookup(rtsp_session_t * session, int channel, int leve
 {
     if(!session->bsrv)
         return NULL;
-    zpl_media_channel_t * chn = zpl_media_channel_lookup( channel,  level);
+    zpl_media_channel_t * chn = zpl_media_channel_lookup( channel,  level, path);
     if(chn)
     {
         rtsp_media_srv_setup(chn, session);
         return chn;
-    }
-    if(path)
-    {
-        chn = zpl_media_channel_filelookup(path);
-        if(chn)
-        {
-            rtsp_media_srv_setup(chn, session);
-            return chn;
-        }
     }
     if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
     {
@@ -154,7 +138,10 @@ rtsp_media_t * rtsp_media_lookup(rtsp_session_t * session, int channel, int leve
     return NULL;
 }
 
-
+int rtsp_media_extradata_get(rtsp_session_t * session, int channel, int level, const char *path, void *p)
+{
+    return 0;
+}
 
 int rtsp_media_start(rtsp_session_t* session, rtsp_media_t *media, bool start)
 {
@@ -180,9 +167,9 @@ int rtsp_media_start(rtsp_session_t* session, rtsp_media_t *media, bool start)
     }
     if(session->bsrv)
     {
-        if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
+        if(zpl_media_channel_islocalfile(session->mchannel, session->mlevel, session->mfilepath))
         {
-            return zpl_media_channel_filestart(media, true);
+            return zpl_media_channel_start(session->mchannel, session->mlevel, session->mfilepath);
         }
     }
     return 0;
@@ -293,22 +280,22 @@ int rtsp_media_rtp_recv(rtsp_session_t* session, bool bvideo, zpl_skbuffer_t *bu
 
 static int rtsp_media_codec2pt(rtsp_session_t *session, rtsp_media_t *media)
 {
-    if(zpl_media_getptr(media)->video_media.enable)
+    if(zpl_media_channel_isvideo(session->mchannel, session->mlevel, session->mfilepath))
     {
-        zpl_video_codec_t *pcodec = &zpl_media_getptr(media)->video_media.codec;
-        if(pcodec)
+        zpl_video_codec_t pcodec;
+        if (zpl_media_channel_video_codec_get(session->mchannel, session->mlevel, session->mfilepath, &pcodec) == OK)
         {
-            session->video_session.payload = pcodec->enctype;
-            session->video_session.framerate = pcodec->framerate;
+            session->video_session.payload = pcodec.enctype;
+            session->video_session.framerate = pcodec.framerate;
         }
     }
-    if(zpl_media_getptr(media)->audio_media.enable)
+    if(zpl_media_channel_isaudio(session->mchannel, session->mlevel, session->mfilepath))
     {
-        zpl_audio_codec_t *paudiocodec = &zpl_media_getptr(media)->audio_media.codec;
-        if(paudiocodec)
+        zpl_audio_codec_t paudiocodec;
+        if (zpl_media_channel_audio_codec_get(session->mchannel, session->mlevel, session->mfilepath, &paudiocodec) == OK)
         {
-            session->audio_session.payload = paudiocodec->enctype;
-            session->audio_session.framerate = paudiocodec->framerate;
+            session->audio_session.payload = paudiocodec.enctype;
+            session->audio_session.framerate = paudiocodec.framerate;
         }
     }
     return 0;
@@ -321,7 +308,7 @@ static int rtsp_media_srv_setup(rtsp_media_t *media, rtsp_session_t *session)
 
     rtsp_media_codec2pt(session, media);
 
-    if(zpl_media_getptr(media)->video_media.enable && zpl_media_getptr(media)->video_media.halparam)
+    if(zpl_media_channel_isvideo(session->mchannel, session->mlevel, session->mfilepath))
     {
         session->video_session.timestamp_interval = rtp_profile_get_clock_rate(session->video_session.payload)/session->video_session.framerate;
         if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
@@ -330,7 +317,7 @@ static int rtsp_media_srv_setup(rtsp_media_t *media, rtsp_session_t *session)
                 session->video_session.timestamp_interval, session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
         } 
     }
-    else if(zpl_media_getptr(media)->audio_media.enable && zpl_media_getptr(media)->audio_media.halparam)
+    else if(zpl_media_channel_isaudio(session->mchannel, session->mlevel, session->mfilepath))
     {
         session->audio_session.timestamp_interval = rtp_profile_get_clock_rate(session->audio_session.payload)/session->audio_session.framerate;
         if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
@@ -340,31 +327,31 @@ static int rtsp_media_srv_setup(rtsp_media_t *media, rtsp_session_t *session)
         } 
     }
 
-    if(zpl_media_channel_gettype(media) == ZPL_MEDIA_CHANNEL_FILE)
+    if(zpl_media_channel_islocalfile(session->mchannel, session->mlevel, session->mfilepath))
     {
-        if(zpl_media_getptr(media)->video_media.enable && zpl_media_getptr(media)->video_media.halparam)
+        if(zpl_media_channel_isvideo(session->mchannel, session->mlevel, session->mfilepath))
         {
             //zpl_media_file_master(zpl_media_getptr(media)->video_media.halparam, eloop_master_module_lookup(MODULE_ZPLMEDIA), 1000/25);
-            zpl_media_file_pdata(zpl_media_getptr(media)->video_media.halparam, session);
-            zpl_media_file_get_frame_callback(zpl_media_getptr(media)->video_media.halparam, zpl_media_file_get_frame_h264);
+            //zpl_media_file_pdata(zpl_media_getptr(media)->video_media.halparam, session);
+            //zpl_media_file_get_frame_callback(zpl_media_getptr(media)->video_media.halparam, zpl_media_file_get_frame_h264);
             if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
             {
                 rtsp_log_debug("RTSP Media set Video timestamp=%d for %d/%d or %s", 
                     1000/25, session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
             } 
         }
-        else if(zpl_media_getptr(media)->audio_media.enable && zpl_media_getptr(media)->audio_media.halparam)
+        else if(zpl_media_channel_isaudio(session->mchannel, session->mlevel, session->mfilepath))
         {
             //zpl_media_file_master(zpl_media_getptr(media)->audio_media.halparam, eloop_master_module_lookup(MODULE_ZPLMEDIA), 1000/25);
-            zpl_media_file_pdata(zpl_media_getptr(media)->audio_media.halparam, session);
-            zpl_media_file_get_frame_callback(zpl_media_getptr(media)->audio_media.halparam, zpl_media_file_get_frame_h264);
+            //zpl_media_file_pdata(zpl_media_getptr(media)->audio_media.halparam, session);
+            //zpl_media_file_get_frame_callback(zpl_media_getptr(media)->audio_media.halparam, zpl_media_file_get_frame_h264);
             if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
             {
                 rtsp_log_debug("RTSP Media set Audio timestamp=%d for %d/%d or %s", 
                     1000/25, session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
             } 
         }
-        zpl_media_channel_client_add(media, rtsp_media_rtp_sendto, session);
+        zpl_media_channel_client_add(session->mchannel, session->mlevel, session->mfilepath, rtsp_media_rtp_sendto, session);
     }
     return ret;
 }

@@ -9,7 +9,7 @@ int zpl_media_database_create(zpl_media_db_t *zdb, const char *tbl)
     result = sqlite3_exec( zdb->db, tbl, NULL, NULL, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
@@ -25,7 +25,7 @@ int zpl_media_insert(zpl_media_db_t *zdb, int captureid, const char *datetime, i
     result = sqlite3_exec( zdb->db, sqlcmd, NULL, NULL, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
@@ -41,7 +41,7 @@ int zpl_media_deletebyid(zpl_media_db_t *zdb, int id)
     result = sqlite3_exec( zdb->db, sqlcmd, NULL, NULL, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
@@ -57,7 +57,7 @@ int zpl_media_deletebycaptureid(zpl_media_db_t *zdb, int id)
     result = sqlite3_exec( zdb->db, sqlcmd, NULL, NULL, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
@@ -79,7 +79,7 @@ int zpl_media_deletebydatetime(zpl_media_db_t *zdb, const char *sdatetime, const
     result = sqlite3_exec( zdb->db, sqlcmd, NULL, NULL, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
@@ -94,7 +94,7 @@ int zpl_media_deletebychannel(zpl_media_db_t *zdb, int channel)
     result = sqlite3_exec( zdb->db, sqlcmd, NULL, NULL, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
@@ -157,7 +157,7 @@ int zpl_media_select(zpl_media_db_t *zdb, zpl_media_table_t *table, int num, boo
     result = sqlite3_exec( zdb->db, sqlcmd, select_callback, table, &errmsg);
     if(result != SQLITE_OK )
     {
-        printf( "创建表失败，错误码:%d，错误原因:%s/n", result, errmsg );
+        printf( "创建表失败，错误码:%d, 错误原因:%s/n", result, errmsg );
         return ERROR;
     }
     return OK;
