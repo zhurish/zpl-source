@@ -33,13 +33,15 @@ OBJS += 	avprofile.o  \
 			rtptimer.o	\
 			scheduler.o \
 			sessionset.o  \
-			rtp_queue.o  \
 			str_utils.o 	\
 			telephonyevents.o  \
-			videobandwidthestimator.o \
-			utils.o \
-			ortp_list.o \
-			ortp_srtp.o \
+			videobandwidthestimator.o rtpframemarking.o \
+			utils.o fecstream.o rtpaudiolevel.o \
+			ortp_list.o dblk.o rtpbundle.o \
+			zpl_rtp_h264.o \
+			zpl_rtp_h265.o \
+			zpl_rtp_g7xx.o 
+#ortp_srtp.o \
 			zrtp.o \
 			stun.o \
 			stun_udp.o \

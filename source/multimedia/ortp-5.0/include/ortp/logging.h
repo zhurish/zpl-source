@@ -54,14 +54,14 @@ typedef int (*OrtpLogFunc)(OrtpLogLevel, char*);
 
 	
 /*#define ortp_set_log_handler ortp_set_log_handler*/
-ORTP_PUBLIC void ortp_set_log_handler(OrtpLogFunc func);
+ void ortp_set_log_handler(OrtpLogFunc func);
 /* This function does not have any means by now, as even ortp_set_log_handler is deprecated. use ortp_log_handler_t instead*/
-ORTP_PUBLIC OrtpLogFunc ortp_get_log_handler(void);
+ OrtpLogFunc ortp_get_log_handler(void);
 
-ORTP_PUBLIC void ortp_set_log_level(int level);
-ORTP_PUBLIC unsigned int ortp_get_log_level(void);
+ void ortp_set_log_level(int level);
+ unsigned int ortp_get_log_level(void);
 
-ORTP_PUBLIC void ortp_hdr_log_out(char *buf);
+ void ortp_hdr_log_out(char *buf);
 
 #ifdef ORTP_NOMESSAGE_MODE
 
@@ -71,15 +71,15 @@ ORTP_PUBLIC void ortp_hdr_log_out(char *buf);
 
 #else
 
-ORTP_PUBLIC void ortp_log(OrtpLogLevel lev,const char *fmt,...);
-ORTP_PUBLIC void ortp_log_out(OrtpLogLevel lev, const char *func, int line, const char *fmt,...);
+ void ortp_log(OrtpLogLevel lev,const char *fmt,...);
+ void ortp_log_out(OrtpLogLevel lev, const char *func, int line, const char *fmt,...);
 
 #ifdef ORTP_WINDOWS_DESKTOP
-ORTP_PUBLIC void ortp_message(const char *fmt,...);
-ORTP_PUBLIC void ortp_warning(const char *fmt,...);
-ORTP_PUBLIC void ortp_error(const char *fmt,...);
-ORTP_PUBLIC void ortp_fatal(const char *fmt,...);
-ORTP_PUBLIC void ortp_debug(const char *fmt,...);
+ void ortp_message(const char *fmt,...);
+ void ortp_warning(const char *fmt,...);
+ void ortp_error(const char *fmt,...);
+ void ortp_fatal(const char *fmt,...);
+ void ortp_debug(const char *fmt,...);
 #else
 #define ortp_message(format, ...)   ortp_log_out(ORTP_MESSAGE, __func__, __LINE__, format, ##__VA_ARGS__)
 #define ortp_warning(format, ...)   ortp_log_out(ORTP_WARNING, __func__, __LINE__, format, ##__VA_ARGS__)

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 /**
@@ -24,12 +25,19 @@
 #ifndef SESSIONSET_H
 #define SESSIONSET_H
 
+
+#include <ortp/rtpsession.h>
+
 #ifdef __cplusplus
 extern "C"{
 #endif
 
 
-
+#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+/* UNIX */
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define ORTP_FD_SET(d, s)     FD_SET(d, s)
 #define ORTP_FD_CLR(d, s)     FD_CLR(d, s)
@@ -39,13 +47,52 @@ extern "C"{
 typedef fd_set ortp_fd_set;
 
 
+#else
+/* _WIN32 */
 
-typedef struct _SessionSet
+#define ORTP_FD_ZERO(s) \
+  do {									      \
+    unsigned int __i;							      \
+    ortp_fd_set *__arr = (s);						      \
+    for (__i = 0; __i < sizeof (ortp_fd_set) / sizeof (ortp__fd_mask); ++__i)	      \
+      ORTP__FDS_BITS (__arr)[__i] = 0;					      \
+  } while (0)
+#define ORTP_FD_SET(d, s)     (ORTP__FDS_BITS (s)[ORTP__FDELT(d)] |= ORTP__FDMASK(d))
+#define ORTP_FD_CLR(d, s)     (ORTP__FDS_BITS (s)[ORTP__FDELT(d)] &= ~ORTP__FDMASK(d))
+#define ORTP_FD_ISSET(d, s)   ((ORTP__FDS_BITS (s)[ORTP__FDELT(d)] & ORTP__FDMASK(d)) != 0)
+
+
+
+/* The fd_set member is required to be an array of longs.  */
+typedef long int ortp__fd_mask;
+
+
+/* Number of bits per word of `fd_set' (some code assumes this is 32).  */
+#define ORTP__FD_SETSIZE 1024
+
+/* It's easier to assume 8-bit bytes than to get CHAR_BIT.  */
+#define ORTP__NFDBITS	(8 * sizeof (ortp__fd_mask))
+#define	ORTP__FDELT(d)	((d) / ORTP__NFDBITS)
+#define	ORTP__FDMASK(d)	((ortp__fd_mask) 1 << ((d) % ORTP__NFDBITS))
+
+
+/* fd_set for select and pselect.  */
+typedef struct
+  {
+    ortp__fd_mask fds_bits[ORTP__FD_SETSIZE / ORTP__NFDBITS];
+# define ORTP__FDS_BITS(set) ((set)->fds_bits)
+  } ortp_fd_set;
+
+
+#endif /*end _WIN32*/
+
+struct _SessionSet
 {
 	ortp_fd_set rtpset;
-}SessionSet;
+};
 
 
+typedef struct _SessionSet SessionSet;
 
 #define session_set_init(ss)		ORTP_FD_ZERO(&(ss)->rtpset)
 

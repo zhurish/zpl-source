@@ -1,29 +1,28 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 
 #ifndef RTCP_H
 #define RTCP_H
-#ifdef __cplusplus
-extern "C"{
-#endif
 
+#include <ortp/port.h>
 
 #define RTCP_MAX_RECV_BUFSIZE 1500
 
@@ -32,7 +31,9 @@ extern "C"{
 #define RTCP_COMMON_HEADER_SIZE 4
 #define RTCP_SSRC_FIELD_SIZE 4
 
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 /* RTCP common header */
 
@@ -171,7 +172,8 @@ typedef struct sdes_chunk
 } sdes_chunk_t;
 
 
-#define sdes_chunk_get_csrc(c)	ntohl((c)->csrc)
+#define sdes_chunk_get_ssrc(m) ntohl(((sdes_chunk_t*)((m)->b_rptr))->csrc)
+#define sdes_chunk_get_csrc(c) ntohl((c)->csrc)
 
 typedef struct sdes_item
 {
@@ -404,9 +406,10 @@ typedef struct rtcp_app{
 	char name[4];
 } rtcp_app_t;
 
-
-ORTP_PUBLIC void rtp_session_rtcp_process_send(void *s);
-ORTP_PUBLIC void rtp_session_rtcp_process_recv(void *s);
+struct _RtpSession;
+struct _RtpStream;
+ORTP_PUBLIC void rtp_session_rtcp_process_send(struct _RtpSession *s);
+ORTP_PUBLIC void rtp_session_rtcp_process_recv(struct _RtpSession *s);
 
 
 #define RTCP_DEFAULT_REPORT_INTERVAL 5000 /* in milliseconds */
@@ -545,9 +548,9 @@ typedef struct OrtpLossRateEstimator{
 }OrtpLossRateEstimator;
 
 
-ORTP_PUBLIC OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, void *session);
+ORTP_PUBLIC OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
 
-ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, void *session);
+ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
 
 
 /**
@@ -566,7 +569,7 @@ ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int m
  * @return TRUE if a new loss rate estimation is ready, FALSE otherwise.
  */
 ORTP_PUBLIC bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj,
-																 const void *session,
+																 const struct _RtpSession *session,
 																 const report_block_t *rb);
 /**
  * Get the latest loss rate in percentage estimation computed.
@@ -577,12 +580,7 @@ ORTP_PUBLIC bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEst
 ORTP_PUBLIC float ortp_loss_rate_estimator_get_value(OrtpLossRateEstimator *obj);
 
 ORTP_PUBLIC void ortp_loss_rate_estimator_destroy(OrtpLossRateEstimator *obj);
-
-ORTP_PUBLIC void ortp_rtcp_msg_debug(const void *session, unsigned char *ptr,
-                         uint32_t len, const char *dest);
-
-void compute_rtcp_interval(void *session);
-						 
+void compute_rtcp_interval(struct _RtpSession *session);
 #ifdef __cplusplus
 }
 #endif

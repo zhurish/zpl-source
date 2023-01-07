@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -21,24 +22,10 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-
-#include <inttypes.h>
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-#include <ortp/scheduler.h>
 #include "ortp/ortp.h"
-
+#include "utils.h"
+#include <inttypes.h>
+#include "scheduler.h"
 
 rtp_stats_t ortp_global_stats;
 
@@ -46,17 +33,8 @@ rtp_stats_t ortp_global_stats;
 int ortp_allocations=0;
 #endif
 
+RtpScheduler *__ortp_scheduler;
 
-
-#ifdef HAVE_SRTP
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-#include "ortp/ortp_srtp.h"
-#endif
-
-static RtpScheduler *__ortp_scheduler;
 
 
 
@@ -92,7 +70,7 @@ static int ortp_initialized=0;
  *	Initialize the oRTP library. You should call this function first before using
  *	oRTP API.
 **/
-void ortp_init(void)
+void ortp_init()
 {
 	if (ortp_initialized++) return;
 
@@ -102,11 +80,12 @@ void ortp_init(void)
 	av_profile_init(&av_profile);
 	ortp_global_stats_reset();
 	init_random_number_generator();
-
-#ifdef HAVE_SRTP
-	ortp_srtp_init();
-#endif
+// HAVE_ATOMIC is mandatory but we let it there just in case we want to support other atomic algorithms.
+#ifdef HAVE_ATOMIC
+	ortp_message("oRTP-" ORTP_VERSION " initialized with Atomic protection.");
+#else
 	ortp_message("oRTP-" ORTP_VERSION " initialized.");
+#endif
 }
 
 
@@ -115,7 +94,7 @@ void ortp_init(void)
  *	scheduled mode of the RtpSession in your application.
  *
 **/
-void ortp_scheduler_init(void)
+void ortp_scheduler_init()
 {
 	static bool_t initialized=FALSE;
 	if (initialized) return;
@@ -139,7 +118,7 @@ void ortp_scheduler_init(void)
  * Gracefully uninitialize the library, including shutdowning the scheduler if it was started.
  *
 **/
-void ortp_exit(void)
+void ortp_exit()
 {
 	if (ortp_initialized==0) {
 		ortp_warning("ortp_exit() called without prior call to ortp_init(), ignored.");
@@ -152,13 +131,10 @@ void ortp_exit(void)
 			rtp_scheduler_destroy(__ortp_scheduler);
 			__ortp_scheduler=NULL;
 		}
-#ifdef HAVE_SRTP
-		ortp_srtp_shutdown();
-#endif
 	}
 }
 
-RtpScheduler * ortp_get_scheduler(void)
+RtpScheduler * ortp_get_scheduler()
 {
 	if (__ortp_scheduler==NULL) ortp_error("Cannot use the scheduled mode: the scheduler is not "
 									"started. Call ortp_scheduler_init() at the begginning of the application.");
@@ -169,7 +145,7 @@ RtpScheduler * ortp_get_scheduler(void)
 /**
  * Display global statistics (cumulative for all RtpSession)
 **/
-void ortp_global_stats_display(void)
+void ortp_global_stats_display()
 {
 	rtp_stats_display(&ortp_global_stats,"Global statistics");
 #ifdef ENABLE_MEMCHECK
@@ -200,11 +176,11 @@ void rtp_stats_display(const rtp_stats_t *stats, const char *header) {
 	ortp_log(ORTP_MESSAGE, "===========================================================");
 }
 
-void ortp_global_stats_reset(void){
+void ortp_global_stats_reset(){
 	memset(&ortp_global_stats,0,sizeof(rtp_stats_t));
 }
 
-rtp_stats_t *ortp_get_global_stats(void){
+rtp_stats_t *ortp_get_global_stats(){
 	return &ortp_global_stats;
 }
 

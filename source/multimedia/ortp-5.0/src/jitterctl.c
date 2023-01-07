@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 /***************************************************************************
@@ -23,23 +24,15 @@
  *  Copyright  2004  Simon MORLAT
  *  Email simon.morlat@linphone.org
  ****************************************************************************/
-
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
+#include "ortp/rtpsession.h"
+#include "ortp/payloadtype.h"
+#include "ortp/ortp.h"
+#include "utils.h"
+#include "rtpsession_priv.h"
 #include <math.h>
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-
-
 
 #define JC_BETA .01
 #define JC_GAMMA (JC_BETA)
@@ -78,6 +71,7 @@ void jitter_control_set_payload(JitterControl *ctl, PayloadType *pt){
 	ctl->clock_rate=pt->clock_rate;
 }
 
+
 void jitter_control_dump_stats(JitterControl *ctl){
 	ortp_message("JitterControl:\n\tslide=%g,jitter=%g,adapt_jitt_comp_ts=%i,corrective_slide=%i, count=%i",
 			(double)ctl->clock_offset_ts,ctl->jitter, ctl->adapt_jitt_comp_ts, ctl->corrective_slide,ctl->count);
@@ -98,7 +92,7 @@ void jitter_control_update_corrective_slide(JitterControl *ctl){
 	}
 }
 
-void jitter_control_update_size(JitterControl *ctl, rtp_queue_t *q){
+void jitter_control_update_size(JitterControl *ctl, queue_t *q){
 	mblk_t *newest=qlast(q);
 	mblk_t *oldest=qbegin(q);
 	uint32_t newest_ts,oldest_ts;

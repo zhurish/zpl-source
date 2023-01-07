@@ -18,15 +18,15 @@ RTSP_API int rtsp_rtp_init(void);
 RTSP_API int rtsp_rtp_start(void);
 
 
-RTSP_API int rtsp_rtp_handle_options(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_describe(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_setup(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_teardown(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_play(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_pause(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_scale(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_set_parameter(rtsp_session_t*, void *);
-RTSP_API int rtsp_rtp_handle_get_parameter(rtsp_session_t*, void *);
+RTSP_API int rtsp_rtp_handle_options(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_describe(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_setup(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_teardown(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_play(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_pause(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_scale(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_set_parameter(rtsp_session_t*);
+RTSP_API int rtsp_rtp_handle_get_parameter(rtsp_session_t*);
 
 
 

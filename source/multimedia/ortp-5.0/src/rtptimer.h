@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -27,20 +28,28 @@
 #include "winsock2.h"
 #endif
 
+#include <ortp/port.h>
 
 
+typedef void (*RtpTimerFunc)(void);
+	
+struct _RtpTimer
+{
+	int state;
+#define RTP_TIMER_RUNNING 1
+#define RTP_TIMER_STOPPED 0
+	RtpTimerFunc timer_init;
+	RtpTimerFunc timer_do;
+	RtpTimerFunc timer_uninit;
+	struct timeval interval;
+};
+
+typedef struct _RtpTimer RtpTimer;
 
 ORTP_PUBLIC void rtp_timer_set_interval(RtpTimer *timer, struct timeval *interval);
 
 ORTP_VAR_PUBLIC RtpTimer posix_timer;
-
-
 void posix_timer_init(void);
 void posix_timer_do(void);
 void posix_timer_uninit(void);
-
-ORTP_PUBLIC int rtp_user_timer_call(UserTimer *tt);
-ORTP_PUBLIC int rtp_user_timer_add(int (*func)(void *), void *p, int interval);
-ORTP_PUBLIC int rtp_user_timer_del(int (*func)(void *), void *p);
-
 #endif

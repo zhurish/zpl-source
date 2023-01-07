@@ -91,7 +91,7 @@ ZPLOS_GNU_WERROR += -Werror=invalid-memory-model
 ZPLOS_GNU_WERROR += -Werror=sizeof-pointer-memaccess 
 ZPLOS_GNU_WERROR += -Werror=overflow 
 ZPLOS_GNU_WERROR += -Werror=format-security 
-ZPLOS_GNU_WERROR += -Werror=shadow 
+#ZPLOS_GNU_WERROR += -Werror=shadow 
 ZPLOS_GNU_WERROR += -Werror=array-bounds 
 ZPLOS_GNU_WERROR += -Werror=unsafe-loop-optimizations 
 ZPLOS_GNU_WERROR += -Werror=init-self  

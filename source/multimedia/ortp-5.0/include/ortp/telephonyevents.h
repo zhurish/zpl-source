@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -26,12 +27,11 @@
 
 #ifndef TELEPHONYEVENTS_H
 #define TELEPHONYEVENTS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#include <ortp/rtpsession.h>
 
 
-typedef struct _telephone_event
+struct _telephone_event
 {
 #ifdef ORTP_BIGENDIAN
 	uint32_t event:8;
@@ -46,10 +46,13 @@ typedef struct _telephone_event
 	uint32_t E:1;
 	uint32_t duration:16;
 #endif
-}telephone_event_t;
+};
 
+typedef struct _telephone_event telephone_event_t;
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* tell if the session supports telephony events. For this the telephony events payload_type 
 	must be present in the rtp profile used by the session */

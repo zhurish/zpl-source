@@ -158,6 +158,11 @@
         "if_packet.h": "c",
         "filter.h": "c",
         "ether.h": "c",
-        "if_tunnel.h": "c"
+        "if_tunnel.h": "c",
+        "list.h": "c",
+        "bctport.h": "c",
+        "netdb.h": "c",
+        "process.h": "c",
+        "sockaddr.h": "c"
     }
 }

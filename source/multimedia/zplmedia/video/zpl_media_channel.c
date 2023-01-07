@@ -383,13 +383,14 @@ static zpl_media_channel_t *zpl_media_channel_lookup_entry(zpl_int32 channel, ZP
                 }
             }
         }
-        else if(chn->channel_type != ZPL_MEDIA_CHANNEL_FILE)
+        else 
         {
             if (sseid && chn && (zpl_uint32)chn == sseid)
             {
                 break;
             }
-            else if (chn && chn->channel == channel && chn->channel_index == channel_index)
+            else if (chn && chn->channel == channel && chn->channel_index == channel_index && 
+                (chn->channel_type != ZPL_MEDIA_CHANNEL_FILE))
             {
                 break;
             }
@@ -404,7 +405,7 @@ zpl_media_channel_t *zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANN
 	zpl_media_channel_t *chn = NULL;
 	if (media_channel_mutex)
 		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-    chn = zpl_media_channel_lookup_entry( channel, channel_index, 0, NULL);
+    chn = zpl_media_channel_lookup_entry( channel, channel_index, 0, filename);
     if (media_channel_mutex)
         os_mutex_unlock(media_channel_mutex);
 	return chn;

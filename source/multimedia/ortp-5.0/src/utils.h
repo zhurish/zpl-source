@@ -1,34 +1,31 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef UTILS_H
 #define UTILS_H
 
-
-#if HAVE_STDATOMIC_H
-#include <stdatomic.h>
-#endif
+#include "ortp/event.h"
+#include "ortp/rtpsession.h"
 
 void ortp_init_logger(void);
 void ortp_uninit_logger(void);
-
-
 
 #define OList ortp_list_t
 
@@ -71,7 +68,7 @@ typedef union{
 #define ntoh24(x) hton24(x)
 
 #if defined(_WIN32) || defined(_WIN32_WCE)
-#define is_would_block_error(errnum)	(errnum==WSAEWOULDBLOCK  || errnum==WSATRY_AGAIN)
+#define is_would_block_error(errnum)	(errnum==WSAEWOULDBLOCK)
 #else
 #define is_would_block_error(errnum)	(errnum==EWOULDBLOCK || errnum==EAGAIN)
 #endif

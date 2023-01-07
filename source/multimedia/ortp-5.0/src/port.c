@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -21,10 +22,12 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include <ortp/port.h>
-#include <ortp/logging.h>
-
-
+#include "ortp/logging.h"
+#include "ortp/port.h"
+#include "ortp/str_utils.h"
+#include "utils.h"
+//#include <ortp/bctport.h>
+//#include <bctoolbox/charconv.h>
 
 #if	defined(_WIN32) && !defined(_WIN32_WCE)
 #include <process.h>
@@ -80,6 +83,12 @@ void ortp_free(void* ptr){
 	ortp_allocator.free_fun(ptr);
 }
 
+void * ortp_malloc0(size_t size){
+	void *ptr=ortp_malloc(size);
+	memset(ptr,0,size);
+	return ptr;
+}
+
 char * ortp_strdup(const char *tmp){
 	size_t sz;
 	char *ret;
@@ -98,7 +107,12 @@ char * ortp_strdup(const char *tmp){
  * int retrun the result of the system method
  */
 int set_non_blocking_socket (ortp_socket_t sock){
-	return ipstack_set_nonblocking(sock);
+#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+	return fcntl (sock, F_SETFL, fcntl(sock,F_GETFL) | O_NONBLOCK);
+#else
+	unsigned long nonBlock = 1;
+	return ioctlsocket(sock, FIONBIO , &nonBlock);
+#endif
 }
 
 /*
@@ -107,7 +121,12 @@ int set_non_blocking_socket (ortp_socket_t sock){
  * int retrun the result of the system method
  */
 int set_blocking_socket (ortp_socket_t sock){
-	return ipstack_set_blocking(sock);
+#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+	return fcntl (sock, F_SETFL, fcntl(sock, F_GETFL) & ~O_NONBLOCK);
+#else
+	unsigned long nonBlock = 0;
+	return ioctlsocket(sock, FIONBIO , &nonBlock);
+#endif
 }
 
 
@@ -117,129 +136,25 @@ int set_blocking_socket (ortp_socket_t sock){
  * int retrun the result of the system method
  */
 int close_socket(ortp_socket_t sock){
-	return ipstack_close(sock);
-}
-
-
-
-static int ortp_getnameinfo(const struct ipstack_sockaddr *addr, socklen_t addrlen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags) {
-#if __APPLE__
-        /* What an unpleasant surprise... It appears getnameinfo from Apple is calling inet_ntoa internally that is not thread-safe:
-         *   https://opensource.apple.com/source/Libc/Libc-583/net/FreeBSD/inet_ntoa.c
-         *   http://www.educatedguesswork.org/2009/02/well_thats_an_unpleasant_surpr.html
-         */
-        int i;
-        int err;
-        for (i = 0; i < 50; i++) {
-                err = ipstack_getnameinfo(addr, addrlen, host, hostlen, serv, servlen, flags);
-                if (!(host && strstr(host, "[inet_ntoa error]"))) return err;
-        }
-        return EAI_AGAIN;
+#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+	return close (sock);
 #else
-        return ipstack_getnameinfo(addr, addrlen, host, hostlen, serv, servlen, flags);
+	return closesocket(sock);
 #endif
 }
 
-static void _ortp_sockaddr_to_ip_address_error(int err, char *ip, size_t ip_size) {
-        ortp_error("getnameinfo() error: %s", gai_strerror(err));
-        strncpy(ip, "<bug!!>", ip_size);
-}
+#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+	/* Use UNIX inet_aton method */
+#else
+	int inet_aton (const char * cp, struct in_addr * addr)
+	{
+		int retval;
 
-int ortp_sockaddr_to_address(const struct ipstack_sockaddr *sa, socklen_t salen, char *ip, size_t ip_size, int *port) {
-        char serv[16];
-        int err=ortp_getnameinfo(sa, salen,ip,(socklen_t)ip_size,serv,(socklen_t)sizeof(serv),NI_NUMERICHOST|NI_NUMERICSERV);
-        if (err!=0) _ortp_sockaddr_to_ip_address_error(err, ip, ip_size);
-        if (port) *port=atoi(serv);
-        return 0;
-}
+		retval = inet_pton (AF_INET, cp, addr);
 
-int ortp_sockaddr_to_print_address(struct ipstack_sockaddr *sa, socklen_t salen, char *printable_ip, size_t printable_ip_size) {
-        if ((sa->sa_family == 0) || (salen == 0)) {
-                snprintf(printable_ip, printable_ip_size, "no-addr");
-                return 0;
-        } else {
-            char ip[64];
-            char serv[16];
-            int err = ortp_getnameinfo(sa, salen, ip, sizeof(ip), serv, sizeof(serv), NI_NUMERICHOST | NI_NUMERICSERV);
-            if (err != 0) _ortp_sockaddr_to_ip_address_error(err, ip, sizeof(ip));
-            if (sa->sa_family == AF_INET)
-                    snprintf(printable_ip, printable_ip_size, "%s:%s", ip, serv);
-            else if (sa->sa_family == AF_INET6)
-                    snprintf(printable_ip, printable_ip_size, "[%s]:%s", ip, serv);
-            return 0;
-        }
-}
-
-int ortp_address_to_sockaddr(int sin_family, char *ip, int port,
-                             const struct ipstack_sockaddr *sa, socklen_t *salen) {
-    struct ipstack_sockaddr_in *addr = (struct ipstack_sockaddr_in *)sa;
-    struct ipstack_sockaddr_in6 *addr6 = (struct ipstack_sockaddr_in6 *)sa;
-    if(sin_family == AF_INET)
-    {
-        memset(addr, 0, sizeof(struct ipstack_sockaddr_in));
-        addr->sin_family = AF_INET;
-        /* If the modbus port is < to 1024, we need the setuid root. */
-        addr->sin_port = htons(port);
-        if (ip == NULL) {
-            addr->sin_addr.s_addr = htonl(INADDR_ANY);
-        } else {
-            addr->sin_addr.s_addr = inet_addr(ip);
-        }
-        if(salen)
-            *salen = sizeof(struct ipstack_sockaddr_in);
-    }
-    if(sin_family == AF_INET6)
-    {
-        memset(addr6, 0, sizeof(struct ipstack_sockaddr_in6));
-        addr6->sin6_family = AF_INET6;
-        /* If the modbus port is < to 1024, we need the setuid root. */
-        addr6->sin6_port = htons(port);
-        if (ip == NULL) {
-            memset(&addr6->sin6_addr.s6_addr, 0, sizeof(addr6->sin6_addr.s6_addr));
-        } else {
-            //inet6_aton();
-            //addr6->sin6_addr.s6_addr = 0;
-        }
-        if(salen)
-            *salen = sizeof(struct ipstack_sockaddr_in6);
-    }
-    return 0;
-}
-
-bool_t ortp_sockaddr_equals(const struct ipstack_sockaddr * sa, const struct ipstack_sockaddr * sb) {
-
-        if (sa->sa_family != sb->sa_family)
-                return FALSE;
-
-        if (sa->sa_family == AF_INET) {
-                if ((((struct ipstack_sockaddr_in*)sa)->sin_addr.s_addr != ((struct ipstack_sockaddr_in*)sb)->sin_addr.s_addr
-                         || ((struct ipstack_sockaddr_in*)sa)->sin_port != ((struct ipstack_sockaddr_in*)sb)->sin_port))
-                        return FALSE;
-        } else if (sa->sa_family == AF_INET6) {
-                if (memcmp(&((struct ipstack_sockaddr_in6*)sa)->sin6_addr
-                                   , &((struct ipstack_sockaddr_in6*)sb)->sin6_addr
-                                   , sizeof(struct in6_addr)) !=0
-                        || ((struct ipstack_sockaddr_in6*)sa)->sin6_port != ((struct ipstack_sockaddr_in6*)sb)->sin6_port)
-                        return FALSE;
-        } else {
-                ortp_warning ("Cannot compare family type [%d]", sa->sa_family);
-                return FALSE;
-        }
-        return TRUE;
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
+		return retval == 1 ? 1 : 0;
+	}
+#endif
 
 char *ortp_strndup(const char *str,int n){
 	int min=MIN((int)strlen(str),n)+1;
@@ -273,8 +188,8 @@ int __ortp_thread_create(ortp_thread_t *thread, pthread_attr_t *attr, void * (*r
 unsigned long __ortp_thread_self(void) {
 	return (unsigned long)pthread_self();
 }
-#endif
 
+#endif
 #if	defined(_WIN32) || defined(_WIN32_WCE)
 
 int WIN_mutex_init(ortp_mutex_t *mutex, void *attr)
@@ -478,6 +393,22 @@ char * WSAAPI gai_strerror(int errnum){
 
 #endif
 
+#ifndef _WIN32
+
+#include <sys/socket.h>
+#include <netdb.h>
+#include <sys/un.h>
+#include <sys/stat.h>
+
+/* portable named pipes */
+
+#ifdef HAVE_SYS_SHM_H
+
+#endif
+
+#elif defined(_WIN32) && !defined(_WIN32_WCE)
+
+#endif
 
 
 #ifdef __MACH__
@@ -694,5 +625,90 @@ bool_t ortp_is_multicast_addr(const struct ipstack_sockaddr *addr) {
 		default:
 			return FALSE;
 	}
+
+}
+
+
+int ortp_sockaddr_to_address(const struct ipstack_sockaddr *sa, socklen_t salen, char *ip, size_t ip_size, int *port) {
+		inet_ntop(sa->sa_family, &((struct ipstack_sockaddr_in*)sa)->sin_addr, ip, ip_size);
+        if(sa->sa_family == AF_INET && port)
+			*port = ntohs(((struct ipstack_sockaddr_in *)sa)->sin_port);
+        if(sa->sa_family == AF_INET6 && port)
+			*port = ntohs(((struct ipstack_sockaddr_in6 *)sa)->sin6_port);
+		return 0;
+}
+
+int ortp_sockaddr_to_print_address(struct ipstack_sockaddr *sa, socklen_t salen, char *printable_ip, size_t printable_ip_size) {
+        if ((sa->sa_family == 0) || (salen == 0)) {
+                snprintf(printable_ip, printable_ip_size, "no-addr");
+                return 0;
+        } else {
+            char ip[64];
+            int port;
+			ortp_sockaddr_to_address(sa, salen, ip, sizeof(ip), &port);
+			if (sa->sa_family == AF_INET)
+			    snprintf(printable_ip, printable_ip_size, "%s:%d", ip, port);
+            else if (sa->sa_family == AF_INET6)
+                    snprintf(printable_ip, printable_ip_size, "[%s]:%d", ip, port);
+            return 0;
+        }
+}
+
+int ortp_address_to_sockaddr(int sin_family, char *ip, int port,
+                             const struct ipstack_sockaddr *sa, socklen_t *salen) {
+    struct ipstack_sockaddr_in *addr = (struct ipstack_sockaddr_in *)sa;
+    struct ipstack_sockaddr_in6 *addr6 = (struct ipstack_sockaddr_in6 *)sa;
+    if(sin_family == AF_INET)
+    {
+        memset(addr, 0, sizeof(struct ipstack_sockaddr_in));
+        addr->sin_family = AF_INET;
+        /* If the modbus port is < to 1024, we need the setuid root. */
+        addr->sin_port = htons(port);
+        if (ip == NULL) {
+            addr->sin_addr.s_addr = htonl(INADDR_ANY);
+        } else {
+            addr->sin_addr.s_addr = inet_addr(ip);
+        }
+        if(salen)
+            *salen = sizeof(struct ipstack_sockaddr_in);
+    }
+    if(sin_family == AF_INET6)
+    {
+        memset(addr6, 0, sizeof(struct ipstack_sockaddr_in6));
+        addr6->sin6_family = AF_INET6;
+        /* If the modbus port is < to 1024, we need the setuid root. */
+        addr6->sin6_port = htons(port);
+        if (ip == NULL) {
+            memset(&addr6->sin6_addr.s6_addr, 0, sizeof(addr6->sin6_addr.s6_addr));
+        } else {
+            //inet6_aton();
+            //addr6->sin6_addr.s6_addr = 0;
+        }
+        if(salen)
+            *salen = sizeof(struct ipstack_sockaddr_in6);
+    }
+    return 0;
+}
+
+bool_t ortp_sockaddr_equals(const struct ipstack_sockaddr * sa, const struct ipstack_sockaddr * sb) {
+
+        if (sa->sa_family != sb->sa_family)
+                return FALSE;
+
+        if (sa->sa_family == AF_INET) {
+                if ((((struct ipstack_sockaddr_in*)sa)->sin_addr.s_addr != ((struct ipstack_sockaddr_in*)sb)->sin_addr.s_addr
+                         || ((struct ipstack_sockaddr_in*)sa)->sin_port != ((struct ipstack_sockaddr_in*)sb)->sin_port))
+                        return FALSE;
+        } else if (sa->sa_family == AF_INET6) {
+                if (memcmp(&((struct ipstack_sockaddr_in6*)sa)->sin6_addr
+                                   , &((struct ipstack_sockaddr_in6*)sb)->sin6_addr
+                                   , sizeof(struct in6_addr)) !=0
+                        || ((struct ipstack_sockaddr_in6*)sa)->sin6_port != ((struct ipstack_sockaddr_in6*)sb)->sin6_port)
+                        return FALSE;
+        } else {
+                ortp_warning ("Cannot compare family type [%d]", sa->sa_family);
+                return FALSE;
+        }
+        return TRUE;
 
 }

@@ -1,43 +1,35 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-#include <ortp/event.h>
+#ifdef HAVE_CONFIG_H
+#include "ortp-config.h"
+#endif
+#include "ortp/ortp.h"
 #include "utils.h"
-
+#include "ortp/rtpsession.h"
+#include "rtpsession_priv.h"
+//#include <ortp/bctport.h>
 
 static void rtp_session_schedule_outbound_network_simulator(RtpSession *session, ortpTimeSpec *sleep_until);
 
 static OrtpNetworkSimulatorCtx* simulator_ctx_new(void){
-	OrtpNetworkSimulatorCtx *ctx=(OrtpNetworkSimulatorCtx*)ortp_malloc(sizeof(OrtpNetworkSimulatorCtx));
+	OrtpNetworkSimulatorCtx *ctx=(OrtpNetworkSimulatorCtx*)ortp_malloc0(sizeof(OrtpNetworkSimulatorCtx));
 	qinit(&ctx->latency_q);
 	qinit(&ctx->q);
 	qinit(&ctx->send_q);
@@ -273,11 +265,8 @@ static mblk_t *simulate_bandwidth_limit_and_jitter(RtpSession *session, mblk_t *
 	int bits;
 	int budget_increase;
 	mblk_t *output=NULL;
-#ifdef ORTP_INET6
 	int overhead=(session->rtp.gs.sockfamily==AF_INET6) ? IP6_UDP_OVERHEAD : IP_UDP_OVERHEAD;
-#else
-	int overhead=IP_UDP_OVERHEAD;
-#endif
+
 	ortp_gettimeofday(&current,NULL);
 
 	if (sim->last_check.tv_sec==0){
@@ -455,7 +444,7 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 			is_rtp_packet=om->reserved1; /*it was set by rtp_session_sendto()*/
 			om=rtp_session_network_simulate(session,om, &is_rtp_packet);
 			if (om){
-                _ortp_sendto(rtp_session_get_socket(session, is_rtp_packet), om, 0, (struct sockaddr*)&om->net_addr.addr, om->net_addr.len);
+				_ortp_sendto(rtp_session_get_socket(session, is_rtp_packet), om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
 				freemsg(om);
 			}
 			ortp_mutex_lock(&session->net_sim_ctx->mutex);
@@ -466,7 +455,7 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 			is_rtp_packet=TRUE;
 			om=rtp_session_network_simulate(session,NULL, &is_rtp_packet);
 			if (om){
-                _ortp_sendto(rtp_session_get_socket(session, is_rtp_packet), om, 0, (struct sockaddr*)&om->net_addr.addr, om->net_addr.len);
+				_ortp_sendto(rtp_session_get_socket(session, is_rtp_packet), om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
 				freemsg(om);
 			}
 		}
@@ -490,8 +479,8 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 				todrop = om; /*simulate a packet loss, only RTP packets can be dropped. Timestamp is not set for RTCP packets*/
 			}else if (ortp_timespec_compare(&packet_time, &current) <= 0){
 				/*it is time to send this packet*/
-				
-                _ortp_sendto(is_rtp_packet ? session->rtp.gs.socket : session->rtcp.gs.socket, om, 0, (struct sockaddr*)&om->net_addr.addr, om->net_addr.len);
+
+				_ortp_sendto(is_rtp_packet ? session->rtp.gs.socket : session->rtcp.gs.socket, om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
 				todrop = om;
 			}else {
 				/*no packet is to be sent yet; set the time at which we want to be called*/
@@ -512,4 +501,3 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 		}
 	}
 }
-

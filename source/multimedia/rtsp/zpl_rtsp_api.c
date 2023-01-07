@@ -14,8 +14,7 @@
 #ifdef ZPL_LIVE555_MODULE
 #include "livertsp_server.h"
 #else
-#include <ortp/port.h>
-#include <ortp/rtp_queue.h>
+
 #include <ortp/ortp.h>
 
 #include "zpl_rtsp.h"

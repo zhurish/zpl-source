@@ -167,7 +167,7 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
         // ipstack_set_nonblocking(sock);
         sockopt_reuseaddr(sock);
         ipstack_tcp_nodelay(sock, 1);
-        sockopt_keepalive(sock);
+        //sockopt_keepalive(sock);
 
         return rtsp_srv_session_create(ctx, sock, address, ntohs(client.sin_port));
     }
@@ -417,7 +417,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
                 sdplength += sprintf(buftmp + sdplength, "a=control:trackID=%d\r\n", session->audio_session.i_trackid);
         }
         */
-        sdplength += rtsp_media_build_sdptext(session, NULL, buftmp + sdplength);
+        sdplength += rtsp_media_build_sdptext(session, buftmp + sdplength);
 
         length += sprintf(ctx->_send_build + length, "Content-Type: application/sdp\r\n");
         length += sprintf(ctx->_send_build + length, "Content-Length: %d\r\n", sdplength);
@@ -449,7 +449,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
 
     if (code == RTSP_STATE_CODE_200)
     {
-        rtsp_media_update(session, NULL, true);
+        rtsp_media_update(session, true);
         session->_rtpsession = &session->video_session;
         if (session->sdptext.misc.url)
         {

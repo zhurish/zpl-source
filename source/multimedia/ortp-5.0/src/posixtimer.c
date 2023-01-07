@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -21,18 +22,7 @@
 #include "ortp-config.h"
 #endif
 
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
+#include "ortp/ortp.h"
 #include "rtptimer.h"
 
 #if	!defined(_WIN32) && !defined(_WIN32_WCE)
@@ -45,9 +35,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef POSIXTIMER_INTERVAL
-#define POSIXTIMER_INTERVAL 10000
-#endif
 
 static struct timeval orig,cur;
 static uint32_t posix_timer_time=0;		/*in milisecond */
@@ -69,7 +56,7 @@ void posix_timer_do(void)
 	ortp_gettimeofday(&cur,NULL);
 	time=((cur.tv_usec-orig.tv_usec)/1000 ) + ((cur.tv_sec-orig.tv_sec)*1000 );
 	if ( (diff=time-posix_timer_time)>50){
-        ;//ortp_warning("Must catchup %i miliseconds.",diff);
+		ortp_warning("Must catchup %i miliseconds.",diff);
 	}
 	while((diff = posix_timer_time-time) > 0)
 	{
@@ -85,7 +72,7 @@ void posix_timer_do(void)
 		time=((cur.tv_usec-orig.tv_usec)/1000 ) + ((cur.tv_sec-orig.tv_sec)*1000 );
 	}
 	posix_timer_time+=POSIXTIMER_INTERVAL/1000;
-	
+
 }
 
 void posix_timer_uninit(void)
@@ -98,8 +85,8 @@ RtpTimer posix_timer={	0,
 						posix_timer_do,
 						posix_timer_uninit,
 						{0,POSIXTIMER_INTERVAL}};
-							
-							
+
+
 #else //_WIN32
 
 
@@ -308,7 +295,7 @@ void win_timer_do(void)
 
 void win_timer_close(void)
 {
-	timeKillEvent(timerId); 
+	timeKillEvent(timerId);
 }
 
 RtpTimer toto;

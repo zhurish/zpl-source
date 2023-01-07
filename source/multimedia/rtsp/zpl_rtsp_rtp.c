@@ -4,20 +4,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-#include <ortp/telephonyevents.h>
-#include <ortp/rtpsignaltable.h>
+
 #include <ortp/ortp.h>
 
 #include "zpl_rtsp.h"
@@ -52,17 +39,17 @@ int rtsp_rtp_start(void)
 
 
 
-int rtsp_rtp_handle_options(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_options(rtsp_session_t* session)
 {
     return 0;
 }
 
-int rtsp_rtp_handle_describe(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_describe(rtsp_session_t* session)
 {
     return 0;
 }
 #define ortp_socketpair ipstack_socketpair
-static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool bcreate)
+static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, bool bcreate)
 {
     rtp_session_t   *_rtpsession = session->_rtpsession;
     if(_rtpsession == NULL)
@@ -91,8 +78,8 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
             if(_rtpsession->transport.proto == RTSP_TRANSPORT_RTP_RTPOVERRTSP ||
                     _rtpsession->transport.proto == RTSP_TRANSPORT_RTP_TCP)
             {
-                ortp_socket_t rtp_recv[2] = {0, 0};
-                ortp_socket_t rtcp_recv[2] = {0, 0};
+                zpl_socket_t rtp_recv[2] = {0, 0};
+                zpl_socket_t rtcp_recv[2] = {0, 0};
                 if(ipstack_invalid(_rtpsession->rtp_sock))
                 {
                     ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
@@ -112,7 +99,7 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
                 if(!ipstack_invalid(rtp_recv[1]) && !ipstack_invalid(rtcp_recv[1]))
                 {
                     rtp_session_set_sockets(_rtpsession->rtp_session,
-                                            rtp_recv[1], rtcp_recv[1]);
+                                            ipstack_fd(rtp_recv[1]), ipstack_fd(rtcp_recv[1]));
 
                     rtp_session_set_overtcp(_rtpsession->rtp_session, true,
                                             _rtpsession->transport.rtp_interleaved,
@@ -124,8 +111,8 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
                 if(!ipstack_invalid(_rtpsession->rtp_sock) && !ipstack_invalid(_rtpsession->rtcp_sock))
                 {
                     rtp_session_set_sockets(_rtpsession->rtp_session,
-                                            _rtpsession->rtp_sock,
-                                            _rtpsession->rtcp_sock);
+                                            ipstack_fd(_rtpsession->rtp_sock),
+                                            ipstack_fd(_rtpsession->rtcp_sock));
                 }
                 else
                 {
@@ -146,7 +133,7 @@ static int rtsp_rtp_session_srv_setup(rtsp_session_t* session, void *pUser, bool
     return -1;
 }
 
-static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, bool bcreate)
+static int rtsp_rtp_session_client_setup(rtsp_session_t* session, bool bcreate)
 {
     rtp_session_t   *_rtpsession = session->_rtpsession;
     if(_rtpsession == NULL)
@@ -157,8 +144,8 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
         if(_rtpsession->transport.proto == RTSP_TRANSPORT_RTP_RTPOVERRTSP ||
                 _rtpsession->transport.proto == RTSP_TRANSPORT_RTP_TCP)
         {
-            ortp_socket_t rtp_recv[2] = {0, 0};
-            ortp_socket_t rtcp_recv[2] = {0, 0};
+            zpl_socket_t rtp_recv[2] = {0, 0};
+            zpl_socket_t rtcp_recv[2] = {0, 0};
             if(ipstack_invalid(_rtpsession->rtp_sock))
             {
                 ortp_socketpair(IPSTACK_OS, AF_INET, SOCK_STREAM, IPPROTO_TCP, rtp_recv);
@@ -178,7 +165,7 @@ static int rtsp_rtp_session_client_setup(rtsp_session_t* session, void *pUser, b
             if(!ipstack_invalid(rtp_recv[1]) && !ipstack_invalid(rtcp_recv[1]))
             {
                 rtp_session_set_sockets(_rtpsession->rtp_session,
-                                        rtp_recv[1], rtcp_recv[1]);
+                                        ipstack_fd(rtp_recv[1]), ipstack_fd(rtcp_recv[1]));
 
                 rtp_session_set_overtcp(_rtpsession->rtp_session, true,
                                         _rtpsession->transport.rtp_interleaved,
@@ -208,7 +195,7 @@ static void rtp_session_timestamp_jump(RtpSession *session)
     rtsp_log_debug("======================rtp_session_timestamp_jump !\n");
 }
 
-int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_setup(rtsp_session_t* session)
 {
     int ret = 0;
     bool    bcreate = false;
@@ -235,7 +222,7 @@ int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
         if(_rtpsession->local_ssrc == 0)
             _rtpsession->local_ssrc = (uint32_t)_rtpsession->rtp_session;
         //if(!bcreate && _rtpsession->local_ssrc)
-        ORTP_SESSION_LOCK(_rtpsession->rtp_session);
+        //ORTP_SESSION_LOCK(_rtpsession->rtp_session);
         rtp_session_set_recv_buf_size(_rtpsession->rtp_session, 165530);
         rtp_session_set_send_buf_size(_rtpsession->rtp_session, 65530);
 
@@ -262,28 +249,28 @@ int rtsp_rtp_handle_setup(rtsp_session_t* session, void *pUser)
                                               _rtpsession->transport.rtp.unicast.rtp_port,
                                               _rtpsession->transport.rtp.unicast.rtcp_port);
         }
-        ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);                                      
+        //ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);                                      
     }
     if(session->bsrv && _rtpsession->rtp_session)
     {
-        ORTP_SESSION_LOCK(_rtpsession->rtp_session);
+        //ORTP_SESSION_LOCK(_rtpsession->rtp_session);
         rtp_session_signal_connect(_rtpsession->rtp_session,"timestamp_jump",(RtpCallback)rtp_session_timestamp_jump,0);
         rtp_session_signal_connect(_rtpsession->rtp_session,"ssrc_changed",(RtpCallback)rtp_session_reset,0);
-        ret = rtsp_rtp_session_srv_setup(session, pUser, bcreate);
-        ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);
+        ret = rtsp_rtp_session_srv_setup(session, bcreate);
+        //ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);
         return ret;
     }
     else if(_rtpsession->rtp_session)
     {
-        ORTP_SESSION_LOCK(_rtpsession->rtp_session);
-        ret = rtsp_rtp_session_client_setup(session, pUser, bcreate);
-        ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);
+        //ORTP_SESSION_LOCK(_rtpsession->rtp_session);
+        ret = rtsp_rtp_session_client_setup(session, bcreate);
+        //ORTP_SESSION_UNLOCK(_rtpsession->rtp_session);
         return ret;
     }
     return -1;
 }
 
-int rtsp_rtp_handle_teardown(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_teardown(rtsp_session_t* session)
 {
     if(session->audio_session.rtp_session)
     {
@@ -300,37 +287,37 @@ int rtsp_rtp_handle_teardown(rtsp_session_t* session, void *pUser)
     return 0;
 }
 
-int rtsp_rtp_handle_play(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_play(rtsp_session_t* session)
 {
     return 0;
 }
 
-int rtsp_rtp_handle_pause(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_pause(rtsp_session_t* session)
 {
     if(session->audio_session.rtp_session)
     {
         session->audio_session.rtp_state = RTP_SESSION_STATE_STOP;
-        rtsp_media_start(session, NULL, false);
+        rtsp_media_start(session, false);
     }
     if(session->video_session.rtp_session)
     {
         session->video_session.rtp_state = RTP_SESSION_STATE_STOP;
-        rtsp_media_start(session, NULL, false);
+        rtsp_media_start(session, false);
     }
     return 0;
 }
 
-int rtsp_rtp_handle_scale(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_scale(rtsp_session_t* session)
 {
     return 0;
 }
 
-int rtsp_rtp_handle_set_parameter(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_set_parameter(rtsp_session_t* session)
 {
     return 0;
 }
 
-int rtsp_rtp_handle_get_parameter(rtsp_session_t* session, void *pUser)
+int rtsp_rtp_handle_get_parameter(rtsp_session_t* session)
 {
     return 0;
 }
@@ -372,7 +359,7 @@ int rtsp_rtp_tcp_forward(rtsp_session_t* session, const uint8_t *buffer, uint32_
     else if(session->audio_session.transport.rtcp_interleaved == channel)
         sock = session->audio_session.rtcp_sock;
     if(sock)
-        return rtp_session_tcp_forward(sock, buffer + 4, (int)len - 4);
+        return rtp_session_tcp_forward(ipstack_fd(sock), buffer + 4, (int)len - 4);
     return 0;
 }
 
@@ -384,20 +371,20 @@ int rtsp_rtp_send(rtsp_session_t* session, bool bvideo, const uint8_t *buffer, u
     if(bvideo && session->video_session.rtp_session)
     {
         //rtsp_log_debug("rtsp_rtp_send===============video");
-        ORTP_SESSION_LOCK(session->video_session.rtp_session);
+        //ORTP_SESSION_LOCK(session->video_session.rtp_session);
         ret = rtp_session_send_with_ts(session->video_session.rtp_session,
                                             pbuffer, len,
-                                            session->video_session.user_timestamp, flags);
-        ORTP_SESSION_UNLOCK(session->video_session.rtp_session); 
+                                            session->video_session.user_timestamp/*, flags*/);
+        //ORTP_SESSION_UNLOCK(session->video_session.rtp_session); 
         return ret;                                   
     }
     if(!bvideo && session->audio_session.rtp_session)
     {
-        ORTP_SESSION_LOCK(session->audio_session.rtp_session);
+        //ORTP_SESSION_LOCK(session->audio_session.rtp_session);
         ret = rtp_session_send_with_ts(session->audio_session.rtp_session,
                                             pbuffer, len,
-                                            session->audio_session.user_timestamp, flags);
-        ORTP_SESSION_UNLOCK(session->audio_session.rtp_session);   
+                                            session->audio_session.user_timestamp/*, flags*/);
+        //ORTP_SESSION_UNLOCK(session->audio_session.rtp_session);   
         return ret;                                 
     }
     return -1;
@@ -496,20 +483,20 @@ int rtsp_rtp_recv(rtsp_session_t* session, uint8_t *buffer, uint32_t len, bool b
     int ret = 0;
     if(bvideo && session->video_session.rtp_session)
     {
-        ORTP_SESSION_LOCK(session->video_session.rtp_session);
+        //ORTP_SESSION_LOCK(session->video_session.rtp_session);
         ret = rtp_session_recv_with_ts(session->video_session.rtp_session,
                                             buffer, len,
                                             session->video_session.user_timestamp, more);
-        ORTP_SESSION_UNLOCK(session->video_session.rtp_session);
+        //ORTP_SESSION_UNLOCK(session->video_session.rtp_session);
         return ret;
     }
     if(!bvideo && session->audio_session.rtp_session)
     {
-        ORTP_SESSION_LOCK(session->audio_session.rtp_session);
+        //ORTP_SESSION_LOCK(session->audio_session.rtp_session);
         ret = rtp_session_recv_with_ts(session->audio_session.rtp_session,
                                             buffer, len,
                                             session->audio_session.user_timestamp, more);
-        ORTP_SESSION_UNLOCK(session->audio_session.rtp_session);
+        //ORTP_SESSION_UNLOCK(session->audio_session.rtp_session);
         return ret;
     }
     return -1;

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -21,7 +22,9 @@
 #ifndef VIDEOBANDWIDTHESTIMATOR_H
 #define VIDEOBANDWIDTHESTIMATOR_H
 
-
+#include <ortp/port.h>
+#include <ortp/utils.h>
+#include <ortp/ortp_list.h>
 
 typedef struct _OrtpVideoBandwidthEstimatorPacket{
 	uint32_t sent_timestamp;
@@ -33,7 +36,7 @@ typedef struct _OrtpVideoBandwidthEstimatorPacket{
 }OrtpVideoBandwidthEstimatorPacket;
 
 typedef struct _OrtpVideoBandwidthEstimator{
-	RtpSession *session;
+	struct _RtpSession *session;
 	unsigned int packet_count_min;
 	unsigned int packets_size_max;
 	unsigned int trust_percentage;
@@ -43,7 +46,7 @@ typedef struct _OrtpVideoBandwidthEstimator{
     int nb_packets_computed;
 }OrtpVideoBandwidthEstimator;
 
-OrtpVideoBandwidthEstimator * ortp_video_bandwidth_estimator_new(RtpSession *session);
+OrtpVideoBandwidthEstimator * ortp_video_bandwidth_estimator_new(struct _RtpSession *session);
 
 void ortp_video_bandwidth_estimator_destroy(OrtpVideoBandwidthEstimator *vbe);
 

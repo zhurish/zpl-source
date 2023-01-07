@@ -1,38 +1,29 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <math.h>
 
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
 #include "congestiondetector.h"
 
+#include <ortp/logging.h>
+#include <math.h>
+
+#include <ortp/rtpsession.h>
 
 static const unsigned int congestion_pending_duration_ms = 5000;
 static const float return_from_suspected_max_loss_rate = 5.0;
@@ -40,7 +31,7 @@ static const float absolute_congested_clock_ratio = 0.93f;
 static const float relative_congested_clock_ratio = 0.96f;
 static const float rls_forgetting_factor = 0.97f;
 
-static const char *ortp_congestion_detector_state_to_string(OrtpCongestionState state){
+const char *ortp_congestion_detector_state_to_string(OrtpCongestionState state){
 	switch (state){
 		case CongestionStateNormal:
 			return "CongestionStateNormal";
@@ -61,7 +52,7 @@ static const char *ortp_congestion_detector_state_to_string(OrtpCongestionState 
 static bool_t ortp_congestion_detector_set_state(OrtpCongestionDetector *cd, OrtpCongestionState state){
 	bool_t binary_state_changed = FALSE;
 	if (state == cd->state) return FALSE;
-	ortp_message("OrtpCongestionDetector: moving from state %s to state %s", 
+	ortp_message("OrtpCongestionDetector: moving from state %s to state %s",
 		     ortp_congestion_detector_state_to_string(cd->state),
 		     ortp_congestion_detector_state_to_string(state));
 	cd->state = state;
@@ -88,7 +79,7 @@ void ortp_congestion_detector_reset(OrtpCongestionDetector *cd) {
 }
 
 OrtpCongestionDetector * ortp_congestion_detector_new(RtpSession *session) {
-	OrtpCongestionDetector *cd = (OrtpCongestionDetector*)ortp_malloc(sizeof(OrtpCongestionDetector));
+	OrtpCongestionDetector *cd = (OrtpCongestionDetector*)ortp_malloc0(sizeof(OrtpCongestionDetector));
 	cd->session = session;
 	ortp_congestion_detector_reset(cd);
 	return cd;
@@ -104,7 +95,7 @@ static float ortp_congestion_detector_get_loss_rate(OrtpCongestionDetector *cd){
 	uint32_t cur_loss = (uint32_t)cd->session->stats.cum_packet_loss;
 	uint32_t cur_seq = rtp_session_get_rcv_ext_seq_number(cd->session);
 	uint32_t expected = cur_seq - cd->seq_begin;
-	
+
 	if (expected == 0) return 0;
 	return 100.0f*(float)(cur_loss - cd->loss_begin) / (float)expected;
 }
@@ -116,10 +107,10 @@ bool_t ortp_congestion_detector_record(OrtpCongestionDetector *cd, uint32_t pack
 	//float deviation;
 
 	if (cd->skip) return FALSE;
-	
+
 	packet_ts -= jitterctl->remote_ts_start;
 	cur_str_ts -= jitterctl->local_ts_start;
-	
+
 	if (!cd->initialized) {
 		cd->initialized = TRUE;
 		ortp_kalman_rls_init(&cd->rls, 1, packet_ts - cur_str_ts);
@@ -139,7 +130,7 @@ bool_t ortp_congestion_detector_record(OrtpCongestionDetector *cd, uint32_t pack
 		 */
 		return binary_state_changed;
 	}
-	
+
 	clock_drift = cd->rls.m < absolute_congested_clock_ratio || jitterctl->capped_clock_ratio < absolute_congested_clock_ratio
 		|| cd->rls.m < relative_congested_clock_ratio * jitterctl->capped_clock_ratio ;
 	//deviation = ((int32_t)(packet_ts - local_ts_to_remote_ts_rls(cd->rls.m, cd->rls.b, cur_str_ts))) / (float)jitterctl->clock_rate;
@@ -181,14 +172,14 @@ bool_t ortp_congestion_detector_record(OrtpCongestionDetector *cd, uint32_t pack
 						cd->too_much_loss = TRUE;
 					}
 				}else{
-					// congestion has maybe stopped 
+					// congestion has maybe stopped
 					binary_state_changed = ortp_congestion_detector_set_state(cd, CongestionStateNormal);
 				}
 			} else {
-				
+
 				if (curtime - cd->last_packet_recv >= 1000){
-					/*no packet received during last second ! 
-					 It means that the drift measure is not very significant, and futhermore the banwdith computation will be 
+					/*no packet received during last second !
+					 It means that the drift measure is not very significant, and futhermore the banwdith computation will be
 					 near to zero. It makes no sense to trigger a congestion detection in this case; the network is simply not working.
 					 */
 					binary_state_changed = ortp_congestion_detector_set_state(cd, CongestionStateNormal);

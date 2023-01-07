@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -63,20 +64,14 @@
 
 #ifndef ORTP_H
 #define ORTP_H
+#include "ortp/logging.h"
+#include "ortp/rtpsession.h"
+#include "ortp/sessionset.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-#include <ortp/port.h>
-#include <ortp/ortp_list.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-#include <ortp/sessionset.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/str_utils.h>
-#include <ortp/extremum.h>
 
 ORTP_PUBLIC bool_t ortp_min_version_required(int major, int minor, int micro);
 ORTP_PUBLIC void ortp_init(void);

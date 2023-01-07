@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -25,7 +26,7 @@
 
 #ifndef RTPPROFILE_H
 #define RTPPROFILE_H
-
+#include <ortp/port.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -38,19 +39,20 @@ extern "C"{
  * between RTP payload type number and the PayloadType that defines the type of
  * media.
 **/
-typedef struct _RtpProfile
+struct _RtpProfile
 {
 	char *name;
 	PayloadType *payload[RTP_PROFILE_MAX_PAYLOADS];
-}RtpProfile;
+};
 
 
+typedef struct _RtpProfile RtpProfile;
 
 ORTP_VAR_PUBLIC RtpProfile av_profile;
 
 #define rtp_profile_get_name(profile) 	(const char*)((profile)->name)
-
-ORTP_PUBLIC void rtp_profile_set_payload(RtpProfile *prof, int idx, const PayloadType *pt);
+void av_profile_init(RtpProfile *profile);
+ORTP_PUBLIC void rtp_profile_set_payload(RtpProfile *prof, int idx, PayloadType *pt);
 
 ORTP_PUBLIC void rtp_profile_payload_update(int pt, const PayloadType *type);
 /**
@@ -71,7 +73,12 @@ ORTP_PUBLIC void rtp_profile_payload_update(int pt, const PayloadType *type);
  *@param idx	the payload type number
  *@return the payload description (a PayloadType object)
 **/
-ORTP_PUBLIC PayloadType *rtp_profile_get_payload(const RtpProfile *prof, int idx);
+static ORTP_INLINE PayloadType * rtp_profile_get_payload(const RtpProfile *prof, int idx){
+	if (idx<0 || idx>=RTP_PROFILE_MAX_PAYLOADS) {
+		return NULL;
+	}
+	return prof->payload[idx];
+}
 ORTP_PUBLIC void rtp_profile_clear_all(RtpProfile *prof);
 ORTP_PUBLIC void rtp_profile_set_name(RtpProfile *prof, const char *name);
 ORTP_PUBLIC PayloadType * rtp_profile_get_payload_from_mime(RtpProfile *profile,const char *mime);
@@ -92,12 +99,10 @@ ORTP_PUBLIC RtpProfile * rtp_profile_clone(RtpProfile *prof);
 ORTP_PUBLIC RtpProfile * rtp_profile_clone_full(RtpProfile *prof);
 /* frees the profile and all its PayloadTypes*/
 ORTP_PUBLIC void rtp_profile_destroy(RtpProfile *prof);
-ORTP_PUBLIC void av_profile_init(RtpProfile *profile);
 
-ORTP_PUBLIC char *payload_type_get_rtpmap(PayloadType *pt);
+//ORTP_PUBLIC char *payload_type_get_rtpmap(PayloadType *pt);
 ORTP_PUBLIC char *rtp_profile_get_rtpmap(int payload);
 ORTP_PUBLIC uint32_t rtp_profile_get_clock_rate(int payload);
-
 #ifdef __cplusplus
 }
 #endif

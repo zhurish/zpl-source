@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -27,23 +28,12 @@
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-#include <ortp/event.h>
+#include "ortp/ortp.h"
+#include "ortp/rtpsession.h"
+#include "ortp/rtcp.h"
 #include "utils.h"
+#include "rtpsession_priv.h"
 #include "jitterctl.h"
-
 
 #define rtcp_bye_set_ssrc(b,pos,ssrc)	(b)->ssrc[pos]=htonl(ssrc)
 #define rtcp_bye_get_ssrc(b,pos)		ntohl((b)->ssrc[pos])
@@ -106,8 +96,6 @@ static void sdes_chunk_set_ssrc(mblk_t *m, uint32_t ssrc){
 	sdes_chunk_t *sc=(sdes_chunk_t*)m->b_rptr;
 	sc->csrc=htonl(ssrc);
 }
-
-#define sdes_chunk_get_ssrc(m) ntohl(((sdes_chunk_t*)((m)->b_rptr))->csrc)
 
 static mblk_t * sdes_chunk_pad(mblk_t *m){
 	return appendb(m,"",1,TRUE);
@@ -190,7 +178,7 @@ void rtp_session_add_contributing_source(RtpSession *session, uint32_t csrc,
 }
 
 void rtp_session_remove_contributing_source(RtpSession *session, uint32_t ssrc) {
-	rtp_queue_t *q=&session->contributing_sources;
+	queue_t *q=&session->contributing_sources;
 	mblk_t *tmp;
 	for (tmp=qbegin(q); !qend(q,tmp); tmp=qnext(q,tmp)){
 		uint32_t csrc=sdes_chunk_get_ssrc(tmp);
@@ -201,6 +189,11 @@ void rtp_session_remove_contributing_source(RtpSession *session, uint32_t ssrc) 
 	}
 	tmp=rtcp_create_simple_bye_packet(ssrc, NULL);
 	rtp_session_rtcp_send(session,tmp);
+}
+
+void rtp_session_clear_contributing_sources(RtpSession *session) {
+	queue_t *q=&session->contributing_sources;
+	flushq(q, 0);
 }
 
 void rtcp_common_header_init(rtcp_common_header_t *ch, RtpSession *s,int type, int rc, size_t bytes_len){
@@ -217,7 +210,7 @@ mblk_t* rtp_session_create_rtcp_sdes_packet(RtpSession *session, bool_t full) {
 	mblk_t *tmp;
 	mblk_t *m = mp;
 	mblk_t *sdes;
-	rtp_queue_t *q;
+	queue_t *q;
 	int rc = 0;
 
 	sdes = (full == TRUE) ? session->full_sdes : session->minimal_sdes;
@@ -231,7 +224,7 @@ mblk_t* rtp_session_create_rtcp_sdes_packet(RtpSession *session, bool_t full) {
 
 	if (full == TRUE) {
 		q = &session->contributing_sources;
-		for (tmp = qbegin(q); !qend(q, tmp); tmp = qnext(q, mp)) {
+		for (tmp = qbegin(q); !qend(q, tmp); tmp = qnext(q, tmp)) {
 			m = concatb(m, dupmsg(tmp));
 			rc++;
 		}
@@ -507,11 +500,11 @@ static float rtcp_rand(float t) {
  * This is a simplified version with this limit of the algorithm described in
  * the appendix A.7 of RFC3550.
  */
-void compute_rtcp_interval(void *p) {
+void compute_rtcp_interval(struct _RtpSession *session) {
 	float t;
 	float rtcp_min_time;
 	float rtcp_bw;
-	RtpSession *session = p;
+
 	if (session->target_upload_bandwidth == 0) return;
 
 	/* Compute target RTCP bandwidth in bits/s. */
@@ -640,11 +633,11 @@ void rtp_session_run_rtcp_send_scheduler(RtpSession *session) {
 	}
 }
 
-void rtp_session_rtcp_process_send(void *session) {
+void rtp_session_rtcp_process_send(RtpSession *session) {
 	rtp_session_run_rtcp_send_scheduler(session);
 }
 
-void rtp_session_rtcp_process_recv(void *session){
+void rtp_session_rtcp_process_recv(RtpSession *session){
 	rtp_session_run_rtcp_send_scheduler(session);
 }
 
@@ -695,14 +688,13 @@ int rtp_session_bye(RtpSession *session, const char *reason) {
     return ret;
 }
 
-OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, void *session){
+OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, RtpSession *session){
 	OrtpLossRateEstimator *obj=ortp_malloc(sizeof(OrtpLossRateEstimator));
 	ortp_loss_rate_estimator_init(obj,min_packet_count_interval, min_time_ms_interval, session);
 	return obj;
 }
 
-void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, void *p){
-	RtpSession *session = p;
+void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, RtpSession *session){
 	memset(obj,0,sizeof(*obj));
 	obj->min_packet_count_interval=min_packet_count_interval;
 	obj->last_ext_seq=rtp_session_get_seq_number(session);
@@ -713,10 +705,9 @@ void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_co
 	obj->last_estimate_time_ms=(uint64_t)-1;
 }
 
-bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj, const void *p, const report_block_t *rb){
+bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj, const RtpSession *session, const report_block_t *rb){
 	int32_t cum_loss=report_block_get_cum_packet_lost(rb);
 	int32_t extseq=report_block_get_high_ext_seq(rb);
-	RtpSession *session = p;
 	//int32_t diff_unique_outgoing=(int32_t)(session->stats.packet_sent-obj->last_packet_sent_count);
 	//int32_t diff_total_outgoing=diff_unique_outgoing+(int32_t)(session->stats.packet_dup_sent-obj->last_dup_packet_sent_count);
 	int32_t diff;
@@ -748,7 +739,7 @@ bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj,
 	}else if (diff>obj->min_packet_count_interval && curtime-obj->last_estimate_time_ms>=obj->min_time_ms_interval){
 		/*we have sufficient interval*/
 		int32_t new_losses=cum_loss-obj->last_cum_loss;
-		
+
 #if 0 /*SM: the following code try to takes into account sent duplicates - however by doing this it creates a bias in the loss rate computation
 		that can sometimes result in a negative loss rate, even if there is no duplicate.
 		Since the rate control doesn't use duplicates anymore, there is no good reason to take this into account.
@@ -786,82 +777,4 @@ float ortp_loss_rate_estimator_get_value(OrtpLossRateEstimator *obj){
 
 void ortp_loss_rate_estimator_destroy(OrtpLossRateEstimator *obj){
 	ortp_free(obj);
-}
-
-void ortp_rtcp_msg_debug(const void *p, unsigned char *ptr,
-                         uint32_t len, const char *dest)
-{
-	//RtpSession *session = p;
-    rtcp_common_header_t *ch = (rtcp_common_header_t *)ptr;
-    rtcp_sr_t *rtcpsr = (rtcp_sr_t *)ptr;
-    rtcp_rr_t *rtcprr = (rtcp_rr_t *)ptr;
-    rtcp_app_t *rtcpapp = (rtcp_app_t *)ptr;
-    rtcp_bye_t *rtcpbyte = (rtcp_bye_t *)ptr;
-    rtcp_bye_reason_t *rtcpbyteres = (rtcp_bye_reason_t *)(ptr + sizeof(rtcp_bye_t));
-
-    switch (rtcp_common_header_get_packet_type(ch))
-    {
-    case RTCP_SR:
-        ortp_debug("version             %d", rtcp_common_header_get_version(ch));
-        ortp_debug("padbit              0x%x", rtcp_common_header_get_padbit(ch));
-        ortp_debug("rc                  %d", rtcp_common_header_get_rc(ch));
-        ortp_debug("type                SR");
-        ortp_debug("length              %d", rtcp_common_header_get_length(ch));
-        ortp_debug("sender ssrc         %d", rtcpsr->ssrc);
-        ortp_debug("ntp timestamp msw   %d", rtcpsr->si.ntp_timestamp_msw);
-        ortp_debug("ntp timestamp lsw   %d", rtcpsr->si.ntp_timestamp_lsw);
-        ortp_debug("rtp timestamp       %d", rtcpsr->si.rtp_timestamp);
-        ortp_debug("sender packet count %d", rtcpsr->si.senders_packet_count);
-        ortp_debug("sender octet count  %d", rtcpsr->si.senders_octet_count);
-
-        ortp_debug("recv ssrc           %d", rtcpsr->rb[0].ssrc);
-        ortp_debug("lost                %d", rtcpsr->rb[0].fl_cnpl);
-        ortp_debug("ext high seq rec    %d", rtcpsr->rb[0].ext_high_seq_num_rec);
-        ortp_debug("Jitter              %d", rtcpsr->rb[0].interarrival_jitter);
-        ortp_debug("LSR                 %d", rtcpsr->rb[0].lsr);
-        ortp_debug("DLSR                %d", rtcpsr->rb[0].delay_snc_last_sr);
-        break;
-    case RTCP_RR:
-        ortp_debug("version             %d", rtcp_common_header_get_version(ch));
-        ortp_debug("padbit              0x%x", rtcp_common_header_get_padbit(ch));
-        ortp_debug("rc                  %d", rtcp_common_header_get_rc(ch));
-        ortp_debug("type                RR");
-        ortp_debug("length              %d", rtcp_common_header_get_length(ch));
-        ortp_debug("sender ssrc         %d", rtcprr->ssrc);
-        ortp_debug("recv ssrc           %d", rtcprr->rb[0].ssrc);
-        ortp_debug("lost                %d", rtcprr->rb[0].fl_cnpl);
-        ortp_debug("ext high seq rec    %d", rtcprr->rb[0].ext_high_seq_num_rec);
-        ortp_debug("Jitter              %d", rtcprr->rb[0].interarrival_jitter);
-        ortp_debug("LSR                 %d", rtcprr->rb[0].lsr);
-        ortp_debug("DLSR                %d", rtcprr->rb[0].delay_snc_last_sr);
-        break;
-    case RTCP_SDES:
-        break;
-    case RTCP_BYE:
-        ortp_debug("version             %d", rtcp_common_header_get_version(ch));
-        ortp_debug("padbit              0x%x", rtcp_common_header_get_padbit(ch));
-        ortp_debug("rc                  %d", rtcp_common_header_get_rc(ch));
-        ortp_debug("type                RR");
-        ortp_debug("length              %d", rtcp_common_header_get_length(ch));
-        ortp_debug("sender ssrc         %d", rtcpbyte->ssrc);
-        if(rtcpbyteres->len)
-            ortp_debug("sender ssrc         %s", rtcpbyteres->content);
-
-        break;
-    case RTCP_APP:
-        ortp_debug("version             %d", rtcp_common_header_get_version(ch));
-        ortp_debug("padbit              0x%x", rtcp_common_header_get_padbit(ch));
-        ortp_debug("rc                  %d", rtcp_common_header_get_rc(ch));
-        ortp_debug("type                RR");
-        ortp_debug("length              %d", rtcp_common_header_get_length(ch));
-        ortp_debug("sender ssrc         %d", rtcpapp->ssrc);
-        ortp_debug("app name            %d", rtcpapp->name);
-        break;
-    case RTCP_RTPFB:
-        break;
-    case RTCP_PSFB:
-        break;
-    case RTCP_XR:
-        break;
-    }
 }

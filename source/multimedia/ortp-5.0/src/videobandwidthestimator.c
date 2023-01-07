@@ -1,43 +1,32 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-#include <ortp/event.h>
 #include "videobandwidthestimator.h"
+#include <ortp/logging.h>
+#include <math.h>
+#include <ortp/rtpsession.h>
 
 #define MIN_DIFFTIME 0.00001f
 
 OrtpVideoBandwidthEstimator * ortp_video_bandwidth_estimator_new(RtpSession *session) {
-	OrtpVideoBandwidthEstimator *vbe = (OrtpVideoBandwidthEstimator*)ortp_malloc(sizeof(OrtpVideoBandwidthEstimator));
+	OrtpVideoBandwidthEstimator *vbe = (OrtpVideoBandwidthEstimator*)ortp_malloc0(sizeof(OrtpVideoBandwidthEstimator));
 	vbe->session = session;
 	vbe->packet_count_min = 5;
 	vbe->packets_size_max = 30;
@@ -57,7 +46,7 @@ void ortp_video_bandwidth_estimator_reset(OrtpVideoBandwidthEstimator *vbe) {
 	ortp_free(vbe->last_packet);
     vbe->last_packet = NULL;
     vbe->nb_packets_computed = 0;
-    vbe->packets = ortp_list_free_with_data(vbe->packets, ortp_free);
+	vbe->packets = ortp_list_free_with_data(vbe->packets, ortp_free);
 }
 
 void ortp_video_bandwidth_estimator_set_packets_count_min(OrtpVideoBandwidthEstimator *vbe, unsigned int value) {
@@ -113,11 +102,11 @@ static void compute_bitrate_add_to_list_and_remove_oldest_value(OrtpVideoBandwid
 		ortp_debug("[VBE] Bitrate is %f kbits/s computed using %f timedif and %u size", packet->bitrate / 1000, difftime, packet->bytes);
 
 		vbe->nb_packets_computed += 1;
-        vbe->packets = ortp_list_prepend(vbe->packets, packet);
+		vbe->packets = ortp_list_prepend(vbe->packets, packet);
 
-        if (ortp_list_size(vbe->packets) > vbe->packets_size_max) {
-            void *old_data = ortp_list_nth_data(vbe->packets, vbe->packets_size_max);
-            vbe->packets = ortp_list_remove(vbe->packets, old_data);
+		if (ortp_list_size(vbe->packets) > vbe->packets_size_max) {
+			void *old_data = ortp_list_nth_data(vbe->packets, vbe->packets_size_max);
+			vbe->packets = ortp_list_remove(vbe->packets, old_data);
 			ortp_free(old_data);
 		}
 
@@ -162,7 +151,7 @@ void ortp_video_bandwidth_estimator_process_packet(OrtpVideoBandwidthEstimator *
 	}
 
 	if (!current_packet) {
-		current_packet = (OrtpVideoBandwidthEstimatorPacket*)ortp_malloc(sizeof(OrtpVideoBandwidthEstimatorPacket));
+		current_packet = (OrtpVideoBandwidthEstimatorPacket*)ortp_malloc0(sizeof(OrtpVideoBandwidthEstimatorPacket));
 		current_packet->count = 1;
 		current_packet->bytes = msgsize;
 		current_packet->sent_timestamp = sent_timestamp;

@@ -1,43 +1,44 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #ifdef HAVE_CONFIG_H
 #include "ortp-config.h"
 #endif
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/ortp_list.h>
-#include <ortp/extremum.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
-#include <ortp/sessionset.h>
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
-#include <ortp/rtpsession_priv.h>
-#include <ortp/rtpsession.h>
-#include <ortp/event.h>
 #include <ortp/telephonyevents.h>
-#include <ortp/rtpsignaltable.h>
 #include "utils.h"
-
-
-
+#include "rtpsession_priv.h"
+#include "ortp/str_utils.h"
+#include <ortp/ortp.h>
+//#include <ortp/bctport.h>
+#if 0
+PayloadType	payload_type_telephone_event={
+	PAYLOAD_AUDIO_PACKETIZED, /*type */
+	8000,	/*clock rate */
+	0,		/* bytes per sample N/A */
+	NULL,	/* zero pattern N/A*/
+	0,		/*pattern_length N/A */
+	0,		/*	normal_bitrate */
+	"telephone-event",	/* MIME subtype */
+	1,		/* Audio Channels */
+	0		/*flags */
+};
+#endif
 /**
  * Tells whether telephony events payload type is supported within the
  * context of the rtp session.
@@ -47,10 +48,8 @@
 **/
 int rtp_session_telephone_events_supported(RtpSession *session)
 {
-	int ret = 0;
 	/* search for a telephony event payload in the current profile */
-	ret = rtp_profile_get_payload_number_from_mime(session->snd.profile,"telephone-event");
-	return ret;
+	return rtp_profile_get_payload_number_from_mime(session->snd.profile,"telephone-event");
 }
 
 bool_t rtp_profile_is_telephone_event(const RtpProfile *prof, int pt_num){
@@ -78,8 +77,7 @@ int rtp_session_send_telephone_events_supported(RtpSession *session)
  * @param session a rtp session
  *
  * @return the payload type number used for telephony events if found, -1 if not found.
-**/
-int rtp_session_recv_telephone_events_supported(RtpSession *session)
+**/int rtp_session_recv_telephone_events_supported(RtpSession *session)
 {
 	/* search for a telephony event payload in the current profile */
 	return rtp_profile_get_payload_number_from_mime(session->rcv.profile,"telephone-event");
@@ -129,7 +127,7 @@ mblk_t	*rtp_session_create_telephone_event_packet(RtpSession *session, int start
 	rtp->padbit = 0;
 	rtp->extbit = 0;
 	rtp->cc = 0;
-	rtp->ssrc = session->snd.ssrc;
+	rtp_header_set_ssrc(rtp, session->snd.ssrc);
 	/* timestamp set later, when packet is sended */
 	/*seq number set later, when packet is sended */
 
@@ -165,7 +163,7 @@ int rtp_session_add_telephone_event(RtpSession *session,
 	/* find the place where to add the new telephony event to the packet */
 	while(mp->b_cont!=NULL) mp=mp->b_cont;
 	/* see if we need to allocate a new mblk_t */
-	if ( ( mp->b_wptr) >= (mp->b_datap->db_lim)){
+	if ( ( mp->b_wptr) >= mp->b_datap->db_lim){
 		mblk_t *newm=allocb(TELEPHONY_EVENTS_ALLOCATED_SIZE,BPRI_MED);
 		mp->b_cont=newm;
 		mp=mp->b_cont;
@@ -400,9 +398,7 @@ void rtp_session_check_telephone_events(RtpSession *session, mblk_t *m0)
 	if (cur_tev!=NULL)
 	{
 		/* first compare timestamp, they must be identical */
-		if (((rtp_header_t*)cur_tev->b_rptr)->timestamp==
-			((rtp_header_t*)m0->b_rptr)->timestamp)
-		{
+		if (rtp_get_timestamp(cur_tev) == rtp_get_timestamp(m0)) {
 			datasize=rtp_get_payload(cur_tev,&payload);
 			num2=datasize/sizeof(telephone_event_t);
 			evbuf=(telephone_event_t*)payload;

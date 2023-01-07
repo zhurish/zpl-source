@@ -64,6 +64,7 @@ zpl_socket_t rtsp_session_listen(const char *lip, uint16_t port)
             return ZPL_SOCKET_INVALID;
         }
         ipstack_set_nonblocking(sock);
+        sockopt_reuseaddr(sock);
         ipstack_setsockopt(sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                            (void *)&enable, sizeof(enable));
         return sock;
@@ -165,7 +166,7 @@ int rtsp_session_destroy(rtsp_session_t *session)
         }
         if (rtsp_media_lookup(session, session->mchannel, session->mlevel, session->mfilepath))
         {
-            rtsp_media_destroy(session, NULL);
+            rtsp_media_destroy(session);
         }
         rtsp_header_transport_destroy(&session->video_session.transport);
         rtsp_header_transport_destroy(&session->audio_session.transport);

@@ -1,39 +1,33 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ortp/port.h>
-#include <ortp/logging.h>
-#include <ortp/rtp_queue.h>
-#include <ortp/rtp.h>
-#include <ortp/rtcp.h>
+
 #include <ortp/payloadtype.h>
 #include <ortp/rtpprofile.h>
+#include <ortp/ortp.h>
+#include <ortp/rtcp.h>
 
+char offset127=127;
+char offset0xD5=(char)0xD5;
+char offset0[4] = {0x00, 0x00, 0x00, 0x00};
 
-
-
-
-static char offset127=127;
-static char offset0xD5=(char)0xD5;
-static char offset0[4] = {0x00, 0x00, 0x00, 0x00};
-
-RtpProfile av_profile;
 /*
  * IMPORTANT : some compiler don't support the tagged-field syntax. Those
  * macros are there to trap the problem This means that if you want to keep
@@ -55,25 +49,8 @@ RtpProfile av_profile;
 #define NO_AVPF		.avpf={.features=PAYLOAD_TYPE_AVPF_NONE, .trr_interval=0}
 #define AVPF(feat, intv)		.avpf={.features=(feat), .trr_interval=(intv)}
 #define FLAGS(val)		.flags=(val)
-#define USERDATA(val)		.user_data=(val)
 #elif defined(__GNUC__)
 // GCC's legacy tagged syntax (even old versions have it)
-#if 1
-#define TYPE(val)		(val)
-#define CLOCK_RATE(val)		(val)
-#define BITS_PER_SAMPLE(val)	(val)
-#define ZERO_PATTERN(val)	(val)
-#define PATTERN_LENGTH(val)	(val)
-#define NORMAL_BITRATE(val)	(val)
-#define MIME_TYPE(val)		(val)
-#define CHANNELS(val)		(val)
-#define RECV_FMTP(val)		(val)
-#define SEND_FMTP(val)		(val)
-#define NO_AVPF		{PAYLOAD_TYPE_AVPF_NONE, 0, 0}
-#define AVPF(feat, intv)		{(feat), FALSE, (intv)}
-#define FLAGS(val)		(val)
-#define USERDATA(val)		(val)
-#else
 #define TYPE(val)		type: (val)
 #define CLOCK_RATE(val)		clock_rate: (val)
 #define BITS_PER_SAMPLE(val)	bits_per_sample: (val)
@@ -87,8 +64,6 @@ RtpProfile av_profile;
 #define NO_AVPF		avpf: {features: PAYLOAD_TYPE_AVPF_NONE, trr_interval: 0}
 #define AVPF(feat, intv)		avpf: {features: (feat), trr_interval: (intv)}
 #define FLAGS(val)		flags: (val)
-#define USERDATA(val)		user_data: (val)
-#endif
 #else
 // No tagged syntax supported
 #define TYPE(val)		(val)
@@ -104,27 +79,10 @@ RtpProfile av_profile;
 #define NO_AVPF		{PAYLOAD_TYPE_AVPF_NONE, 0}
 #define AVPF(feat, intv)		{(feat), FALSE, (intv)}
 #define FLAGS(val)		(val)
-#define USERDATA(val)		(val)
+
 #endif
 
-
-static PayloadType payload_type_telephone_event={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("telephone-event"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_pcmu8000={
+PayloadType payload_type_pcmu8000={
 	TYPE(PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(8),
@@ -136,11 +94,10 @@ static PayloadType payload_type_pcmu8000={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_pcma8000={
+PayloadType payload_type_pcma8000={
 	TYPE(PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(8),
@@ -152,11 +109,10 @@ static PayloadType payload_type_pcma8000={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
-#if 0
-static PayloadType payload_type_pcm8000={
+
+PayloadType payload_type_pcm8000={
 	TYPE(PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(16),
@@ -168,12 +124,10 @@ static PayloadType payload_type_pcm8000={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
-#endif
 
-static PayloadType payload_type_l16_mono={
+PayloadType payload_type_l16_mono={
 	TYPE(PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(44100),
 	BITS_PER_SAMPLE(16),
@@ -185,11 +139,10 @@ static PayloadType payload_type_l16_mono={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_l16_stereo={
+PayloadType payload_type_l16_stereo={
 	TYPE(PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(44100),
 	BITS_PER_SAMPLE(32),				/* 16bits x 2 channels */
@@ -201,11 +154,10 @@ static PayloadType payload_type_l16_stereo={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_lpc1016={
+PayloadType payload_type_lpc1016={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -217,11 +169,10 @@ static PayloadType payload_type_lpc1016={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_gsm={
+PayloadType payload_type_gsm={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -233,11 +184,10 @@ static PayloadType payload_type_gsm={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_lpc={
+PayloadType payload_type_lpc={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -249,11 +199,10 @@ static PayloadType payload_type_lpc={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_g7231={
+PayloadType payload_type_g7231={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -265,11 +214,10 @@ static PayloadType payload_type_g7231={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_cn={
+PayloadType payload_type_cn={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -281,11 +229,10 @@ static PayloadType payload_type_cn={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_g729={
+PayloadType payload_type_g729={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -297,11 +244,10 @@ static PayloadType payload_type_g729={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
-#if 0
-static PayloadType payload_type_g7221={
+
+PayloadType payload_type_g7221={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(16000),
 	BITS_PER_SAMPLE(0),
@@ -313,11 +259,10 @@ static PayloadType payload_type_g7221={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_g726_40={
+PayloadType payload_type_g726_40={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -329,11 +274,10 @@ static PayloadType payload_type_g726_40={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_g726_32={
+PayloadType payload_type_g726_32={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -345,11 +289,10 @@ static PayloadType payload_type_g726_32={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_g726_24={
+PayloadType payload_type_g726_24={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -361,11 +304,10 @@ static PayloadType payload_type_g726_24={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_g726_16={
+PayloadType payload_type_g726_16={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -377,11 +319,10 @@ static PayloadType payload_type_g726_16={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_aal2_g726_40={
+PayloadType payload_type_aal2_g726_40={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -393,11 +334,10 @@ static PayloadType payload_type_aal2_g726_40={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_aal2_g726_32={
+PayloadType payload_type_aal2_g726_32={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -409,11 +349,10 @@ static PayloadType payload_type_aal2_g726_32={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_aal2_g726_24={
+PayloadType payload_type_aal2_g726_24={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -425,11 +364,10 @@ static PayloadType payload_type_aal2_g726_24={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_aal2_g726_16={
+PayloadType payload_type_aal2_g726_16={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -441,12 +379,10 @@ static PayloadType payload_type_aal2_g726_16={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
-#endif
 
-static PayloadType payload_type_mpv={
+PayloadType payload_type_mpv={
 	TYPE(PAYLOAD_VIDEO),
 	CLOCK_RATE(90000),
 	BITS_PER_SAMPLE(0),
@@ -458,12 +394,11 @@ static PayloadType payload_type_mpv={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
 
-static PayloadType payload_type_h261={
+PayloadType payload_type_h261={
 	TYPE(PAYLOAD_VIDEO),
 	CLOCK_RATE(90000),
 	BITS_PER_SAMPLE(0),
@@ -475,11 +410,10 @@ static PayloadType payload_type_h261={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_h263={
+PayloadType payload_type_h263={
 	TYPE(PAYLOAD_VIDEO),
 	CLOCK_RATE(90000),
 	BITS_PER_SAMPLE(0),
@@ -491,11 +425,10 @@ static PayloadType payload_type_h263={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
-#if 0
-static PayloadType payload_type_truespeech={
+
+PayloadType payload_type_truespeech={
 	TYPE(PAYLOAD_AUDIO_PACKETIZED),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(0),
@@ -507,602 +440,39 @@ static PayloadType payload_type_truespeech={
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-
-
-
-
-/* these are extra payload types that can be used dynamically */
-static PayloadType payload_type_lpc1015={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(2400),
-	MIME_TYPE("1015"),
-	CHANNELS(1),
+PayloadType	payload_type_telephone_event={
+	PAYLOAD_AUDIO_PACKETIZED, /*type */
+	8000,	/*clock rate */
+	0,		/* bytes per sample N/A */
+	NULL,	/* zero pattern N/A*/
+	0,		/*pattern_length N/A */
+	0,		/*	normal_bitrate */
+	"telephone-event",	/* MIME subtype */
+	1,		/* Audio Channels */
 	RECV_FMTP(NULL),
 	SEND_FMTP(NULL),
 	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
+	FLAGS(0)
 };
 
-static PayloadType payload_type_speex_nb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(8000),   /*not true: 8000 is the minimum*/
-	MIME_TYPE("speex"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
 
-static PayloadType payload_type_bv16={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(16000),/* 5ms / 80 bits per frame */
-	MIME_TYPE("BV16"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_speex_wb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(16000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(28000),
-	MIME_TYPE("speex"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_speex_uwb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(32000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(28000),
-	MIME_TYPE("speex"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_ilbc={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(13300), /* the minimum, with 30ms frames */
-	MIME_TYPE("iLBC"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_amr={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(12200),
-	MIME_TYPE("AMR"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_amrwb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(16000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(23850),
-	MIME_TYPE("AMR-WB"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_gsm_efr={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(12200),
-	MIME_TYPE ("GSM-EFR"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
+#ifdef __cplusplus
+extern "C"
+{
 #endif
-
-static PayloadType payload_type_mp4v={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("MP4V-ES"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI, RTCP_DEFAULT_REPORT_INTERVAL),
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-#if 0
-static PayloadType payload_type_evrc0={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("EVRC0"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_evrcb0={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("EVRCB0"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_h263_1998={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("H263-1998"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_h263_2000={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("H263-2000"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_theora={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("theora"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
+RtpProfile av_profile;
+#ifdef __cplusplus
+}
 #endif
-
-PayloadType payload_type_h264={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("H264"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI, RTCP_DEFAULT_REPORT_INTERVAL),
-	FLAGS(PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_h265={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("H265"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI, RTCP_DEFAULT_REPORT_INTERVAL),
-	FLAGS(PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED),
-	USERDATA(NULL)
-};
-
-#if 0
-static PayloadType payload_type_x_snow={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("x-snow"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-#endif
-static PayloadType payload_type_jpeg={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("JPEG"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_vp8={
-	TYPE(PAYLOAD_VIDEO),
-	CLOCK_RATE(90000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(256000),
-	MIME_TYPE("VP8"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI | PAYLOAD_TYPE_AVPF_SLI | PAYLOAD_TYPE_AVPF_RPSI, RTCP_DEFAULT_REPORT_INTERVAL),
-	FLAGS(PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED),
-	USERDATA(NULL)
-};
-#if 0
-static PayloadType	payload_type_t140={
-	TYPE(PAYLOAD_TEXT),
-	CLOCK_RATE(1000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("t140"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_t140_red={
-	TYPE(PAYLOAD_TEXT),
-	CLOCK_RATE(1000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("red"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-
-static PayloadType	payload_type_x_udpftp={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(1000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(0),
-	MIME_TYPE("x-udpftp"),
-	CHANNELS(0),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-#endif
-static PayloadType payload_type_g722={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(64000),
-	MIME_TYPE("G722"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-#if 0
-static PayloadType payload_type_silk_nb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(13000),
-	MIME_TYPE("SILK"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_silk_mb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(12000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(15000),
-	MIME_TYPE("SILK"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_silk_wb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(16000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(20000),
-	MIME_TYPE("SILK"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_silk_swb={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(24000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(30000),
-	MIME_TYPE("SILK"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_aaceld_16k={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(16000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(24000),
-	MIME_TYPE("mpeg4-generic"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_aaceld_22k={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(22050),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(32000),
-	MIME_TYPE("mpeg4-generic"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_aaceld_32k={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(32000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(48000),
-	MIME_TYPE("mpeg4-generic"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_aaceld_44k={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(44100),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(64000),
-	MIME_TYPE("mpeg4-generic"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_aaceld_48k={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(48000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(64000),
-	MIME_TYPE("mpeg4-generic"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_opus = {
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(48000), /*mandatory according to RFC*/
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(20000),
-	MIME_TYPE("opus"),
-	CHANNELS(2), /*mandatory according to RFC*/
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_isac = {
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(16000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(32000),
-	MIME_TYPE("iSAC"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(PAYLOAD_TYPE_IS_VBR),
-	USERDATA(NULL)
-};
-
-static PayloadType payload_type_codec2={
-	TYPE(PAYLOAD_AUDIO_PACKETIZED),
-	CLOCK_RATE(8000),
-	BITS_PER_SAMPLE(0),
-	ZERO_PATTERN(NULL),
-	PATTERN_LENGTH(0),
-	NORMAL_BITRATE(3200),
-	MIME_TYPE("CODEC2"),
-	CHANNELS(1),
-	RECV_FMTP(NULL),
-	SEND_FMTP(NULL),
-	NO_AVPF,
-	FLAGS(0),
-	USERDATA(NULL)
-};
-#endif
-
 
 
 void av_profile_init(RtpProfile *profile)
 {
 	rtp_profile_clear_all(profile);
-	profile->name=ortp_strdup("AV profile");
+	profile->name="AV profile";
 	
 	rtp_profile_set_payload(profile,0,&payload_type_pcmu8000);
 	rtp_profile_set_payload(profile,1,&payload_type_lpc1016);
@@ -1127,10 +497,560 @@ void av_profile_init(RtpProfile *profile)
 
     rtp_profile_set_payload(profile,101,&payload_type_telephone_event);
 }
-
 void rtp_profile_payload_update(int pt, const PayloadType *type)
 {
     //extern RtpProfile av_profile;
     rtp_profile_set_payload(&av_profile, pt, type);
 }
+/* these are extra payload types that can be used dynamically */
+PayloadType payload_type_lpc1015={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(2400),
+	MIME_TYPE("1015"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
 
+PayloadType payload_type_speex_nb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(8000),   /*not true: 8000 is the minimum*/
+	MIME_TYPE("speex"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_bv16={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(16000),/* 5ms / 80 bits per frame */
+	MIME_TYPE("BV16"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_speex_wb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(16000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(28000),
+	MIME_TYPE("speex"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_speex_uwb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(32000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(28000),
+	MIME_TYPE("speex"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_ilbc={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(13300), /* the minimum, with 30ms frames */
+	MIME_TYPE("iLBC"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_amr={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(12200),
+	MIME_TYPE("AMR"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_amrwb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(16000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(23850),
+	MIME_TYPE("AMR-WB"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_gsm_efr={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(12200),
+	MIME_TYPE ("GSM-EFR"),
+	CHANNELS(1)
+};
+
+PayloadType payload_type_mp4v={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("MP4V-ES"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI, RTCP_DEFAULT_REPORT_INTERVAL),
+	FLAGS(0)
+};
+
+
+PayloadType payload_type_evrc0={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("EVRC0"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_evrcb0={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("EVRCB0"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_h263_1998={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("H263-1998"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_h263_2000={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("H263-2000"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_theora={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("theora"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_h264={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("H264"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI, RTCP_DEFAULT_REPORT_INTERVAL),
+	FLAGS(PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED)
+};
+
+PayloadType payload_type_h265={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("H265"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI, RTCP_DEFAULT_REPORT_INTERVAL),
+	FLAGS(PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED)
+};
+
+PayloadType payload_type_x_snow={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("x-snow"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_jpeg={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("JPEG"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_vp8={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(256000),
+	MIME_TYPE("VP8"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	AVPF(PAYLOAD_TYPE_AVPF_FIR | PAYLOAD_TYPE_AVPF_PLI | PAYLOAD_TYPE_AVPF_SLI | PAYLOAD_TYPE_AVPF_RPSI, RTCP_DEFAULT_REPORT_INTERVAL),
+	FLAGS(PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED)
+};
+
+PayloadType	payload_type_t140={
+	TYPE(PAYLOAD_TEXT),
+	CLOCK_RATE(1000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("t140"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_t140_red={
+	TYPE(PAYLOAD_TEXT),
+	CLOCK_RATE(1000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("red"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType	payload_type_x_udpftp={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(1000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(0),
+	MIME_TYPE("x-udpftp"),
+	CHANNELS(0),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_g722={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(64000),
+	MIME_TYPE("G722"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_silk_nb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(13000),
+	MIME_TYPE("SILK"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_silk_mb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(12000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(15000),
+	MIME_TYPE("SILK"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_silk_wb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(16000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(20000),
+	MIME_TYPE("SILK"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_silk_swb={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(24000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(30000),
+	MIME_TYPE("SILK"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_aaceld_16k={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(16000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(24000),
+	MIME_TYPE("mpeg4-generic"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_aaceld_22k={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(22050),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(32000),
+	MIME_TYPE("mpeg4-generic"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_aaceld_32k={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(32000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(48000),
+	MIME_TYPE("mpeg4-generic"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_aaceld_44k={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(44100),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(64000),
+	MIME_TYPE("mpeg4-generic"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_aaceld_48k={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(48000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(64000),
+	MIME_TYPE("mpeg4-generic"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_opus = {
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(48000), /*mandatory according to RFC*/
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(20000),
+	MIME_TYPE("opus"),
+	CHANNELS(2), /*mandatory according to RFC*/
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_isac = {
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(16000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(32000),
+	MIME_TYPE("iSAC"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(PAYLOAD_TYPE_IS_VBR)
+};
+
+PayloadType payload_type_codec2={
+	TYPE(PAYLOAD_AUDIO_PACKETIZED),
+	CLOCK_RATE(8000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(3200),
+	MIME_TYPE("CODEC2"),
+	CHANNELS(1),
+	RECV_FMTP(NULL),
+	SEND_FMTP(NULL),
+	NO_AVPF,
+	FLAGS(0)
+};
+
+PayloadType payload_type_flexfec={
+	TYPE(PAYLOAD_VIDEO),
+	CLOCK_RATE(90000),
+	BITS_PER_SAMPLE(0),
+	ZERO_PATTERN(NULL),
+	PATTERN_LENGTH(0),
+	NORMAL_BITRATE(3200),
+	MIME_TYPE("flexfec"),
+	CHANNELS(0),
+	RECV_FMTP("repair-window=200000"),
+	SEND_FMTP("repair-window=200000"),
+	NO_AVPF,
+	FLAGS(0)
+};

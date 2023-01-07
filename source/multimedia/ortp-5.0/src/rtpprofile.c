@@ -1,36 +1,26 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of oRTP.
+ * This file is part of oRTP 
+ * (see https://gitlab.linphone.org/BC/public/ortp).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <ortp/port.h>
-#include <ortp/logging.h>
 
-#include <ortp/payloadtype.h>
-#include <ortp/rtpprofile.h>
+#include "ortp/ortp.h"
+//#include <ortp/bctport.h>
 
-
-
-PayloadType * rtp_profile_get_payload(const RtpProfile *prof, int idx)
-{
-	if (idx<0 || idx>=RTP_PROFILE_MAX_PAYLOADS) {
-		return NULL;
-	}
-	return prof->payload[idx];
-}
 
 char *payload_type_get_rtpmap(PayloadType *pt)
 {
@@ -197,37 +187,12 @@ RtpProfile * rtp_profile_new(const char *name)
  * @param pt the payload type description
  *
 **/
-//#define RTP_PROFILE_DEBUG
-void rtp_profile_set_payload(RtpProfile *profile, int idx, const PayloadType *pt){
+void rtp_profile_set_payload(RtpProfile *profile, int idx, PayloadType *pt){
 	if (idx<0 || idx>=RTP_PROFILE_MAX_PAYLOADS) {
 		ortp_error("Bad index %i",idx);
 		return;
 	}
-	#ifndef RTP_PROFILE_DEBUG
-	profile->payload[idx]= pt;
-	#else
-	profile->payload[idx]= payload_type_new();
-	if(profile->payload[idx])
-	{
-		memset(profile->payload[idx], 0, sizeof(PayloadType));
-		profile->payload[idx]->type = pt->type; /**< one of PAYLOAD_* macros*/
-		profile->payload[idx]->clock_rate = pt->clock_rate; /**< rtp clock rate*/
-		profile->payload[idx]->bits_per_sample = pt->bits_per_sample;	/* in case of continuous audio data */
-		profile->payload[idx]->zero_pattern = pt->zero_pattern?ortp_strdup(pt->zero_pattern):NULL;
-		profile->payload[idx]->pattern_length = pt->pattern_length;
-		/* other useful information for the application*/
-		profile->payload[idx]->normal_bitrate = pt->normal_bitrate;	/*in bit/s */
-		profile->payload[idx]->mime_type = pt->mime_type?ortp_strdup(pt->mime_type):NULL; /**<actually the submime, ex: pcm, pcma, gsm*/
-		profile->payload[idx]->channels = pt->channels; /**< number of channels of audio */
-		profile->payload[idx]->recv_fmtp = pt->recv_fmtp?ortp_strdup(pt->recv_fmtp):NULL; /* various format parameters for the incoming stream */
-		profile->payload[idx]->send_fmtp = pt->send_fmtp?ortp_strdup(pt->send_fmtp):NULL; /* various format parameters for the outgoing stream */
-		profile->payload[idx]->avpf.features = pt->avpf.features; /* AVPF parameters */
-		profile->payload[idx]->avpf.rpsi_compatibility = pt->avpf.rpsi_compatibility;
-		profile->payload[idx]->avpf.trr_interval = pt->avpf.trr_interval;
-		profile->payload[idx]->flags = pt->flags;
-		profile->payload[idx]->user_data = pt->user_data;
-	}
-	#endif
+	profile->payload[idx]=pt;
 }
 
 /**
@@ -238,35 +203,7 @@ void rtp_profile_set_payload(RtpProfile *profile, int idx, const PayloadType *pt
 void rtp_profile_clear_all(RtpProfile *profile){
 	int i;
 	for (i=0;i<RTP_PROFILE_MAX_PAYLOADS;i++){
-		#ifndef RTP_PROFILE_DEBUG
-		profile->payload[i] = NULL;
-		#else
-		if(profile->payload[i])
-		{
-			if(profile->payload[i]->zero_pattern)
-			{
-				ortp_free(profile->payload[i]->zero_pattern);
-				profile->payload[i]->zero_pattern = NULL;
-			}
-			if(profile->payload[i]->mime_type)
-			{
-				ortp_free(profile->payload[i]->mime_type);
-				profile->payload[i]->mime_type = NULL;
-			}
-			if(profile->payload[i]->recv_fmtp)
-			{
-				ortp_free(profile->payload[i]->recv_fmtp);
-				profile->payload[i]->recv_fmtp = NULL;
-			}
-			if(profile->payload[i]->send_fmtp)
-			{
-				ortp_free(profile->payload[i]->send_fmtp);
-				profile->payload[i]->send_fmtp = NULL;
-			}
-			ortp_free(profile->payload[i]);
-			profile->payload[i] = NULL;
-		}
-		#endif
+		profile->payload[i]=0;
 	}
 }
 
