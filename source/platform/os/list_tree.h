@@ -40,7 +40,7 @@ struct list_tree{
 
 static inline zpl_bool list_tree_empty(struct list_tree *tree)
 {
-	return (tree->root == NULL)? 1:0;
+	return (tree->root == NULL)? zpl_true:zpl_false;
 }
 
 static inline zpl_uint32 list_tree_count(struct list_tree *tree)
@@ -136,7 +136,7 @@ static inline int list_tree_clear(struct list_tree *tree, struct tree_node *root
 static inline int list_tree_del(struct list_tree *tree, struct tree_node *root, void *data)
 {
 	struct tree_node *node1 = NULL;
-	struct tree_node *node = list_tree_lookup(tree, root, data);
+	struct tree_node *node = (struct tree_node *)list_tree_lookup(tree, root, data);
 	if(!node)
 	{
 		return -1;

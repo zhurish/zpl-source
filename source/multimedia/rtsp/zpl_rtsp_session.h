@@ -60,7 +60,7 @@ typedef struct rtp_session_s
     uint32_t        user_timestamp;     //用户时间戳
     uint32_t        timestamp_interval; //用户时间戳间隔
     uint32_t        framerate;          //帧率
-    uint32_t        t_msec;             //发包时间间隔，毫秒
+    uint32_t        frame_delay_msec;             //发包时间间隔，毫秒
 
     void            *pdata;
 }rtp_session_t;

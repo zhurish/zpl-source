@@ -143,8 +143,9 @@ int zpl_base_signal_init(int daemon_mode)
 		printf("Zebra daemon failed: %s", strerror(ipstack_errno));
 		exit(1);
 	}
-	os_signal_init(os_signals, array_size(os_signals));
-	//signal_init( array_size(os_signals), os_signals);
+    
+    os_signal_init(os_signals, array_size(os_signals));
+    //signal_init( array_size(os_signals), os_signals);
 	return OK;
 }
 

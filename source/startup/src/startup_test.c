@@ -29,14 +29,14 @@
 struct nsm_rule
 {
 	int slot;
-	int type;
-	int cfg_type;
-	int flag;
+	int type;       //协商后的主备
+	int cfg_type;   //配置的主备
+	int flag;       //协商的标志
 	int ttl;
 	int reset;
 };
 struct nsm_rule _nsm_rule1 = {1, 1, 1, 0, 0, 0};
-struct nsm_rule _nsm_rule2 = {2, 1, 2, 0, 0, 0};
+struct nsm_rule _nsm_rule2 = {2, 1, 1, 0, 0, 0};
 
 static int nsm_rule_detault(int slot, int type, int cfg_type)
 {
@@ -60,109 +60,126 @@ static int nsm_rule_detault(int slot, int type, int cfg_type)
 	}	
 	return 0;
 }
-static int nsm_rule_update(int slot, struct nsm_rule *rule)
+static int nsm_rule_update1(struct nsm_rule *rule)
 {
-	if(slot == 2)
-	{
-		if(_nsm_rule2.slot < rule->slot)//对端槽位号 比本地大
+        if(_nsm_rule1.slot < rule->slot)
 		{
-			if(_nsm_rule2.type != 1)
+			if(_nsm_rule1.type != 1 && rule->flag == 0)
 			{
-				_nsm_rule2.type = 1;//master
-				fprintf(stdout, "slot 2 change to master\r\n");
+                if(_nsm_rule1.type != 1)
+				    zlog_debug(MODULE_LIB, "slot 1 change to master\r\n");
+                _nsm_rule1.type = 1;//master  
+                _nsm_rule1.flag = 1;  
+			}
+			if(_nsm_rule1.type != 1 && rule->flag == 1)
+			{
+				if(_nsm_rule1.type != 2)//standby
+				    zlog_debug(MODULE_LIB, "slot 1 change to standby\r\n");
+                _nsm_rule1.type = 2;//standby
+                _nsm_rule1.flag = 1;
 			}
 		}
 		else
 		{
-			if(_nsm_rule2.type != 2)
-			{
-				if(_nsm_rule2.flag == 1)
-				{
-
-				}
-				else
-				{
-					_nsm_rule2.type = 2;//standby
-					fprintf(stdout, "slot 2 change to standby\r\n");
-				}
-			}
-		}
-		_nsm_rule2.ttl = 3;
-	}
-	else if(slot == 1)
-	{
-		if(_nsm_rule1.slot < rule->slot)
-		{
-			if(_nsm_rule1.type != 1 && _nsm_rule2.flag == 0)
-			{
-				_nsm_rule1.type = 1;//master
-				fprintf(stdout, "slot 1 change to master\r\n");
-			}
-			if(_nsm_rule2.flag == 1)
+			if(_nsm_rule1.type != 1 && rule->flag == 0)
 			{
 				if(_nsm_rule1.type != 2)
-				{
-					_nsm_rule1.type = 2;//standby
-					fprintf(stdout, "slot 1 change to standby\r\n");
-				}
+				    zlog_debug(MODULE_LIB, "slot 1 change to standby\r\n");
+                _nsm_rule1.type = 2;//standby
+                _nsm_rule1.flag = 1;
 			}
-		}
-		else
-		{
-			if(_nsm_rule1.type != 2)
+			if(_nsm_rule1.type != 1 && rule->flag == 1)
 			{
-				_nsm_rule1.type = 2;//standby
-				fprintf(stdout, "slot 1 change to standby\r\n");
+				if(_nsm_rule1.type != 2)
+				    zlog_debug(MODULE_LIB, "slot 1 change to standby\r\n");
+                _nsm_rule1.type = 2;//standby
+                _nsm_rule1.flag = 1;
 			}
 		}
 		_nsm_rule1.ttl = 3;
-	}
-	return 0;
+	    return 0;
+}
+static int nsm_rule_update2(struct nsm_rule *rule)
+{
+        if(_nsm_rule2.slot < rule->slot)
+		{
+			if(_nsm_rule2.type != 1 && rule->flag == 0)
+			{
+                if(_nsm_rule2.type != 1)
+				    zlog_debug(MODULE_LIB, "slot 2 change to master\r\n");
+                _nsm_rule2.type = 1;//master   
+                _nsm_rule2.flag = 1; 
+			}
+			if(_nsm_rule2.type != 1 && rule->flag == 1)
+			{
+				if(_nsm_rule2.type != 2)//standby
+				    zlog_debug(MODULE_LIB, "slot 2 change to standby\r\n");
+                _nsm_rule2.type = 2;//standby
+                _nsm_rule2.flag = 1;
+			}
+		}
+		else
+		{
+			if(_nsm_rule2.type != 1 && rule->flag == 0)
+			{
+				if(_nsm_rule2.type != 2)
+				    zlog_debug(MODULE_LIB, "slot 2 change to standby\r\n");
+                _nsm_rule2.type = 2;//standby
+                _nsm_rule2.flag = 1;
+            }
+            if(_nsm_rule2.type != 1 && rule->flag == 1)
+			{
+				if(_nsm_rule2.type != 2)
+				    zlog_debug(MODULE_LIB, "slot 2 change to standby\r\n");
+                _nsm_rule2.type = 2;//standby
+                _nsm_rule2.flag = 1;
+			}
+		}
+        _nsm_rule2.ttl = 3;
+	    return 0;
 }
 
 static int nsm_rule_test1(void *p)
 {
+    sleep(5);
 	while(1)
 	{
 		sleep(1);
-		if(_nsm_rule1.ttl)
-			_nsm_rule1.ttl--;
-		if(_nsm_rule1.ttl == 0)
-		{
-			if(_nsm_rule1.type != 1)
-				fprintf(stdout, "slot 1 timeout change to master\r\n");
-			_nsm_rule1.type = 1;//master
-			_nsm_rule1.flag = 1;
-		}	
-		if(_nsm_rule2.reset)
-			_nsm_rule2.reset--;
-		if(_nsm_rule2.reset == 0)
-		{
-			nsm_rule_update(1, &_nsm_rule2);
-		}
-	}
+        if(_nsm_rule1.ttl)
+            _nsm_rule1.ttl--;
+        if(_nsm_rule1.ttl == 0)
+        {
+            if(_nsm_rule1.type != 1)
+				zlog_debug(MODULE_LIB, "slot 1 change to master\r\n");
+            _nsm_rule1.type = 1;//master   
+            _nsm_rule1.flag = 1; 
+        }    
+        if (_nsm_rule2.reset)
+            _nsm_rule2.reset--;
+        if(_nsm_rule2.reset == 0)    
+            nsm_rule_update1(&_nsm_rule2);
+    }
 	return 0;
 }
 static int nsm_rule_test2(void *p)
 {
+    sleep(5);
 	while(1)
 	{
 		sleep(1);
-		if(_nsm_rule2.ttl)
-			_nsm_rule2.ttl--;
-		if(_nsm_rule2.ttl == 0)
-		{
-			if(_nsm_rule2.type != 1)
-				fprintf(stdout, "slot 2 timeout change to master\r\n");
-			_nsm_rule2.type = 1;//master
-			_nsm_rule2.flag = 1;
-		}	
-		if(_nsm_rule1.reset)
-			_nsm_rule1.reset--;
-		if(_nsm_rule1.reset == 0)
-		{
-			nsm_rule_update(2, &_nsm_rule1);
-		}
+        if(_nsm_rule2.ttl)
+            _nsm_rule2.ttl--;
+        if(_nsm_rule2.ttl == 0)
+        {
+            if(_nsm_rule2.type != 1)
+				zlog_debug(MODULE_LIB, "slot 2 change to master\r\n");
+            _nsm_rule2.type = 1;//master   
+            _nsm_rule2.flag = 1; 
+        }  
+        if (_nsm_rule1.reset)
+            _nsm_rule1.reset--;
+        if(_nsm_rule1.reset == 0)   
+		    nsm_rule_update2(&_nsm_rule1);
 	}
 	return 0;
 }

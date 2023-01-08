@@ -44,7 +44,7 @@ struct zpl_media_file_s
     FILE        *fp;
     int         file_size;      //! 4 for parameter sets and first slice in picture, 3 for everything else (suggested)
     uint32_t    offset_len;
-    int         msec;           //定时间隔
+    int         delay_msec;           //定时读取一帧数据的时间间隔
 
     zpl_media_filedesc_t filedesc;
 
@@ -53,13 +53,10 @@ struct zpl_media_file_s
 
     uint32_t    flags;
 
-    zpl_uint32  last_ts;
-
     zpl_taskid_t    taskid;
     zpl_uint32    run;
 
-    uint32_t    pack_seq;
-    uint32_t    cnt;
+    uint32_t    bindcount;
     void        *pdata;                     //稀有数据
     zpl_skbqueue_t    *frame_queue;              //消息队列
     zpl_void    *parent;                    //父节点

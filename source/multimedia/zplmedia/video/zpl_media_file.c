@@ -46,7 +46,7 @@ char *zpl_media_file_basename(const char *name)
     static char basename[128];
     memset(basename, 0, sizeof(basename));
     snprintf(basename, sizeof(basename), "%s%s", RTP_MEDIA_BASE_PATH, name);
-    zpl_media_debugmsg_debug(" basename=%s", basename);
+    //zpl_media_debugmsg_debug(" basename=%s", basename);
     return basename;
 }
 static char *zpl_media_filedesc_name(const char *name)
@@ -135,7 +135,7 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
             else
                 strcpy(media_file->filename, zpl_media_file_basename(name));    
 
-            media_file->cnt = 0;
+            media_file->bindcount = 0;
             media_file->flags = 0;
             media_file->offset_len = 0;
             //zpl_media_bufcache_create(&media_file->tmppacket, 1500);
@@ -157,10 +157,10 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
                     if(media_file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
                     {
                         if(media_file->filedesc.video.framerate)
-                            media_file->msec = 1000U/media_file->filedesc.video.framerate;
+                            media_file->delay_msec = 1000U/media_file->filedesc.video.framerate;
                         media_file->b_video = zpl_true;
-                        if(media_file->msec == 0)
-                            media_file->msec = 1000U/25;
+                        if(media_file->delay_msec == 0)
+                            media_file->delay_msec = 1000U/25;
                     }
                     if(media_file->filedesc.video.enctype == RTP_MEDIA_PAYLOAD_H264)
                     {
@@ -170,10 +170,10 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
                     if(media_file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
                     {
                         if(media_file->filedesc.audio.framerate)
-                            media_file->msec = 1000U/media_file->filedesc.audio.framerate;
+                            media_file->delay_msec = 1000U/media_file->filedesc.audio.framerate;
                         media_file->b_audio = zpl_true;
-                        if(media_file->msec == 0)
-                            media_file->msec = 1000U/25;
+                        if(media_file->delay_msec == 0)
+                            media_file->delay_msec = 1000U/25;
                     }
                 }
                 else
@@ -187,18 +187,18 @@ zpl_media_file_t *zpl_media_file_create(const char *name, const char *op)
                 if(media_file->filedesc.video.format != ZPL_VIDEO_FORMAT_NONE)
                 {
                     if(media_file->filedesc.video.framerate)
-                        media_file->msec = 1000U/media_file->filedesc.video.framerate;
+                        media_file->delay_msec = 1000U/media_file->filedesc.video.framerate;
                     media_file->b_video = zpl_true;
-                    if(media_file->msec == 0)
-                        media_file->msec = 1000U/25;
+                    if(media_file->delay_msec == 0)
+                        media_file->delay_msec = 1000U/25;
                 }
                 if(media_file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
                 {
                     if(media_file->filedesc.audio.framerate)
-                        media_file->msec = 1000U/media_file->filedesc.audio.framerate;
+                        media_file->delay_msec = 1000U/media_file->filedesc.audio.framerate;
                     media_file->b_audio = zpl_true;
-                    if(media_file->msec == 0)
-                        media_file->msec = 1000U/25;
+                    if(media_file->delay_msec == 0)
+                        media_file->delay_msec = 1000U/25;
                 }
             }
             media_file->filedesc.video.enctype = ZPL_VIDEO_CODEC_H264;
@@ -308,7 +308,7 @@ int zpl_media_file_interval(zpl_media_file_t *media_file, int interval)
     if (media_file)
     {
         ZPL_MEDIA_FILE_LOCK(media_file);
-        media_file->msec = interval;
+        media_file->delay_msec = interval;
         ZPL_MEDIA_FILE_UNLOCK(media_file);
     }
     return 0;
@@ -462,18 +462,18 @@ int zpl_media_file_read(zpl_media_file_t *media_file, zpl_skbuffer_t *pbufdata)
         if (len > 0 && bufdata && bufdata->skb_data && bufdata->skb_maxsize >= len && tmp.data)
         {
             zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
-            media_file->last_ts = zpl_media_timerstamp();
+
             media_header->ID = ZPL_MEDIA_CHANNEL_SET(chn->channel, chn->channel_index, chn->channel_type);
             media_header->sessionID = (zpl_uint32)chn;
             media_header->frame_timetick = zpl_media_timerstamp(); // 时间戳
-            // bufdata->buffer_seq = media_file->pack_seq++;
+
             media_header->frame_codec = ZPL_VIDEO_CODEC_H264;
             media_header->frame_type = ZPL_MEDIA_VIDEO;
             media_header->frame_flags = ZPL_BUFFER_DATA_ENCODE;
             bufdata->skb_len = len; // 当前缓存帧的长度
 
             memcpy(ZPL_SKB_DATA(bufdata), tmp.data, len);
-            zpl_media_debugmsg_debug("read media frame data and add skbqueue for media channel(%s)", media_file->filename);
+            //zpl_media_debugmsg_debug("read media frame data and add skbqueue for media channel(%s)", media_file->filename);
             zpl_skbqueue_enqueue(media_file->frame_queue, bufdata);
             ZPL_MEDIA_FILE_UNLOCK(media_file);
             return ret;
@@ -492,9 +492,9 @@ int zpl_media_file_update(zpl_media_file_t *media_file, bool add)
     if (media_file)
     {
         if (add)
-            media_file->cnt++;
+            media_file->bindcount++;
         else
-            media_file->cnt--;
+            media_file->bindcount--;
     }
     ZPL_MEDIA_FILE_UNLOCK(media_file);
     return 0;
@@ -586,7 +586,7 @@ static int zpl_media_file_read_task(void *t)
     zpl_media_file_t *media = (zpl_media_file_t *)(t);
     if (media && media->fp)
     {
-        zpl_uint32 timerstamp = media->msec;
+        zpl_uint32 timerstamp = media->delay_msec;
         while(media->fp && media->run)
         {
             if(media->run == 2)
@@ -599,11 +599,11 @@ static int zpl_media_file_read_task(void *t)
                 break; 
             }  
             ZPL_MEDIA_FILE_LOCK(media);
-            timerstamp = media->msec;
+            timerstamp = media->delay_msec;
             ZPL_MEDIA_FILE_UNLOCK(media);
             if (zpl_media_file_read(media, NULL) != -1)
             {
-                if(timerstamp > 0U && timerstamp <= media->msec)
+                if(timerstamp > 0U && timerstamp <= media->delay_msec)
                 {
                     zpl_media_msleep(timerstamp);
                 }
@@ -623,8 +623,9 @@ int zpl_media_file_play_start(zpl_media_file_t *media, bool start)
         ZPL_MEDIA_FILE_LOCK(media);
         media->run = 1;
         if(media->taskid == 0)
-        	media->taskid = os_task_create("mediaRtpFileTask", OS_TASK_DEFAULT_PRIORITY,
-								 0, zpl_media_file_read_task, media, OS_TASK_DEFAULT_STACK);
+        	//media->taskid = os_task_create("mediaRtpFileTask", OS_TASK_DEFAULT_PRIORITY,
+			//					 0, zpl_media_file_read_task, media, OS_TASK_DEFAULT_STACK);
+       	    pthread_create(&media->taskid, NULL, zpl_media_file_read_task, media);
         else
         {
             media->run = 1;

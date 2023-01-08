@@ -342,17 +342,10 @@ int ortp_sockaddr_to_print_address(struct ipstack_sockaddr *sa, socklen_t salen,
 								   size_t printable_ip_size);
 int ortp_address_to_sockaddr(int sin_family, char *ip, int port, const struct ipstack_sockaddr *sa, socklen_t *salen);
 bool_t ortp_sockaddr_equals(const struct ipstack_sockaddr *sa, const struct ipstack_sockaddr *sb);
-ORTP_PUBLIC int ortp_sockaddr_to_ip_address(const struct sockaddr *sa, socklen_t salen, char *ip, size_t ip_size, int *port);
-ORTP_PUBLIC int ortp_sockaddr_to_printable_ip_address(struct sockaddr *sa, socklen_t salen, char *printable_ip, size_t printable_ip_size);
-ORTP_PUBLIC int ortp_addrinfo_to_ip_address(const struct addrinfo *ai, char *ip, size_t ip_size, int *port);
-ORTP_PUBLIC int ortp_addrinfo_to_printable_ip_address(const struct addrinfo *ai, char *printable_ip, size_t printable_ip_size);
-ORTP_PUBLIC struct addrinfo * ortp_ip_address_to_addrinfo(int family, int socktype, const char *ipaddress, int port);
+
 ORTP_PUBLIC int ortp_get_local_ip_for(int type, const char *dest, int port, char *result, size_t result_len);
 
-ORTP_PUBLIC struct addrinfo * ortp_name_to_addrinfo(int family, int socktype, const char *name, int port);
-ORTP_PUBLIC int ortp_getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res);
-ORTP_PUBLIC void ortp_freeaddrinfo(struct addrinfo *res);
-ORTP_PUBLIC int ortp_getnameinfo(const struct sockaddr *address, socklen_t address_len, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
+
 /* portable named pipes  and shared memory*/
 #if !defined(_WIN32_WCE)
 #ifdef _WIN32
@@ -363,25 +356,6 @@ typedef int ortp_pipe_t;
 #define ORTP_PIPE_INVALID (-1)
 #endif
 
-#define ortp_server_pipe_create(name) ortp_server_pipe_create(name)
-/*
- * warning: on win32 ortp_server_pipe_accept_client() might return INVALID_HANDLE_VALUE without
- * any specific error, this happens when ortp_server_pipe_close() is called on another pipe.
- * This pipe api is not thread-safe.
-*/
-#define ortp_server_pipe_accept_client(server) ortp_server_pipe_accept_client(server)
-
-#define ortp_server_pipe_close(spipe) ortp_server_pipe_close(spipe)
-#define ortp_server_pipe_close_client(client) ortp_server_pipe_close_client(client)
-
-#define ortp_client_pipe_connect(name) ortp_client_pipe_connect(name)
-#define ortp_client_pipe_close(sock) ortp_client_pipe_close(sock)
-
-#define ortp_pipe_read(p, buf, len) ortp_pipe_read(b, buf, len)
-#define ortp_pipe_write(p, buf, len) ortp_pipe_write(p, buf, len)
-
-#define ortp_shm_open(keyid, size, create) ortp_shm_open(keyid, size, create)
-#define ortp_shm_close(keyid, size, create) ortp_shm_close(keyid, size, create)
 
 ORTP_PUBLIC bool_t ortp_is_multicast_addr(const struct sockaddr *addr);
 

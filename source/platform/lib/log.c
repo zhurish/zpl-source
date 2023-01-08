@@ -1264,11 +1264,11 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 	abort();
 }
 
-static void _oslog_callback_entry(int pri, const zpl_char *format, ...)
+static void _oslog_callback_entry(const char *file, const char *func, const zpl_uint32 line, int pri, const zpl_char *format, ...)
 {
   va_list args; 
   va_start(args, format); 
-  pl_vzlog (NULL, NULL, 0, zlog_default, MODULE_LIB, pri, format, args); 
+  pl_vzlog (file, func, line, zlog_default, MODULE_LIB, pri, format, args); 
   va_end(args); 
 }
 

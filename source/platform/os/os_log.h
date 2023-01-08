@@ -14,8 +14,6 @@ extern "C" {
 #include "zpl_type.h"
 
 
-typedef void (*oslog_callback)(int pri, const zpl_char *format, ...);
-
 
 /* 16进制格式化 */
 extern int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len);
@@ -30,15 +28,18 @@ extern void os_vflog(FILE *fp, zpl_char *herd, zpl_char *func, int line, const z
 extern void os_log_entry(zpl_char *func, int line, zpl_char *file, const zpl_char *format, ...);
 #define os_log(f,fmt,...)   os_log_entry(__func__, __LINE__, f, fmt, ##__VA_ARGS__)
 
+
+/* OS LIB 模块使用 LIB 模块的 log 系统 */
+
+typedef void (*oslog_callback)(const char *file, const char *func, const zpl_uint32 line, int pri, const zpl_char *format, ...);
+
 void os_log_init(oslog_callback func);
-extern void os_log_func(zpl_char *func, int line, int pri, const zpl_char *format, ...);
-
-
-#define os_log_err(fmt,...)   os_log_func(__func__, __LINE__, 3,fmt, ##__VA_ARGS__)
-#define os_log_info(fmt,...)   os_log_func(__func__, __LINE__, 6, fmt, ##__VA_ARGS__)
-#define os_log_warn(fmt,...)   os_log_func(__func__, __LINE__, 4, fmt, ##__VA_ARGS__)
-#define os_log_debug(fmt,...)   os_log_func(__func__, __LINE__, 7, fmt, ##__VA_ARGS__)
-#define os_log_trap(fmt,...)   os_log_func(__func__, __LINE__, 8, fmt, ##__VA_ARGS__)
+extern void os_log_func(const char *file, const char *func, const zpl_uint32 line, int pri, const zpl_char *format, ...);
+#define os_log_err(fmt,...)   os_log_func(__FILE__, __FUNCTION__, __LINE__, 3, fmt, ##__VA_ARGS__)
+#define os_log_info(fmt,...)   os_log_func(__FILE__, __FUNCTION__, __LINE__, 6, fmt, ##__VA_ARGS__)
+#define os_log_warn(fmt,...)   os_log_func(__FILE__, __FUNCTION__, __LINE__, 4, fmt, ##__VA_ARGS__)
+#define os_log_debug(fmt,...)   os_log_func(__FILE__, __FUNCTION__, __LINE__, 7, fmt, ##__VA_ARGS__)
+#define os_log_trap(fmt,...)   os_log_func(__FILE__, __FUNCTION__, __LINE__, 8, fmt, ##__VA_ARGS__)
 
 //#define __OS_DEBUG_ENABLE  
 

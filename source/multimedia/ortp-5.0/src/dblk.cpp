@@ -19,7 +19,7 @@
  */
  
 #ifdef HAVE_CONFIG_H
-//#include "ortp-config.h"
+#include "ortp-config.h"
 #endif
 #include <atomic>
 #include <ortp/port.h>

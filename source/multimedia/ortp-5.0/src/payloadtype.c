@@ -25,7 +25,6 @@
 #include "ortp/logging.h"
 #include "ortp/payloadtype.h"
 #include "ortp/str_utils.h"
-//#include <ortp/bctport.h>
 
 
 PayloadType *payload_type_new()

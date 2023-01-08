@@ -109,8 +109,8 @@ extern struct rb_node *rb_last(const struct rb_root *);
 
 
 /* Fast replacement of a single node without remove/rebalance/add/rebalance */
-extern void rb_replace_node(struct rb_node *victim, struct rb_node *new,
-			    struct rb_root *root);
+extern void rb_replace_node(struct rb_node *, struct rb_node *,
+			    struct rb_root *);
 
 static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 				struct rb_node ** rb_link)

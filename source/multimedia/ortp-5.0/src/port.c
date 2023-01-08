@@ -26,8 +26,6 @@
 #include "ortp/port.h"
 #include "ortp/str_utils.h"
 #include "utils.h"
-//#include <ortp/bctport.h>
-//#include <bctoolbox/charconv.h>
 
 #if	defined(_WIN32) && !defined(_WIN32_WCE)
 #include <process.h>

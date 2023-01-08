@@ -194,151 +194,138 @@ static int set_multicast_group(ortp_socket_t sock, const char *addr){
 #endif
 }
 
-static ortp_socket_t create_and_bind(const char *addr, int *port, int *sock_family, bool_t reuse_addr,struct sockaddr_storage* bound_addr,socklen_t *bound_addr_len){
-	int err;
-	int optval = 1;
-	ortp_socket_t sock=-1;
-	struct sockaddr saddr;
-	if (*port==-1) *port=0;
-	if (*port==0) reuse_addr=FALSE;
+static ortp_socket_t create_and_bind(const char *addr, int *port, int *sock_family, bool_t reuse_addr, struct sockaddr_storage *bound_addr, socklen_t *bound_addr_len)
+{
+    int err;
+    int optval = 1;
+    ortp_socket_t sock = -1;
+    struct sockaddr saddr;
+    if (*port == -1)
+        *port = 0;
+    if (*port == 0)
+        reuse_addr = FALSE;
 
-
-	if (addr && strstr(addr, ".")) {
+    if (addr && strstr(addr, "."))
+    {
         struct sockaddr_in *saddr4 = (struct sockaddr_in *)&saddr;
-		saddr4->sin_addr.s_addr = inet_addr(addr);
-		saddr4->sin_family = AF_INET;
-	}
-	if(addr && strstr(addr, ":"))
+        saddr4->sin_addr.s_addr = inet_addr(addr);
+        saddr4->sin_family = AF_INET;
+    }
+    if (addr && strstr(addr, ":"))
     {
         struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&saddr;
-		inet_pton(AF_INET6, addr, &saddr6->sin6_addr);
+        inet_pton(AF_INET6, addr, &saddr6->sin6_addr);
         saddr6->sin6_family = AF_INET6;
-	}
-    if(addr == NULL)
+    }
+    if (addr == NULL)
     {
         struct sockaddr_in *saddr4 = (struct sockaddr_in *)&saddr;
-		saddr4->sin_addr.s_addr = inet_addr("127.0.0.1");
-		saddr4->sin_family = AF_INET; 
+        saddr4->sin_addr.s_addr = inet_addr("127.0.0.1");
+        saddr4->sin_family = AF_INET;
     }
-	 {
-		sock = socket(saddr.sa_family, IPSTACK_SOCK_DGRAM, 0);
-		if (sock==-1){
-			ortp_error("Cannot create a socket with family=[%i] and socktype=[%i]: %s", saddr.sa_family, IPSTACK_SOCK_DGRAM, getSocketError());
-			return -1;
-		}
-		if (reuse_addr){
-			err = setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
-					(SOCKET_OPTION_VALUE)&optval, sizeof (optval));
-			if (err < 0)
-			{
-				ortp_warning ("Fail to set rtp address reusable: %s.", getSocketError());
-			}
+    ortp_address_to_sockaddr(saddr.sa_family, addr, *port, bound_addr, bound_addr_len);
+    sock = socket(saddr.sa_family, IPSTACK_SOCK_DGRAM, 0);
+    if (sock == -1)
+    {
+        ortp_error("Cannot create a socket with family=[%i] and socktype=[%i]: %s", saddr.sa_family, IPSTACK_SOCK_DGRAM, getSocketError());
+        return -1;
+    }
+    if (reuse_addr)
+    {
+        err = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+                         (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
+        if (err < 0)
+        {
+                ortp_warning("Fail to set rtp address reusable: %s.", getSocketError());
+        }
 #ifdef SO_REUSEPORT
-			/*SO_REUSEPORT is required on mac and ios especially for doing multicast*/
-			err = setsockopt (sock, SOL_SOCKET, SO_REUSEPORT,
-					(SOCKET_OPTION_VALUE)&optval, sizeof (optval));
-			if (err < 0)
-			{
-				ortp_warning ("Fail to set rtp port reusable: %s.", getSocketError());
-			}
+        /*SO_REUSEPORT is required on mac and ios especially for doing multicast*/
+        err = setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
+                         (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
+        if (err < 0)
+        {
+                ortp_warning("Fail to set rtp port reusable: %s.", getSocketError());
+        }
 #endif
-		}
-		/*enable dual stack operation, default is enabled on unix, disabled on windows.*/
-		if (saddr.sa_family==AF_INET6){
-			optval=0;
-			err=setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&optval, sizeof(optval));
-			if (err < 0){
-				ortp_warning ("Fail to IPV6_V6ONLY: %s.",getSocketError());
-			}
-		}
+    }
+    /*enable dual stack operation, default is enabled on unix, disabled on windows.*/
+    if (saddr.sa_family == AF_INET6)
+    {
+        optval = 0;
+        err = setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&optval, sizeof(optval));
+        if (err < 0)
+        {
+                ortp_warning("Fail to IPV6_V6ONLY: %s.", getSocketError());
+        }
+    }
 
 #ifdef SO_TIMESTAMP
-		optval=1;
-		err = setsockopt (sock, SOL_SOCKET, SO_TIMESTAMP,
-			(SOCKET_OPTION_VALUE)&optval, sizeof (optval));
-		if (err < 0)
-		{
-			ortp_warning ("Fail to set rtp timestamp: %s.",getSocketError());
-		}
+    optval = 1;
+    err = setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP,
+                     (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
+    if (err < 0)
+    {
+        ortp_warning("Fail to set rtp timestamp: %s.", getSocketError());
+    }
 #ifdef _WIN32
-		DWORD bytes_returned;
-		// Configure tx timestamp reception.
-		TIMESTAMPING_CONFIG config = { 0 };
-		config.Flags |= TIMESTAMPING_FLAG_RX;
-		if( WSAIoctl( sock, SIO_TIMESTAMPING, &config, sizeof(config), NULL, 0, &bytes_returned, NULL, NULL) == SOCKET_ERROR) {
-			ortp_warning("WSAIoctl cannot configure timestamping %d\n", WSAGetLastError());
-		}else {
-			ortp_message("WSAIoctl configured successfully timestamping with SIO_TIMESTAMPING\n");
-		}
+    DWORD bytes_returned;
+    // Configure tx timestamp reception.
+    TIMESTAMPING_CONFIG config = {0};
+    config.Flags |= TIMESTAMPING_FLAG_RX;
+    if (WSAIoctl(sock, SIO_TIMESTAMPING, &config, sizeof(config), NULL, 0, &bytes_returned, NULL, NULL) == SOCKET_ERROR)
+    {
+        ortp_warning("WSAIoctl cannot configure timestamping %d\n", WSAGetLastError());
+    }
+    else
+    {
+        ortp_message("WSAIoctl configured successfully timestamping with SIO_TIMESTAMPING\n");
+    }
 #endif
 #endif
-		err = 0;
-		optval=1;
-		switch (saddr.sa_family) {
-			default:
-			case AF_INET:
+    err = 0;
+    optval = 1;
+    switch (saddr.sa_family)
+    {
+    default:
+    case AF_INET:
 #ifdef IP_RECVTTL
-				err = setsockopt(sock, IPPROTO_IP, IP_RECVTTL, (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
+        err = setsockopt(sock, IPPROTO_IP, IP_RECVTTL, (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
 #endif
-				break;
-			case AF_INET6:
+        break;
+    case AF_INET6:
 #ifdef IPV6_RECVHOPLIMIT
-				err = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
+        err = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, (SOCKET_OPTION_VALUE)&optval, sizeof(optval));
 #endif
-				break;
-		}
-		if (err < 0) {
-			ortp_warning("Fail to set recv TTL/HL socket option: %s.", getSocketError());
-		}
+        break;
+    }
+    if (err < 0)
+    {
+        ortp_warning("Fail to set recv TTL/HL socket option: %s.", getSocketError());
+    }
 
-		*sock_family=saddr.sa_family;
-		err = bind(sock, &saddr, (int)sizeof(saddr));
-		if (err != 0){
-			ortp_error ("Fail to bind rtp/rtcp socket to (addr=%s port=%i) : %s.", addr, *port, getSocketError());
-			close_socket(sock);
-			sock=-1;
-			return -1;
-		}
-		/*compatibility mode. New applications should use rtp_session_set_multicast_group() instead*/
-        if(addr)
-		set_multicast_group(sock, addr);
-	}
-
+    *sock_family = saddr.sa_family;
+    err = bind(sock, &saddr, (int)sizeof(saddr));
+    if (err != 0)
+    {
+        ortp_error("Fail to bind rtp/rtcp socket to (addr=%s port=%i) : %s.", addr, *port, getSocketError());
+        close_socket(sock);
+        sock = -1;
+        return -1;
+    }
 
 #if defined(_WIN32) || defined(_WIN32_WCE)
-	if (ortp_WSARecvMsg == NULL) {
-		GUID guid = WSAID_WSARECVMSG;
-		DWORD bytes_returned;
-		if (  WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid),
-			&ortp_WSARecvMsg, sizeof(ortp_WSARecvMsg), &bytes_returned, NULL, NULL) == SOCKET_ERROR) {
-			ortp_warning("WSARecvMsg function not found [%d].", WSAGetLastError());
-		}
-	}
+    if (ortp_WSARecvMsg == NULL)
+    {
+        GUID guid = WSAID_WSARECVMSG;
+        DWORD bytes_returned;
+        if (WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid),
+                     &ortp_WSARecvMsg, sizeof(ortp_WSARecvMsg), &bytes_returned, NULL, NULL) == SOCKET_ERROR)
+        {
+                ortp_warning("WSARecvMsg function not found [%d].", WSAGetLastError());
+        }
+    }
 #endif
-	if (sock!=-1){
-		struct sockaddr_storage saddr;
-		socklen_t slen=sizeof(saddr);
-
-		set_non_blocking_socket (sock);
-		err=getsockname(sock,(struct sockaddr*)&saddr,&slen);
-		if (err==-1){
-			ortp_error("getsockname(): %s",getSocketError());
-			close_socket(sock);
-			return (ortp_socket_t)-1;
-		}
-		/*update the bind address, especially useful if requested port was 0 (random)*/
-		memcpy(bound_addr,&saddr,slen);
-		*bound_addr_len=slen;
-		if (*port==0){
-			err = ortp_sockaddr_to_address((struct sockaddr *)&saddr, slen, NULL, 0, port);
-			if (err!=0){
-				close_socket(sock);
-				return (ortp_socket_t)-1;
-			}
-		}
-
-	}
-	return sock;
+    return sock;
 }
 
 void _rtp_session_apply_socket_sizes(RtpSession * session){
@@ -412,9 +399,9 @@ rtp_session_set_local_addr (RtpSession * session, const char * addr, int rtp_por
 		_rtp_session_release_sockets(session, FALSE);
 	}
 	/* try to bind the rtp port */
-
-	sock=create_and_bind(addr,&rtp_port,&sockfamily,session->reuseaddr,&session->rtp.gs.loc_addr,&session->rtp.gs.loc_addrlen);
-	if (sock!=-1){
+    
+    sock = create_and_bind(addr, &rtp_port, &sockfamily, session->reuseaddr, &session->rtp.gs.loc_addr, &session->rtp.gs.loc_addrlen);
+    if (sock!=-1){
 		session->rtp.gs.sockfamily=sockfamily;
 		session->rtp.gs.socket=sock;
 		session->rtp.gs.loc_port=rtp_port;
@@ -861,14 +848,11 @@ _rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, 
 	char rtp_printable_addr[64];
 	char rtcp_printable_addr[64];
 	int err;
-	//struct addrinfo *res0, *res;
 	struct sockaddr_storage *rtp_saddr=&session->rtp.gs.rem_addr;
 	socklen_t *rtp_saddr_len=&session->rtp.gs.rem_addrlen;
 	struct sockaddr_storage *rtcp_saddr=&session->rtcp.gs.rem_addr;
 	socklen_t *rtcp_saddr_len=&session->rtcp.gs.rem_addrlen;
 	OrtpAddress *aux_rtp=NULL,*aux_rtcp=NULL;
-    struct ipstack_sockaddr sa;
-    socklen_t salen = 0;
 	if (is_aux){
 		aux_rtp=ortp_malloc0(sizeof(OrtpAddress));
 		rtp_saddr=&aux_rtp->addr;
@@ -878,22 +862,20 @@ _rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, 
 		rtcp_saddr_len=&aux_rtcp->len;
 	}
     err = ortp_address_to_sockaddr((session->rtp.gs.socket) ? IPSTACK_AF_INET : session->rtp.gs.sockfamily,
-                                   rtp_addr, rtp_port, &sa, &salen);
-	//res0 = ortp_name_to_addrinfo((session->rtp.gs.socket == -1) ? AF_UNSPEC : session->rtp.gs.sockfamily, SOCK_DGRAM, rtp_addr, rtp_port);
-	//if (res0 == NULL) {
+                                   rtp_addr, rtp_port, rtp_saddr, rtp_saddr_len);
     if (err != 0) {
 		ortp_error("_rtp_session_set_remote_addr_full(): cannot set RTP destination to %s port %i.", rtp_addr, rtp_port);
 		err=-1;
 		goto end;
 	} else {
-        ortp_sockaddr_to_print_address(&sa, salen, rtp_printable_addr, sizeof(rtp_printable_addr));
-		//ortp_addrinfo_to_printable_ip_address(res0, rtp_printable_addr, sizeof(rtp_printable_addr));
+        ortp_sockaddr_to_print_address(rtp_saddr, *rtp_saddr_len, rtp_printable_addr, sizeof(rtp_printable_addr));
 	}
+    #if 0
 	if (session->rtp.gs.socket == -1){
 		/* the session has not its socket bound, do it */
 		ortp_message ("Setting random local addresses.");
 		/* bind to an address type that matches the destination address */
-		if (sa.sa_family==AF_INET6)
+		if (rtp_saddr->ss_family==AF_INET6)
 			err = rtp_session_set_local_addr (session, "::", -1, -1);
 		else err=rtp_session_set_local_addr (session, "0.0.0.0", -1, -1);
 		if (err<0) {
@@ -901,41 +883,17 @@ _rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, 
 			goto end;
 		}
 	}
-
-	err=-1;
-    memcpy(rtp_saddr, &sa, salen);
-    *rtp_saddr_len=(socklen_t)salen;
-    rtp_saddr->ss_family = sa.sa_family;
-    //rtp_saddr->len = salen;
-    err=0;
-	if (err) {
-		ortp_warning("Could not set destination for RTP socket to %s:%i.",rtp_addr,rtp_port);
-		goto end;
-	}
-
+    #endif
 	if ((rtcp_addr != NULL) && (rtcp_port > 0)) {
         err = ortp_address_to_sockaddr((session->rtcp.gs.socket) ? IPSTACK_AF_INET : session->rtcp.gs.sockfamily,
-                                   rtp_addr, rtp_port, &sa, &salen);
-		//res0 = ortp_name_to_addrinfo((session->rtcp.gs.socket == -1) ? AF_UNSPEC : session->rtcp.gs.sockfamily, SOCK_DGRAM, rtcp_addr, rtcp_port);
-		//if (res0 == NULL) {
+                                   rtcp_addr, rtcp_port, rtcp_saddr, rtcp_saddr_len);
         if (err != 0) {
 			ortp_error("_rtp_session_set_remote_addr_full(): cannot set RTCP destination to %s port %i.", rtcp_addr, rtcp_port);
 			err=-1;
 			goto end;
 		} else {
-			ortp_sockaddr_to_print_address(&sa, salen, rtcp_printable_addr, sizeof(rtcp_printable_addr));
+			ortp_sockaddr_to_print_address(rtcp_saddr, *rtcp_saddr_len, rtcp_printable_addr, sizeof(rtcp_printable_addr));
 		}
-		err=-1;
-        memcpy(rtcp_saddr, &sa, salen);
-        *rtcp_saddr_len=(socklen_t)salen;
-        rtcp_saddr->ss_family = sa.sa_family;
-        //rtcp_saddr->len = salen;
-		//ortp_freeaddrinfo(res0);
-		if (err) {
-			ortp_warning("Could not set destination for RCTP socket to %s:%i.",rtcp_addr,rtcp_port);
-			goto end;
-		}
-
 		if (can_connect(session)){
 			if (try_connect(session->rtp.gs.socket,(struct sockaddr*)&session->rtp.gs.rem_addr,session->rtp.gs.rem_addrlen))
 				session->flags|=RTP_SOCKET_CONNECTED;
@@ -2283,34 +2241,19 @@ int rtp_session_update_remote_sock_addr(RtpSession * session, mblk_t * mp, bool_
 }
 
 void rtp_session_use_local_addr(RtpSession * session, const char * rtp_local_addr, const char * rtcp_local_addr) {
-    //struct addrinfo * session_addr_info;
-    struct ipstack_sockaddr sa;
-    socklen_t salen = 0;
-    if(rtp_local_addr[0] != '\0')
+    if(rtp_local_addr && rtp_local_addr[0] != '\0')
     {// rtp_local_addr should not be NULL
-        ortp_address_to_sockaddr(session->rtp.gs.sockfamily, rtp_local_addr, 0, &sa, &salen);
-
-        //session_addr_info = bctbx_ip_address_to_addrinfo(session->rtp.gs.sockfamily , IPSTACK_SOCK_DGRAM ,rtp_local_addr, 0);
-        memcpy(&session->rtp.gs.used_loc_addr, &sa, salen);
-        //session->rtp.gs.used_loc_addr.len = (socklen_t)salen;
-        session->rtp.gs.used_loc_addr.ss_family = sa.sa_family;
-        //bctbx_freeaddrinfo(session_addr_info);
+        ortp_address_to_sockaddr(session->rtp.gs.sockfamily, rtp_local_addr, 0, &session->rtp.gs.used_loc_addr, &session->rtp.gs.used_loc_addrlen);
     }else {
-        //session->rtp.gs.used_loc_addr.len = 0;
+        session->rtp.gs.used_loc_addrlen = 0;
         memset(&session->rtp.gs.used_loc_addr, 0, sizeof(session->rtp.gs.used_loc_addr));// To not let tracks on memory
     }
     if(rtcp_local_addr[0] != '\0')
     {// rtcp_local_addr should not be NULL
-        ortp_address_to_sockaddr(session->rtp.gs.sockfamily, rtcp_local_addr, 0, &sa, &salen);
-
-        //session_addr_info = bctbx_ip_address_to_addrinfo(session->rtcp.gs.sockfamily , IPSTACK_SOCK_DGRAM ,rtcp_local_addr, 0);
-        memcpy(&session->rtcp.gs.used_loc_addr, &sa, salen);
-        //session->rtcp.gs.used_loc_addr.len = (socklen_t)salen;
-        session->rtcp.gs.used_loc_addr.ss_family = sa.sa_family;
-        //bctbx_freeaddrinfo(session_addr_info);
+        ortp_address_to_sockaddr(session->rtp.gs.sockfamily, rtcp_local_addr, 0, &session->rtcp.gs.used_loc_addr, &session->rtcp.gs.used_loc_addrlen);
     }else {
-        //session->rtcp.gs.used_loc_addr.len = 0;
-        memset(&session->rtcp.gs.used_loc_addr, 0, sizeof(session->rtcp.gs.used_loc_addr));// To not let tracks on memory
+        session->rtcp.gs.used_loc_addrlen = 0;
+        memset(&session->rtcp.gs.used_loc_addr, 0, sizeof(session->rtcp.gs.used_loc_addr)); // To not let tracks on memory
     }
     ortp_message("RtpSession set sources to [%s] and [%s]",rtp_local_addr, rtcp_local_addr );
 }

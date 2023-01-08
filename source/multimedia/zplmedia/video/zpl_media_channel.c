@@ -283,7 +283,6 @@ int zpl_media_channel_create(zpl_int32 channel,
             }
             media_file->frame_queue = chn->frame_queue;
             media_file->parent = chn;
-            media_file->cnt = 0;
 
             media_file->filedesc.video.format = ZPL_VIDEO_FORMAT_720P;
 
@@ -565,6 +564,42 @@ int zpl_media_channel_bindcount_set(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
 	return ret;  
 }
 
+int zpl_media_channel_update_interval(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, int interval)
+{
+    int ret = ERROR;
+    zpl_media_channel_t *chn = zpl_media_channel_lookup(channel, channel_index, filename);
+    if (chn)
+	{
+		if (media_channel_mutex)
+			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+		if (chn->channel_type != ZPL_MEDIA_CHANNEL_FILE)
+		{
+			if (zpl_media_hal_start(chn) != OK)
+			{
+                zpl_media_debugmsg_error("can not start media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+            ret = OK;
+        }
+        else if(chn->channel_type == ZPL_MEDIA_CHANNEL_FILE)
+        {
+            if(chn->video_media.enable)
+                ret = zpl_media_file_interval(chn->video_media.halparam, interval);
+            else if(chn->audio_media.enable)
+                ret = zpl_media_file_interval(chn->audio_media.halparam, interval);
+        }
+		if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+		{
+			zpl_media_debugmsg_debug("update media channel(%d/%d)", channel, channel_index);
+		}
+		if (media_channel_mutex)
+			os_mutex_unlock(media_channel_mutex);
+		return ret;
+	}
+	return ERROR;
+}
 
 int zpl_media_channel_client_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename, 
     zpl_media_buffer_handler cb_handler, void *pUser)

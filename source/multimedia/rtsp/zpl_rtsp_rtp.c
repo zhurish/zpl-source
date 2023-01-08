@@ -209,7 +209,7 @@ int rtsp_rtp_handle_setup(rtsp_session_t* session)
     else
     {
         if(session->bsrv)
-            _rtpsession->rtpmode = RTP_SESSION_SENDONLY;
+            _rtpsession->rtpmode = RTP_SESSION_SENDRECV;//RTP_SESSION_SENDONLY;
         else
             _rtpsession->rtpmode = RTP_SESSION_RECVONLY;
         //_rtpsession->rtp_session = rtp_session_new(srv ? RTP_SESSION_SENDONLY:RTP_SESSION_RECVONLY);

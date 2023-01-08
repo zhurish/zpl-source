@@ -101,7 +101,9 @@ int os_fdprintf(zpl_char *func, int line, int fd,const zpl_char *format, ...)
 	return write(fd, buf, len);
 }
 
-void os_log_func(zpl_char *func, int line, int pri, const zpl_char *format, ...)
+
+/* OS LIB 模块使用 LIB 模块的 log 系统 */
+void os_log_func(const char *file, const char *func, const zpl_uint32 line, int pri, const zpl_char *format, ...)
 {
 	if(_oslog_func)
 	{
@@ -116,7 +118,7 @@ void os_log_func(zpl_char *func, int line, int pri, const zpl_char *format, ...)
 		}
 		len += vsnprintf(buf + len, sizeof(buf) - len, format, args);
 		va_end(args);
-		(_oslog_func)(pri, buf);
+		(_oslog_func)(file, func, line, pri, buf);
 	}
 }
 

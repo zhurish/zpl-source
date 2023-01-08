@@ -35,21 +35,18 @@ OBJS += 	avprofile.o  \
 			sessionset.o  \
 			str_utils.o 	\
 			telephonyevents.o  \
-			videobandwidthestimator.o rtpframemarking.o \
-			utils.o fecstream.o rtpaudiolevel.o \
-			ortp_list.o dblk.o rtpbundle.o \
+			videobandwidthestimator.o \
+			rtpframemarking.o \
+			utils.o \
+			fecstream.o \
+			rtpaudiolevel.o \
+			ortp_list.o \
+			dblk.o \
+			rtpbundle.o \
 			zpl_rtp_h264.o \
 			zpl_rtp_h265.o \
 			zpl_rtp_g7xx.o 
-#ortp_srtp.o \
-			zrtp.o \
-			stun.o \
-			stun_udp.o \
-			zpl_rtp_h264.o \
-			zpl_rtp_h265.o \
-			zpl_rtp_g7xx.o \
-			rtpbundle.o rtpsend.o 
-#rtprecv.o 
+
 #############################################################################
 # LIB 		
 ###########################################################################

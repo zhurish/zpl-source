@@ -117,6 +117,7 @@ extern int zpl_media_channel_video_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNE
 extern int zpl_media_channel_audio_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, zpl_audio_codec_t *);
 extern int zpl_media_channel_bindcount_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
 extern int zpl_media_channel_bindcount_set(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, int addsub);
+extern int zpl_media_channel_update_interval(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, int interval);
 
 extern int zpl_media_channel_halparam_set(zpl_int32 channel, 
     ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool video, void *halparam);
