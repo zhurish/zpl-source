@@ -43,9 +43,9 @@ OBJS += 	avprofile.o  \
 			ortp_list.o \
 			dblk.o \
 			rtpbundle.o \
-			zpl_rtp_h264.o \
-			zpl_rtp_h265.o \
-			zpl_rtp_g7xx.o 
+			rtp_h264.o \
+			rtp_g7xx.o 
+
 
 #############################################################################
 # LIB 		

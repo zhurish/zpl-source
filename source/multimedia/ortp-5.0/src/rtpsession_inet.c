@@ -210,18 +210,21 @@ static ortp_socket_t create_and_bind(const char *addr, int *port, int *sock_fami
         struct sockaddr_in *saddr4 = (struct sockaddr_in *)&saddr;
         saddr4->sin_addr.s_addr = inet_addr(addr);
         saddr4->sin_family = AF_INET;
+        saddr4->sin_port = htons(*port);
     }
     if (addr && strstr(addr, ":"))
     {
         struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&saddr;
         inet_pton(AF_INET6, addr, &saddr6->sin6_addr);
         saddr6->sin6_family = AF_INET6;
+        saddr6->sin6_port = htons(*port);
     }
     if (addr == NULL)
     {
         struct sockaddr_in *saddr4 = (struct sockaddr_in *)&saddr;
         saddr4->sin_addr.s_addr = inet_addr("127.0.0.1");
         saddr4->sin_family = AF_INET;
+        saddr4->sin_port = htons(*port);
     }
     ortp_address_to_sockaddr(saddr.sa_family, addr, *port, bound_addr, bound_addr_len);
     sock = socket(saddr.sa_family, IPSTACK_SOCK_DGRAM, 0);
@@ -421,10 +424,10 @@ rtp_session_set_local_addr (RtpSession * session, const char * addr, int rtp_por
 		rtp_session_set_multicast_ttl( session, -1 );
 		rtp_session_set_multicast_loopback( session, -1 );
 		if (session->use_pktinfo) rtp_session_set_pktinfo(session, TRUE);
-		ortp_message("RtpSession bound to [%s] ports [%i] [%i]", addr, rtp_port, rtcp_port);
+		ortp_message("RtpSession bound to [%s] ports [%i] [%i]", addr?addr:"127.0.0.1", rtp_port, rtcp_port);
 		return 0;
 	}
-	ortp_error("Could not bind RTP socket to %s on port %i for session [%p]",addr,rtp_port,session);
+	ortp_error("Could not bind RTP socket to %s on port %i for session [%p]",addr?addr:"127.0.0.1",rtp_port,session);
 	return -1;
 }
 

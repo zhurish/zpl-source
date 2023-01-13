@@ -587,7 +587,19 @@ static int zpl_media_file_read_task(void *t)
     if (media && media->fp)
     {
         zpl_uint32 timerstamp = media->delay_msec;
-        while(media->fp && media->run)
+        if(media->delay_msec > 100)
+            timerstamp -= 25;
+        else if(media->delay_msec > 80)
+            timerstamp -= 20;
+        else if(media->delay_msec > 50)
+            timerstamp -= 15;
+        else if(media->delay_msec > 30)
+            timerstamp -= 10;
+        else if(media->delay_msec > 20)
+            timerstamp -= 6;
+        else if(media->delay_msec > 10)
+            timerstamp -= 3;
+        while (media->fp && media->run)
         {
             if(media->run == 2)
             {
@@ -600,6 +612,18 @@ static int zpl_media_file_read_task(void *t)
             }  
             ZPL_MEDIA_FILE_LOCK(media);
             timerstamp = media->delay_msec;
+            if(media->delay_msec > 100)
+                timerstamp -= 25;
+            else if(media->delay_msec > 80)
+                timerstamp -= 20;
+            else if(media->delay_msec > 50)
+                timerstamp -= 15;
+            else if(media->delay_msec > 30)
+                timerstamp -= 10;
+            else if(media->delay_msec > 20)
+                timerstamp -= 6;
+            else if(media->delay_msec > 10)
+                timerstamp -= 3;
             ZPL_MEDIA_FILE_UNLOCK(media);
             if (zpl_media_file_read(media, NULL) != -1)
             {
