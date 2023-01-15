@@ -54,7 +54,7 @@ struct module_list module_list_nsm = {
 		.module_task_exit = nsm_task_exit,
 		.module_cmd_init = nsm_module_cmd_init,
 		.taskid = 0,
-		.flags=0,
+		.flags=ZPL_MODULE_NEED_INIT,
 };
 
 static struct nsm_srv_t m_nsm_srv =
@@ -90,7 +90,7 @@ int nsm_module_init(void)
 	prefix_list_init ();
 	keychain_init ();
 
-	lib_template_init();
+
 
 
 #ifdef ZPL_IPCBC_MODULE

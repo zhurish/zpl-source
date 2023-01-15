@@ -38,11 +38,8 @@ static void os_sighup(int signo, void *p)
 	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
-	vty_terminate();
-	//zlog_notice(MODULE_DEFAULT, "%s: SIGHUP received\r\n",__func__);
-	//os_msgq_exit();
-	//os_exit_all_module();
-
+	startup_module_stop();
+	startup_module_exit();
 	_exit(0);
 }
 
@@ -52,10 +49,8 @@ static void os_sigint(int signo, void *p)
 	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
-	vty_terminate();
-	//zlog_notice(MODULE_DEFAULT, "%s: Terminating on signal\r\n",__func__);
-	//os_msgq_exit();
-	//os_exit_all_module();
+	startup_module_stop();
+	startup_module_exit();
 	_exit(0);
 }
 
@@ -91,10 +86,8 @@ static void os_sigterm(int signo, void *p)
 	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
-	vty_terminate();
-	//zlog_notice(MODULE_DEFAULT, "%s: Terminating on signal\r\n",__func__);
-	//os_msgq_exit();
-	//os_exit_all_module();
+	startup_module_stop();
+	startup_module_exit();
 	_exit(0);
 }
 /*

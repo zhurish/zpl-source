@@ -28,6 +28,7 @@ struct module_list module_list_hal =
 	.module_task_exit=hal_module_task_exit, 
 	.module_cmd_init=hal_module_cmd_init, 
 	.taskid=0,
+	.flags=ZPL_MODULE_NEED_INIT,
 };
 
 

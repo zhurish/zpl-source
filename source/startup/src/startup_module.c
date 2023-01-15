@@ -28,8 +28,6 @@
 #endif
 #include "startup_module.h"
 #include "startup_disk.h"
-//#include "sdk_netpkt.h"
-
 
 extern struct module_alllist module_lists_tbl[MODULE_MAX];
 
@@ -47,17 +45,15 @@ static int ipcom_stack_init(int localport)
 
 int zpl_stack_init(void)
 {
-	//os_limit_stack_size(10240);
 	os_limit_stack_size(819200);
 	zpl_base_env_init();
 	zpl_base_env_load();
-	
-	zplib_module_install(module_lists_tbl);
 
+	zplib_module_install(module_lists_tbl);
 	return OK;
 }
 
-int zpl_stack_start(const char* progname, int localport)
+int zpl_stack_start(const char *progname, int localport)
 {
 	if (os_task_init() == ERROR)
 		return ERROR;
@@ -70,11 +66,7 @@ int zpl_stack_start(const char* progname, int localport)
 
 	memory_init();
 	cmd_init(1);
-
-	openzlog (progname, MODULE_DEFAULT, LOG_LOCAL7, 0);
-	//zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
-
-	vty_user_init();
+	host_config_init();
 
 	cmd_host_init(1);
 	cmd_memory_init();
@@ -88,88 +80,74 @@ int zpl_stack_start(const char* progname, int localport)
 #ifdef ZPL_IPCOM_MODULE
 	cmd_os_eloop_init();
 #endif
-#ifdef ZPL_ACTIVE_STANDBY
-	zplib_module_cmd_init(MODULE_STANDBY);
-#endif
-#ifdef ZPL_NSM_MODULE
-	nsm_module_cmd_init();
-#endif
+	zplib_module_cmd_all();
 	
-#ifdef ZPL_ZPLMEDIA_MODULE
-	//zpl_media_cmd_init();
-#endif
+	openzlog(progname, MODULE_DEFAULT, LOG_LOCAL7, 0);
+	// zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
+
 	ipcom_stack_init(localport);
 
 	return OK;
 }
 
-
-
-
 int startup_module_init(int console_enable)
 {
 	zplib_module_name_show();
 	_global_host.slot = os_netservice_port_get("slot");
-	#ifdef ZPL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
 	unit_board_init();
-	#endif
+#endif
 	_global_host.console_enable = console_enable;
-	//设置准备初始化标志
+	// 设置准备初始化标志
 	host_loadconfig_state(LOAD_INIT);
-	#ifdef ZPL_PAL_MODULE
+#ifdef ZPL_PAL_MODULE
 	zplib_module_init(MODULE_PAL);
-	#endif
-	#ifdef ZPL_HAL_MODULE
+#endif
+#ifdef ZPL_HAL_MODULE
 	zplib_module_init(MODULE_HAL);
-	#endif
-	os_msleep(50);
-	#ifdef ZPL_PAL_MODULE
-	zplib_module_task_init(MODULE_PAL);
-	#endif
-	#ifdef ZPL_HAL_MODULE
-	zplib_module_task_init(MODULE_HAL);
-	#endif
-	//等待BSP初始化，最长等待15s时间
-	#ifdef ZPL_BSP_MODULE
-	zplib_module_init(MODULE_SDK);
-	zplib_module_task_init(MODULE_SDK);
-	#endif
-	os_msleep(50);
+#endif
+	os_msleep(10);
 #ifdef ZPL_ACTIVE_STANDBY
 	zplib_module_init(MODULE_STANDBY);
 	zplib_module_task_init(MODULE_STANDBY);
 #endif
+	os_msleep(10);
+#ifdef ZPL_PAL_MODULE
+	zplib_module_task_init(MODULE_PAL);
+#endif
+#ifdef ZPL_HAL_MODULE
+	zplib_module_task_init(MODULE_HAL);
+#endif
+
+#ifdef ZPL_BSP_MODULE
+	zplib_module_init(MODULE_SDK);
+	zplib_module_task_init(MODULE_SDK);
+#endif
+	os_msleep(50);
+
 	return OK;
 }
 
 int startup_module_load(void)
 {
-	#ifdef ZPL_BSP_MODULE
-	bsp_module_start();
-	#endif	
-	
-	os_msleep(50);
-	#ifdef ZPL_NSM_MODULE
+#ifdef ZPL_NSM_MODULE
 	zplib_module_init(MODULE_NSM);
-	#endif
-	zplib_module_initall();
-	zplib_module_cmd_all();
-	os_msleep(50);
-	#ifdef ZPL_NSM_MODULE
-	zplib_module_task_init(MODULE_NSM);
-	#endif
-	zplib_module_task_startall();
+	zplib_module_task_init(MODULE_NSM);	
+#endif
 
 	os_msleep(50);
-	return OK;
-}
-/*
-int startup_module_start(void)
-{
+#ifdef ZPL_BSP_MODULE
+	bsp_module_start();
+#endif
+
+	os_msleep(50);
+	zplib_module_initall();
+	zplib_module_task_startall();
 	os_msleep(50);
 	return OK;
 }
-*/
+
+
 int startup_module_waitting(void)
 {
 	os_msleep(100);
@@ -184,18 +162,7 @@ int startup_module_waitting(void)
 	nsm_module_start();
 #endif
 
-#ifdef ZPL_ACTIVE_STANDBY
-	ipcstandby_done(5);
-#endif	
-
-#ifdef ZPL_KERNEL_MODULE
-	//_netlink_load_all();
-#endif
-	//eth_drv_init(0);
-	//eth_drv_start(0);
-
 	unit_board_startup();
-
 	return OK;
 }
 
@@ -205,18 +172,55 @@ int startup_module_stop(void)
 	os_process_stop();
 #endif
 	zplib_module_task_stopall();
+
+#ifdef ZPL_ACTIVE_STANDBY
+	zplib_module_task_exit(MODULE_STANDBY);
+#endif
+#ifdef ZPL_BSP_MODULE
+	zplib_module_task_exit(MODULE_SDK);
+#endif
+#ifdef ZPL_HAL_MODULE
+	zplib_module_task_exit(MODULE_HAL);
+#endif
+#ifdef ZPL_PAL_MODULE
+	zplib_module_task_exit(MODULE_PAL);
+#endif
+#ifdef ZPL_NSM_MODULE
+	zplib_module_task_exit(MODULE_NSM);	
+#endif
+
+	zplib_module_task_exit(MODULE_CONSOLE);
+	zplib_module_task_exit(MODULE_TELNET);
 	return OK;
 }
 
 int startup_module_exit(void)
 {
-	#ifdef ZPL_VRF_MODULE
+	zplib_module_exitall();
+#ifdef ZPL_ACTIVE_STANDBY
+	zplib_module_exit(MODULE_STANDBY);
+#endif
+#ifdef ZPL_BSP_MODULE
+	zplib_module_exit(MODULE_SDK);
+#endif
+#ifdef ZPL_HAL_MODULE
+	zplib_module_exit(MODULE_HAL);
+#endif
+#ifdef ZPL_PAL_MODULE
+	zplib_module_exit(MODULE_PAL);
+#endif
+#ifdef ZPL_NSM_MODULE
+	zplib_module_exit(MODULE_NSM);	
+#endif
+
+	zplib_module_exit(MODULE_CONSOLE);
+	zplib_module_exit(MODULE_TELNET);
+
+#ifdef ZPL_VRF_MODULE
 	ip_vrf_terminate();
-	#endif
+#endif
 	vty_terminate();
 	cmd_terminate();
-
-	zplib_module_exitall();
 
 	os_time_exit();
 	os_job_exit();
@@ -227,7 +231,6 @@ int startup_module_exit(void)
 	return OK;
 }
 
-
 int zpl_base_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *tty)
 {
 	zplib_module_init(MODULE_CONSOLE);
@@ -235,8 +238,7 @@ int zpl_base_shell_start(char *shell_path, char *shell_addr, int shell_port, con
 	vty_tty_init(tty);
 	vty_serv_init(shell_addr, shell_port, shell_path, tty);
 	zlog_notice(MODULE_DEFAULT, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
-	//vty_task_init ();
-	//vty_task_exit (void);
+
 	zplib_module_task_init(MODULE_CONSOLE);
 	zplib_module_task_init(MODULE_TELNET);
 	return OK;
@@ -252,6 +254,6 @@ int zpl_base_start_pid(int pro, char *pid_file, int *pid)
 	if (pid)
 		*pid = getpid();
 
-	zlog_notice(MODULE_DEFAULT,"Zebra %s starting pid:%d", OEM_VERSION, getpid());
+	zlog_notice(MODULE_DEFAULT, "Zebra %s starting pid:%d", OEM_VERSION, getpid());
 	return OK;
 }

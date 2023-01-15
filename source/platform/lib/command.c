@@ -63,16 +63,6 @@ enum matcher_rv
 #define MATCHER_ERROR(matcher_rv) \
   ((matcher_rv) == MATCHER_INCOMPLETE || (matcher_rv) == MATCHER_NO_MATCH || (matcher_rv) == MATCHER_AMBIGUOUS || (matcher_rv) == MATCHER_EXCEED_ARGC_MAX)
 
-/* Host information structure. */
-
-/* Default motd string. */
-const char *default_motd =
-    "\r\n\
-Hello, this is " OEM_PACKAGE_BASE " (version " OEM_VERSION ").\r\n\
-" OEM_PACKAGE_COPYRIGHT "\r\n\
-"
-    "\r\n";
-
 
 /* Utility function to concatenate argv argument into a single string
    with inserting ' ' character between each argument.  */
@@ -2903,9 +2893,6 @@ void cmd_init(zpl_bool terminal)
 
   /* Allocate initial top vector of commands. */
   cli_cmdvec_list = vector_init(VECTOR_MIN_SIZE);
-
-  host_config_init(default_motd);
-  /* Install top nodes. */
 
   srandom(time(NULL));
 }

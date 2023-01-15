@@ -323,7 +323,7 @@ int os_process_start(void)
 
 int os_process_stop(void)
 {
-	zpl_uint32 os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
+	zpl_int32 os_process_id = os_pid_get(BASE_DIR"/run/process.pid");
 	if(os_process_id > 0)
 		return child_process_destroy(os_process_id);
 	return 0;

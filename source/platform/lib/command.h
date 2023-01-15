@@ -519,7 +519,6 @@ extern struct cmd_element show_running_config_cmd;
 
 
 /* "<cr>" global */
-extern const char *default_motd;
 extern zpl_char *command_cr;
 
 #endif /* ZPL_SHELL_MODULE */ 

@@ -54,6 +54,7 @@ int zpl_media_module_exit(void)
 	zpl_video_encode_exit();
 	zpl_media_proxy_exit();
 	zpl_media_bufqueue_exit();
+	zpl_media_event_destroy(zpl_media_event_default());
 	return OK;
 }
 

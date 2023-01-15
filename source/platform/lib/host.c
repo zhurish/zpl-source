@@ -13,10 +13,22 @@
 #include "host.h"
 #include "prefix.h"
 #include "str.h"
+#include "linklist.h"
+#include "vty.h"
+#include "vty_user.h"
+#include "template.h"
 #include "sys/sysinfo.h"
 
 
 struct zpl_host _global_host;
+
+/* Default motd string. */
+const char *default_motd =
+    "\r\n\
+Hello, this is " OEM_PACKAGE_BASE " (version " OEM_VERSION ").\r\n\
+" OEM_PACKAGE_COPYRIGHT "\r\n\
+"
+    "\r\n";
 
 
 int host_sysconfig_sync(void)
@@ -132,7 +144,7 @@ int host_active(zpl_bool val)
 }
 #endif
 
-int host_config_init(zpl_char *motd)
+int host_config_init(void)
 {
 	os_memset(&_global_host, 0, sizeof(_global_host));
 	/* Default host value settings. */
@@ -144,7 +156,7 @@ int host_config_init(zpl_char *motd)
 	_global_host.factory_config = XSTRDUP(MTYPE_HOST, FACTORY_CONFIG_FILE);
 	_global_host.lines = -1;
 	_global_host.slot = 1;
-	_global_host.motd = motd; //default_motd;
+	_global_host.motd = default_motd;
 	_global_host.motdfile = NULL;
 	#ifdef ZPL_SHELL_MODULE
 	_global_host.vty_timeout_val = VTY_TIMEOUT_DEFAULT;
@@ -163,6 +175,9 @@ int host_config_init(zpl_char *motd)
 	_global_host.no_password_check = 0;
 	_global_host.mutex = os_mutex_name_init("hostmutex");
 	_global_host.bspinit_sem = os_sem_name_init("hostsem");
+	if(_global_host.userlist == NULL)
+		_global_host.userlist = list_new ();	
+
 	if(access("/etc/.serial_no", F_OK) == 0)
 	{
 		memset(_global_host.serial, '\0', sizeof(_global_host.serial));
@@ -187,6 +202,8 @@ int host_config_init(zpl_char *motd)
     _global_host.switch_delay = 5;
     _global_host.active_standby = 0; // 主:0;备:1
 #endif
+	vty_user_init();
+	lib_template_init();
 	return OK;
 }
 

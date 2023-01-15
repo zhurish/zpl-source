@@ -39,6 +39,7 @@ struct module_list module_list_sdk =
 	.module_task_exit=bsp_module_task_exit, 
 	.module_cmd_init=NULL, 
 	.taskid=0,
+	.flags=ZPL_MODULE_NEED_INIT,
 };
 
 

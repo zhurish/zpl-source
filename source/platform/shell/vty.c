@@ -98,7 +98,7 @@ struct module_list module_list_console =
 		.module_task_exit = cli_console_task_exit,
 		.module_cmd_init = NULL,
 		.taskid = 0,
-		.flags = 0,
+		.flags = ZPL_MODULE_NEED_INIT,
 };
 
 struct module_list module_list_telnet =
@@ -116,7 +116,7 @@ struct module_list module_list_telnet =
 #endif	
 		.module_cmd_init = NULL,
 		.taskid = 0,
-		.flags = 0,
+		.flags = ZPL_MODULE_NEED_INIT,
 };
 /*******************************************************************************/
 cli_vtyshell_t g_vtyshell = 

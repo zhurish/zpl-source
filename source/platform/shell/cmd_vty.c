@@ -282,7 +282,7 @@ DEFUN_HIDDEN (exit_platform,
 		"exit platform\n")
 {
 	vty_out(vty, "os_signal_send(SIGTERM)%s", VTY_NEWLINE);
-	vty_terminate();
+	//vty_terminate();
 	os_signal_send(SIGTERM);
 	return CMD_SUCCESS;
 }

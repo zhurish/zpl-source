@@ -48,7 +48,7 @@ struct module_list module_list_standby =
         .module_task_init = ipcstandby_task_init,
         .module_task_exit = ipcstandby_task_exit,
         .module_cmd_init = ipcstandby_cmd_init,
-        .taskid = 0,
+        .taskid = ZPL_MODULE_NEED_INIT,
 };
 
 void ipcstandby_create_header(struct stream *s, zpl_uint16 command)

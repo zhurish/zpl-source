@@ -253,7 +253,7 @@ zpl_pid_t os_pid_get (const zpl_char *path)
 				strerror(ipstack_errno));
 		umask(oldumask);
 	}
-	return -1;
+	return ERROR;
 }
 
 

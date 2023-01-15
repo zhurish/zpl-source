@@ -164,6 +164,7 @@
         "netdb.h": "c",
         "process.h": "c",
         "sockaddr.h": "c",
-        "ipcstandby_serv.h": "c"
+        "ipcstandby_serv.h": "c",
+        "linklist.h": "c"
     }
 }

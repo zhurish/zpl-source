@@ -121,5 +121,11 @@ int rtsp_module_task_init(void)
 
 int rtsp_module_task_exit(void)
 {
+    if(rtsp_srv)
+    {
+        if(rtsp_srv->t_taskid)
+		    os_task_destroy(rtsp_srv->t_taskid);
+	    rtsp_srv->t_taskid = 0;
+    }
     return OK;
 }

@@ -39,7 +39,7 @@ struct module_list module_list_pal =
 	.module_task_exit=NULL, 
 	.module_cmd_init=NULL, 
 	.taskid=0,
-	.flags = 0,
+	.flags=ZPL_MODULE_NEED_INIT,
 };
 
 int pal_socket_vrf(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vrf_id)

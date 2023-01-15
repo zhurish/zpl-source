@@ -43,19 +43,20 @@ struct module_list
 	int	(*module_task_exit)(void);
 	int	(*module_cmd_init)(void);
 	zpl_taskid_t	taskid;       //模块任务ID
-//	zpl_uint32		priority; 	
 	zpl_uint32		flags;
 	zpl_void		*master;  
-#define ZPL_MODULE_IS_INIT    0x00000100	//已经初始化
-#define ZPL_MODULE_IS_TASK  0x00000200	//初始化task
-#define ZPL_MODULE_IS_CMD   0x00000400	//初始化CLI
- 
-	struct submodule
+#define ZPL_MODULE_NEED_INIT	0x00000010	//需要手动初始化
+#define ZPL_MODULE_IS_INIT  	0x00000100  //已经初始化
+#define ZPL_MODULE_IS_TASK  	0x00000200	//初始化task
+#define ZPL_MODULE_IS_CMD   	0x00000400	//初始化CLI
+
+	int index_num;
+	/*struct submodule
 	{
 		zpl_uint32 module;
 		char 	*name;
 		zpl_taskid_t		taskid;
-	}submodule[ZPL_SUB_MODULE_MAX];
+	}submodule[ZPL_SUB_MODULE_MAX];*/
 };
 
 struct module_alllist
