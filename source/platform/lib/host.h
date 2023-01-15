@@ -76,7 +76,9 @@ struct zpl_host
 	struct ipmc_slot ipmctable[IPMC_SLOT_MAX];
 	int slot;
 #ifdef ZPL_ACTIVE_STANDBY
-	zpl_bool active_standby;	//主:0;备:1
+    zpl_bool preempt_mode;
+    zpl_int32 switch_delay;
+    zpl_bool active_standby; // 主:0;备:1
 #endif
 	zpl_bool control_access;	//控制板卡还是接入板卡
 	
@@ -122,6 +124,10 @@ extern zpl_bool host_isstandby(void);
 extern int host_standby(zpl_bool val);
 extern zpl_bool host_isactive(void);
 extern int host_active(zpl_bool val);
+extern int host_preempt_mode(zpl_bool enable);
+extern zpl_bool host_ispreempt_mode(void);
+extern int host_switch_delay_set(zpl_int32 val);
+extern int host_switch_delay_get(void);
 #endif
 
 extern zpl_bool host_is_access(void);//接入板卡

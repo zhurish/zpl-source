@@ -117,7 +117,7 @@ static int rtsp_media_codec2pt(rtsp_session_t *session)
             session->video_session.payload = pcodec.enctype;
             /* 更新帧率和发包时间间隔 */
             session->video_session.framerate = pcodec.framerate;
-            session->video_session.frame_delay_msec = 1000/session->video_session.framerate;
+            session->video_session.frame_delay_msec = RTP_MEDIA_FRAME_DELAY(1000/session->video_session.framerate);
             session->video_session.timestamp_interval = rtp_profile_get_clock_rate(session->video_session.payload)/session->video_session.framerate;
             if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
             {
@@ -134,7 +134,7 @@ static int rtsp_media_codec2pt(rtsp_session_t *session)
             session->audio_session.payload = paudiocodec.enctype;
             /* 更新帧率和发包时间间隔 */
             session->audio_session.framerate = paudiocodec.framerate;
-            session->audio_session.frame_delay_msec = 1000/session->audio_session.framerate;
+            session->audio_session.frame_delay_msec = RTP_MEDIA_FRAME_DELAY(1000/session->audio_session.framerate);
             session->audio_session.timestamp_interval = rtp_profile_get_clock_rate(session->audio_session.payload)/session->audio_session.framerate;
             if(session->parent && RTSP_DEBUG_FLAG(rtsp_srv_getptr(session->parent)->debug, EVENT))
             {

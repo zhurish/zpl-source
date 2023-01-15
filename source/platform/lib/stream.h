@@ -133,7 +133,7 @@ struct stream_fifo
 #define STREAM_PNT(S)   stream_pnt((S))
 #define STREAM_DATA(S)  ((S)->data)
 #define STREAM_REMAIN(S) STREAM_WRITEABLE((S))
-
+#define STREAM_DATA_LEN(S)  ((S)->endp - (S)->getp)
 /* Stream prototypes. 
  * For stream_{put,get}S, the S suffix mean:
  *

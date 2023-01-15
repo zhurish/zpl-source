@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 
-# Wed Jan  4 22:50:41 2023
+# Sat Jan 14 20:46:12 2023
 #
 CONFIG_HAVE_DOT_CONFIG=true
 
@@ -83,7 +83,7 @@ ZPL_IP_PLIST=true
 ZPL_WORKQUEUE=true
 ZPL_SHELL_MODULE=true
 # CONFIG_ZPL_SHRL_MODULE is not set
-# CONFIG_ZPL_ACTIVE_STANDBY is not set
+ZPL_ACTIVE_STANDBY=true
 # CONFIG_ZPL_NSM_SNMP is not set
 ZPL_NSM_MODULE=true
 ZPL_VRF_MODULE=true

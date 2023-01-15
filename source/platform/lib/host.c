@@ -92,6 +92,25 @@ int host_bspinit_done(void)
 }
 
 #ifdef ZPL_ACTIVE_STANDBY
+int host_switch_delay_set(zpl_int32 val)
+{
+    _global_host.switch_delay = val;
+    return OK;
+}
+int host_switch_delay_get(void)
+{
+	return _global_host.switch_delay;
+}
+int host_preempt_mode(zpl_bool enable)
+{
+    _global_host.preempt_mode = enable;
+    return OK;
+}
+
+zpl_bool host_ispreempt_mode(void)
+{
+	return _global_host.preempt_mode;
+}
 zpl_bool host_isstandby(void)
 {
 	return _global_host.active_standby;
@@ -163,6 +182,11 @@ int host_config_init(zpl_char *motd)
 			host_config_set_api(API_SET_SYSMAC_CMD, ether.octet);
 		}
 	}
+#ifdef ZPL_ACTIVE_STANDBY
+    _global_host.preempt_mode = 1;
+    _global_host.switch_delay = 5;
+    _global_host.active_standby = 0; // 主:0;备:1
+#endif
 	return OK;
 }
 

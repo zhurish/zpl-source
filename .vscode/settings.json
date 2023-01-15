@@ -163,6 +163,7 @@
         "bctport.h": "c",
         "netdb.h": "c",
         "process.h": "c",
-        "sockaddr.h": "c"
+        "sockaddr.h": "c",
+        "ipcstandby_serv.h": "c"
     }
 }

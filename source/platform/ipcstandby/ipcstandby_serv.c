@@ -39,8 +39,9 @@
 /* Event list of ipcstandby. */
 
 static void ipcstandby_serv_event(struct ipcstandby_server_t *_server, enum ipcmsg_event event, zpl_socket_t sock, struct ipcstandby_serv *client);
-
 static void ipcstandby_serv_client_close(struct ipcstandby_serv *client);
+static int ipcstandby_negotiate_handle(struct ipcstandby_serv *client, struct ipcstanby_negotiate *negotiate);
+static int ipcstandby_negotiate_state_change(struct ipcstandby_serv *client, int state);
 
 int ipcstandby_serv_callback(struct ipcstandby_server_t *_server, struct ipcstandby_callback cli, struct ipcstandby_callback msg, struct ipcstandby_callback res)
 {
@@ -104,35 +105,41 @@ int ipcstandby_serv_result(struct ipcstandby_serv *client, int process, int ret,
 /* Tie up route-type and client->sock */
 static void ipcstandby_serv_read_hello(struct ipcstandby_serv *client)
 {
-    /* type of protocol (lib/zplos_include.h) */
-    client->ipcstanby.slot = stream_getl(client->ibuf);
-    client->ipcstanby.active = stream_getl(client->ibuf);
-    client->ipcstanby.negotiate = stream_getl(client->ibuf);
-    if (client->ipcserver && client->ipcserver->ipcstandby_negotiate_callback)
-    {
-        (client->ipcserver->ipcstandby_negotiate_callback)(&client->ipcstanby);
-    }
+    stream_get(client->version, client->ibuf, sizeof(client->version));
+    client->ipcstanby.ID     = stream_getl(client->ibuf);
+    client->ipcstanby.seqnum = stream_getl(client->ibuf);
+    client->ipcstanby.state  = stream_getc(client->ibuf);
+    client->ipcstanby.slot   = stream_getc(client->ibuf);
+    client->ipcstanby.MS     = stream_getc(client->ibuf);
+    client->ipcstanby.master = stream_getc(client->ibuf);
+    ipcstandby_negotiate_handle(client, &client->ipcstanby);
     client->hello++;
 }
 
-static void ipcstandby_serv_read_register(struct ipcstandby_serv *client)
+static void ipcstandby_serv_read_switch(struct ipcstandby_serv *client)
 {
-    client->ipcstanby.slot = stream_getl(client->ibuf);
-    stream_get(client->version, client->ibuf, sizeof(client->version));
-    _host_standby.state++;
+    struct ipcstanby_negotiate mneg;
+    mneg.ID     = stream_getl(client->ibuf);
+    mneg.seqnum = stream_getl(client->ibuf);
+    mneg.state  = stream_getc(client->ibuf);
+    mneg.slot   = stream_getc(client->ibuf);
+    mneg.MS     = stream_getc(client->ibuf);
+    mneg.master = stream_getc(client->ibuf);
+    if (client->ipcserver && client->ipcserver->ipcstandby_switch_change_callback)
+    {
+        (client->ipcserver->ipcstandby_switch_change_callback)(client, &mneg);
+    }
 }
-
 /* Close ipcstandby client. */
 static void
 ipcstandby_serv_client_close(struct ipcstandby_serv *client)
 {
     /* Close file descriptor. */
+    ipcstandby_negotiate_state_change(client, ZPL_IPCSTANBY_STATE_DOWN);
     if (!ipstack_invalid(client->sock))
     {
         ipstack_close(client->sock);
     }
-    if (_host_standby.state)
-        _host_standby.state--;
     /* Free stream buffers. */
     if (client->ibuf)
         stream_free(client->ibuf);
@@ -180,7 +187,6 @@ ipcstandby_serv_client_timeout(struct thread *thread)
     {
         if (client->ipcserver->debug)
             zlog_warn(MODULE_STANDBY, "ipc standby server close client %s:%d sock [%d] is timeout", client->remote, client->port, ipstack_fd(client->sock));
-        client->state = zpl_false;
         ipcstandby_serv_client_close(client);
         return OK;
     }
@@ -298,29 +304,28 @@ ipcstandby_serv_client_read(struct thread *thread)
 
     switch (command)
     {
-    case ZPL_IPCSTANBY_HELLO:
+    case ZPL_IPCSTANBY_SWITCH:
         ipcstandby_serv_read_hello(client);
         break;
-    case ZPL_IPCSTANBY_REGISTER:
-        ipcstandby_serv_read_register(client);
-        ret = OK;
+    case ZPL_IPCSTANBY_HELLO:
+        ipcstandby_serv_read_switch(client);
         break;
 
     case ZPL_IPCSTANBY_CLI:
         if (client->ipcserver->cli_callback.ipcstandby_callback)
-            ret = (client->ipcserver->cli_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client->ipcserver->cli_callback.pVoid);
+            ret = (client->ipcserver->cli_callback.ipcstandby_callback)(stream_pnt(client->ibuf), STREAM_DATA_LEN(client->ibuf), client->ipcserver->cli_callback.pVoid);
         else
             ret = OS_NO_CALLBACK;
         break;
     case ZPL_IPCSTANBY_MSG:
         if (client->ipcserver->msg_callback.ipcstandby_callback)
-            ret = (client->ipcserver->msg_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client->ipcserver->msg_callback.pVoid);
+            ret = (client->ipcserver->msg_callback.ipcstandby_callback)(stream_pnt(client->ibuf), STREAM_DATA_LEN(client->ibuf), client->ipcserver->msg_callback.pVoid);
         else
             ret = OS_NO_CALLBACK;
         break;
     case ZPL_IPCSTANBY_RES:
         if (client->ipcserver->res_callback.ipcstandby_callback)
-            ret = (client->ipcserver->res_callback.ipcstandby_callback)(stream_pnt(client->ibuf), 0, client);
+            ret = (client->ipcserver->res_callback.ipcstandby_callback)(stream_pnt(client->ibuf), STREAM_DATA_LEN(client->ibuf), client);
         else
             ret = OS_NO_CALLBACK;
         break;
@@ -495,3 +500,246 @@ void ipcstandby_serv_exit(struct ipcstandby_server_t *_server)
     XFREE(MTYPE_STANDBY_SERV, _server);
     _server = NULL;
 }
+
+
+
+static int ipcstandby_negotiate_state_change(struct ipcstandby_serv *client, int state)
+{
+    struct ipcstanby_negotiate *local = NULL;
+    if (client)
+    {
+        char *statestr[] = {"Down", "Init", "Full", "Down"};
+        local = &client->ipcstanby;
+        if (local->state != state)
+        {
+            if(local->MS == 0)
+                local->state = state;
+            zlog_debug(MODULE_STANDBY, "negotiate state change to '%s' at slot:%d", statestr[local->state], local->slot);
+            if(ZPL_IPCSTANBY_STATE_DOWN == state)
+            {
+                local->master = 1;
+                ipcstandby_active_change_event(0);
+            }
+        }
+    }
+    return 0;
+}
+
+static int ipcstandby_negotiate_state_autochange(struct ipcstandby_serv *client, struct ipcstanby_negotiate *negotiate)
+{
+    struct ipcstanby_negotiate *local = NULL;
+    if (client)
+    {
+        local = &client->ipcstanby;
+        if (local->state == ZPL_IPCSTANBY_STATE_DOWN)
+        {
+            ipcstandby_negotiate_state_change(client, ZPL_IPCSTANBY_STATE_INIT);
+        }
+        else if (local->state == ZPL_IPCSTANBY_STATE_INIT)
+        {
+            ipcstandby_negotiate_state_change(client, ZPL_IPCSTANBY_STATE_FULL);
+            local->MS = 1;
+        }
+    }
+    return 0;
+}
+#if 1
+static int ipcstandby_negotiate_handle(struct ipcstandby_serv *client, struct ipcstanby_negotiate *negotiate)
+{
+    struct ipcstanby_negotiate *local = NULL;
+    IPCSTANDBY_LOCK();
+    if (client)
+    {
+        local = &client->ipcstanby;
+        ipcstandby_negotiate_timeout_cennel();
+
+        switch (local->state)
+        {
+        case ZPL_IPCSTANBY_STATE_DOWN:
+            ipcstandby_negotiate_state_autochange(client, negotiate);
+            zlog_debug(MODULE_STANDBY, "=================================negotiate state change to 'init' at slot:%d", local->slot);
+            break;
+        case ZPL_IPCSTANBY_STATE_INIT:
+            if(host_ispreempt_mode())
+            {
+                if (negotiate->slot > local->slot)
+                {
+                    local->master = 1;
+                }
+                else
+                {
+                    local->master = 0;
+                }
+                if(local->MS == 0 && negotiate->MS)
+                {
+                    local->need_delay = 1;
+                }
+                else if(local->MS && negotiate->MS == 0)
+                {
+                    local->need_delay = 1;
+                }
+            }
+            else
+            {
+                if(local->MS == 0 && negotiate->MS == 0)
+                {
+                    if (negotiate->slot > local->slot)
+                    {
+                    }
+                    else
+                    {
+                        local->master = 0;
+                    }
+                }
+                else if(local->MS == 0 && negotiate->MS)
+                {
+                    if (negotiate->master)
+                    {
+                        local->master = 0;
+                    }
+                    else
+                    {
+                        local->master = 1;
+                    }
+                    //ipcstandby_negotiate_state_autochange(client, negotiate);
+                }
+                else if(local->MS && negotiate->MS == 0)
+                {
+                    //ipcstandby_negotiate_state_autochange(client, negotiate);
+                }
+            }
+            ipcstandby_negotiate_state_autochange(client, negotiate);
+            zlog_debug(MODULE_STANDBY, "=================================negotiate state change to 'full' at slot:%d", local->slot);
+            break;
+        case ZPL_IPCSTANBY_STATE_FULL:
+            if(host_ispreempt_mode())
+            {
+                if (negotiate->slot > local->slot)
+                {
+                    local->master = 1;
+                }
+                else
+                {
+                    local->master = 0;
+                }
+                if(local->MS == 0 && negotiate->MS)
+                {
+                    local->need_delay = 1;
+                }
+                else if(local->MS && negotiate->MS == 0)
+                {
+                    local->need_delay = 1;
+                }
+            }
+            if(local->MS && negotiate->MS)
+            {
+               if(host_ispreempt_mode())
+                {
+                    if (negotiate->slot > local->slot)
+                    {
+                        ipcstandby_active_change_event(local->need_delay);   
+                    }
+                    else
+                    {
+                        ipcstandby_active_change_event(local->need_delay);    
+                    }
+                }
+                else
+                    ipcstandby_active_change_event(0);
+            }
+            //zlog_debug(MODULE_STANDBY, "=================================negotiate state change in 'full' at slot:%d", local->slot);
+            break;
+        }
+    }
+    IPCSTANDBY_UNLOCK();
+    return OK;
+}
+#else
+static int ipcstandby_negotiate_handle(struct ipcstandby_serv *client, struct ipcstanby_negotiate *negotiate)
+{
+    struct ipcstanby_negotiate *local = NULL;
+    IPCSTANDBY_LOCK();
+    if (_host_standby.ipcstandby_client)
+    {
+        local = &_host_standby.ipcstandby_client->ipcstanby;
+        if (_host_standby.t_timeout)
+            THREAD_OFF(_host_standby.t_timeout);
+    
+        switch (local->state)
+        {
+        case ZPL_IPCSTANBY_STATE_DOWN:
+            //if (negotiate->state == ZPL_IPCSTANBY_STATE_FULL)
+            //{
+            //}
+            //else
+                ipcstandby_negotiate_state_autochange(client, negotiate);
+            break;
+        case ZPL_IPCSTANBY_STATE_INIT:
+            //if (negotiate->state == ZPL_IPCSTANBY_STATE_DOWN)
+            {
+                if(local->MS == 0 && negotiate->MS == 0)
+                {
+                    if (negotiate->slot > local->slot)
+                    {
+                    }
+                    else
+                    {
+                        local->master = 0;
+                    }
+                }
+            }
+            //else if (negotiate->state == ZPL_IPCSTANBY_STATE_FULL)
+            {
+                if(local->MS == 0)
+                {
+                    if (negotiate->MS)
+                    {
+                        if (negotiate->master)
+                        {
+                            if (local->master)
+                                local->master = 0;
+                            else
+                                local->master = 0;
+                        }
+                        else
+                        {
+                            if (!local->master)
+                                local->master = 1;
+                            else
+                                local->master = 1;
+                        }
+                        ipcstandby_negotiate_state_autochange(client, negotiate);
+                    }
+                }
+            }
+            //else
+            {
+                if (negotiate->slot > local->slot)
+                {
+                }
+                else
+                {
+                    local->master = 0;
+                }
+                ipcstandby_negotiate_state_autochange(client, negotiate);
+            }
+            break;
+        case ZPL_IPCSTANBY_STATE_FULL:
+            if (negotiate->state == ZPL_IPCSTANBY_STATE_DOWN)
+            {
+            }
+            else if (negotiate->state == ZPL_IPCSTANBY_STATE_INIT)
+            {
+            }
+            else
+            {
+                // if(local->master != host_isactive())
+                thread_add_event(_host_standby.master, ipcstandby_negotiate_event, NULL, 0);
+            }
+            break;
+        }
+    }
+    IPCSTANDBY_UNLOCK();
+    return OK;
+}
+#endif

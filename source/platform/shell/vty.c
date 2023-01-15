@@ -931,7 +931,7 @@ int vty_command(struct vty *vty, const zpl_char *buf)
 	}
 #endif /* CONSUMED_TIME_CHECK */
 #ifdef ZPL_ACTIVE_STANDBY
-	if(ret == CMD_SUCCESS && vty->node > AUTH_ENABLE_NODE)
+	if(ret == CMD_SUCCESS && vty->node > AUTH_ENABLE_NODE && host_isactive())
 	{
 		ipcstandby_execue_clicmd(buf, vty->length);
 	}

@@ -38,8 +38,8 @@
 
 /* Prototype for event manager. */
 static void ipcstandby_client_event(enum ipcmsg_event, struct ipcstandby_client *);
-static int ipcstandby_client_register_send(struct ipcstandby_client *client);
 static int ipcstandby_client_failed(struct ipcstandby_client *client);
+static int ipcstandby_client_hello_send(struct ipcstandby_client *client);
 
 /* Allocate client structure. */
 struct ipcstandby_client *
@@ -51,7 +51,7 @@ ipcstandby_client_new(void *m)
     client->ibuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
     client->obuf = stream_new(ZPL_IPCMSG_MAX_PACKET_SIZ);
     client->master = m;
-    client->debug = 1;
+    client->debug = 0;
     return client;
 }
 
@@ -86,8 +86,7 @@ void ipcstandby_client_start(struct ipcstandby_client *client, zpl_uint32 slot, 
     else
         client->remote = strdup("127.0.0.1");
     client->port = port;
-    client->ipcstanby.active = host_isactive();
-    client->ipcstanby.negotiate = 0;
+
     ipcstandby_client_event(ZPL_IPCMSG_SCHEDULE, client);
 }
 
@@ -96,8 +95,7 @@ void ipcstandby_client_stop(struct ipcstandby_client *client)
 {
     if (client->debug)
         zlog_debug(MODULE_STANDBY, "ipc standby client stopped");
-    if (_host_standby.state)
-        _host_standby.state--;
+
     /* Stop threads. */
     THREAD_OFF(client->t_connect);
     THREAD_OFF(client->t_write);
@@ -129,7 +127,7 @@ void ipcstandby_client_reset(struct ipcstandby_client *client)
 
 static int ipcstandby_client_connect_check(struct thread *t)
 {
-    struct ipcstandby_client *client;
+    struct ipcstandby_client *client = NULL;
     client = THREAD_ARG(t);
     client->t_write = NULL;
 
@@ -137,9 +135,11 @@ static int ipcstandby_client_connect_check(struct thread *t)
     {
         THREAD_OFF(client->t_timeout);
         client->is_connect = zpl_true;
-        ipcstandby_client_register_send(client);
+
+        if (client->t_neg_timeout)
+            THREAD_OFF(client->t_neg_timeout);
+        ipcstandby_client_hello_send(client);
         ipcstandby_client_event(ZPL_IPCMSG_TIMEOUT, client);
-        _host_standby.state++;
         if (client->debug)
             zlog_warn(MODULE_STANDBY, "ipc standby client connect to %s:%d sock [%d] OK", client->remote, client->port, ipstack_fd(client->sock));
         return OK;
@@ -176,7 +176,7 @@ static int ipcstandby_client_socket_connect(struct ipcstandby_client *client, ch
         return ERROR;
     }
     client->t_write = thread_add_write(client->master, ipcstandby_client_connect_check, client, client->sock);
-    client->t_timeout = thread_add_timer(client->master, ipcstandby_client_connect_timeout, client, 5);    
+    client->t_timeout = thread_add_timer(client->master, ipcstandby_client_connect_timeout, client, 5);
     return OK;
 }
 
@@ -213,23 +213,19 @@ static int ipcstandby_client_connect(struct thread *t)
     return OK;
 }
 
-static int ipcstandby_client_register_send(struct ipcstandby_client *client)
-{
-    struct ipcstanby_result ack;
-    ipcstandby_create_header(client->obuf, ZPL_IPCSTANBY_REGISTER);
-    stream_putl(client->obuf, client->slot);
-    stream_put(client->obuf, "", 64);
-    // stream_putw_at(s, 0, stream_get_endp(s));
-    return ipcstandby_client_send_message(client, &ack, NULL, 500);
-}
-
 static int ipcstandby_client_hello_send(struct ipcstandby_client *client)
 {
     struct ipcstanby_result ack;
     ipcstandby_create_header(client->obuf, ZPL_IPCSTANBY_HELLO);
-    stream_putl(client->obuf, client->ipcstanby.slot);
-    stream_putl(client->obuf, client->ipcstanby.active ? 1 : 0);
-    stream_putl(client->obuf, client->ipcstanby.negotiate);
+    IPCSTANDBY_LOCK();
+    stream_put(client->obuf, client->version, sizeof(client->version));
+    stream_putl(client->obuf, client->ipcstanby.ID);
+    stream_putl(client->obuf, ++client->ipcstanby.seqnum);
+    stream_putc(client->obuf, client->ipcstanby.state);
+    stream_putc(client->obuf, client->ipcstanby.slot);
+    stream_putc(client->obuf, client->ipcstanby.MS);
+    stream_putc(client->obuf, client->ipcstanby.master);
+    IPCSTANDBY_UNLOCK();
     return ipcstandby_client_send_message(client, &ack, NULL, 500);
 }
 
@@ -398,6 +394,21 @@ static int ipcstandby_client_recv_message(struct ipcstandby_client *client, stru
     return ERROR;
 }
 
+int ipcstandby_client_switch(struct ipcstandby_client *client)
+{
+    struct ipcstanby_result ack;
+    ipcstandby_create_header(client->obuf, ZPL_IPCSTANBY_SWITCH);
+    IPCSTANDBY_LOCK();
+    stream_putl(client->obuf, client->ipcstanby.ID);
+    stream_putl(client->obuf, ++client->ipcstanby.seqnum);
+    stream_putc(client->obuf, client->ipcstanby.state);
+    stream_putc(client->obuf, client->ipcstanby.slot);
+    stream_putc(client->obuf, client->ipcstanby.MS);
+    stream_putc(client->obuf, client->ipcstanby.master);
+    IPCSTANDBY_UNLOCK();
+    return ipcstandby_client_send_message(client, &ack, NULL, 500);
+}
+
 int ipcstandby_client_send_message(struct ipcstandby_client *client, struct ipcstanby_result *ack,
                                    struct ipcstandby_callback *callback, int timeout)
 {
@@ -463,11 +474,11 @@ ipcstandby_client_event(enum ipcmsg_event event, struct ipcstandby_client *clien
     case ZPL_IPCMSG_CONNECT:
         if (client->debug)
             zlog_debug(MODULE_STANDBY, "ipc standby client ipstack_connect schedule interval is %d",
-                       client->fail < 3 ? 10 : 60);
+                       client->fail < 3 ? 5 : 10);
         if (!client->t_connect)
             client->t_connect =
                 thread_add_timer(client->master, ipcstandby_client_connect, client,
-                                 client->fail < 3 ? 10 : 60);
+                                 client->fail < 3 ? 5 : 10);
         break;
     case ZPL_IPCMSG_TIMEOUT:
         if (!client->t_timeout)
@@ -477,3 +488,5 @@ ipcstandby_client_event(enum ipcmsg_event event, struct ipcstandby_client *clien
         break;
     }
 }
+
+

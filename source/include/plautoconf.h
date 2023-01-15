@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2023-01-04 22:50:41 CST"
+#define AUTOCONF_TIMESTAMP "2023-01-14 20:46:12 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -84,7 +84,7 @@
 #define ZPL_WORKQUEUE 1
 #define ZPL_SHELL_MODULE 1
 #undef ZPL_SHRL_MODULE
-#undef ZPL_ACTIVE_STANDBY
+#define ZPL_ACTIVE_STANDBY 1
 #undef ZPL_NSM_SNMP
 #define ZPL_NSM_MODULE 1
 #define ZPL_VRF_MODULE 1

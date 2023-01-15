@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 
-
+#define  RTP_MEDIA_FRAME_DELAY(n)   ((n)/4)
 
 
 

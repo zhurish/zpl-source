@@ -351,7 +351,7 @@ int rtsp_session_default(rtsp_session_t *newNode, bool srv)
     newNode->audio_session.framerate = ZPL_AUDIO_FRAMERATE_DEFAULT;
     newNode->audio_session.rtpmode = 2;
     newNode->audio_session.user_timestamp = 0;
-    newNode->audio_session.frame_delay_msec = 1000/newNode->audio_session.framerate;
+    newNode->audio_session.frame_delay_msec = RTP_MEDIA_FRAME_DELAY(1000/newNode->audio_session.framerate);
     if (!srv)
     {
         newNode->session = 0;
@@ -383,7 +383,7 @@ int rtsp_session_default(rtsp_session_t *newNode, bool srv)
     newNode->video_session.framerate = ZPL_VIDEO_FRAMERATE_DEFAULT;
     newNode->video_session.rtpmode = 2; // RTP_SESSION_SENDRECV;
     newNode->video_session.user_timestamp = 0;
-    newNode->video_session.frame_delay_msec = 1000/newNode->video_session.framerate;
+    newNode->video_session.frame_delay_msec = RTP_MEDIA_FRAME_DELAY(1000/newNode->video_session.framerate);
     if (!srv)
     {
         newNode->video_session.transport.rtp.unicast.local_rtp_port = newNode->video_session.local_rtp_port;

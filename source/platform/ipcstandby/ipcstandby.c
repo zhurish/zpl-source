@@ -60,45 +60,11 @@ void ipcstandby_create_header(struct stream *s, zpl_uint16 command)
     stream_putw(s, command);
 }
 
-static int ipcstandby_switch_callback(zpl_bool standby)
-{
-    host_active(standby);
-    return OK;
-}
-
-int ipcstandby_switch_master(zpl_bool master)
-{
-    return ipcstandby_switch_callback(master);
-}
-
-/* server callback */
+/* 备用设备执行主设备同步过来的CLI */
 static int ipcstandby_callback_cli(const zpl_char *data, zpl_uint32 len, void *pVoid)
 {
     int ret = 0;
     struct vty *vty = pVoid;
-    if (strstr(data, "switch standby")) // 切换为备用
-    {
-        if (host_isactive()) // 主
-        {
-            if (_host_standby.ipcstandby_switch_callback)
-            {
-                ret = (_host_standby.ipcstandby_switch_callback)(zpl_false);
-            }
-        }
-        return ret;
-    }
-    if (strstr(data, "switch master")) // 切换为主用
-    {
-        if (host_isstandby()) // 主
-        {
-            if (_host_standby.ipcstandby_switch_callback)
-            {
-                ret = (_host_standby.ipcstandby_switch_callback)(zpl_true);
-            }
-        }
-        return ret;
-    }
-
     if (host_isactive()) // 主
     {
         return OK;
@@ -109,6 +75,7 @@ static int ipcstandby_callback_cli(const zpl_char *data, zpl_uint32 len, void *p
     return ret;
 }
 
+/* 接收设备发送信息的回调函数 */
 static int ipcstandby_callback_msg(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
 {
     int ret = 0;
@@ -117,6 +84,7 @@ static int ipcstandby_callback_msg(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
     return ret;
 }
 
+/* 接收备用设备资源请求回调函数 */
 static int ipcstandby_callback_res(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
 {
     int ret = 0;
@@ -129,43 +97,11 @@ static int ipcstandby_callback_res(zpl_uint8 *data, zpl_uint32 len, void *pVoid)
 }
 
 /* client call vty->length */
+/* 主设备CLI同步至备设备 */
 int ipcstandby_execue_clicmd(char *cmd, int len)
 {
     int ret = 0;
     struct ipcstanby_result ack;
-    if (!_host_standby.ipcstandby_client)
-    {
-        return OK;
-    }
-    if (host_isstandby() && _host_standby.ipcstandby_client) // 备用
-    {
-        if (strstr(cmd, "switch master"))
-        {
-            ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
-                                            NULL, ZPL_IPCSTANBY_CLI, cmd, len);
-            if (ret == OK)
-            {
-                if (ack.result == OK)
-                    return OK;
-            }
-            return ERROR;
-        }
-        return OK;
-    }
-    if (host_isactive() && _host_standby.ipcstandby_client) //
-    {
-        if (strstr(cmd, "switch standby"))
-        {
-            ret = ipcstandby_client_sendmsg(_host_standby.ipcstandby_client, &ack,
-                                            NULL, ZPL_IPCSTANBY_CLI, cmd, len);
-            if (ret == OK)
-            {
-                if (ack.result == OK)
-                    return OK;
-            }
-            return ERROR;
-        }
-    }
     if (strstr(cmd, "tftp") || strstr(cmd, "ftp") ||
         strstr(cmd, "ping") || strstr(cmd, "traceroute") ||
         strstr(cmd, "ymodem") || strstr(cmd, "xmodem") ||
@@ -175,7 +111,8 @@ int ipcstandby_execue_clicmd(char *cmd, int len)
         strstr(cmd, "terminal") || strstr(cmd, "log commands") ||
         strstr(cmd, "exit-platform") || strstr(cmd, "list") ||
         strstr(cmd, "help") || strstr(cmd, "echo") ||
-        strstr(cmd, "login-type"))
+        strstr(cmd, "login-type")||
+        strstr(cmd, "switch master") || strstr(cmd, "switch standby"))
     {
         return OK;
     }
@@ -203,7 +140,7 @@ int ipcstandby_sendto_msg(char *msg, int len)
     }
     return ERROR;
 }
-
+/* 资源解析回调函数 */
 static int ipcstandby_callback_resources(zpl_uint8 *data, zpl_uint32 len, void *pVOid)
 {
     struct ipcstanby_reskey *reskey = pVOid;
@@ -221,7 +158,7 @@ static int ipcstandby_callback_resources(zpl_uint8 *data, zpl_uint32 len, void *
     }
     return ERROR;
 }
-
+/* 备用设备向主设备请求资源信息 */
 int ipcstandby_request_res(int type, struct ipcstanby_reskey *reskey)
 {
     struct ipcstanby_result ack;
@@ -241,142 +178,141 @@ int ipcstandby_request_res(int type, struct ipcstanby_reskey *reskey)
     return ERROR;
 }
 
+int ipcstandby_change_callback(int (*func)(zpl_bool))
+{
+    IPCSTANDBY_LOCK();
+    _host_standby.ipcstandby_change_notify = func;
+    IPCSTANDBY_UNLOCK();
+    return OK;
+}
+
+/* 开机等的主备协商完成 */
 zpl_bool ipcstandby_done(int waitime)
 {
-    int waitime_cnt = waitime;
-    if (!(_global_host.ipmctable[0].state && _global_host.ipmctable[1].state)) // 当前只有一个板卡在线
+    while (1)
     {
         if (_host_standby.ipcstandby_client)
         {
-            if (_host_standby.ipcstandby_client->ipcstanby.negotiate == 0)
-                _host_standby.ipcstandby_client->ipcstanby.negotiate = 3;
-        }
-        return zpl_true;
-    }
-    while (waitime_cnt--)
-    {
-        if (_host_standby.start_state == 0)
-        {
-            if (_host_standby.state == 2)
+            IPCSTANDBY_LOCK();
+            if (_host_standby.ipcstandby_client->ipcstanby.state == ZPL_IPCSTANBY_STATE_FULL &&
+                _host_standby.ipcstandby_client->ipcstanby.MS)
             {
-                _host_standby.start_state = 2;
+                IPCSTANDBY_UNLOCK();
+                break;
             }
-        }
-        os_sleep(1);
-    }
-
-    if (_host_standby.ipcstandby_client)
-    {
-        if (_host_standby.ipcstandby_client->ipcstanby.negotiate == 0)
-            _host_standby.ipcstandby_client->ipcstanby.negotiate = 3;
-    }
-    if (_host_standby.start_state == 2)
-    {
-        return zpl_true;
-    }
-    return zpl_false;
-}
-
-static int ipcstandby_negotiate_handle(struct ipcstanby_negotiate *client)
-{
-    struct ipcstanby_negotiate *local = NULL;
-    if (_host_standby.ipcstandby_client)
-    {
-        local = &_host_standby.ipcstandby_client->ipcstanby;
-        if (local->slot < client->slot)
-        {
-            if (client->active && client->negotiate) // 对端是主，且协商后的
-            {
-                if (local->active) // 本地也是主，切换为备
-                {
-                    local->active = zpl_false;
-                    zlog_debug(MODULE_STANDBY, "client %d change to standby", local->slot);
-                }
-            }
-            else if (client->active && client->negotiate == 0) // 对端是主，未协商的
-            {
-                if (local->active == 0) // 本地是备，切换为主
-                {
-                    local->active = (zpl_true);
-                    zlog_debug(MODULE_STANDBY, "client %d change to master", local->slot);
-                }
-            }
-            else if (client->active == 0 && client->negotiate) // 对端是备，协商的
-            {
-                if (local->active == 0) // 本地是备，切换为主
-                {
-                    local->active = (zpl_true);
-                    zlog_debug(MODULE_STANDBY, "client %d change to master", local->slot);
-                }
-            }
-            else if (client->active == 0 && client->negotiate == 0) // 对端是备，未协商的
-            {
-                if (local->active == 0) // 本地是备，切换为主
-                {
-                    local->active = (zpl_true);
-                    zlog_debug(MODULE_STANDBY, "client %d change to master", local->slot);
-                }
-            }
+            IPCSTANDBY_UNLOCK();
+            os_sleep(1);
         }
         else
         {
-            if (client->active && client->negotiate) // 对端是主，且协商后的
-            {
-                if (local->active) // 本地也是主，切换为备
-                {
-                    local->active = zpl_false;
-                    zlog_debug(MODULE_STANDBY, "client %d change to standby", local->slot);
-                }
-            }
-            else if (client->active && client->negotiate == 0) // 对端是主，未协商的
-            {
-                if (local->active) // 本地也是主，切换为备
-                {
-                    local->active = zpl_false;
-                    zlog_debug(MODULE_STANDBY, "client %d change to standby", local->slot);
-                }
-            }
-            else if (client->active == 0 && client->negotiate) // 对端是备，协商的
-            {
-                if (local->active == 0) // 本地是备，切换为主
-                {
-                    local->active = (zpl_true);
-                    zlog_debug(MODULE_STANDBY, "client %d change to master", local->slot);
-                }
-            }
-            else if (client->active == 0 && client->negotiate == 0) // 对端是备，未协商的
-            {
-                if (local->active == 0) // 本地是备，切换为主
-                {
-                    local->active = (zpl_true);
-                    zlog_debug(MODULE_STANDBY, "client %d change to master", local->slot);
-                }
-            }
+            break;
         }
-        if (local->negotiate >= 3)
-        {
-            if (local->active == client->active) // 协商一致
-            {
-                if (local->active == zpl_false)
-                {
-                    if (host_isactive())
-                    {
-                        host_standby(zpl_true);
-                        zlog_debug(MODULE_STANDBY, "set local to standby");
-                    }
-                }
-                else if (local->active == zpl_true)
-                {
-                    if (host_isstandby())
-                    {
-                        zlog_debug(MODULE_STANDBY, "set local to master");
-                        host_active(zpl_true);
-                    }
-                }
-            }
-        }
-        local->negotiate++;
     }
+    return zpl_true;
+}
+/* 主备切换 */
+static int ipcstandby_negotiate_event_thread(struct thread *thread)
+{
+    struct ipcstanby_negotiate *local = NULL;
+    IPCSTANDBY_LOCK();
+    if (_host_standby.ipcstandby_client)
+    {
+        local = &_host_standby.ipcstandby_client->ipcstanby;
+        if (host_isactive() && local->master == 0)
+        {
+            host_standby(zpl_true);
+            if(local->cli_switch)
+                ipcstandby_client_switch(_host_standby.ipcstandby_client);
+            if(_host_standby.ipcstandby_change_notify)
+            {
+                (_host_standby.ipcstandby_change_notify)(zpl_false);
+            }
+            local->cli_switch = 0;
+            zlog_debug(MODULE_STANDBY, "slot:%d state change standby", local->slot);
+        }
+        if (host_isstandby() && local->master)
+        {
+            host_active(zpl_true);
+            if(local->cli_switch)
+                ipcstandby_client_switch(_host_standby.ipcstandby_client);
+            if(_host_standby.ipcstandby_change_notify)
+            {
+                (_host_standby.ipcstandby_change_notify)(zpl_true);
+            }
+            local->cli_switch = 0;    
+            zlog_debug(MODULE_STANDBY, "slot:%d state change master", local->slot);
+        }
+    }
+    IPCSTANDBY_UNLOCK();
+    return OK;
+}
+/* 触发主备切换 */
+int ipcstandby_active_change_event(int delay)
+{
+    if(delay > 0)
+        thread_add_timer(_host_standby.master, ipcstandby_negotiate_event_thread, NULL, host_switch_delay_get());
+    else
+    {
+        if(delay == -1)
+        {
+            if (_host_standby.ipcstandby_client)
+                _host_standby.ipcstandby_client->ipcstanby.cli_switch = 1;
+        }
+        thread_add_event(_host_standby.master, ipcstandby_negotiate_event_thread, NULL, 0);
+    }
+    return OK;
+}
+/* 开机等待主备协商超时自动设为主 */
+static int ipcstandby_negotiate_timeout(struct thread *t)
+{
+    struct ipcstandby_client *client = NULL;
+    struct ipcstanby_negotiate *local = NULL;
+    client = THREAD_ARG(t);
+
+    if (client)
+    {
+        IPCSTANDBY_LOCK();
+        client->t_neg_timeout = NULL;
+        local = &client->ipcstanby;
+        if (local->state != ZPL_IPCSTANBY_STATE_FULL)
+        {
+            local->state = ZPL_IPCSTANBY_STATE_FULL;
+            local->MS = 1;
+            zlog_debug(MODULE_STANDBY, "=================================negotiate state timeout and set 'full' at slot:%d", local->slot);
+            ipcstandby_active_change_event(0);
+        }
+        IPCSTANDBY_UNLOCK();
+    }
+    return OK;
+}
+
+int ipcstandby_negotiate_timeout_cennel(void)
+{
+    if (_host_standby.t_neg_timeout)
+        THREAD_OFF(_host_standby.t_neg_timeout);
+    return OK;
+}
+
+/*主备切换回调函数，发生主备切换时，主设备备通知备用设备 */
+static int ipcstandby_switch_msg_callback(struct ipcstandby_serv *client, struct ipcstanby_negotiate *neg)
+{
+    struct ipcstanby_negotiate *local = NULL;
+    IPCSTANDBY_LOCK();
+    if (client)
+    {
+        local = &client->ipcstanby;
+        if (host_isactive() && neg->master)/*当前我是主，对端切换为主，我需要切换为备用*/
+        {
+            local->master = 0;
+            ipcstandby_active_change_event(0);
+        }
+        else if (host_isstandby() && neg->master == 0)/*当前我是备，对端切换为备，我需要切换为主用*/
+        {
+            local->master = 1;
+            ipcstandby_active_change_event(0);
+        }
+    }
+    IPCSTANDBY_UNLOCK();  
     return OK;
 }
 
@@ -385,6 +321,7 @@ int ipcstandby_init(void)
     memset(&_host_standby, 0, sizeof(struct ipcstandby));
     _host_standby.slot = _global_host.slot;
     _host_standby.master = thread_master_module_create(MODULE_STANDBY);
+    _host_standby._lock = os_mutex_name_init("_host_standby.mutex");
     _host_standby.ipcstandby_client = ipcstandby_client_new(_host_standby.master);
     _host_standby.ipcstandby_server = ipcstandby_serv_init(_host_standby.master, os_netservice_port_get("standbyd_port"));
     if (_host_standby.ipcstandby_client && _host_standby.ipcstandby_server)
@@ -402,10 +339,12 @@ int ipcstandby_init(void)
         res.pVoid = NULL;
 
         ipcstandby_serv_callback(_host_standby.ipcstandby_server, cli, msg, res);
-        _host_standby.ipcstandby_switch_callback = ipcstandby_switch_callback;
-        ipcstandby_client_start(_host_standby.ipcstandby_client, _host_standby.slot, NULL, os_netservice_port_get("standbyc_port"));
+        _host_standby.ipcstandby_server->ipcstandby_switch_change_callback = ipcstandby_switch_msg_callback;
 
-        _host_standby.ipcstandby_server->ipcstandby_negotiate_callback = ipcstandby_negotiate_handle;
+        _host_standby.ipcstandby_client->ipcstanby.master = host_isactive();
+        ipcstandby_client_start(_host_standby.ipcstandby_client, _host_standby.slot, NULL, os_netservice_port_get("standbyc_port"));
+        _host_standby.t_neg_timeout = thread_add_timer(_host_standby.master, ipcstandby_negotiate_timeout, 
+                _host_standby.ipcstandby_client, ZPL_IPCSTANBY_TIMEOUT << 2);
         return OK;
     }
     return ERROR;
@@ -413,6 +352,7 @@ int ipcstandby_init(void)
 
 int ipcstandby_exit(void)
 {
+    IPCSTANDBY_LOCK();
     if (_host_standby.ipcstandby_client)
     {
         ipcstandby_client_stop(_host_standby.ipcstandby_client);
@@ -424,6 +364,12 @@ int ipcstandby_exit(void)
     {
         thread_master_free(_host_standby.master);
         _host_standby.master = NULL;
+    }
+    IPCSTANDBY_UNLOCK();
+    if (_host_standby._lock)
+    {
+        os_mutex_exit(_host_standby._lock);
+        _host_standby._lock = NULL;
     }
     return OK;
 }
@@ -522,9 +468,10 @@ DEFUN(show_ipcstandby_serv_statistics,
 {
     struct listnode *node;
     struct ipcstandby_serv *client;
-
+    IPCSTANDBY_LOCK();
     for (ALL_LIST_ELEMENTS_RO(_host_standby.ipcstandby_server->client_list, node, client))
         show_ipcstandby_serv_statistics_info(vty, client);
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 
@@ -538,7 +485,7 @@ DEFUN(ipcstandby_serv_statistics_clear,
 {
     struct listnode *node;
     struct ipcstandby_serv *client;
-
+    IPCSTANDBY_LOCK();
     for (ALL_LIST_ELEMENTS_RO(_host_standby.ipcstandby_server->client_list, node, client))
     {
         client->recv_cnt = 0;
@@ -548,6 +495,7 @@ DEFUN(ipcstandby_serv_statistics_clear,
         client->send_faild_cnt = 0;
         client->connect_cnt = 0;
     }
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 
@@ -560,8 +508,10 @@ DEFUN(show_ipcstandby_client_statistics,
       "Client information\n"
       "Statistics information\n")
 {
+    IPCSTANDBY_LOCK();
     if (_host_standby.ipcstandby_client)
         ipcstandby_client_statistics_show(vty, _host_standby.ipcstandby_client);
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 
@@ -573,6 +523,7 @@ DEFUN(ipcstandby_client_statistics_clear,
       "Client information\n"
       "Statistics information\n")
 {
+    IPCSTANDBY_LOCK();
     if (_host_standby.ipcstandby_client)
     {
         _host_standby.ipcstandby_client->recv_cnt = 0;
@@ -582,6 +533,7 @@ DEFUN(ipcstandby_client_statistics_clear,
         _host_standby.ipcstandby_client->send_faild_cnt = 0;
         _host_standby.ipcstandby_client->connect_cnt = 0;
     }
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 
@@ -592,10 +544,16 @@ DEFUN(ipcstandby_switch_cli,
       "Master mode\n"
       "Standby mode\n")
 {
+    IPCSTANDBY_LOCK();
     if (host_isstandby())
     {
         if (strstr(argv[0], "master"))
-            ipcstandby_switch_master(zpl_true);
+        {
+            IPCSTANDBY_LOCK();
+            _host_standby.ipcstandby_client->ipcstanby.master = 1;
+            ipcstandby_active_change_event(0);
+            IPCSTANDBY_UNLOCK();
+        }
         else
         {
             vty_out(vty, "Is already on standby mode%s", VTY_NEWLINE);
@@ -604,12 +562,18 @@ DEFUN(ipcstandby_switch_cli,
     else
     {
         if (strstr(argv[0], "standby"))
-            ipcstandby_switch_master(zpl_false);
+        {
+            IPCSTANDBY_LOCK();
+            _host_standby.ipcstandby_client->ipcstanby.master = 0;
+            ipcstandby_active_change_event(0);
+            IPCSTANDBY_UNLOCK();
+        }
         else
         {
             vty_out(vty, "Is already on master mode%s", VTY_NEWLINE);
         }
     }
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 
@@ -623,20 +587,22 @@ DEFUN(show_ipcstandby_negotiate,
     struct listnode *node;
     struct ipcstandby_serv *client;
     struct ipcstanby_negotiate *local = NULL;
+    IPCSTANDBY_LOCK();
     if (_host_standby.ipcstandby_client)
     {
         local = &_host_standby.ipcstandby_client->ipcstanby;
         vty_out(vty, "Local slot        %d%s", local->slot, VTY_NEWLINE);
-        vty_out(vty, "Local active      %d%s", local->active, VTY_NEWLINE);
-        vty_out(vty, "Local negotiate   %d%s", local->negotiate, VTY_NEWLINE);
+        vty_out(vty, "Local MS          %d%s", local->MS, VTY_NEWLINE);
+        vty_out(vty, "Local state       %d%s", local->state, VTY_NEWLINE);
 
         for (ALL_LIST_ELEMENTS_RO(_host_standby.ipcstandby_server->client_list, node, client))
         {
             vty_out(vty, " remote slot      %d%s", client->ipcstanby.slot, VTY_NEWLINE);
-            vty_out(vty, " remote active    %d%s", client->ipcstanby.active, VTY_NEWLINE);
-            vty_out(vty, " remote negotiate %d%s", client->ipcstanby.negotiate, VTY_NEWLINE);
+            vty_out(vty, " remote MS        %d%s", client->ipcstanby.MS, VTY_NEWLINE);
+            vty_out(vty, " remote state     %d%s", client->ipcstanby.state, VTY_NEWLINE);
         }
     }
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 DEFUN(ipcstandby_negotiate_reset,
@@ -647,12 +613,15 @@ DEFUN(ipcstandby_negotiate_reset,
       "Negotiate information\n")
 {
     struct ipcstanby_negotiate *local = NULL;
+    IPCSTANDBY_LOCK();
     if (_host_standby.ipcstandby_client)
     {
         local = &_host_standby.ipcstandby_client->ipcstanby;
-        local->active = 1;
-        local->negotiate = 0;
+        local->state = ZPL_IPCSTANBY_STATE_DOWN;
+        local->seqnum = 0; // 序列号
+        local->MS = 0;     // 主备协商
     }
+    IPCSTANDBY_UNLOCK();
     return CMD_SUCCESS;
 }
 
