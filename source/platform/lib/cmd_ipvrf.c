@@ -13,14 +13,10 @@
 #include "nsm_event.h"
 #include "zmemory.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "command.h"
 #include "table.h"
-#include "nsm_rib.h"
-#include "nsm_ipvrf.h"
-#include "router-id.h"
-
 
 
 #ifdef ZPL_VRF_MODULE
@@ -40,7 +36,7 @@ DEFUN (ip_vrf_cli_create,
 		vty->node = VRF_NODE;
 		return CMD_SUCCESS;
 	}
-	vrf = ipvrf_create (argv[0]);
+	vrf = ip_vrf_create (argv[0]);
 	if(vrf)
 	{
 		vty->index = vrf;
@@ -67,7 +63,7 @@ DEFUN (ip_vrf_cli_delete,
 		vty_out(vty, "Can not find VRF by VRF name%s",VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	ret = ipvrf_delete(argv[0]);
+	ret = ip_vrf_delete(argv[0]);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -81,7 +77,8 @@ DEFUN (ip_vrf_cli_set_vrfid,
 {
 	vrf_id_t vrf_id = 0;
 	struct prefix rid;
-	rid.u.prefix4.s_addr = ipstack_inet_addr (argv[0]);
+	struct ip_vrf *ip_vrf = vty->index;
+	rid.u.prefix4.s_addr = ipstack_inet_addr(argv[0]);
 	if (!rid.u.prefix4.s_addr)
 		return CMD_WARNING;
 
@@ -89,11 +86,7 @@ DEFUN (ip_vrf_cli_set_vrfid,
 	rid.family = IPSTACK_AF_INET;
 	if (argc > 1)
 		VTY_GET_INTEGER ("VRF ID", vrf_id, argv[1]);
-
-	ip_vrf_set_vrfid(vty->index, vrf_id);
-
-	router_id_set (&rid, vrf_id);
-
+	ip_vrf_set_vrfid(ip_vrf, vrf_id, &rid);
 	return CMD_SUCCESS;
 }
 
@@ -102,16 +95,13 @@ static int ip_vrf_show_one (struct ip_vrf *vrf, void *pVoid)
 	//rd A.B.C.D <0-65535>
 	struct prefix p;
 	struct vty *vty = pVoid;
-	struct nsm_ipvrf *zvrf = vrf->info;
-	if(vrf && zvrf && vrf->vrf_id != VRF_DEFAULT)
+	if(vrf && vrf->vrf_id != VRF_DEFAULT)
 	{
-		//fprintf(stdout, "=========%s\r\n", __func__);
-		router_id_get (&p, zvrf->vrf_id);
 		if(vrf->name)
 			vty_out (vty, "ip vrf %s%s", vrf->name, VTY_NEWLINE);
-		if(p.u.prefix4.s_addr)
-			vty_out (vty, " rd %s %d%s",
-					ipstack_inet_ntoa (p.u.prefix4), zvrf->vrf_id, VTY_NEWLINE);
+		if (vrf->rd_id.u.prefix4.s_addr)
+			vty_out(vty, " rd %s %d%s",
+					ipstack_inet_ntoa(p.u.prefix4), vrf->vrf_id, VTY_NEWLINE);
 		vty_out (vty, "exit%s", VTY_NEWLINE);			
 	}
 	return 0;

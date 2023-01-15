@@ -30,7 +30,7 @@ extern "C" {
 #include "if.h"
 #include "workqueue.h"
 #ifdef ZPL_VRF_MODULE
-#include "vrf.h"
+
 #endif
 #include "route_types.h"
 /* Default port information. */

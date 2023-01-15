@@ -28,7 +28,7 @@
 #include "command.h"
 #include "filter.h"
 #ifdef ZPL_VRF_MODULE
-#include "vrf.h"
+
 #endif
 #include "nexthop.h"
 #include "plist.h"

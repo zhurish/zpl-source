@@ -31,7 +31,7 @@
 #include "log.h"
 #include "sockunion.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "host.h"
 #include "vty.h"
 #include "zmemory.h"
@@ -3558,7 +3558,28 @@ static void nsm_vrf_table_create(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi)
 	info->safi = safi;
 	table->info = info;
 }
+static void nsm_vrf_table_destroy(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi)
+{
+	struct route_table *table = NULL;
 
+	table = zvrf->table[afi][safi];
+	if(table)
+	{
+		rib_close_table(table);
+		if(table->info)
+		{
+			XFREE(MTYPE_RIB_TABLE_INFO, table->info);
+			table->info = NULL;
+		}
+		if(table->mutex)
+		{
+			os_mutex_exit(table->mutex);
+			table->mutex = NULL;
+		}
+		route_table_finish(table);
+		zvrf->table[afi][safi] = NULL;
+	}
+}
 /* Allocate new nsmribd VRF. */
 static struct nsm_ipvrf * nsm_vrf_alloc(const char *name, vrf_id_t vrf_id)
 {
@@ -3594,10 +3615,86 @@ static struct nsm_ipvrf * nsm_vrf_alloc(const char *name, vrf_id_t vrf_id)
 		/* Set VRF ID */
 		zvrf->vrf_id = vrf_id;
 	}
-	zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, zvrf);
 	return zvrf;
 }
 
+static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
+{
+	if(zvrf)
+	{
+		if(zvrf->name)
+			free(zvrf->name);
+		/* Allocate routing table and static table.  */
+		nsm_vrf_table_destroy(zvrf, AFI_IP, SAFI_UNICAST);
+		nsm_vrf_table_destroy(zvrf, AFI_IP6, SAFI_UNICAST);
+		if(zvrf->stable[AFI_IP][SAFI_UNICAST])
+		{
+			rib_close_table(zvrf->table[AFI_IP][SAFI_UNICAST]);
+			if(zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex)
+			{
+				os_mutex_exit(zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex);
+				zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex = NULL;
+			}
+			route_table_finish(zvrf->stable[AFI_IP][SAFI_UNICAST]);
+		}
+		if(zvrf->stable[AFI_IP6][SAFI_UNICAST])
+		{
+			rib_close_table(zvrf->table[AFI_IP6][SAFI_UNICAST]);
+			if(zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex)
+			{
+				os_mutex_exit(zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex);
+				zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex = NULL;
+			}
+			route_table_finish(zvrf->stable[AFI_IP6][SAFI_UNICAST]);
+		}
+
+		nsm_vrf_table_destroy(zvrf, AFI_IP, SAFI_MULTICAST);
+		nsm_vrf_table_destroy(zvrf, AFI_IP6, SAFI_MULTICAST);
+
+		if(zvrf->stable[AFI_IP][SAFI_MULTICAST])
+		{
+			rib_close_table(zvrf->table[AFI_IP][SAFI_MULTICAST]);
+			if(zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex)
+			{
+				os_mutex_exit(zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex);
+				zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex = NULL;
+			}
+			route_table_finish(zvrf->stable[AFI_IP][SAFI_MULTICAST]);
+		}
+		if(zvrf->stable[AFI_IP6][SAFI_MULTICAST])
+		{
+			rib_close_table(zvrf->table[AFI_IP6][SAFI_MULTICAST]);
+			if(zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex)
+			{
+				os_mutex_exit(zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex);
+				zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex = NULL;
+			}
+			route_table_finish(zvrf->stable[AFI_IP6][SAFI_MULTICAST]);
+		}
+
+		if(zvrf->rnh_table[AFI_IP])
+		{
+			rib_close_table(zvrf->rnh_table[AFI_IP]);
+			if(zvrf->rnh_table[AFI_IP]->mutex)
+			{
+				os_mutex_exit(zvrf->rnh_table[AFI_IP]->mutex);
+				zvrf->rnh_table[AFI_IP]->mutex = NULL;
+			}
+			route_table_finish(zvrf->rnh_table[AFI_IP]);
+		}
+		if(zvrf->rnh_table[AFI_IP6])
+		{
+			rib_close_table(zvrf->rnh_table[AFI_IP6]);
+			if(zvrf->rnh_table[AFI_IP6]->mutex)
+			{
+				os_mutex_exit(zvrf->rnh_table[AFI_IP6]->mutex);
+				zvrf->rnh_table[AFI_IP6]->mutex = NULL;
+			}
+			route_table_finish(zvrf->rnh_table[AFI_IP6]);
+		}
+	}
+	return 0;
+}
 /* Lookup the routing table in an enabled VRF. */
 struct route_table * nsm_vrf_table(afi_t afi, safi_t safi, vrf_id_t vrf_id)
 {
@@ -3632,9 +3729,10 @@ struct nsm_ipvrf * nsm_vrf_create(const char *name, vrf_id_t vrf_id)
     struct nsm_ipvrf *info = nsm_vrf_alloc(name, vrf_id);
 	if(info)
 	{
-		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, info);
     	router_id_init(info);
-		zlog_trap(MODULE_NSM, "======================%s %p\r\n", __func__, info);
+#if defined(ZPL_NSM_RTADV)
+		nsm_rtadv_init(info);
+#endif
 		return info;
 	}
 	return NULL;
@@ -3642,21 +3740,20 @@ struct nsm_ipvrf * nsm_vrf_create(const char *name, vrf_id_t vrf_id)
 
 int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf)
 {
-  	//struct nsm_ipvrf *zvrf = NULL;
-
   	assert(ipvrf);
   	if (ipvrf)
   	{
-		if(ipvrf->name)
-			free(ipvrf->name);
-		//nsm_halpal_delete_vrf(ip_vrf_lookup(vrf_id));
-    	//zvrf = nsm_vrf_alloc(vrf_id);
-    	//ip_vrf->info = (void *)zvrf;
-    	//router_id_init(zvrf);
+#if defined (ZPL_NSM_RTADV)
+  		nsm_rtadv_terminate (ipvrf);
+#endif
+		nsm_vrf_free(ipvrf);
+		list_delete_all_node (ipvrf->rid_all_sorted_list);
+		list_delete_all_node (ipvrf->rid_lo_sorted_list);		
   	}
   	return 0;
 }
 
+#if 0
 /* Callback upon enabling a VRF. */
 int nsm_vrf_enable(struct nsm_ipvrf *zvrf)
 {
@@ -3684,7 +3781,7 @@ int nsm_vrf_disable(struct nsm_ipvrf *zvrf)
 	  
   	return 0;
 }
-
+#endif
 
 
 /* Routing information base initialize. */
@@ -3699,12 +3796,6 @@ void rib_init(void)
 		{
 			nsm_ribd.initialise = 1;
 			rib_queue_init(&nsm_ribd);
-			//ip_vrf_add_hook(VRF_NEW_HOOK, nsm_vrf_create);
-			//ip_vrf_add_hook(VRF_ENABLE_HOOK, nsm_vrf_enable);
-			//ip_vrf_add_hook(VRF_DISABLE_HOOK, nsm_vrf_disable);
-			//ip_vrf_add_hook(VRF_DELETE_HOOK, nsm_vrf_destroy);
-
-			//ip_vrf_create("Default-IP-Routing-Table");
 		}
 	}
 }

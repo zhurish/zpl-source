@@ -757,7 +757,7 @@ DEFUN (ip_irdp_debug_disable,
   return CMD_SUCCESS;
 }
 
-void nsm_irdp_init (void)
+void cmd_nsm_irdp_init (void)
 {
   install_element (INTERFACE_NODE, CMD_CONFIG_LEVEL, &ip_irdp_broadcast_cmd);
   install_element (INTERFACE_NODE, CMD_CONFIG_LEVEL, &ip_irdp_multicast_cmd);

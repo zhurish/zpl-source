@@ -14,7 +14,7 @@
 #include "nsm_interface.h"
 #include "vty.h"
 #include "if_name.h"
-#include "vrf.h"
+
 #include "template.h"
 #ifdef ZPL_DHCP_MODULE
 #include "nsm_dhcp.h"

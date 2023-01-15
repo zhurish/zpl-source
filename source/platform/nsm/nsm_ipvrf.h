@@ -27,18 +27,7 @@
 extern "C" {
 #endif
 
-
-
-extern struct ip_vrf * ipvrf_create (const char *name);
-extern int ipvrf_delete (const char *name);
-
-extern void ipvrf_terminate (void);
-
-extern void ipvrf_init (void);
-
-extern void cmd_ipvrf_init (void);
-
-
+    extern int ipvrf_nsm_init(void);
 
 #ifdef __cplusplus
 }

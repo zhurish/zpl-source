@@ -12,7 +12,7 @@
 #include "vty.h"
 #include "command.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "str.h"
 #include "prefix.h"
 #include "nsm_interface.h"

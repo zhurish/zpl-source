@@ -58,7 +58,7 @@ ifeq ($(strip $(ZPL_NSM_MODULE)),true)
 OBJS	+= if.o
 OBJS	+= if_name.o
 ifeq ($(strip $(ZPL_VRF_MODULE)),true)
-OBJS	+= vrf.o	
+OBJS	+= ipvrf.o	
 endif
 OBJS	+= if_utsp.o
 OBJS	+= nexthop.o
@@ -77,7 +77,9 @@ OBJS	+= command.o
 OBJS	+= cli.o
 OBJS	+= template.o
 OBJS	+= cli_node.o
-
+ifeq ($(strip $(ZPL_VRF_MODULE)),true)
+OBJS	+= cmd_ipvrf.o
+endif
 OBJS	+= cmd_log.o
 OBJS	+= cmd_host.o
 OBJS	+= cmd_memory.o

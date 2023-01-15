@@ -165,6 +165,16 @@
         "process.h": "c",
         "sockaddr.h": "c",
         "ipcstandby_serv.h": "c",
-        "linklist.h": "c"
-    }
+        "linklist.h": "c",
+        "nsm_halpal.h": "c",
+        "nsm_ipvrf.h": "c",
+        "ipvrf.h": "c",
+        "nsm_rib.h": "c"
+    },
+    "editor.defaultFormatter": "jbenden.c-cpp-flylint",
+    "editor.formatOnPaste": false,
+    "C_Cpp.vcFormat.indent.accessSpecifiers": true,
+    "C_Cpp.vcFormat.indent.caseLabels": true,
+    "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
+    "C_Cpp.vcFormat.indent.braces": true
 }

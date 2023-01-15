@@ -12,7 +12,7 @@
 #include "zmemory.h"
 #include "if.h"
 #include "nsm_interface.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "command.h"
 #include "nsm_tunnel.h"

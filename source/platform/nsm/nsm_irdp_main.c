@@ -290,7 +290,7 @@ void nsm_process_solicit (struct interface *ifp)
 				       timer);
 }
 
-void nsm_irdp_finish()
+void nsm_irdp_finish(void)
 {
 
   struct listnode *node, *nnode;

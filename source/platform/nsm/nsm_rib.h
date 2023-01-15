@@ -29,7 +29,7 @@ extern "C" {
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "vrf.h"
+
 #include "linklist.h"
 #include "prefix.h"
 #include "table.h"

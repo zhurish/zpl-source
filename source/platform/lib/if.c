@@ -31,7 +31,7 @@
 #include "zmemory.h"
 #include "log.h"
 #ifdef ZPL_VRF_MODULE
-#include "vrf.h"
+
 #endif
 
 

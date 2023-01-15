@@ -31,7 +31,7 @@ extern "C" {
 
 /* For struct interface and struct connected. */
 #include "if.h"
-#include "vrf.h"
+
 /* For input/output buffer to zebra. */
 #define ZCLIENT_MAX_PACKET_SIZ          4096
 

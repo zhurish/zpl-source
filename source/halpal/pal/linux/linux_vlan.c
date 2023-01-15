@@ -15,7 +15,7 @@
 #include "vty.h"
 #include "command.h"
 #include "prefix.h"
-#include "vrf.h"
+
 #include "pal_include.h"
 #include "nsm_debug.h"
 #include "nsm_vlan.h"

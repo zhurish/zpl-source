@@ -532,7 +532,7 @@ void vtysh_init(void)
 {
   memset(&vtysh_client, 0, sizeof(vtysh_client));
   vtysh_readline_init();
-  vty_init_vtysh();
+
   /* Make vty structure. */
   vtysh_client.vty = vty_new();
   vtysh_client.vty->type = VTY_SHELL;

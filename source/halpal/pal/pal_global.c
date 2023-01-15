@@ -16,7 +16,7 @@
 #include "host.h"
 #include "command.h"
 #include "prefix.h"
-#include "vrf.h"
+
 
 #include "nsm_include.h"
 #include "pal_include.h"

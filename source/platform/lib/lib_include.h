@@ -21,7 +21,7 @@ extern "C" {
 #include "host.h"
 #include "prefix.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "network.h"
 #include "sockopt.h"
 #include "sockunion.h"

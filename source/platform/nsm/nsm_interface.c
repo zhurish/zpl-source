@@ -25,7 +25,7 @@
 #include "module.h"
 #include "linklist.h"
 #include "zmemory.h"
-#include "vrf.h"
+
 #include "if.h"
 #include "str.h"
 #include "vty.h"

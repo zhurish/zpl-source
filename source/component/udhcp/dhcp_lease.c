@@ -10,7 +10,7 @@
 #include "vty.h"
 #include "command.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "nsm_interface.h"
 #include "nsm_dhcp.h"
 

@@ -12,7 +12,7 @@
 #include "thread.h"
 #include "if.h"
 #include "vty.h"
-#include "vrf.h"
+
 #include "command.h"
 #include "prefix.h"
 #include "nsm_arp.h"

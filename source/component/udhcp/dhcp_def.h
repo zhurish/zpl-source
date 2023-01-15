@@ -20,7 +20,7 @@ extern "C" {
 #include "vty.h"
 #include "command.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "sockopt.h"
 #include "nsm_interface.h"

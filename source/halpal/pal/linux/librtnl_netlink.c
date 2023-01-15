@@ -28,7 +28,7 @@
 #include "vty.h"
 #include "command.h"
 #include "prefix.h"
-#include "vrf.h"
+
 #include "nexthop.h"
 #include "pal_include.h"
 #include "nsm_debug.h"

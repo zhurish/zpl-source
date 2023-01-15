@@ -27,7 +27,7 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "table.h"
 #include "zmemory.h"

@@ -9,7 +9,7 @@
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "vty.h"
 #include "zmemory.h"

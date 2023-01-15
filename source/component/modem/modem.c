@@ -12,7 +12,7 @@
 #include "vty.h"
 #include "command.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "nsm_include.h"
 
 #include "modem_enum.h"

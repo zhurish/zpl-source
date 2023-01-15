@@ -14,7 +14,7 @@ extern "C" {
 
 #include "zplos_include.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "nexthop.h"
 #include "nsm_rib.h"
 

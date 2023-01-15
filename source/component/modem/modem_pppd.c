@@ -11,7 +11,7 @@
 #include "vty.h"
 #include "command.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "checksum.h"
 #include "nsm_include.h"
 

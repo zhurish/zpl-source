@@ -93,7 +93,7 @@ struct module_list module_list_console =
 		.module = MODULE_CONSOLE,
 		.name = "CONSOLE\0",
 		.module_init = vty_init,
-		.module_exit = NULL,
+		.module_exit = vty_terminate,
 		.module_task_init = cli_console_task_init,
 		.module_task_exit = cli_console_task_exit,
 		.module_cmd_init = NULL,
@@ -4144,10 +4144,6 @@ enum vtylogin_type vty_login_type(struct vty *vty)
 	return vty->login_type;
 }
 
-void vty_init_vtysh(void)
-{
-	g_vtyshell.vtyvec = vector_init(VECTOR_MIN_SIZE);
-}
 
 void *vty_thread_master(void)
 {

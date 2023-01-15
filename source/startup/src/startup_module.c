@@ -158,11 +158,11 @@ int startup_module_waitting(void)
 
 	host_waitting_bspinit(10);
 
+	unit_board_startup();
+
 #ifdef ZPL_NSM_MODULE
 	nsm_module_start();
 #endif
-
-	unit_board_startup();
 	return OK;
 }
 
@@ -189,8 +189,9 @@ int startup_module_stop(void)
 	zplib_module_task_exit(MODULE_NSM);	
 #endif
 
-	zplib_module_task_exit(MODULE_CONSOLE);
 	zplib_module_task_exit(MODULE_TELNET);
+	zplib_module_task_exit(MODULE_CONSOLE);
+
 	return OK;
 }
 
@@ -213,13 +214,9 @@ int startup_module_exit(void)
 	zplib_module_exit(MODULE_NSM);	
 #endif
 
-	zplib_module_exit(MODULE_CONSOLE);
 	zplib_module_exit(MODULE_TELNET);
-
-#ifdef ZPL_VRF_MODULE
-	ip_vrf_terminate();
-#endif
-	vty_terminate();
+	zplib_module_exit(MODULE_CONSOLE);
+	
 	cmd_terminate();
 
 	os_time_exit();

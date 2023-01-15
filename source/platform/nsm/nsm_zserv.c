@@ -36,7 +36,7 @@
 #include "network.h"
 #include "buffer.h"
 #ifdef ZPL_VRF_MODULE
-#include "vrf.h"
+
 #endif
 #include "nexthop.h"
 #include "router-id.h"

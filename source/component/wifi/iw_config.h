@@ -21,7 +21,7 @@ extern "C" {
 #include "zmemory.h"
 #include "vty.h"
 #include "if_name.h"
-#include "vrf.h"
+
 #include "template.h"
 #include "host.h"
 #include "nsm_interface.h"

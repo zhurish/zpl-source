@@ -39,8 +39,6 @@ extern "C" {
  * The command strings
  */
 
-
-
 #define VRF_ALL_CMD_STR         "vrf all"
 #define VRF_ALL_CMD_HELP_STR    "Specify the VRF\nAll VRFs\n"
 
@@ -54,29 +52,28 @@ extern "C" {
 
 #define VRF_NEW_HOOK        0   /* a new VRF is just created */
 #define VRF_DELETE_HOOK     1   /* a VRF is to be deleted */
-#define VRF_ENABLE_HOOK     2   /* a VRF is ready to use */
-#define VRF_DISABLE_HOOK    3   /* a VRF is to be unusable */
-#define VRF_UPDATE_HOOK    4  /* a VRF is to be unusable */
+#define VRF_SET_VRFID_HOOK    2   /* a VRF is to be unusable */
+
 #define VRF_NAME_MAX    32
 
 
 struct ip_vrf
 {
   NODE node;
-  /* Identifier, same as the vector index */
+  struct prefix rd_id;
   vrf_id_t vrf_id;
   vrf_id_t  kvrfid;
-  /* File descriptor */
   zpl_socket_t fd;
-  /* Name */
   char name[VRF_NAME_MAX];
-  /* User data */
   void *info;
 };
 
 struct ip_vrf_master
 {
   LIST *ip_vrf_list;
+  int (*ip_vrf_new_hook)(struct ip_vrf *, void *);
+  int (*ip_vrf_delete_hook)(struct ip_vrf *, void *);
+  int (*ip_vrf_set_vrfid_hook)(struct ip_vrf *, void *);
   void *vrf_mutex;  
 };
 
@@ -103,16 +100,25 @@ extern void *ip_vrf_info_lookup (vrf_id_t);
 struct ip_vrf * ip_vrf_lookup (vrf_id_t vrf_id);
 struct ip_vrf * ip_vrf_lookup_by_name (const char *name);
 
-zpl_char * ip_vrf_vrfid2name (vrf_id_t vrf_id);
-vrf_id_t ip_vrf_name2vrfid (const char *name);
+extern zpl_char * ip_vrf_vrfid2name (vrf_id_t vrf_id);
+extern vrf_id_t ip_vrf_name2vrfid (const char *name);
 
-extern void *ip_vrf_list (void);
+
+
 /*
- * Utilities to obtain the interface list
+ * VRF initializer/destructor
  */
+extern void *ip_vrf_list (void);
+extern void ip_vrf_add_hook(int, int (*)(struct ip_vrf *, void *));
+extern struct ip_vrf * ip_vrf_create (const char *name);
+extern int ip_vrf_delete (const char *name);
+extern int ip_vrf_set_vrfid (struct ip_vrf *ip_vrf, vrf_id_t vrf_id, struct prefix *p);
+extern int ip_vrf_foreach(ip_vrf_call func, void *pVoid);
+extern void ip_vrf_init(void);
+extern void ip_vrf_terminate(void);
 
-
-
+extern void cmd_ipvrf_init(void);
+/***********************************************************************/
 /*
  * VRF bit-map: maintaining flags, one bit per VRF ID
  */
@@ -125,20 +131,6 @@ extern void ip_vrf_bitmap_free (ip_vrf_bitmap_t);
 extern void ip_vrf_bitmap_set (ip_vrf_bitmap_t, vrf_id_t);
 extern void ip_vrf_bitmap_unset (ip_vrf_bitmap_t, vrf_id_t);
 extern zpl_bool ip_vrf_bitmap_check (ip_vrf_bitmap_t, vrf_id_t);
-
-/*
- * VRF initializer/destructor
- */
-
-
-extern struct ip_vrf * ip_vrf_create (const char *name);
-extern int ip_vrf_delete (const char *name);
-extern int ip_vrf_set_vrfid (struct ip_vrf *ip_vrf, vrf_id_t vrf_id);
-extern int ip_vrf_foreach(ip_vrf_call func, void *pVoid);
-
-extern void ip_vrf_terminate (void);
-
-extern void ip_vrf_init (void);
 
 
 #endif

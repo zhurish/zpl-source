@@ -30,7 +30,7 @@ extern "C" {
 #include "if.h"
 #include "prefix.h"
 #ifdef ZPL_VRF_MODULE
-#include "vrf.h"
+
 #endif
 #include "nsm_interface.h"
 

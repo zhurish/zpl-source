@@ -11,7 +11,7 @@
 #include "vty.h"
 #include "command.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "str.h"
 #include "nsm_interface.h"
 

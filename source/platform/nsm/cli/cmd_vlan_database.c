@@ -11,7 +11,7 @@
 #include "zmemory.h"
 #include "if.h"
 #include "if_name.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "command.h"
 #include "nsm_vlan_database.h"

@@ -31,7 +31,7 @@
 #include "zclient.h"
 #include "linklist.h"
 #include "log.h"
-#include "vrf.h"
+
 #include "if.h"
 #include "connected.h"
 #include "nsm_rib.h"

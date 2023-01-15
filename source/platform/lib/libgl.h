@@ -22,7 +22,7 @@ extern "C" {
 #include "vector.h"
 
 #ifdef ZPL_VRF_MODULE
-#include "vrf.h"
+
 #endif
 #include "zassert.h"
 

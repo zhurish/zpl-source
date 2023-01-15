@@ -10,7 +10,7 @@
 #include "module.h"
 #include "zmemory.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "vty.h"
 #include "nsm_include.h"
 #include "hal_include.h"

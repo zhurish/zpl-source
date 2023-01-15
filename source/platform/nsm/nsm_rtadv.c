@@ -32,7 +32,7 @@
 #include "prefix.h"
 #include "linklist.h"
 #include "command.h"
-#include "vrf.h"
+
 
 #include "nsm_include.h"
 #include "nsm_rtadv.h"

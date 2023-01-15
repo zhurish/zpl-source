@@ -29,8 +29,9 @@ extern "C" {
 
 #include "prefix.h"
 #include "if_def.h"
-
-
+#ifdef ZPL_VRF_MODULE
+#include "ipvrf.h"
+#endif
 
 /* Prototypes. */
 extern struct list *if_list_get(void);

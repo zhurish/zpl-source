@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "vrf.h"
+
 
 extern int linux_ioctl_vrf_enable(struct ip_vrf *vrf);
 extern int linux_ioctl_vrf_disable(struct ip_vrf *vrf);

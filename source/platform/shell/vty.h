@@ -459,7 +459,7 @@ extern int vtyrl_stdio_start(zpl_bool s);
 
 extern void vty_init (void);
 extern void vty_tty_init(const char *tty);
-extern void vty_init_vtysh (void);
+
 extern void vty_terminate (void);
 
 extern void vty_task_init (void);

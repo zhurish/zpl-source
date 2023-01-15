@@ -141,7 +141,7 @@ struct nsm_adv
   int pref;
 };
 
-extern void nsm_irdp_init(void);
+extern void cmd_nsm_irdp_init(void);
 extern zpl_socket_t nsm_irdp_sock_init(void);
 extern void nsm_irdp_finish(void);
 extern void nsm_irdp_config_write (struct vty *, struct interface *);

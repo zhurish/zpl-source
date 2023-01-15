@@ -26,7 +26,7 @@
 #include "nsm_event.h"
 #include "zmemory.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "prefix.h"
 #include "command.h"
 #include "table.h"

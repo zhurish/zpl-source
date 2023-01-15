@@ -24,7 +24,7 @@
 #include "module.h"
 #include "zmemory.h"
 #include "if.h"
-#include "vrf.h"
+
 #include "host.h"
 #include "prefix.h"
 #include "vty.h"
@@ -79,8 +79,9 @@ int nsm_module_init(void)
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
 
 #ifdef ZPL_VRF_MODULE
-	ipvrf_init();
+	ip_vrf_init();
 #endif
+	ipvrf_nsm_init();
 	if_init();
 	rib_init();
 
@@ -222,11 +223,19 @@ int nsm_module_exit(void)
 #endif
 	nsm_global_exit();
 	nsm_port_exit();
-	
+
 	access_list_reset();
 	prefix_list_reset();
-
 	lib_event_exit();
+#if defined(ZPL_NSM_IRDP)
+	nsm_irdp_finish();
+#endif
+#ifdef ZPL_VRF_MODULE
+	ip_vrf_terminate();
+#endif
+
+	rib_close();
+	if_terminate();
 	return OK;
 }
 
@@ -290,6 +299,12 @@ int nsm_module_cmd_init(void)
 #ifdef ZPL_NSM_QOS
 	cmd_qos_init();
 #endif
+#if defined(ZPL_NSM_IRDP)
+	cmd_nsm_irdp_init();
+#endif
+#if defined(ZPL_NSM_RTADV)
+	nsm_rtadv_cmd_init();
+#endif
 	cmd_nsm_zserv_init();
 	return OK;
 }
@@ -297,13 +312,12 @@ int nsm_module_cmd_init(void)
 
 int nsm_module_start(void)
 {
-	//ip_vrf_create("Default-IP-Routing-Table");
 	nsm_global_start();
 	nsm_port_start();
 #ifdef ZPL_NSM_VLAN	
 	nsm_vlan_default();
 #endif
-	ipvrf_create("Default-IP-Routing-Table");
+	ip_vrf_create("Default-IP-Routing-Table");
 	return OK;
 }
 

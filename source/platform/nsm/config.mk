@@ -106,7 +106,6 @@ ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 OBJS	+= cmd_debug.o
 OBJS	+= cmd_interface.o
 OBJS	+= cmd_routerid.o
-OBJS	+= cmd_vrf.o
 OBJS	+= cmd_port.o
 ifeq ($(strip $(ZPL_NSM_L3MODULE)),true)
 OBJS	+= cmd_route.o

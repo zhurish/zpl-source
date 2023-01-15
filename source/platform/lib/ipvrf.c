@@ -25,14 +25,13 @@
 #include "module.h"
 
 #include "if.h"
-#include "vrf.h"
+#include "ipvrf.h"
 #include "prefix.h"
 #include "table.h"
 #include "log.h"
 #include "zmemory.h"
 #include "command.h"
 #include "vty.h"
-
 
 struct ip_vrf_master _ip_vrf_master;
 /*
@@ -59,8 +58,6 @@ struct vrf_bitmap_table
 {
   zpl_uchar *groups[VRF_BITMAP_NUM_OF_GROUPS];
 };
-
-
 
 ip_vrf_bitmap_t ip_vrf_bitmap_init(void)
 {
@@ -126,9 +123,29 @@ zpl_bool ip_vrf_bitmap_check(ip_vrf_bitmap_t bmap, vrf_id_t vrf_id)
              ? zpl_true
              : zpl_false;
 }
-
 /***********************************************************************/
-void *ip_vrf_list (void)
+/***********************************************************************/
+
+void ip_vrf_add_hook(int type, int (*func)(struct ip_vrf *, void *))
+{
+  switch (type)
+  {
+  case VRF_NEW_HOOK:
+    _ip_vrf_master.ip_vrf_new_hook = func;
+    break;
+  case VRF_DELETE_HOOK:
+    _ip_vrf_master.ip_vrf_delete_hook = func;
+    break;
+  case VRF_SET_VRFID_HOOK:
+    _ip_vrf_master.ip_vrf_set_vrfid_hook = func;
+    break;
+    break;
+  default:
+    break;
+  }
+}
+
+void *ip_vrf_list(void)
 {
   return _ip_vrf_master.ip_vrf_list;
 }
@@ -139,22 +156,15 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
   int ret = 0;
   struct ip_vrf *ip_vrf = NULL;
   ip_vrf = XCALLOC(MTYPE_VRF, sizeof(struct ip_vrf));
-  if(!ip_vrf)
+  if (!ip_vrf)
     return NULL;
-  if (_ip_vrf_master.vrf_mutex)
-    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
-
-  memset(ip_vrf, 0, sizeof(struct ip_vrf));  
+  memset(ip_vrf, 0, sizeof(struct ip_vrf));
   ip_vrf->vrf_id = vrf_id;
-  //if (name)
-  //  ip_vrf->name = XSTRDUP(MTYPE_VRF_NAME, name);
-  //else
-  //  ip_vrf->name = NULL;
   strcpy(ip_vrf->name, name);
-  /* Initialize interfaces. */
+  if (_ip_vrf_master.ip_vrf_new_hook)
+    ret = (_ip_vrf_master.ip_vrf_new_hook)(ip_vrf, NULL);
   zlog_info(MODULE_NSM, "VRF %s %u is created.", ip_vrf->name, vrf_id);
-
-  if(ret == OK)
+  if (ret == OK)
   {
     lstAdd(_ip_vrf_master.ip_vrf_list, (NODE *)ip_vrf);
   }
@@ -163,8 +173,6 @@ static struct ip_vrf *ip_vrf_new_one(vrf_id_t vrf_id, const char *name)
     XFREE(MTYPE_VRF, ip_vrf);
     ip_vrf = NULL;
   }
-  if (_ip_vrf_master.vrf_mutex)
-    os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return ip_vrf;
 }
 
@@ -173,17 +181,15 @@ static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
 {
   int ret = 0;
   zlog_info(MODULE_NSM, "VRF %u is to be deleted.", ip_vrf->vrf_id);
-  if (_ip_vrf_master.vrf_mutex)
-    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
-
-  if(ret == OK)
+  if (_ip_vrf_master.ip_vrf_delete_hook)
+    ret = (_ip_vrf_master.ip_vrf_delete_hook)(ip_vrf, NULL);
+  if (ret == OK)
   {
     lstDelete(_ip_vrf_master.ip_vrf_list, (NODE *)ip_vrf);
 
     XFREE(MTYPE_VRF, ip_vrf);
   }
-  if (_ip_vrf_master.vrf_mutex)
-    os_mutex_unlock(_ip_vrf_master.vrf_mutex);
+
   return ret;
 }
 
@@ -191,6 +197,8 @@ static int ip_vrf_del_one(struct ip_vrf *ip_vrf)
 struct ip_vrf *ip_vrf_lookup(vrf_id_t vrf_id)
 {
   struct ip_vrf *ip_vrf = NULL;
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
   ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
   while (ip_vrf)
   {
@@ -198,11 +206,15 @@ struct ip_vrf *ip_vrf_lookup(vrf_id_t vrf_id)
     {
       if (ip_vrf->vrf_id == vrf_id)
       {
+        if (_ip_vrf_master.vrf_mutex)
+          os_mutex_unlock(_ip_vrf_master.vrf_mutex);
         return ip_vrf;
       }
     }
     ip_vrf = (struct ip_vrf *)lstNext((NODE *)ip_vrf);
   }
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return NULL;
 }
 
@@ -210,6 +222,8 @@ struct ip_vrf *ip_vrf_lookup(vrf_id_t vrf_id)
 struct ip_vrf *ip_vrf_lookup_by_name(const char *name)
 {
   struct ip_vrf *ip_vrf = NULL;
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
   ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
   while (ip_vrf)
   {
@@ -217,11 +231,15 @@ struct ip_vrf *ip_vrf_lookup_by_name(const char *name)
     {
       if (strcmp(ip_vrf->name, name) == 0)
       {
+        if (_ip_vrf_master.vrf_mutex)
+          os_mutex_unlock(_ip_vrf_master.vrf_mutex);
         return ip_vrf;
       }
     }
     ip_vrf = (struct ip_vrf *)lstNext((NODE *)ip_vrf);
   }
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return NULL;
 }
 
@@ -241,31 +259,30 @@ vrf_id_t ip_vrf_name2vrfid(const char *name)
   return 0;
 }
 
-
 int ip_vrf_foreach(ip_vrf_call func, void *pVoid)
 {
   int ret = 0;
-	struct ip_vrf *ip_vrf = NULL;
-	NODE index;
+  struct ip_vrf *ip_vrf = NULL;
+  NODE index;
   if (_ip_vrf_master.vrf_mutex)
     os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
-	for(ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
-			ip_vrf != NULL;  ip_vrf = (struct ip_vrf *)lstNext((NODE*)&index))
-	{
-		index = ip_vrf->node;
-		if(ip_vrf && ip_vrf->info)
-		{
-			if(func)
-			{
-				ret = (func)(ip_vrf, pVoid);
-        if(ret != OK)
+  for (ip_vrf = (struct ip_vrf *)lstFirst(_ip_vrf_master.ip_vrf_list);
+       ip_vrf != NULL; ip_vrf = (struct ip_vrf *)lstNext((NODE *)&index))
+  {
+    index = ip_vrf->node;
+    if (ip_vrf && ip_vrf->info)
+    {
+      if (func)
+      {
+        ret = (func)(ip_vrf, pVoid);
+        if (ret != OK)
           break;
-			}
-		}
-	}
+      }
+    }
+  }
   if (_ip_vrf_master.vrf_mutex)
     os_mutex_unlock(_ip_vrf_master.vrf_mutex);
-	return OK;
+  return OK;
 }
 /* Look up the data pointer of the specified VRF. */
 void *
@@ -280,46 +297,63 @@ struct ip_vrf *ip_vrf_create(const char *name)
 {
   struct ip_vrf *ip_vrf = NULL;
   static int local_vrf_id = 0;
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
   ip_vrf = ip_vrf_new_one(local_vrf_id++, name);
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_unlock(_ip_vrf_master.vrf_mutex);
   return ip_vrf;
 }
 
 int ip_vrf_delete(const char *name)
 {
+  int ret = ERROR;
   struct ip_vrf *ip_vrf = NULL;
-  /* The default VRF always exists. */
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
   ip_vrf = ip_vrf_lookup_by_name(name);
   if (!ip_vrf)
   {
+    if (_ip_vrf_master.vrf_mutex)
+      os_mutex_unlock(_ip_vrf_master.vrf_mutex);
     zlog_err(MODULE_NSM, "vrf_init: failed to create the default VRF!");
     return ERROR;
   }
-  ip_vrf_del_one(ip_vrf);
-  return 0;
+  ret = ip_vrf_del_one(ip_vrf);
+  if (_ip_vrf_master.vrf_mutex)
+    os_mutex_unlock(_ip_vrf_master.vrf_mutex);
+  return ret;
 }
 
-int ip_vrf_set_vrfid(struct ip_vrf *ip_vrf, vrf_id_t vrf_id)
+int ip_vrf_set_vrfid(struct ip_vrf *ip_vrf, vrf_id_t vrf_id, struct prefix *p)
 {
+  int ret = ERROR;
+  vrf_id_t old_vrfid;
   if (ip_vrf)
   {
     if (_ip_vrf_master.vrf_mutex)
       os_mutex_lock(_ip_vrf_master.vrf_mutex, OS_WAIT_FOREVER);
+    old_vrfid = ip_vrf->vrf_id;
     ip_vrf->vrf_id = vrf_id;
+    if (_ip_vrf_master.ip_vrf_set_vrfid_hook)
+      ret = (_ip_vrf_master.ip_vrf_set_vrfid_hook)(ip_vrf, p);
+    if (ret != OK)
+      ip_vrf->vrf_id = old_vrfid;
+    else
+      memcpy(&ip_vrf->rd_id, p, sizeof(struct prefix));
     if (_ip_vrf_master.vrf_mutex)
       os_mutex_unlock(_ip_vrf_master.vrf_mutex);
-    return 0;
+    return ret;
   }
-  return 0;
+  return ret;
 }
-
-
 
 /* Zebra VRF initialization. */
 void ip_vrf_init(void)
 {
   memset(&_ip_vrf_master, 0, sizeof(struct ip_vrf_master));
   _ip_vrf_master.ip_vrf_list = XMALLOC(MTYPE_VRF, sizeof(LIST));
-  if(_ip_vrf_master.ip_vrf_list)
+  if (_ip_vrf_master.ip_vrf_list)
   {
     lstInit(_ip_vrf_master.ip_vrf_list);
     _ip_vrf_master.vrf_mutex = os_mutex_name_init("vrfmutex");
