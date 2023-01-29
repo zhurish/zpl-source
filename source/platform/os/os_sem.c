@@ -14,7 +14,7 @@
 #include <sys/shm.h>
 #endif
 
-#define OS_SEMM_LOG_FILE	RSYSLOGDIR"/mutex.log"
+#define OS_SEMM_LOG_FILE	SYSLOGDIR"/mutex.log"
 
 #ifdef OS_SEM_PROCESS
 #include <sys/ipc.h>

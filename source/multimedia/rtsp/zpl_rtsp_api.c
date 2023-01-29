@@ -83,7 +83,7 @@ int rtsp_module_init(void)
     rtsp_srv = malloc(sizeof(rtsp_srv_t));
     livertsp_server_init(8554, BASEUSAGEENV_BASE_DIR, rtsp_logcb);
 #else
-    rtsp_srv = rtsp_srv_create(NULL, 9554, MODULE_RTSP);
+    rtsp_srv = rtsp_srv_create(NULL, 554, MODULE_RTSP);
     if(rtsp_srv)
     {
         rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);

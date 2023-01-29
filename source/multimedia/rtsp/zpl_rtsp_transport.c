@@ -35,7 +35,8 @@ int rtsp_header_transport(zpl_bool srv, const char* field, rtsp_transport_t* t)
 
     t->type = RTSP_TRANSPORT_UNICAST; // default unicast
     t->proto = RTSP_TRANSPORT_RTP_UDP;
-
+    while(*p == ' ')
+        p++;
     while(p && *p)
     {
         p1 = strpbrk(p, TRANSPORT_SPECIAL);
@@ -45,19 +46,19 @@ int rtsp_header_transport(zpl_bool srv, const char* field, rtsp_transport_t* t)
         {
         case 'r':
         case 'R':
-            if(11 == n && 0 == strncasecmp("RTP/AVP/UDP", p, 11))
+            if(11 == n && 0 == strncasecmp(p, "RTP/AVP/UDP", 11))
             {
                 t->proto = RTSP_TRANSPORT_RTP_UDP;
             }
-            else if(11 == n && 0 == strncasecmp("RTP/AVP/TCP", p, 11))
+            else if(11 == n && 0 == strncasecmp(p, "RTP/AVP/TCP", 11))
             {
                 t->proto = RTSP_TRANSPORT_RTP_TCP;
             }
-            else if(11 == n && 0 == strncasecmp("RAW/RAW/UDP", p, 11))
+            else if(11 == n && 0 == strncasecmp(p, "RAW/RAW/UDP", 11))
             {
                 t->proto = RTSP_TRANSPORT_RTP_RAW;
             }
-            else if(7 == n && 0 == strncasecmp("RTP/AVP", p, 7))
+            else if(7 == n && 0 == strncasecmp(p, "RTP/AVP", 7))
             {
                 t->proto = RTSP_TRANSPORT_RTP_UDP;
             }

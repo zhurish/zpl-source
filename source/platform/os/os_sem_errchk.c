@@ -12,7 +12,7 @@
 
 
 #ifdef OS_LOCK_ERR_CHECK_GRAPH_VIEW
-#define OS_LOCK_ERR_FILE	RSYSLOGDIR"/sem-errchk.log"
+#define OS_LOCK_ERR_FILE	SYSLOGDIR"/sem-errchk.log"
 struct task_graph *tg = NULL;
 
 static int os_lock_search_for_cycle(int idx) ;
@@ -287,7 +287,7 @@ int task_mutex_graph_unlock_after(int selfid, void *p)
 #endif
 
 #ifdef OS_LOCK_ERR_CHECK
-#define OS_LOCK_ERR_FILE	RSYSLOGDIR"/sem-errchk.log"
+#define OS_LOCK_ERR_FILE	SYSLOGDIR"/sem-errchk.log"
 
 static struct task_mutex_graph  _task_mutex_graph[TASK_MUTEX_GRAPH_MAX];
 static zpl_pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;

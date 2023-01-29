@@ -38,6 +38,19 @@
 
 #ifdef ZPL_NSM_L3MODULE
 
+#ifdef ZPL_VRF_MODULE
+struct ip_vrf_temp
+{
+	  zpl_uchar proto;
+    vrf_id_t vrf_id;
+    zpl_socket_t fd;
+    char name[VRF_NAME_MAX];
+    zpl_uint32 value;
+		zpl_ulong cnt;
+    void    *p;
+};
+#endif
+
 char *proto_rm[AFI_MAX][ZPL_ROUTE_PROTO_MAX+1];	/* "any" == ZPL_ROUTE_PROTO_MAX */
 static int do_show_ip_route(struct vty *vty, safi_t safi, vrf_id_t vrf_id);
 static void vty_show_ip_route_detail (struct vty *vty, struct route_node *rn,

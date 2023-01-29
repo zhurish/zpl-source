@@ -3360,20 +3360,20 @@ static zpl_ulong rib_score_proto_table(zpl_uchar proto,
 /* Remove specific by protocol routes. */
 static int rib_score_proto_one(struct ip_vrf *vrf, void *p)
 {
-	struct ip_vrf_temp *rib_test = (struct ip_vrf_temp *)p;
+	int *rib_test = (int *)p;
 	struct nsm_ipvrf *zvrf = vrf->info;
-	rib_test->cnt += rib_score_proto_table(rib_test->proto, zvrf->table[AFI_IP][SAFI_UNICAST])
-					+ rib_score_proto_table(rib_test->proto, zvrf->table[AFI_IP6][SAFI_UNICAST]);
+	rib_test[1] += rib_score_proto_table(rib_test[0], zvrf->table[AFI_IP][SAFI_UNICAST])
+					+ rib_score_proto_table(rib_test[0], zvrf->table[AFI_IP6][SAFI_UNICAST]);
 	return 0;
 }
 
 zpl_ulong rib_score_proto(zpl_uchar proto)
 {
-	struct ip_vrf_temp rib_test;
-	rib_test.proto = proto;
-	rib_test.cnt = 0;
+	int rib_test[] = {0, 0};
+	rib_test[0] = proto;
+	rib_test[1] = 0;
 	ip_vrf_foreach(rib_score_proto_one, &rib_test);
-	return rib_test.cnt;
+	return rib_test[1];
 }
 
 /* Close RIB and clean up kernel routes. */

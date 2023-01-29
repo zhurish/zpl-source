@@ -443,7 +443,7 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 			is_rtp_packet=om->reserved1; /*it was set by rtp_session_sendto()*/
 			om=rtp_session_network_simulate(session,om, &is_rtp_packet);
 			if (om){
-				_ortp_sendto(rtp_session_get_socket(session, is_rtp_packet), om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
+				_ortp_sendto(session, is_rtp_packet, om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
 				freemsg(om);
 			}
 			ortp_mutex_lock(&session->net_sim_ctx->mutex);
@@ -454,7 +454,7 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 			is_rtp_packet=TRUE;
 			om=rtp_session_network_simulate(session,NULL, &is_rtp_packet);
 			if (om){
-				_ortp_sendto(rtp_session_get_socket(session, is_rtp_packet), om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
+				_ortp_sendto(session, is_rtp_packet, om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
 				freemsg(om);
 			}
 		}
@@ -479,7 +479,7 @@ static void rtp_session_schedule_outbound_network_simulator(RtpSession *session,
 			}else if (ortp_timespec_compare(&packet_time, &current) <= 0){
 				/*it is time to send this packet*/
 
-				_ortp_sendto(is_rtp_packet ? session->rtp.gs.socket : session->rtcp.gs.socket, om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
+				_ortp_sendto(session, is_rtp_packet, om, 0, (struct sockaddr*)&om->net_addr, om->net_addrlen);
 				todrop = om;
 			}else {
 				/*no packet is to be sent yet; set the time at which we want to be called*/

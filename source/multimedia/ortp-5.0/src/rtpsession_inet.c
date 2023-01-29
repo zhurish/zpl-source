@@ -1254,18 +1254,57 @@ static int rtp_sendmsg(ortp_socket_t sock,mblk_t *m, const struct sockaddr *rem_
 #endif
 #endif
 
+
+static int  rtp_session_rtp_tcp_sendto(RtpSession * session, mblk_t *msg , int rtp, const struct sockaddr *to, socklen_t tolen)
+{
+    uint8_t *ptr = (uint8_t*)msg->b_rptr;
+    int ptrsize = (int)(msg->b_wptr - msg->b_rptr);
+    uint8_t tmpbuf[UDP_MAX_SIZE];
+    rtp_tcp_header_t *hdr = (rtp_tcp_header_t *)tmpbuf;
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    memcpy(tmpbuf + sizeof(rtp_tcp_header_t), ptr, ptrsize);
+    hdr->masker = '$';
+    hdr->channel = rtp ? session->rtp_channel:session->rtcp_channel;
+    hdr->length = htons(ptrsize);
+    return send(rtp ? session->rtp.gs.socket : session->rtcp.gs.socket, (char*)tmpbuf, ptrsize + sizeof(rtp_tcp_header_t), 0);
+}
+#if 0
+static int  rtp_session_rtp_tcp_recvfrom(RtpSession * session, mblk_t *msg , int rtp, struct sockaddr *to, socklen_t *tolen)
+{
+    ortp_socket_t sock = rtp ? session->rtp.gs.socket : session->rtcp.gs.socket;
+    int bufsz = (int) (msg->b_datap->db_lim - msg->b_datap->db_base);
+    int ret = recv(sock, (char *)msg->b_wptr, bufsz, 0);
+    /*if(ret > sizeof(rtp_tcp_header_t))
+    {
+        msg->b_wptr += sizeof(rtp_tcp_header_t);
+        return (ret - sizeof(rtp_tcp_header_t));
+    }*/
+    return ret;
+}
+#endif
+int  rtp_session_tcp_forward(int sock, const uint8_t *msg , int tolen)
+{
+    int ret = send(sock, (char*)msg, tolen, 0);
+    return ret;
+}
+
 ortp_socket_t rtp_session_get_socket(RtpSession *session, bool_t is_rtp){
 	return is_rtp ? session->rtp.gs.socket : session->rtcp.gs.socket;
 }
 
-int _ortp_sendto(ortp_socket_t sockfd, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen) {
+int _ortp_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen) {
 	int sent_bytes;
+	ortp_socket_t sockfd = rtp_session_get_socket(session, is_rtp || session->rtcp_mux);
 #if defined(_WIN32) || defined(_WIN32_WCE) || defined(USE_SENDMSG)
 	sent_bytes = rtp_sendmsg(sockfd, m, destaddr, destlen);
 #else
 	if (m->b_cont != NULL)
 		msgpullup(m, -1);
-	sent_bytes = sendto(sockfd, (char*)m->b_rptr, (int)(m->b_wptr - m->b_rptr), 0, destaddr, destlen);
+	if(session->flags & RTP_SESSION_USING_OVER_RTSPTCP_SOCKETS ||
+        session->flags & RTP_SESSION_USING_OVER_TCP_SOCKETS)
+		sent_bytes = rtp_session_rtp_tcp_sendto(session, m, is_rtp, destaddr, destlen);
+	else	
+		sent_bytes = sendto(sockfd, (char*)m->b_rptr, (int)(m->b_wptr - m->b_rptr), 0, destaddr, destlen);
 #endif
 	return sent_bytes;
 }
@@ -1295,7 +1334,7 @@ int rtp_session_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags,
 	}else{
 		ortp_socket_t sockfd = rtp_session_get_socket(session, is_rtp || session->rtcp_mux);
 		if (sockfd != (ortp_socket_t)-1){
-			ret=_ortp_sendto(sockfd, m, flags, destaddr, destlen);
+			ret=_ortp_sendto(session, is_rtp, m, flags, destaddr, destlen);
 		}else{
 			ret = -1;
 		}
@@ -1340,7 +1379,12 @@ static const ortp_recv_addr_t * get_recv_addr(RtpSession *session, struct sockad
 }
 
 int rtp_session_recvfrom(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, struct sockaddr *from, socklen_t *fromlen) {
-	int ret = rtp_session_rtp_recv_abstract(is_rtp ? session->rtp.gs.socket : session->rtcp.gs.socket, m, flags, from, fromlen);
+	int ret = 0;
+	/*if(session->flags & RTP_SESSION_USING_OVER_RTSPTCP_SOCKETS ||
+        session->flags & RTP_SESSION_USING_OVER_TCP_SOCKETS)	
+		ret = rtp_session_rtp_tcp_recvfrom(session, m , is_rtp, from, fromlen);
+	else*/
+		ret = rtp_session_rtp_recv_abstract(is_rtp ? session->rtp.gs.socket : session->rtcp.gs.socket, m, flags, from, fromlen);
 	if ((ret >= 0) && (session->use_pktinfo == TRUE)) {
 		if (m->recv_addr.family == AF_UNSPEC) {
 			const ortp_recv_addr_t *recv_addr;
@@ -1389,43 +1433,12 @@ static void log_send_error(RtpSession *session, const char *type, mblk_t *m, str
 	char printable_ip_address[65]={0};
 	int errnum = getSocketErrorCode();
 	const char *errstr = getSocketError();
-	ortp_sockaddr_to_print_address(destaddr, destlen, printable_ip_address, sizeof(printable_ip_address));
+	if(destaddr && destlen)
+		ortp_sockaddr_to_print_address(destaddr, destlen, printable_ip_address, sizeof(printable_ip_address));
 	ortp_error ("RtpSession [%p] error sending [%s] packet [%p] to %s: %s [%d]",
 		session, type, m, printable_ip_address, errstr, errnum);
 }
-#if 0
-static int  rtp_session_rtp_tcp_sendto(RtpSession * session, mblk_t *msg , int rtp, const struct ipstack_sockaddr *to, socklen_t tolen)
-{
-    uint8_t *ptr = (uint8_t*)msg->b_rptr;
-    int ptrsize = (int)(msg->b_wptr - msg->b_rptr);
-    uint8_t tmpbuf[UDP_MAX_SIZE];
-    rtp_tcp_header_t *hdr = (rtp_tcp_header_t *)tmpbuf;
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    memcpy(tmpbuf + sizeof(rtp_tcp_header_t), ptr, ptrsize);
-    hdr->masker = '$';
-    hdr->channel = rtp ? session->rtp_channel:session->rtcp_channel;
-    hdr->length = htons(ptrsize);
-    return ipstack_send(rtp ? session->rtp.gs.socket : session->rtcp.gs.socket, (char*)tmpbuf, ptrsize + sizeof(rtp_tcp_header_t), 0);
-}
 
-static int  rtp_session_rtp_tcp_recvfrom(RtpSession * session, mblk_t *msg , int rtp, const struct ipstack_sockaddr *to, socklen_t tolen)
-{
-    ortp_socket_t sock = rtp ? session->rtp.gs.socket : session->rtcp.gs.socket;
-    int bufsz = (int) (msg->b_datap->db_lim - msg->b_datap->db_base);
-    int ret = ipstack_recv(sock, (char *)msg->b_wptr, bufsz, 0);
-    /*if(ret > sizeof(rtp_tcp_header_t))
-    {
-        msg->b_wptr += sizeof(rtp_tcp_header_t);
-        return (ret - sizeof(rtp_tcp_header_t));
-    }*/
-    return ret;
-}
-#endif
-int  rtp_session_tcp_forward(int sock, const uint8_t *msg , int tolen)
-{
-    int ret = send(sock, (char*)msg, tolen, 0);
-    return ret;
-}
 static int rtp_session_rtp_sendto(RtpSession * session, mblk_t * m, struct sockaddr *destaddr, socklen_t destlen, bool_t is_aux){
 	int error;
 	RtpSession *send_session = session;
@@ -1443,7 +1456,7 @@ static int rtp_session_rtp_sendto(RtpSession * session, mblk_t * m, struct socka
 	if (rtp_session_using_transport(send_session, rtp)){
 		error = (send_session->rtp.gs.tr->t_sendto) (send_session->rtp.gs.tr,m,0,destaddr,destlen);
 	}else{
-		error=rtp_session_sendto(send_session, TRUE,m,0,destaddr,destlen);
+		error=rtp_session_sendto(send_session, TRUE, m, 0, destaddr, destlen);
 	}
 	if (!is_aux){
 		/*errors to auxiliary destinations are not notified*/
@@ -1504,7 +1517,7 @@ static int rtp_session_rtcp_sendto(RtpSession * session, mblk_t * m, struct sock
 	if (rtp_session_using_transport(send_session, rtcp)){
 		error = (send_session->rtcp.gs.tr->t_sendto) (send_session->rtcp.gs.tr, m, 0, destaddr, destlen);
 	}else{
-		error=_ortp_sendto(rtp_session_get_socket(send_session, send_session->rtcp_mux),m,0,destaddr,destlen);
+		error=_ortp_sendto(send_session, send_session->rtcp_mux, m,0,destaddr,destlen);
 	}
 
 	if (!is_aux){

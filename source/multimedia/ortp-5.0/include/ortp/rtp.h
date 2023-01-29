@@ -125,6 +125,12 @@ typedef struct rtp_audio_level {
 
 #define TIME_IS_STRICTLY_NEWER_THAN(t1,t2) RTP_TIMESTAMP_IS_STRICTLY_NEWER_THAN(t1,t2)
 
+typedef struct rtp_tcp_header
+{
+    uint8_t     masker;
+    uint8_t     channel;
+    uint16_t    length;
+}__attribute__ ((packed)) rtp_tcp_header_t;
 
 #ifdef __cplusplus
 extern "C"{

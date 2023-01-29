@@ -444,6 +444,7 @@ static int linux_interface_update(struct interface *ifp)
 
 int iplinux_stack_init(void)
 {
+	librtnl_open(0, 8192);
   // interface
   pal_stack.ip_stack_up = linux_ioctl_if_set_up;
   pal_stack.ip_stack_down = linux_ioctl_if_set_down;

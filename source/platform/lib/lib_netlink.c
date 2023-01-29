@@ -281,7 +281,7 @@ static int lib_netlink_sock_talk(lib_netlink_t *nsock, struct ipstack_nlmsghdr *
     {
         zlog_err(MODULE_PAL, "netlink_talk ipstack_sendmsg() error: %s",
                  ipstack_strerror(save_errno));
-        return -1;
+        return ERROR;
     }
     if(filter)
         return lib_netlink_sock_parse_info(nsock, filter, p);

@@ -78,17 +78,6 @@ struct ip_vrf_master
 };
 
 
-struct ip_vrf_temp
-{
-	  zpl_uchar proto;
-    vrf_id_t vrf_id;
-    zpl_socket_t fd;
-    char name[VRF_NAME_MAX];
-    zpl_uint32 value;
-		zpl_ulong cnt;
-    void    *p;
-};
-
 typedef int (*ip_vrf_call)(struct ip_vrf *, void *);
 
 

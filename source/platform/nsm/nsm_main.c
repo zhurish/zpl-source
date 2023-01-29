@@ -157,8 +157,7 @@ int nsm_module_init(void)
 #endif /* ZPL_NSM_SNMP */
 
 	nsm_zserv_init();
-	extern void librtnl_open(vrf_id_t vrfid, zpl_uint32 msgsize);
-	librtnl_open(0, 8192);
+
 	return 0;
 }
 

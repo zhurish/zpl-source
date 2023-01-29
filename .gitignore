@@ -39,6 +39,8 @@ source/halpal/pal/linux/iproute2-5.9.0/*
 source/halpal/pal/linux/libiproute/*
 source/halpal/pal/linux/tests/*
 source/multimedia/ortp-5.0/src/tests/*
+source/multimedia/ortp-5.0/tester/*
+source/multimedia/ortp-5.0-new/*
 source/multimedia/zplmedia/hisidir/
 source/multimedia/zplmedia/ikayaki/
 source/multimedia/zplmedia/rtsp源码/
@@ -47,7 +49,7 @@ source/multimedia/mu/
 source/product/sdk-robo-5.9.2
 source/product/bsp/pal/linux/iproute2-5.9.0
 source/product/bsp/pal/linux/libiproute
-
+source/quagga/*
 source/rootfs_install
 *.libs/*
 *.deps/*
