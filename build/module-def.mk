@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 
-# Sat Jan 14 20:46:12 2023
+# Sat Feb  4 12:19:56 2023
 #
 CONFIG_HAVE_DOT_CONFIG=true
 
@@ -193,8 +193,8 @@ ZPL_MULTIMEDIA_MODULE=true
 ZPL_LIBRTSP_MODULE=true
 ZPL_LIBORTP_MODULE=true
 # CONFIG_ZPL_EXOSIP_MODULE is not set
-# CONFIG_ZPL_LIBRTMP_MODULE is not set
-# CONFIG_ZPL_LIBJPEG_MODULE is not set
+ZPL_LIBRTMP_MODULE=true
+ZPL_LIBJPEG_MODULE=true
 ZPL_ZPLMEDIA_MODULE=true
 # CONFIG_ZPL_HISIMPP_MODULE is not set
 # CONFIG_ZPL_HISIMPP_HWDEBUG is not set

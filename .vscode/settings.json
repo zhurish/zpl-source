@@ -169,7 +169,12 @@
         "nsm_halpal.h": "c",
         "nsm_ipvrf.h": "c",
         "ipvrf.h": "c",
-        "nsm_rib.h": "c"
+        "nsm_rib.h": "c",
+        "rtmp_log.h": "c",
+        "rtmp_client.h": "c",
+        "os_time.h": "c",
+        "os_task.h": "c",
+        "zpl_media_extradata.h": "c"
     },
     "editor.defaultFormatter": "jbenden.c-cpp-flylint",
     "editor.formatOnPaste": false,

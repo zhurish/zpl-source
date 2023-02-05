@@ -24,7 +24,7 @@
 #include "rtp_payload.h"
 
 
-static rtsp_media_adap_t _rtp_media_adap_tbl[] =
+static rtsp_session_media_adap_t _rtp_media_adap_tbl[] =
 {
     {"H264", RTP_MEDIA_PAYLOAD_H264, rtp_payload_send_h264, NULL},
     {"G711A", RTP_MEDIA_PAYLOAD_G711A, rtp_payload_send_g7xx, NULL},
@@ -42,50 +42,50 @@ static rtsp_media_adap_t _rtp_media_adap_tbl[] =
 };
 
 
-int rtsp_media_adap_rtp_sendto(uint32_t ptid, rtsp_session_t *session, int type, const uint8_t *buf, uint32_t len)
+int rtsp_session_media_adap_rtp_sendto(uint32_t ptid, rtsp_session_t *session, int type, const uint8_t *buf, uint32_t len)
 {
     uint32_t i = 0;
-    rtp_session_t   *rtp_session = NULL;
-    if(type == ZPL_MEDIA_VIDEO && session->video_session.b_enable && session->video_session.rtp_session)
+    rtp_session_t   *myrtp_session = NULL;
+    if(type == ZPL_MEDIA_VIDEO && session->video_session.b_enable && session->video_session.rtp_session && session->video_session.rtp_state==RTP_SESSION_STATE_START)
     {
-        rtp_session = &session->video_session;                               
+        myrtp_session = &session->video_session;                               
     }
-    if(type == ZPL_MEDIA_AUDIO && session->audio_session.b_enable && session->audio_session.rtp_session)
+    if(type == ZPL_MEDIA_AUDIO && session->audio_session.b_enable && session->audio_session.rtp_session && session->audio_session.rtp_state==RTP_SESSION_STATE_START)
     {
-        rtp_session = &session->audio_session;                               
+        myrtp_session = &session->audio_session;                               
     }    
-    if(rtp_session)
+    if(myrtp_session && myrtp_session->rtp_session)
     {
         for(i = 0; i < sizeof(_rtp_media_adap_tbl)/sizeof(_rtp_media_adap_tbl[0]); i++)
         {
             if(_rtp_media_adap_tbl[i].ptid == ptid)
             {
                 if(_rtp_media_adap_tbl[i]._rtp_sendto)
-                return (_rtp_media_adap_tbl[i]._rtp_sendto)(rtp_session->rtp_session, buf, len, rtp_session->user_timestamp);
+                return (_rtp_media_adap_tbl[i]._rtp_sendto)(myrtp_session->rtp_session, buf, len, myrtp_session->user_timestamp);
             }
         }
     }
     return -1;
 }
 
-int rtsp_media_adap_rtp_recv(uint32_t ptid, rtsp_session_t *session, int type, uint8_t *buf, uint32_t len, int *havemore)
+int rtsp_session_media_adap_rtp_recv(uint32_t ptid, rtsp_session_t *session, int type, uint8_t *buf, uint32_t len, int *havemore)
 {
     uint32_t i = 0;
-    rtp_session_t   *rtp_session = NULL;
+    rtp_session_t   *myrtp_session = NULL;
     if(type == ZPL_MEDIA_VIDEO && session->video_session.b_enable && session->video_session.rtp_session)
     {
-        rtp_session = &session->video_session;                               
+        myrtp_session = &session->video_session;                               
     }
     if(type == ZPL_MEDIA_AUDIO && session->audio_session.b_enable && session->audio_session.rtp_session)
     {
-        rtp_session = &session->audio_session;                               
+        myrtp_session = &session->audio_session;                               
     }  
     for(i = 0; i < sizeof(_rtp_media_adap_tbl)/sizeof(_rtp_media_adap_tbl[0]); i++)
     {
-        if(_rtp_media_adap_tbl[i].ptid == ptid)
+        if(_rtp_media_adap_tbl[i].ptid == ptid && myrtp_session->rtp_session)
         {
             if(_rtp_media_adap_tbl[i]._rtp_recv)
-               return (_rtp_media_adap_tbl[i]._rtp_recv)(session, buf, len, rtp_session->user_timestamp, havemore);
+               return (_rtp_media_adap_tbl[i]._rtp_recv)(myrtp_session->rtp_session, buf, len, myrtp_session->user_timestamp, havemore);
         }
     }
     return -1;

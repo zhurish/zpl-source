@@ -45,8 +45,6 @@ typedef struct rtsp_srv_s {
     uint16_t        rtp_port;
     uint16_t        rtcp_port;
 
-    osker_list_head_t     session_list_head;
-
     rtp_socket_t    video_sock;
     rtp_socket_t    audio_sock;
 
@@ -60,7 +58,6 @@ typedef struct rtsp_srv_s {
     int32_t        _send_length;
 
     uint32_t        debug;
-    void            *mutex;
 }rtsp_srv_t;
 
 //#define RTSP_SRV_LOCK(x)    if(x && x->mutex) os_mutex_lock(x->mutex, OS_WAIT_FOREVER)

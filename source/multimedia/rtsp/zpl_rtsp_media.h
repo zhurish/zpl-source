@@ -19,40 +19,52 @@ extern "C" {
 
 #define  RTP_MEDIA_FRAME_DELAY(n)   ((n)/3)
 
+typedef struct
+{
+    SessionSet *r_session_set;
+    SessionSet *w_session_set;
+    int count;
+    zpl_taskid_t    taskid;
+} rtsp_session_media_scheduler;
 
 
-RTSP_API char *rtsp_media_name(int channel, int level);
+RTSP_API char *rtsp_session_media_name(int channel, int level);
 
 
-RTSP_API int rtsp_media_lookup(rtsp_session_t * session, int channel, int level, const char *path);
-RTSP_API int rtsp_media_start(rtsp_session_t* session, bool start);
-RTSP_API int rtsp_media_update(rtsp_session_t * session, bool add);
-RTSP_API int rtsp_media_destroy(rtsp_session_t *session);
+RTSP_API int rtsp_session_media_lookup(rtsp_session_t * session, int channel, int level, const char *path);
+RTSP_API int rtsp_session_media_start(rtsp_session_t* session, zpl_bool bvideo, zpl_bool start);
 
-RTSP_API int rtsp_media_extradata_get(rtsp_session_t *session, int channel, int level, const char *path, void *p);
-
-RTSP_API int rtsp_media_build_sdptext(rtsp_session_t * session, uint8_t *sdp);
-
-RTSP_API int rtsp_media_rtp_sendto(zpl_media_channel_t *mediachn,
-        const zpl_skbuffer_t *bufdata,  void *pVoidUser);
-RTSP_API int rtsp_media_tcp_forward(rtsp_session_t* session, const uint8_t *buffer, uint32_t len);
-RTSP_API int rtsp_media_rtp_recv(rtsp_session_t* session, bool bvideo, zpl_skbuffer_t *bufdata);
+RTSP_API int rtsp_session_media_destroy(rtsp_session_t *session);
 
 
+RTSP_API int rtsp_session_media_build_sdptext(rtsp_session_t * session, uint8_t *sdp);
 
-RTSP_API rtsp_code rtsp_media_handle_option(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_describe(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_setup(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_teardown(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_play(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_pause(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_scale(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_get_parameter(rtsp_session_t * session, void *pUser);
-RTSP_API rtsp_code rtsp_media_handle_set_parameter(rtsp_session_t * session, void *pUser);
+RTSP_API int rtsp_session_media_rtp_proxy(zpl_media_channel_t *mediachn, 
+                          const zpl_skbuffer_t *bufdata,  void *pVoidUser);
+//RTSP_API int rtsp_session_media_rtp_sendto(zpl_media_channel_t *mediachn,
+//        const zpl_skbuffer_t *bufdata,  void *pVoidUser);
+RTSP_API int rtsp_session_media_tcp_forward(rtsp_session_t* session, const uint8_t *buffer, uint32_t len);
+//RTSP_API int rtsp_session_media_rtp_recv(rtsp_session_t* session, bool bvideo, zpl_skbuffer_t *bufdata);
 
 
 
+RTSP_API rtsp_code rtsp_session_media_handle_option(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_describe(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_setup(rtsp_session_t * session,  int isvideo, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_teardown(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_play(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_pause(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_scale(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_get_parameter(rtsp_session_t * session, void *pUser);
+RTSP_API rtsp_code rtsp_session_media_handle_set_parameter(rtsp_session_t * session, void *pUser);
 
+
+
+RTSP_API int rtsp_session_media_scheduler_init(void);
+RTSP_API int rtsp_session_media_scheduler_exit(void);
+RTSP_API int rtsp_session_media_scheduler_add(void *rtp_session);
+RTSP_API int rtsp_session_media_scheduler_del(void *rtp_session);
+RTSP_API int rtsp_session_media_scheduler_handle(void);
 
 
 #ifdef __cplusplus

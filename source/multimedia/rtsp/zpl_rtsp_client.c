@@ -24,6 +24,7 @@
 #include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_rtp.h"
 
+#if 0
 static int rtsp_client_event_handle(rtsp_client_t *client);
 
 rtsp_client_t *rtsp_client_create(const char *name, const char *url)
@@ -166,7 +167,7 @@ static int rtsp_client_tcpthread(rtsp_client_t *client)
                         if (client->_recv_buf[0] == '$')
                         {
                             // client->_recv_offset = 4;
-                            return rtsp_media_tcp_forward(client->rtsp_session, client->_recv_buf, ret);
+                            return rtsp_rtp_tcp_forward(client->rtsp_session, client->_recv_buf, ret);
                         }
                         else
                         {
@@ -326,11 +327,11 @@ static int rtsp_client_event_handle(rtsp_client_t *client)
     switch (client->method)
     {
     case RTSP_METHOD_OPTIONS:
-        ret = rtsp_media_handle_option(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_options(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_OPTIONS(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_DESCRIBE:
-        ret = rtsp_media_handle_describe(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_describe(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_DESCRIBE(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_SETUP:
@@ -342,31 +343,31 @@ static int rtsp_client_event_handle(rtsp_client_t *client)
                                       &client->rtsp_session->_rtpsession->transport);
             }
         }
-        ret = rtsp_media_handle_setup(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_setup(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_SETUP(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_TEARDOWN:
-        ret = rtsp_media_handle_teardown(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_teardown(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_TEARDOWN(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_PLAY:
-        ret = rtsp_media_handle_play(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_play(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_PLAY(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_PAUSE:
-        ret = rtsp_media_handle_pause(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_pause(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_PAUSE(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_SCALE:
-        ret = rtsp_media_handle_scale(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_scale(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_SCALE(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_GET_PARAMETER:
-        ret = rtsp_media_handle_get_parameter(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_get_parameter(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_GET_PARAMETER(%d)\r\n", __func__, ret);
         break;
     case RTSP_METHOD_SET_PARAMETER:
-        ret = rtsp_media_handle_set_parameter(client->rtsp_session, &client->client_media);
+        ret = rtsp_rtp_handle_set_parameter(client->rtsp_session, &client->client_media);
         fprintf(stdout, "===============:%s <- RTSP_METHOD_SET_PARAMETER(%d)\r\n", __func__, ret);
         break;
     default:
@@ -750,3 +751,5 @@ int rtsp_client_thread(rtsp_client_t *client)
     }
     return 1;
 }
+
+#endif

@@ -87,8 +87,8 @@ int rtsp_module_init(void)
     if(rtsp_srv)
     {
         rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
-        rtsp_rtp_init();
-        rtsp_rtp_start();
+        rtsp_session_rtp_init();
+        rtsp_session_rtp_start();
     }
 #endif    
     return OK;
@@ -112,6 +112,7 @@ int rtsp_module_task_init(void)
 {
     if(rtsp_srv)
     {
+        rtsp_session_media_scheduler_init();
 		rtsp_srv->t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
 								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK*8);
         return OK;
@@ -123,6 +124,7 @@ int rtsp_module_task_exit(void)
 {
     if(rtsp_srv)
     {
+        rtsp_session_media_scheduler_exit();
         if(rtsp_srv->t_taskid)
 		    os_task_destroy(rtsp_srv->t_taskid);
 	    rtsp_srv->t_taskid = 0;

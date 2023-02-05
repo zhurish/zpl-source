@@ -10,41 +10,23 @@
 extern "C" {
 #endif
 
-
-
-
-
-RTSP_API int rtsp_rtp_init(void);
-RTSP_API int rtsp_rtp_start(void);
-
-
-RTSP_API int rtsp_rtp_handle_options(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_describe(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_setup(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_teardown(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_play(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_pause(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_scale(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_set_parameter(rtsp_session_t*);
-RTSP_API int rtsp_rtp_handle_get_parameter(rtsp_session_t*);
-
-
-
-RTSP_API int rtsp_rtp_select(rtsp_session_t* session);
-
-RTSP_API int rtsp_rtp_tcp_forward(rtsp_session_t* session,  const uint8_t *buffer, uint32_t len);
-RTSP_API int rtsp_rtp_send(rtsp_session_t* session, bool bvideo, const uint8_t *buffer, uint32_t len, uint8_t flags);
-RTSP_API int rtsp_rtp_recv(rtsp_session_t* session, uint8_t *buffer, uint32_t len, bool bvideo, int *more);
-
-RTSP_API int rtsp_srvread(rtsp_session_t* rtsp_session);
-
 typedef struct
 {
-    int u32X;
-    int u32Y;
-} ST_Point_T;
+    SessionSet *r_session_set;
+    SessionSet *w_session_set;
+    int count;
+} rtsp_session_rtp_scheduler;
 
-int st_app_osd_DrawText(unsigned short *yuv, int u32Width, int u32Height, ST_Point_T stPoint, const char *szString, int u32Color);
+
+
+RTSP_API int rtsp_session_rtp_init(void);
+RTSP_API int rtsp_session_rtp_start(void);
+
+RTSP_API int rtsp_session_rtp_setup(rtsp_session_t* session, int isvideo);
+RTSP_API int rtsp_session_rtp_teardown(rtsp_session_t*);
+
+RTSP_API int rtsp_session_rtp_tcp_forward(rtsp_session_t* session,  const uint8_t *buffer, uint32_t len);
+
 
 #ifdef __cplusplus
 }

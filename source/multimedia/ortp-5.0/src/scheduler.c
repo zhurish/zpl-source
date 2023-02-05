@@ -24,7 +24,8 @@
 #include "utils.h"
 #include "scheduler.h"
 #include "rtpsession_priv.h"
-
+#include <sys/prctl.h>
+#include <sys/syscall.h>
 // To avoid warning during compile
 
 
@@ -104,7 +105,7 @@ void * rtp_scheduler_schedule(void * psched)
 	RtpScheduler *sched=(RtpScheduler*) psched;
 	RtpTimer *timer=sched->timer;
 	RtpSession *current;
-
+    prctl(PR_SET_NAME, "rtp-scheduler", 0);
 	/* take this lock to prevent the thread to start until g_thread_create() returns
 		because we need sched->thread to be initialized */
 	ortp_mutex_lock(&sched->lock);

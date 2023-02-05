@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * Busybox version: 
  */
-#define AUTOCONF_TIMESTAMP "2023-01-14 20:46:12 CST"
+#define AUTOCONF_TIMESTAMP "2023-02-04 12:19:56 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -194,8 +194,8 @@
 #define ZPL_LIBRTSP_MODULE 1
 #define ZPL_LIBORTP_MODULE 1
 #undef ZPL_EXOSIP_MODULE
-#undef ZPL_LIBRTMP_MODULE
-#undef ZPL_LIBJPEG_MODULE
+#define ZPL_LIBRTMP_MODULE 1
+#define ZPL_LIBJPEG_MODULE 1
 #define ZPL_ZPLMEDIA_MODULE 1
 #undef ZPL_HISIMPP_MODULE
 #undef ZPL_HISIMPP_HWDEBUG
