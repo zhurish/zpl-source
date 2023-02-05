@@ -187,8 +187,8 @@ zpl_media_hal_sys_init();
             } 
             return ERROR;
         } 
-        video_encode = chn->video_media.halparam = zpl_video_encode_lookup(venc_channel);
-        if (chn->video_media.halparam == NULL)
+        video_encode = chn->media_param.video_media.halparam = zpl_video_encode_lookup(venc_channel);
+        if (chn->media_param.video_media.halparam == NULL)
         {
             zpl_media_debugmsg_error("can not lookup video_encode channel(%d)", venc_channel);
             zpl_video_encode_destroy(venc_channel);
@@ -217,7 +217,7 @@ zpl_media_hal_sys_init();
             zpl_video_encode_destroy(venc_channel);
             return ERROR;
         }
-        video_encode->pCodec = &chn->video_media.codec;
+        video_encode->pCodec = &chn->media_param.video_media.codec;
         video_vpss = zpl_video_vpss_channel_lookup(vpss_channel);
         video_encode->video_vpss = video_vpss;
         video_vpssgrp = zpl_video_vpssgrp_lookup(vpss_group);
@@ -226,8 +226,8 @@ zpl_media_hal_sys_init();
             video_vpss->vpssgrp = video_vpssgrp;
 			if(video_vpss->input_size.width == 0 || video_vpss->input_size.width == 0)
 			{
-				video_vpss->input_size.width = chn->video_media.codec.vidsize.width;
-				video_vpss->input_size.height = chn->video_media.codec.vidsize.height;
+				video_vpss->input_size.width = chn->media_param.video_media.codec.vidsize.width;
+				video_vpss->input_size.height = chn->media_param.video_media.codec.vidsize.height;
 			}
 		}
         video_input = zpl_video_input_channel_lookup(input_chn);       
@@ -238,8 +238,8 @@ zpl_media_hal_sys_init();
             video_vpssgrp->video_input = video_input;
 			if(video_vpssgrp->input_size.width == 0 || video_vpssgrp->input_size.width == 0)
 			{
-				video_vpssgrp->input_size.width = chn->video_media.codec.vidsize.width;
-				video_vpssgrp->input_size.height = chn->video_media.codec.vidsize.height;
+				video_vpssgrp->input_size.width = chn->media_param.video_media.codec.vidsize.width;
+				video_vpssgrp->input_size.height = chn->media_param.video_media.codec.vidsize.height;
 			}
 		}
         if(video_input)
@@ -271,7 +271,7 @@ int zpl_media_hal_destroy(zpl_media_channel_t *chn)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -373,7 +373,7 @@ int zpl_media_hal_active(zpl_media_channel_t *chn)
 	{
 			zpl_media_debugmsg_debug("media channel(%d/%d)", chn->channel, chn->channel_index);
 	}
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -488,7 +488,7 @@ int zpl_media_hal_start(zpl_media_channel_t *chn)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if (ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -590,7 +590,7 @@ int zpl_media_hal_stop(zpl_media_channel_t *chn)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -673,7 +673,7 @@ int zpl_media_hal_inactive(zpl_media_channel_t *chn)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -757,7 +757,7 @@ int zpl_media_hal_encode_hwbind(zpl_media_channel_t *chn, zpl_bool bind)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -844,7 +844,7 @@ int zpl_media_hal_vpss_hwbind(zpl_media_channel_t *chn, zpl_bool bind)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -937,7 +937,7 @@ int zpl_media_hal_read_stop(ZPL_MEDIA_NODE_E module, zpl_media_channel_t *chn)
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -1019,7 +1019,7 @@ int zpl_media_hal_read_start(ZPL_MEDIA_NODE_E module, zpl_void *master, zpl_medi
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
     zpl_video_vpssgrp_t *video_vpssgrp = NULL;
 #endif
-    video_encode = chn->video_media.halparam;
+    video_encode = chn->media_param.video_media.halparam;
     if (video_encode == NULL || video_encode->video_vpss == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))

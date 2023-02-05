@@ -51,7 +51,7 @@ static char * zpl_media_channel_capture_filename(zpl_media_channel_t *mediachn)
 zpl_bool zpl_media_channel_capture_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index)
 {
     zpl_bool ret = zpl_false;
-    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index, NULL);
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
         return 0;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);
@@ -63,7 +63,7 @@ zpl_bool zpl_media_channel_capture_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_IN
 int zpl_media_channel_capture_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool enable)
 {
     zpl_media_capture_t *capture = NULL;
-    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index, NULL);
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
         return ERROR;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn); 
@@ -116,7 +116,7 @@ int zpl_media_channel_capture_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_
 
 int zpl_media_channel_capture_image_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index,const zpl_media_image_t *bufdata)
 {
-    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index, NULL);
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
         return ERROR;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);    
@@ -131,7 +131,7 @@ int zpl_media_channel_capture_image_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_IND
 int zpl_media_channel_capture_imagedata_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index,zpl_video_size_t vsize, 
     ZPL_COLOR_SPACE color, zpl_uint8 quality, uint8_t *img, zpl_uint32 len)
 {
-    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index, NULL);
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
         return ERROR;    
     if(mediachn && mediachn->p_capture.param && mediachn->p_capture.enable)

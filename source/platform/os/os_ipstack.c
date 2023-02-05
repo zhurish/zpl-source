@@ -401,7 +401,7 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 	}
 	return ret;
 #else
-	int ret = 0, mfds[2];
+	int ret = 0, mfds[2] = {0,0};
 	_socks[0] = ipstack_create(stack);
 	_socks[1] = ipstack_create(stack);
 #ifdef ZPL_SOCKET_T_POINT
@@ -423,6 +423,16 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 	}
 #endif	
 	ret = socketpair(__domain, __type, __protocol, mfds);
+	if(ret != 0)
+	{
+		ipstack_drstroy(_socks[0]);
+		ipstack_drstroy(_socks[1]);
+		#ifdef ZPL_SOCKET_T_POINT
+		_socks[0] = NULL;
+		_socks[1] = NULL;
+		#endif
+		return ret;
+	}
 	ipstack_fd(_socks[0]) = mfds[0];
 	ipstack_fd(_socks[1]) = mfds[1];
 	OSSTACK_DEBUG_DETAIL("socket socketpair: %s" ,ipstack_sockstr(_socks[0]));
@@ -599,7 +609,7 @@ ssize_t ipstack_recv (zpl_socket_t _sock, void *__buf, size_t __n, int __flags)
 	return ret;
 #else
 	int ret = recv(ipstack_fd(_sock), __buf, __n, __flags);
-	os_log_debug("socket recv: %s" ,ipstack_sockstr(_sock));
+	//os_log_debug("socket recv: %s" ,ipstack_sockstr(_sock));
 	return ret;
 #endif
 }

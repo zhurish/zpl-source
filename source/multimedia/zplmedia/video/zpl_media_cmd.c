@@ -42,66 +42,18 @@ DEFUN (media_channel_enable,
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 	if(strstr(argv[2],"enable"))
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index, NULL) == NULL)
-			ret = zpl_media_channel_create( channel,  channel_index, NULL);
-		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL)
+		if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
+			ret = zpl_media_channel_create( channel,  channel_index);
+		if(zpl_media_channel_lookup(channel,  channel_index) != NULL)
 			ret = zpl_media_channel_active(channel,  channel_index);
 	}
 	else if(strstr(argv[2],"disable"))
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL && 
-			zpl_media_channel_state(channel,  channel_index, NULL) != ZPL_MEDIA_STATE_ACTIVE)
-			ret = zpl_media_channel_destroy( channel,  channel_index, NULL);
+		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
+			zpl_media_channel_state(channel,  channel_index) != ZPL_MEDIA_STATE_ACTIVE)
+			ret = zpl_media_channel_destroy( channel,  channel_index);
 		else
 			ret = ERROR;	
-	}
-	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-DEFUN (media_channel_file_enable,
-		media_channel_file_enable_cmd,
-		"media channel FILENAME (enable|disable|start|stop)" ,
-		MEDIA_CHANNEL_STR
-		"Channel Number Select\n"
-		"Media File Name Configure\n"
-		"Enable\n"
-		"Disable\n")
-{
-	int ret = ERROR;
-    zpl_media_channel_t *chn = NULL;
-    if (strstr(argv[1], "enable"))
-    {
-		if(zpl_media_channel_lookup(-1, -1, argv[0]) == NULL)
-			ret = zpl_media_channel_create(-1, -1, argv[0]);
-        else
-            ret = OK;    
-	}
-	else if(strstr(argv[1],"disable"))
-	{
-		if(zpl_media_channel_lookup(-1, -1, argv[0]) != NULL)
-			ret = zpl_media_channel_destroy( -1,  -1, argv[0]);
-		else
-			ret = ERROR;	
-	}
-	else if(strstr(argv[1],"start"))
-	{
-        chn  = zpl_media_channel_lookup(-1, -1, argv[0]);
-        if (chn != NULL)
-        {
-            ret = zpl_media_channel_start(-1, -1, argv[0]);
-        }
-        else
-            ret = OK; 
-    }
-	else if(strstr(argv[1],"stop"))
-	{
-        chn  = zpl_media_channel_lookup(-1, -1, argv[0]);
-        if (chn != NULL)
-        {
-            ret = zpl_media_channel_stop(-1, -1, argv[0]);
-        }
-        else
-            ret = OK; 
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
@@ -128,15 +80,15 @@ DEFUN (media_channel_active,
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 	if(strncmp(argv[2],"active", 4) == 0)
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL && 
-			zpl_media_channel_state(channel,  channel_index, NULL) != ZPL_MEDIA_STATE_ACTIVE)
-			ret = zpl_media_channel_start(channel,  channel_index, NULL);
+		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
+			zpl_media_channel_state(channel,  channel_index) != ZPL_MEDIA_STATE_ACTIVE)
+			ret = zpl_media_channel_start(channel,  channel_index);
 	}
 	else if(strncmp(argv[2],"inactive", 4) == 0)
 	{
-		if(zpl_media_channel_lookup(channel,  channel_index, NULL) != NULL && 
-			zpl_media_channel_state(channel,  channel_index, NULL) == ZPL_MEDIA_STATE_ACTIVE)
-			ret = zpl_media_channel_stop( channel,  channel_index, NULL);
+		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
+			zpl_media_channel_state(channel,  channel_index) == ZPL_MEDIA_STATE_ACTIVE)
+			ret = zpl_media_channel_stop( channel,  channel_index);
 		else
 			ret = ERROR;	
 	}
@@ -165,7 +117,7 @@ DEFUN (media_channel_record,
 	else if(strstr(argv[1],"sub"))
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 
-	chn = zpl_media_channel_lookup(channel,  channel_index, NULL);
+	chn = zpl_media_channel_lookup(channel,  channel_index);
 	if(chn && strncmp(argv[2],"enable", 4) == 0)
 	{
 		if(!zpl_media_channel_record_state(channel,  channel_index))
@@ -205,7 +157,7 @@ DEFUN (media_channel_alarm_capture,
 	else if(strstr(argv[1],"sub"))
 		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
 
-	chn = zpl_media_channel_lookup(channel,  channel_index, NULL);
+	chn = zpl_media_channel_lookup(channel,  channel_index);
 	if(chn && strncmp(argv[2],"enable", 4) == 0)
 	{
 		if(!zpl_media_channel_capture_state(channel,  channel_index))
@@ -482,7 +434,6 @@ static void cmd_mediaservice_init(void)
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &mediaservice_template_cmd);
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mediaservice_template_cmd);
 
-		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_file_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_active_cmd);
 

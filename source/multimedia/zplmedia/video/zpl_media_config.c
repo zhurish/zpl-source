@@ -180,15 +180,15 @@ zpl_video_media_channel_config_json_read_obj(cJSON *obj, zpl_media_channel_t *ua
 			ua->channel = cJSON_GetObjectItemIntValue(obj, "channel");
 		if (cJSON_GetObjectItem(obj, "channel_index")) 
 			ua->channel_index = cJSON_GetObjectItemIntValue(obj, "channel_index");
-		if (cJSON_GetObjectItem(obj, "channel_type")) 
-			ua->channel_type = cJSON_GetObjectItemIntValue(obj, "channel_type");
+		if (cJSON_GetObjectItem(obj, "media_type")) 
+			ua->media_type = cJSON_GetObjectItemIntValue(obj, "media_type");
 
 		cJSON *tmpobj = cJSON_GetObjectItem(obj, "video_codec");
 		if (tmpobj)
 		{
-			//if (ua->video_media.codec)
+			//if (ua->media_param.video_media.codec)
 			{
-				if (zpl_video_encode_config_json_read_obj(tmpobj, &ua->video_media.codec) != OK)
+				if (zpl_video_encode_config_json_read_obj(tmpobj, &ua->media_param.video_media.codec) != OK)
 				{
 					return ERROR;
 				}
@@ -217,13 +217,13 @@ zpl_video_media_channel_config_json_write_obj(cJSON *obj, zpl_media_channel_t *u
 		ZPL_JSON_WRITE_INT(ua, obj, channel_type);*/
 		cJSON_AddItemToObject(obj, "channel", cJSON_CreateNumber(ua->channel));
 		cJSON_AddItemToObject(obj, "channel_index", cJSON_CreateNumber(ua->channel_index));
-		cJSON_AddItemToObject(obj, "channel_type", cJSON_CreateNumber(ua->channel_type));
+		cJSON_AddItemToObject(obj, "media_type", cJSON_CreateNumber(ua->media_type));
 		cJSON *tmpobj = cJSON_CreateObject();
 		if (tmpobj)
 		{
 			//if (ua->video_codec)
 			{
-				if (zpl_video_encode_config_json_write_obj(tmpobj, &ua->video_media.codec) != OK)
+				if (zpl_video_encode_config_json_write_obj(tmpobj, &ua->media_param.video_media.codec) != OK)
 				{
 					cJSON_Delete(tmpobj);
 					return ERROR;

@@ -137,15 +137,15 @@ int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel,
 {
 	zpl_media_channel_t *media_channel = channel;
     zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
-    media_header->ID = ZPL_MEDIA_CHANNEL_SET(media_channel->channel, media_channel->channel_index, media_channel->channel_type);
+    media_header->ID = ZPL_MEDIA_CHANNEL_SET(media_channel->channel, media_channel->channel_index, media_channel->media_type);
     media_header->frame_key = key;    //时间戳 毫秒
 	if (media_header->frame_type == ZPL_MEDIA_VIDEO)
 	{
-		media_header->frame_codec = media_channel->video_media.codec.enctype;
+		media_header->frame_codec = media_channel->media_param.video_media.codec.enctype;
 	}
 	else if (media_header->frame_type == ZPL_MEDIA_AUDIO)
 	{
-		media_header->frame_codec = media_channel->audio_media.codec.enctype;
+		media_header->frame_codec = media_channel->media_param.audio_media.codec.enctype;
 	}
 	return OK;
 }

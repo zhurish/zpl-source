@@ -294,9 +294,9 @@ int zpl_media_channel_extradata_import(void *p, zpl_uint8 *Buf, int len)
     int data_offset=0, pos = 0;
 #ifdef ZPL_VIDEO_EXTRADATA_MAXSIZE  
 #else
-    if(chn && chn->video_media.extradata.fSPS != NULL && 
-        chn->video_media.extradata.fPPS != NULL /*&& 
-        chn->video_media.extradata.fSEI != NULL*/)
+    if(chn && chn->media_param.video_media.extradata.fSPS != NULL && 
+        chn->media_param.video_media.extradata.fPPS != NULL /*&& 
+        chn->media_param.video_media.extradata.fSEI != NULL*/)
         return 1;
 #endif
     memset(&nalu, 0, sizeof(H264_NALU_T));
@@ -316,7 +316,7 @@ int zpl_media_channel_extradata_import(void *p, zpl_uint8 *Buf, int len)
                 if(ZPL_MEDIA_DEBUG(ENCODE, BUFDETAIL))
                     zpl_media_channel_nalu_show(&nalu);
                 if(chn)
-                    zpl_media_channel_nalu2extradata(&nalu, &chn->video_media.extradata);
+                    zpl_media_channel_nalu2extradata(&nalu, &chn->media_param.video_media.extradata);
                 memset(&nalu, 0, sizeof(H264_NALU_T));
                 tmpbuf += pos;
                 data_offset += pos;
@@ -328,7 +328,7 @@ int zpl_media_channel_extradata_import(void *p, zpl_uint8 *Buf, int len)
                 if(ZPL_MEDIA_DEBUG(ENCODE, BUFDETAIL))
                     zpl_media_channel_nalu_show(&nalu);
                 if(chn)
-                    zpl_media_channel_nalu2extradata(&nalu, &chn->video_media.extradata);
+                    zpl_media_channel_nalu2extradata(&nalu, &chn->media_param.video_media.extradata);
                 memset(&nalu, 0, sizeof(H264_NALU_T));
                 return 0;
             }
@@ -344,44 +344,44 @@ int zpl_media_channel_extradata_get(void *p, zpl_video_extradata_t *extradata)
 {
     int n = 0;
     zpl_media_channel_t *chn = (zpl_media_channel_t *)p;
-    if(chn && (chn->video_media.halparam))
+    if(chn && (chn->media_param.video_media.halparam))
     {
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE         
-        if(chn->video_media.extradata.fPPS && extradata->fPPS)
+        if(chn->media_param.video_media.extradata.fPPS && extradata->fPPS)
  #endif
         {
 			n++;
-            memcpy(extradata->fPPS, chn->video_media.extradata.fPPS, chn->video_media.extradata.fPPSSize);
-            extradata->fPPSSize = chn->video_media.extradata.fPPSSize;
+            memcpy(extradata->fPPS, chn->media_param.video_media.extradata.fPPS, chn->media_param.video_media.extradata.fPPSSize);
+            extradata->fPPSSize = chn->media_param.video_media.extradata.fPPSSize;
         }
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
-        if(chn->video_media.extradata.fVPS && extradata->fVPS)
+        if(chn->media_param.video_media.extradata.fVPS && extradata->fVPS)
  #endif
         {
 			n++;
-            memcpy(extradata->fVPS, chn->video_media.extradata.fVPS, chn->video_media.extradata.fVPSSize);
-            extradata->fVPSSize = chn->video_media.extradata.fVPSSize;
+            memcpy(extradata->fVPS, chn->media_param.video_media.extradata.fVPS, chn->media_param.video_media.extradata.fVPSSize);
+            extradata->fVPSSize = chn->media_param.video_media.extradata.fVPSSize;
         }
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
-        if(chn->video_media.extradata.fSPS && extradata->fSPS)
+        if(chn->media_param.video_media.extradata.fSPS && extradata->fSPS)
  #endif
         {
 			n++;
-            memcpy(extradata->fSPS, chn->video_media.extradata.fSPS, chn->video_media.extradata.fSPSSize);
-            extradata->fSPSSize = chn->video_media.extradata.fSPSSize;
+            memcpy(extradata->fSPS, chn->media_param.video_media.extradata.fSPS, chn->media_param.video_media.extradata.fSPSSize);
+            extradata->fSPSSize = chn->media_param.video_media.extradata.fSPSSize;
         }
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
-        if(chn->video_media.extradata.fSEI && extradata->fSEI)
+        if(chn->media_param.video_media.extradata.fSEI && extradata->fSEI)
  #endif
         {
 			n++;
-            memcpy(extradata->fSEI, chn->video_media.extradata.fSEI, chn->video_media.extradata.fSEISize);
-            extradata->fSEISize = chn->video_media.extradata.fSEISize;
+            memcpy(extradata->fSEI, chn->media_param.video_media.extradata.fSEI, chn->media_param.video_media.extradata.fSEISize);
+            extradata->fSEISize = chn->media_param.video_media.extradata.fSEISize;
         }
-        if(chn->video_media.extradata.profileLevelId && extradata->profileLevelId)
+        if(chn->media_param.video_media.extradata.profileLevelId && extradata->profileLevelId)
         {
 			n++;
-            extradata->profileLevelId = chn->video_media.extradata.profileLevelId;
+            extradata->profileLevelId = chn->media_param.video_media.extradata.profileLevelId;
         }
 		if(n)
         	return OK;

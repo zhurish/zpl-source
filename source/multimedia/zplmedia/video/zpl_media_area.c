@@ -124,14 +124,14 @@ int zpl_media_area_destroy_all(void *chn)
 {
     zpl_uint32 i = 0;
     zpl_media_channel_t *channel = chn;
-    if(channel && channel->video_media.enable)
+    if(channel && channel->media_param.video_media.enable)
     {
         for(i = 0; i < ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
         {
-            if(channel->video_media.m_areas[i])
+            if(channel->media_param.video_media.m_areas[i])
             {
-                zpl_media_area_destroy(channel->video_media.m_areas[i]);
-                channel->video_media.m_areas[i] = NULL;
+                zpl_media_area_destroy(channel->media_param.video_media.m_areas[i]);
+                channel->media_param.video_media.m_areas[i] = NULL;
             }
         }
     }
@@ -141,40 +141,40 @@ int zpl_media_area_destroy_all(void *chn)
 int zpl_media_area_channel_default(void *chn)
 {
     zpl_media_channel_t *channel = chn;
-    if(channel && channel->video_media.enable)
+    if(channel && channel->media_param.video_media.enable)
     {
-        channel->video_media.m_areas[0] = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
-        if(channel->video_media.m_areas[0])
+        channel->media_param.video_media.m_areas[0] = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
+        if(channel->media_param.video_media.m_areas[0])
         {
-            zpl_media_text_bitmap_auto_size(channel->video_media.m_areas[0], "channel", 
-                ZPL_FONT_SIZE_16X16, &channel->video_media.m_areas[0]->media_area.m_rect);
+            zpl_media_text_bitmap_auto_size(channel->media_param.video_media.m_areas[0], "channel", 
+                ZPL_FONT_SIZE_16X16, &channel->media_param.video_media.m_areas[0]->media_area.m_rect);
    
-            zpl_media_area_osd_attr(channel->video_media.m_areas[0], ZPL_MEDIA_OSD_CHANNAL, 0xffff);
-            zpl_media_area_osd_show(channel->video_media.m_areas[0], zpl_true, "channel", 16, 0x0000, zpl_true);
+            zpl_media_area_osd_attr(channel->media_param.video_media.m_areas[0], ZPL_MEDIA_OSD_CHANNAL, 0xffff);
+            zpl_media_area_osd_show(channel->media_param.video_media.m_areas[0], zpl_true, "channel", 16, 0x0000, zpl_true);
             //area->m_text->m_rect.width;
             //area->m_text->m_rect.height;
-            //zpl_media_area_rectsize(channel->video_media.m_areas[0], channel->video_media.m_areas[0]->m_text->m_rect);
-            zpl_media_area_active(channel->video_media.m_areas[0], zpl_true);
+            //zpl_media_area_rectsize(channel->media_param.video_media.m_areas[0], channel->media_param.video_media.m_areas[0]->m_text->m_rect);
+            zpl_media_area_active(channel->media_param.video_media.m_areas[0], zpl_true);
         }
-        channel->video_media.m_areas[1] = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
-        if(channel->video_media.m_areas[1])
+        channel->media_param.video_media.m_areas[1] = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
+        if(channel->media_param.video_media.m_areas[1])
         {
-            zpl_media_text_bitmap_auto_size(channel->video_media.m_areas[1], "time:2021/10/19 11:13:33", 
-                ZPL_FONT_SIZE_16X16, &channel->video_media.m_areas[1]->media_area.m_rect);
-            //zpl_media_area_rectsize(channel->video_media.m_areas[1], channel->video_media.m_areas[0]->m_text->m_rect);
-            zpl_media_area_osd_attr(channel->video_media.m_areas[1], ZPL_MEDIA_OSD_DATETIME, 0xffff);
-            zpl_media_area_osd_show(channel->video_media.m_areas[1], zpl_true, "time:2021/10/19 11:13:33", 16, 0x0000, zpl_true);
-            zpl_media_area_active(channel->video_media.m_areas[1], zpl_true);
+            zpl_media_text_bitmap_auto_size(channel->media_param.video_media.m_areas[1], "time:2021/10/19 11:13:33", 
+                ZPL_FONT_SIZE_16X16, &channel->media_param.video_media.m_areas[1]->media_area.m_rect);
+            //zpl_media_area_rectsize(channel->media_param.video_media.m_areas[1], channel->media_param.video_media.m_areas[0]->m_text->m_rect);
+            zpl_media_area_osd_attr(channel->media_param.video_media.m_areas[1], ZPL_MEDIA_OSD_DATETIME, 0xffff);
+            zpl_media_area_osd_show(channel->media_param.video_media.m_areas[1], zpl_true, "time:2021/10/19 11:13:33", 16, 0x0000, zpl_true);
+            zpl_media_area_active(channel->media_param.video_media.m_areas[1], zpl_true);
         }
-        channel->video_media.m_areas[2] = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
-        if(channel->video_media.m_areas[2])
+        channel->media_param.video_media.m_areas[2] = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
+        if(channel->media_param.video_media.m_areas[2])
         {
-            zpl_media_text_bitmap_auto_size(channel->video_media.m_areas[2], "channel", 
-                ZPL_FONT_SIZE_16X16, &channel->video_media.m_areas[1]->media_area.m_rect);
-            //zpl_media_area_rectsize(channel->video_media.m_areas[2], channel->video_media.m_areas[0]->m_text->m_rect);
-            zpl_media_area_osd_attr(channel->video_media.m_areas[2], ZPL_MEDIA_OSD_BITRATE, 0xffff);
-            zpl_media_area_osd_show(channel->video_media.m_areas[2], zpl_true, "channel", 16, 0x0000, zpl_true);
-            zpl_media_area_active(channel->video_media.m_areas[2], zpl_true);
+            zpl_media_text_bitmap_auto_size(channel->media_param.video_media.m_areas[2], "channel", 
+                ZPL_FONT_SIZE_16X16, &channel->media_param.video_media.m_areas[1]->media_area.m_rect);
+            //zpl_media_area_rectsize(channel->media_param.video_media.m_areas[2], channel->media_param.video_media.m_areas[0]->m_text->m_rect);
+            zpl_media_area_osd_attr(channel->media_param.video_media.m_areas[2], ZPL_MEDIA_OSD_BITRATE, 0xffff);
+            zpl_media_area_osd_show(channel->media_param.video_media.m_areas[2], zpl_true, "channel", 16, 0x0000, zpl_true);
+            zpl_media_area_active(channel->media_param.video_media.m_areas[2], zpl_true);
         }
         return OK;
     }

@@ -72,18 +72,20 @@ typedef struct zpl_media_channel_s
     NODE	                    node;
 	zpl_int32                   channel;	        //通道号
 	ZPL_MEDIA_CHANNEL_INDEX_E 	channel_index;	    //码流类型
-    ZPL_MEDIA_CHANNEL_TYPE_E    channel_type;
 
-    zpl_media_video_t           video_media;
-    zpl_media_audio_t           audio_media;
-
+    ZPL_MEDIA_E                 media_type;
+    union
+    {
+        zpl_media_video_t           video_media;
+        zpl_media_audio_t           audio_media;
+    }media_param;
     zpl_skbqueue_t              *frame_queue;      //通道对应的编码数据缓冲区
 
     ZPL_MEDIA_STATE_E           state;
     zpl_media_client_t          media_client[ZPL_MEDIA_CLIENT_MAX];
 
     zpl_uint32                  bindcount;      //绑定的数量
-
+    zpl_media_channel_t         *bind_other;    //视频通道绑定的音频通道
     zpl_media_unit_t            p_record;//通道使能录像
     zpl_media_unit_t            p_capture;//通道使能抓拍
 
@@ -94,7 +96,7 @@ typedef struct zpl_media_channel_s
 #define ZPL_MEDIA_CHANNEL_UNLOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_unlock(((zpl_media_channel_t*)m)->_mutex)
 
 
-#define zpl_media_channel_gettype(m)    (((zpl_media_channel_t*)m)->channel_type)
+#define zpl_media_gettype(m)    (((zpl_media_channel_t*)m)->media_type)
 #define zpl_media_getptr(m)             (((zpl_media_channel_t*)m))
 
 extern int zpl_media_channel_init(void);
@@ -102,36 +104,35 @@ extern int zpl_media_channel_exit(void);
 
 extern int zpl_media_channel_count(void);
 extern int zpl_media_channel_load_default(void);
-extern int zpl_media_channel_create(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
-extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename);
-extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern int zpl_media_channel_create(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 extern zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID);
 
+extern zpl_media_channel_t * zpl_media_channel_lookup_bind(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 
-extern ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 
-extern zpl_bool zpl_media_channel_isvideo(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
-extern zpl_bool zpl_media_channel_isaudio(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
-extern zpl_bool zpl_media_channel_islocalfile(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
-extern int zpl_media_channel_video_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, zpl_video_codec_t *);
-extern int zpl_media_channel_audio_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, zpl_audio_codec_t *);
-extern int zpl_media_channel_bindcount_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
-extern int zpl_media_channel_bindcount_set(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, int addsub);
-extern int zpl_media_channel_update_interval(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename, int interval);
+extern zpl_bool zpl_media_channel_isvideo(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern zpl_bool zpl_media_channel_isaudio(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_video_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_video_codec_t *);
+extern int zpl_media_channel_audio_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_audio_codec_t *);
+extern int zpl_media_channel_bindcount_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_bindcount_set(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, int addsub);
 
 extern int zpl_media_channel_halparam_set(zpl_int32 channel, 
     ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool video, void *halparam);
 
-extern int zpl_media_channel_client_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename, zpl_media_buffer_handler cb_handler, void *pUser);
-extern int zpl_media_channel_client_del(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, char *filename, zpl_int32 index);
+extern int zpl_media_channel_client_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_media_buffer_handler cb_handler, void *pUser);
+extern int zpl_media_channel_client_del(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_int32 index);
 
 
 /* 激活通道 -> 创建底层资源 */
 extern int zpl_media_channel_active(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 /* 开始通道 -> 底层开始 */
-extern int zpl_media_channel_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern int zpl_media_channel_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 /* 暂停通道 -> 底层结束 */
-extern int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_char *filename);
+extern int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 /* 销毁通道 -> 销毁底层资源 */
 extern int zpl_media_channel_inactive(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 

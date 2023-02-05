@@ -23,12 +23,11 @@ extern "C" {
 #define ZPL_INVALID_VAL	-1
 
 
-
-
-#define ZPL_MEDIA_ISNORMAL_CHANNEL(n)	((n) >= 0)&&((n)<8)
-#define ZPL_MEDIA_ISCAPTURE_CHANNEL(n)	((n) >= 16)&&((n)<24)
-#define ZPL_MEDIA_ISRECORED_CHANNEL(n)	((n) >= 24)&&((n)<32)
-#define ZPL_MEDIA_ISFILE_CHANNEL(n)	    ((n) >= 32)&&((n)<40)
+#ifdef ZPL_BUILD_LINUX
+#define     ZPL_MEDIA_BASE_PATH     "/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/"
+#else
+#define     ZPL_MEDIA_BASE_PATH     "D:/qt-project/live555-test/"
+#endif
 
 #define ZPL_MEDIA_BUF_ALIGN(n)	(((n)+3)/4)*4
 
@@ -37,13 +36,6 @@ extern "C" {
 #define ZPL_MEDIA_CHANNEL_GET_I(n)	        (((n) >> 4) & 0x0F)
 #define ZPL_MEDIA_CHANNEL_GET_T(n)	        ((n) & 0x0F)
 
-typedef enum
-{
-    ZPL_MEDIA_CHANNEL_NORMAL	= 0x00,				//预览默认通道类型<0-8>
-    ZPL_MEDIA_CHANNEL_CAPTURE	= 0x01,				//抓拍通道<16-23>
-    ZPL_MEDIA_CHANNEL_RECORED	= 0x02,				//录像通道<24-32>
-    ZPL_MEDIA_CHANNEL_FILE  	= 0x04,				//录像通道<32-40>
-} ZPL_MEDIA_CHANNEL_TYPE_E;
 
 typedef enum
 {

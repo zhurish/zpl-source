@@ -54,7 +54,7 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
 {
     zpl_media_channel_t *mediachn = NULL;
     zpl_media_record_t *record = NULL;
-    mediachn = zpl_media_channel_lookup(channel, channel_index, NULL);
+    mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
         return ERROR;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);
@@ -86,7 +86,7 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
             return ERROR;
         }
-        mediachn->p_record.cbid = zpl_media_channel_client_add(mediachn->channel, mediachn->channel_index, NULL, zpl_media_buffer_data_record, mediachn->p_record.param);
+        mediachn->p_record.cbid = zpl_media_channel_client_add(mediachn->channel, mediachn->channel_index, zpl_media_buffer_data_record, mediachn->p_record.param);
         mediachn->p_record.enable = enable; 
         ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
         return OK;
@@ -94,7 +94,7 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
     else
     {
         mediachn->p_record.enable = enable; 
-        zpl_media_channel_client_del(mediachn->channel, mediachn->channel_index, NULL, mediachn->p_record.cbid);
+        zpl_media_channel_client_del(mediachn->channel, mediachn->channel_index, mediachn->p_record.cbid);
         
         mediachn->p_record.cbid = 0;
         if(mediachn->p_record.param) 
@@ -123,7 +123,7 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
 zpl_bool zpl_media_channel_record_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index)
 {
     zpl_bool ret = zpl_false;
-    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index, NULL);
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
         return 0;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);
