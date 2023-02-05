@@ -46,7 +46,7 @@ struct module_list module_list_rtsp = {
 		.taskid = 0,
 };
 
-static int zpl_media_rtsp_task(void* argv)
+static int rtsp_main_task(void* argv)
 {   
 #ifdef ZPL_LIVE555_MODULE
     host_waitting_loadconfig();
@@ -74,7 +74,7 @@ static int rtsp_logcb(const char *fmt,...)
     zlog_debug(MODULE_RTSP,"%s\r\n", lbuf);
     //fprintf(stdout, "%s\r\n", lbuf);
     //fflush(stdout);
-    return 0;
+    return OK;
 }
 #endif
 int rtsp_module_init(void)
@@ -114,7 +114,7 @@ int rtsp_module_task_init(void)
     {
         rtsp_session_media_scheduler_init();
 		rtsp_srv->t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
-								 0, zpl_media_rtsp_task, NULL, OS_TASK_DEFAULT_STACK*8);
+								 0, rtsp_main_task, NULL, OS_TASK_DEFAULT_STACK*8);
         return OK;
     }
     return OK;

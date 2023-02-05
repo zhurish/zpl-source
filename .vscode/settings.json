@@ -174,7 +174,8 @@
         "rtmp_client.h": "c",
         "os_time.h": "c",
         "os_task.h": "c",
-        "zpl_media_extradata.h": "c"
+        "zpl_media_extradata.h": "c",
+        "zmemory.h": "c"
     },
     "editor.defaultFormatter": "jbenden.c-cpp-flylint",
     "editor.formatOnPaste": false,

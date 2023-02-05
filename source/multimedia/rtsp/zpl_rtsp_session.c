@@ -29,14 +29,14 @@ int rtsp_session_recvfrom(rtsp_session_t *session, uint8_t *req, uint32_t req_le
 {
     if (!ipstack_invalid(session->sock))
         return ipstack_recv(session->sock, req, req_length, 0);
-    return -1;
+    return ERROR;
 }
 
 int rtsp_session_sendto(rtsp_session_t *session, uint8_t *req, uint32_t req_length)
 {
     if (!ipstack_invalid(session->sock))
         return ipstack_send(session->sock, req, req_length, 0);
-    return -1;
+    return ERROR;
 }
 
 int rtsp_session_close(rtsp_session_t *session)
@@ -46,6 +46,7 @@ int rtsp_session_close(rtsp_session_t *session)
         eloop_cancel(session->t_read);
 #endif    
     session->state = RTSP_SESSION_STATE_CLOSE;
+    rtsp_session_del(session->sock);
     return OK;
 }
 
@@ -114,7 +115,7 @@ int rtsp_session_init(void)
 {
     _rtsp_session_lst.mutex = os_mutex_name_init("rtspsession");
     INIT_OSKER_LIST_HEAD(&_rtsp_session_lst.session_list_head);
-    return 0;
+    return OK;
 }
 
 
@@ -138,7 +139,7 @@ int rtsp_session_exit(void)
         os_mutex_exit(_rtsp_session_lst.mutex);
         _rtsp_session_lst.mutex = NULL;
     }
-    return 0;
+    return OK;
 }
 
 int rtsp_session_destroy(rtsp_session_t *session)
@@ -196,7 +197,7 @@ int rtsp_session_destroy(rtsp_session_t *session)
         free(session);
         // session = NULL;
     }
-    return 0;
+    return OK;
 }
 
 int rtsp_session_install(rtsp_session_t *newNode, rtsp_method method, rtsp_session_call func, void *p)
@@ -244,7 +245,7 @@ int rtsp_session_install(rtsp_session_t *newNode, rtsp_method method, rtsp_sessi
         break;
     }
     // RTSP_SESSION_UNLOCK(newNode);
-    return 0;
+    return OK;
 }
 
 int rtsp_session_callback(rtsp_session_t *newNode, rtsp_method method)
@@ -395,7 +396,7 @@ int rtsp_session_default(rtsp_session_t *newNode, bool srv)
     newNode->mchannel = newNode->mlevel = -1;
 
     RTSP_SESSION_UNLOCK(newNode);
-    return 0;
+    return OK;
 }
 
 rtsp_session_t *rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *ctx)
@@ -480,8 +481,8 @@ int rtsp_session_del(zpl_socket_t sock)
         // printf("NO FOUND!\n");
     }
     else
-        return 0;
-    return -1;
+        return OK;
+    return ERROR;
 }
 int rtsp_session_del_byid(uint32_t id)
 {
@@ -506,8 +507,8 @@ int rtsp_session_del_byid(uint32_t id)
         // printf("NO FOUND!\n");
     }
     else
-        return 0;
-    return -1;
+        return OK;
+    return ERROR;
 }
 
 int rtsp_session_cleancache(void)
@@ -525,7 +526,7 @@ int rtsp_session_cleancache(void)
             p = NULL;
         }
     }
-    return 0;
+    return OK;
 }
 
 rtsp_session_t *rtsp_session_lookup(zpl_socket_t sock)
@@ -573,7 +574,7 @@ int rtsp_session_foreach(int (*calback)(rtsp_session_t *, void *), void *pVoid)
             (calback)(p, pVoid);
         }
     }
-    return 0;
+    return OK;
 }
 
 int rtsp_session_update_maxfd(void)
@@ -631,7 +632,7 @@ int rtsp_session_read(rtsp_session_t * head, fd_set *rset, char *req, int req_le
             }
         }
     }
-    return 0;
+    return OK;
 }
 
 int rtsp_session_write(rtsp_session_t * head, fd_set *wset, char *req, int req_length)
@@ -651,7 +652,7 @@ int rtsp_session_write(rtsp_session_t * head, fd_set *wset, char *req, int req_l
             }
         }
     }
-    return 0;
+    return OK;
 }
 */
 

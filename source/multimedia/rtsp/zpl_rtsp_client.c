@@ -87,7 +87,7 @@ rtsp_client_t *rtsp_client_create(const char *name, const char *url)
 int rtsp_client_destroy(rtsp_client_t *client)
 {
     if (client == NULL)
-        return -1;
+        return ERROR;
     // if(client->rtsp_session->state != RTSP_SESSION_STATE_NONE)
 
     if (client->rtsp_session)
@@ -128,7 +128,7 @@ int rtsp_client_destroy(rtsp_client_t *client)
     }
     free(client);
     client = NULL;
-    return 0;
+    return OK;
 }
 
 int rtsp_client_connect(rtsp_client_t *client, int timeout)
@@ -142,7 +142,7 @@ int rtsp_client_connect(rtsp_client_t *client, int timeout)
         }
         i--;
     }
-    return -1;
+    return ERROR;
 }
 
 static int rtsp_client_tcpthread(rtsp_client_t *client)
@@ -180,7 +180,7 @@ static int rtsp_client_tcpthread(rtsp_client_t *client)
                 }
                 fprintf(stdout, "%s [%d]  rtsp client select\r\n", __func__, __LINE__);
                 fflush(stdout);
-                return -1;
+                return ERROR;
             }
         }
         else if (ret == 0)
@@ -193,10 +193,10 @@ static int rtsp_client_tcpthread(rtsp_client_t *client)
         {
             fprintf(stdout, "%s [%d]  rtsp client select %s\r\n", __func__, __LINE__, strerror(errno));
             fflush(stdout);
-            return -1;
+            return ERROR;
         }
     }
-    return -1;
+    return ERROR;
 }
 
 static int rtsp_client_wait_respone(rtsp_client_t *client, int timeout)
@@ -216,7 +216,7 @@ static int rtsp_client_wait_respone(rtsp_client_t *client, int timeout)
                 IPSTACK_FD_CLR(ipstack_fd(client->rtsp_session->sock), &rset);
                 fprintf(stdout, "%s [%d]  rtsp client select\r\n", __func__, __LINE__);
                 fflush(stdout);
-                return 0;
+                return OK;
             }
         }
         else if (ret == 0)
@@ -229,10 +229,10 @@ static int rtsp_client_wait_respone(rtsp_client_t *client, int timeout)
         {
             fprintf(stdout, "%s [%d]  rtsp client select %s\r\n", __func__, __LINE__, strerror(errno));
             fflush(stdout);
-            return -1;
+            return ERROR;
         }
     }
-    return -1;
+    return ERROR;
 }
 
 static int rtsp_client_read_respone(rtsp_client_t *client)
@@ -255,7 +255,7 @@ static int rtsp_client_read_respone(rtsp_client_t *client)
             return rtsp_client_event_handle(client);
         }
     }
-    return -1;
+    return ERROR;
 }
 
 static int rtsp_client_request_and_wait_respone(rtsp_client_t *client, rtsp_session_t *session, int timeout)
@@ -287,12 +287,12 @@ static int rtsp_client_request_and_wait_respone(rtsp_client_t *client, rtsp_sess
             // error
         }
     }
-    return -1;
+    return ERROR;
 }
 
 static int rtsp_client_event_handle(rtsp_client_t *client)
 {
-    int ret = -1;
+    int ret = ERROR;
     fprintf(stdout, "\r\n");
     fprintf(stdout, "S -> C:\r\n%s", client->_recv_sdpbuf + client->_recv_offset);
     fprintf(stdout, "\r\n");
@@ -394,7 +394,7 @@ static int rtsp_client_request_option(rtsp_client_t *client, rtsp_session_t *ses
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_describe(rtsp_client_t *client, rtsp_session_t *session)
@@ -410,12 +410,12 @@ static int rtsp_client_request_describe(rtsp_client_t *client, rtsp_session_t *s
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_setup(rtsp_client_t *client, rtsp_session_t *session)
 {
-    int length = 0, ret = -1;
+    int length = 0, ret = ERROR;
 
     if (session->video_session.b_enable)
     {
@@ -446,7 +446,7 @@ static int rtsp_client_request_setup(rtsp_client_t *client, rtsp_session_t *sess
         if (ret != RTSP_STATE_CODE_200)
         {
             client->rtsp_session->_rtpsession = NULL;
-            return -1;
+            return ERROR;
         }
     }
     if (session->audio_session.b_enable)
@@ -480,7 +480,7 @@ static int rtsp_client_request_setup(rtsp_client_t *client, rtsp_session_t *sess
     if (ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->_rtpsession = NULL;
-        return -1;
+        return ERROR;
     }
     return ret;
 }
@@ -499,7 +499,7 @@ static int rtsp_client_request_teardown(rtsp_client_t *client, rtsp_session_t *s
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_play(rtsp_client_t *client, rtsp_session_t *session)
@@ -516,7 +516,7 @@ static int rtsp_client_request_play(rtsp_client_t *client, rtsp_session_t *sessi
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_pause(rtsp_client_t *client, rtsp_session_t *session)
@@ -533,7 +533,7 @@ static int rtsp_client_request_pause(rtsp_client_t *client, rtsp_session_t *sess
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_scale(rtsp_client_t *client, rtsp_session_t *session)
@@ -550,7 +550,7 @@ static int rtsp_client_request_scale(rtsp_client_t *client, rtsp_session_t *sess
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_set_parameter(rtsp_client_t *client, rtsp_session_t *session)
@@ -567,7 +567,7 @@ static int rtsp_client_request_set_parameter(rtsp_client_t *client, rtsp_session
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_client_request_get_parameter(rtsp_client_t *client, rtsp_session_t *session)
@@ -584,7 +584,7 @@ static int rtsp_client_request_get_parameter(rtsp_client_t *client, rtsp_session
         client->_send_length = length;
         return rtsp_client_request_and_wait_respone(client, session, client->timeout);
     }
-    return 0;
+    return OK;
 }
 
 int rtsp_client_request(rtsp_client_t *client, rtsp_method method)
@@ -652,21 +652,21 @@ int rtsp_client_open(rtsp_client_t *client, zpl_client_media_data_callback cb)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
         rtsp_client_destroy(client);
-        return -1;
+        return ERROR;
     }
     ret = rtsp_client_request(client, RTSP_METHOD_DESCRIBE);
     if (ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
         rtsp_client_destroy(client);
-        return -1;
+        return ERROR;
     }
     ret = rtsp_client_request(client, RTSP_METHOD_SETUP);
     if (ret != RTSP_STATE_CODE_200)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
         rtsp_client_destroy(client);
-        return -1;
+        return ERROR;
     }
 
     ret = rtsp_client_request(client, RTSP_METHOD_PLAY);
@@ -674,7 +674,7 @@ int rtsp_client_open(rtsp_client_t *client, zpl_client_media_data_callback cb)
     {
         client->rtsp_session->state = RTSP_SESSION_STATE_CLOSE;
         rtsp_client_destroy(client);
-        return -1;
+        return ERROR;
     }
     return ret;
 }
@@ -684,7 +684,7 @@ int rtsp_client_close(rtsp_client_t *client)
     int ret = rtsp_client_request(client, RTSP_METHOD_TEARDOWN);
     if (ret != 0)
     {
-        return -1;
+        return ERROR;
     }
     return ret;
 }
@@ -727,7 +727,7 @@ static int rtsp_client_rtpread(rtsp_client_t *client)
 #endif
         }
     }
-    return -1;
+    return ERROR;
 }
 
 int rtsp_client_thread(rtsp_client_t *client)

@@ -23,6 +23,8 @@ typedef struct
 {
     SessionSet *r_session_set;
     SessionSet *w_session_set;
+    SessionSet *e_session_set;
+    SessionSet all_session_set;
     int count;
     zpl_taskid_t    taskid;
 } rtsp_session_media_scheduler;

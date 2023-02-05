@@ -203,12 +203,12 @@ int rtsp_header_transport(zpl_bool srv, const char* field, rtsp_transport_t* t)
             if(s_cport)
                 t->rtp.unicast.rtcp_port = s_cport;
         }
-        fprintf(stdout,"==================================rtsp_header_transport========rtp-port=%d rtcp-port=%d\r\n",t->rtp.unicast.rtp_port, t->rtp.unicast.rtcp_port);
-        fprintf(stdout,"==================================rtsp_header_transport===local=====rtp-port=%d rtcp-port=%d\r\n",t->rtp.unicast.local_rtp_port, t->rtp.unicast.local_rtcp_port);
+        //fprintf(stdout,"==================================rtsp_header_transport========rtp-port=%d rtcp-port=%d\r\n",t->rtp.unicast.rtp_port, t->rtp.unicast.rtcp_port);
+        //fprintf(stdout,"==================================rtsp_header_transport===local=====rtp-port=%d rtcp-port=%d\r\n",t->rtp.unicast.local_rtp_port, t->rtp.unicast.local_rtcp_port);
         //fprintf(stdout,"==================================rtsp_header_transport========payload=%d\n",_rtpsession->payload);
-        fflush(stdout);
+        //fflush(stdout);
     }
-    return 0;
+    return OK;
 }
 
 
@@ -225,5 +225,5 @@ int rtsp_header_transport_destroy(rtsp_transport_t* t)
         free(t->source);
         t->source = NULL;
     }
-    return 0;
+    return OK;
 }

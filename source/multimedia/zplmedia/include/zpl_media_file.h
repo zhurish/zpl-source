@@ -20,10 +20,6 @@ typedef struct
     uint8_t  hdrstr[4];
     zpl_video_codec_t video;
     zpl_audio_codec_t audio;
-    uint32_t    begintime;
-    uint32_t    endtime;
-    uint32_t    videoframe;
-    uint32_t    audioframe;
 }zpl_media_filedesc_t;
 #pragma pack(0)
 
@@ -37,16 +33,15 @@ struct zpl_media_file_s
     uint8_t     filename[ZPL_MEDIA_FILE_NAME_MAX];
     FILE        *fp;
     int         file_size;      //! 4 for parameter sets and first slice in picture, 3 for everything else (suggested)
-    uint32_t    offset_len;
 
     zpl_media_filedesc_t filedesc;
 
     zpl_bool     b_video;
     zpl_bool     b_audio;
     zpl_bool     b_create;
-    uint32_t    flags;
 
     os_mutex_t *_mutex;
+    zpl_media_bufcache_t bufcache;
     int         (*get_frame)(FILE *, zpl_media_bufcache_t *);            // 读取一帧数据回调函数
     int         (*put_frame)(zpl_media_file_t*, char *, int);
 };
@@ -55,9 +50,10 @@ struct zpl_media_file_s
 
 extern char *zpl_media_file_basename(const char *name);
 
-extern zpl_media_file_t *zpl_media_file_create(const char *name, const char *op);
+extern zpl_media_file_t *zpl_media_file_create(zpl_media_channel_t *chn, const char *name);
+extern zpl_media_file_t *zpl_media_file_open(const char *name);
 extern int zpl_media_file_destroy(zpl_media_file_t *media_file);
-extern int zpl_media_file_open(zpl_media_file_t *media_file);
+extern int zpl_media_file_reopen(zpl_media_file_t *media_file);
 extern int zpl_media_file_close(zpl_media_file_t *media_file);
 extern int zpl_media_file_write(zpl_media_file_t *media_file, zpl_skbuffer_t *bufdata);
 extern int zpl_media_file_check(zpl_media_file_t *media_file, const char *name);
@@ -74,6 +70,9 @@ extern int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extr
 
 //extern int zpl_media_file_get_frame_h264(zpl_media_file_t *media_file, zpl_media_bufcache_t *outpacket);
 extern int zpl_media_file_get_frame_h264(FILE *fp, zpl_media_bufcache_t *outpacket);
+
+extern int get_frame_h264_test(void);
+
 
 #ifdef __cplusplus
 }

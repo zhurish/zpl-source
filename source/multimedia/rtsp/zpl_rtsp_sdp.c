@@ -155,8 +155,8 @@ int sdp_token_crlf(struct sdp_session* sdp)
     }
     // sdp end line
     if('\0' == sdp->misc.sdp_data[sdp->misc.sdp_offset])
-        return -1;
-    return 0;
+        return ERROR;
+    return OK;
 }
 
 char* sdp_get_string(const char *src, const char*brk)
@@ -225,7 +225,7 @@ int sdp_get_intcode(const char *src, const char*brk)
     p += strlen(brk);
     if(p)
         return atoi(p);
-    return -1;
+    return ERROR;
 }
 
 char* sdp_get_datetime(time_t t)
@@ -297,7 +297,7 @@ static int sdp_method_get_value(const char*name, struct sdp_session *session, co
             session->method = RTSP_METHOD_SET_PARAMETER;
         }
     }
-    return 0;
+    return OK;
 }
 
 static int _sdp_method_parse(char *src, uint32_t len, struct sdp_session *session)
@@ -323,7 +323,7 @@ static int _sdp_method_parse(char *src, uint32_t len, struct sdp_session *sessio
         if(session->misc.version == NULL)
         session->misc.version = strdup(version);
 
-        fprintf(stdout, "=========%s==%s==%s=====\r\n", tmp, urltmp, version);
+        //fprintf(stdout, "=========%s==%s==%s=====\r\n", tmp, urltmp, version);
         return 1;
     }
     return 0;
@@ -357,9 +357,9 @@ static int _sdp_code_parse(const char*src, uint32_t len, int *rescode, char *res
         memset(tmp, 0, sizeof(tmp));
         sscanf(src, "%s %d %s", tmp, rescode, restring);
         //fprintf(stdout, "=====client_sdp_code_parse====%s==%d==%s=====\r\n", tmp, *rescode, restring);
-        return 0;
+        return OK;
     }
-    return -1;
+    return ERROR;
 }
 
 
@@ -371,7 +371,7 @@ int sdp_text_init(struct sdp_session *session, const char *raw, uint32_t len)
     session->misc.sdp_data = session->misc.sdp_start = (char *)raw;
     session->misc.sdp_offset = 0;
     session->misc.sdp_len = len;
-    return 0;
+    return OK;
 }
 
 
@@ -414,7 +414,7 @@ static int _sdp_text_prase(bool srv, struct sdp_session *session)
     }
     //fprintf(stdout, "==========gggggggggggggg============media_count=%d\r\n", session->media_count);
     //sdp_text_debug(session);
-    return 0;
+    return OK;
 }
 
 int sdp_text_prase(bool srv, struct sdp_session *session)
@@ -434,7 +434,7 @@ int sdp_text_debug(struct sdp_session *session)
     sdp_header_debug(session);
     sdp_attr_debug(session);
     fprintf(stdout, "=========%s -> end=========\r\n", __func__);
-    return 0;
+    return OK;
 }
 
 
@@ -474,7 +474,7 @@ int sdp_build_request_header(struct sdp_session *sdp, uint8_t *src, const char *
         offset += sprintf((char*)(src + offset), "User-Agent: %s\r\n", clientname);
         return offset;
     }
-    return 0;
+    return OK;
 }
 
 int sdp_build_respone_option(uint8_t *src, const char *srvname, int code, int CSeq)
@@ -540,5 +540,5 @@ int rtsp_sdp_hdr_prase_test()
     sdp_text_prase(false, &ssssession);
     fflush(stdout);
     sdp_text_free(&ssssession);
-    return 0;
+    return OK;
 }

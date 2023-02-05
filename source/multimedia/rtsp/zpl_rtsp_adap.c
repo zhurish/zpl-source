@@ -65,7 +65,7 @@ int rtsp_session_media_adap_rtp_sendto(uint32_t ptid, rtsp_session_t *session, i
             }
         }
     }
-    return -1;
+    return ERROR;
 }
 
 int rtsp_session_media_adap_rtp_recv(uint32_t ptid, rtsp_session_t *session, int type, uint8_t *buf, uint32_t len, int *havemore)
@@ -88,5 +88,5 @@ int rtsp_session_media_adap_rtp_recv(uint32_t ptid, rtsp_session_t *session, int
                return (_rtp_media_adap_tbl[i]._rtp_recv)(myrtp_session->rtp_session, buf, len, myrtp_session->user_timestamp, havemore);
         }
     }
-    return -1;
+    return ERROR;
 }

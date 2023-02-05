@@ -33,7 +33,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
     *format = atoi(p);
     p1 = strchr(p, ' ');
     if(!p1 || ' ' != *p1)
-        return -1;
+        return ERROR;
 
     h264->flags = 0;
     //assert(' ' == *p1);
@@ -42,7 +42,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
     {
         p1 = strchr(p, '=');
         if(!p1 || '=' != *p1)
-            return -1;
+            return ERROR;
 
         p2 = strchr(p1+1, ';');
         if(!p2)
@@ -59,7 +59,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
             // packetization-mode
             if(0 == strncasecmp("profile-level-id", p, nc))
             {
-                if(6 != vc) return -1;
+                if(6 != vc) return ERROR;
                 h264->flags |= SDP_A_FMTP_H264_PROFILE_LEVEL_ID;
                 memcpy(h264->profile_level_id, p1+1, 6);
                 h264->profile_level_id[6] = '\0';
@@ -133,7 +133,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
             // sar-supported
             if(0 == strncasecmp("sprop-parameter-sets", p, nc))
             {
-                if(vc >= sizeof(h264->sprop_parameter_sets)) return -1;
+                if(vc >= sizeof(h264->sprop_parameter_sets)) return ERROR;
                 h264->flags |= SDP_A_FMTP_H264_SPROP_PARAMETER_SETS;
                 memcpy(h264->sprop_parameter_sets, p1+1, vc);
                 h264->sprop_parameter_sets[vc] = '\0';
@@ -141,7 +141,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
             }
             else if(0 == strncasecmp("sprop-level-parameter-sets", p, nc))
             {
-                if(vc >= sizeof(h264->sprop_level_parameter_sets)) return -1;
+                if(vc >= sizeof(h264->sprop_level_parameter_sets)) return ERROR;
                 h264->flags |= SDP_A_FMTP_H264_SPROP_LEVEL_PARAMETER_SETS;
                 memcpy(h264->sprop_level_parameter_sets, p1+1, vc);
                 h264->sprop_level_parameter_sets[vc] = '\0';
@@ -163,7 +163,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
             }
             else if(0 == strncasecmp("sprop-init-buf-time", p, nc))
             {
-                if(vc >= sizeof(h264->sprop_init_buf_time)) return -1;
+                if(vc >= sizeof(h264->sprop_init_buf_time)) return ERROR;
                 h264->flags |= SDP_A_FMTP_H264_SPROP_INIT_BUF_TIME;
                 memcpy(h264->sprop_init_buf_time, p1+1, vc);
                 h264->sprop_init_buf_time[vc] = '\0';
@@ -228,7 +228,7 @@ int sdp_attr_fmtp_h264(const char* fmtp, int *format, struct sdp_attr_fmtp_h264_
 
         p = *p2 ? p2 + 1 : p2;
     }
-    return 0;
+    return OK;
 }
 
 // RFC7798 RTP Payload Format for High Efficiency Video Coding (HEVC)
@@ -245,7 +245,7 @@ int sdp_attr_fmtp_h265(const char* fmtp, int *format, struct sdp_attr_fmtp_h265_
     *format = atoi(p);
     p1 = strchr(p, ' ');
     if (!p1 || ' ' != *p1)
-        return -1;
+        return ERROR;
 
     h265->flags = 0;
     //assert(' ' == *p1);
@@ -254,7 +254,7 @@ int sdp_attr_fmtp_h265(const char* fmtp, int *format, struct sdp_attr_fmtp_h265_
     {
         p1 = strchr(p, '=');
         if (!p1 || '=' != *p1)
-            return -1;
+            return ERROR;
 
         p2 = strchr(p1 + 1, ';');
         if (!p2)
@@ -305,7 +305,7 @@ int sdp_attr_fmtp_h265(const char* fmtp, int *format, struct sdp_attr_fmtp_h265_
         p = *p2 ? p2 + 1 : p2;
     }
 
-    return 0;
+    return OK;
 }
 
 // RFC3640 RTP Payload Format for Transport of MPEG-4 Elementary Streams
@@ -328,7 +328,7 @@ int sdp_attr_fmtp_mpeg4(const char* fmtp, int *format, struct sdp_attr_fmtp_mpeg
     *format = atoi(p);
     p1 = strchr(p, ' ');
     if(!p1 || ' ' != *p1)
-        return -1;
+        return ERROR;
 
     mpeg4->flags = 0;
     //assert(' ' == *p1);
@@ -337,7 +337,7 @@ int sdp_attr_fmtp_mpeg4(const char* fmtp, int *format, struct sdp_attr_fmtp_mpeg
     {
         p1 = strchr(p, '=');
         if(!p1 || '=' != *p1)
-            return -1;
+            return ERROR;
 
         p2 = strchr(p1+1, ';');
         if(!p2)
@@ -373,7 +373,7 @@ int sdp_attr_fmtp_mpeg4(const char* fmtp, int *format, struct sdp_attr_fmtp_mpeg
             // profile-level-id
             if(0 == strncasecmp("profile-level-id", p, nc))
             {
-                if(vc >= sizeof(mpeg4->profile_level_id)) return -1;
+                if(vc >= sizeof(mpeg4->profile_level_id)) return ERROR;
                 memcpy(mpeg4->profile_level_id, p1+1, vc);
                 mpeg4->profile_level_id[vc] = '\0';
             }
@@ -385,7 +385,7 @@ int sdp_attr_fmtp_mpeg4(const char* fmtp, int *format, struct sdp_attr_fmtp_mpeg
             // constantDuration
             if(0 == strncasecmp("config", p, nc))
             {
-                if(vc >= sizeof(mpeg4->config)) return -1;
+                if(vc >= sizeof(mpeg4->config)) return ERROR;
                 memcpy(mpeg4->config, p1+1, vc);
                 mpeg4->config[vc] = '\0';
             }
@@ -499,5 +499,5 @@ int sdp_attr_fmtp_mpeg4(const char* fmtp, int *format, struct sdp_attr_fmtp_mpeg
         p = *p2 ? p2 + 1 : p2;
     }
 
-    return 0;
+    return OK;
 }

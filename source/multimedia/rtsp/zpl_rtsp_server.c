@@ -154,7 +154,7 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
         {
             if(RTSP_DEBUG_FLAG(ctx->debug, ERROR))
                 rtsp_log_error("Can not accept rtsp client error:%s", ipstack_strerror(ipstack_errno));
-            return -1;
+            return ERROR;
         }
         ipstack_inet_ntop(IPSTACK_AF_INET, &client.sin_addr, address, sizeof(address));
         if(RTSP_DEBUG_FLAG(ctx->debug, EVENT))
@@ -168,7 +168,7 @@ static int rtsp_srv_accept(rtsp_srv_t *ctx)
 
         return rtsp_srv_session_create(ctx, sock, address, ntohs(client.sin_port));
     }
-    return -1;
+    return ERROR;
 }
 
 static int rtsp_srv_accept_eloop(struct eloop *ctx)
@@ -177,7 +177,7 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
     pctx->t_accept = NULL;
     rtsp_srv_accept(pctx);
     pctx->t_accept = eloop_add_read(pctx->t_master, rtsp_srv_accept_eloop, pctx, pctx->listen_sock);
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_rtsp_sdp_parse(rtsp_srv_t *ctx, int *find)
@@ -227,7 +227,7 @@ static int rtsp_srv_session_read_handler(rtsp_srv_t *ctx, rtsp_session_t *sessio
                 if(ctx->_recv_length < 4)
                 {
                     RTSP_SRV_UNLOCK(ctx);
-                    return 0;
+                    return OK;
                 }
                 if(need_len > ctx->_recv_length)
                 {
@@ -236,7 +236,7 @@ static int rtsp_srv_session_read_handler(rtsp_srv_t *ctx, rtsp_session_t *sessio
                     {
                         rtsp_session_close(session);
                         RTSP_SRV_UNLOCK(ctx);
-                        return 0;
+                        return OK;
                     }
                     ctx->_recv_length += ret;
                     if(need_len == ctx->_recv_length)
@@ -277,7 +277,7 @@ static int rtsp_srv_session_read_handler(rtsp_srv_t *ctx, rtsp_session_t *sessio
         }
         RTSP_SRV_UNLOCK(ctx);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_read_eloop(struct eloop *ctx)
@@ -298,7 +298,7 @@ static int rtsp_srv_session_read_eloop(struct eloop *ctx)
         rtsp_session_cleancache();
         RTSP_SRV_UNLOCK(srv);
     }
-    return 0;
+    return OK;
 }
 
 
@@ -312,14 +312,14 @@ int rtsp_srv_session_create(rtsp_srv_t *ctx, zpl_socket_t sock, const char *ip_a
         session->t_master = ctx->t_master;
         session->t_read = eloop_add_read(ctx->t_master, rtsp_srv_session_read_eloop, session, sock);
         RTSP_SRV_UNLOCK(ctx);
-        return 0;
+        return OK;
     }
     RTSP_SRV_UNLOCK(ctx);
-    return -1;
+    return ERROR;
 #else
     if (rtsp_session_add(sock, ip_address, port, ctx))
-        return 0;
-    return -1;
+        return OK;
+    return ERROR;
 #endif
 }
 
@@ -354,7 +354,7 @@ static int rtsp_srv_session_url_split(rtsp_srv_t *ctx, rtsp_session_t *session)
 
         if (strlen(urlpath.url))
             session->rtsp_url = strdup(urlpath.url);
-
+/*
         RTSP_DEBUG_TRACE("=======================%s====================\r\n", miscurl);
         RTSP_DEBUG_TRACE("===============username   :%s\r\n", urlpath.user ? urlpath.user : "null");
         RTSP_DEBUG_TRACE("===============password   :%s\r\n", urlpath.pass ? urlpath.pass : "null");
@@ -366,7 +366,7 @@ static int rtsp_srv_session_url_split(rtsp_srv_t *ctx, rtsp_session_t *session)
         RTSP_DEBUG_TRACE("===============url        :%s\r\n", urlpath.url);
         RTSP_DEBUG_TRACE("===============mode       :%d\r\n", urlpath.mode);
         RTSP_DEBUG_TRACE("===========================================\r\n");
-
+*/
         // 解析URL，确定访问的码流还是文件
         if (urlpath.filename && strlen(urlpath.filename))
         {
@@ -387,12 +387,12 @@ static int rtsp_srv_session_url_split(rtsp_srv_t *ctx, rtsp_session_t *session)
         os_url_free(&urlpath);
 
         if ((session->mchannel != -1 || (session->mfilepath)))
-            return 0;
-        return -1;
+            return OK;
+        return ERROR;
     }
     if ((session->mchannel != -1 || (session->mfilepath)))
-        return 0;
-    return -1;
+        return OK;
+    return ERROR;
 }
 
 static int rtsp_srv_session_handle_option(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -417,7 +417,7 @@ static int rtsp_srv_session_handle_option(rtsp_srv_t *ctx, rtsp_session_t *sessi
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -436,7 +436,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
                 length += sprintf(ctx->_send_build + length, "\r\n");
                 return rtsp_session_sendto(session, ctx->_send_build, length);
             }
-            return 0;
+            return OK;
         }
     }
     if ((session->video_session.b_enable && session->video_session.payload == RTP_MEDIA_PAYLOAD_NONE) ||
@@ -449,7 +449,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
             length += sprintf(ctx->_send_build + length, "\r\n");
             return rtsp_session_sendto(session, ctx->_send_build, length);
         }
-        return 0;
+        return OK;
     }
     code = RTSP_STATE_CODE_200;
     memset(buftmp, 0, sizeof(buftmp));
@@ -496,7 +496,7 @@ static int rtsp_srv_session_handle_describe(rtsp_srv_t *ctx, rtsp_session_t *ses
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -513,7 +513,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
             length += sprintf(ctx->_send_build + length, "\r\n");
             return rtsp_session_sendto(session, ctx->_send_build, length);
         }
-        return 0;
+        return OK;
     }
 
     if (code == RTSP_STATE_CODE_200)
@@ -621,7 +621,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
                 length += sprintf(ctx->_send_build + length, "\r\n");
                 return rtsp_session_sendto(session, ctx->_send_build, length);
             }
-            return 0;
+            return OK;
         }
     }
     else
@@ -631,7 +631,7 @@ static int rtsp_srv_session_handle_setup(rtsp_srv_t *ctx, rtsp_session_t *sessio
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_teardown(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -666,7 +666,7 @@ static int rtsp_srv_session_handle_teardown(rtsp_srv_t *ctx, rtsp_session_t *ses
     }
     
     session->state = RTSP_SESSION_STATE_CLOSE;
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_play(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -711,7 +711,7 @@ static int rtsp_srv_session_handle_play(rtsp_srv_t *ctx, rtsp_session_t *session
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_pause(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -738,7 +738,7 @@ static int rtsp_srv_session_handle_pause(rtsp_srv_t *ctx, rtsp_session_t *sessio
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_scale(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -749,7 +749,7 @@ static int rtsp_srv_session_handle_scale(rtsp_srv_t *ctx, rtsp_session_t *sessio
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_set_parameter(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -760,7 +760,7 @@ static int rtsp_srv_session_handle_set_parameter(rtsp_srv_t *ctx, rtsp_session_t
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_handle_get_parameter(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -771,7 +771,7 @@ static int rtsp_srv_session_handle_get_parameter(rtsp_srv_t *ctx, rtsp_session_t
         length += sprintf(ctx->_send_build + length, "\r\n");
         return rtsp_session_sendto(session, ctx->_send_build, length);
     }
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_socket_load(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -803,7 +803,7 @@ static int rtsp_srv_session_socket_load(rtsp_srv_t *ctx, rtsp_session_t *session
     }
     if (session->audio_session.transport.rtp.unicast.local_rtp_port == 0)
         session->audio_session.transport.rtp.unicast.local_rtp_port = ctx->audio_sock.local_rtp_port;
-    return 0;
+    return OK;
 }
 
 static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *session)
@@ -897,7 +897,7 @@ static int rtsp_srv_session_event_handle(rtsp_srv_t *ctx, rtsp_session_t *sessio
     }
 
     sdp_text_free(&session->sdptext);
-    return 0;
+    return OK;
 }
 
 /*

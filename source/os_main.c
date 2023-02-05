@@ -88,6 +88,7 @@ extern int ftp_download(void *v, char *hostName, int port, char *path, char *fil
 extern int ortp_create_init(void);
 extern int testmain(int argc, char **argv);
 extern int testmain111(int argc, char **argv);
+extern int get_frame_h264_test(void);
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -128,7 +129,8 @@ int main(int argc, char **argv)
 	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", 1);
 #endif
 
-	
+	get_frame_h264_test();
+	//return 0;
 	startup_module_init(1);
 
 	startup_module_load();

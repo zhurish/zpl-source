@@ -26,7 +26,7 @@
 
 
 static OrtpLogFunc _ortp_log_func = NULL;
-static unsigned int _ortp_log_level = ORTP_LOGLEV_END;
+static unsigned int _ortp_log_level = ORTP_LOGLEV_END+1;
 
 void ortp_set_log_handler(OrtpLogFunc func){
     _ortp_log_func = func;

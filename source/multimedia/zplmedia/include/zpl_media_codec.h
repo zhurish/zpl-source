@@ -287,6 +287,12 @@ typedef struct
     ZPL_BIT_RATE_E		bitrate_type;	//码率类型
 }__attribute__ ((packed)) zpl_audio_codec_t ;
 
+
+
+
+extern const char *zpl_media_codec_name(int codec);
+extern int zpl_media_codec_key(const char *name);
+
 #ifdef __cplusplus
 }
 #endif

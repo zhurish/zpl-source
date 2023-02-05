@@ -250,7 +250,7 @@ int rtsp_urlpath_test(char *url)
     fprintf(stdout, "===============mode       :%d\r\n", urlpath.mode);
     fprintf(stdout, "===========================================\r\n");
     fflush(stdout);
-    return 0;
+    return OK;
 }
 #endif
 
@@ -260,7 +260,7 @@ int rtsp_authenticate_option(const char *auth, const char *username, const char 
     int length = 0;
     if(auth == NULL)
     {
-        return 0;
+        return -1;
     }
     else
     {

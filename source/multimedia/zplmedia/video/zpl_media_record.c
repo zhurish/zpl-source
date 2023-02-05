@@ -46,7 +46,9 @@ static char * zpl_media_channel_record_filename(zpl_media_channel_t *mediachn)
 {
     static zpl_uint32 data[128];
     os_memset(data, 0, sizeof(data));
-    sprintf(data, "%d-%d-%s", mediachn->channel, mediachn->channel_index, os_time_fmt("filename",0));
+    sprintf(data, "%d-%d-%s-%s", mediachn->channel, mediachn->channel_index, os_time_fmt("filename",0),
+        (mediachn->media_type==ZPL_MEDIA_VIDEO)?zpl_media_codec_name(mediachn->media_param.video_media.codec.enctype):
+        zpl_media_codec_name(mediachn->media_param.audio_media.codec.enctype));
     return data;
 }
 
@@ -77,7 +79,7 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
             return ERROR;
         }
-        record->record_file = zpl_media_file_create(zpl_media_channel_record_filename(mediachn), "a+");
+        record->record_file = zpl_media_file_create(mediachn, zpl_media_channel_record_filename(mediachn));
         if (record->record_file == NULL)
         {
             zpl_skbqueue_destroy(record->buffer_queue);

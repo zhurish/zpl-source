@@ -198,14 +198,14 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
             if(session->origin.addr == NULL)
                 session->origin.addr = strdup(addr);	    /**< The address.*/
             //session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "s=", 2) == 0)
         {
             if(session->name == NULL)
                 session->name = strdup(src+2);
             //session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "c=", 2) == 0)
         {
@@ -219,20 +219,20 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                 session->conn.addr_type = strdup(addr_type);	    /**< Address type ("IP4", "IP6")	*/
             if(session->conn.addr == NULL)
                 session->conn.addr = strdup(addr);	    /**< The address.*/
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "i=", 2) == 0)
         {
             if(session->information == NULL)
                 session->information = strdup(src+2);
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "u=", 2) == 0)
         {
             if(session->uri == NULL)
                 session->uri = strdup(src+2);
             //session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "e=", 2) == 0)
         {
@@ -247,7 +247,7 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                 token = strtok(NULL, " ");
             }
             //session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "p=", 2) == 0)
         {
@@ -262,7 +262,7 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                 token = strtok(NULL, " ");
             }
             //session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "z=", 2) == 0)
         {
@@ -287,7 +287,7 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                 token = strtok(NULL, " ");
             }
             //session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "k=", 2) == 0)
         {
@@ -301,7 +301,7 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                     session->encrypt_key.key = strdup(src+2 + n +1);
                 }
             }
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "a=", 2) == 0)
         {
@@ -316,13 +316,13 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                 }
                 session->attr_count++;
             }
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "t=", 2) == 0)
         {
             sscanf(src+2, "%d %d", &session->time.start, &session->time.stop);
             session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "r=", 2) == 0)
         {
@@ -354,7 +354,7 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
             }
             session->time.repeat_count++;
             session->media_start = false;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "m=", 2) == 0)
         {
@@ -383,7 +383,7 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
             }
             session->media_count++;
             session->media_start = true;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "b=", 2) == 0)
         {
@@ -399,10 +399,10 @@ static int sdp_attr_get_value(const char*src, uint32_t len, struct sdp_session *
                 }
             }
             session->bandw_count++;
-            return 0;
+            return OK;
         }
     }
-    return -1;
+    return ERROR;
 }
 
 static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_session *session, const char*name)
@@ -444,7 +444,7 @@ static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_ses
             fprintf(stdout, "=================================media_count=%d\r\n", session->media_count);
             session->media_count++;
             session->media_start = true;
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "c=", 2) == 0)
         {
@@ -458,13 +458,13 @@ static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_ses
                 session->media[session->media_count-1].conn.addr_type = strdup(addr_type);	    /**< Address type ("IP4", "IP6")	*/
             if(session->media[session->media_count-1].conn.addr == NULL)
                 session->media[session->media_count-1].conn.addr = strdup(addr);	    /**< The address.*/
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "i=", 2) == 0)
         {
             if(session->media[session->media_count-1].title == NULL)
                 session->media[session->media_count-1].title = strdup(src+2);
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "k=", 2) == 0)
         {
@@ -478,7 +478,7 @@ static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_ses
                     session->media[session->media_count-1].encrypt_key.key = strdup(src+2 + n +1);
                 }
             }
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "a=", 2) == 0)
         {
@@ -496,7 +496,7 @@ static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_ses
                 aindex++;
                 session->media[session->media_count-1].attr_count = aindex;
             }
-            return 0;
+            return OK;
         }
         else if(strncmp(src, "b=", 2) == 0)
         {
@@ -514,7 +514,7 @@ static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_ses
                 aindex++;
             }
             session->media[session->media_count-1].bandw_count = aindex;
-            return 0;
+            return OK;
         }
         else
         {
@@ -523,7 +523,7 @@ static int sdp_media_attr_get_value(const char*src, uint32_t len, struct sdp_ses
         session->media_start = false;
     }
     session->media_start = false;
-    return -1;
+    return ERROR;
 }
 
 
@@ -549,7 +549,7 @@ static int sdp_media_attr_parse(char*src, uint32_t len, struct sdp_session *hdr)
             return (_sdp_media_cb[i].get_value)(src, len, hdr, _sdp_media_cb[i].name);
         }
     }
-    return -1;
+    return ERROR;
 }
 
 
@@ -567,7 +567,7 @@ int sdp_attr_parse(char*src, uint32_t len, struct sdp_session *hdr, bool m)
             return (_sdp_session_cb[i].get_value)(src, len, hdr, _sdp_session_cb[i].name);
         }
     }
-    return -1;
+    return ERROR;
 }
 
 static int sdp_media_attr_free(struct sdp_session *session)
@@ -650,7 +650,7 @@ static int sdp_media_attr_free(struct sdp_session *session)
             }
         }
     }
-    return 0;
+    return OK;
 }
 
 int sdp_attr_free(struct sdp_session *session)
@@ -771,7 +771,7 @@ int sdp_attr_free(struct sdp_session *session)
         }
     }
     sdp_media_attr_free(session);
-    return 0;
+    return OK;
 }
 
 
@@ -846,7 +846,7 @@ static int sdp_media_attr_debug(struct sdp_session *session)
         }
     }
     fflush(stdout);
-    return 0;
+    return OK;
 }
 
 int sdp_attr_debug(struct sdp_session *session)
@@ -956,7 +956,7 @@ int sdp_attr_debug(struct sdp_session *session)
     }
     fflush(stdout);
     sdp_media_attr_debug(session);
-    return 0;
+    return OK;
 }
 
 int sdp_attr_rtpmap_get(const char* rtpmapstr, struct sdp_rtpmap *rtpmap)
@@ -967,7 +967,7 @@ int sdp_attr_rtpmap_get(const char* rtpmapstr, struct sdp_rtpmap *rtpmap)
     // payload type
     p1 = strchr(p, ' ');
     if(!p1)
-        return -1;
+        return ERROR;
 
     if(rtpmap)
     {
@@ -979,7 +979,7 @@ int sdp_attr_rtpmap_get(const char* rtpmapstr, struct sdp_rtpmap *rtpmap)
     //assert(' ' == *p1);
     p1 = strchr(p, '/');
     if(!p1)
-        return -1;
+        return ERROR;
 
     if(rtpmap)
     {
@@ -1008,5 +1008,5 @@ int sdp_attr_rtpmap_get(const char* rtpmapstr, struct sdp_rtpmap *rtpmap)
         }
     }
 
-    return 0;
+    return OK;
 }

@@ -198,6 +198,8 @@ int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *e
             break;
         case NALU_TYPE_FILL:
             break;
+        default:
+            return -1;    
         }
     }
     return 0;
@@ -834,7 +836,7 @@ int zpl_media_channel_decode_sps(const zpl_uint8 *buf, int len, int *width,int *
     if(len <= 0)
         return -1;
     bool findSPS = false;
-    if (buf[2] == 0)
+    if (buf[0] == 0 && buf[1] == 0 && buf[2] == 0)
     {
         if ((buf[4] & 0x1f) == 7)
         { // start code 0 0 0 1
@@ -843,7 +845,7 @@ int zpl_media_channel_decode_sps(const zpl_uint8 *buf, int len, int *width,int *
             findSPS = true;
         }
     }
-    else if (buf[2] == 1)
+    else if (buf[0] == 0 && buf[1] == 0 && buf[2] == 1)
     { // start code 0 0 1
         if ((buf[3] & 0x1f) == 7)
         {

@@ -12,6 +12,7 @@ OSOBJ	+= zpl_media_client.o
 OSOBJ	+= zpl_media_buffer.o
 OSOBJ	+= zpl_media_hardadap.o
 OSOBJ	+= zpl_media_api.o
+OSOBJ	+= zpl_media_codecmap.o
 
 OSOBJ	+= zpl_media_hal.o
 OSOBJ	+= zpl_media_cmd.o
