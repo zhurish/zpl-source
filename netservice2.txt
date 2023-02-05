@@ -1,0 +1,26 @@
+{
+	"netservice":	{
+		"slot":	2,
+		"vty_port":	3610,
+		"telnet_port":	233,
+		"tftpd_port":	639,
+		"ftpd_port":	231,
+		"sntpd_port":	3580,
+		"zclient_port":	65300,
+		"standbyd_port":	65301,
+		"standbyc_port":	65501,
+		"ipbc_port":	65310,
+		"hal_port":	65313,
+		"pal_port":	65324,
+		"rtsp_port":	3554,
+		"web_port":	8380,
+		"web_sslport":	3443,
+		"sshd_port":	4322,
+		"dhcpd_port":	367,
+		"dhcpc_port":	3547,
+		"dhcpd6_port":	368,
+		"dhcpc6_port":	3546,
+		"modbus_port":	35445,
+		"mqtt_port":	31883
+	}
+}
