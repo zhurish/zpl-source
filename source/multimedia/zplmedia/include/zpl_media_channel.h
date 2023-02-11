@@ -30,6 +30,7 @@ typedef int	(*zpl_media_buffer_handler)(zpl_media_channel_t *, const zpl_skbuffe
 
 typedef struct zpl_media_client_s
 {
+    zpl_bool                is_use;
     zpl_bool                enable;
 	zpl_media_buffer_handler _pmedia_buffer_handler;
 	void					*pVoidUser;
@@ -125,7 +126,7 @@ extern int zpl_media_channel_halparam_set(zpl_int32 channel,
 
 extern int zpl_media_channel_client_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_media_buffer_handler cb_handler, void *pUser);
 extern int zpl_media_channel_client_del(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_int32 index);
-
+extern int zpl_media_channel_client_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_int32 index, zpl_bool start);
 
 /* 激活通道 -> 创建底层资源 */
 extern int zpl_media_channel_active(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
@@ -137,7 +138,7 @@ extern int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E c
 extern int zpl_media_channel_inactive(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
 
 /* active:1 使能所有 ，:2 去使能所有 :3 开始所有 :4 停止所有 :-1 销毁所有*/
-extern int zpl_media_channel_handle_all(zpl_uint32 active);
+extern int zpl_media_channel_handle_all(zpl_int32 active);
 
 #ifdef ZPL_SHELL_MODULE
 int zpl_media_channel_show(void *pvoid);

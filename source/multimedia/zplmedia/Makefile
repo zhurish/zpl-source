@@ -20,6 +20,14 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/video/%.c
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
 
+$(OBJS_DIR)/%.o: $(SRC_DIR)/video/framediscrete/%.c
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
+#
+
 #
 $(OBJS_DIR)/%.o: $(SRC_DIR)/video/hal/%.c
 	@if test ! -d $(OBJS_DIR) ; \

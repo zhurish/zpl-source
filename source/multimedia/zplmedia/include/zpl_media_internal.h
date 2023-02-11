@@ -33,6 +33,7 @@ extern "C" {
 #include "zpl_media_log.h"
 #include "zpl_media_proxy.h"
 #include "zpl_media_area.h"
+#include "zpl_media_frame_adap.h"
 
 #include <zpl_video_input.h>
 #include <zpl_video_vpss.h>

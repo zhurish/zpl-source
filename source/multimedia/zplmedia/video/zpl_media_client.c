@@ -22,7 +22,7 @@ zpl_bool zpl_media_client_lookup(zpl_media_client_t *client, zpl_media_buffer_ha
     zpl_uint32 i = 0;
     for(i = 0; i < ZPL_MEDIA_CLIENT_MAX; i++)
     {
-        if(client[i].enable == zpl_true && client[i]._pmedia_buffer_handler == cb_handler)
+        if(client[i].is_use == zpl_true && client[i]._pmedia_buffer_handler == cb_handler)
         {
             if(pUser && client[i].pVoidUser && client[i].pVoidUser == pUser)
                 return zpl_true;
@@ -40,9 +40,9 @@ int zpl_media_client_add(zpl_media_client_t *client, zpl_media_buffer_handler cb
         return ERROR;
 	for(i = 0; i < ZPL_MEDIA_CLIENT_MAX; i++)
 	{
-		if(client[i].enable == zpl_false)
+		if(client[i].is_use == zpl_false)
 		{
-			client[i].enable = zpl_true;
+			client[i].is_use = zpl_true;
 			client[i]._pmedia_buffer_handler = cb_handler;
 			client[i].pVoidUser = pUser;
 
@@ -57,11 +57,25 @@ int zpl_media_client_del(zpl_media_client_t *client, zpl_int32 index)
     zpl_int32 i = ZPL_MEDIA_CLIENT_INDEX_GET(index);
 	if(i >= 0 && i < ZPL_MEDIA_CLIENT_MAX)
 	{
-		if(client[i].enable == zpl_true)
+		if(client[i].is_use == zpl_true)
 		{
-			client[i].enable = zpl_false;
+			client[i].is_use = zpl_false;
 			client[i]._pmedia_buffer_handler = NULL;
 			client[i].pVoidUser = NULL;
+            return OK;
+		}
+	}
+    return ERROR;
+}
+
+int zpl_media_client_start(zpl_media_client_t *client, zpl_int32 index, zpl_bool start)
+{
+    zpl_int32 i = ZPL_MEDIA_CLIENT_INDEX_GET(index);
+	if(i >= 0 && i < ZPL_MEDIA_CLIENT_MAX)
+	{
+		if(client[i].is_use == zpl_true)
+		{
+			client[i].enable = start;
             return OK;
 		}
 	}
@@ -91,7 +105,7 @@ int zpl_media_client_foreach(zpl_skbuffer_t *bufdata, void *p)
         //zpl_media_debugmsg_debug("======== zpl_media_client_foreach");
 		for(i = 0; i < ZPL_MEDIA_CLIENT_MAX; i++)
 		{
-			if(client[i].enable == zpl_true && client[i]._pmedia_buffer_handler != NULL)
+			if(client[i].enable == zpl_true && client[i].is_use == zpl_true && client[i]._pmedia_buffer_handler != NULL)
 			{
                 //zpl_media_debugmsg_debug("======== zpl_media_client_foreach _pmedia_buffer_handler");
                 client[i]._pmedia_buffer_handler(media_channel,  bufdata, client[i].pVoidUser);

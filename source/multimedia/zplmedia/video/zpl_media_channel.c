@@ -77,7 +77,7 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
    
         zpl_syshal_get_video_resolution(chn->media_param.video_media.codec.format, &chn->media_param.video_media.codec.vidsize); // 视频分辨率
 
-        chn->media_param.video_media.codec.enctype = ZPL_VIDEO_CODEC_H264;          // 编码类型
+        chn->media_param.video_media.codec.codectype = ZPL_VIDEO_CODEC_H264;          // 编码类型
         chn->media_param.video_media.codec.framerate = ZPL_VIDHAL_DEFULT_FRAMERATE; // 帧率
 
         if (chn->channel_index == ZPL_MEDIA_CHANNEL_INDEX_MAIN)
@@ -89,9 +89,9 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
         else
             chn->media_param.video_media.codec.bitrate = 2048;
         chn->media_param.video_media.codec.bitrate_type = ZPL_VIDHAL_DEFULT_BITRATE; // 码率类型
-        if (chn->media_param.video_media.codec.enctype == ZPL_VIDEO_CODEC_H264)
+        if (chn->media_param.video_media.codec.codectype == ZPL_VIDEO_CODEC_H264)
             chn->media_param.video_media.codec.profile = ZPL_VIDEO_CODEC_PROFILE_BASELINE;
-        else if (chn->media_param.video_media.codec.enctype == ZPL_VIDEO_CODEC_H265)
+        else if (chn->media_param.video_media.codec.codectype == ZPL_VIDEO_CODEC_H265)
             chn->media_param.video_media.codec.profile = ZPL_VIDEO_CODEC_PROFILE_MAIN;
 
         chn->media_param.video_media.codec.ikey_rate = ZPL_VIDHAL_DEFULT_IKEY_INTERVAL; // I帧间隔
@@ -114,7 +114,7 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
 	else if(chn->media_type == ZPL_MEDIA_AUDIO)
 	{
 		chn->media_param.audio_media.codec.framerate = ZPL_AUDIO_FRAMERATE_DEFAULT; // 帧率
-		chn->media_param.audio_media.codec.enctype = ZPL_AUDIO_CODEC_PCMU;          // 编码类型
+		chn->media_param.audio_media.codec.codectype = ZPL_AUDIO_CODEC_PCMU;          // 编码类型
 		chn->media_param.audio_media.codec.bitrate = 64;                            // 码率
 		chn->media_param.audio_media.codec.bitrate_type = 0;                        // 码率类型
 	}
@@ -217,7 +217,7 @@ int zpl_media_channel_create(zpl_int32 channel,
 			zpl_video_encode_t *encode = chn->media_param.video_media.halparam;
 			zpl_media_debugmsg_debug("create media channel(%d/%d) bind to encode(%d)", channel, channel_index, encode ? encode->venc_channel : -1);
 			zpl_media_debugmsg_debug("  format:%d %dx%d", chn->media_param.video_media.codec.format, chn->media_param.video_media.codec.vidsize.width, chn->media_param.video_media.codec.vidsize.height);
-			zpl_media_debugmsg_debug("    enctype:%d framerate:%d bitrate:%d profile:%d", chn->media_param.video_media.codec.enctype, chn->media_param.video_media.codec.framerate,
+			zpl_media_debugmsg_debug("    codectype:%d framerate:%d bitrate:%d profile:%d", chn->media_param.video_media.codec.codectype, chn->media_param.video_media.codec.framerate,
 										 chn->media_param.video_media.codec.bitrate, chn->media_param.video_media.codec.profile);
 			zpl_media_debugmsg_debug("    bitrate_type:%d ikey_rate:%d enRcMode:%d gopmode:%d", chn->media_param.video_media.codec.bitrate_type, chn->media_param.video_media.codec.ikey_rate,
 										 chn->media_param.video_media.codec.enRcMode, chn->media_param.video_media.codec.gopmode);
@@ -451,7 +451,23 @@ int zpl_media_channel_client_del(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E ch
 	return ret;	
 }
 
-
+int zpl_media_channel_client_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_int32 index, zpl_bool start)
+{
+	int ret = ERROR;
+    zpl_media_channel_t *mchannel = NULL;
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+    mchannel = zpl_media_channel_lookup_entry( channel, channel_index, 0);
+    if(mchannel)
+	    ret = zpl_media_client_start(mchannel->media_client, index, start);
+	if(ret == OK && start)
+	{
+		zpl_media_hal_request_IDR(mchannel); /* 请求关键帧 */
+	}
+	if (media_channel_mutex)
+		os_mutex_unlock(media_channel_mutex);
+	return ret;	
+}
 
 int zpl_media_channel_active(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index)
 {
@@ -639,7 +655,7 @@ int zpl_media_channel_halparam_set(zpl_int32 channel,
 	return OK;
 }
 
-int zpl_media_channel_handle_all(zpl_uint32 active)
+int zpl_media_channel_handle_all(zpl_int32 active)
 {
 	NODE node;
 	zpl_media_channel_t *chn = NULL;

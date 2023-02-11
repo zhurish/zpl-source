@@ -92,7 +92,7 @@ zpl_video_encode_config_json_read_obj(cJSON *obj, zpl_video_codec_t *encode)
 		ZPL_JSON_READ_INT(encode, obj, format);
 		ZPL_JSON_READ_INT(encode, obj, vidsize.width);
 		ZPL_JSON_READ_INT(encode, obj, vidsize.height);
-		ZPL_JSON_READ_INT(encode, obj, enctype);
+		ZPL_JSON_READ_INT(encode, obj, codectype);
 
 		ZPL_JSON_READ_INT(encode, obj, framerate);
 		ZPL_JSON_READ_INT(encode, obj, bitrate);
@@ -109,8 +109,8 @@ zpl_video_encode_config_json_read_obj(cJSON *obj, zpl_video_codec_t *encode)
 			encode->vidsize.width = cJSON_GetObjectItemIntValue(obj, "vidsize.width");
 		if (cJSON_GetObjectItem(obj, "vidsize.height")) 
 			encode->vidsize.height = cJSON_GetObjectItemIntValue(obj, "vidsize.height");
-		if (cJSON_GetObjectItem(obj, "enctype")) 
-			encode->enctype = cJSON_GetObjectItemIntValue(obj, "enctype");
+		if (cJSON_GetObjectItem(obj, "codectype")) 
+			encode->codectype = cJSON_GetObjectItemIntValue(obj, "codectype");
 		if (cJSON_GetObjectItem(obj, "framerate")) 
 			encode->framerate = cJSON_GetObjectItemIntValue(obj, "framerate");
 		if (cJSON_GetObjectItem(obj, "bitrate")) 
@@ -140,7 +140,7 @@ zpl_video_encode_config_json_write_obj(cJSON *obj, zpl_video_codec_t *encode)
 		/*ZPL_JSON_WRITE_INT(encode, obj, format);
 		ZPL_JSON_WRITE_INT(encode, obj, vidsize.width);
 		ZPL_JSON_WRITE_INT(encode, obj, vidsize.height);
-		ZPL_JSON_WRITE_INT(encode, obj, enctype);
+		ZPL_JSON_WRITE_INT(encode, obj, codectype);
 
 		ZPL_JSON_WRITE_INT(encode, obj, framerate);
 		ZPL_JSON_WRITE_INT(encode, obj, bitrate);
@@ -153,7 +153,7 @@ zpl_video_encode_config_json_write_obj(cJSON *obj, zpl_video_codec_t *encode)
 		cJSON_AddItemToObject(obj, "format", cJSON_CreateNumber(encode->format));
 		cJSON_AddItemToObject(obj, "vidsize.width", cJSON_CreateNumber(encode->vidsize.width));
 		cJSON_AddItemToObject(obj, "vidsize.height", cJSON_CreateNumber(encode->vidsize.height));
-		cJSON_AddItemToObject(obj, "enctype", cJSON_CreateNumber(encode->enctype));
+		cJSON_AddItemToObject(obj, "codectype", cJSON_CreateNumber(encode->codectype));
 		cJSON_AddItemToObject(obj, "framerate", cJSON_CreateNumber(encode->framerate));
 		cJSON_AddItemToObject(obj, "bitrate", cJSON_CreateNumber(encode->bitrate));
 		cJSON_AddItemToObject(obj, "profile", cJSON_CreateNumber(encode->profile));

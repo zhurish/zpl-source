@@ -240,17 +240,17 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
             zpl_media_filedesc_load(media_file);
             if (zpl_media_filedesc_check(media_file))
             {
-                if (media_file->filedesc.video.enctype != ZPL_VIDEO_CODEC_NONE)
+                if (media_file->filedesc.video.codectype != ZPL_VIDEO_CODEC_NONE)
                 {
                     media_file->b_video = zpl_true;
                 }
-                if (media_file->filedesc.audio.enctype != ZPL_AUDIO_CODEC_NONE)
+                if (media_file->filedesc.audio.codectype != ZPL_AUDIO_CODEC_NONE)
                 {
                     media_file->b_audio = zpl_true;
                 }
-                if (media_file->filedesc.video.enctype == RTP_MEDIA_PAYLOAD_H264)
+                if (media_file->filedesc.video.codectype != ZPL_VIDEO_CODEC_NONE)
                 {
-                    media_file->get_frame = zpl_media_file_get_frame_h264;
+                    media_file->get_frame = zpl_media_adap_get_frame_get(media_file->filedesc.video.codectype);
                     zpl_media_debugmsg_debug("media channel(%s) is h264 media file", name);
                 }
             }
@@ -266,27 +266,32 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
                 {
                     zpl_video_extradata_t extradata;
                     media_file->b_video = zpl_true;
-                    media_file->filedesc.video.enctype = icodec;
-                    if(media_file->filedesc.video.enctype == RTP_MEDIA_PAYLOAD_H264)
+                    media_file->filedesc.video.codectype = icodec;
+                    if (media_file->filedesc.video.codectype != ZPL_VIDEO_CODEC_NONE)
+                        media_file->get_frame = zpl_media_adap_get_frame_get(media_file->filedesc.video.codectype);
+                    if(media_file->filedesc.video.codectype == ZPL_VIDEO_CODEC_H264)
                     {
-                        media_file->get_frame = zpl_media_file_get_frame_h264;
                         memset(&extradata, 0, sizeof(zpl_video_extradata_t));
                         
                         if (zpl_media_file_extradata(media_file, &extradata) == OK && extradata.fSPSSize)
                         {
+                            h264_sps_extradata_t sps;
                             media_file->filedesc.hdrstr[0] = '$';
                             media_file->filedesc.hdrstr[1] = '$';
                             media_file->filedesc.hdrstr[2] = '$';
                             media_file->filedesc.hdrstr[3] = '$';
-                            zpl_media_channel_decode_sps(extradata.fSPS, extradata.fSPSSize, &media_file->filedesc.video.vidsize.width, 
-                                &media_file->filedesc.video.vidsize.height, &media_file->filedesc.video.framerate);
+                            zpl_media_channel_decode_sps(extradata.fSPS, extradata.fSPSSize, &sps);
+                            media_file->filedesc.video.vidsize.width = sps.vidsize.width;
+                            media_file->filedesc.video.vidsize.height = sps.vidsize.height;
+                            media_file->filedesc.video.framerate = sps.fps;
+                            media_file->filedesc.video.profile = sps.profile;
                         }
                     }
                 }
                 else
                 {
                     media_file->b_audio = zpl_true;
-                    media_file->filedesc.audio.enctype = icodec;
+                    media_file->filedesc.audio.codectype = icodec;
                 }
                 rewind(media_file->fp);
             }
@@ -434,8 +439,7 @@ int zpl_media_file_read(zpl_media_file_t *media_file, zpl_media_bufcache_t *bufc
 
     if (media_file && media_file->get_frame)
     {
-        //ret = (media_file->get_frame)(media_file->fp, bufcache);
-        ret = zpl_media_file_get_frame_h264(media_file->fp, bufcache);
+        ret = (media_file->get_frame)(media_file->fp, bufcache);
         len = bufcache->len;
 
         if (len > 0 && ret && bufcache->data)
@@ -472,8 +476,7 @@ int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extradata_t
                 break;
             n++;
             tmp.len = 0;
-            //ret = (media_file->get_frame)(media_file->fp, &tmp);
-            ret = zpl_media_file_get_frame_h264(media_file->fp, &tmp);
+            ret = (media_file->get_frame)(media_file->fp, &tmp);
             if (ret && tmp.len)
             {
                 H264_NALU_T nalu;
@@ -514,335 +517,4 @@ int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extradata_t
     zpl_media_bufcache_destroy(&tmp);
     ZPL_MEDIA_FILE_UNLOCK(media_file);
     return -1;
-}
-#if 0
-int zpl_media_file_get_frame_h264(zpl_media_file_t *media_file, zpl_media_bufcache_t *outpacket)
-{
-    int ret = 0;
-    uint32_t packetsize = 1400, packet_offset = 0;
-    uint32_t nalulen = 0;
-    uint8_t *p = NULL;
-    H264_NALU_T naluhdr;
-    char buftmp[1400 + 16];
-    char tmpdata[8];
-    memset(&naluhdr, 0, sizeof(H264_NALU_T));
-    outpacket->len = 0;
-    while(media_file->fp)
-    {
-        packetsize = 1400 - packet_offset;
-        ret = fread(buftmp + packet_offset, 1, packetsize, media_file->fp);
-        if(ret > 0)
-        {
-            if (is_nalu4_start(buftmp))
-            {
-                naluhdr.hdr_len = 4;
-                naluhdr.len = naluhdr.hdr_len;
-                naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
-                naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
-                naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
-                naluhdr.buf = buftmp;
-                media_file->flags |= 0x01;/* 找到开始的标志 */
-            }
-            else if (is_nalu3_start(buftmp))
-            {
-                naluhdr.hdr_len = 3;
-                naluhdr.len = naluhdr.hdr_len;
-                naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
-                naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
-                naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
-                naluhdr.buf = buftmp;
-                media_file->flags |= 0x01;/* 找到开始的标志 */
-            }
-            if(media_file->flags & 0x01)
-            {
-                p = buftmp + naluhdr.len;
-                nalulen = zpl_media_channel_get_nextnalu(p, (ret)-4);
-                if(nalulen)
-                {
-                    naluhdr.len += nalulen;
-                    zpl_media_bufcache_add(outpacket, buftmp, naluhdr.len);
-
-                    media_file->offset_len += (naluhdr.len);
-                    fseek(media_file->fp, media_file->offset_len, SEEK_SET);
-
-                    media_file->flags = 0;
-                    zpl_media_channel_nalu_show(&naluhdr);
-                    return outpacket->len;
-                }
-                else
-                {
-                    if(ret > 8)
-                    {
-                        zpl_media_bufcache_add(outpacket, buftmp, ret - 8);
-                        memcpy(tmpdata, buftmp+ret-8, 8);
-                        memmove(buftmp, tmpdata, 8);
-                        packet_offset = 8;
-                    }
-                    else
-                    {
-                        zpl_media_bufcache_add(outpacket, buftmp, ret);
-                        naluhdr.len += ret;
-                        media_file->offset_len = 0;
-                        media_file->flags = 0;
-                        //zpl_media_channel_nalu_show(&naluhdr);
-                        return outpacket->len;
-                    }
-                }
-            }
-        }
-        else
-            break;
-    }
-    media_file->offset_len = 0;
-    return -1;
-}
-#else
-int zpl_media_file_get_frame_h264(FILE *fp, zpl_media_bufcache_t *outpacket)
-{
-    int ret = 0;
-    static int tatol_len = 0;
-    uint32_t packetsize = 1400, packet_offset = 0;
-    uint32_t nalulen = 0, flags = 0, frist = 0;
-    int offset_len = 0;
-    uint8_t *p = NULL;
-    H264_NALU_T naluhdr;
-    char buftmp[1400 + 16];
-    //char tmpdata[8];
-    memset(&naluhdr, 0, sizeof(H264_NALU_T));
-    outpacket->len = 0;
-    while(fp)
-    {
-        packetsize = 1400 - packet_offset;
-        ret = fread(buftmp + packet_offset, 1, packetsize, fp);
-        if(ret > 0)
-        {
-            if(flags == 0)
-            {
-                if (is_nalu4_start(buftmp))
-                {
-                    naluhdr.hdr_len = 4;
-                    naluhdr.len = naluhdr.hdr_len;
-                    naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
-                    naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
-                    naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
-                    naluhdr.buf = buftmp;
-                    flags |= 0x01;/* 找到开始的标志 */
-                    frist = 1;
-                }
-                else if (is_nalu3_start(buftmp))
-                {
-                    naluhdr.hdr_len = 3;
-                    naluhdr.len = naluhdr.hdr_len;
-                    naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
-                    naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
-                    naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
-                    naluhdr.buf = buftmp;
-                    flags |= 0x01;/* 找到开始的标志 */
-                    frist = 1;
-                }
-            }
-            if(flags & 0x01)
-            {
-                if(frist)
-                    p = buftmp + naluhdr.hdr_len;
-                else    
-                    p = buftmp;
-                nalulen = zpl_media_channel_get_nextnalu(p, (ret)-4);
-                if(nalulen)
-                {
-                    naluhdr.len += nalulen;
-                    if(frist)
-                        zpl_media_bufcache_add(outpacket, buftmp, naluhdr.len);
-                    else
-                        zpl_media_bufcache_add(outpacket, buftmp, nalulen);
-                    if(frist)
-                        offset_len = naluhdr.len - ret;
-                    else    
-                        offset_len = nalulen - ret;
-                    if(offset_len)
-                        fseek(fp, offset_len, SEEK_CUR);
-
-                    flags = 0;
-                    zpl_media_channel_nalu_show(&naluhdr);
-                    tatol_len += outpacket->len;
-                    return outpacket->len;
-                }
-                else
-                {
-                    
-                    if(ret > 8)
-                    {
-                        if(frist)
-                            naluhdr.len = (ret-8);
-                        else    
-                            naluhdr.len += (ret-8);
-                        zpl_media_bufcache_add(outpacket, buftmp, ret - 8);
-    
-                        packet_offset = 0;
-                        fseek(fp, -8, SEEK_CUR);
-                        frist = 0;
-                    }
-                    else
-                    {
-                        zpl_media_bufcache_add(outpacket, buftmp, ret);
-                        naluhdr.len += ret;
-                        offset_len = 0;
-                        flags = 0;
-                        //zpl_media_channel_nalu_show(&naluhdr);
-                        tatol_len += outpacket->len;
-                        return outpacket->len;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if(feof(fp))
-            {
-                zpl_media_debugmsg_error("===========can not get media frame data eof tatol_len=%d packetsize=%d, ret=%d error(%s)", tatol_len, packetsize, ret, strerror(errno));
-                break;
-            }
-            else
-            {
-                if(ferror(fp))
-                {
-                    zpl_media_debugmsg_error("===========can not get media frame data tatol_len=%d packetsize=%d, ret=%d error(%s)", tatol_len, packetsize, ret, strerror(errno));
-                    break;
-                }
-            }
-        }
-    }
-    offset_len = 0;
-    tatol_len = 0;
-    return -1;
-}
-#endif
-
-static int zpl_media_file_get_frame_h264_test(FILE *fp)
-{
-    int ret = 0;
-    static int tatol_len = 0;
-    uint32_t packetsize = 1400, packet_offset = 0;
-    uint32_t nalulen = 0, flags = 0, frist = 0;
-    int offset_len = 0;//, frame_len = 0;
-    uint8_t *p = NULL;
-    H264_NALU_T naluhdr;
-    char buftmp[1400 + 16];
-    char tmpdata[16];
-    memset(&naluhdr, 0, sizeof(H264_NALU_T));
-    while(fp)
-    {
-        packetsize = 1400 - packet_offset;
-        ret = fread(buftmp + packet_offset, 1, packetsize, fp);
-        if(ret > 0)
-        {
-            if(flags == 0)
-            {
-                if (is_nalu4_start(buftmp))
-                {
-                    naluhdr.hdr_len = 4;
-                    naluhdr.len = naluhdr.hdr_len;
-                    naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
-                    naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
-                    naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
-                    naluhdr.buf = buftmp;
-                    flags |= 0x01;/* 找到开始的标志 */
-                    frist = 1;
-                }
-                else if (is_nalu3_start(buftmp))
-                {
-                    naluhdr.hdr_len = 3;
-                    naluhdr.len = naluhdr.hdr_len;
-                    naluhdr.forbidden_bit = buftmp[naluhdr.hdr_len] & 0x80;	 //1 bit
-                    naluhdr.nal_idc = buftmp[naluhdr.hdr_len] & 0x60;		 // 2 bit
-                    naluhdr.nal_unit_type = (buftmp[naluhdr.hdr_len]) & 0x1f; // 5 bit
-                    naluhdr.buf = buftmp;
-                    flags |= 0x01;/* 设置开始的标志 */
-                    frist = 1;
-                }
-            }
-            if(flags & 0x01)/* 找到开始的标志 */
-            {
-                if(frist)
-                    p = buftmp + naluhdr.hdr_len;
-                else    
-                    p = buftmp;
-                nalulen = zpl_media_channel_get_nextnalu(p, (ret)-4);
-                if(nalulen)
-                {
-                    naluhdr.len += nalulen;
-                    tatol_len += naluhdr.len;
-                    if(frist)
-                        offset_len = naluhdr.len - ret;
-                    else    
-                        offset_len = nalulen - ret;
-                    if(offset_len)
-                        fseek(fp, offset_len, SEEK_CUR);
-                    printf("===========get media frame size=%d offset_len=%d\r\n", naluhdr.len, offset_len);
-                    packet_offset = flags = 0;
-                    
-                    return naluhdr.len;
-                }
-                else
-                {
-                    if(ret > 8)
-                    {
-                        if(frist)
-                            naluhdr.len = (ret-8);
-                        else    
-                            naluhdr.len += (ret-8);
-                        memcpy(tmpdata, buftmp+(ret-8), 8);
-                        memcpy(buftmp, tmpdata, 8);
-                        packet_offset = 0;
-                        fseek(fp, -8, SEEK_CUR);
-                        frist = 0;
-                    }
-                    else
-                    {
-                        naluhdr.len += ret;
-                        offset_len = 0;
-                        flags = 0;
-                        frist = 0;
-                        tatol_len += ret;
-                        printf("===========get media last frame size=%d\r\n", naluhdr.len);
-                        printf("===========get media total frame size=%d\r\n", tatol_len);
-                        return naluhdr.len;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if(feof(fp))
-            {
-                printf("===========can not get media frame data eof tatol_len=%d packetsize=%d, ret=%d error(%s)\r\n", tatol_len, packetsize, ret, strerror(errno));
-                break;
-            }
-            else
-            {
-                if(ferror(fp))
-                {
-                    printf("===========can not get media frame data tatol_len=%d packetsize=%d, ret=%d error(%s)\r\n", tatol_len, packetsize, ret, strerror(errno));
-                    break;
-                }
-            }
-        }
-    }
-    offset_len = 0;
-    tatol_len = 0;
-    return -1;
-}
-
-
-int get_frame_h264_test(void)
-{
-    FILE *fp = NULL;
-    fp = fopen("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out-video.h264", "r");
-    if(fp)
-    {
-        while(zpl_media_file_get_frame_h264_test(fp) > 0)
-        ;
-        fclose(fp);
-    }
-    return 0;
 }

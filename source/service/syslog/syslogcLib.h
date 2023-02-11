@@ -131,6 +131,15 @@ extern "C" {
 #define MIN(x,y)   ((x) > (y)? (y): (x))
 #endif
 
+struct syslog_client_node
+{
+	zpl_socket_t sock;
+	zpl_uint16 port;
+	struct ipstack_in_addr address;
+	char  address_string[DFT_HOST_NAME_LEN];
+	zpl_bool		dynamics;
+};
+
 struct syslog_client
 {
 	zpl_bool enable;
@@ -154,7 +163,6 @@ struct syslog_client
 
 /* function declarations */
 
-#if defined(__STDC__) || defined(__cplusplus)
 
 extern int syslogc_lib_init(void *, char *);
 extern int syslogc_lib_uninit(void);
@@ -174,22 +182,8 @@ extern int syslogc_facility_get(zpl_uint32 *);
 
 extern int vsysclog (zpl_uint32 , zpl_uint32, char *, va_list );
 extern int syslogc_out(zpl_uint32 , zpl_uint32, char * , zpl_uint32 );
-/*
-extern int syslogcLibInit (char *);
-//extern STATUS syslogcMdataSend(M_BLK_ID,int,char *, UINT16,ULONG);
-extern int syslogcBinDataSend (zpl_uint8 *, int, char *,zpl_uint16, zpl_ulong);
-extern int syslogcStringSend (char *, zpl_uint16, zpl_ulong);
-*/
 
-#else	/* __STDC__ */
 
-extern int syslogcLibInit ();
-extern void syslogcShutdown ();
-extern STATUS syslogcMdataSend();
-extern STATUS syslogcBinDataSend ();
-extern STATUS syslogcStringSend ();
-
-#endif	/* __STDC__ */
 #endif
 
 #ifdef __cplusplus

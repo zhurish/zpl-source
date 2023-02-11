@@ -1,7 +1,7 @@
 /* syslogcLib.c - BSD syslog protocol client library */
 
 /* Copyright 2004 Wind River Systems, Inc. */
-//#include "copyright_wrs.h"
+// #include "copyright_wrs.h"
 /*
  modification history
  --------------------
@@ -46,18 +46,18 @@ static struct syslog_client *syslog_client = NULL;
  static int  syslogcLibInitDone = zpl_false;
  */
 
-static char * monthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-		"Aug", "Sep", "Oct", "Nov", "Dec" };
+static char *monthStr[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+						   "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 /* local function prototypes */
 
 static int syslogMsgSend(struct syslog_client *, void *, zpl_uint32, char *, zpl_uint16, zpl_ulong,
-		zpl_uint32);
-//static int mdataToSyslogBuf (M_BLK_ID,int, char *, int);
+						 zpl_uint32);
+// static int mdataToSyslogBuf (M_BLK_ID,int, char *, int);
 static int num100LessToAsc(zpl_uint32, char *);
 static int timestampStrGet(char *);
 static int syslogcBinToAscStrConvert(zpl_uint8 *, zpl_uint32, char *, zpl_uint32);
-static char * syslogHostNameStrGet(struct syslog_client *);
+static char *syslogHostNameStrGet(struct syslog_client *);
 /******************************************************************************
  *
  * syslogcLibInit - initialize the syslog client module
@@ -70,108 +70,121 @@ static char * syslogHostNameStrGet(struct syslog_client *);
  * RETURNS: ipstack_socket file descriptor or ERROR if fails
  *
  */
-static int syslogc_socket_init(struct syslog_client *client) {
+static int syslogc_socket_init(struct syslog_client *client)
+{
 	struct ipstack_sockaddr_in sin;
 	zpl_socket_t sFd;
 	zpl_family_t family = IPSTACK_SOCK_DGRAM;
-	if(!client)
+	if (!client)
 		return ERROR;
 	if (client && client->enable == zpl_true)
 	{
-		if(!ipstack_invalid(client->sock))
+		if (!ipstack_invalid(client->sock))
 			ipstack_close(client->sock);
 	}
 	/* validate the destination parameter */
 
-	if (client->address_string == NULL) {
+	if (client->address_string == NULL)
+	{
 		return ERROR;
-	} else {
-		//hostGetByName
+	}
+	else
+	{
+		// hostGetByName
 		struct ipstack_hostent *hptr;
 		hptr = ipstack_gethostbyname(client->address_string);
-		if (hptr) {
+		if (hptr)
+		{
 			char **pptr;
 			char str[32];
 			/* ���ݵ�ַ���ͣ�����ַ����� */
-			switch (hptr->h_addrtype) {
+			switch (hptr->h_addrtype)
+			{
 			case IPSTACK_AF_INET:
 			case IPSTACK_AF_INET6:
 				pptr = hptr->h_addr_list;
 				/* ���ղŵõ������е�ַ������������е�����ipstack_inet_ntop()���� */
-				for (; *pptr != NULL; pptr++) {
-/*					printf(" address:%s\n",
-							ipstack_inet_ntop(hptr->h_addrtype, *pptr, str, sizeof(str)));*/
+				for (; *pptr != NULL; pptr++)
+				{
+					/*					printf(" address:%s\n",
+												ipstack_inet_ntop(hptr->h_addrtype, *pptr, str, sizeof(str)));*/
 					ipstack_inet_ntop(hptr->h_addrtype, *pptr, str, sizeof(str));
 					client->address.s_addr = ipstack_inet_addr(str);
 					break;
 				}
 				break;
 			default:
-		    	fprintf (stdout, "\r\n%s:unknown address type:%s\r\n",
-		                   __func__,os_strerror (ipstack_errno) );
+				fprintf(stdout, "\r\n%s:unknown address type:%s\r\n",
+						__func__, os_strerror(ipstack_errno));
 				break;
 			}
-		} else {
-			if (((client->address.s_addr = ipstack_inet_addr(client->address_string)) == ERROR)/* &&
-			 ((client->address.s_addr = ipstack_gethostbyname(pServer)) == ERROR)*/) {
+		}
+		else
+		{
+			if (((client->address.s_addr = ipstack_inet_addr(client->address_string)) == ERROR) /* &&
+			  ((client->address.s_addr = ipstack_gethostbyname(pServer)) == ERROR)*/
+			)
+			{
 				client->address.s_addr = 0;
-		    	fprintf (stdout, "\r\n%s:syslogcLibInit,unknown default syslog server name:%s\r\n",
-		                   __func__,os_strerror (ipstack_errno) );
-		    	fflush(stdout);
-		    	return ERROR;
+				fprintf(stdout, "\r\n%s:syslogcLibInit,unknown default syslog server name:%s\r\n",
+						__func__, os_strerror(ipstack_errno));
+				fflush(stdout);
+				return ERROR;
 			}
 		}
 	}
 
 	/* create the client ipstack_socket */
 
-	bzero((char *) &sin, sizeof(sin));
+	bzero((char *)&sin, sizeof(sin));
 
-	if(client->mode == SYSLOG_TCP_MODE)
+	if (client->mode == SYSLOG_TCP_MODE)
 		family = IPSTACK_SOCK_STREAM;
 	else
 		family = IPSTACK_SOCK_DGRAM;
 	sFd = ipstack_socket(IPSTACK_IPCOM, IPSTACK_AF_INET, family, 0);
-	if (ipstack_invalid(sFd)) {
-    	fprintf (stdout, "\r\n%s: syslogcLibInit, syslog ipstack_socket creation fail:%s\r\n",
-                   __func__,os_strerror (ipstack_errno) );
-    	fflush(stdout);
+	if (ipstack_invalid(sFd))
+	{
+		fprintf(stdout, "\r\n%s: syslogcLibInit, syslog ipstack_socket creation fail:%s\r\n",
+				__func__, os_strerror(ipstack_errno));
+		fflush(stdout);
 		return ERROR;
 	}
 
 	/* ipstack_bind the ipstack_socket to the default port as recommeded by RFC3164 */
 
 	sin.sin_family = IPSTACK_AF_INET;
-//    sin.sin_len    = sizeof(sin);
+	//    sin.sin_len    = sizeof(sin);
 	sin.sin_port = htons(SYSLOGC_DEFAULT_PORT);
 	sin.sin_addr.s_addr = IPSTACK_INADDR_ANY;
 
-	if (ipstack_bind(sFd, (struct ipstack_sockaddr *) &sin, sizeof(sin)) == ERROR) {
-//		perror("\r\nsyslogcLibInit, syslog sokcet ipstack_bind fail");
-    	fprintf (stdout, "%s: syslogcLibInit ipstack_bind fail:%s\r\n",
-                   __func__,os_strerror (ipstack_errno) );
-    	ipstack_close(sFd);
+	if (ipstack_bind(sFd, (struct ipstack_sockaddr *)&sin, sizeof(sin)) == ERROR)
+	{
+		//		perror("\r\nsyslogcLibInit, syslog sokcet ipstack_bind fail");
+		fprintf(stdout, "%s: syslogcLibInit ipstack_bind fail:%s\r\n",
+				__func__, os_strerror(ipstack_errno));
+		ipstack_close(sFd);
 		fflush(stdout);
 		return ERROR;
 	}
 
 	/* get the client's host name used as ID in syslog message */
 
-/*
-	bzero(client->hostname, DFT_HOST_NAME_LEN);
+	/*
+		bzero(client->hostname, DFT_HOST_NAME_LEN);
 
-	if (gethostname(client->hostname, DFT_HOST_NAME_LEN - 1) == ERROR)
-		strcpy(client->hostname, "Un-defined host name");
-*/
+		if (gethostname(client->hostname, DFT_HOST_NAME_LEN - 1) == ERROR)
+			strcpy(client->hostname, "Un-defined host name");
+	*/
 	sin.sin_family = IPSTACK_AF_INET;
-	//serverSockAddr.sin_len         = sizeof(serverSockAddr);
+	// serverSockAddr.sin_len         = sizeof(serverSockAddr);
 	sin.sin_port = htons(client->port);
 	sin.sin_addr.s_addr = client->address.s_addr;
-	if(ipstack_connect(sFd, (struct ipstack_sockaddr *) &sin, sizeof(sin)) == ERROR)
+	if (ipstack_connect(sFd, (struct ipstack_sockaddr *)&sin, sizeof(sin)) == ERROR)
 	{
-    	fprintf (stdout, "%s: syslogcLibInit ipstack_connect fail:%s\r\n",
-                   __func__,os_strerror (ipstack_errno) );
-    	ipstack_close(sFd);
+		fprintf(stdout, "%s: syslogcLibInit ipstack_connect fail:%s\r\n",
+				__func__, os_strerror(ipstack_errno));
+		ipstack_close(sFd);
 		fflush(stdout);
 		return ERROR;
 	}
@@ -195,14 +208,16 @@ static int syslogc_reconnect(struct syslog_client *client)
  * RETURNS: NONE
  */
 
-static int syslogcShutdown(struct syslog_client *client) {
-	if(!client)
+static int syslogcShutdown(struct syslog_client *client)
+{
+	if (!client)
 		return ERROR;
-	if (client->enable == zpl_true) {
-		if(!ipstack_invalid(client->sock))
+	if (client->enable == zpl_true)
+	{
+		if (!ipstack_invalid(client->sock))
 			ipstack_close(client->sock);
 		client->ipstack_connect = zpl_false;
-		//client->enable = zpl_false;
+		// client->enable = zpl_false;
 		return OK;
 	}
 	return OK;
@@ -268,17 +283,18 @@ zpl_ulong serverIpAddr /* binary server IP address in network byte order,
  * RETURNS: OK or ERROR
  */
 
-static int syslogcStringSend(struct syslog_client *client, char * pStr, /* point to the NULL terminated string */
-zpl_uint16 code, /* syslog facility and severity code, default used if 0 */
-zpl_ulong serverIpAddr /* binary server IP address in network byte order,
- * default used if value is 0 */
-) {
-	if(!client)
+static int syslogcStringSend(struct syslog_client *client, char *pStr, /* point to the NULL terminated string */
+							 zpl_uint16 code,						   /* syslog facility and severity code, default used if 0 */
+							 zpl_ulong serverIpAddr					   /* binary server IP address in network byte order,
+																		* default used if value is 0 */
+)
+{
+	if (!client)
 		return ERROR;
 	if (client->enable == zpl_false)
 		return ERROR;
 
-	return syslogMsgSend(client, (void *) pStr, 0, NULL, code, serverIpAddr, CDATA_TYPE);
+	return syslogMsgSend(client, (void *)pStr, 0, NULL, code, serverIpAddr, CDATA_TYPE);
 }
 
 /******************************************************************************
@@ -291,18 +307,19 @@ zpl_ulong serverIpAddr /* binary server IP address in network byte order,
  * RETURNS: OK or ERROR
  *
  */
-static int syslogMsgSend(struct syslog_client *client, void * pData, /* point to the data message */
-zpl_uint32 dataLen, /* length of the message */
-char * pMsgIdStr, /* message Id string */
-zpl_uint16 code, /* syslog facility and severity code, default used if 0 */
-zpl_ulong serverIpAddr, zpl_uint32 dataType) {
-	char  pLogMsg[SYSLOG_MSG_MAX_LEN];
+static int syslogMsgSend(struct syslog_client *client, void *pData, /* point to the data message */
+						 zpl_uint32 dataLen,						/* length of the message */
+						 char *pMsgIdStr,							/* message Id string */
+						 zpl_uint16 code,							/* syslog facility and severity code, default used if 0 */
+						 zpl_ulong serverIpAddr, zpl_uint32 dataType)
+{
+	char pLogMsg[SYSLOG_MSG_MAX_LEN];
 	zpl_uint32 cnt = 0;
 	zpl_uint32 remainder;
 	zpl_uint32 digit;
-	char * pTmp;
+	char *pTmp;
 	zpl_uint32 len;
-//	struct ipstack_sockaddr_in serverSockAddr;
+	//	struct ipstack_sockaddr_in serverSockAddr;
 	zpl_uint8 fCode; /* syslog facility code */
 	zpl_uint8 sCode; /* syslog severity code */
 
@@ -312,7 +329,7 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 		return ERROR;
 
 	fCode = (code >> 8) & 0xff;
-	sCode = (zpl_uint8) (code & 0xff);
+	sCode = (zpl_uint8)(code & 0xff);
 
 	/* check facility code, use default if not specified or invalid */
 
@@ -324,7 +341,8 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 	if (sCode > SYSLOGC_SEVERITY_DEBUG)
 		sCode = SYSLOGC_SEVERITY_INFORMATIONAL;
 
-	if (serverIpAddr == 0 && client->address.s_addr == 0) {
+	if (serverIpAddr == 0 && client->address.s_addr == 0)
+	{
 		/* syslog server IP address is not specified  */
 
 		return ERROR;
@@ -335,19 +353,19 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 
 	/* initialize the server address structure */
 
-/*
-	serverSockAddr.sin_family = IPSTACK_AF_INET;
-	serverSockAddr.sin_len         = sizeof(serverSockAddr);
-	serverSockAddr.sin_port = htons(SYSLOGC_DEFAULT_PORT);
-	serverSockAddr.sin_addr.s_addr = serverIpAddr;
-*/
+	/*
+		serverSockAddr.sin_family = IPSTACK_AF_INET;
+		serverSockAddr.sin_len         = sizeof(serverSockAddr);
+		serverSockAddr.sin_port = htons(SYSLOGC_DEFAULT_PORT);
+		serverSockAddr.sin_addr.s_addr = serverIpAddr;
+	*/
 
 	/* malloc a buffer to compose the syslog message */
 
-/*	if ((pLogMsg = XMALLOC(MTYPE_ZLOG, SYSLOG_MSG_MAX_LEN)) == NULL) {
-    	fprintf (stdout, "\r\nERROR: slogcMsgSend: fail to allocate the memory\r\n");
-		return ERROR;
-	}*/
+	/*	if ((pLogMsg = XMALLOC(MTYPE_ZLOG, SYSLOG_MSG_MAX_LEN)) == NULL) {
+			fprintf (stdout, "\r\nERROR: slogcMsgSend: fail to allocate the memory\r\n");
+			return ERROR;
+		}*/
 	os_memset(pLogMsg, 0, SYSLOG_MSG_MAX_LEN);
 
 	/* compose the PRI part */
@@ -361,7 +379,8 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 	/* extract the 100th digit and convert to ASCII value*/
 
 	digit = remainder / 100;
-	if (digit) {
+	if (digit)
+	{
 		remainder = remainder - (digit * 100);
 		pLogMsg[cnt++] = digit + ASCII_ZERO;
 	}
@@ -384,7 +403,7 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 
 	/* host name */
 	client->hostname = syslogHostNameStrGet(client);
-	if(client->hostname)
+	if (client->hostname)
 	{
 		bcopy(client->hostname, &pLogMsg[cnt], os_strlen(client->hostname));
 		cnt += strlen(client->hostname);
@@ -399,9 +418,10 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 
 	/* Use task name as the  process Id */
 
-	pTmp = client->processname; //taskName(taskIdSelf());
+	pTmp = client->processname; // taskName(taskIdSelf());
 
-	if ((pTmp)) {
+	if ((pTmp))
+	{
 		len = MIN(strlen(pTmp), DFT_TAGID_LEN);
 		bcopy(pTmp, &pLogMsg[cnt], len);
 		cnt += len;
@@ -409,7 +429,8 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 		pLogMsg[cnt++] = ' ';
 	}
 
-	if (pMsgIdStr != NULL) {
+	if (pMsgIdStr != NULL)
+	{
 		len = MIN(strlen(pMsgIdStr), SYSLOG_MSG_MAX_LEN - cnt - 1);
 		bcopy(pMsgIdStr, &pLogMsg[cnt], len);
 		cnt += len;
@@ -417,7 +438,8 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 
 	pLogMsg[cnt++] = ' ';
 
-	switch (dataType) {
+	switch (dataType)
+	{
 	case MDATA_TYPE:
 		/*            cnt += mdataToSyslogBuf((M_BLK_ID)pData,dataLen,
 		 &pLogMsg[cnt],
@@ -425,47 +447,49 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
 		break;
 
 	case BDATA_TYPE:
-		cnt += syslogcBinToAscStrConvert((zpl_uint8 *) pData, dataLen,
-				&pLogMsg[cnt],
-				SYSLOG_MSG_MAX_LEN - cnt);
+		cnt += syslogcBinToAscStrConvert((zpl_uint8 *)pData, dataLen,
+										 &pLogMsg[cnt],
+										 SYSLOG_MSG_MAX_LEN - cnt);
 		break;
 
-	case CDATA_TYPE: {
+	case CDATA_TYPE:
+	{
 		zpl_uint32 copyLen;
 
-		copyLen = MIN(strlen((char * )pData), (SYSLOG_MSG_MAX_LEN - cnt));
+		copyLen = MIN(strlen((char *)pData), (SYSLOG_MSG_MAX_LEN - cnt));
 
-		bcopy((char *) pData, &pLogMsg[cnt], copyLen);
+		bcopy((char *)pData, &pLogMsg[cnt], copyLen);
 		cnt += copyLen;
 	}
-		break;
+	break;
 
 	default:
-    	fprintf (stdout, "\r\nERROR type 0x%x not supported\r\n", dataType);
+		fprintf(stdout, "\r\nERROR type 0x%x not supported\r\n", dataType);
 	}
 
 	/* now ipstack_send the message to the server */
 
-/*	if (ipstack_sendto(client->sock, (caddr_t) pLogMsg, cnt, 0,
-			(struct ipstack_sockaddr *) &serverSockAddr, sizeof(serverSockAddr))
-			== ERROR) {
-		XFREE(MTYPE_ZLOG,pLogMsg);
-    	fprintf (stdout, "\r\n%s: syslogMsgSend ipstack_sendto fail:%s\r\n",
-                   __func__,os_strerror (ipstack_errno) );
-    	fflush(stdout);
-		return (ERROR);
-	}*/
-	if (ipstack_write(client->sock, pLogMsg, cnt) == ERROR) {
+	/*	if (ipstack_sendto(client->sock, (caddr_t) pLogMsg, cnt, 0,
+				(struct ipstack_sockaddr *) &serverSockAddr, sizeof(serverSockAddr))
+				== ERROR) {
+			XFREE(MTYPE_ZLOG,pLogMsg);
+			fprintf (stdout, "\r\n%s: syslogMsgSend ipstack_sendto fail:%s\r\n",
+					   __func__,os_strerror (ipstack_errno) );
+			fflush(stdout);
+			return (ERROR);
+		}*/
+	if (ipstack_write(client->sock, pLogMsg, cnt) == ERROR)
+	{
 
 		syslogcShutdown(client);
 		return syslogc_reconnect(client);
-	    	fprintf (stdout, "\r\n%s: syslogMsgSend ipstack_sendto fail:%s\r\n",
-	                   __func__,os_strerror (ipstack_errno) );
-	    	fflush(stdout);
-			return (ERROR);
-		}
+		fprintf(stdout, "\r\n%s: syslogMsgSend ipstack_sendto fail:%s\r\n",
+				__func__, os_strerror(ipstack_errno));
+		fflush(stdout);
+		return (ERROR);
+	}
 
-//	XFREE(MTYPE_ZLOG,pLogMsg);
+	//	XFREE(MTYPE_ZLOG,pLogMsg);
 	return OK;
 }
 
@@ -476,11 +500,12 @@ zpl_ulong serverIpAddr, zpl_uint32 dataType) {
  * RETURN: number of ASCII bytes written to buffer
  */
 
-static int syslogcBinToAscStrConvert(zpl_uint8 * pData, /* point to a block of data */
-zpl_uint32 dataLen, /* data length */
-char * pBuf, /* buffer to store converted ASCII value */
-zpl_uint32 bufLen /* length of the buffer */
-) {
+static int syslogcBinToAscStrConvert(zpl_uint8 *pData,	 /* point to a block of data */
+									 zpl_uint32 dataLen, /* data length */
+									 char *pBuf,		 /* buffer to store converted ASCII value */
+									 zpl_uint32 bufLen	 /* length of the buffer */
+)
+{
 	zpl_uint32 i;
 	zpl_uint32 cnt = 0;
 	zpl_uint32 copyLen;
@@ -489,7 +514,8 @@ zpl_uint32 bufLen /* length of the buffer */
 
 	copyLen = MIN(dataLen, bufLen / 3);
 
-	for (i = 0; i < copyLen; i++) {
+	for (i = 0; i < copyLen; i++)
+	{
 		/* the most significant 4 bits */
 
 		if (BYTE_MS4BITS(pData[i]) > 9)
@@ -571,7 +597,7 @@ static int mdataToSyslogBuf
  * RETURNS: the length of  the timestamp string
  */
 #if 1
-static int timestampStrGet(char * pBuf)
+static int timestampStrGet(char *pBuf)
 {
 	zpl_uint32 cnt = 0;
 	zpl_time_t timeSec = 0;
@@ -581,8 +607,8 @@ static int timestampStrGet(char * pBuf)
 	if (!timeSec)
 		return cnt;
 	os_memset(buf, 0, sizeof(buf));
-	tm = localtime((zpl_time_t *) &timeSec);
-	strftime(buf,50,"%d %H:%M:%S",tm);
+	tm = localtime((zpl_time_t *)&timeSec);
+	strftime(buf, 50, "%d %H:%M:%S", tm);
 	strcpy(pBuf, monthStr[tm->tm_mon]);
 	cnt += strlen(monthStr[tm->tm_mon]);
 	pBuf[cnt++] = FIELD_DELIMITER;
@@ -592,16 +618,17 @@ static int timestampStrGet(char * pBuf)
 }
 
 #else
-static int timestampStrGet(char * pBuf /* buffer to store the timestamp string */
-) {
+static int timestampStrGet(char *pBuf /* buffer to store the timestamp string */
+)
+{
 	int cnt = 0;
 	zpl_uint32 timeSec = 0;
 	int digit;
 	struct timespec ts;
 	struct tm timeFields;
-	//struct timespec _clockRealtime;
+	// struct timespec _clockRealtime;
 
-	//if (_clockRealtime.timeBase.tv_sec)
+	// if (_clockRealtime.timeBase.tv_sec)
 	{
 		clock_gettime(CLOCK_REALTIME, &ts);
 		timeSec = ts.tv_sec;
@@ -610,7 +637,7 @@ static int timestampStrGet(char * pBuf /* buffer to store the timestamp string *
 	if (!timeSec)
 		return cnt;
 
-	localtime_r((zpl_time_t *) &timeSec, &timeFields);
+	localtime_r((zpl_time_t *)&timeSec, &timeFields);
 
 	/* month field */
 
@@ -623,7 +650,8 @@ static int timestampStrGet(char * pBuf /* buffer to store the timestamp string *
 
 	if (timeFields.tm_mday < 10)
 		pBuf[cnt++] = ' ';
-	else {
+	else
+	{
 		digit = timeFields.tm_mday / 10;
 		timeFields.tm_mday = timeFields.tm_mday - (digit * 10);
 		pBuf[cnt++] = digit + ASCII_ZERO;
@@ -657,8 +685,9 @@ static int timestampStrGet(char * pBuf /* buffer to store the timestamp string *
  */
 
 static int num100LessToAsc(zpl_uint32 number, /* numeric value */
-char * pBuf /* buffer to store the converted ASCII data */
-) {
+						   char *pBuf		  /* buffer to store the converted ASCII data */
+)
+{
 	zpl_uint32 digit;
 	zpl_uint32 cnt = 0;
 
@@ -671,9 +700,9 @@ char * pBuf /* buffer to store the converted ASCII data */
 }
 
 /******************************************************************************/
-static char * syslogHostNameStrGet(struct syslog_client *client)
+static char *syslogHostNameStrGet(struct syslog_client *client)
 {
-	if(client && client->hostname)
+	if (client && client->hostname)
 		return client->hostname;
 	else
 		return _global_host.name;
@@ -685,22 +714,22 @@ static char * syslogHostNameStrGet(struct syslog_client *client)
 
 int syslogc_lib_init(void *m, char *processname)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		syslog_client = XMALLOC(MTYPE_ZLOG, sizeof(struct syslog_client));
-	if(syslog_client)
+	if (syslog_client)
 	{
 		syslog_client->master = m;
-		if(processname)
+		if (processname)
 		{
-			if(syslog_client->processname)
+			if (syslog_client->processname)
 				XFREE(MTYPE_ZLOG, syslog_client->processname);
 			syslog_client->processname = XSTRDUP(MTYPE_ZLOG, processname);
-			//os_memset(syslog_client->processname, 0, sizeof(syslog_client->processname));
-			//os_memcpy(syslog_client->processname, processname, MIN(os_strlen(processname),DFT_HOST_NAME_LEN));
+			// os_memset(syslog_client->processname, 0, sizeof(syslog_client->processname));
+			// os_memcpy(syslog_client->processname, processname, MIN(os_strlen(processname),DFT_HOST_NAME_LEN));
 		}
-		if(!syslog_client->mutx)
+		if (!syslog_client->mutx)
 			syslog_client->mutx = os_mutex_name_init("syslog-mutex");
-//		OS_SERVICE_DEBUG("%s:processname=%s\r\n", __func__,syslog_client->processname);
+		//		OS_SERVICE_DEBUG("%s:processname=%s\r\n", __func__,syslog_client->processname);
 		return OK;
 	}
 	return ERROR;
@@ -708,14 +737,14 @@ int syslogc_lib_init(void *m, char *processname)
 
 int syslogc_lib_uninit(void)
 {
-	if(syslog_client)
+	if (syslog_client)
 	{
-//		OS_SERVICE_DEBUG("%s:\r\n", __func__);
+		//		OS_SERVICE_DEBUG("%s:\r\n", __func__);
 		syslogcShutdown(syslog_client);
-		if(syslog_client->processname)
+		if (syslog_client->processname)
 			XFREE(MTYPE_ZLOG, syslog_client->processname);
-		//if(syslog_client->hostname)
-		if(syslog_client->mutx)
+		// if(syslog_client->hostname)
+		if (syslog_client->mutx)
 			os_mutex_exit(syslog_client->mutx);
 		//	XFREE(MTYPE_ZLOG, syslog_client->hostname);
 		XFREE(MTYPE_ZLOG, syslog_client);
@@ -726,66 +755,66 @@ int syslogc_lib_uninit(void)
 
 int syslogc_enable(char *hostname)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		syslog_client->enable = zpl_true;
-	if(hostname)
+	if (hostname)
 	{
-/*		if(syslog_client->hostname)
-			XFREE(MTYPE_ZLOG, syslog_client->hostname);
-		syslog_client->processname = XSTRDUP(MTYPE_ZLOG, processname);
-		*/
+		/*		if(syslog_client->hostname)
+					XFREE(MTYPE_ZLOG, syslog_client->hostname);
+				syslog_client->processname = XSTRDUP(MTYPE_ZLOG, processname);
+				*/
 		syslog_client->hostname = hostname;
-		//os_memset(syslog_client->hostname, 0, sizeof(syslog_client->hostname));
-		//os_memcpy(syslog_client->hostname, hostname, MIN(os_strlen(hostname),DFT_HOST_NAME_LEN));
+		// os_memset(syslog_client->hostname, 0, sizeof(syslog_client->hostname));
+		// os_memcpy(syslog_client->hostname, hostname, MIN(os_strlen(hostname),DFT_HOST_NAME_LEN));
 	}
 	else
 	{
 		syslog_client->hostname = syslogHostNameStrGet(syslog_client);
-		//syslog_client->hostname = zpl_host.name;
+		// syslog_client->hostname = zpl_host.name;
 	}
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 zpl_bool syslogc_is_enable(void)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return zpl_false;
 	return syslog_client->enable;
 }
 
 int syslogc_disable(void)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return OK;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	syslogcShutdown(syslog_client);
 	syslog_client->enable = zpl_false;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 int syslogc_is_dynamics(void)
 {
-	if(syslog_client == NULL)
+	if (syslog_client == NULL)
 		return ERROR;
 	return syslog_client->dynamics;
 }
 
 int syslogc_dynamics_enable(void)
 {
-	if(syslog_client == NULL)
+	if (syslog_client == NULL)
 		return ERROR;
-	if(!syslog_client->dynamics)
+	if (!syslog_client->dynamics)
 		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
 	syslog_client->dynamics = zpl_true;
 	return OK;
@@ -793,9 +822,9 @@ int syslogc_dynamics_enable(void)
 
 int syslogc_dynamics_disable(void)
 {
-	if(syslog_client == NULL)
+	if (syslog_client == NULL)
 		return ERROR;
-	if(syslog_client->dynamics)
+	if (syslog_client->dynamics)
 		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
 	syslog_client->dynamics = zpl_false;
 	return OK;
@@ -803,164 +832,164 @@ int syslogc_dynamics_disable(void)
 
 int syslogc_host_config_set(char *address_string, zpl_uint16 port, zpl_uint32 facility)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	syslog_client->port = port;
 	syslog_client->facility = facility;
-	if(address_string)
+	if (address_string)
 	{
 		os_memset(syslog_client->address_string, 0, sizeof(syslog_client->address_string));
-		os_memcpy(syslog_client->address_string, address_string, MIN(os_strlen(address_string),DFT_HOST_NAME_LEN));
+		os_memcpy(syslog_client->address_string, address_string, MIN(os_strlen(address_string), DFT_HOST_NAME_LEN));
 	}
-	if(syslogcShutdown(syslog_client) == OK)
+	if (syslogcShutdown(syslog_client) == OK)
 	{
-		if(syslogc_socket_init(syslog_client) != ERROR)
+		if (syslogc_socket_init(syslog_client) != ERROR)
 		{
-		    fflush(stdout);
-			if(syslog_client->mutx)
+			fflush(stdout);
+			if (syslog_client->mutx)
 				os_mutex_unlock(syslog_client->mutx);
 			return OK;
 		}
-	    fflush(stdout);
+		fflush(stdout);
 	}
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 int syslogc_host_config_get(char *hostname, zpl_uint16 *port, zpl_uint32 *facility)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
-	if(port)
+	if (port)
 		*port = syslog_client->port;
-	if(hostname && os_strlen(syslog_client->address_string)>1)
+	if (hostname && os_strlen(syslog_client->address_string) > 1)
 		os_strncpy(hostname, syslog_client->address_string,
-				MIN(os_strlen(syslog_client->address_string), DFT_HOST_NAME_LEN));
-	if(facility)
+				   MIN(os_strlen(syslog_client->address_string), DFT_HOST_NAME_LEN));
+	if (facility)
 		*facility = syslog_client->facility;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 int syslogc_mode_set(zpl_uint32 mode)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
 
-	if(syslog_client->mode == mode)
+	if (syslog_client->mode == mode)
 		return OK;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	syslog_client->mode = mode;
-	if(syslogcShutdown(syslog_client) == OK)
+	if (syslogcShutdown(syslog_client) == OK)
 	{
-		if(syslogc_socket_init(syslog_client) != ERROR)
+		if (syslogc_socket_init(syslog_client) != ERROR)
 		{
-			if(syslog_client->mutx)
+			if (syslog_client->mutx)
 				os_mutex_unlock(syslog_client->mutx);
-		    fflush(stdout);
+			fflush(stdout);
 			return OK;
 		}
-	    fflush(stdout);
+		fflush(stdout);
 	}
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 int syslogc_mode_get(zpl_uint32 *mode)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
-	if(mode)
+	if (mode)
 		*mode = syslog_client->mode;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 int syslogc_facility_set(zpl_uint32 facility)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
 	syslog_client->facility = facility;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
 int syslogc_facility_get(zpl_uint32 *facility)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_lock(syslog_client->mutx, OS_WAIT_FOREVER);
-	if(facility)
+	if (facility)
 		*facility = syslog_client->facility;
-	if(syslog_client->mutx)
+	if (syslog_client->mutx)
 		os_mutex_unlock(syslog_client->mutx);
 	return OK;
 }
 
-static int syslogc_format(struct syslog_client *client, zpl_uint32 pri, char * pStr, zpl_uint32 len)
+static int syslogc_format(struct syslog_client *client, zpl_uint32 pri, char *pStr, zpl_uint32 len)
 {
 	zpl_uint16 code = 0;
-	if(!client)
+	if (!client)
 		return ERROR;
 	code = ((client->facility & 0xff) << 5);
 	code |= (pri & 0xff);
 
 	return syslogcStringSend(client, pStr,
-		code, client->address.s_addr);
+							 code, client->address.s_addr);
 }
 
-int vsysclog (zpl_uint32 priority, zpl_uint32 facility, char *format, va_list arglist)
+int vsysclog(zpl_uint32 priority, zpl_uint32 facility, char *format, va_list arglist)
 {
 	zpl_uint32 len = 0;
 	char log_msg[SYSLOG_MSG_MAX_LEN];
-    va_list ac;
-	if(!syslog_client)
+	va_list ac;
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
 	syslog_client->facility = facility;
-    va_copy(ac, arglist);
-    len = vsnprintf (log_msg, SYSLOG_MSG_MAX_LEN, format, ac);
-    //vfprintf (stdout, format, ac);
-    syslogc_format(syslog_client, priority, log_msg, len);
-    va_end(ac);
-    return OK;
+	va_copy(ac, arglist);
+	len = vsnprintf(log_msg, SYSLOG_MSG_MAX_LEN, format, ac);
+	// vfprintf (stdout, format, ac);
+	syslogc_format(syslog_client, priority, log_msg, len);
+	va_end(ac);
+	return OK;
 }
 
-int syslogc_out(zpl_uint32 priority, zpl_uint32 facility, char * pStr, zpl_uint32 len)
+int syslogc_out(zpl_uint32 priority, zpl_uint32 facility, char *pStr, zpl_uint32 len)
 {
-	if(!syslog_client)
+	if (!syslog_client)
 		return ERROR;
-	if(syslog_client->enable == zpl_false)
+	if (syslog_client->enable == zpl_false)
 		return ERROR;
-	if(pStr == NULL)
+	if (pStr == NULL)
 		return ERROR;
-	if(syslog_client->ipstack_connect == zpl_false)
+	if (syslog_client->ipstack_connect == zpl_false)
 		return ERROR;
 	syslog_client->facility = facility;
 	return syslogc_format(syslog_client, priority, pStr, len);

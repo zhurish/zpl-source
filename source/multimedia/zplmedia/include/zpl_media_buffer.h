@@ -39,7 +39,7 @@ typedef struct zpl_media_bufcache_s
     uint8_t     *data;
     int32_t    len;
     uint32_t    maxsize;
-}zpl_media_bufcache_t ;
+}zpl_media_bufcache_t, zpl_media_frame_t;
 
 typedef struct 
 {

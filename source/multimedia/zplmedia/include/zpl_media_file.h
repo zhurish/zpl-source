@@ -24,6 +24,8 @@ typedef struct
 #pragma pack(0)
 
 
+typedef int (* media_get_frame_hander)(FILE *, zpl_media_bufcache_t*);
+typedef int (* media_put_frame_hander)(FILE *, char *, int);
 
 typedef struct zpl_media_file_s zpl_media_file_t;
 
@@ -42,8 +44,8 @@ struct zpl_media_file_s
 
     os_mutex_t *_mutex;
     zpl_media_bufcache_t bufcache;
-    int         (*get_frame)(FILE *, zpl_media_bufcache_t *);            // 读取一帧数据回调函数
-    int         (*put_frame)(zpl_media_file_t*, char *, int);
+    media_get_frame_hander get_frame;            // 读取一帧数据回调函数
+    media_put_frame_hander put_frame;
 };
 
 #define zpl_media_file_getptr(m)             (((zpl_media_file_t*)m))
@@ -68,10 +70,6 @@ extern int zpl_media_file_put_frame_callback(zpl_media_file_t *media_file, int (
 extern int zpl_media_file_read(zpl_media_file_t *media_file, zpl_media_bufcache_t *bufcache);
 extern int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extradata_t *extradata);
 
-//extern int zpl_media_file_get_frame_h264(zpl_media_file_t *media_file, zpl_media_bufcache_t *outpacket);
-extern int zpl_media_file_get_frame_h264(FILE *fp, zpl_media_bufcache_t *outpacket);
-
-extern int get_frame_h264_test(void);
 
 
 #ifdef __cplusplus

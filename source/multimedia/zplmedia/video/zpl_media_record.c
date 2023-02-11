@@ -47,8 +47,8 @@ static char * zpl_media_channel_record_filename(zpl_media_channel_t *mediachn)
     static zpl_uint32 data[128];
     os_memset(data, 0, sizeof(data));
     sprintf(data, "%d-%d-%s-%s", mediachn->channel, mediachn->channel_index, os_time_fmt("filename",0),
-        (mediachn->media_type==ZPL_MEDIA_VIDEO)?zpl_media_codec_name(mediachn->media_param.video_media.codec.enctype):
-        zpl_media_codec_name(mediachn->media_param.audio_media.codec.enctype));
+        (mediachn->media_type==ZPL_MEDIA_VIDEO)?zpl_media_codec_name(mediachn->media_param.video_media.codec.codectype):
+        zpl_media_codec_name(mediachn->media_param.audio_media.codec.codectype));
     return data;
 }
 

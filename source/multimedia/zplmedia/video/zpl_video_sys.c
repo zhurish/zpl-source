@@ -13,13 +13,13 @@
 
 
 
-zpl_media_frame_t * zpl_video_frame_clone(zpl_media_frame_t *inframe)
+zpl_media_memframe_t * zpl_video_frame_clone(zpl_media_memframe_t *inframe)
 {
-    zpl_media_frame_t *frame = malloc(sizeof(zpl_media_frame_t));
+    zpl_media_memframe_t *frame = malloc(sizeof(zpl_media_memframe_t));
     if(frame)
     {
         zpl_uint32 blocksize = 0;
-        memset(frame, 0, sizeof(zpl_media_frame_t));
+        memset(frame, 0, sizeof(zpl_media_memframe_t));
         blocksize =  zpl_video_hal_frame_blksize(inframe->framehdr);
         zpl_video_hal_memblock_init(&frame->m_memblk, blocksize);
         frame->framehdr = zpl_video_hal_frame_clone(inframe->framehdr, &frame->m_memblk);
@@ -28,7 +28,7 @@ zpl_media_frame_t * zpl_video_frame_clone(zpl_media_frame_t *inframe)
     return NULL;
 }
 
-int zpl_video_frame_destroy(zpl_media_frame_t *inframe)
+int zpl_video_frame_destroy(zpl_media_memframe_t *inframe)
 {
     if(inframe)
     {

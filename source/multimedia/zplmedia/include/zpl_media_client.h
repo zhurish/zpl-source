@@ -25,6 +25,7 @@ extern "C" {
 extern zpl_bool zpl_media_client_lookup(zpl_media_client_t *client, zpl_media_buffer_handler cb_handler, void *pUser);
 extern int zpl_media_client_add(zpl_media_client_t *client, zpl_media_buffer_handler cb_handler, void *pUser);
 extern int zpl_media_client_del(zpl_media_client_t *client, zpl_int32 index);
+extern int zpl_media_client_start(zpl_media_client_t *client, zpl_int32 index, zpl_bool start);
 extern int zpl_media_client_foreach(zpl_skbuffer_t *buffer_data, void *p);
 
 

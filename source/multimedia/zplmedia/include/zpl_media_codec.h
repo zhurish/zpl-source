@@ -268,7 +268,7 @@ typedef struct
 {
 	ZPL_VIDEO_FORMAT_E	format;	
 	zpl_video_size_t	vidsize;		//视频大小
-	ZPL_VIDEO_CODEC_E 	enctype;		//编码类型
+	ZPL_VIDEO_CODEC_E 	codectype;		//编码类型
 	zpl_uint32			framerate;		//帧率
 	zpl_uint32			bitrate;		//码率
     zpl_uint32			profile;        //编码等级
@@ -281,7 +281,7 @@ typedef struct
 
 typedef struct
 {
-    ZPL_AUDIO_CODEC_E 	enctype;		//编码类型
+    ZPL_AUDIO_CODEC_E 	codectype;		//编码类型
     zpl_uint32			framerate;		//帧率
     zpl_uint32			bitrate;		//码率
     ZPL_BIT_RATE_E		bitrate_type;	//码率类型

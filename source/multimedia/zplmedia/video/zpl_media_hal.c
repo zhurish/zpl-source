@@ -156,6 +156,18 @@ static int zpl_video_input_hal_create(zpl_media_channel_t *chn, zpl_int32 input_
     return OK;
 }
 
+int zpl_media_hal_request_IDR(zpl_media_channel_t *chn)
+{
+    zpl_int32 venc_channel = VIDHAL_RES_ID_LOAD(chn->channel, chn->channel_index, VENCCHN);
+    if (venc_channel >= 0)
+    {
+        zpl_video_encode_t *video_encode = zpl_video_encode_lookup(venc_channel);
+        if(video_encode)
+            return zpl_video_encode_request_IDR(video_encode);
+    }
+    return ERROR;
+}
+
 int zpl_media_hal_create(zpl_media_channel_t *chn, void *buffer_queue)
 {
     zpl_int32 venc_channel = VIDHAL_RES_ID_LOAD(chn->channel, chn->channel_index, VENCCHN);

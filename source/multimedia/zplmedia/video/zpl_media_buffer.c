@@ -141,11 +141,11 @@ int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel,
     media_header->frame_key = key;    //时间戳 毫秒
 	if (media_header->frame_type == ZPL_MEDIA_VIDEO)
 	{
-		media_header->frame_codec = media_channel->media_param.video_media.codec.enctype;
+		media_header->frame_codec = media_channel->media_param.video_media.codec.codectype;
 	}
 	else if (media_header->frame_type == ZPL_MEDIA_AUDIO)
 	{
-		media_header->frame_codec = media_channel->media_param.audio_media.codec.enctype;
+		media_header->frame_codec = media_channel->media_param.audio_media.codec.codectype;
 	}
 	return OK;
 }

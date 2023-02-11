@@ -175,7 +175,17 @@
         "os_time.h": "c",
         "os_task.h": "c",
         "zpl_media_extradata.h": "c",
-        "zmemory.h": "c"
+        "zmemory.h": "c",
+        "log2.h": "c",
+        "types.h": "c",
+        "int-ll64.h": "c",
+        "bitsperlong.h": "c",
+        "param.h": "c",
+        "nal-rbsp.h": "c",
+        "zpl_media_frame_adp.h": "c",
+        "zpl_media_api.h": "c",
+        "os_file.h": "c",
+        "os_base64.h": "c"
     },
     "editor.defaultFormatter": "jbenden.c-cpp-flylint",
     "editor.formatOnPaste": false,

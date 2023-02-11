@@ -42,7 +42,7 @@ typedef struct  {
 typedef struct  {
     void              *framehdr;
     zpl_media_memblock_t    m_memblk;
-} zpl_media_frame_t;
+} zpl_media_memframe_t;
  
 
 

@@ -4,7 +4,7 @@
 MODULEDIR = multimedia/zplmedia
 #OS
 
-ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/bsp
+ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/video/framediscrete -I$(ZPLMEDIA_ROOT)/bsp
 
 OSOBJ	+= zpl_media_channel.o
 OSOBJ	+= zpl_media_file.o
@@ -31,6 +31,7 @@ OSOBJ	+= zpl_media_bmp.o
 OSOBJ	+= zpl_media_text.o
 OSOBJ	+= zpl_media_area.o
 OSOBJ	+= zpl_media_proxy.o
+OSOBJ	+= zpl_media_frame_adap.o
 
 OSOBJ	+= zpl_video_encode.o
 OSOBJ	+= zpl_video_vpss.o
@@ -38,6 +39,10 @@ OSOBJ	+= zpl_video_vpssgrp.o
 OSOBJ	+= zpl_video_input.o
 OSOBJ	+= zpl_video_input_pipe.o
 
+#
+OSOBJ	+= nal-h264.o
+OSOBJ	+= nal-hevc.o
+OSOBJ	+= nal-rbsp.o
 
 #ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 OSOBJ	+= zpl_vidhal_mipi.o

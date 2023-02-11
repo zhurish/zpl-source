@@ -18,6 +18,7 @@ OSOBJ	+= os_file.o
 OSOBJ	+= os_url.o
 OSOBJ	+= os_signal.o
 OSOBJ	+= os_bitmap.o
+OSOBJ	+= os_base64.o
 OSOBJ	+= os_backtrace.o
 OSOBJ	+= zpl_skbuffer.o
 OSOBJ	+= zpl_errno.o
