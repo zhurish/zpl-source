@@ -12,7 +12,7 @@
 #include <time.h>
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
-#include "zpl_rtsp_base64.h"
+
 
 static rtsp_log_callback rtsp_log_cb_default = NULL;
 
@@ -271,7 +271,7 @@ int rtsp_authenticate_option(const char *auth, const char *username, const char 
             if(p && strlen(p))
             {
                 memset(buftmp, 0, sizeof(buftmp));
-                length = av_base64_decode(buftmp, p, sizeof(buftmp));
+                length = os_base64_decode(buftmp, p, sizeof(buftmp));
                 if(length > 2 && strstr(buftmp, ":"))
                 {
                     char gusername[128];

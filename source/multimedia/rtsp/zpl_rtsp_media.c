@@ -16,7 +16,6 @@
 #include "zpl_rtsp_transport.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_sdpfmtp.h"
-#include "zpl_rtsp_base64.h"
 #include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
@@ -176,6 +175,7 @@ static int rtsp_session_media_overtcp_start(rtsp_session_t *session, zpl_bool bv
 
 int rtsp_session_media_start(rtsp_session_t* session, zpl_bool bvideo, zpl_bool start)
 {
+    int ret = 0;
     if(session->bsrv && session->audio_session.b_enable && bvideo == zpl_false && 
             session->audio_session.rtp_state != RTP_SESSION_STATE_START &&
             session->audio_session.rtp_session)
@@ -196,14 +196,21 @@ int rtsp_session_media_start(rtsp_session_t* session, zpl_bool bvideo, zpl_bool 
             if(start)
             {
                 session->audio_session._call_index = zpl_media_channel_client_add(session->audio_session.mchannel, session->audio_session.mlevel, rtsp_session_media_rtp_proxy, &session->audio_session);
-                return zpl_media_channel_start(session->audio_session.mchannel, session->audio_session.mlevel);
+                if(session->audio_session._call_index > 0)
+                    return zpl_media_channel_client_start(session->audio_session.mchannel, session->audio_session.mlevel, session->audio_session._call_index, zpl_true);
+                else
+                    return ERROR;
             }
             else
             {
-                if(session->audio_session._call_index)
-                    zpl_media_channel_client_del(session->audio_session.mchannel, session->audio_session.mlevel, session->audio_session._call_index);
+                if(session->audio_session._call_index > 0)
+                {
+                    ret = zpl_media_channel_client_start(session->audio_session.mchannel, session->audio_session.mlevel, session->audio_session._call_index, zpl_false);
+                    if(ret == OK)
+                        zpl_media_channel_client_del(session->audio_session.mchannel, session->audio_session.mlevel, session->audio_session._call_index);
+                }
                 session->audio_session._call_index = 0;    
-                return zpl_media_channel_stop(session->audio_session.mchannel, session->audio_session.mlevel);      
+                return ret;      
             }  
         }
         else if(session->audio_session.rtsp_media)
@@ -236,15 +243,22 @@ int rtsp_session_media_start(rtsp_session_t* session, zpl_bool bvideo, zpl_bool 
         {
             if(start)
             {
-                session->video_session._call_index = zpl_media_channel_client_add(session->video_session.mchannel, session->video_session.mlevel, rtsp_session_media_rtp_proxy, &session->video_session);
-                return zpl_media_channel_start(session->video_session.mchannel, session->video_session.mlevel);
+                session->video_session._call_index = zpl_media_channel_client_add(session->video_session.mchannel, session->video_session.mlevel, rtsp_session_media_rtp_proxy, &session->audio_session);
+                if(session->video_session._call_index > 0)
+                    return zpl_media_channel_client_start(session->video_session.mchannel, session->video_session.mlevel, session->video_session._call_index, zpl_true);
+                else
+                    return ERROR;
             }
             else
             {
-                if(session->video_session._call_index)
-                    zpl_media_channel_client_del(session->video_session.mchannel, session->video_session.mlevel, session->video_session._call_index);
+                if(session->video_session._call_index > 0)
+                {
+                    ret = zpl_media_channel_client_start(session->video_session.mchannel, session->video_session.mlevel, session->video_session._call_index, zpl_false);
+                    if(ret == OK)
+                        zpl_media_channel_client_del(session->video_session.mchannel, session->video_session.mlevel, session->video_session._call_index);
+                }
                 session->video_session._call_index = 0;    
-                return zpl_media_channel_stop(session->video_session.mchannel, session->video_session.mlevel);      
+                return ret;           
             }  
         }
         else if(session->video_session.rtsp_media)
@@ -347,7 +361,7 @@ int rtsp_session_media_lookup(rtsp_session_t * session, int channel, int level, 
                         session->video_session.rtsp_media = mfile;
                     if(session->audio_session.b_enable)
                         session->audio_session.rtsp_media = mfile;
-                    rtsp_log_debug("=====================RTSP Media file %p", session->audio_session.rtsp_media);    
+                    //rtsp_log_debug("=====================RTSP Media file %p", session->audio_session.rtsp_media);    
                 }
             }
 
@@ -424,7 +438,7 @@ static int rtsp_session_media_option_load(rtsp_session_t *session)
     }
     if (is_video & 1)
     {
-        session->video_session.payload = pcodec.enctype;
+        session->video_session.payload = pcodec.codectype;
         /* 更新帧率和发包时间间隔 */
         session->video_session.framerate = pcodec.framerate;
         session->video_session.video_height = pcodec.vidsize.height; // 视频的高度
@@ -442,7 +456,7 @@ static int rtsp_session_media_option_load(rtsp_session_t *session)
     }
     if (is_video & 2)
     {
-        session->audio_session.payload = paudiocodec.enctype;
+        session->audio_session.payload = paudiocodec.codectype;
         /* 更新帧率和发包时间间隔 */
         session->audio_session.framerate = paudiocodec.framerate;
         if(session->audio_session.framerate)
@@ -461,13 +475,14 @@ static int rtsp_session_media_option_load(rtsp_session_t *session)
 
 static int rtsp_session_media_build_sdptext_h264(rtsp_session_t *session, uint8_t *src, uint32_t len)
 {
-    uint8_t base64sps[AV_BASE64_DECODE_SIZE(1024)];
-    uint8_t base64pps[AV_BASE64_DECODE_SIZE(1024)];
-
+    uint8_t base64sps[OS_BASE64_DECODE_SIZE(1024)];
+    uint8_t base64pps[OS_BASE64_DECODE_SIZE(1024)];
     zpl_video_extradata_t extradata;
-
     int profile = 0, sdplength = 0;
- 
+
+    memset(base64pps, 0, sizeof(base64pps));
+    memset(base64sps, 0, sizeof(base64sps));
+    memset(&extradata, 0, sizeof(zpl_video_extradata_t));
     if((session->video_session.mchannel != -1 && session->video_session.mlevel != -1))
     {
          zpl_media_channel_t *chn = zpl_media_channel_lookup(session->video_session.mchannel, session->video_session.mlevel);
@@ -479,7 +494,7 @@ static int rtsp_session_media_build_sdptext_h264(rtsp_session_t *session, uint8_
         if(session->video_session.rtsp_media)
             zpl_media_file_extradata(session->video_session.rtsp_media, &extradata);
     }
-    profile = extradata.profileLevelId;
+    profile = extradata.h264spspps.profileLevelId;
 
 
     if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264))
@@ -487,12 +502,11 @@ static int rtsp_session_media_build_sdptext_h264(rtsp_session_t *session, uint8_
     else
         sdplength += sprintf(src + sdplength, "a=rtpmap:%d H264/90000\r\n", RTP_MEDIA_PAYLOAD_H264);
 
-    memset(base64pps, 0, sizeof(base64pps));
-    memset(base64sps, 0, sizeof(base64sps));
+    //extradata.fPPSHdrLen = extradata.fSPSHdrLen = 0;
     if(extradata.fPPSSize)
-        av_base64_encode(base64pps, sizeof(base64pps), extradata.fPPS, extradata.fPPSSize);
+        os_base64_encode(base64pps, sizeof(base64pps), extradata.fPPS + extradata.fPPSHdrLen, extradata.fPPSSize - extradata.fPPSHdrLen);
     if(extradata.fSPSSize)
-        av_base64_encode(base64sps, sizeof(base64sps), extradata.fSPS, extradata.fSPSSize);
+        os_base64_encode(base64sps, sizeof(base64sps), extradata.fSPS + extradata.fSPSHdrLen, extradata.fSPSSize - extradata.fSPSHdrLen);
 
     if (strlen(base64sps))
     {
@@ -605,7 +619,7 @@ static int rtsp_session_media_sprop_parameterset_parse_h264(uint8_t *buffer, uin
         {
             *p = '\0';
             memset(tmp, 0, sizeof(tmp));
-            out_size = av_base64_decode(tmp, (const char*)start, sizeof(tmp));
+            out_size = os_base64_decode(tmp, (const char*)start, sizeof(tmp));
             if(out_size)
             {
                 uint8_t nal_unit_type = (tmp[0])&0x1F;
@@ -658,10 +672,13 @@ static int rtsp_session_media_parse_sdptext_h264(rtsp_session_t *session, uint8_
 
     rtsp_session_media_sprop_parameterset_parse_h264(h264.sprop_parameter_sets,
                                    h264.sprop_parameter_sets_len, &extradata);
-    zpl_media_channel_decode_sps(extradata.fSPS, extradata.fSPSSize,
-                                    &client->client_media.video_codec.vidsize.width,
-                                    &client->client_media.video_codec.vidsize.height,
-                                    &client->client_media.video_codec.framerate);
+ 
+    zpl_media_channel_decode_sps(extradata.fSPS, extradata.fSPSSize, &extradata.h264spspps);
+
+    client->client_media.video_codec.vidsize.width = extradata.h264spspps.vidsize.width;
+    client->client_media.video_codec.vidsize.height = extradata.h264spspps.vidsize.height;
+    client->client_media.video_codec.framerate = extradata.h264spspps.fps;
+    client->client_media.video_codec.profile = extradata.h264spspps.profile; 
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE
     if(extradata.fPPS)
         free(extradata.fPPS);
@@ -766,9 +783,9 @@ static int rtsp_session_media_fmtp_attr_parse(struct sdp_media *m, rtsp_session_
                     {
                         //rtpsession->payload = atoi(attrval);
                         if(client_media && bvideo)
-                            client_media->video_codec.enctype = rtpsession->payload;
+                            client_media->video_codec.codectype = rtpsession->payload;
                         else if(client_media && !bvideo)
-                            client_media->audio_codec.enctype = rtpsession->payload;
+                            client_media->audio_codec.codectype = rtpsession->payload;
 
                         if(rtpsession->framerate)
                             rtpsession->timestamp_interval = rtpmap.clock_rate/rtpsession->framerate;
@@ -1081,9 +1098,9 @@ static int rtsp_session_media_rtp_sendto(rtp_session_t *rtp_session)
             int frame_codec = 0;
             //rtsp_log_debug("============RTSP Media Rtp read and Sendto %d byte", bufcache->len);
             if(type == ZPL_MEDIA_VIDEO)
-                frame_codec = zpl_media_file_getptr(rtp_session->rtsp_media)->filedesc.video.enctype;
+                frame_codec = zpl_media_file_getptr(rtp_session->rtsp_media)->filedesc.video.codectype;
             else
-                frame_codec = zpl_media_file_getptr(rtp_session->rtsp_media)->filedesc.audio.enctype;
+                frame_codec = zpl_media_file_getptr(rtp_session->rtsp_media)->filedesc.audio.codectype;
             if(bufcache->len) 
             {       
                 ret = rtsp_session_media_adap_rtp_sendto(frame_codec, rtp_session->rtsp_parent, type,
@@ -1314,11 +1331,11 @@ static int rtsp_session_media_scheduler_callback(rtsp_session_t *session, void *
 int rtsp_session_media_scheduler_handle(void)
 {
     int ret = 0;
-    rtsp_log_debug("=====RTSP Media Rtp select befor");
+    //rtsp_log_debug("=====RTSP Media Rtp select befor");
     session_set_copy(_media_scheduler.w_session_set, &_media_scheduler.all_session_set);
 	//ret = session_set_select(_media_scheduler.r_session_set, _media_scheduler.w_session_set, NULL);
     ret = session_set_select(NULL, _media_scheduler.w_session_set, NULL);
-    rtsp_log_debug("=====RTSP Media Rtp select after %d", ret);
+    //rtsp_log_debug("=====RTSP Media Rtp select after %d", ret);
     if(ret)
     {
         rtsp_session_foreach(rtsp_session_media_scheduler_callback, &_media_scheduler);

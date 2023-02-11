@@ -13,7 +13,6 @@ OBJS += DynamicRTSPServer.o \
 #RTSPServerSupportingHTTPStreaming.o \			
 else
 OBJS += 	\
-			zpl_rtsp_base64.o \
 			zpl_rtsp_client.o \
 			zpl_rtsp_session.o \
 			zpl_rtsp_server.o \

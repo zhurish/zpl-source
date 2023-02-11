@@ -9,7 +9,6 @@
 #include "zpl_rtsp_transport.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_sdpfmtp.h"
-#include "zpl_rtsp_base64.h"
 #include "zpl_rtsp_auth.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
