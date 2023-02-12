@@ -195,7 +195,7 @@ zpl_media_file_t *zpl_media_file_create(zpl_media_channel_t *chn, const char *na
             }
             if (media_file->_mutex == NULL)
             {
-                media_file->_mutex = os_mutex_name_init("media_file_mutex");
+                media_file->_mutex = os_mutex_name_create("media_file_mutex");
             }
             zpl_media_debugmsg_debug("=====================Media file %p", media_file);
             return media_file;
@@ -298,7 +298,7 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
 
             if (media_file->_mutex == NULL)
             {
-                media_file->_mutex = os_mutex_name_init("media_file_mutex");
+                media_file->_mutex = os_mutex_name_create("media_file_mutex");
             }
             zpl_media_debugmsg_debug("=====================Media file %p", media_file);
             return media_file;
@@ -362,7 +362,7 @@ int zpl_media_file_destroy(zpl_media_file_t *media_file)
         zpl_media_bufcache_destroy(&media_file->bufcache);
 	    if (media_file->_mutex)
 		    os_mutex_unlock(media_file->_mutex);        
-        if (os_mutex_exit(media_file->_mutex) == OK)
+        if (os_mutex_destroy(media_file->_mutex) == OK)
 			media_file->_mutex = NULL;
         free(media_file);
     }

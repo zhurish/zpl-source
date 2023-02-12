@@ -13,7 +13,7 @@ OSOBJ	+= zpl_media_buffer.o
 OSOBJ	+= zpl_media_hardadap.o
 OSOBJ	+= zpl_media_api.o
 OSOBJ	+= zpl_media_codecmap.o
-
+OSOBJ	+= zpl_media.o
 OSOBJ	+= zpl_media_hal.o
 OSOBJ	+= zpl_media_cmd.o
 OSOBJ	+= zpl_media_config.o
@@ -33,11 +33,11 @@ OSOBJ	+= zpl_media_area.o
 OSOBJ	+= zpl_media_proxy.o
 OSOBJ	+= zpl_media_frame_adap.o
 
-OSOBJ	+= zpl_video_encode.o
-OSOBJ	+= zpl_video_vpss.o
-OSOBJ	+= zpl_video_vpssgrp.o
-OSOBJ	+= zpl_video_input.o
-OSOBJ	+= zpl_video_input_pipe.o
+OSOBJ	+= zpl_media_video_encode.o
+OSOBJ	+= zpl_media_video_vpss.o
+OSOBJ	+= zpl_media_video_vpssgrp.o
+OSOBJ	+= zpl_media_video_input.o
+OSOBJ	+= zpl_media_video_input_pipe.o
 
 #
 OSOBJ	+= nal-h264.o

@@ -53,37 +53,37 @@ typedef struct
     zpl_uint32              dbg_send_count;
     zpl_uint32              dbg_recv_count;    
 #endif
-    //int (*venc_frame_handle)(void *, zpl_uint32);
-}zpl_video_encode_t;
+    int (*get_encode_frame)(void *, zpl_skbuffer_t **);
+}zpl_media_video_encode_t;
 
 
-int zpl_video_encode_init(void);
-int zpl_video_encode_exit(void);
-int zpl_video_encode_create(zpl_int32 channel);
-int zpl_video_encode_destroy(zpl_int32 channel);
-zpl_video_encode_t * zpl_video_encode_lookup(zpl_int32 channel);
-int zpl_video_encode_vpss_set(zpl_int32 channel, void *halparam);
-int zpl_video_encode_frame_queue_set(zpl_int32 venc_channel, void *frame_queue);
-int zpl_video_encode_online_set(zpl_video_encode_t *encode, zpl_bool online);
-int zpl_video_encode_online_get(zpl_video_encode_t *encode, zpl_bool *online);
+int zpl_media_video_encode_init(void);
+int zpl_media_video_encode_new(zpl_int32 venc_channel);
+int zpl_media_video_encode_delete(zpl_int32 venc_channel);
+zpl_media_video_encode_t * zpl_media_video_encode_lookup(zpl_int32 venc_channel);
+int zpl_media_video_encode_vpss_set(zpl_int32 venc_channel, void *halparam);
+int zpl_media_video_encode_frame_queue_set(zpl_int32 venc_channel, void *frame_queue);
+int zpl_media_video_encode_online_set(zpl_media_video_encode_t *encode, zpl_bool online);
+int zpl_media_video_encode_online_get(zpl_media_video_encode_t *encode, zpl_bool *online);
 
 
-int zpl_video_encode_read_start(zpl_void *master, zpl_video_encode_t *encode);
-int zpl_video_encode_read_stop(zpl_video_encode_t *encode);
+int zpl_media_video_encode_read_start(zpl_void *master, zpl_media_video_encode_t *encode);
+int zpl_media_video_encode_read_stop(zpl_media_video_encode_t *encode);
 
-int zpl_video_encode_sendto(zpl_video_encode_t *encode,  void *p, zpl_int timeout);
+int zpl_media_video_encode_read(zpl_media_video_encode_t *encode);
+int zpl_media_video_encode_sendto(zpl_media_video_encode_t *encode,  void *p, zpl_int timeout);
 
-int zpl_video_encode_active(zpl_video_encode_t *encode);
-int zpl_video_encode_start(zpl_video_encode_t *encode);
-int zpl_video_encode_stop(zpl_video_encode_t *encode);
-int zpl_video_encode_inactive(zpl_video_encode_t *encode);
+int zpl_media_video_encode_hal_create(zpl_media_video_encode_t *encode);
+int zpl_media_video_encode_start(zpl_media_video_encode_t *encode);
+int zpl_media_video_encode_stop(zpl_media_video_encode_t *encode);
+int zpl_media_video_encode_hal_destroy(zpl_media_video_encode_t *encode);
 
-int zpl_video_encode_request_IDR(zpl_video_encode_t *encode);
-int zpl_video_encode_enable_IDR(zpl_video_encode_t *encode, zpl_bool bEnableIDR);
-int zpl_video_encode_encode_reset(zpl_video_encode_t *encode);
+int zpl_media_video_encode_request_IDR(zpl_media_video_encode_t *encode);
+int zpl_media_video_encode_enable_IDR(zpl_media_video_encode_t *encode, zpl_bool bEnableIDR);
+int zpl_media_video_encode_encode_reset(zpl_media_video_encode_t *encode);
 
 #ifdef ZPL_SHELL_MODULE
-int zpl_video_encode_show(void *pvoid);
+int zpl_media_video_encode_show(void *pvoid);
 #endif
 
 #ifdef __cplusplus

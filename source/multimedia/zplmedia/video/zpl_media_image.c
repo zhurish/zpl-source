@@ -23,7 +23,7 @@ zpl_media_imglst_t *zpl_media_imglst_create(char *name, zpl_uint32 maxsize)
         memset(queue, 0, sizeof(zpl_media_imglst_t));
         queue->name = strdup(name);
         queue->maxsize = maxsize;
-        queue->mutex = os_mutex_name_init(os_name_format("%s-mutex", name));
+        queue->mutex = os_mutex_name_create(os_name_format("%s-mutex", name));
 
         lstInitFree (&queue->ulist, zpl_media_image_free);
         lstInitFree (&queue->list, zpl_media_image_free);
@@ -48,7 +48,7 @@ int zpl_media_imglst_destroy(zpl_media_imglst_t *queue)
     lstFree(&queue->ulist);
     lstFree(&queue->list);
     if(queue->mutex)
-        os_mutex_exit(queue->mutex);
+        os_mutex_destroy(queue->mutex);
     if(queue->name)
         free(queue->name);
     free(queue);

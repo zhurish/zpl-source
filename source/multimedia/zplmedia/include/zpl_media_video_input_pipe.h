@@ -42,30 +42,30 @@ typedef struct
     zpl_uint32              dbg_send_count;
     zpl_uint32              dbg_recv_count;    
 #endif  
-}zpl_video_input_pipe_t;
+}zpl_meida_video_input_pipe_t;
 
 
-int zpl_video_input_pipe_init(void);
-int zpl_video_input_pipe_exit(void);
-int zpl_video_input_pipe_create(zpl_int32 , zpl_int32 );
-int zpl_video_input_pipe_destroy(zpl_int32 , zpl_int32 );
-zpl_video_input_pipe_t * zpl_video_input_pipe_lookup(zpl_int32 , zpl_int32 );
-int zpl_video_input_pipe_channel_count(zpl_int32 );
+int zpl_meida_video_input_pipe_init(void);
 
-int zpl_video_input_pipe_read_start(zpl_void *master, zpl_video_input_pipe_t *input);
-int zpl_video_input_pipe_read_stop(zpl_video_input_pipe_t *input);
-int zpl_video_input_pipe_sendto(zpl_video_input_pipe_t *input,  void *p, zpl_int timeout);
-int zpl_video_input_pipe_active(zpl_video_input_pipe_t *input);
-int zpl_video_input_pipe_start(zpl_video_input_pipe_t *input);
-int zpl_video_input_pipe_stop(zpl_video_input_pipe_t *input);
-int zpl_video_input_pipe_inactive(zpl_video_input_pipe_t *input);
-int zpl_video_input_pipe_online_set(zpl_video_input_pipe_t *input, zpl_bool online);
-int zpl_video_input_pipe_online_get(zpl_video_input_pipe_t *input, zpl_bool *online);
+int zpl_meida_video_input_pipe_create(zpl_int32 , zpl_int32 );
+int zpl_meida_video_input_pipe_destroy(zpl_int32 , zpl_int32 );
+zpl_meida_video_input_pipe_t * zpl_meida_video_input_pipe_lookup(zpl_int32 , zpl_int32 );
+int zpl_meida_video_input_pipe_channel_count(zpl_int32 );
 
-int zpl_video_input_pipe_bindcount_set(zpl_video_input_pipe_t *input, zpl_bool add);
-int zpl_video_input_pipe_bindcount_get(zpl_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_read_start(zpl_void *master, zpl_meida_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_read_stop(zpl_meida_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_sendto(zpl_meida_video_input_pipe_t *input,  void *p, zpl_int timeout);
+int zpl_meida_video_input_pipe_hal_create(zpl_meida_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_start(zpl_meida_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_stop(zpl_meida_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_hal_destroy(zpl_meida_video_input_pipe_t *input);
+int zpl_meida_video_input_pipe_online_set(zpl_meida_video_input_pipe_t *input, zpl_bool online);
+int zpl_meida_video_input_pipe_online_get(zpl_meida_video_input_pipe_t *input, zpl_bool *online);
+
+int zpl_meida_video_input_pipe_bindcount_set(zpl_meida_video_input_pipe_t *input, zpl_bool add);
+int zpl_meida_video_input_pipe_bindcount_get(zpl_meida_video_input_pipe_t *input);
 #ifdef ZPL_SHELL_MODULE
-int zpl_video_input_pipe_show(void *pvoid);
+int zpl_meida_video_input_pipe_show(void *pvoid);
 #endif
 
 #ifdef __cplusplus

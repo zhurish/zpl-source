@@ -32,20 +32,20 @@ extern int zpl_vidhal_vpss_rotation(zpl_int32 vpssgrp, zpl_int32 vpsschn, zpl_ui
 extern int zpl_vidhal_vpss_fish_eye(zpl_int32 vpssgrp, zpl_int32 vpsschn, zpl_video_size_t cropsize);//鱼眼校正
 extern int zpl_vidhal_vpss_compression(zpl_int32 vpssgrp, zpl_int32 vpsschn, zpl_video_size_t cropsize);//压缩解压 
 
-extern int zpl_vidhal_vpssgrp_create(zpl_video_vpssgrp_t *);
-extern int zpl_vidhal_vpssgrp_destroy(zpl_video_vpssgrp_t *);
-extern int zpl_vidhal_vpssgrp_start(zpl_video_vpssgrp_t *);
-extern int zpl_vidhal_vpssgrp_stop(zpl_video_vpssgrp_t *);
-extern int zpl_vidhal_vpssgrp_frame_recvfrom(zpl_video_vpssgrp_t *);
-extern int zpl_vidhal_vpssgrp_frame_sendto(zpl_video_vpssgrp_t *, void *p, zpl_int32 s32MilliSec);
+extern int zpl_vidhal_vpssgrp_create(zpl_media_video_vpssgrp_t *);
+extern int zpl_vidhal_vpssgrp_destroy(zpl_media_video_vpssgrp_t *);
+extern int zpl_vidhal_vpssgrp_start(zpl_media_video_vpssgrp_t *);
+extern int zpl_vidhal_vpssgrp_stop(zpl_media_video_vpssgrp_t *);
+extern int zpl_vidhal_vpssgrp_frame_recvfrom(zpl_media_video_vpssgrp_t *);
+extern int zpl_vidhal_vpssgrp_frame_sendto(zpl_media_video_vpssgrp_t *, void *p, zpl_int32 s32MilliSec);
 
 
-extern int zpl_vidhal_vpss_channel_create(zpl_video_vpss_channel_t *);
-extern int zpl_vidhal_vpss_channel_destroy(zpl_video_vpss_channel_t *);
-extern int zpl_vidhal_vpss_channel_start(zpl_video_vpss_channel_t *);
-extern int zpl_vidhal_vpss_channel_stop(zpl_video_vpss_channel_t *);
-extern int zpl_vidhal_vpss_channel_update_fd(zpl_video_vpss_channel_t *);
-extern int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_video_vpss_channel_t *vpss);
+extern int zpl_vidhal_vpss_channel_create(zpl_media_video_vpss_channel_t *);
+extern int zpl_vidhal_vpss_channel_destroy(zpl_media_video_vpss_channel_t *);
+extern int zpl_vidhal_vpss_channel_start(zpl_media_video_vpss_channel_t *);
+extern int zpl_vidhal_vpss_channel_stop(zpl_media_video_vpss_channel_t *);
+extern int zpl_vidhal_vpss_channel_update_fd(zpl_media_video_vpss_channel_t *);
+extern int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_media_video_vpss_channel_t *vpss);
 
 
 

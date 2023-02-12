@@ -64,11 +64,11 @@ typedef struct
 } zpl_video_resources_t;//资源管理表
 
 
-zpl_uint32 zpl_video_resources_get_flag(zpl_int32 channel, 
-    zpl_int32 channel_index, ZPL_VIDHAL_INDEX_E index);
+zpl_uint32 zpl_video_resources_get_flag(ZPL_MEDIA_CHANNEL_E channel, 
+    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDHAL_INDEX_E index);
 
-int zpl_video_resources_get(zpl_int32 channel, 
-    zpl_int32 channel_index, ZPL_VIDHAL_INDEX_E index);
+int zpl_video_resources_get(ZPL_MEDIA_CHANNEL_E channel, 
+    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDHAL_INDEX_E index);
 
 //获取pipe数组
 int zpl_video_resources_get_pipe(zpl_int32 *vipipe);

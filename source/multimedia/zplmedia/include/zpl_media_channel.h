@@ -62,17 +62,18 @@ typedef struct zpl_media_unit_s
 
 typedef enum 
 {
-    ZPL_MEDIA_STATE_NONE    = 0x00000000,      //
-    ZPL_MEDIA_STATE_INIT    = 0x00000001,      //初始化
-    ZPL_MEDIA_STATE_ACTIVE  = 0x00000004,      //使能
-    ZPL_MEDIA_STATE_INACTIVE= 0x0000008,       //去使能
+    ZPL_MEDIA_STATE_NONE    = 0,      //
+    ZPL_MEDIA_STATE_ACTIVE  = 1,      //硬件通道创建并使能
+    ZPL_MEDIA_STATE_INACTIVE= 2,      //硬件通道销毁并去使能
+    ZPL_MEDIA_STATE_START   = 3,      //硬件通道创建并开始
+    ZPL_MEDIA_STATE_STOP    = 4,      //硬件通道创建并停止
 } ZPL_MEDIA_STATE_E;
 
 typedef struct zpl_media_channel_s
 {
     NODE	                    node;
-	zpl_int32                   channel;	        //通道号
-	ZPL_MEDIA_CHANNEL_INDEX_E 	channel_index;	    //码流类型
+	ZPL_MEDIA_CHANNEL_E         channel;	        //通道号
+	ZPL_MEDIA_CHANNEL_TYPE_E 	channel_index;	    //码流类型
 
     ZPL_MEDIA_E                 media_type;
     union
@@ -105,37 +106,70 @@ extern int zpl_media_channel_exit(void);
 
 extern int zpl_media_channel_count(void);
 extern int zpl_media_channel_load_default(void);
-extern int zpl_media_channel_create(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern int zpl_media_channel_destroy(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern zpl_media_channel_t * zpl_media_channel_lookup(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern zpl_media_channel_t * zpl_media_channel_lookup(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 extern zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID);
 
-extern zpl_media_channel_t * zpl_media_channel_lookup_bind(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern zpl_media_channel_t * zpl_media_channel_lookup_bind(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 
-extern ZPL_MEDIA_STATE_E zpl_media_channel_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern ZPL_MEDIA_STATE_E zpl_media_channel_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 
-extern zpl_bool zpl_media_channel_isvideo(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern zpl_bool zpl_media_channel_isaudio(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern int zpl_media_channel_video_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_video_codec_t *);
-extern int zpl_media_channel_audio_codec_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_audio_codec_t *);
-extern int zpl_media_channel_bindcount_get(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
-extern int zpl_media_channel_bindcount_set(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, int addsub);
+extern zpl_bool zpl_media_channel_isvideo(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern zpl_bool zpl_media_channel_isaudio(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern int zpl_media_channel_video_codec_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_video_codec_t *);
+extern int zpl_media_channel_audio_codec_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_audio_codec_t *);
+extern int zpl_media_channel_bindcount_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern int zpl_media_channel_bindcount_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int addsub);
 
-extern int zpl_media_channel_halparam_set(zpl_int32 channel, 
-    ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool video, void *halparam);
+extern int zpl_media_channel_halparam_set(ZPL_MEDIA_CHANNEL_E channel, 
+    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam);
 
-extern int zpl_media_channel_client_add(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_media_buffer_handler cb_handler, void *pUser);
-extern int zpl_media_channel_client_del(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_int32 index);
-extern int zpl_media_channel_client_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_int32 index, zpl_bool start);
+extern int zpl_media_channel_client_add(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_buffer_handler cb_handler, void *pUser);
+extern int zpl_media_channel_client_del(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_int32 index);
+extern int zpl_media_channel_client_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_int32 index, zpl_bool start);
+
+
+extern int zpl_media_channel_codec_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_MEDIA_CODEC_E codec);
+extern int zpl_media_channel_codec_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_MEDIA_CODEC_E *codec);
+/*分辨率*/
+extern int zpl_media_channel_video_resolving_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDEO_FORMAT_E val);
+extern int zpl_media_channel_video_resolving_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDEO_FORMAT_E *val);
+
+/*帧率*/
+extern int zpl_media_channel_framerate_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_uint32 framerate);
+extern int zpl_media_channel_framerate_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_uint32 *framerate);
+
+/*码率*/
+extern int zpl_media_channel_bitrate_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_BIT_RATE_E type, zpl_uint32 bitrate);
+extern int zpl_media_channel_bitrate_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_BIT_RATE_E *type, zpl_uint32 *bitrate);
+
+/*编码等级*/
+extern int zpl_media_channel_video_profile_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_uint32	profile);
+extern int zpl_media_channel_video_profile_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_uint32	*profile);
+
+/*I帧间隔*/
+extern int zpl_media_channel_video_ikey_rate_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_uint32 ikey_rate);
+extern int zpl_media_channel_video_ikey_rate_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_uint32 *ikey_rate);
+
+
+extern int zpl_media_channel_video_enRcMode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VENC_RC_E val);
+extern int zpl_media_channel_video_enRcMode_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VENC_RC_E *val);
+
+extern int zpl_media_channel_video_gopmode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VENC_GOP_MODE_E val);
+extern int zpl_media_channel_video_gopmode_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VENC_GOP_MODE_E *val);
+
+
+
 
 /* 激活通道 -> 创建底层资源 */
-extern int zpl_media_channel_active(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_active(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 /* 开始通道 -> 底层开始 */
-extern int zpl_media_channel_start(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 /* 暂停通道 -> 底层结束 */
-extern int zpl_media_channel_stop(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 /* 销毁通道 -> 销毁底层资源 */
-extern int zpl_media_channel_inactive(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index);
+extern int zpl_media_channel_inactive(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 
 /* active:1 使能所有 ，:2 去使能所有 :3 开始所有 :4 停止所有 :-1 销毁所有*/
 extern int zpl_media_channel_handle_all(zpl_int32 active);

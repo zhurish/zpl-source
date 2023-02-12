@@ -29,6 +29,7 @@ struct module_list module_list_zplmedia = {
 
 int zpl_media_module_init(void)
 {
+	zpl_media_global_init();
 	zpl_media_debugmsg_init();
 	printf( "=======zpl_media_module_init :zpl_video_resources_show\r\n");
 	zpl_video_resources_show(NULL);
@@ -37,9 +38,9 @@ int zpl_media_module_init(void)
 	zpl_media_event_create("mediaEvent", 16);
 	zpl_media_bufqueue_init();
 	zpl_media_channel_init();
-	zpl_video_input_init();
-	zpl_video_vpss_init();
-	zpl_video_encode_init();
+	zpl_media_video_input_init();
+	zpl_media_video_vpss_init();
+	zpl_media_video_encode_init();
 	zpl_media_proxy_init();
 	return OK;
 }
@@ -47,14 +48,11 @@ int zpl_media_module_init(void)
 int zpl_media_module_exit(void)
 {
 	printf( "=======zpl_media_module_exit\r\n");
-	//zpl_media_client_exit();
 	zpl_media_channel_exit();
-	zpl_video_input_exit();
-	zpl_video_vpss_exit();
-	zpl_video_encode_exit();
 	zpl_media_proxy_exit();
 	zpl_media_bufqueue_exit();
 	zpl_media_event_destroy(zpl_media_event_default());
+	zpl_media_global_exit();
 	return OK;
 }
 

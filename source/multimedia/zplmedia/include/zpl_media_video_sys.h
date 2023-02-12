@@ -42,9 +42,10 @@ typedef struct  {
 typedef struct  {
     void              *framehdr;
     zpl_media_memblock_t    m_memblk;
-} zpl_media_memframe_t;
+} zpl_media_video_frame_t;
  
-
+zpl_media_video_frame_t * zpl_media_video_frame_clone(zpl_media_video_frame_t *inframe);
+int zpl_media_video_frame_destroy(zpl_media_video_frame_t *inframe);
 
 #ifdef __cplusplus
 }

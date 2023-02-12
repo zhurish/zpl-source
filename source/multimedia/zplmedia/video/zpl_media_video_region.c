@@ -9,11 +9,11 @@
 #include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
-#include "zpl_video_region.h"
+#include "zpl_media_video_region.h"
 
 
 
-int zpl_video_hwregion_destroy(zpl_video_hwregion_t *hwregion)
+int zpl_media_video_hwregion_destroy(zpl_media_video_hwregion_t *hwregion)
 {
 		if(hwregion)
 		{
@@ -22,13 +22,13 @@ int zpl_video_hwregion_destroy(zpl_video_hwregion_t *hwregion)
 	return OK;
 }
 
-zpl_video_hwregion_t * zpl_video_hwregion_create(zpl_int32 rng_id)
+zpl_media_video_hwregion_t * zpl_media_video_hwregion_create(zpl_int32 rng_id)
 {
-	zpl_video_hwregion_t *t = os_malloc(sizeof(zpl_video_hwregion_t));
+	zpl_media_video_hwregion_t *t = os_malloc(sizeof(zpl_media_video_hwregion_t));
 	zpl_video_assert(t);
 	if(t)
 	{
-		memset(t, 0, sizeof(zpl_video_hwregion_t));
+		memset(t, 0, sizeof(zpl_media_video_hwregion_t));
 		t->rng_id = rng_id;
 
 		return t;
@@ -39,7 +39,7 @@ zpl_video_hwregion_t * zpl_video_hwregion_create(zpl_int32 rng_id)
 
 
 
-int zpl_video_hwregion_active(zpl_video_hwregion_t *hwregion)
+int zpl_media_video_hwregion_active(zpl_media_video_hwregion_t *hwregion)
 {
     int ret = -1;
     zpl_video_assert(hwregion);
@@ -47,7 +47,7 @@ int zpl_video_hwregion_active(zpl_video_hwregion_t *hwregion)
     return ret;
 }
 
-int zpl_video_hwregion_inactive(zpl_video_hwregion_t *hwregion)
+int zpl_media_video_hwregion_inactive(zpl_media_video_hwregion_t *hwregion)
 {
     int ret = -1;
     zpl_video_assert(hwregion);

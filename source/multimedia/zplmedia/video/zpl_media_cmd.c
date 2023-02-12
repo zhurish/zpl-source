@@ -31,15 +31,15 @@ DEFUN (media_channel_enable,
 		"Disable\n")
 {
 	int ret = ERROR;
-	zpl_int32 channel = -1;
-	ZPL_MEDIA_CHANNEL_INDEX_E channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 	
 	//VTY_GET_INTEGER("channel",channel, argv[0]);
 	channel = atoi(argv[0]);
 	if(strstr(argv[1],"main"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_MAIN;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
 	else if(strstr(argv[1],"sub"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 	if(strstr(argv[2],"enable"))
 	{
 		if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
@@ -50,7 +50,7 @@ DEFUN (media_channel_enable,
 	else if(strstr(argv[2],"disable"))
 	{
 		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
-			zpl_media_channel_state(channel,  channel_index) != ZPL_MEDIA_STATE_ACTIVE)
+			ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
 			ret = zpl_media_channel_destroy( channel,  channel_index);
 		else
 			ret = ERROR;	
@@ -70,24 +70,24 @@ DEFUN (media_channel_active,
 		"Inactive\n")
 {
 	int ret = ERROR;
-	zpl_int32 channel = -1;
-	ZPL_MEDIA_CHANNEL_INDEX_E channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 	VTY_GET_INTEGER("channel",channel, argv[0]);
 	//channel = atoi(argv[0]);
 	if(strstr(argv[1],"main"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_MAIN;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
 	else if(strstr(argv[1],"sub"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 	if(strncmp(argv[2],"active", 4) == 0)
 	{
 		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
-			zpl_media_channel_state(channel,  channel_index) != ZPL_MEDIA_STATE_ACTIVE)
+			!ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
 			ret = zpl_media_channel_start(channel,  channel_index);
 	}
 	else if(strncmp(argv[2],"inactive", 4) == 0)
 	{
 		if(zpl_media_channel_lookup(channel,  channel_index) != NULL && 
-			zpl_media_channel_state(channel,  channel_index) == ZPL_MEDIA_STATE_ACTIVE)
+			ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
 			ret = zpl_media_channel_stop( channel,  channel_index);
 		else
 			ret = ERROR;	
@@ -107,15 +107,15 @@ DEFUN (media_channel_record,
 		"Disable\n")
 {
 	int ret = ERROR;
-	zpl_int32 channel = -1;
-	ZPL_MEDIA_CHANNEL_INDEX_E channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 	zpl_media_channel_t	*chn = NULL;
 	VTY_GET_INTEGER("channel",channel, argv[0]);
 	
 	if(strstr(argv[1],"main"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_MAIN;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
 	else if(strstr(argv[1],"sub"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 
 	chn = zpl_media_channel_lookup(channel,  channel_index);
 	if(chn && strncmp(argv[2],"enable", 4) == 0)
@@ -147,15 +147,15 @@ DEFUN (media_channel_alarm_capture,
 		"Disable\n")
 {
 	int ret = ERROR;
-	zpl_int32 channel = -1;
-	ZPL_MEDIA_CHANNEL_INDEX_E channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 	zpl_media_channel_t	*chn = NULL;
 	VTY_GET_INTEGER("channel",channel, argv[0]);
 	
 	if(strstr(argv[1],"main"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_MAIN;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
 	else if(strstr(argv[1],"sub"))
-		channel_index = ZPL_MEDIA_CHANNEL_INDEX_SUB;
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 
 	chn = zpl_media_channel_lookup(channel,  channel_index);
 	if(chn && strncmp(argv[2],"enable", 4) == 0)
@@ -193,7 +193,7 @@ DEFUN (media_channel_osd,
 		"Disable\n")
 {
 	int ret = ERROR;
-	ret = zpl_video_vpssgrp_show(vty);
+	ret = zpl_media_video_vpssgrp_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -208,7 +208,7 @@ DEFUN (show_video_vpssgrp_info,
 		"information\n")
 {
 	int ret = ERROR;
-	ret = zpl_video_vpssgrp_show(vty);
+	ret = zpl_media_video_vpssgrp_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -222,7 +222,7 @@ DEFUN (show_video_vpss_channel_info,
 		"information\n")
 {
 	int ret = ERROR;
-	ret = zpl_video_vpss_channel_show(vty);
+	ret = zpl_media_video_vpss_channel_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -236,7 +236,7 @@ DEFUN (show_video_input_pipe_info,
 		"information\n")
 {
 	int ret = ERROR;
-	ret = zpl_video_input_pipe_show(vty);
+	ret = zpl_meida_video_input_pipe_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -249,7 +249,7 @@ DEFUN (show_video_input_info,
 		"information\n")
 {
 	int ret = ERROR;
-	ret = zpl_video_input_show(vty);
+	ret = zpl_media_video_input_channel_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -262,7 +262,7 @@ DEFUN (show_video_encode_info,
 		"information\n")
 {
 	int ret = ERROR;
-	ret = zpl_video_encode_show(vty);
+	ret = zpl_media_video_encode_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 //extern int rtp_send_h264_test(void);
@@ -386,21 +386,21 @@ static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 	if(chn)
 	{
 		vty_out(vty, " media channel %d %s enable%s", chn->channel, 
-			(chn->channel_index==ZPL_MEDIA_CHANNEL_INDEX_MAIN)?"main":"sub", VTY_NEWLINE);
+			(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", VTY_NEWLINE);
 
-		if(chn->state==ZPL_MEDIA_STATE_ACTIVE)
+		if(ZPL_TST_BIT(chn->state, ZPL_MEDIA_STATE_START))
 			vty_out(vty, " media channel %d %s %s%s", chn->channel, 
-				(chn->channel_index==ZPL_MEDIA_CHANNEL_INDEX_MAIN)?"main":"sub", 
-				(chn->state==ZPL_MEDIA_STATE_ACTIVE)?"active":"inactive", VTY_NEWLINE);
+				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
+				(ZPL_TST_BIT(chn->state, ZPL_MEDIA_STATE_START))?"active":"inactive", VTY_NEWLINE);
 
 		if(chn->p_record.enable)
 			vty_out(vty, " media channel %d %s record %s%s", chn->channel, 
-				(chn->channel_index==ZPL_MEDIA_CHANNEL_INDEX_MAIN)?"main":"sub", 
+				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
 				chn->p_record.enable?"enable":"disable", VTY_NEWLINE);
 
 		if(chn->p_capture.enable)
 			vty_out(vty, " media channel %d %s alarm capture %s%s", chn->channel, 
-				(chn->channel_index==ZPL_MEDIA_CHANNEL_INDEX_MAIN)?"main":"sub", 
+				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
 				chn->p_capture.enable?"enable":"disable", VTY_NEWLINE);
 		return OK;
 	}

@@ -105,8 +105,7 @@ int zpl_media_hardadap_uninstall(zpl_media_hardadap_lst_t *lst,
 int zpl_media_hardadap_handle(zpl_media_hardadap_lst_t *lst, void *p, zpl_int timeout)
 {
     zpl_uint32 j = 0;
-    //zpl_video_assert(callback);
-    //zpl_video_assert(p);
+
     for (j = 0; j < ZPL_MEDIA_HARDADAP_MAX; j++)
     {
         if (lst->callback[j].hardadap_sendto != NULL)
@@ -127,27 +126,27 @@ int zpl_media_hardadap_handle(zpl_media_hardadap_lst_t *lst, void *p, zpl_int ti
 int zpl_media_hal_input_sendto_vpss_default(zpl_void *dst, zpl_int32 vpssgrp, zpl_int32 vpsschn,
                                             void *p, zpl_int32 timeout)
 {
-    if (((zpl_video_vpssgrp_t *)dst)->vpss_group != vpssgrp)
+    if (((zpl_media_video_vpssgrp_t *)dst)->vpss_group != vpssgrp)
 	{
 		if(ZPL_MEDIA_DEBUG(INPUT, EVENT) && ZPL_MEDIA_DEBUG(INPUT, HARDWARE) && ZPL_MEDIA_DEBUG(INPUT, SEND))
 		{
-			//zpl_media_debugmsg_warn(" =====================vpss_group(%d) vpssgrp(%d) ", ((zpl_video_vpssgrp_t *)dst)->vpss_group, vpssgrp);
+			//zpl_media_debugmsg_warn(" =====================vpss_group(%d) vpssgrp(%d) ", ((zpl_media_video_vpssgrp_t *)dst)->vpss_group, vpssgrp);
 		}
         return ERROR;
 	}
-    return zpl_video_vpssgrp_sendto((zpl_video_vpssgrp_t *)dst, p, timeout);
+    return zpl_media_video_vpssgrp_sendto((zpl_media_video_vpssgrp_t *)dst, p, timeout);
 }
 
 int zpl_media_hal_vpss_sendto_encode_default(zpl_void *dst, zpl_int32 vencgrp, zpl_int32 vencchn,
                                              void *p, zpl_int32 timeout)
 {
-    if (((zpl_video_encode_t *)dst)->venc_channel != vencchn)
+    if (((zpl_media_video_encode_t *)dst)->venc_channel != vencchn)
 	{
 		if(ZPL_MEDIA_DEBUG(VPSS, EVENT) && ZPL_MEDIA_DEBUG(VPSS, HARDWARE) && ZPL_MEDIA_DEBUG(VPSS, SEND))
 		{
-			//zpl_media_debugmsg_warn(" ====================venc_channel(%d) vencchn(%d) ", ((zpl_video_encode_t *)dst)->venc_channel, vencchn);
+			//zpl_media_debugmsg_warn(" ====================venc_channel(%d) vencchn(%d) ", ((zpl_media_video_encode_t *)dst)->venc_channel, vencchn);
 		}
         return ERROR;
 	}
-    return zpl_video_encode_sendto((zpl_video_encode_t *)dst, p, timeout);
+    return zpl_media_video_encode_sendto((zpl_media_video_encode_t *)dst, p, timeout);
 }

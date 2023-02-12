@@ -66,7 +66,7 @@ static int zpl_media_rtsp_write_frame(zpl_media_channel_t *mediachn, zpl_skbuffe
     lst_data_queue_t *m_queue = (lst_data_queue_t *)pVoidUser;
     if(mediachn == NULL)
         return 0;
-    zpl_video_encode_t *video_encode = (zpl_video_encode_t *)mediachn->halparam;
+    zpl_media_video_encode_t *video_encode = (zpl_media_video_encode_t *)mediachn->halparam;
 	//zpl_media_debugmsg_warn(" =====================zpl_media_rtsp_write_frame");
     if(m_queue)
     {
@@ -106,7 +106,7 @@ static int zpl_media_rtsp_write_frame(zpl_media_channel_t *mediachn, zpl_skbuffe
                 {
                     video_encode->dbg_send_count = 0;
                     zpl_video_frame_info(bufdata);
-                    zpl_video_encode_request_IDR(video_encode);
+                    zpl_media_video_encode_request_IDR(video_encode);
                 }
                 video_encode->dbg_send_count++;
                 #endif
@@ -217,8 +217,8 @@ static int zpl_video_encode2rtspfmt(int encode)
     return 0;
 }
 
-int zpl_media_rtsp_url(zpl_int32 channel, 
-	ZPL_MEDIA_CHANNEL_INDEX_E type, char *rtspurl)
+int zpl_media_rtsp_url(ZPL_MEDIA_CHANNEL_E channel, 
+	ZPL_MEDIA_CHANNEL_TYPE_E type, char *rtspurl)
 {
     //sprintf(rtspurl, "%d/%d", channel, type);
     sprintf(rtspurl, "live");
@@ -255,8 +255,8 @@ int zpl_media_rtsp_exit()
 }
 
 /*
-int zpl_media_rtsp_channel_init(zpl_int32 channel, 
-	ZPL_MEDIA_CHANNEL_INDEX_E type, int rtspfmt)
+int zpl_media_rtsp_channel_init(ZPL_MEDIA_CHANNEL_E channel, 
+	ZPL_MEDIA_CHANNEL_TYPE_E type, int rtspfmt)
 {
     if(rtsp_srv)
     {
@@ -288,8 +288,8 @@ int zpl_media_rtsp_channel_init(zpl_int32 channel,
 }
 */
 lst_data_queue_t *m_queue;
-int zpl_media_rtsp_channel_add(zpl_int32 channel, 
-	ZPL_MEDIA_CHANNEL_INDEX_E type, zpl_int32 encode, void *mediachn)
+int zpl_media_rtsp_channel_add(ZPL_MEDIA_CHANNEL_E channel, 
+	ZPL_MEDIA_CHANNEL_TYPE_E type, zpl_int32 encode, void *mediachn)
 {
     #ifdef TEST
     m_queue = lst_data_queue_create(64);
@@ -297,7 +297,7 @@ int zpl_media_rtsp_channel_add(zpl_int32 channel,
     return OK;
     #endif
     int rtspfmt = zpl_video_encode2rtspfmt(encode);
-    if(rtsp_srv && channel == 0 && type == ZPL_MEDIA_CHANNEL_INDEX_MAIN)
+    if(rtsp_srv && channel == 0 && type == ZPL_MEDIA_CHANNEL_TYPE_MAIN)
     {
         //lst_data_queue_t *m_queue = lst_data_queue_create(64);
         m_queue = lst_data_queue_create(64);

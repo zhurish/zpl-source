@@ -93,7 +93,7 @@ static int _zpl_vidhal_vpssgrp_destroy(zpl_int32 vpssgrp)
 #endif
 }
 
-static int zpl_vidhal_vpsschn_create(zpl_int32 vpssgrp, zpl_video_vpss_channel_t *vpss)
+static int zpl_vidhal_vpsschn_create(zpl_int32 vpssgrp, zpl_media_video_vpss_channel_t *vpss)
 {
 #ifdef ZPL_HISIMPP_MODULE
     VPSS_CHN_ATTR_S stVpssChnAttr;
@@ -212,7 +212,7 @@ static int zpl_vidhal_vpsschn_release_frame(zpl_int32 vpssgrp, zpl_int32 vpsschn
 }
 #endif
 
-int zpl_vidhal_vpssgrp_frame_recvfrom(zpl_video_vpssgrp_t *vpssgrp)
+int zpl_vidhal_vpssgrp_frame_recvfrom(zpl_media_video_vpssgrp_t *vpssgrp)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32MilliSec = 200;
@@ -222,7 +222,7 @@ int zpl_vidhal_vpssgrp_frame_recvfrom(zpl_video_vpssgrp_t *vpssgrp)
     if (s32Ret == HI_SUCCESS)
     {
         zpl_video_size_t input_size;
-        //zpl_video_encode_t *venc_ptr = vpss->venc_ptr;
+        //zpl_media_video_encode_t *venc_ptr = vpss->venc_ptr;
         /* 1.1 mmap frame */
         input_size.width = stFrmInfo_vpss.stVFrame.u32Width;
         input_size.height = stFrmInfo_vpss.stVFrame.u32Height;
@@ -274,7 +274,7 @@ int zpl_vidhal_vpssgrp_frame_recvfrom(zpl_video_vpssgrp_t *vpssgrp)
     return ERROR;
 }
 
-int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_video_vpss_channel_t *vpss)
+int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_media_video_vpss_channel_t *vpss)
 {
 #ifdef ZPL_HISIMPP_MODULE
 
@@ -285,7 +285,7 @@ int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_video_vpss_channel_t *vpss)
     if (s32Ret == HI_SUCCESS)
     {
         zpl_video_size_t input_size;
-        //zpl_video_encode_t *venc_ptr = vpss->venc_ptr;
+        //zpl_media_video_encode_t *venc_ptr = vpss->venc_ptr;
         /* 1.1 mmap frame */
         input_size.width = stFrmInfo_vpss.stVFrame.u32Width;
         input_size.height = stFrmInfo_vpss.stVFrame.u32Height;
@@ -335,7 +335,7 @@ int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_video_vpss_channel_t *vpss)
 
 
 
-int zpl_vidhal_vpssgrp_frame_sendto(zpl_video_vpssgrp_t *vpssgrp, void *p, zpl_int s32MilliSec)
+int zpl_vidhal_vpssgrp_frame_sendto(zpl_media_video_vpssgrp_t *vpssgrp, void *p, zpl_int s32MilliSec)
 {
 #ifdef ZPL_HISIMPP_MODULE
     int s32Ret = HI_MPI_VPSS_SendFrame(vpssgrp->vpss_group, 0, p, s32MilliSec);
@@ -361,7 +361,7 @@ int zpl_vidhal_vpssgrp_frame_sendto(zpl_video_vpssgrp_t *vpssgrp, void *p, zpl_i
 #endif
 }
 
-int zpl_vidhal_vpss_channel_update_fd(zpl_video_vpss_channel_t *vpss)
+int zpl_vidhal_vpss_channel_update_fd(zpl_media_video_vpss_channel_t *vpss)
 {
 #ifdef ZPL_HISIMPP_MODULE
     if (vpss->vpss_channel >= 0)
@@ -378,7 +378,7 @@ int zpl_vidhal_vpss_channel_update_fd(zpl_video_vpss_channel_t *vpss)
 #endif
 }
 
-int zpl_vidhal_vpssgrp_create(zpl_video_vpssgrp_t *vpss)
+int zpl_vidhal_vpssgrp_create(zpl_media_video_vpssgrp_t *vpss)
 {
     if (vpss->vpss_group == ZPL_INVALID_VAL)
     {
@@ -389,7 +389,7 @@ int zpl_vidhal_vpssgrp_create(zpl_video_vpssgrp_t *vpss)
     return OK;
 }
 
-int zpl_vidhal_vpss_channel_create(zpl_video_vpss_channel_t *vpss)
+int zpl_vidhal_vpss_channel_create(zpl_media_video_vpss_channel_t *vpss)
 {
     if (vpss->vpss_channel != ZPL_INVALID_VAL)
     {
@@ -398,7 +398,7 @@ int zpl_vidhal_vpss_channel_create(zpl_video_vpss_channel_t *vpss)
     }
     return OK;
 }
-int zpl_vidhal_vpssgrp_destroy(zpl_video_vpssgrp_t *vpss)
+int zpl_vidhal_vpssgrp_destroy(zpl_media_video_vpssgrp_t *vpss)
 {
     if (vpss->vpss_group == ZPL_INVALID_VAL)
     {
@@ -409,7 +409,7 @@ int zpl_vidhal_vpssgrp_destroy(zpl_video_vpssgrp_t *vpss)
     return OK;
 }
 
-int zpl_vidhal_vpss_channel_destroy(zpl_video_vpss_channel_t *vpss)
+int zpl_vidhal_vpss_channel_destroy(zpl_media_video_vpss_channel_t *vpss)
 {
     if (vpss->vpss_channel != ZPL_INVALID_VAL)
     {
@@ -418,7 +418,7 @@ int zpl_vidhal_vpss_channel_destroy(zpl_video_vpss_channel_t *vpss)
     }
     return OK;
 }
-int zpl_vidhal_vpssgrp_start(zpl_video_vpssgrp_t *vpss)
+int zpl_vidhal_vpssgrp_start(zpl_media_video_vpssgrp_t *vpss)
 {
     if (vpss->vpss_group == ZPL_INVALID_VAL)
     {
@@ -429,7 +429,7 @@ int zpl_vidhal_vpssgrp_start(zpl_video_vpssgrp_t *vpss)
     return OK;
 }
 
-int zpl_vidhal_vpss_channel_start(zpl_video_vpss_channel_t *vpss)
+int zpl_vidhal_vpss_channel_start(zpl_media_video_vpss_channel_t *vpss)
 {
     if (vpss->vpss_channel != ZPL_INVALID_VAL)
     {
@@ -442,7 +442,7 @@ int zpl_vidhal_vpss_channel_start(zpl_video_vpss_channel_t *vpss)
 #endif
     return OK;
 }
-int zpl_vidhal_vpssgrp_stop(zpl_video_vpssgrp_t *vpss)
+int zpl_vidhal_vpssgrp_stop(zpl_media_video_vpssgrp_t *vpss)
 {
     if (vpss->vpss_group == ZPL_INVALID_VAL)
     {
@@ -452,7 +452,7 @@ int zpl_vidhal_vpssgrp_stop(zpl_video_vpssgrp_t *vpss)
         return ERROR;
     return OK;
 }
-int zpl_vidhal_vpss_channel_stop(zpl_video_vpss_channel_t *vpss)
+int zpl_vidhal_vpss_channel_stop(zpl_media_video_vpss_channel_t *vpss)
 {
     if (vpss->vpss_channel != ZPL_INVALID_VAL)
     {

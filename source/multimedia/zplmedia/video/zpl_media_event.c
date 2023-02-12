@@ -36,12 +36,13 @@ zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uint32 max
 	if(queue)
 	{
         memset(queue, 0, sizeof(zpl_media_event_queue_t));
-        queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
-        queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
+        queue->mutex = os_mutex_name_create(os_name_format("%s-mutex",name));
+        queue->sem = os_sem_name_create(os_name_format("%s-sem",name));
         queue->maxsize = maxsize;
         if(name)
             queue->name = strdup(name);
         lstInitFree (&queue->list, zpl_media_eventcb_free);
+        lstInitFree (&queue->ulist, zpl_media_eventcb_free);
         if(_media_event_queue_default == NULL)
             _media_event_queue_default = queue;
 		return queue;
@@ -63,10 +64,11 @@ int zpl_media_event_destroy(zpl_media_event_queue_t *queue)
     if(queue->name)
         free(queue->name);
 	lstFree(&queue->list);
+    lstFree(&queue->ulist);
     if(queue->mutex)
-    	os_mutex_exit(queue->mutex);
+    	os_mutex_destroy(queue->mutex);
     if(queue->sem)
-    	os_sem_exit(queue->sem);
+    	os_sem_destroy(queue->sem);
     free(queue);
 	return OK;
 }

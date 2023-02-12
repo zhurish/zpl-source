@@ -26,19 +26,19 @@ extern int zpl_vidhal_input_spread(zpl_int32 input_pipe, zpl_int32 input_chn, vo
 
 
 
-extern int zpl_vidhal_input_pipe_create(zpl_video_input_pipe_t *);
-extern int zpl_vidhal_input_pipe_start(zpl_video_input_pipe_t *);
-extern int zpl_vidhal_input_pipe_stop(zpl_video_input_pipe_t *);
-extern int zpl_vidhal_input_pipe_destroy(zpl_video_input_pipe_t *);
-extern int zpl_vidhal_input_pipe_frame_recvfrom(zpl_video_input_pipe_t *input);
-extern int zpl_vidhal_input_pipe_update_fd(zpl_video_input_pipe_t *);
+extern int zpl_vidhal_input_pipe_create(zpl_meida_video_input_pipe_t *);
+extern int zpl_vidhal_input_pipe_start(zpl_meida_video_input_pipe_t *);
+extern int zpl_vidhal_input_pipe_stop(zpl_meida_video_input_pipe_t *);
+extern int zpl_vidhal_input_pipe_destroy(zpl_meida_video_input_pipe_t *);
+extern int zpl_vidhal_input_pipe_frame_recvfrom(zpl_meida_video_input_pipe_t *input);
+extern int zpl_vidhal_input_pipe_update_fd(zpl_meida_video_input_pipe_t *);
 
-extern int zpl_vidhal_input_channel_create(zpl_video_input_channel_t *);
-extern int zpl_vidhal_input_channel_start(zpl_video_input_channel_t *);
-extern int zpl_vidhal_input_channel_stop(zpl_video_input_channel_t *);
-extern int zpl_vidhal_input_channel_destroy(zpl_video_input_channel_t *);
-extern int zpl_vidhal_input_channel_frame_recvfrom(zpl_video_input_channel_t *input);
-extern int zpl_vidhal_input_channel_update_fd(zpl_video_input_channel_t *);
+extern int zpl_vidhal_input_channel_create(zpl_meida_video_input_channel_t *);
+extern int zpl_vidhal_input_channel_start(zpl_meida_video_input_channel_t *);
+extern int zpl_vidhal_input_channel_stop(zpl_meida_video_input_channel_t *);
+extern int zpl_vidhal_input_channel_destroy(zpl_meida_video_input_channel_t *);
+extern int zpl_vidhal_input_channel_frame_recvfrom(zpl_meida_video_input_channel_t *input);
+extern int zpl_vidhal_input_channel_update_fd(zpl_meida_video_input_channel_t *);
 
 #ifdef __cplusplus
 }

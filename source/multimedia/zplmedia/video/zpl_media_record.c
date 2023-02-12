@@ -52,7 +52,7 @@ static char * zpl_media_channel_record_filename(zpl_media_channel_t *mediachn)
     return data;
 }
 
-int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index, zpl_bool enable)
+int zpl_media_channel_record_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable)
 {
     zpl_media_channel_t *mediachn = NULL;
     zpl_media_record_t *record = NULL;
@@ -79,6 +79,9 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
             return ERROR;
         }
+
+		zpl_skbqueue_attribute_set(record->buffer_queue, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
+        
         record->record_file = zpl_media_file_create(mediachn, zpl_media_channel_record_filename(mediachn));
         if (record->record_file == NULL)
         {
@@ -122,7 +125,7 @@ int zpl_media_channel_record_enable(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E
 }
 
 
-zpl_bool zpl_media_channel_record_state(zpl_int32 channel, ZPL_MEDIA_CHANNEL_INDEX_E channel_index)
+zpl_bool zpl_media_channel_record_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {
     zpl_bool ret = zpl_false;
     zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);

@@ -14,9 +14,9 @@ extern "C" {
 
 //#include <zpl_type.h>
 #include <zpl_media.h>
-#include <zpl_media_buffer.h>
 #include <zpl_media_format.h>
 #include <zpl_media_codec.h>
+#include <zpl_media_buffer.h>
 #include <zpl_media_text.h>
 #include <zpl_media_area.h>
 #include <zpl_media_channel.h>
@@ -35,12 +35,14 @@ extern "C" {
 #include "zpl_media_area.h"
 #include "zpl_media_frame_adap.h"
 
-#include <zpl_video_input.h>
-#include <zpl_video_vpss.h>
-#include <zpl_video_encode.h>
-#include "zpl_video_region.h"
-#include "zpl_video_sys.h"
-#include "zpl_sensor_type.h"
+#include <zpl_media_video_input.h>
+#include <zpl_media_video_vpss.h>
+#include <zpl_media_video_encode.h>
+#include "zpl_media_video_region.h"
+#include "zpl_media_video_sys.h"
+
+
+#include "zpl_media_sensor_type.h"
 
 
 #include "zpl_vidhal_internal.h"

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "zpl_sensor_type.h"
+#include "zpl_media_sensor_type.h"
 
 
 

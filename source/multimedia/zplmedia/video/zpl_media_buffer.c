@@ -11,7 +11,7 @@
 #include "zpl_media_internal.h"
 
 
-static zpl_media_bufqueue_t _media_bufqueue;
+static zpl_media_bufqueue_t *_media_bufqueue = NULL;
 
 
 char *zpl_media_timerstring(void)
@@ -121,32 +121,56 @@ int zpl_media_bufcache_destroy(zpl_media_bufcache_t * bufdata)
 	return ERROR;
 }
 
-
-int zpl_media_buffer_header(zpl_skbuffer_t * bufdata, int type,int flag, int timetick, int datalen)
-{
-    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
-    media_header->frame_type = type;     //音频视频
-    media_header->frame_flags = flag;
-    media_header->frame_timetick = timetick;    //时间戳 毫秒
-    //media_header->buffer_seq  = stStream.u32Seq;                        //序列号 底层序列号
-    bufdata->skb_len = datalen;             //当前缓存帧的长度
-	return OK;
-}
-
-int zpl_media_buffer_header_channel_key(zpl_skbuffer_t * bufdata, void *channel, int key)
+int zpl_media_buffer_header_channel(zpl_skbuffer_t * bufdata, void *channel)
 {
 	zpl_media_channel_t *media_channel = channel;
     zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
     media_header->ID = ZPL_MEDIA_CHANNEL_SET(media_channel->channel, media_channel->channel_index, media_channel->media_type);
-    media_header->frame_key = key;    //时间戳 毫秒
-	if (media_header->frame_type == ZPL_MEDIA_VIDEO)
+	if (media_header->type == ZPL_MEDIA_VIDEO)
 	{
-		media_header->frame_codec = media_channel->media_param.video_media.codec.codectype;
+		media_header->codectype = media_channel->media_param.video_media.codec.codectype;
 	}
-	else if (media_header->frame_type == ZPL_MEDIA_AUDIO)
+	else if (media_header->type == ZPL_MEDIA_AUDIO)
 	{
-		media_header->frame_codec = media_channel->media_param.audio_media.codec.codectype;
+		media_header->codectype = media_channel->media_param.audio_media.codec.codectype;
 	}
+	return OK;	
+}
+
+int zpl_media_buffer_header(void *channel, zpl_skbuffer_t * bufdata, ZPL_MEDIA_E type, int timetick, int datalen)
+{
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+	zpl_media_channel_t *media_channel = channel;
+	if(media_channel)
+	{
+		media_header->ID = ZPL_MEDIA_CHANNEL_SET(media_channel->channel, media_channel->channel_index, media_channel->media_type);
+		if (media_header->type == ZPL_MEDIA_VIDEO)
+		{
+			media_header->codectype = media_channel->media_param.video_media.codec.codectype;
+		}
+		else if (media_header->type == ZPL_MEDIA_AUDIO)
+		{
+			media_header->codectype = media_channel->media_param.audio_media.codec.codectype;
+		}
+	}
+    media_header->type = type;     //音频视频
+    media_header->timetick = timetick;    //时间戳 毫秒
+	media_header->length = datalen;
+    bufdata->skb_len = datalen;             //当前缓存帧的长度
+	return OK;
+}
+
+int zpl_media_buffer_header_framedatatype(zpl_skbuffer_t * bufdata, ZPL_MEDIA_FRAME_DATA_E buffertype)
+{
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+    media_header->buffertype = buffertype;    //时间戳 毫秒
+	return OK;
+}
+
+int zpl_media_buffer_header_frame_type(zpl_skbuffer_t * bufdata, ZPL_VIDEO_FRAME_TYPE_E key)
+{
+    zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+    media_header->frame_type = key;    //时间戳 毫秒
 	return OK;
 }
 
@@ -154,9 +178,9 @@ int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
 {
 	zpl_media_channel_t *media_channel = channel;
     zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
-	if (media_header->frame_type == ZPL_MEDIA_VIDEO)
+	if (media_header->type == ZPL_MEDIA_VIDEO)
 	{
-		switch(media_header->frame_key)
+		switch(media_header->frame_type)
 		{
     		case ZPL_VIDEO_FRAME_TYPE_SEI:                         /* H264/H265 SEI types */
     		case ZPL_VIDEO_FRAME_TYPE_SPS:                         /* H264/H265 SPS types */
@@ -172,45 +196,142 @@ int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
 	return OK;
 }
 
-zpl_skbqueue_t * zpl_media_bufqueue_get(void)
+zpl_skbqueue_t * zpl_media_bufqueue_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {
-	return _media_bufqueue.media_queue;
+	if(_media_bufqueue)
+		return _media_bufqueue->media_queue[channel][channel_index];
+	return NULL;	
 }
 
+int zpl_media_bufqueue_signal(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
+{
+	if(_media_bufqueue == NULL)
+		return ERROR;
+    zpl_media_bufqueue_event_t *data = NULL;
+    if(_media_bufqueue->mutex)
+    	os_mutex_lock(_media_bufqueue->mutex, OS_WAIT_FOREVER);
+    if(lstCount (&_media_bufqueue->ulist))    
+	    data = lstFirst (&_media_bufqueue->ulist);
+    if(data == NULL)    
+        data = malloc(sizeof(zpl_media_bufqueue_event_t));
+
+    if(data)
+    {
+        memset(data, 0, sizeof(zpl_media_bufqueue_event_t));
+        data->channel = channel;             //模块
+        data->channel_index = channel_index;            //
+        lstAdd (&_media_bufqueue->list, data);
+    	if(_media_bufqueue->mutex)
+    		os_mutex_unlock(_media_bufqueue->mutex);
+		if (_media_bufqueue->sem)
+			os_sem_give(_media_bufqueue->sem);
+        return OK;
+    }
+	return ERROR;	
+}
+
+static int zpl_media_bufqueue_free(zpl_media_bufqueue_event_t *data)
+{
+	if(data)
+	{		
+        free(data);
+	}	
+	return OK;
+}
 int zpl_media_bufqueue_init(void)
 {
-	memset(&_media_bufqueue, 0, sizeof(zpl_media_bufqueue_t));
-	_media_bufqueue.media_queue = zpl_skbqueue_create(os_name_format("mediaBufQueue"), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_true);
+	int ch = 0, chtype = 0;
+	if(_media_bufqueue == NULL)
+		_media_bufqueue = malloc(sizeof(zpl_media_bufqueue_t));
+
+	if(_media_bufqueue == NULL)
+		return ERROR;	
+	memset(_media_bufqueue, 0, sizeof(zpl_media_bufqueue_t));
+    _media_bufqueue->mutex = os_mutex_name_create("mediaBufQueue-mutex");	
+	_media_bufqueue->sem = os_sem_name_create("mediaBufQueue-sem");
+    lstInitFree (&_media_bufqueue->list, zpl_media_bufqueue_free);
+	lstInitFree (&_media_bufqueue->ulist, zpl_media_bufqueue_free);
+	for(ch = ZPL_MEDIA_CHANNEL_0; ch < ZPL_MEDIA_CHANNEL_MAX; ch++)
+	{
+		for(chtype = ZPL_MEDIA_CHANNEL_TYPE_MAIN; chtype < ZPL_MEDIA_CHANNEL_TYPE_MAX; chtype++)
+		{
+			_media_bufqueue->media_queue[ch][chtype] = zpl_skbqueue_create(os_name_format("mediaBufQueue-%d/%d", ch, chtype), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_true);
+			if(_media_bufqueue->media_queue[ch][chtype])
+				zpl_skbqueue_attribute_set(_media_bufqueue->media_queue[ch][chtype], ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
+		}
+	}
 	return OK;
 }
 
 int zpl_media_bufqueue_exit(void)
 {
-	if(_media_bufqueue.taskid)
+	int ch = 0, chtype = 0;	
+	if(_media_bufqueue == NULL)
+		return OK;
+    if(_media_bufqueue->mutex)
+    	os_mutex_lock(_media_bufqueue->mutex, OS_WAIT_FOREVER);
+	if(_media_bufqueue->taskid)
 	{
-		if(os_task_destroy(_media_bufqueue.taskid)==OK)
-			_media_bufqueue.taskid = 0;
+		if(os_task_destroy(_media_bufqueue->taskid)==OK)
+			_media_bufqueue->taskid = 0;
 	}
-    if(_media_bufqueue.media_queue)
-    	zpl_skbqueue_destroy(_media_bufqueue.media_queue);
-	_media_bufqueue.media_queue = NULL;	
+	for(ch = ZPL_MEDIA_CHANNEL_0; ch < ZPL_MEDIA_CHANNEL_MAX; ch++)
+	{
+		for(chtype = ZPL_MEDIA_CHANNEL_TYPE_MAIN; chtype < ZPL_MEDIA_CHANNEL_TYPE_MAX; chtype++)
+		{
+			if(_media_bufqueue->media_queue[ch][chtype])
+				zpl_skbqueue_destroy(_media_bufqueue->media_queue[ch][chtype]);
+		}
+	}
+	lstFree(&_media_bufqueue->list);
+    lstFree(&_media_bufqueue->ulist);
+    if(_media_bufqueue->mutex)
+    	os_mutex_destroy(_media_bufqueue->mutex);
+	if (_media_bufqueue->sem)
+		os_sem_destroy(_media_bufqueue->sem);
+	_media_bufqueue->sem = NULL;	
+	free(_media_bufqueue);
+	_media_bufqueue = NULL;
 	return OK;
 }
 
 static int media_queue_task(void *p)
 {
+	NODE node;
+    zpl_media_bufqueue_event_t *eventcb = NULL;
 	host_waitting_loadconfig();
-	while(OS_TASK_TRUE())
+
+	while(_media_bufqueue && OS_TASK_TRUE())
 	{
-        zpl_skbqueue_distribute(_media_bufqueue.media_queue, 1, zpl_media_client_foreach, NULL);
+        if(_media_bufqueue->sem)
+		    os_sem_take(_media_bufqueue->sem, OS_WAIT_FOREVER);
+
+		if(_media_bufqueue->mutex)
+			os_mutex_lock(_media_bufqueue->mutex, OS_WAIT_FOREVER);
+
+		for(eventcb = (zpl_media_bufqueue_event_t *)lstFirst(&_media_bufqueue->list); eventcb != NULL;
+			eventcb = (zpl_media_bufqueue_event_t *)lstNext(&node))
+		{
+			node = eventcb->node;
+			if(eventcb) 
+			{
+				lstDelete(&_media_bufqueue->list, eventcb);
+				lstAdd (&_media_bufqueue->ulist, eventcb); 
+				if(_media_bufqueue->media_queue[eventcb->channel][eventcb->channel_index])
+					zpl_skbqueue_async_wait_distribute(_media_bufqueue->media_queue[eventcb->channel][eventcb->channel_index], 
+						5,	zpl_media_client_foreach, NULL);
+			}
+		}
+		if(_media_bufqueue->mutex)
+			os_mutex_unlock(_media_bufqueue->mutex);		
 	}
 	return OK;
 }
 
 int zpl_media_bufqueue_start(void)
 {
-    if(_media_bufqueue.taskid == 0)
-        _media_bufqueue.taskid = os_task_create("mediaQuaueTask", OS_TASK_DEFAULT_PRIORITY,
+    if(_media_bufqueue->taskid == 0)
+        _media_bufqueue->taskid = os_task_create("mediaQuaueTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, media_queue_task, NULL, OS_TASK_DEFAULT_STACK);
     return OK;               
 }

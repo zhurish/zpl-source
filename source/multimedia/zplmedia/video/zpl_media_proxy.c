@@ -14,7 +14,7 @@
 #include "zpl_media_internal.h"
 
 
-static proxy_server_t proxy_server = 
+static zpl_media_proxy_server_t proxy_server = 
 {
     .initalition = 0,
 };
@@ -22,26 +22,204 @@ static proxy_server_t proxy_server =
 
 static int zpl_proxy_server_accept(struct eloop *t);
 static int zpl_proxy_server_read(struct eloop *t);
+static int proxy_server_client_destroy(zpl_media_proxy_client_t * client);
+static int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn, 
+        const zpl_skbuffer_t *bufdata,  void *pVoidUser);
 
-static int zpl_media_proxy_buffer_write(zpl_socket_t sock, char *hdr, int hdrlen, char *data, int datalen)
+int zpl_media_msg_create_header(struct zpl_media_msg *ipcmsg, zpl_uint32 command, int channel, int level)
 {
-    char *buf = malloc(hdrlen + datalen+5);
-    if(buf)
-    {
-        if(hdr)
-            memcpy(buf, hdr, hdrlen);
-        if(data)
-            memcpy(buf + hdrlen, data, datalen);
-        ipstack_write(sock, buf, hdrlen + datalen);  
-        free(buf);  
-    }
-    return -1;
+    zpl_media_msg_header_t *hdr = (zpl_media_msg_header_t *)ipcmsg->buf;
+    hdr->length = htons(ZPL_MEDIA_MSG_HEADER_SIZE);
+    hdr->marker = ZPL_MEDIA_MSG_HEADER_MARKER;
+    hdr->command = htons(command);
+    hdr->channel = channel;
+    hdr->level = level;
+    ipcmsg->setp = sizeof(zpl_media_msg_header_t);
+    return ipcmsg->setp;
 }
-int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn, 
+
+int zpl_media_msg_get_header(struct zpl_media_msg *ipcmsg, zpl_media_msg_header_t *header)
+{
+    zpl_media_msg_header_t *hdr = (zpl_media_msg_header_t *)ipcmsg->buf;
+    header->length = ntohs(hdr->length);
+    header->marker = hdr->marker ;
+    header->command = ntohs(hdr->command);
+    header->channel = hdr->channel ;
+    header->level = hdr->level;    
+    ipcmsg->getp = sizeof(zpl_media_msg_header_t);
+    return ipcmsg->getp;
+}
+
+
+static int zpl_media_msg_data_destroy(struct zpl_media_msg * bufdata)
+{
+	if(bufdata && bufdata->buf)
+	{
+		free(bufdata->buf);
+		bufdata->buf = NULL;
+        bufdata->length_max = 0;
+		return OK;
+	}
+	return ERROR;
+}
+
+
+static int zpl_media_msg_data_create(struct zpl_media_msg * bufdata, int maxlen)
+{
+	if(bufdata == NULL)
+		return ERROR;
+	memset(bufdata, 0, sizeof(zpl_media_bufcache_t));
+	bufdata->length_max = ZPL_SKSIZE_ALIGN(maxlen);
+	bufdata->buf = malloc(bufdata->length_max);
+	if(bufdata->buf)
+	{
+		memset(bufdata->buf, 0, bufdata->length_max);
+		return OK;
+	}
+	return ERROR;
+}
+
+static int zpl_media_msg_data_add(struct zpl_media_msg * bufdata, char *data, int datalen)
+{
+	if (datalen <= 0)
+		return OK;
+	if (bufdata->buf == NULL)
+	{
+        zpl_media_msg_data_create(bufdata, datalen);
+	}
+	else
+	{
+		if (bufdata->length_max < (bufdata->setp + ZPL_SKBUF_ALIGN(datalen)))
+		{
+			zpl_uint32 length_max = bufdata->length_max + ZPL_SKBUF_ALIGN(datalen);
+			bufdata->buf = realloc(bufdata->buf, length_max);
+			if (bufdata->buf)
+				bufdata->length_max = length_max;
+		}
+	}
+
+	if (bufdata->buf != NULL && (bufdata->setp + datalen) < bufdata->length_max)
+	{
+		memcpy(bufdata->buf + bufdata->setp, data, datalen);
+		bufdata->setp += datalen;
+		return bufdata->setp;
+	}
+	return OK;
+}
+
+static int zpl_media_send_result_msg(zpl_media_proxy_client_t *client, zpl_uint16 command, int ret, char *data, int len)
+{
+    struct zpl_media_msg_result *msg;
+    zpl_media_msg_create_header(&client->obuf, command, client->channel, client->level);
+    msg = (struct zpl_media_msg_result *)(client->obuf.buf + client->obuf.setp);
+    msg->result = htonl(ret);
+    client->obuf.setp += 4;
+    if(data)
+        zpl_media_msg_data_add(&client->obuf, data, strlen(data));
+    if(ipstack_write(client->sock, client->obuf.buf, client->obuf.setp) < 0)
+    {
+        proxy_server_client_destroy(client);
+    }
+    return 0;
+}
+
+static int zpl_media_read_hander(zpl_media_proxy_client_t *client, zpl_uint16 command, char *data, int datalen)
+{
+    int ret = -1;
+    char *result = NULL;
+    struct zpl_media_msg_cmd *msgcmd = (struct zpl_media_msg_cmd *)data;
+    if (ZPL_MEDIA_CMD_GET(command) == ZPL_MEDIA_MSG_REGISTER)
+    {
+        struct zpl_media_msg_register *reg = (struct zpl_media_msg_register *)data;
+        client->type = reg->type;
+        ret = zpl_media_channel_client_add(client->channel, client->level, zpl_media_proxy_buffer_data_distribute, NULL);
+        if(ret > 0)
+        {
+            client->call_index = ret; 
+            ret = OK;
+        }  
+        else
+            ret = -1; 
+        zpl_media_send_result_msg(client, ZPL_MEDIA_MSG_ACK, ret, NULL, 0);
+    }
+    else if (ZPL_MEDIA_CMD_GET(command) == ZPL_MEDIA_MSG_SET_CMD)
+    {
+        switch (ZPL_MEDIA_SUBCMD_GET(command))
+        {
+        case ZPL_MEDIA_MSG_SUB_START: // 开启
+            if(client->call_index)
+                ret = zpl_media_channel_client_start(client->channel, client->level, client->call_index, zpl_true);
+            break;
+        case ZPL_MEDIA_MSG_SUB_STOP: // 停止
+            if(client->call_index)
+                ret = zpl_media_channel_client_start(client->channel, client->level, client->call_index, zpl_false);
+            break;
+        case ZPL_MEDIA_MSG_SUB_RECORD: // 录像
+            ret = zpl_media_channel_record_enable(client->channel, client->level, ntohl(msgcmd->record));
+            break;
+        case ZPL_MEDIA_MSG_SUB_CAPTURE: // 抓拍
+             ret = zpl_media_channel_capture_enable(client->channel, client->level, ntohl(msgcmd->capture));
+            break;
+        case ZPL_MEDIA_MSG_SUB_CODEC: // 设置通道编解码
+            break;
+        case ZPL_MEDIA_MSG_SUB_RESOLVING: // 设置通道分辨率
+            break;
+        case ZPL_MEDIA_MSG_SUB_FRAME_RATE: // 设置通道帧率
+            break;
+        case ZPL_MEDIA_MSG_SUB_BITRATE: // 设置通道码率
+            break;
+        case ZPL_MEDIA_MSG_SUB_IKEYRATE: // I帧间隔
+            break;
+        case ZPL_MEDIA_MSG_SUB_PROFILE: // 编码等级
+            break;
+        case ZPL_MEDIA_MSG_SUB_RCMODE: // ZPL_VENC_RC_E
+            break;
+        case ZPL_MEDIA_MSG_SUB_GOPMODE: /* the gop mode */
+            break;
+        } 
+        zpl_media_send_result_msg(client, ZPL_MEDIA_MSG_ACK, ret, result, strlen(result));
+        return ret;
+    }
+    else if (ZPL_MEDIA_CMD_GET(command) == ZPL_MEDIA_MSG_GET_CMD)
+    {
+        switch (ZPL_MEDIA_SUBCMD_GET(command))
+        {
+        case ZPL_MEDIA_MSG_SUB_START: // 开启
+            break;
+        case ZPL_MEDIA_MSG_SUB_STOP: // 停止
+            break;
+        case ZPL_MEDIA_MSG_SUB_RECORD: // 录像
+            break;
+        case ZPL_MEDIA_MSG_SUB_CAPTURE: // 抓拍
+            break;
+        case ZPL_MEDIA_MSG_SUB_CODEC: // 设置通道编解码
+            break;
+        case ZPL_MEDIA_MSG_SUB_RESOLVING: // 设置通道分辨率
+            break;
+        case ZPL_MEDIA_MSG_SUB_FRAME_RATE: // 设置通道帧率
+            break;
+        case ZPL_MEDIA_MSG_SUB_BITRATE: // 设置通道码率
+            break;
+        case ZPL_MEDIA_MSG_SUB_IKEYRATE: // I帧间隔
+            break;
+        case ZPL_MEDIA_MSG_SUB_PROFILE: // 编码等级
+            break;
+        case ZPL_MEDIA_MSG_SUB_RCMODE: // ZPL_VENC_RC_E
+            break;
+        case ZPL_MEDIA_MSG_SUB_GOPMODE: /* the gop mode */
+            break;
+        }
+        zpl_media_send_result_msg(client, ZPL_MEDIA_MSG_GET_ACK, ret, result, strlen(result));
+    }
+    return 0;
+}
+
+static int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn, 
         const zpl_skbuffer_t *bufdata,  void *pVoidUser)
 {
 	NODE node;
-    proxy_client_t *client = NULL;
+    zpl_media_proxy_client_t *client = NULL;
+    struct zpl_media_msg_data msgdata;
     if(mediachn == NULL)
         return 0;
     zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
@@ -49,30 +227,36 @@ int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn,
         return OK;
     if (proxy_server.mutex)
 		os_mutex_lock(proxy_server.mutex, OS_WAIT_FOREVER);
+
     if(lstCount(&proxy_server.list))
     {
-        for (client = (proxy_client_t *)lstFirst(&proxy_server.list);
-            client != NULL; client = (proxy_client_t *)lstNext(&node))
+        for (client = (zpl_media_proxy_client_t *)lstFirst(&proxy_server.list);
+            client != NULL; client = (zpl_media_proxy_client_t *)lstNext(&node))
         {
             node = client->node;
-            if (client && !ipstack_invalid(client->sock))
+            if (client && client->type == 1 && !ipstack_invalid(client->sock) && client->drop == 0)
             {
-#if 0                
-                hdr.ID = bufdata->ID;                 //ID 通道号
-                hdr.buffer_type = bufdata->buffer_type;        //音频视频
-                hdr.buffer_codec = bufdata->buffer_codec;       //编码类型
-                hdr.buffer_key = bufdata->buffer_key;         //帧类型
-                hdr.buffer_rev = bufdata->buffer_rev;         //
-                hdr.buffer_flags = bufdata->buffer_flags;        //ZPL_BUFFER_DATA_E
-                hdr.buffer_timetick = bufdata->buffer_timetick;    //时间戳毫秒
-                //hdr.buffer_seq = bufdata->ID;         //序列号底层序列号
-                hdr.buffer_len = bufdata->buffer_len;         //帧长度
+                if(mediachn->media_type == ZPL_MEDIA_VIDEO)
+                {
+                    if(media_header->buffertype == ZPL_MEDIA_FRAME_DATA_ENCODE)
+                        zpl_media_msg_create_header(&client->obuf, ZPL_MEDIA_MSG_DATA, mediachn->channel, mediachn->channel_index);
+                    else if(media_header->buffertype == ZPL_MEDIA_FRAME_DATA_CAPTURE)
+                        zpl_media_msg_create_header(&client->obuf, ZPL_MEDIA_MSG_CAPTURE, mediachn->channel, mediachn->channel_index);
+                }
+                msgdata.type = media_header->type;        //音频/视频 ZPL_MEDIA_E
+                msgdata.codectype = media_header->codectype;   //编码类型 ZPL_VIDEO_CODEC_E
+                msgdata.frame_type = media_header->frame_type;  //帧类型  ZPL_VIDEO_FRAME_TYPE_E
+                msgdata.buffertype = media_header->buffertype;    //ZPL_MEDIA_FRAME_DATA_E
+                msgdata.length = htonl(media_header->length);      //帧长度  
+                zpl_media_msg_data_add(&client->obuf, &msgdata, sizeof(msgdata));
 
-                //bufdata->buffer_data;       //buffer
-#endif
-                zpl_media_proxy_buffer_write(client->sock, media_header, sizeof(zpl_media_hdr_t), ZPL_SKB_DATA(bufdata), ZPL_SKB_DATA_LEN(bufdata));
-                //write(client->sock, &hdr, sizeof(hdr));
-                //write(client->sock, bufdata->buffer_data, bufdata->buffer_len);
+                zpl_media_msg_data_add(&client->obuf, ZPL_SKB_DATA(bufdata), ZPL_SKB_DATA_LEN(bufdata));
+
+                if(ipstack_write(client->sock, client->obuf.buf, client->obuf.setp) < 0)
+                {
+                    proxy_server_client_destroy(client);
+                }
+                client->obuf.setp = client->obuf.getp = 0;
             }
         }
     }
@@ -84,13 +268,14 @@ int zpl_media_proxy_buffer_data_distribute(zpl_media_channel_t *mediachn,
 
 
 
-static int proxy_server_client_destroy(proxy_client_t * client)
+static int proxy_server_client_destroy(zpl_media_proxy_client_t * client)
 {
     if(client)
     {
-
+        lstDelete(&proxy_server.list, (NODE *)client);
         ipstack_close(client->sock);
-
+        zpl_media_msg_data_destroy(&client->ibuf);
+        zpl_media_msg_data_destroy(&client->obuf);
         client->port = 0;
         if(client->address)
         {
@@ -109,7 +294,7 @@ static int proxy_server_init(void *master, int port)
         memset(&proxy_server, 0, sizeof(proxy_server));
 
         proxy_server.port = port;
-        proxy_server.mutex = os_mutex_name_init("proxy_server.mutex");
+        proxy_server.mutex = os_mutex_name_create("proxy_server.mutex");
 		lstInitFree(&proxy_server.list, proxy_server_client_destroy);
         proxy_server.sock = ipstack_sock_create(IPSTACK_IPCOM, zpl_true);
 
@@ -117,7 +302,7 @@ static int proxy_server_init(void *master, int port)
         {
             if (proxy_server.mutex)
             {
-                if (os_mutex_exit(proxy_server.mutex) == OK)
+                if (os_mutex_destroy(proxy_server.mutex) == OK)
                     proxy_server.mutex = NULL;
             }
             ipstack_close(proxy_server.sock);
@@ -127,7 +312,7 @@ static int proxy_server_init(void *master, int port)
         {
             if (proxy_server.mutex)
             {
-                if (os_mutex_exit(proxy_server.mutex) == OK)
+                if (os_mutex_destroy(proxy_server.mutex) == OK)
                     proxy_server.mutex = NULL;
             }
             ipstack_close(proxy_server.sock);
@@ -158,7 +343,7 @@ static int proxy_server_destroy(void)
 	lstFree(&proxy_server.list);
     if (proxy_server.mutex)
     {
-        if (os_mutex_exit(proxy_server.mutex) == OK)
+        if (os_mutex_destroy(proxy_server.mutex) == OK)
             proxy_server.mutex = NULL;
     }
     ipstack_close(proxy_server.sock);
@@ -171,7 +356,7 @@ static int proxy_server_destroy(void)
 static int zpl_proxy_server_accept(struct eloop *t)
 {
     zpl_socket_t sock;
-	proxy_server_t *proxy = THREAD_ARG(t);
+	zpl_media_proxy_server_t *proxy = THREAD_ARG(t);
     if(proxy && !ipstack_invalid(proxy->sock))
     {
         struct ipstack_sockaddr_in clientaddr;
@@ -181,16 +366,23 @@ static int zpl_proxy_server_accept(struct eloop *t)
         sock = ipstack_sock_accept (proxy->sock, &clientaddr);
         if(!ipstack_invalid(sock))
         {
-            proxy_client_t *client = malloc(sizeof(proxy_client_t));
+            zpl_media_proxy_client_t *client = malloc(sizeof(zpl_media_proxy_client_t));
             if(client)
             {
                 client->port = ntohs(clientaddr.sin_port);
                 client->address = strdup(inet_ntoa(clientaddr.sin_addr));
                 client->sock = sock;
+                if (proxy->mutex)
+                    os_mutex_lock(proxy->mutex, OS_WAIT_FOREVER);
                 lstAdd(&proxy->list, (NODE *)client);
                 ipstack_set_nonblocking(sock);
+
+                zpl_media_msg_data_create(&client->ibuf, ZPL_MEDIA_MSG_MAX_PACKET_SIZ);
+                zpl_media_msg_data_create(&client->obuf, ZPL_MEDIA_MSG_MAX_PACKET_SIZ);
                 if(proxy->t_master)
                     client->t_read  = eloop_add_read(proxy->t_master, zpl_proxy_server_read, client, client->sock);
+                if (proxy->mutex)
+                    os_mutex_unlock(proxy->mutex);
             }
         }
         if(proxy->t_master)
@@ -203,7 +395,149 @@ static int zpl_proxy_server_accept(struct eloop *t)
 
 static int zpl_proxy_server_read(struct eloop *t)
 {
-    proxy_client_t *client = THREAD_ARG(t);
+    zpl_socket_t sock;
+    zpl_media_proxy_client_t *client = NULL;
+    zpl_media_msg_header_t *hdr = NULL;
+    struct zpl_media_msg *input_ipcmsg = NULL;
+    /* Get thread data.  Reset reading thread because I'm running. */
+    sock = ELOOP_FD(t);
+    client = ELOOP_ARG(t);
+    zpl_assert(client);
+    client->t_read = NULL;
+    input_ipcmsg = &client->ibuf;
+    hdr = (zpl_media_msg_header_t *)input_ipcmsg->buf;
+    if (proxy_server.mutex)
+		os_mutex_lock(proxy_server.mutex, OS_WAIT_FOREVER);
+    /* Read length and command (if we don't have it already). */
+    if (input_ipcmsg->setp < ZPL_MEDIA_MSG_HEADER_SIZE)
+    {
+        ssize_t nbyte = 0;
+        nbyte = ipstack_read(sock, input_ipcmsg->buf + input_ipcmsg->setp, ZPL_MEDIA_MSG_HEADER_SIZE - input_ipcmsg->setp);
+        if ((nbyte == 0) || (nbyte == -1))
+        {
+            zlog_err(MODULE_HAL, "connection closed ipstack_socket [%d]", ipstack_fd(sock));
+            proxy_server_client_destroy(client);
+            if (proxy_server.mutex)
+		        os_mutex_unlock(proxy_server.mutex);  
+            return -1;
+        }
+        if (nbyte != (ssize_t)(ZPL_MEDIA_MSG_HEADER_SIZE - input_ipcmsg->setp))
+        {
+            /* Try again later. */
+            if (proxy_server.t_master)
+                client->t_read = eloop_add_read(proxy_server.t_master, zpl_proxy_server_read, client, client->sock);
+            if (proxy_server.mutex)
+		        os_mutex_unlock(proxy_server.mutex);  
+            return 0;
+        }
+        input_ipcmsg->setp = ZPL_MEDIA_MSG_HEADER_SIZE;
+    }
+
+    /* Fetch header values */
+    hdr->length = ntohs(hdr->length);
+    hdr->command = ntohs(hdr->command);
+
+    if (hdr->marker != ZPL_MEDIA_MSG_HEADER_MARKER)
+    {
+        zlog_err(MODULE_HAL, "%s: ipstack_socket %d mismatch, marker %d",
+                 __func__, ipstack_fd(sock), hdr->marker);
+        proxy_server_client_destroy(client);
+        if (proxy_server.mutex)
+		    os_mutex_unlock(proxy_server.mutex);  
+        return -1;
+    }
+    if (hdr->length < ZPL_MEDIA_MSG_HEADER_SIZE)
+    {
+        zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u is less than header size %u",
+                  __func__, ipstack_fd(sock), hdr->length, (zpl_uint32)ZPL_MEDIA_MSG_HEADER_SIZE);
+        proxy_server_client_destroy(client);
+        if (proxy_server.mutex)
+		    os_mutex_unlock(proxy_server.mutex);  
+        return -1;
+    }
+    if (hdr->length > input_ipcmsg->length_max)
+    {
+        zlog_warn(MODULE_HAL, "%s: ipstack_socket %d message length %u exceeds buffer size %lu",
+                  __func__, ipstack_fd(sock), hdr->length, (u_long)(input_ipcmsg->length_max));
+        proxy_server_client_destroy(client);
+        if (proxy_server.mutex)
+		    os_mutex_unlock(proxy_server.mutex);  
+        return -1;
+    }
+
+    /* Read rest of data. */
+    if (input_ipcmsg->setp < hdr->length)
+    {
+        ssize_t nbyte;
+        if (((nbyte = ipstack_read(sock, input_ipcmsg->buf + input_ipcmsg->setp,
+                                   hdr->length - input_ipcmsg->setp)) == 0) ||
+            (nbyte == -1))
+        {
+            zlog_err(MODULE_HAL, "connection closed [%d] when reading zebra data", ipstack_fd(sock));
+            proxy_server_client_destroy(client);
+            if (proxy_server.mutex)
+		        os_mutex_unlock(proxy_server.mutex);  
+            return -1;
+        }
+        if (nbyte != (ssize_t)(hdr->length - input_ipcmsg->setp))
+        {
+            /* Try again later. */
+            if (proxy_server.t_master)
+                client->t_read = eloop_add_read(proxy_server.t_master, zpl_proxy_server_read, client, client->sock);
+             if (proxy_server.mutex)
+		        os_mutex_unlock(proxy_server.mutex);  
+            return 0;
+        }
+        input_ipcmsg->setp += hdr->length;
+    }
+
+    hdr->length -= ZPL_MEDIA_MSG_HEADER_SIZE;
+
+    input_ipcmsg->getp = ZPL_MEDIA_MSG_HEADER_SIZE;
+    client->channel = hdr->channel; 
+    client->level = hdr->level;
+    switch (ZPL_MEDIA_CMD_GET(hdr->command))
+    {
+    case ZPL_MEDIA_MSG_REGISTER:
+        client->drop = 1;
+        zpl_media_read_hander(client, hdr->command, input_ipcmsg->buf + input_ipcmsg->getp, hdr->length);
+        client->drop = 0;
+        break;
+    case ZPL_MEDIA_MSG_DATA:
+        break;
+    case ZPL_MEDIA_MSG_CAPTURE:
+        break;
+    case ZPL_MEDIA_MSG_SET_CMD:
+        client->drop = 1;
+        zpl_media_read_hander(client, hdr->command, input_ipcmsg->buf + input_ipcmsg->getp, hdr->length);
+        client->drop = 0;
+        break;
+    case ZPL_MEDIA_MSG_GET_CMD:
+        client->drop = 1;
+        zpl_media_read_hander(client, hdr->command, input_ipcmsg->buf + input_ipcmsg->getp, hdr->length);
+        client->drop = 0;
+        break;
+    case ZPL_MEDIA_MSG_ACK:
+        break;
+    case ZPL_MEDIA_MSG_GET_ACK:
+        break;
+    default:
+        zlog_warn(MODULE_HAL, "Server Recv unknown command %d", ZPL_MEDIA_CMD_GET(hdr->command));
+        break;
+    }
+
+    if (proxy_server.t_master)
+        client->t_read = eloop_add_read(proxy_server.t_master, zpl_proxy_server_read, client, client->sock);
+    input_ipcmsg->setp = input_ipcmsg->getp = 0;    
+    if (proxy_server.mutex)
+		os_mutex_unlock(proxy_server.mutex);  
+    return 0;
+}
+
+#if 0
+static int zpl_proxy_server_read(struct eloop *t)
+{
+    zpl_media_proxy_client_t *client = THREAD_ARG(t);
     if(client)
     {
         char buf[64];
@@ -217,11 +551,14 @@ static int zpl_proxy_server_read(struct eloop *t)
             if (proxy_server.mutex)
 			    os_mutex_unlock(proxy_server.mutex);  
         }
+        zpl_media_client_add(NULL, zpl_media_proxy_buffer_data_distribute, NULL);
         if(proxy_server.t_master)
             client->t_read  = eloop_add_read(proxy_server.t_master, zpl_proxy_server_read, client, client->sock);
     }
     return OK;
 }
+#endif
+
 
 int zpl_media_proxy_init(void)
 {

@@ -54,8 +54,8 @@ int zpl_video_resources_init()
 
 
 
-zpl_uint32 zpl_video_resources_get_flag(zpl_int32 channel, 
-    zpl_int32 channel_index, ZPL_VIDHAL_INDEX_E index)
+zpl_uint32 zpl_video_resources_get_flag(ZPL_MEDIA_CHANNEL_E channel, 
+    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDHAL_INDEX_E index)
 {
     zpl_uint32 i = 0;
     for(i = 0; i < array_size(_hal_resources); i++)
@@ -69,8 +69,8 @@ zpl_uint32 zpl_video_resources_get_flag(zpl_int32 channel,
     return 0;
 }
 
-int zpl_video_resources_get(zpl_int32 channel, 
-    zpl_int32 channel_index, ZPL_VIDHAL_INDEX_E index)
+int zpl_video_resources_get(ZPL_MEDIA_CHANNEL_E channel, 
+    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDHAL_INDEX_E index)
 {
     zpl_uint32 i = 0;
     zpl_int32 res = -1;

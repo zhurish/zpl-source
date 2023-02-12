@@ -12,7 +12,7 @@
 
 #if 0
 static int
-zpl_video_region_config_json_read_obj(cJSON *obj, zpl_video_hwregion_t *region)
+zpl_video_region_config_json_read_obj(cJSON *obj, zpl_media_video_hwregion_t *region)
 {
 	if (obj && region)
 	{
@@ -47,7 +47,7 @@ zpl_video_region_config_json_read_obj(cJSON *obj, zpl_video_hwregion_t *region)
 }
 
 static int
-zpl_video_region_config_json_write_obj(cJSON *obj, zpl_video_hwregion_t *region)
+zpl_video_region_config_json_write_obj(cJSON *obj, zpl_media_video_hwregion_t *region)
 {
 	if (obj && region)
 	{
@@ -84,7 +84,7 @@ zpl_video_region_config_json_write_obj(cJSON *obj, zpl_video_hwregion_t *region)
 }
 #endif
 static int
-zpl_video_encode_config_json_read_obj(cJSON *obj, zpl_video_codec_t *encode)
+zpl_media_video_encode_config_json_read_obj(cJSON *obj, zpl_video_codec_t *encode)
 {
 	if (obj && encode)
 	{
@@ -133,7 +133,7 @@ zpl_video_encode_config_json_read_obj(cJSON *obj, zpl_video_codec_t *encode)
 }
 
 static int
-zpl_video_encode_config_json_write_obj(cJSON *obj, zpl_video_codec_t *encode)
+zpl_media_video_encode_config_json_write_obj(cJSON *obj, zpl_video_codec_t *encode)
 {
 	if (obj && encode)
 	{
@@ -188,7 +188,7 @@ zpl_video_media_channel_config_json_read_obj(cJSON *obj, zpl_media_channel_t *ua
 		{
 			//if (ua->media_param.video_media.codec)
 			{
-				if (zpl_video_encode_config_json_read_obj(tmpobj, &ua->media_param.video_media.codec) != OK)
+				if (zpl_media_video_encode_config_json_read_obj(tmpobj, &ua->media_param.video_media.codec) != OK)
 				{
 					return ERROR;
 				}
@@ -223,7 +223,7 @@ zpl_video_media_channel_config_json_write_obj(cJSON *obj, zpl_media_channel_t *u
 		{
 			//if (ua->video_codec)
 			{
-				if (zpl_video_encode_config_json_write_obj(tmpobj, &ua->media_param.video_media.codec) != OK)
+				if (zpl_media_video_encode_config_json_write_obj(tmpobj, &ua->media_param.video_media.codec) != OK)
 				{
 					cJSON_Delete(tmpobj);
 					return ERROR;

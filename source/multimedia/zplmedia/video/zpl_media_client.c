@@ -90,10 +90,7 @@ int zpl_media_client_foreach(zpl_skbuffer_t *bufdata, void *p)
     zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
 	media_channel = zpl_media_channel_lookup(ZPL_MEDIA_CHANNEL_GET_C(media_header->ID), 
 		ZPL_MEDIA_CHANNEL_GET_I(media_header->ID));
-    if(media_channel == NULL)
-    {
-        media_channel = zpl_media_channel_lookup_sessionID(media_header->sessionID);
-    }    
+ 
 	if(media_channel)
 	{
 		client = (media_channel)->media_client;

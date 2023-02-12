@@ -16,7 +16,7 @@ extern "C" {
 #include <zpl_type.h>
 #include <zpl_media_format.h>
 #include <zpl_media.h>
-#include <zpl_video_sys.h>
+#include <zpl_media_video_sys.h>
 #ifdef ZPL_HISIMPP_MODULE
 #include "zpl_hal_hisi.h"
 #endif

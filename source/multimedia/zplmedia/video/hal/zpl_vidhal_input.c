@@ -582,7 +582,7 @@ static int zpl_vidhal_input_chn_release_frame(zpl_int32 pipe, zpl_int32 chn, voi
 
 
 
-int zpl_vidhal_input_pipe_frame_recvfrom(zpl_video_input_pipe_t *input)
+int zpl_vidhal_input_pipe_frame_recvfrom(zpl_meida_video_input_pipe_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32MilliSec = 200;
@@ -592,7 +592,7 @@ int zpl_vidhal_input_pipe_frame_recvfrom(zpl_video_input_pipe_t *input)
     if(zpl_vidhal_input_pipe_read_frame(input->input_pipe, &stFrmInfo_input) == HI_SUCCESS)
     {
         zpl_video_size_t input_size;
-        //zpl_video_encode_t *venc_ptr = input->venc_ptr;
+        //zpl_media_video_encode_t *venc_ptr = input->venc_ptr;
         /* 1.1 mmap frame */
         input_size.width = stFrmInfo_input.stVFrame.u32Width;
         input_size.height = stFrmInfo_input.stVFrame.u32Height;
@@ -642,7 +642,7 @@ int zpl_vidhal_input_pipe_frame_recvfrom(zpl_video_input_pipe_t *input)
     return ERROR;
 }
 
-int zpl_vidhal_input_channel_frame_recvfrom(zpl_video_input_channel_t *input)
+int zpl_vidhal_input_channel_frame_recvfrom(zpl_meida_video_input_channel_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32MilliSec = 200;
@@ -652,7 +652,7 @@ int zpl_vidhal_input_channel_frame_recvfrom(zpl_video_input_channel_t *input)
     if(zpl_vidhal_input_chn_read_frame(input->inputpipe->input_pipe, input->input_chn, &stFrmInfo_input,  s32MilliSec) == HI_SUCCESS)
     {
         zpl_video_size_t input_size;
-        //zpl_video_encode_t *venc_ptr = input->venc_ptr;
+        //zpl_media_video_encode_t *venc_ptr = input->venc_ptr;
         /* 1.1 mmap frame */
         input_size.width = stFrmInfo_input.stVFrame.u32Width;
         input_size.height = stFrmInfo_input.stVFrame.u32Height;
@@ -703,7 +703,7 @@ int zpl_vidhal_input_channel_frame_recvfrom(zpl_video_input_channel_t *input)
 }
 
 
-int zpl_vidhal_input_pipe_create(zpl_video_input_pipe_t *input)
+int zpl_vidhal_input_pipe_create(zpl_meida_video_input_pipe_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 vipipe[VI_MAX_PIPE_NUM] = { -1 };
@@ -756,7 +756,7 @@ zpl_media_debugmsg_debug("==================%s dev=%d pipe=%d", __func__,input->
 }
 
 
-int zpl_vidhal_input_pipe_update_fd(zpl_video_input_pipe_t *input)
+int zpl_vidhal_input_pipe_update_fd(zpl_meida_video_input_pipe_t *input)
 {
 #ifdef ZPL_HISIMPP_MODULE
     if(input->input_pipe >= 0)
@@ -773,7 +773,7 @@ int zpl_vidhal_input_pipe_update_fd(zpl_video_input_pipe_t *input)
 #endif
 }
 
-int zpl_vidhal_input_channel_update_fd(zpl_video_input_channel_t *input)
+int zpl_vidhal_input_channel_update_fd(zpl_meida_video_input_channel_t *input)
 {
 #ifdef ZPL_HISIMPP_MODULE
     if(input->input_chn >= 0 && input->inputpipe->input_pipe >= 0)
@@ -790,7 +790,7 @@ int zpl_vidhal_input_channel_update_fd(zpl_video_input_channel_t *input)
 #endif
 }
 
-int zpl_vidhal_input_pipe_start(zpl_video_input_pipe_t *input)
+int zpl_vidhal_input_pipe_start(zpl_meida_video_input_pipe_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     _zpl_vidhal_input_pipe_start(input->input_pipe);
@@ -800,7 +800,7 @@ int zpl_vidhal_input_pipe_start(zpl_video_input_pipe_t *input)
     return OK;
 }
 
-int zpl_vidhal_input_channel_create(zpl_video_input_channel_t *input)
+int zpl_vidhal_input_channel_create(zpl_meida_video_input_channel_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     _zpl_vidhal_input_channel_create(input->inputpipe->input_pipe, input->input_chn, &input->input_size);
@@ -809,7 +809,7 @@ int zpl_vidhal_input_channel_create(zpl_video_input_channel_t *input)
     return OK;
 }
 
-int zpl_vidhal_input_channel_start(zpl_video_input_channel_t *input)
+int zpl_vidhal_input_channel_start(zpl_meida_video_input_channel_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     zpl_vidhal_isp_sensor_t ispsensor;
@@ -842,7 +842,7 @@ zpl_media_debugmsg_debug("==================%s pipe=%d chn=%d", __func__,input->
     return OK;
 }
 
-int zpl_vidhal_input_pipe_stop(zpl_video_input_pipe_t *input)
+int zpl_vidhal_input_pipe_stop(zpl_meida_video_input_pipe_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     _zpl_vidhal_input_pipe_stop(input->input_pipe);
@@ -850,7 +850,7 @@ int zpl_vidhal_input_pipe_stop(zpl_video_input_pipe_t *input)
     return OK;
 }
 
-int zpl_vidhal_input_channel_stop(zpl_video_input_channel_t *input)
+int zpl_vidhal_input_channel_stop(zpl_meida_video_input_channel_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     if(zpl_vidhal_input_chn_stop(input->inputpipe->input_pipe, input->input_chn) == OK)
@@ -860,7 +860,7 @@ int zpl_vidhal_input_channel_stop(zpl_video_input_channel_t *input)
     return OK;
 }
 
-int zpl_vidhal_input_pipe_destroy(zpl_video_input_pipe_t *input)
+int zpl_vidhal_input_pipe_destroy(zpl_meida_video_input_pipe_t *input)
 {
     #ifdef ZPL_HISIMPP_MODULE
     if(_zpl_vidhal_input_pipe_destroy(input->input_pipe) == OK)
@@ -875,7 +875,7 @@ int zpl_vidhal_input_pipe_destroy(zpl_video_input_pipe_t *input)
     #endif
 }
 
-int zpl_vidhal_input_channel_destroy(zpl_video_input_channel_t *input)
+int zpl_vidhal_input_channel_destroy(zpl_meida_video_input_channel_t *input)
 {
     zpl_vidhal_input_channel_stop(input);
     return OK;

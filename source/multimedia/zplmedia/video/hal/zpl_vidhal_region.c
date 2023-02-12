@@ -243,7 +243,7 @@ int zpl_vidhal_region_load_canvas(const char* filename, zpl_media_bitmap_t* pstB
 
 
 #ifdef ZPL_HISIMPP_MODULE
-static int zpl_vidhal_region_chn_attribute_setup(zpl_video_hwregion_t *region, void *p)
+static int zpl_vidhal_region_chn_attribute_setup(zpl_media_video_hwregion_t *region, void *p)
 {
     RGN_CHN_ATTR_S stChnAttr;
     /*set the chn config*/
@@ -345,7 +345,7 @@ static int zpl_vidhal_region_chn_attribute_setup(zpl_video_hwregion_t *region, v
 }
 #endif
 
-int zpl_vidhal_region_set_bitmap(zpl_video_hwregion_t *region, zpl_media_bitmap_t *pstBitmap)
+int zpl_vidhal_region_set_bitmap(zpl_media_video_hwregion_t *region, zpl_media_bitmap_t *pstBitmap)
 {
 #ifdef ZPL_HISIMPP_MODULE    
     int s32Ret;
@@ -364,7 +364,7 @@ int zpl_vidhal_region_set_bitmap(zpl_video_hwregion_t *region, zpl_media_bitmap_
 
 
 
-int zpl_vidhal_region_update_canvas(zpl_video_hwregion_t *region)
+int zpl_vidhal_region_update_canvas(zpl_media_video_hwregion_t *region)
 {
 #ifdef ZPL_HISIMPP_MODULE
     int s32Ret;
@@ -391,7 +391,7 @@ int zpl_vidhal_region_update_canvas(zpl_video_hwregion_t *region)
 #endif 
 }
 
-int zpl_vidhal_region_attachtochannel(zpl_video_hwregion_t *region, zpl_uint32 modeid, zpl_uint32 devid, 
+int zpl_vidhal_region_attachtochannel(zpl_media_video_hwregion_t *region, zpl_uint32 modeid, zpl_uint32 devid, 
         zpl_uint32 chnid, zpl_bool attach)
 {
 #ifdef ZPL_HISIMPP_MODULE
@@ -431,7 +431,7 @@ int zpl_vidhal_region_attachtochannel(zpl_video_hwregion_t *region, zpl_uint32 m
 
 
 
-int zpl_vidhal_region_update_attribute(zpl_video_hwregion_t *region)
+int zpl_vidhal_region_update_attribute(zpl_media_video_hwregion_t *region)
 {
 #ifdef ZPL_HISIMPP_MODULE
     int s32Ret;
@@ -459,7 +459,7 @@ int zpl_vidhal_region_update_attribute(zpl_video_hwregion_t *region)
 
 
 
-int zpl_vidhal_region_update_channel_attribute(zpl_video_hwregion_t *region, zpl_uint32 modeid, 
+int zpl_vidhal_region_update_channel_attribute(zpl_media_video_hwregion_t *region, zpl_uint32 modeid, 
         zpl_uint32 devid, zpl_uint32 chnid)
 {
 #ifdef ZPL_HISIMPP_MODULE
@@ -491,7 +491,7 @@ int zpl_vidhal_region_update_channel_attribute(zpl_video_hwregion_t *region, zpl
 #endif 
 }
 
-int zpl_vidhal_region_channel_show(zpl_video_hwregion_t *region, zpl_uint32 modeid, 
+int zpl_vidhal_region_channel_show(zpl_media_video_hwregion_t *region, zpl_uint32 modeid, 
         zpl_uint32 devid, zpl_uint32 chnid, zpl_bool show)
 {
 #ifdef ZPL_HISIMPP_MODULE
@@ -522,7 +522,7 @@ int zpl_vidhal_region_channel_show(zpl_video_hwregion_t *region, zpl_uint32 mode
 #endif 
 }
 
-int zpl_vidhal_region_create(zpl_video_hwregion_t *region)
+int zpl_vidhal_region_create(zpl_media_video_hwregion_t *region)
 {
 #ifdef ZPL_HISIMPP_MODULE
     int s32Ret;
@@ -573,7 +573,7 @@ int zpl_vidhal_region_create(zpl_video_hwregion_t *region)
 
 
 
-int zpl_vidhal_region_destroy(zpl_video_hwregion_t *region)
+int zpl_vidhal_region_destroy(zpl_media_video_hwregion_t *region)
 {
 #ifdef ZPL_HISIMPP_MODULE
     int s32Ret;
