@@ -19,6 +19,9 @@ extern "C" {
 #define OS_LOCK_ERR_CHECK 
 //#define OS_LOCK_ERR_CHECK_GRAPH_VIEW
 
+#define OS_SEM_FLAG_INIT		1 
+#define OS_SEM_FLAG_CREATE 		2
+
 #ifdef OS_SEM_PROCESS
 
 /*
@@ -33,6 +36,7 @@ typedef struct
 	zpl_uint8 init;
 	zpl_uint8 cnt;		//记录当前信号量有几个进程在使用
 	zpl_uint8 type;
+	zpl_uint8 flags;
 	union
 	{
 		zpl_pthread_mutex_t mutex;
@@ -63,7 +67,7 @@ int os_mutex_obj_exit(void);
 /*
 * 进程之间互斥信号量
 */
-extern os_mutex_t * os_mutex_init(zpl_uint32 key);
+extern os_mutex_t * os_mutex_create(zpl_uint32 key);
 /*
 *	wait:
 *		0: 不等待
@@ -72,11 +76,11 @@ extern os_mutex_t * os_mutex_init(zpl_uint32 key);
 */
 extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait_ms);
 extern int os_mutex_unlock(os_mutex_t *);
-extern int os_mutex_exit(os_mutex_t *);
+extern int os_mutex_destroy(os_mutex_t *);
 /*
 * 进程之间同步信号量
 */
-extern os_sem_t * os_sem_init(int key);
+extern os_sem_t * os_sem_create(int key);
 /*
 *	wait:
 *		0: 不等待
@@ -85,7 +89,7 @@ extern os_sem_t * os_sem_init(int key);
 */
 extern int os_sem_give(os_sem_t *);
 extern int os_sem_take(os_sem_t *, zpl_int32 wait_ms);
-extern int os_sem_exit(os_sem_t *);
+extern int os_sem_destroy(os_sem_t *);
 
 
 #else
@@ -93,6 +97,7 @@ typedef struct os_sem_s
 {
 	char *name;
 	zpl_sem_t  sem;
+	zpl_uint8 flags;
 	#ifdef OS_LOCK_ERR_CHECK
 	zpl_pid_t	self_lock;
 	zpl_pid_t	wait_lock;
@@ -103,6 +108,7 @@ typedef struct os_mutex_s
 {
 	char *name;
 	zpl_pthread_mutex_t mutex;
+	zpl_uint8 flags;
 	#ifdef OS_LOCK_ERR_CHECK
 	zpl_pid_t	self_lock;
 	zpl_pid_t	wait_lock;
@@ -114,6 +120,7 @@ typedef struct os_cond_s
 	char *name;
 	zpl_pthread_cond_t cond_wait;
 	zpl_pthread_mutex_t mutex;
+	zpl_uint8 flags;
 	#ifdef OS_LOCK_ERR_CHECK
 	zpl_pid_t	self_lock;
 	zpl_pid_t	wait_lock;
@@ -124,6 +131,7 @@ typedef struct os_spin_s
 {
 	char *name;
 	pthread_spinlock_t spinlock;
+	zpl_uint8 flags;
 	#ifdef OS_LOCK_ERR_CHECK
 	zpl_pid_t	self_lock;
 	zpl_pid_t	wait_lock;
@@ -143,27 +151,31 @@ typedef struct os_spin_s
 #ifdef OS_LOCK_DETAIL_DEBUG
 extern int os_sem_module_debug(int val);
 
-extern os_sem_t * os_sem_init(void);
-extern os_sem_t * os_sem_name_init(const char *name);
+extern int os_sem_init(os_sem_t *);
+extern int os_sem_name_init(os_sem_t *, const char *name);
+extern os_sem_t * os_sem_create(void);
+extern os_sem_t * os_sem_name_create(const char *name);
 extern int os_sem_give_entry(os_sem_t *, zpl_char *func, int line);
 extern int os_sem_take_entry(os_sem_t *, zpl_int32 wait_ms, zpl_char *func, int line);
 #define os_sem_give(n)		os_sem_give_entry(n, __func__, __LINE__)
 #define os_sem_take(n, w)	os_sem_take_entry(n, w, __func__, __LINE__)
-extern int os_sem_exit(os_sem_t *);
+extern int os_sem_destroy(os_sem_t *);
 
-
-extern os_mutex_t * os_mutex_init(void);
-extern os_mutex_t * os_mutex_name_init(const char *name);
+extern int os_mutex_init(os_mutex_t *);
+extern int os_mutex_name_init(os_mutex_t *, const char *name);
+extern os_mutex_t * os_mutex_create(void);
+extern os_mutex_t * os_mutex_name_create(const char *name);
 extern int os_mutex_lock_entry(os_mutex_t *, zpl_int32 wait_ms, zpl_char *func, int line);
 extern int os_mutex_unlock_entry(os_mutex_t *, zpl_char *func, int line);
 #define os_mutex_unlock(n)		os_mutex_unlock_entry(n, __func__, __LINE__)
 #define os_mutex_lock(n, w)		os_mutex_lock_entry(n, w, __func__, __LINE__)
-extern int os_mutex_exit(os_mutex_t *);
+extern int os_mutex_destroy(os_mutex_t *);
 
-
-extern os_cond_t * os_cond_init(void);
-extern os_cond_t * os_cond_name_init(const char *name);
-extern int os_cond_exit(os_cond_t *);
+extern int os_cond_init(os_cond_t *);
+extern int os_cond_name_init(os_cond_t *, const char *name);
+extern os_cond_t * os_cond_create(void);
+extern os_cond_t * os_cond_name_create(const char *name);
+extern int os_cond_destroy(os_cond_t *);
 
 int os_cond_signal_entry(os_cond_t *oscond, zpl_char *func, int line);
 int os_cond_broadcast_entry(os_cond_t *oscond, zpl_char *func, int line);
@@ -175,45 +187,53 @@ int os_cond_wait_entry(os_cond_t *oscond, zpl_int32 wait_ms, zpl_char *func, int
 extern int os_cond_unlock(os_cond_t *);
 extern int os_cond_lock(os_cond_t *);
 
-extern os_spin_t * os_spin_init(void);
-extern os_spin_t * os_spin_name_init(const char *name);
+extern int os_spin_init(os_spin_t *);
+extern int os_spin_name_init(os_spin_t *, const char *name);
+extern os_spin_t * os_spin_create(void);
+extern os_spin_t * os_spin_name_create(const char *name);
 extern int os_spin_lock_entry(os_spin_t *, zpl_char *func, int line);
 extern int os_spin_unlock_entry(os_spin_t *, zpl_char *func, int line);
 #define os_spin_lock(n)		os_spin_lock_entry(n, __func__, __LINE__)
 #define os_spin_unlock(n)	os_spin_unlock_entry(n, __func__, __LINE__)
-extern int os_spin_exit(os_spin_t *);
+extern int os_spin_destroy(os_spin_t *);
 
 #else
 extern int os_sem_module_debug(int val);
 
-extern os_sem_t * os_sem_init(void);
-extern os_sem_t * os_sem_name_init(const char *name);
+extern int os_sem_init(os_sem_t *);
+extern int os_sem_name_init(os_sem_t *, const char *name);
+extern os_sem_t * os_sem_create(void);
+extern os_sem_t * os_sem_name_create(const char *name);
 extern int os_sem_give(os_sem_t *);
 extern int os_sem_take(os_sem_t *, zpl_int32 wait_ms);
-extern int os_sem_exit(os_sem_t *);
+extern int os_sem_destroy(os_sem_t *);
 
-
-extern os_mutex_t * os_mutex_init(void);
-extern os_mutex_t * os_mutex_name_init(const char *name);
+extern int os_mutex_init(os_mutex_t *);
+extern int os_mutex_name_init(os_mutex_t *, const char *name);
+extern os_mutex_t * os_mutex_create(void);
+extern os_mutex_t * os_mutex_name_create(const char *name);
 extern int os_mutex_lock(os_mutex_t *, zpl_int32 wait_ms);
 extern int os_mutex_unlock(os_mutex_t *);
-extern int os_mutex_exit(os_mutex_t *);
+extern int os_mutex_destroy(os_mutex_t *);
 
-extern os_cond_t * os_cond_init(void);
-extern os_cond_t * os_cond_name_init(const char *name);
+extern int os_cond_init(os_cond_t *);
+extern int os_cond_name_init(os_cond_t *, const char *name);
+extern os_cond_t * os_cond_create(void);
+extern os_cond_t * os_cond_name_create(const char *name);
 extern int os_cond_wait(os_cond_t *, zpl_int32 wait_ms);
 extern int os_cond_signal(os_cond_t *);
 extern int os_cond_broadcast(os_cond_t *);
-extern int os_cond_exit(os_cond_t *);
+extern int os_cond_destroy(os_cond_t *);
 extern int os_cond_unlock(os_cond_t *);
 extern int os_cond_lock(os_cond_t *);
 
-
-extern os_spin_t * os_spin_init(void);
-extern os_spin_t * os_spin_name_init(const char *name);
+extern int os_spin_init(os_spin_t *);
+extern int os_spin_name_init(os_spin_t *, const char *name);
+extern os_spin_t * os_spin_create(void);
+extern os_spin_t * os_spin_name_create(const char *name);
 extern int os_spin_lock(os_spin_t *);
 extern int os_spin_unlock(os_spin_t *);
-extern int os_spin_exit(os_spin_t *);
+extern int os_spin_destroy(os_spin_t *);
 
 #endif
 #endif

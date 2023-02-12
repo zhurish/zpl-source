@@ -4157,7 +4157,7 @@ void vty_init(void)
 	{
 		memset(&g_vtyshell, 0, sizeof(cli_vtyshell_t));
 		g_vtyshell.init = 1;
-		g_vtyshell.mutex = os_mutex_name_init("climutex");
+		g_vtyshell.mutex = os_mutex_name_create("climutex");
 #ifdef ZPL_IPCOM_MODULE
 		if (g_vtyshell.m_eloop_master == NULL)
 			g_vtyshell.m_eloop_master = eloop_master_module_create(MODULE_TELNET);
@@ -4181,7 +4181,7 @@ void vty_terminate(void)
 {
 	if (g_vtyshell.mutex)
 	{
-		os_mutex_exit(g_vtyshell.mutex);
+		os_mutex_destroy(g_vtyshell.mutex);
 		g_vtyshell.mutex = NULL;
 	}
 #ifdef ZPL_SHRL_MODULE

@@ -31,7 +31,7 @@ int modem_client_init(void)
 	gModemClient.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModemClient.list)
 	{
-		gModemClient.mutex = os_mutex_name_init("gModemClient.mutex");
+		gModemClient.mutex = os_mutex_name_create("gModemClient.mutex");
 		gModemClient.list->free = modem_client_free;
 		lstInit(gModemClient.list);
 		return OK;
@@ -48,7 +48,7 @@ int modem_client_exit(void)
 		XFREE(MTYPE_MODEM, gModemClient.list);
 	}
 	if(gModemClient.mutex)
-		os_mutex_exit(gModemClient.mutex);
+		os_mutex_destroy(gModemClient.mutex);
 	return OK;
 }
 

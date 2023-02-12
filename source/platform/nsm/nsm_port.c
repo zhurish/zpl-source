@@ -35,7 +35,7 @@ static int nsm_port_interface_create_api(struct interface *ifp)
 				return ERROR;
 			os_memset(port, 0, sizeof(nsm_port_t));
 			if (port->mutex == NULL)
-				port->mutex = os_mutex_name_init(os_name_format("%s-port_mutex", ifp->name));
+				port->mutex = os_mutex_name_create(os_name_format("%s-port_mutex", ifp->name));
 			IF_NSM_PORT_DATA_LOCK(port);
 			port->ifp = ifp;
 			port->learning_enable = zpl_true;
@@ -55,7 +55,7 @@ static int nsm_port_interface_del_api(struct interface *ifp)
 	{
 		if(port->mutex)
 		{
-			os_mutex_exit(port->mutex);
+			os_mutex_destroy(port->mutex);
 			port->mutex = NULL;
 		}
 		XFREE(MTYPE_PORT, port);

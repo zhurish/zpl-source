@@ -61,7 +61,7 @@ int v9_video_board_init()
 {
 	if(!board_mutex)
 	{
-		board_mutex = os_mutex_name_init("board_mutex");
+		board_mutex = os_mutex_name_create("board_mutex");
 	}
 	if(!v9_video_board)
 	{
@@ -111,7 +111,7 @@ int v9_video_board_exit()
 	}
 	if(board_mutex)
 	{
-		os_mutex_exit(board_mutex);
+		os_mutex_destroy(board_mutex);
 		board_mutex = NULL;
 	}
 	return OK;

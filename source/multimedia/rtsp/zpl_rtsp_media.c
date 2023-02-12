@@ -1082,7 +1082,7 @@ static int rtsp_session_media_rtp_sendto(rtp_session_t *rtp_session)
         {
             zpl_media_hdr_t *media_header = skb->skb_hdr.other_hdr;
   
-            ret = rtsp_session_media_adap_rtp_sendto(media_header->frame_codec, rtp_session->rtsp_parent, media_header->frame_type,
+            ret = rtsp_session_media_adap_rtp_sendto(media_header->codectype, rtp_session->rtsp_parent, media_header->frame_type,
                                             ZPL_SKB_DATA(skb), ZPL_SKB_DATA_LEN(skb));
             rtp_session->user_timestamp += rtp_session->timestamp_interval;
             zpl_skbqueue_finsh(rtp_session->rtsp_media_queue, skb);

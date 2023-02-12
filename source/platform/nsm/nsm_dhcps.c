@@ -35,7 +35,7 @@ int nsm_dhcps_init(void)
 {
 	memset(&dhcps_list, 0, sizeof(dhcps_list));
 	dhcps_list.dhcpslist = malloc(sizeof(LIST));
-	dhcps_list.mutex = os_mutex_name_init("dhcps-mutex");
+	dhcps_list.mutex = os_mutex_name_create("dhcps-mutex");
 	lstInit(dhcps_list.dhcpslist);
 	return OK;
 }
@@ -51,7 +51,7 @@ int nsm_dhcps_exit(void)
 	if(dhcps_list.dhcpslist)
 		free(dhcps_list.dhcpslist);
 	if(dhcps_list.mutex)
-		os_mutex_exit(dhcps_list.mutex);
+		os_mutex_destroy(dhcps_list.mutex);
 	return OK;
 }
 

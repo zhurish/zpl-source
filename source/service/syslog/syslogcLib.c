@@ -728,7 +728,7 @@ int syslogc_lib_init(void *m, char *processname)
 			// os_memcpy(syslog_client->processname, processname, MIN(os_strlen(processname),DFT_HOST_NAME_LEN));
 		}
 		if (!syslog_client->mutx)
-			syslog_client->mutx = os_mutex_name_init("syslog-mutex");
+			syslog_client->mutx = os_mutex_name_create("syslog-mutex");
 		//		OS_SERVICE_DEBUG("%s:processname=%s\r\n", __func__,syslog_client->processname);
 		return OK;
 	}
@@ -745,7 +745,7 @@ int syslogc_lib_uninit(void)
 			XFREE(MTYPE_ZLOG, syslog_client->processname);
 		// if(syslog_client->hostname)
 		if (syslog_client->mutx)
-			os_mutex_exit(syslog_client->mutx);
+			os_mutex_destroy(syslog_client->mutx);
 		//	XFREE(MTYPE_ZLOG, syslog_client->hostname);
 		XFREE(MTYPE_ZLOG, syslog_client);
 		syslog_client = NULL;

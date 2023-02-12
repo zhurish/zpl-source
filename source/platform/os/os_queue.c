@@ -40,8 +40,8 @@ os_queue_t *os_queue_create(zpl_char *name, zpl_uint32 max, zpl_uint32 size)
 		}
 		queue->max = max;
 		queue->size = size;
-		queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
-		queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
+		queue->sem = os_sem_name_create(os_name_format("%s-sem",name));
+		queue->mutex = os_mutex_name_create(os_name_format("%s-mutex",name));
 		lstInit (&queue->ulist);
 		lstInit (&queue->list);
 		return queue;
@@ -58,9 +58,9 @@ int os_queue_delete(os_queue_t *queue)
 	lstFree(&queue->ulist);
 	lstFree(&queue->list);
 	if(queue->sem)
-		os_sem_exit(queue->sem);
+		os_sem_destroy(queue->sem);
 	if(queue->mutex)
-		os_mutex_exit(queue->mutex);
+		os_mutex_destroy(queue->mutex);
 	os_free(queue);
 	return OK;
 }

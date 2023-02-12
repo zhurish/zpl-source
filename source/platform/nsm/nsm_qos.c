@@ -895,7 +895,7 @@ static int nsm_qos_interface_create_api(struct interface *ifp)
 		 qos = XMALLOC(MTYPE_QOS, sizeof(nsm_qos_t));
 		os_memset(qos, 0, sizeof(nsm_qos_t));
 		if (qos->mutex == NULL)
-			qos->mutex = os_mutex_name_init(os_name_format("%s-qos_mutex", ifp->name));
+			qos->mutex = os_mutex_name_create(os_name_format("%s-qos_mutex", ifp->name));
 		IF_NSM_QOS_DATA_LOCK(qos);	
 		qos->ifindex = ifp->ifindex;
 		nsm_intf_module_data_set(ifp, NSM_INTF_QOS, qos);
@@ -915,7 +915,7 @@ static int nsm_qos_interface_del_api(struct interface *ifp)
 	{
 		if(qos->mutex)
 		{
-			os_mutex_exit(qos->mutex);
+			os_mutex_destroy(qos->mutex);
 			qos->mutex = NULL;
 		}
 		XFREE(MTYPE_QOS, qos);

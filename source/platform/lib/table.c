@@ -130,7 +130,7 @@ route_table_free (struct route_table *rt)
  
   assert (rt->count == 0);
   if(rt->mutex)
-	  os_mutex_exit(rt->mutex);
+	  os_mutex_destroy(rt->mutex);
 
   XFREE (MTYPE_ROUTE_TABLE, rt);
   return;

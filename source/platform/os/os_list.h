@@ -61,7 +61,7 @@ extern void 	lstInsert (LIST *pList, NODE *pPrev, NODE *pNode);
 extern void 	lstSortInit (LIST *pList, int(*cmp)(void *, void *));
 extern void 	lstInitFree (LIST *pList, void(*freecb)(void *));
 extern void 	lstAddSort (LIST *pList, NODE *pNode);
-
+extern NODE *   lstLookup(LIST *pList, NODE *p);
 
 #ifdef __cplusplus
 }

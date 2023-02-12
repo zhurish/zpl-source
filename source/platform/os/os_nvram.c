@@ -23,7 +23,7 @@ int os_nvram_env_init(void)
 {
 	if (env_mutex == NULL)
 	{
-		env_mutex = os_mutex_name_init("env_mutex");
+		env_mutex = os_mutex_name_create("env_mutex");
 	}
 	if (env_table == NULL)
 	{
@@ -34,7 +34,7 @@ int os_nvram_env_init(void)
 			os_nvram_env_loadall();
 			return OK;
 		}
-		os_mutex_exit(env_mutex);
+		os_mutex_destroy(env_mutex);
 		return ERROR;
 	}
 	return OK;
@@ -46,7 +46,7 @@ int os_nvram_env_exit(void)
 	if (env_mutex)
 	{
 		os_mutex_lock(env_mutex, OS_WAIT_FOREVER);
-		os_mutex_exit(env_mutex);
+		os_mutex_destroy(env_mutex);
 		if (env_table)
 			lstFree(env_table);
 		return OK;

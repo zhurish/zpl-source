@@ -1281,7 +1281,7 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 
 	zl = XCALLOC(MTYPE_ZLOG, sizeof(struct zlog));
 
-	zl->mutex = os_mutex_name_init("logmutex");
+	zl->mutex = os_mutex_name_create("logmutex");
 	zl->ident = progname;
 	zl->protocol = protocol;
 	zl->facility = syslog_facility;
@@ -1362,7 +1362,7 @@ void closezlog(struct zlog *zl) {
 	if (zl->filename != NULL)
 		free(zl->filename);
 	if (zl->mutex)
-		os_mutex_exit(zl->mutex);
+		os_mutex_destroy(zl->mutex);
 #ifdef ZLOG_TESTING_ENABLE
 	if(zl->testlog.fp)
 	{

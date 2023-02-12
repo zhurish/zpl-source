@@ -44,7 +44,7 @@ static int ip_host_kernel_del(ip_host_t *dns1);
 int nsm_ip_dns_init(void)
 {
 	gIpdns.dnsList = malloc(sizeof(LIST));
-	gIpdns.mutex = os_mutex_name_init("dns-mutex");
+	gIpdns.mutex = os_mutex_name_create("dns-mutex");
 	lstInit(gIpdns.dnsList);
 	return OK;
 }
@@ -60,7 +60,7 @@ int nsm_ip_dns_exit(void)
 		gIpdns.dnsList = NULL;
 	}
 	if(gIpdns.mutex)
-		os_mutex_exit(gIpdns.mutex);
+		os_mutex_destroy(gIpdns.mutex);
 
 	ip_host_kernel_load_backup();
 

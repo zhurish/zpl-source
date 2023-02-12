@@ -37,7 +37,7 @@ int unit_board_init(void)
 	}
 	if (_utsp_manage.mgt_mutex == NULL)
 	{
-		_utsp_manage.mgt_mutex = os_mutex_name_init("mgtmutex");
+		_utsp_manage.mgt_mutex = os_mutex_name_create("mgtmutex");
 	}
 	_utsp_manage.bmgt_debug = BMGT_DEBUG_EVENT|BMGT_DEBUG_DETAIL;
 	return OK;
@@ -47,7 +47,7 @@ int unit_board_exit(void)
 {
 	if (_utsp_manage.mgt_mutex)
 	{
-		if (os_mutex_exit(_utsp_manage.mgt_mutex) == OK)
+		if (os_mutex_destroy(_utsp_manage.mgt_mutex) == OK)
 			_utsp_manage.mgt_mutex = NULL;
 	}
 	if (_utsp_manage.unit_board_mgt_list)
@@ -77,7 +77,7 @@ unit_board_mgt_t *unit_board_add(zpl_uint8 unit, zpl_uint8 slot)
 		{
 			lstInitFree(t->port_list, free);
 		}
-		t->mutex = os_mutex_name_init("utspmutex");
+		t->mutex = os_mutex_name_create("utspmutex");
 		t->state = UBMG_STAT_INIT;
 		if (_utsp_manage.mgt_mutex)
 			os_mutex_lock(_utsp_manage.mgt_mutex, OS_WAIT_FOREVER);
@@ -115,7 +115,7 @@ int unit_board_del(zpl_uint8 unit, zpl_uint8 slot)
 			if (t->port_list)
 				free(t->port_list);
 			if (t->mutex)
-				os_mutex_exit(t->mutex);
+				os_mutex_destroy(t->mutex);
 			free(t);
 			break;
 		}

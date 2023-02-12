@@ -112,7 +112,7 @@ int rtsp_session_connect(rtsp_session_t *session, const char *ip, uint16_t port,
 
 int rtsp_session_init(void)
 {
-    _rtsp_session_lst.mutex = os_mutex_name_init("rtspsession");
+    _rtsp_session_lst.mutex = os_mutex_name_create("rtspsession");
     INIT_OSKER_LIST_HEAD(&_rtsp_session_lst.session_list_head);
     return OK;
 }
@@ -135,7 +135,7 @@ int rtsp_session_exit(void)
     }
     if (_rtsp_session_lst.mutex)
     {
-        os_mutex_exit(_rtsp_session_lst.mutex);
+        os_mutex_destroy(_rtsp_session_lst.mutex);
         _rtsp_session_lst.mutex = NULL;
     }
     return OK;
@@ -189,7 +189,7 @@ int rtsp_session_destroy(rtsp_session_t *session)
         RTSP_SESSION_UNLOCK(session);
         if (session->mutex)
         {
-            os_mutex_exit(session->mutex);
+            os_mutex_destroy(session->mutex);
             session->mutex = NULL;
         }
 
@@ -405,7 +405,7 @@ rtsp_session_t *rtsp_session_create(zpl_socket_t sock, const char *address, uint
     if (newNode)
     {
         memset(newNode, 0, sizeof(rtsp_session_t));
-        newNode->mutex = os_mutex_name_init("rtspsession");
+        newNode->mutex = os_mutex_name_create("rtspsession");
         if (address)
             newNode->address = strdup(address);
         newNode->sock = sock;
@@ -438,7 +438,7 @@ rtsp_session_t *rtsp_session_add(struct osker_list_head *list, zpl_socket_t sock
     if (newNode)
     {
         memset(newNode, 0, sizeof(rtsp_session_t));
-        newNode->mutex = os_mutex_name_init("rtspsession");
+        newNode->mutex = os_mutex_name_create("rtspsession");
         if (address)
             newNode->address = strdup(address);
         newNode->sock = sock;

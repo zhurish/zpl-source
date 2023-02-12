@@ -50,7 +50,7 @@ int x5b_user_exit()
 	if(facecard_mutex)
 	{
 		os_mutex_lock(facecard_mutex, OS_WAIT_FOREVER);
-		if(os_mutex_exit(facecard_mutex)==OK)
+		if(os_mutex_destroy(facecard_mutex)==OK)
 			facecard_mutex = NULL;
 	}
 	if(facecard_table)
@@ -73,7 +73,7 @@ int x5b_user_load()
 		if (facecard_table)
 		{
 			if(facecard_mutex == NULL)
-				facecard_mutex = os_mutex_name_init("facecard_mutex");
+				facecard_mutex = os_mutex_name_create("facecard_mutex");
 			lstInit(facecard_table);
 			if(facecard_mutex)
 				os_mutex_lock(facecard_mutex, OS_WAIT_FOREVER);

@@ -197,6 +197,9 @@ int hal_txrx_module_init(void)
           close(hal_txrx.rx_fd);
         return ERROR;
       }
+      zpl_skbqueue_attribute_set(hal_txrx.rx_skbqueue, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
+      zpl_skbqueue_attribute_set(hal_txrx.tx_skbqueue, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
+
       hal_netpkt_filter_init();
       hal_txrx.t_read = os_ansync_add(hal_txrx.master, OS_ANSYNC_INPUT, hal_txrx_thread, &hal_txrx, hal_txrx.rx_fd);
       return OK;

@@ -321,7 +321,7 @@ int ipcstandby_init(void)
     memset(&_host_standby, 0, sizeof(struct ipcstandby));
     _host_standby.slot = _global_host.slot;
     _host_standby.master = thread_master_module_create(MODULE_STANDBY);
-    _host_standby._lock = os_mutex_name_init("_host_standby.mutex");
+    _host_standby._lock = os_mutex_name_create("_host_standby.mutex");
     _host_standby.ipcstandby_client = ipcstandby_client_new(_host_standby.master);
     _host_standby.ipcstandby_server = ipcstandby_serv_init(_host_standby.master, os_netservice_port_get("standbyd_port"));
     if (_host_standby.ipcstandby_client && _host_standby.ipcstandby_server)
@@ -368,7 +368,7 @@ int ipcstandby_exit(void)
     IPCSTANDBY_UNLOCK();
     if (_host_standby._lock)
     {
-        os_mutex_exit(_host_standby._lock);
+        os_mutex_destroy(_host_standby._lock);
         _host_standby._lock = NULL;
     }
     return OK;

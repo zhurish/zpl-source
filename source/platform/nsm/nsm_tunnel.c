@@ -402,7 +402,7 @@ int nsm_tunnel_interface_create_api(struct interface *ifp)
 		zassert(tunnel);
 		os_memset(tunnel, 0, sizeof(nsm_tunnel_t));
 		if (tunnel->mutex == NULL)
-			tunnel->mutex = os_mutex_name_init("if_tunnel_mutex");
+			tunnel->mutex = os_mutex_name_create("if_tunnel_mutex");
 		nsm_intf_module_data_set(ifp, NSM_INTF_TUNNEL, tunnel);
 	}
 	IF_NSM_TUNNEL_DATA_LOCK(tunnel);
@@ -427,7 +427,7 @@ int nsm_tunnel_interface_del_api(struct interface *ifp)
 		IF_NSM_TUNNEL_DATA_UNLOCK(tunnel);
 		if(tunnel->mutex)
 		{
-			os_mutex_exit(tunnel->mutex);
+			os_mutex_destroy(tunnel->mutex);
 			tunnel->mutex = NULL;
 		}
 		XFREE(MTYPE_IF_DATA, tunnel);

@@ -603,7 +603,7 @@ int os_time_init(void)
 		{
 			lstInit(time_list);
 			lstSortInit(time_list, os_time_compar);
-			time_sem = os_sem_name_init("os_timer_sem");
+			time_sem = os_sem_name_create("os_timer_sem");
 		}
 		else
 			return ERROR;
@@ -621,7 +621,7 @@ int os_time_init(void)
 	}
 	if(time_mutex == NULL)
 	{
-		time_mutex = os_mutex_name_init("timemutex");
+		time_mutex = os_mutex_name_create("timemutex");
 	}
 	time_task_id = os_task_create("timeTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, os_time_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -646,12 +646,12 @@ int os_time_exit(void)
 	}
 	if(time_mutex)
 	{
-		if(os_mutex_exit(time_mutex)==OK)
+		if(os_mutex_destroy(time_mutex)==OK)
 			time_mutex = NULL;
 	}
 	if(time_sem)
 	{
-		if(os_sem_exit(time_sem)==OK)
+		if(os_sem_destroy(time_sem)==OK)
 			time_sem = NULL;
 	}
 	if(time_list)

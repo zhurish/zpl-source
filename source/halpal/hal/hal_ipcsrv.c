@@ -878,7 +878,7 @@ char *hal_ipcsrv_send_message()
 int hal_ipcsrv_init(void *m, int port, const char *path)
 {
     memset(&_ipcsrv, 0, sizeof(struct hal_ipcsrv));
-    _ipcsrv.mutex = os_mutex_name_init("ipcsrvmutex");
+    _ipcsrv.mutex = os_mutex_name_create("ipcsrvmutex");
     zlog_force_trap(MODULE_HAL, "hal_ipcsrv_init port=%d path=%s", port, path?path:"null");
     if (_ipcsrv.mutex == NULL)
     {
@@ -887,7 +887,7 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
 #ifdef HAL_IPCSRV_SYNC_ACK
     if (ipstack_socketpair (IPSTACK_OS, IPSTACK_AF_UNIX, IPSTACK_SOCK_STREAM, 0, _ipcsrv.waitfd)<0)
     {
-        os_mutex_exit(_ipcsrv.mutex);
+        os_mutex_destroy(_ipcsrv.mutex);
         _ipcsrv.mutex = NULL;
         return ERROR;
     }
@@ -901,7 +901,7 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
     }
     else
     {
-        os_mutex_exit(_ipcsrv.mutex);
+        os_mutex_destroy(_ipcsrv.mutex);
         _ipcsrv.mutex = NULL;
 #ifdef HAL_IPCSRV_SYNC_ACK
         if (!ipstack_invalid(_ipcsrv.waitfd[0]))
@@ -914,7 +914,7 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
     _ipcsrv.unixsock = hal_ipcsrv_un(path);
     if (ipstack_invalid(_ipcsrv.unixsock))
     {
-        os_mutex_exit(_ipcsrv.mutex);
+        os_mutex_destroy(_ipcsrv.mutex);
         _ipcsrv.mutex = NULL;
 #ifdef HAL_IPCSRV_SYNC_ACK
         if (!ipstack_invalid(_ipcsrv.waitfd[0]))
@@ -930,7 +930,7 @@ int hal_ipcsrv_init(void *m, int port, const char *path)
         _ipcsrv.sock = hal_ipcsrv_socket(port);
         if (ipstack_invalid(_ipcsrv.sock))
         {
-            os_mutex_exit(_ipcsrv.mutex);
+            os_mutex_destroy(_ipcsrv.mutex);
             _ipcsrv.mutex = NULL;
 #ifdef HAL_IPCSRV_SYNC_ACK
         if (!ipstack_invalid(_ipcsrv.waitfd[0]))
@@ -978,7 +978,7 @@ int hal_ipcsrv_exit(void)
     //hal_ipcmsg_destroy(&_ipcsrv.input_msg);
     if (_ipcsrv.mutex)
     {
-        os_mutex_exit(_ipcsrv.mutex);
+        os_mutex_destroy(_ipcsrv.mutex);
         _ipcsrv.mutex = NULL;
     }
 #ifdef HAL_IPCSRV_SYNC_ACK

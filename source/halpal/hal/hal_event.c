@@ -44,7 +44,7 @@ static int hal_event_client_create(struct hal_event_serv *ipcsrv, zpl_uint8 even
 int hal_event_init(void)
 {
     memset(&_ipcsrv_event, 0, sizeof(struct hal_event_serv));
-    _ipcsrv_event.mutex = os_mutex_name_init("haleventmutex");
+    _ipcsrv_event.mutex = os_mutex_name_create("haleventmutex");
     if (_ipcsrv_event.mutex == NULL)
     {
         return ERROR;
@@ -56,7 +56,7 @@ int hal_event_init(void)
     }
     else
     {
-        os_mutex_exit(_ipcsrv_event.mutex);
+        os_mutex_destroy(_ipcsrv_event.mutex);
         _ipcsrv_event.mutex = NULL;
         return ERROR;
     }
@@ -68,7 +68,7 @@ int hal_event_exit(void)
     list_delete(_ipcsrv_event.client_list);
     if (_ipcsrv_event.mutex)
     {
-        os_mutex_exit(_ipcsrv_event.mutex);
+        os_mutex_destroy(_ipcsrv_event.mutex);
         _ipcsrv_event.mutex = NULL;
     }
     return OK;

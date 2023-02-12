@@ -607,7 +607,7 @@ int nsm_vlan_interface_create_api(struct interface *ifp)
 			zassert(nsm_vlan);
 			os_memset(nsm_vlan, 0, sizeof(nsm_vlan_t));
 			if (nsm_vlan->mutex == NULL)
-				nsm_vlan->mutex = os_mutex_name_init("if_vlan_mutex");
+				nsm_vlan->mutex = os_mutex_name_create("if_vlan_mutex");
 			nsm_intf_module_data_set(ifp, NSM_INTF_VLAN, nsm_vlan);
 		}
 		if(if_is_ethernet(ifp) && nsm_vlan_database_lookup_api(1))
@@ -633,7 +633,7 @@ int nsm_vlan_interface_del_api(struct interface *ifp)
 		{
 			if(nsm_vlan->mutex)
 			{
-				os_mutex_exit(nsm_vlan->mutex);
+				os_mutex_destroy(nsm_vlan->mutex);
 				nsm_vlan->mutex = NULL;
 			}
 			XFREE(MTYPE_VLAN, nsm_vlan);

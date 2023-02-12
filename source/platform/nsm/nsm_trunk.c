@@ -117,7 +117,7 @@ int nsm_trunk_init(void)
 		lstInit(gtrunk.group[i].trunkList);
 	}
 	gtrunk.enable = zpl_true;
-	gtrunk.mutex = os_mutex_name_init("gtrunk.mutex");
+	gtrunk.mutex = os_mutex_name_create("gtrunk.mutex");
 
 	nsm_interface_hook_add(NSM_INTF_TRUNK, nsm_trunk_interface_create_api, nsm_trunk_interface_del_api);
 	return OK;
@@ -160,7 +160,7 @@ int nsm_trunk_exit(void)
 	if(gtrunk.mutex)
 		os_mutex_unlock(gtrunk.mutex);
 	if(gtrunk.mutex)
-		os_mutex_exit(gtrunk.mutex);
+		os_mutex_destroy(gtrunk.mutex);
 	NSM_LEAVE_FUNC();
 	return OK;
 }

@@ -43,7 +43,7 @@ int nsm_dhcp_interface_create_api(struct interface *ifp)
 			((nsm_dhcp_ifp_t *)(ifp->info[MODULE_DHCP]))->ifp = ifp;
 
 			if (dhcp->mutex == NULL)
-				dhcp->mutex = os_mutex_name_init("if_dhcp_mutex");
+				dhcp->mutex = os_mutex_name_create("if_dhcp_mutex");
 		}
 		else
 		{
@@ -66,7 +66,7 @@ int nsm_dhcp_interface_del_api(struct interface *ifp)
 		{
 			if(dhcp->mutex)
 			{
-				os_mutex_exit(dhcp->mutex);
+				os_mutex_destroy(dhcp->mutex);
 				dhcp->mutex = NULL;
 			}
 			XFREE(MTYPE_DHCP, ifp->info[MODULE_DHCP]);

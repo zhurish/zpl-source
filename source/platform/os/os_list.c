@@ -157,6 +157,22 @@ void lstSortInit (LIST *pList, int(*cmp)(void *, void *))
     pList->count = 0;
     pList->cmp = cmp;
 }
+
+NODE *lstLookup(LIST *pList, NODE *p)
+{
+    FAST NODE *pNextNode = NULL;
+    pNextNode = lstFirst (pList);
+    while ((pNextNode != NULL))
+	{
+        if(pList->cmp)
+        {
+            if((pList->cmp)(pNextNode, p) == 0)
+                return pNextNode;
+        }
+	    pNextNode = lstNext (pNextNode);
+	}
+	return NULL;
+}
 /*************************************************************************
 *
 * lstAdd - add a node to the end of a list

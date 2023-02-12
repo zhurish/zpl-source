@@ -146,7 +146,7 @@ eloop_master_create()
 	if (os_mt_init == 0)
 	{
 		memset(&_master_eloop_list, 0, sizeof(_master_eloop_list));
-		_master_mutex = os_mutex_name_init("eloopmutex");		
+		_master_mutex = os_mutex_name_create("eloopmutex");		
 		os_mt_init = 1;
 	}
 	rv = XCALLOC(MTYPE_THREAD_MASTER, sizeof(struct eloop_master));
@@ -178,7 +178,7 @@ eloop_master_create()
 	//rv->background = pqueue_create();
 	//rv->timer->cmp = rv->background->cmp = eloop_timer_cmp;
 	//rv->timer->update = rv->background->update = eloop_timer_update;
-	rv->mutex = os_mutex_name_init("eloopmutex");
+	rv->mutex = os_mutex_name_create("eloopmutex");
 
 	eloop_master_add_list(rv);
 
@@ -285,7 +285,7 @@ void eloop_master_free(struct eloop_master *m)
 	eloop_master_del_list(m);
 
 	if (m->mutex)
-		os_mutex_exit(m->mutex);
+		os_mutex_destroy(m->mutex);
 	XFREE(MTYPE_THREAD_MASTER, m);
 
 }

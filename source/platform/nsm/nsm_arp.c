@@ -28,7 +28,7 @@ static int ip_arp_dynamic_update(void *pVoid);
 int nsm_ip_arp_init(void)
 {
 	gIparp.arpList = malloc(sizeof(LIST));
-	gIparp.mutex = os_mutex_name_init("gIparp.mutex");
+	gIparp.mutex = os_mutex_name_create("gIparp.mutex");
 	lstInit(gIparp.arpList);
 	return OK;
 }
@@ -44,7 +44,7 @@ int nsm_ip_arp_exit(void)
 		gIparp.arpList = NULL;
 	}
 	if(gIparp.mutex)
-		os_mutex_exit(gIparp.mutex);
+		os_mutex_destroy(gIparp.mutex);
 	return OK;
 }
 

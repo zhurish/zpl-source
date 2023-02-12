@@ -224,6 +224,14 @@ typedef struct zpl_skbuffer_s
 
 }__attribute__ ((packed)) zpl_skbuffer_t ;
 
+
+typedef enum  
+{
+    ZPL_SKBQUEUE_FLAGS_NONE         = 0,
+    ZPL_SKBQUEUE_FLAGS_ASYNC        = 1,   //asynchronous
+	ZPL_SKBQUEUE_FLAGS_LIMIT_MAX    = 2,   //Maximum limit
+}zpl_skbqueue_flags_t;
+
 typedef struct 
 {
     char    *name;
@@ -235,6 +243,8 @@ typedef struct
 	LIST	    list;			//add queue
 	LIST	    rlist;			//ready queue
 	LIST	    ulist;			//unuse queue
+    zpl_int32   queue_flag;
+    zpl_int32   sync_wait;
     zpl_void    *privatedata;
 }zpl_skbqueue_t;
 
@@ -248,18 +258,22 @@ extern zpl_uint32 zpl_skb_timerstamp(void);
 /* zpl_skbqueue_t */
 extern zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem);
 extern int zpl_skbqueue_destroy(zpl_skbqueue_t *queue);
-
+extern int zpl_skbqueue_attribute_set(zpl_skbqueue_t *queue, zpl_int32);
+extern int zpl_skbqueue_attribute_unset(zpl_skbqueue_t *queue, zpl_int32);
+extern int zpl_skbqueue_attribute_get(zpl_skbqueue_t *queue);
 extern int zpl_skbqueue_set_privatedata(zpl_skbqueue_t *queue, zpl_void *privatedata);
 extern zpl_void *zpl_skbqueue_get_privatedata(zpl_skbqueue_t *queue);
 
-extern int zpl_skbqueue_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
-extern zpl_skbuffer_t * zpl_skbqueue_dequeue(zpl_skbqueue_t *queue);
+extern int zpl_skbqueue_async_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
+extern zpl_skbuffer_t * zpl_skbqueue_async_dequeue(zpl_skbqueue_t *queue);
+zpl_skbuffer_t *zpl_skbqueue_async_wait_dequeue(zpl_skbqueue_t *queue, int waitms);
 
 extern int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern int zpl_skbqueue_add(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf);
 extern zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue);
 
-extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int wait, int(*func)(zpl_skbuffer_t*, void *), void *p);
+extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p);
+extern int zpl_skbqueue_async_wait_distribute(zpl_skbqueue_t *queue, int sync_wait_ms, int(*func)(zpl_skbuffer_t*, void *), void *p);
 
 /* zpl_skbuffer_t */
 /* 在报文offset前面添加数据 */
@@ -284,6 +298,7 @@ extern int zpl_skbuffer_next_add(zpl_skbuffer_t *head, zpl_skbuffer_t *next);
 extern int zpl_skbuffer_prev_add(zpl_skbuffer_t *head, zpl_skbuffer_t *next);
 extern zpl_skbuffer_t * zpl_skbuffer_next_get(zpl_skbuffer_t *head);
 extern zpl_skbuffer_t * zpl_skbuffer_prev_get(zpl_skbuffer_t *head);
+extern int zpl_skbuffer_foreach(zpl_skbuffer_t *head, int(*func)(zpl_skbuffer_t*, void *), void *p);
 
 /* net pkt */
 extern int zpl_skbuffer_reason_set(zpl_skbuffer_t *skbuf, zpl_uint32 reason);

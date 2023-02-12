@@ -348,7 +348,7 @@ int v9_serial_init(char *devname, zpl_uint32 speed)
 			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
 
 		v9_serial->master = master_eloop[MODULE_APP_START];
-		v9_serial->mutex = os_mutex_name_init("v9_serial->mutex");
+		v9_serial->mutex = os_mutex_name_create("v9_serial->mutex");
 		memset(v9_serial->tty->devname, 0, sizeof(v9_serial->tty->devname));
 		strcpy(v9_serial->tty->devname, devname);
 		v9_serial->tty->speed = speed;		// speed bit
@@ -401,7 +401,7 @@ int v9_serial_exit()
 #endif /* V9_SLIPNET_ENABLE */
 		if(v9_serial->mutex)
 		{
-			os_mutex_exit(v9_serial->mutex);
+			os_mutex_destroy(v9_serial->mutex);
 			v9_serial->mutex = NULL;
 		}
 		_v9_serial_hw_exit();

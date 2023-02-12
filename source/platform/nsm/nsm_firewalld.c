@@ -710,7 +710,7 @@ firewall_zone_t * nsm_firewall_zone_add(zpl_int8 	*zonename)
 		os_memset(node, 0, sizeof(firewall_zone_t));
 		os_strcpy(node->zonename, zonename);
 		node->zone_list = malloc(sizeof(LIST));
-		node->mutex = os_mutex_name_init(os_name_format("%s-mutex",zonename));
+		node->mutex = os_mutex_name_create(os_name_format("%s-mutex",zonename));
 		lstInit(node->zone_list);
 		lstAdd(gFirewalld.firewall_list, (NODE *)node);
 		return node;
@@ -760,7 +760,7 @@ int nsm_firewall_zone_del(zpl_int8 	*zonename)
 			pstNode->zone_list = NULL;
 		}
 		if(pstNode->mutex)
-			os_mutex_exit(pstNode->mutex);
+			os_mutex_destroy(pstNode->mutex);
 
 		XFREE(MTYPE_FIREWALL_ZONE, pstNode);
 		if(gFirewalld.mutex)
@@ -1000,7 +1000,7 @@ int nsm_firewall_init(void)
 {
 	memset(&gFirewalld, 0, sizeof(Gfirewall_t));
 	gFirewalld.firewall_list = malloc(sizeof(LIST));
-	gFirewalld.mutex = os_mutex_name_init("gFirewalld.mutex");
+	gFirewalld.mutex = os_mutex_name_create("gFirewalld.mutex");
 	lstInit(gFirewalld.firewall_list);
 	gFirewalld.init = zpl_true;
 	nsm_firewall_default();
@@ -1018,7 +1018,7 @@ int nsm_firewall_exit(void)
 		gFirewalld.init = zpl_false;
 	}
 	if(gFirewalld.mutex)
-		os_mutex_exit(gFirewalld.mutex);
+		os_mutex_destroy(gFirewalld.mutex);
 	memset(&gFirewalld, 0, sizeof(Gfirewall_t));
 	return OK;
 }

@@ -332,7 +332,7 @@ int v9_video_user_load()
 	v9_video_group_init();
 	if(!_user_mutex)
 	{
-		_user_mutex = os_mutex_name_init("_user_mutex");
+		_user_mutex = os_mutex_name_create("_user_mutex");
 	}
 	return OK;
 }
@@ -350,7 +350,7 @@ int v9_video_user_exit()
 	if(_user_mutex)
 	{
 		os_mutex_lock(_user_mutex, OS_WAIT_FOREVER);
-		os_mutex_exit(_user_mutex);
+		os_mutex_destroy(_user_mutex);
 		_user_mutex = NULL;
 	}
 	return OK;

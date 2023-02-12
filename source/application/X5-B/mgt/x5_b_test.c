@@ -496,7 +496,7 @@ static int x5b_app_test_module_init(char *local, zpl_uint16 port)
 
 		mgt_test->master = master_eloop[MODULE_APP + 1];
 
-		mgt_test->mutex = os_mutex_name_init("mgt_test->mutex");
+		mgt_test->mutex = os_mutex_name_create("mgt_test->mutex");
 
 		if(local)
 			mgt_test->local_address = strdup(local);
@@ -532,7 +532,7 @@ static int x5b_app_test_module_exit()
 			free(mgt_test->local_address);
 		if(mgt_test->mutex)
 		{
-			os_mutex_exit(mgt_test->mutex);
+			os_mutex_destroy(mgt_test->mutex);
 			mgt_test->mutex = NULL;
 		}
 		if(x5b_app_mgt)

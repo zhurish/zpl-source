@@ -21,7 +21,7 @@ int nsm_mac_init(void)
 {
 	zpl_uchar kmac[NSM_MAC_MAX] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 	gMac.macList = malloc(sizeof(LIST));
-	gMac.mutex = os_mutex_name_init("mac-mutex");
+	gMac.mutex = os_mutex_name_create("mac-mutex");
 	lstInit(gMac.macList);
 
 	nsm_gmac_set_api(0, kmac, NSM_MAC_MAX);
@@ -82,7 +82,7 @@ int nsm_mac_exit(void)
 		gMac.macList = NULL;
 	}
 	if(gMac.mutex)
-		os_mutex_exit(gMac.mutex);
+		os_mutex_destroy(gMac.mutex);
 	return OK;
 }
 

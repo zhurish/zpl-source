@@ -61,7 +61,7 @@ int nsm_serial_interface_create_api(struct interface *ifp)
 		zassert(serial);
 		os_memset(serial, 0, sizeof(nsm_serial_t));
 		if (serial->mutex == NULL)
-			serial->mutex = os_mutex_name_init("if_serial_mutex");
+			serial->mutex = os_mutex_name_create("if_serial_mutex");
 		IF_NSM_SERIAL_DATA_LOCK(serial);
 		serial->serial.databit = NSM_SERIAL_DATA_DEFAULT;
 		serial->serial.stopbit = NSM_SERIAL_STOP_DEFAULT;
@@ -87,7 +87,7 @@ int nsm_serial_interface_del_api(struct interface *ifp)
 	{
 		if(serial->mutex)
 		{
-			os_mutex_exit(serial->mutex);
+			os_mutex_destroy(serial->mutex);
 			serial->mutex = NULL;
 		}
 		XFREE(MTYPE_SERIAL, serial);

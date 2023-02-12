@@ -35,7 +35,7 @@ int modem_process_init(void)
 	gModeProcess.ready = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModeProcess.list && gModeProcess.unlist && gModeProcess.ready)
 	{
-		gModeProcess.mutex = os_mutex_name_init("gModeProcess.mutex");
+		gModeProcess.mutex = os_mutex_name_create("gModeProcess.mutex");
 		gModeProcess.list->free = modem_process_free;
 		gModeProcess.unlist->free = modem_process_free;
 		gModeProcess.ready->free = modem_process_free;
@@ -86,7 +86,7 @@ int modem_process_exit(void)
 		XFREE(MTYPE_MODEM, gModeProcess.unlist);
 	}
 	if(gModeProcess.mutex)
-		os_mutex_exit(gModeProcess.mutex);
+		os_mutex_destroy(gModeProcess.mutex);
 	return OK;
 }
 

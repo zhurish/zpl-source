@@ -356,7 +356,7 @@ void ip_vrf_init(void)
   if (_ip_vrf_master.ip_vrf_list)
   {
     lstInit(_ip_vrf_master.ip_vrf_list);
-    _ip_vrf_master.vrf_mutex = os_mutex_name_init("vrfmutex");
+    _ip_vrf_master.vrf_mutex = os_mutex_name_create("vrfmutex");
   }
 }
 

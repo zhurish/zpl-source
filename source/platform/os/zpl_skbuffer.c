@@ -45,12 +45,18 @@ zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem
 		if(name)
 			queue->name = strdup(name);
 		queue->max_num = max_num;
-		queue->mutex = os_mutex_name_init(os_name_format("%s-mutex",name));
+		queue->mutex = os_mutex_name_create(os_name_format("%s-mutex",name));
 		if (sem)
-			queue->sem = os_sem_name_init(os_name_format("%s-sem",name));
+		{
+			queue->sem = os_sem_name_create(os_name_format("%s-sem",name));
+			ZPL_SET_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_ASYNC);
+			queue->sync_wait = OS_WAIT_FOREVER;
+		}
 		else
+		{
 			queue->sem = NULL;
-
+			ZPL_CLR_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_ASYNC);
+		}
 		lstInitFree(&queue->ulist, zpl_skbuffer_destroy);
 		lstInitFree(&queue->list, zpl_skbuffer_destroy);
 		return queue;
@@ -69,13 +75,58 @@ int zpl_skbqueue_destroy(zpl_skbqueue_t *queue)
 	lstFree(&queue->ulist);
 	lstFree(&queue->list);
 	if (queue->mutex)
-		os_mutex_exit(queue->mutex);
+		os_mutex_destroy(queue->mutex);
 	if (queue->sem)
-		os_sem_exit(queue->sem);
+		os_sem_destroy(queue->sem);
 	if (queue->name)
 		free(queue->name);
 	os_free(queue);
 	return OK;
+}
+
+int zpl_skbqueue_attribute_set(zpl_skbqueue_t *queue, zpl_int32 attr)
+{
+	assert(queue);
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+	if(attr == ZPL_SKBQUEUE_FLAGS_ASYNC)
+	{	
+		if(queue->sem == NULL)
+			queue->sem = os_sem_name_create(os_name_format("%s-sem",queue->name));
+	}
+	queue->queue_flag |= attr;
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return OK;
+}
+
+int zpl_skbqueue_attribute_unset(zpl_skbqueue_t *queue, zpl_int32 attr)
+{
+	assert(queue);
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+	if(attr == ZPL_SKBQUEUE_FLAGS_ASYNC)
+	{	
+		if (queue->sem)
+			os_sem_destroy(queue->sem);
+		queue->sem = NULL;
+	}
+	queue->queue_flag &= ~attr;
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return OK;
+}
+
+int zpl_skbqueue_attribute_get(zpl_skbqueue_t *queue)
+{
+	int queue_flag = 0;
+	assert(queue);
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+	queue_flag = queue->queue_flag;
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return queue_flag;
 }
 
 int zpl_skbqueue_set_privatedata(zpl_skbqueue_t *queue, zpl_void *privatedata)
@@ -101,39 +152,41 @@ zpl_void *zpl_skbqueue_get_privatedata(zpl_skbqueue_t *queue)
 	return privatedata;
 }
 
-int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
+
+
+int zpl_skbqueue_async_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 {
 	assert(queue);
 	assert(skbuf);
 	if (queue->mutex)
 		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
-	lstAdd(&queue->ulist, skbuf);
-	if (queue->mutex)
-		os_mutex_unlock(queue->mutex);
-	return OK;
-}
-
-int zpl_skbqueue_enqueue(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
-{
-	assert(queue);
-	assert(skbuf);
-	if (queue->mutex)
-		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
-
+	if(ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX))
+	{
+		zpl_skbuffer_t *get_skbuf = NULL;
+		if(lstCount(&queue->list) >= queue->max_num)
+		{
+			get_skbuf = lstFirst(&queue->list);
+			if (get_skbuf)
+			{
+				lstDelete(&queue->list, (NODE *)get_skbuf);
+				lstAdd(&queue->ulist, (NODE *)get_skbuf);
+			}
+		}
+	}
 	lstAdd(&queue->list, skbuf);
 	if (queue->mutex)
 		os_mutex_unlock(queue->mutex);
-	if (queue->sem)
+	if (ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_ASYNC) && queue->sem)
 		os_sem_give(queue->sem);
 	return OK;
 }
 
-zpl_skbuffer_t *zpl_skbqueue_dequeue(zpl_skbqueue_t *queue)
+zpl_skbuffer_t *zpl_skbqueue_async_wait_dequeue(zpl_skbqueue_t *queue, int waitms)
 {
 	zpl_skbuffer_t *skbuf = NULL;
 	assert(queue);
-	if (queue->sem)
-		os_sem_take(queue->sem, OS_WAIT_FOREVER);
+	if (ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_ASYNC) && queue->sem)
+		os_sem_take(queue->sem, waitms);
 	if (queue->mutex)
 		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
 	if (lstCount(&queue->list))
@@ -149,13 +202,30 @@ zpl_skbuffer_t *zpl_skbqueue_dequeue(zpl_skbqueue_t *queue)
 	return skbuf;
 }
 
+zpl_skbuffer_t *zpl_skbqueue_async_dequeue(zpl_skbqueue_t *queue)
+{
+	return zpl_skbqueue_async_wait_dequeue(queue, OS_WAIT_FOREVER);
+}
+
 int zpl_skbqueue_add(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 {
 	assert(queue);
 	assert(skbuf);
 	if (queue->mutex)
 		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
-
+	if(ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX))
+	{
+		zpl_skbuffer_t *get_skbuf = NULL;
+		if(lstCount(&queue->list) >= queue->max_num)
+		{
+			get_skbuf = lstFirst(&queue->list);
+			if (get_skbuf)
+			{
+				lstDelete(&queue->list, (NODE *)get_skbuf);
+				lstAdd(&queue->ulist, (NODE *)get_skbuf);
+			}
+		}
+	}
 	lstAdd(&queue->list, skbuf);
 	if (queue->mutex)
 		os_mutex_unlock(queue->mutex);
@@ -179,12 +249,27 @@ zpl_skbuffer_t *zpl_skbqueue_get(zpl_skbqueue_t *queue)
 	return skbuf;
 }
 
-int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int wait, int(*func)(zpl_skbuffer_t*, void *), void *p)
+int zpl_skbqueue_finsh(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
+{
+	assert(queue);
+	assert(skbuf);
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+	lstAdd(&queue->ulist, skbuf);
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return OK;
+}
+
+/*
+int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p)
 {
 	NODE node;
 	zpl_skbuffer_t *skbuf = NULL;
 	assert(queue);
-	if(wait)
+	if(lstCount (&queue->list) == 0)
+		return ERROR;
+	if(ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_ASYNC))
 	{
 		if (queue->sem)
 			os_sem_take(queue->sem, OS_WAIT_FOREVER);
@@ -206,6 +291,44 @@ int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int wait, int(*func)(zpl_skbu
 	if (queue->mutex)
 		os_mutex_unlock(queue->mutex);
 	return OK;
+}
+*/
+
+int zpl_skbqueue_async_wait_distribute(zpl_skbqueue_t *queue, int sync_wait_ms, int(*func)(zpl_skbuffer_t*, void *), void *p)
+{
+	NODE node;
+	zpl_skbuffer_t *skbuf = NULL;
+	assert(queue);
+
+	if(lstCount (&queue->list) == 0)
+		return ERROR;
+	if(ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_ASYNC))
+	{
+		if (queue->sem)
+			os_sem_take(queue->sem, sync_wait_ms);
+	}
+	if (queue->mutex)
+		os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
+
+	for (skbuf = (zpl_skbuffer_t *)lstFirst(&queue->list); skbuf != NULL;
+		 skbuf = (zpl_skbuffer_t *)lstNext(&node))
+	{
+		node = skbuf->node;
+		if (skbuf && skbuf->skb_len)
+		{
+			lstDelete(&queue->list, (NODE *)skbuf);
+			(func)(skbuf, p);
+			lstAdd(&queue->ulist, skbuf);
+		}
+	}
+	if (queue->mutex)
+		os_mutex_unlock(queue->mutex);
+	return OK;
+}
+
+int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffer_t*, void *), void *p)
+{
+	return zpl_skbqueue_async_wait_distribute(queue, OS_WAIT_FOREVER, func, p);
 }
 
 int zpl_skbuffer_init_default(zpl_skbuffer_t *skbuf, zpl_skbuf_type_t skbtype, int maxlen)
@@ -468,6 +591,17 @@ zpl_skbuffer_t * zpl_skbuffer_prev_get(zpl_skbuffer_t *head)
 		}
 	}
 	return nnext;
+}
+
+int zpl_skbuffer_foreach(zpl_skbuffer_t *head, int(*func)(zpl_skbuffer_t*, void *), void *p)
+{
+	zpl_skbuffer_t *nnext = head;
+	while(nnext)
+	{
+		(func)(nnext, p);
+		nnext = nnext->next;
+	}
+	return OK;
 }
 
 

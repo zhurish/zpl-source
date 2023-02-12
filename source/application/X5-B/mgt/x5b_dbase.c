@@ -74,7 +74,7 @@ int voip_dbase_exit()
 	if(dbase_mutex)
 	{
 		os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);
-		if(os_mutex_exit(dbase_mutex)==OK)
+		if(os_mutex_destroy(dbase_mutex)==OK)
 			dbase_mutex = NULL;
 	}
 	if(dbase_table)
@@ -97,7 +97,7 @@ int voip_dbase_load()
 		if (dbase_table)
 		{
 			if(dbase_mutex == NULL)
-				dbase_mutex = os_mutex_name_init("dbase_mutex");
+				dbase_mutex = os_mutex_name_create("dbase_mutex");
 			lstInit(dbase_table);
 			if(dbase_mutex)
 				os_mutex_lock(dbase_mutex, OS_WAIT_FOREVER);

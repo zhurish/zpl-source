@@ -51,7 +51,7 @@ int buddy_dbase_exit()
 	if(buddy_mutex)
 	{
 		os_mutex_lock(buddy_mutex, OS_WAIT_FOREVER);
-		if(os_mutex_exit(buddy_mutex)==OK)
+		if(os_mutex_destroy(buddy_mutex)==OK)
 			buddy_mutex = NULL;
 	}
 	if(buddy_table)
@@ -73,7 +73,7 @@ int buddy_dbase_load()
 		if (buddy_table)
 		{
 			if(buddy_mutex == NULL)
-				buddy_mutex = os_mutex_name_init("buddy_mutex");
+				buddy_mutex = os_mutex_name_create("buddy_mutex");
 			lstInit(buddy_table);
 			if(buddy_mutex)
 				os_mutex_lock(buddy_mutex, OS_WAIT_FOREVER);

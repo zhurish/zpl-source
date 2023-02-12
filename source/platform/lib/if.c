@@ -1587,9 +1587,9 @@ void if_init(void)
 	{
 		_zpl_if_master_lst.intfList = list_new();
 		if (_zpl_if_master_lst.ifMutex == NULL)
-			_zpl_if_master_lst.ifMutex = os_mutex_name_init("ifMutex");
+			_zpl_if_master_lst.ifMutex = os_mutex_name_create("ifMutex");
 		if (_zpl_if_master_lst.ifdatamutex == NULL)
-			_zpl_if_master_lst.ifdatamutex = os_mutex_name_init("if_data_mutex");
+			_zpl_if_master_lst.ifdatamutex = os_mutex_name_create("if_data_mutex");
 			
 		(_zpl_if_master_lst.intfList)->cmp = (zpl_int (*)(void *, void *))if_cmp_func;
 	}
@@ -1614,12 +1614,12 @@ void if_terminate(void)
 	IF_MASTER_UNLOCK();
 	if(_zpl_if_master_lst.ifdatamutex)
 	{
-		os_mutex_exit(_zpl_if_master_lst.ifdatamutex);
+		os_mutex_destroy(_zpl_if_master_lst.ifdatamutex);
 		_zpl_if_master_lst.ifdatamutex = NULL;
 	}
 	if(_zpl_if_master_lst.ifMutex)
 	{
-		os_mutex_exit(_zpl_if_master_lst.ifMutex);
+		os_mutex_destroy(_zpl_if_master_lst.ifMutex);
 		_zpl_if_master_lst.ifMutex = NULL;
 	}
 }

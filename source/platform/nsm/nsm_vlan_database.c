@@ -208,7 +208,7 @@ int nsm_vlan_database_default(void)
 int nsm_vlan_database_init(void)
 {
 	gvlan.vlanList = malloc(sizeof(LIST));
-	gvlan.mutex = os_mutex_name_init("vlandb-mutex");
+	gvlan.mutex = os_mutex_name_create("vlandb-mutex");
 	lstInit(gvlan.vlanList);
 	return OK;
 }
@@ -293,7 +293,7 @@ int nsm_vlan_database_exit(void)
 		gvlan.vlanList = NULL;
 	}
 	if(gvlan.mutex)
-		os_mutex_exit(gvlan.mutex);
+		os_mutex_destroy(gvlan.mutex);
 	return OK;
 }
 

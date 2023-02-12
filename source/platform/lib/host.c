@@ -173,8 +173,8 @@ int host_config_init(void)
 	_global_host.vty_config = 0;
 	/* Login password check. */
 	_global_host.no_password_check = 0;
-	_global_host.mutex = os_mutex_name_init("hostmutex");
-	_global_host.bspinit_sem = os_sem_name_init("hostsem");
+	_global_host.mutex = os_mutex_name_create("hostmutex");
+	_global_host.bspinit_sem = os_sem_name_create("hostsem");
 	if(_global_host.userlist == NULL)
 		_global_host.userlist = list_new ();	
 
@@ -252,12 +252,12 @@ int host_config_exit(void)
 
 	if (_global_host.mutex)
 	{
-		os_mutex_exit(_global_host.mutex);
+		os_mutex_destroy(_global_host.mutex);
 		_global_host.mutex = NULL;
 	}
 	if (_global_host.bspinit_sem)
 	{
-		os_sem_exit(_global_host.bspinit_sem);
+		os_sem_destroy(_global_host.bspinit_sem);
 		_global_host.bspinit_sem = NULL;
 	}
 	return OK;

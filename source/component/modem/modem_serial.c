@@ -43,7 +43,7 @@ int modem_serial_init(void)
 	gModemSerialmain.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModemSerialmain.list)
 	{
-		gModemSerialmain.mutex = os_mutex_name_init("gModemSerialmain.mutex");
+		gModemSerialmain.mutex = os_mutex_name_create("gModemSerialmain.mutex");
 		lstInit(gModemSerialmain.list);
 		return OK;
 	}
@@ -62,7 +62,7 @@ int modem_serial_exit(void)
 		XFREE(MTYPE_MODEM, gModemSerialmain.list);
 	}
 	if(gModemSerialmain.mutex)
-		os_mutex_exit(gModemSerialmain.mutex);
+		os_mutex_destroy(gModemSerialmain.mutex);
 	return OK;
 }
 

@@ -162,7 +162,7 @@ thread_master_create()
 	if (os_mt_init == 0)
 	{
 		memset(&_master_thread_list, 0, sizeof(_master_thread_list));
-		_master_mutex = os_mutex_name_init("thremmutex");
+		_master_mutex = os_mutex_name_create("thremmutex");
 		os_mt_init = 1;
 	}
 	// getrlimit(RLIMIT_NOFILE, &limit);
@@ -195,7 +195,7 @@ thread_master_create()
 	rv->background = pqueue_create();
 	rv->timer->cmp = rv->background->cmp = thread_timer_cmp;
 	rv->timer->update = rv->background->update = thread_timer_update;
-	rv->mutex = os_mutex_name_init("threadmutex");
+	rv->mutex = os_mutex_name_create("threadmutex");
 
 	thread_master_add_list(rv);
 
@@ -313,7 +313,7 @@ void thread_master_free(struct thread_master *m)
 	thread_queue_free(m, m->background);
 	thread_master_del_list(m);
 	if (m->mutex)
-		os_mutex_exit(m->mutex);
+		os_mutex_destroy(m->mutex);
 
 
 

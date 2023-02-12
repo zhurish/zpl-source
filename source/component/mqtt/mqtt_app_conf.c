@@ -31,7 +31,7 @@ void mqtt_config_default_init(struct mqtt_app_config *cfg, mqtt_mode_t pub_or_su
 	zassert(cfg != NULL);
 	memset(cfg, 0, sizeof(struct mqtt_app_config));
 
-	cfg->mutex = os_mutex_name_init("mqtt->mutex");
+	cfg->mutex = os_mutex_name_create("mqtt->mutex");
 
 	cfg->mqtt_mode = pub_or_sub;
 
@@ -108,7 +108,7 @@ void mqtt_config_default_cleanup(struct mqtt_app_config *cfg)
 	zpl_uint32 i;
 	zassert(cfg != NULL);
 	if(cfg->mutex)
-		os_mutex_exit(cfg->mutex);
+		os_mutex_destroy(cfg->mutex);
 	if (cfg->id)
 		XFREE(MTYPE_MQTT_CONF,cfg->id);
 	if (cfg->id_prefix)

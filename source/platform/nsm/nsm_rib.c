@@ -3549,7 +3549,7 @@ static void nsm_vrf_table_create(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi)
 	assert(!zvrf->table[afi][safi]);
 
 	table = route_table_init();
-	table->mutex = os_mutex_name_init(os_name_format("%s-mutex",zvrf->name));
+	table->mutex = os_mutex_name_create(os_name_format("%s-mutex",zvrf->name));
 	zvrf->table[afi][safi] = table;
 
 	info = XCALLOC(MTYPE_RIB_TABLE_INFO, sizeof(rib_table_info_t));
@@ -3573,7 +3573,7 @@ static void nsm_vrf_table_destroy(struct nsm_ipvrf *zvrf, afi_t afi, safi_t safi
 		}
 		if(table->mutex)
 		{
-			os_mutex_exit(table->mutex);
+			os_mutex_destroy(table->mutex);
 			table->mutex = NULL;
 		}
 		route_table_finish(table);
@@ -3595,22 +3595,22 @@ static struct nsm_ipvrf * nsm_vrf_alloc(const char *name, vrf_id_t vrf_id)
 		nsm_vrf_table_create(zvrf, AFI_IP6, SAFI_UNICAST);
 
 		zvrf->stable[AFI_IP][SAFI_UNICAST] = route_table_init();
-		zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex = os_mutex_name_init(os_name_format("%s-un-mutex",zvrf->name));
+		zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex = os_mutex_name_create(os_name_format("%s-un-mutex",zvrf->name));
 		zvrf->stable[AFI_IP6][SAFI_UNICAST] = route_table_init();
-		zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex = os_mutex_name_init(os_name_format("%s-unv6-mutex",zvrf->name));
+		zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex = os_mutex_name_create(os_name_format("%s-unv6-mutex",zvrf->name));
 
 		nsm_vrf_table_create(zvrf, AFI_IP, SAFI_MULTICAST);
 		nsm_vrf_table_create(zvrf, AFI_IP6, SAFI_MULTICAST);
 
 		zvrf->stable[AFI_IP][SAFI_MULTICAST] = route_table_init();
-		zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex = os_mutex_name_init(os_name_format("%s-mu-mutex",zvrf->name));
+		zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex = os_mutex_name_create(os_name_format("%s-mu-mutex",zvrf->name));
 		zvrf->stable[AFI_IP6][SAFI_MULTICAST] = route_table_init();
-		zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex = os_mutex_name_init(os_name_format("%s-umuv6-mutex",zvrf->name));
+		zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex = os_mutex_name_create(os_name_format("%s-umuv6-mutex",zvrf->name));
 
 		zvrf->rnh_table[AFI_IP] = route_table_init();
-		zvrf->rnh_table[AFI_IP]->mutex = os_mutex_name_init(os_name_format("%s-rnh-mutex",zvrf->name));
+		zvrf->rnh_table[AFI_IP]->mutex = os_mutex_name_create(os_name_format("%s-rnh-mutex",zvrf->name));
 		zvrf->rnh_table[AFI_IP6] = route_table_init();
-		zvrf->rnh_table[AFI_IP6]->mutex = os_mutex_name_init(os_name_format("%s-rnhv6-mutex",zvrf->name));
+		zvrf->rnh_table[AFI_IP6]->mutex = os_mutex_name_create(os_name_format("%s-rnhv6-mutex",zvrf->name));
 
 		/* Set VRF ID */
 		zvrf->vrf_id = vrf_id;
@@ -3632,7 +3632,7 @@ static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
 			rib_close_table(zvrf->table[AFI_IP][SAFI_UNICAST]);
 			if(zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex)
 			{
-				os_mutex_exit(zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex);
+				os_mutex_destroy(zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex);
 				zvrf->stable[AFI_IP][SAFI_UNICAST]->mutex = NULL;
 			}
 			route_table_finish(zvrf->stable[AFI_IP][SAFI_UNICAST]);
@@ -3642,7 +3642,7 @@ static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
 			rib_close_table(zvrf->table[AFI_IP6][SAFI_UNICAST]);
 			if(zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex)
 			{
-				os_mutex_exit(zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex);
+				os_mutex_destroy(zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex);
 				zvrf->stable[AFI_IP6][SAFI_UNICAST]->mutex = NULL;
 			}
 			route_table_finish(zvrf->stable[AFI_IP6][SAFI_UNICAST]);
@@ -3656,7 +3656,7 @@ static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
 			rib_close_table(zvrf->table[AFI_IP][SAFI_MULTICAST]);
 			if(zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex)
 			{
-				os_mutex_exit(zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex);
+				os_mutex_destroy(zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex);
 				zvrf->stable[AFI_IP][SAFI_MULTICAST]->mutex = NULL;
 			}
 			route_table_finish(zvrf->stable[AFI_IP][SAFI_MULTICAST]);
@@ -3666,7 +3666,7 @@ static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
 			rib_close_table(zvrf->table[AFI_IP6][SAFI_MULTICAST]);
 			if(zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex)
 			{
-				os_mutex_exit(zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex);
+				os_mutex_destroy(zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex);
 				zvrf->stable[AFI_IP6][SAFI_MULTICAST]->mutex = NULL;
 			}
 			route_table_finish(zvrf->stable[AFI_IP6][SAFI_MULTICAST]);
@@ -3677,7 +3677,7 @@ static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
 			rib_close_table(zvrf->rnh_table[AFI_IP]);
 			if(zvrf->rnh_table[AFI_IP]->mutex)
 			{
-				os_mutex_exit(zvrf->rnh_table[AFI_IP]->mutex);
+				os_mutex_destroy(zvrf->rnh_table[AFI_IP]->mutex);
 				zvrf->rnh_table[AFI_IP]->mutex = NULL;
 			}
 			route_table_finish(zvrf->rnh_table[AFI_IP]);
@@ -3687,7 +3687,7 @@ static int nsm_vrf_free(struct nsm_ipvrf * zvrf)
 			rib_close_table(zvrf->rnh_table[AFI_IP6]);
 			if(zvrf->rnh_table[AFI_IP6]->mutex)
 			{
-				os_mutex_exit(zvrf->rnh_table[AFI_IP6]->mutex);
+				os_mutex_destroy(zvrf->rnh_table[AFI_IP6]->mutex);
 				zvrf->rnh_table[AFI_IP6]->mutex = NULL;
 			}
 			route_table_finish(zvrf->rnh_table[AFI_IP6]);

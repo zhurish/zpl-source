@@ -45,7 +45,7 @@ int modem_pppd_init(void)
 	gModepppd.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModepppd.list)
 	{
-		gModepppd.mutex = os_mutex_name_init("gModepppd.mutex");
+		gModepppd.mutex = os_mutex_name_create("gModepppd.mutex");
 		lstInit(gModepppd.list);
 		return OK;
 	}
@@ -64,7 +64,7 @@ int modem_pppd_exit(void)
 		XFREE(MTYPE_MODEM, gModepppd.list);
 	}
 	if(gModepppd.mutex)
-		os_mutex_exit(gModepppd.mutex);
+		os_mutex_destroy(gModepppd.mutex);
 	return OK;
 }
 

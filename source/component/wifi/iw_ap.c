@@ -1453,7 +1453,7 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	os_memset(iw_ap, 0, sizeof(iw_ap_t));
 
 	iw_ap->ap_list = malloc(sizeof(LIST));
-	iw_ap->ap_mutex = os_mutex_name_init("ap-mutex");
+	iw_ap->ap_mutex = os_mutex_name_create("ap-mutex");
 	lstInit(iw_ap->ap_list);
 
 	iw_ap->mac_list = malloc(sizeof(LIST));
@@ -1461,7 +1461,7 @@ int iw_ap_init(iw_ap_t *iw_ap, ifindex_t ifindex)
 	iw_ap->dmac_list = malloc(sizeof(LIST));
 	lstInit(iw_ap->dmac_list);
 
-	iw_ap->mutex = os_mutex_name_init("iw-mutex");
+	iw_ap->mutex = os_mutex_name_create("iw-mutex");
 
 	iw_ap_default_init(iw_ap, ifindex);
 	iw_ap_task_start(iw_ap);
@@ -1497,7 +1497,7 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 		//iw_ap->ap_list = NULL;
 	}
 	if(iw_ap->ap_mutex)
-		os_mutex_exit(iw_ap->ap_mutex);
+		os_mutex_destroy(iw_ap->ap_mutex);
 	iw_ap->ap_mutex = NULL;
 
 	if(iw_ap->ap_list)
@@ -1513,7 +1513,7 @@ int iw_ap_exit(iw_ap_t *iw_ap)
 	iw_ap->dmac_list = NULL;
 
 	if(iw_ap->mutex)
-		os_mutex_exit(iw_ap->mutex);
+		os_mutex_destroy(iw_ap->mutex);
 	iw_ap->mutex = NULL;
 
 #ifdef ZPL_BUILD_OS_OPENWRT

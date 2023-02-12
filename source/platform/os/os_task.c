@@ -91,7 +91,7 @@ int os_task_init(void)
 #endif
 	if (task_mutex == NULL)
 	{
-		task_mutex = os_mutex_name_init("taskmutex");
+		task_mutex = os_mutex_name_create("taskmutex");
 	}
 	if (os_task_list == NULL)
 	{
@@ -106,7 +106,7 @@ int os_task_init(void)
 			lstInit(os_task_list);
 			return OK;
 		}
-		os_mutex_exit(task_mutex);
+		os_mutex_destroy(task_mutex);
 		return ERROR;
 	}
 	return OK;
@@ -118,7 +118,7 @@ int os_task_exit(void)
 	if (task_mutex)
 	{
 		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		os_mutex_exit(task_mutex);
+		os_mutex_destroy(task_mutex);
 		if (os_task_list)
 			lstFree(os_task_list);
 		return OK;

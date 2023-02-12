@@ -226,7 +226,7 @@ int nsm_security_interface_create_api(struct interface *ifp)
 			security = XMALLOC(MTYPE_SECURITY, sizeof(nsm_security_t));
 			os_memset(security, 0, sizeof(nsm_security_t));
 			if (security->mutex == NULL)
-				security->mutex = os_mutex_name_init("if_security_mutex");
+				security->mutex = os_mutex_name_create("if_security_mutex");
 			nsm_intf_module_data_set(ifp, NSM_INTF_SEC, security);
 		}
 	}
@@ -242,7 +242,7 @@ int nsm_security_interface_del_api(struct interface *ifp)
 	{
 		if(security->mutex)
 		{
-			os_mutex_exit(security->mutex);
+			os_mutex_destroy(security->mutex);
 			security->mutex = NULL;
 		}
 		XFREE(MTYPE_SECURITY, security);

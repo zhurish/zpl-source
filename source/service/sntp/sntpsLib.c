@@ -143,7 +143,7 @@ static STATUS sntps_init
 		sntp_server = (struct sntp_server *)malloc(sizeof(struct sntp_server));
 	os_memset(sntp_server, 0, sizeof(struct sntp_server));
 	sntp_server->master = m;
-	sntp_server->mutex = os_mutex_name_init("sntps");
+	sntp_server->mutex = os_mutex_name_create("sntps");
 //	sntp_server->version =
 	return (OK);
 }

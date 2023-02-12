@@ -36,7 +36,7 @@ int os_job_init(void)
 		if(job_list)
 		{
 			lstInit(job_list);
-			job_sem = os_sem_name_init("job_sem");
+			job_sem = os_sem_name_create("job_sem");
 		}
 		job_unused_list = os_malloc(sizeof(LIST));
 		if(job_unused_list)
@@ -48,7 +48,7 @@ int os_job_init(void)
 	}
 	if(job_mutex == NULL)
 	{
-		job_mutex = os_mutex_name_init("jobmutex");
+		job_mutex = os_mutex_name_create("jobmutex");
 	}
 	job_task_id = os_task_create("jobTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, os_job_task, NULL, OS_TASK_DEFAULT_STACK);
@@ -68,12 +68,12 @@ int os_job_exit(void)
 	}
 	if(job_mutex)
 	{
-		if(os_mutex_exit(job_mutex)==OK)
+		if(os_mutex_destroy(job_mutex)==OK)
 			job_mutex = NULL;
 	}
 	if(job_sem)
 	{
-		if(os_sem_exit(job_sem)==OK)
+		if(os_sem_destroy(job_sem)==OK)
 			job_sem = NULL;
 	}
 	if(job_list)

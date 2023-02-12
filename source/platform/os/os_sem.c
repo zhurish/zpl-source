@@ -286,12 +286,12 @@ static int os_mutex_sem_unlock(os_mutex_t * mutex)
 
 
 
-os_mutex_t * os_mutex_init(zpl_uint32 key)
+os_mutex_t * os_mutex_create(zpl_uint32 key)
 {
 	return os_mutex_sem_init(key, OS_MUTEX_TYPE);
 }
 
-int os_mutex_exit(os_mutex_t * mutex)
+int os_mutex_destroy(os_mutex_t * mutex)
 {
 	return os_mutex_sem_exit(mutex);
 }
@@ -313,12 +313,12 @@ int os_mutex_unlock(os_mutex_t *mutex)
 }
 
 
-os_sem_t * os_sem_init(zpl_uint32 key)
+os_sem_t * os_sem_create(zpl_uint32 key)
 {
 	return os_mutex_sem_init(key, OS_SEM_TYPE);
 }
 
-int os_sem_exit(os_sem_t * sem)
+int os_sem_destroy(os_sem_t * sem)
 {
 	return os_mutex_sem_exit(sem);
 }
@@ -360,7 +360,36 @@ static char *os_semmutex_name(char *hdr)
 	return nametmp;
 }
 
-os_sem_t * os_sem_name_init(const char *name)
+int os_sem_name_init(os_sem_t *ossem, const char *name)
+{
+	if(ossem)
+	{
+		os_memset(ossem, 0, sizeof(os_sem_t));
+		if(sem_init(&ossem->sem, 0, 0) == 0)
+		{
+			if(name)
+				ossem->name = strdup(name);
+			ZPL_SET_BIT(ossem->flags, OS_SEM_FLAG_INIT);
+			#ifdef OS_LOCK_ERR_CHECK
+			task_mutex_graph_add(0, ossem);	
+			#endif	
+			return OK;
+		}
+		else
+		{
+			return ERROR;
+		}
+	}
+	return ERROR;
+}
+
+int os_sem_init(os_sem_t *ossem)
+{
+	return os_sem_name_init(ossem, os_semmutex_name("sem"));
+}
+
+
+os_sem_t * os_sem_name_create(const char *name)
 {
 	os_sem_t *ossem = os_malloc(sizeof(os_sem_t));
 	if(ossem)
@@ -370,6 +399,7 @@ os_sem_t * os_sem_name_init(const char *name)
 		{
 			if(name)
 				ossem->name = strdup(name);
+			ZPL_SET_BIT(ossem->flags, OS_SEM_FLAG_CREATE);
 			#ifdef OS_LOCK_ERR_CHECK
 			task_mutex_graph_add(0, ossem);	
 			#endif	
@@ -384,9 +414,9 @@ os_sem_t * os_sem_name_init(const char *name)
 	return NULL;
 }
 
-os_sem_t * os_sem_init(void)
+os_sem_t * os_sem_create(void)
 {
-	os_sem_t * nsem = os_sem_name_init(os_semmutex_name("sem"));
+	os_sem_t * nsem = os_sem_name_create(os_semmutex_name("sem"));
 	return nsem;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
@@ -398,6 +428,8 @@ int os_sem_give(os_sem_t *ossem)
 	int ret = 0;
 	if(ossem)
 	{
+		if(!ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;
 		#ifdef OS_LOCK_DETAIL_DEBUG
 		os_log_info("sem '%s' give on %s[%d]", ossem->name, func, line);
 		#endif
@@ -421,6 +453,8 @@ int os_sem_take(os_sem_t *ossem, zpl_int32 wait_ms)
 {
 	int ret = 0;
 	if(ossem == NULL)
+		return ERROR;
+	if(!ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_CREATE))
 		return ERROR;
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("sem '%s' take on %s[%d]", ossem->name, func, line);
@@ -469,10 +503,12 @@ int os_sem_take(os_sem_t *ossem, zpl_int32 wait_ms)
 	return ERROR;
 }
 
-int os_sem_exit(os_sem_t *ossem)
+int os_sem_destroy(os_sem_t *ossem)
 {
 	if(ossem)
 	{
+		if(!ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;
 		#ifdef OS_LOCK_ERR_CHECK
 		task_mutex_graph_del(0, ossem);	
 		#endif
@@ -482,15 +518,53 @@ int os_sem_exit(os_sem_t *ossem)
 			os_free(ossem->name);
 			ossem->name = NULL;
 		}
-		os_free(ossem);
-		ossem = NULL;
+		if(ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_CREATE))
+		{
+			os_free(ossem);
+			ossem = NULL;
+		}
 		return OK;
 	}	
 	return ERROR;
 }
 
+int os_mutex_name_init(os_mutex_t *osmutex, const char *name)
+{
+	if(osmutex)
+	{
+		pthread_mutexattr_t _mutexattr;
+		os_memset(osmutex, 0, sizeof(os_mutex_t));
+		pthread_mutexattr_init(&_mutexattr);
+		pthread_mutexattr_setpshared(&_mutexattr, PTHREAD_PROCESS_PRIVATE);
+		//PTHREAD_MUTEX_NORMAL 不检测死锁
+		//PTHREAD_MUTEX_RECURSIVE 嵌套锁
+		pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_ERRORCHECK);
+		if(pthread_mutex_init(&osmutex->mutex, &_mutexattr) == 0)
+		{
+			pthread_mutexattr_destroy(&_mutexattr);
+			if(name)
+				osmutex->name = strdup(name);
+			ZPL_SET_BIT(osmutex->flags, OS_SEM_FLAG_INIT);	
+			#ifdef OS_LOCK_ERR_CHECK
+			task_mutex_graph_add(1, osmutex);	
+			#endif			
+			return OK;
+		}
+		else
+		{
+			pthread_mutexattr_destroy(&_mutexattr);
+			return ERROR;
+		}
+	}
+	return ERROR;
+}
 
-os_mutex_t * os_mutex_name_init(const char *name)
+int os_mutex_init(os_mutex_t *osmutex)
+{
+	return os_mutex_name_init(osmutex, os_semmutex_name("mutex"));
+}
+
+os_mutex_t * os_mutex_name_create(const char *name)
 {
 	os_mutex_t *osmutex = os_malloc(sizeof(os_mutex_t));
 	if(osmutex)
@@ -507,6 +581,7 @@ os_mutex_t * os_mutex_name_init(const char *name)
 			pthread_mutexattr_destroy(&_mutexattr);
 			if(name)
 				osmutex->name = strdup(name);
+			ZPL_SET_BIT(osmutex->flags, OS_SEM_FLAG_CREATE);
 			#ifdef OS_LOCK_ERR_CHECK
 			task_mutex_graph_add(1, osmutex);	
 			#endif			
@@ -522,10 +597,9 @@ os_mutex_t * os_mutex_name_init(const char *name)
 	return NULL;
 }
 
-
-os_mutex_t * os_mutex_init(void)
+os_mutex_t * os_mutex_create(void)
 {
-	os_mutex_t * osmutex = os_mutex_name_init(os_semmutex_name("mutex"));
+	os_mutex_t * osmutex = os_mutex_name_create(os_semmutex_name("mutex"));
 	return osmutex;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
@@ -537,6 +611,8 @@ int os_mutex_unlock(os_mutex_t *osmutex)
 	int ret = 0;
 	if(osmutex)
 	{
+		if(!ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("mutex '%s' unlock on %s[%d]", osmutex->name, func, line);
 	#endif			
@@ -568,6 +644,8 @@ int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait_ms)
 	int ret = 0;
 	if(osmutex == NULL)
 		return ERROR;
+	if(!ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_CREATE))
+		return ERROR;	
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("mutex '%s' lock on %s[%d]", osmutex->name, func, line);
 	#endif			
@@ -628,10 +706,12 @@ int os_mutex_lock(os_mutex_t *osmutex, zpl_int32 wait_ms)
 	return ERROR;
 }
 
-int os_mutex_exit(os_mutex_t *osmutex)
+int os_mutex_destroy(os_mutex_t *osmutex)
 {
 	if(osmutex)
 	{
+		if(!ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;
 		pthread_mutex_destroy(&osmutex->mutex);
 		#ifdef OS_LOCK_ERR_CHECK
 		task_mutex_graph_del(1, osmutex);
@@ -641,15 +721,43 @@ int os_mutex_exit(os_mutex_t *osmutex)
 			os_free(osmutex->name);
 			osmutex->name = NULL;
 		}
-		os_free(osmutex);
-		osmutex = NULL;
+		if(ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_CREATE))
+		{
+			os_free(osmutex);
+			osmutex = NULL;
+		}
 		return OK;
 	}
 	return ERROR;
 }
 
 
-os_cond_t * os_cond_name_init(const char *name)
+int os_cond_name_init(os_cond_t *oscond, const char *name)
+{
+	if(oscond)
+	{
+		os_memset(oscond, 0, sizeof(os_cond_t));
+		if(pthread_cond_init(&oscond->cond_wait, NULL) == 0)
+		{
+			pthread_mutex_init(&oscond->mutex, NULL);
+			if(name)
+				oscond->name = strdup(name);
+			ZPL_SET_BIT(oscond->flags, OS_SEM_FLAG_INIT);
+			return OK;
+		}
+		else
+		{
+			return ERROR;
+		}
+	}
+	return ERROR;
+}
+
+int os_cond_init(os_cond_t *oscond)
+{
+	return os_cond_name_init(oscond, os_semmutex_name("cond"));
+}
+os_cond_t * os_cond_name_create(const char *name)
 {
 	os_cond_t *oscond = os_malloc(sizeof(os_cond_t));
 	if(oscond)
@@ -660,6 +768,7 @@ os_cond_t * os_cond_name_init(const char *name)
 			pthread_mutex_init(&oscond->mutex, NULL);
 			if(name)
 				oscond->name = strdup(name);
+			ZPL_SET_BIT(oscond->flags, OS_SEM_FLAG_CREATE);
 			return oscond;
 		}
 		else
@@ -671,9 +780,9 @@ os_cond_t * os_cond_name_init(const char *name)
 	return NULL;
 }
 
-os_cond_t * os_cond_init(void)
+os_cond_t * os_cond_create(void)
 {
-	os_cond_t * oscond = os_cond_name_init(os_semmutex_name("cond"));
+	os_cond_t * oscond = os_cond_name_create(os_semmutex_name("cond"));
 	return oscond;
 }
 
@@ -681,6 +790,8 @@ int os_cond_unlock(os_cond_t *oscond)
 {
 	if(oscond == NULL)
 		return ERROR;
+	if(!ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+		return ERROR;	
 	return pthread_mutex_unlock(&oscond->mutex);
 }
 
@@ -688,6 +799,8 @@ int os_cond_lock(os_cond_t *oscond)
 {
 	if(oscond == NULL)
 		return ERROR;
+	if(!ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+		return ERROR;	
 	return pthread_mutex_lock(&oscond->mutex);
 }
 
@@ -699,6 +812,8 @@ int os_cond_signal(os_cond_t *oscond)
 {
 	if(oscond)
 	{
+		if(!ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;	
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("mutex '%s' unlock on %s[%d]", oscond->name, func, line);
 	#endif			
@@ -720,6 +835,8 @@ int os_cond_broadcast(os_cond_t *oscond)
 {
 	if(oscond)
 	{
+		if(!ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;	
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("mutex '%s' unlock on %s[%d]", oscond->name, func, line);
 	#endif			
@@ -741,6 +858,8 @@ int os_cond_wait(os_cond_t *oscond, zpl_int32 wait_ms)
 {
 	if(oscond == NULL)
 		return ERROR;
+	if(!ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+		return ERROR;	
 	//pthread_mutex_lock(&oscond->mutex);	
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("mutex '%s' lock on %s[%d]", oscond->name, func, line);
@@ -776,10 +895,12 @@ int os_cond_wait(os_cond_t *oscond, zpl_int32 wait_ms)
 	return ERROR;
 }
 
-int os_cond_exit(os_cond_t *oscond)
+int os_cond_destroy(os_cond_t *oscond)
 {
 	if(oscond)
 	{
+		if(!ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;
 		pthread_cond_destroy(&oscond->cond_wait);
 		pthread_mutex_destroy(&oscond->mutex);
 		if(oscond->name)
@@ -787,14 +908,43 @@ int os_cond_exit(os_cond_t *oscond)
 			os_free(oscond->name);
 			oscond->name = NULL;
 		}
-		os_free(oscond);
-		oscond = NULL;
+		if(ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
+		{
+			os_free(oscond);
+			oscond = NULL;
+		}
 		return OK;
 	}
 	return ERROR;
 }
 
-os_spin_t * os_spin_name_init(const char *name)
+
+int os_spin_name_init(os_spin_t *spin, const char *name)
+{
+	if(spin)
+	{
+		os_memset(spin, 0, sizeof(os_spin_t));
+		if(pthread_spin_init(&spin->spinlock, 0) == 0)
+		{
+			if(name)
+				spin->name = strdup(name);	
+			ZPL_SET_BIT(spin->flags, OS_SEM_FLAG_INIT);	
+			return OK;
+		}
+		else
+		{
+			return ERROR;
+		}
+	}
+	return ERROR;
+}
+
+int os_spin_init(os_spin_t *spin)
+{
+	return os_spin_name_init(spin, os_semmutex_name("spin"));
+}
+
+os_spin_t * os_spin_name_create(const char *name)
 {
 	os_spin_t *spin = os_malloc(sizeof(os_spin_t));
 	if(spin)
@@ -807,6 +957,7 @@ os_spin_t * os_spin_name_init(const char *name)
 			#ifdef OS_LOCK_ERR_CHECK
 			task_mutex_graph_add(2, spin);	
 			#endif
+			ZPL_SET_BIT(spin->flags, OS_SEM_FLAG_CREATE);
 			return spin;
 		}
 		else
@@ -818,9 +969,9 @@ os_spin_t * os_spin_name_init(const char *name)
 	return NULL;
 }
 
-os_spin_t * os_spin_init(void)
+os_spin_t * os_spin_create(void)
 {
-	os_spin_t * spin = os_spin_name_init(os_semmutex_name("spin"));
+	os_spin_t * spin = os_spin_name_create(os_semmutex_name("spin"));
 	return spin;
 }
 #ifdef OS_LOCK_DETAIL_DEBUG
@@ -831,6 +982,8 @@ int os_spin_unlock(os_spin_t *spin)
 {
 	if(spin)
 	{
+		if(!ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;	
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("spin '%s' unlock on %s[%d]", spin->name, func, line);
 	#endif			
@@ -853,6 +1006,8 @@ int os_spin_lock(os_spin_t *spin)
 {
 	if(spin == NULL)
 		return ERROR;
+	if(!ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_CREATE))
+		return ERROR;	
 	#ifdef OS_LOCK_DETAIL_DEBUG
 	os_log_info("spin '%s' lock on %s[%d]", spin->name, func, line);
 	#endif			
@@ -866,10 +1021,12 @@ int os_spin_lock(os_spin_t *spin)
 	return pthread_spin_lock(&spin->spinlock);
 }
 
-int os_spin_exit(os_spin_t *spin)
+int os_spin_destroy(os_spin_t *spin)
 {
 	if(spin)
 	{
+		if(!ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_INIT) && !ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_CREATE))
+			return ERROR;
 		#ifdef OS_LOCK_ERR_CHECK
 		task_mutex_graph_del(2, spin);	
 		#endif
@@ -879,8 +1036,11 @@ int os_spin_exit(os_spin_t *spin)
 			os_free(spin->name);
 			spin->name = NULL;
 		}
-		os_free(spin);
-		spin = NULL;
+		if(ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_CREATE))
+		{
+			os_free(spin);
+			spin = NULL;
+		}
 		return OK;
 	}
 	return ERROR;

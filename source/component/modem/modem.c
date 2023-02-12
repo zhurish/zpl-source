@@ -42,7 +42,7 @@ static int modem_main_list_init(void)
 	gModemmain.list = XMALLOC(MTYPE_MODEM, sizeof(LIST));
 	if(gModemmain.list)
 	{
-		gModemmain.mutex = os_mutex_name_init("gModemmain.mutex");
+		gModemmain.mutex = os_mutex_name_create("gModemmain.mutex");
 		lstInit(gModemmain.list);
 		return OK;
 	}
@@ -62,7 +62,7 @@ static int modem_main_list_exit(void)
 		XFREE(MTYPE_MODEM, gModemmain.list);
 	}
 	if(gModemmain.mutex)
-		os_mutex_exit(gModemmain.mutex);
+		os_mutex_destroy(gModemmain.mutex);
 	return OK;
 }
 
@@ -106,7 +106,7 @@ static int modem_main_default_node(modem_t *modem)
 	modem->dedelay = MODEM_DECHK_TIME;
 	modem->detime_base = os_time (NULL);
 	modem->detime_axis = modem->detime_base;
-	modem->mutex = os_mutex_name_init("modem->mutex");
+	modem->mutex = os_mutex_name_create("modem->mutex");
 	return OK;
 }
 
@@ -138,7 +138,7 @@ static int modem_main_del_node(modem_t *node)
 	if(node)
 	{
 		if(node->mutex)
-			os_mutex_exit(node->mutex);
+			os_mutex_destroy(node->mutex);
 		lstDelete(gModemmain.list, (NODE*)node);
 		modem_mgtlayer_remove(node);
 		//modem_dhcpc_exit(node);
