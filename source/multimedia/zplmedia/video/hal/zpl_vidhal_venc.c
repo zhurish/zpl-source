@@ -1455,6 +1455,10 @@ int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
         }       
 #else/* ZPL_VENC_READ_DEBUG */
 
+        //zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_VIDEO, ZPL_MEDIA_FRAME_DATA_ENCODE, 
+	    //    zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType), 
+        //    stStream.pstPack->u64PTS / 1000U, pbuf, packsize);
+
         bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->frame_queue, packsize);
         offset = 0;
 		if(bufdata != NULL

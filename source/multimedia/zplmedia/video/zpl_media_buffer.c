@@ -174,6 +174,22 @@ int zpl_media_buffer_header_frame_type(zpl_skbuffer_t * bufdata, ZPL_VIDEO_FRAME
 	return OK;
 }
 
+int zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_E type, ZPL_MEDIA_FRAME_DATA_E buffertype, 
+	ZPL_VIDEO_FRAME_TYPE_E key, int hwtimetick, char *framedata, int datalen)
+{
+    zpl_skbuffer_t * bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, zpl_media_getptr(mchannel)->frame_queue, datalen);
+    if(bufdata && bufdata->skb_data && bufdata->skb_maxsize >= datalen)
+    {
+        //zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+        zpl_media_buffer_header(mchannel, bufdata, type, hwtimetick, datalen);
+        zpl_media_buffer_header_framedatatype(bufdata, buffertype);
+        memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);
+		zpl_media_buffer_header_frame_type(bufdata, key);
+		return zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, bufdata);
+	}
+	return ERROR;
+}
+
 int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
 {
 	zpl_media_channel_t *media_channel = channel;

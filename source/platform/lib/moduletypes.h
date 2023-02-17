@@ -24,6 +24,7 @@ typedef enum {
   MODULE_SDK, 
   MODULE_RTSP,
   MODULE_ZPLMEDIA,
+  MODULE_MEDIA_PROXY,
 	MODULE_MAX,
 } module_t;
  
