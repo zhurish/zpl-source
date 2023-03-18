@@ -186,7 +186,7 @@ int linux_ioctl_firewall_port_filter_rule_set(firewall_t *rule, zpl_action actio
 				strcat(cmd, ifindex2ifname(rule->s_ifindex));
 			}
 
-			if(!str_isempty(rule->s_mac, sizeof(rule->s_mac)))
+			if(!strisempty(rule->s_mac, sizeof(rule->s_mac)))
 			{
 				strcat(cmd, " -m mac --mac-source ");
 				strcat(cmd, inet_ethernet(rule->s_mac));
@@ -206,7 +206,7 @@ int linux_ioctl_firewall_port_filter_rule_set(firewall_t *rule, zpl_action actio
 				strcat(cmd, ifindex2ifname(rule->d_ifindex));
 			}
 
-/*			if(!str_isempty(rule->d_mac, sizeof(rule->d_mac)))
+/*			if(!strisempty(rule->d_mac, sizeof(rule->d_mac)))
 			{
 				strcat(cmd, " -m mac --mac-source ");
 				strcat(cmd, inet_ethernet(rule->d_mac));

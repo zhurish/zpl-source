@@ -725,11 +725,11 @@ static int v9_video_filename_split(const char *filename, int *gender, int *group
 								   char *user, char *user_id, char *text)
 {
 	int ret = ERROR;
-	if(strchr_count(filename, '_') == 3)
+	if(strccnt(filename, '_') == 3)
 	{
 		ret = sscanf(filename, "%d_%[^_]_%[^_]_%d", group, user, user_id, gender);
 	}
-	else if(strchr_count(filename, '_') == 4)
+	else if(strccnt(filename, '_') == 4)
 	{
 		ret = sscanf(filename, "%d_%[^_]_%[^_]_%d_%[^.]", group, user, user_id, gender, text);
 	}

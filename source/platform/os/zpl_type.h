@@ -247,19 +247,45 @@ typedef struct sched_param zpl_sched_param_t;
 
 
 #define ZPL_ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
+#define array_size(ar) (sizeof(ar) / sizeof(ar[0]))
+
 
 #define ZPL_BIT(n)		        ((1)<<(n))
-#define ZPL_TST_BIT(v, n)		((v) & ((1)<<(n)))
-#define ZPL_SET_BIT(v, n)		((v) |= (1)<<(n))
-#define ZPL_CLR_BIT(v, n)		((v) &= ~((1)<<(n)))
+#define ZPL_TST_BIT(v, n)		((v) & (ZPL_BIT(n)))
+#define ZPL_SET_BIT(v, n)		((v) |= (ZPL_BIT(n)))
+#define ZPL_CLR_BIT(v, n)		((v) &= ~(ZPL_BIT(n)))
+#define ZPL_RST_BIT(v)		    ((v) = 0)
 
-#define ZPL_CHECK(v, n)		((v) & (n))
-#define ZPL_SET(v, n)		((v) |= (n))
-#define ZPL_UNSET(v, n)		((v) &= ~(n))
+#define ZPL_FLAG_CHECK(v, n)		((v) & (n))
+#define ZPL_FLAG_SET(v, n)		    ((v) |= (n))
+#define ZPL_FLAG_UNSET(v, n)		((v) &= ~(n))
+#define ZPL_FLAG_RESET(v, n)		((v) = 0)
+
+#define OS_WAIT_NO	0
+#define OS_WAIT_FOREVER	-1
 
 
-#define ZPL_SUB_MODULE_MAX  8
-#define ZPL_SUB_MODULE_ID(m,n)  ((m)*(ZPL_SUB_MODULE_MAX) + (n))
+/* Flag manipulation macros. */
+#define CHECK_FLAG(V,F)      ((V) & (F))
+#define SET_FLAG(V,F)        (V) |= (F)
+#define UNSET_FLAG(V,F)      (V) &= ~(F)
+#define RESET_FLAG(V)        (V) = 0
+
+#define FD_IS_STDOUT(f)	((f) < 3)
+
+#ifndef min
+#define min(a,b)	( (a) < (b)? (a):(b) )
+#endif
+#ifndef max
+#define max(a,b)	( (a) > (b)? (a):(b) )
+#endif
+#ifndef MIN
+#define MIN(a,b)	( (a) < (b)? (a):(b) )
+#endif
+#ifndef MAX
+#define MAX(a,b)	( (a) > (b)? (a):(b) )
+#endif
+
 
 #include "zpl_errno.h"
 #include "zpl_def.h"

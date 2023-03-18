@@ -518,6 +518,7 @@ int os_sem_destroy(os_sem_t *ossem)
 			os_free(ossem->name);
 			ossem->name = NULL;
 		}
+		ZPL_CLR_BIT(ossem->flags, OS_SEM_FLAG_INIT);
 		if(ZPL_TST_BIT(ossem->flags, OS_SEM_FLAG_CREATE))
 		{
 			os_free(ossem);
@@ -721,6 +722,7 @@ int os_mutex_destroy(os_mutex_t *osmutex)
 			os_free(osmutex->name);
 			osmutex->name = NULL;
 		}
+		ZPL_CLR_BIT(osmutex->flags, OS_SEM_FLAG_INIT);
 		if(ZPL_TST_BIT(osmutex->flags, OS_SEM_FLAG_CREATE))
 		{
 			os_free(osmutex);
@@ -908,6 +910,7 @@ int os_cond_destroy(os_cond_t *oscond)
 			os_free(oscond->name);
 			oscond->name = NULL;
 		}
+		ZPL_CLR_BIT(oscond->flags, OS_SEM_FLAG_INIT);
 		if(ZPL_TST_BIT(oscond->flags, OS_SEM_FLAG_CREATE))
 		{
 			os_free(oscond);
@@ -1036,6 +1039,7 @@ int os_spin_destroy(os_spin_t *spin)
 			os_free(spin->name);
 			spin->name = NULL;
 		}
+		ZPL_CLR_BIT(spin->flags, OS_SEM_FLAG_INIT);
 		if(ZPL_TST_BIT(spin->flags, OS_SEM_FLAG_CREATE))
 		{
 			os_free(spin);

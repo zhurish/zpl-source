@@ -266,7 +266,7 @@ static int web_video_snap_handle(Webs *wp, char *path, char *query)
 							v9_video_usergroup_idtoname(keywork->id, cap.group)?v9_video_usergroup_idtoname(keywork->id, cap.group):"Unknow",
 							cap.gender ? "男" : "女",
 							cap.age, stream?inet_address(stream->address):"0.0.0.0", cap.channel+1, cap.datetime,
-							!str_isempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ");
+							!strisempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ");
 							//strlen(cap.picname) ? v9_video_disk_urlpath(keywork->id, cap.picname):" "/*v9_video_disk_capdb_dir(keywork->id), cap.picname*/);
 
 					wp->iValue++;
@@ -597,7 +597,7 @@ static int web_video_snap_pichandle(Webs *wp, char *path, char *query)
 							v9_video_usergroup_idtoname(keywork->id, cap.group)?v9_video_usergroup_idtoname(keywork->id, cap.group):"Unknow",
 							cap.gender ? "男" : "女",
 							cap.age, stream?inet_address(stream->address):"0.0.0.0", cap.channel+1, cap.datetime,
-							!str_isempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ");
+							!strisempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ");
 							//strlen(cap.picname) ? v9_video_disk_urlpath(keywork->id, cap.picname):" "/*v9_video_disk_capdb_dir(keywork->id), cap.picname*/);
 
 					wp->iValue++;
@@ -850,7 +850,7 @@ static int web_video_warn_handle(Webs *wp, char *path, char *query)
 						websWrite (wp, "%s", ",");
 
 					memset(&user, 0, sizeof(v9_video_user_t));
-					if(!str_isempty(cap.userid, sizeof(cap.userid))/*strlen(cap.userid)*/)
+					if(!strisempty(cap.userid, sizeof(cap.userid))/*strlen(cap.userid)*/)
 					{
 						//printf("========%s===========(%s)\r\n", __func__, cap.userid);
 						v9_video_user_lookup_user_url(keywork->id, cap.userid, &user);
@@ -868,9 +868,9 @@ static int web_video_warn_handle(Webs *wp, char *path, char *query)
 							(int)cap.key.output_result,
 							stream?inet_address(stream->address):"0.0.0.0", cap.channel+1,
 							cap.datetime,
-							!str_isempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ",
-							!str_isempty(user.picname, sizeof(user.picname))? user.picname:" ",
-							!str_isempty(cap.videoname, sizeof(cap.videoname)) ? v9_video_disk_urlpath(keywork->id, cap.videoname):" ");
+							!strisempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ",
+							!strisempty(user.picname, sizeof(user.picname))? user.picname:" ",
+							!strisempty(cap.videoname, sizeof(cap.videoname)) ? v9_video_disk_urlpath(keywork->id, cap.videoname):" ");
 	/*						strlen(cap.picname) ? v9_video_disk_urlpath(keywork->id, cap.picname):" ",
 							strlen(user.picname)?user.picname:" ",
 							strlen(cap.videoname) ? v9_video_disk_urlpath(keywork->id, cap.videoname):" ");*/
@@ -1048,7 +1048,7 @@ static int web_video_real_warn_handle(Webs *wp, char *path, char *query)
 					websWrite (wp, "%s", ",");
 
 				memset(&user, 0, sizeof(v9_video_user_t));
-				if(!str_isempty(cap.userid, sizeof(cap.userid)))
+				if(!strisempty(cap.userid, sizeof(cap.userid)))
 				{
 					v9_video_user_lookup_user_url(local_keywork.id, cap.userid, &user);
 					v9_app_snapfea_key_free(&user.key);
@@ -1065,9 +1065,9 @@ static int web_video_real_warn_handle(Webs *wp, char *path, char *query)
 						(int)cap.key.output_result,
 						stream?inet_address(stream->address):"0.0.0.0", cap.channel+1,
 						cap.datetime,
-						!str_isempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(local_keywork.id, cap.picname):" ",
-						!str_isempty(user.picname, sizeof(user.picname)) ? user.picname:" ",
-						!str_isempty(cap.videoname, sizeof(cap.videoname)) ? v9_video_disk_urlpath(local_keywork.id, cap.picname):" ");
+						!strisempty(cap.picname, sizeof(cap.picname)) ? v9_video_disk_urlpath(local_keywork.id, cap.picname):" ",
+						!strisempty(user.picname, sizeof(user.picname)) ? user.picname:" ",
+						!strisempty(cap.videoname, sizeof(cap.videoname)) ? v9_video_disk_urlpath(local_keywork.id, cap.picname):" ");
 				/*strlen(cap.picname) ? v9_video_disk_urlpath(local_keywork.id, cap.picname):"",
 				strlen(user.picname)? user.picname:"",
 				strlen(cap.videoname) ? v9_video_disk_urlpath(local_keywork.id, cap.videoname):"");*/

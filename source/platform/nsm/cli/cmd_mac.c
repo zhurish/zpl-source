@@ -41,7 +41,8 @@ DEFUN (mac_address_table_ageing_time,
 		mac_address_table_ageing_time_cmd,
 		CMD_MAC_ADDRESS_STR " " CMD_AGEING_TIME_STR " <10-1000000>",
 		CMD_MAC_ADDRESS_STR_HELP
-		CMD_AGEING_TIME_STR_HELP)
+		CMD_AGEING_TIME_STR_HELP
+		"Ageing time value\n")
 {
 	int ret = ERROR;
 	int ageing;
@@ -56,6 +57,7 @@ DEFUN (mac_address_table_ageing_time,
 DEFUN (no_mac_address_table_ageing_time,
 		no_mac_address_table_ageing_time_cmd,
 		"no "CMD_MAC_ADDRESS_STR " " CMD_AGEING_TIME_STR,
+		NO_STR
 		CMD_MAC_ADDRESS_STR_HELP
 		CMD_AGEING_TIME_STR_HELP)
 {
@@ -121,6 +123,7 @@ DEFUN (no_mac_address_table,
 		no_mac_address_table_cmd,
 		"no "CMD_MAC_ADDRESS_STR " " CMD_MAC_STR " " CMD_FORWARD_STR " "
 			CMD_INTERFACE_STR " " CMD_IF_USPV_STR " " CMD_USP_STR " " CMD_VLAN_STR,
+		NO_STR	
 		CMD_MAC_ADDRESS_STR_HELP
 		CMD_MAC_STR_HELP
 		CMD_FORWARD_STR_HELP
@@ -164,6 +167,7 @@ ALIAS(no_mac_address_table,
 		no_mac_address_table_default_cmd,
 		"no "CMD_MAC_ADDRESS_STR " " CMD_MAC_STR " " CMD_FORWARD_STR " "
 			CMD_INTERFACE_STR " " CMD_IF_USPV_STR " " CMD_USP_STR,
+		NO_STR
 		CMD_MAC_ADDRESS_STR_HELP
 		CMD_MAC_STR_HELP
 		CMD_FORWARD_STR_HELP
@@ -206,6 +210,7 @@ DEFUN (mac_address_table_discard,
 DEFUN (no_mac_address_table_discard,
 		no_mac_address_table_discard_cmd,
 		"no "CMD_MAC_ADDRESS_STR " " CMD_MAC_STR " " CMD_DISCARD_STR,
+		NO_STR
 		CMD_MAC_ADDRESS_STR_HELP
 		CMD_MAC_STR_HELP
 		CMD_DISCARD_STR_HELP)
@@ -238,10 +243,10 @@ DEFUN (no_mac_address_table_discard,
 DEFUN (clear_mac_address_table,
 		clear_mac_address_table_cmd,
 		"clear "CMD_MAC_ADDRESS_STR " (static|dynamic) " CMD_VLAN_STR,
+		CLEAR_STR
 		CMD_MAC_ADDRESS_STR_HELP
 		"Static\n"
 		"Dynamic\n"
-		"Multicast\n"
 		CMD_VLAN_STR_HELP)
 {
 	int ret = ERROR;
@@ -282,6 +287,7 @@ DEFUN (clear_mac_address_table,
 ALIAS(clear_mac_address_table,
 		clear_mac_address_table_address_cmd,
 		"clear "CMD_MAC_ADDRESS_STR " (static|dynamic) address " CMD_MAC_STR,
+		CLEAR_STR
 		CMD_MAC_ADDRESS_STR_HELP
 		"Static\n"
 		"Dynamic\n"
@@ -293,10 +299,10 @@ ALIAS(clear_mac_address_table,
 DEFUN (clear_mac_address_table_interface,
 		clear_mac_address_table_interface_cmd,
 		"clear "CMD_MAC_ADDRESS_STR " (static|dynamic) " CMD_INTERFACE_STR " " CMD_IF_USPV_STR " " CMD_USP_STR ,
+		CLEAR_STR
 		CMD_MAC_ADDRESS_STR_HELP
 		"Static\n"
 		"Dynamic\n"
-		"Multicast\n"
 		CMD_INTERFACE_STR_HELP
 		CMD_IF_USPV_STR_HELP
 		CMD_USP_STR_HELP)
@@ -356,7 +362,9 @@ ALIAS(show_mac_address_table,
 		CMD_MAC_ADDRESS_STR_HELP
 		CMD_AGEING_TIME_STR_HELP
 		"MAC Count information\n"
-		"Filter MAC information\n");
+		"Filter MAC information\n"
+		"Static\n"
+		"Dynamic\n");
 
 
 static int nsm_mac_address_table_summary(l2mac_t *node, struct mac_user *user)

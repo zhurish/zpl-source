@@ -43,8 +43,7 @@ DEFUN(no_global_jumboframe_size,
 	  NO_STR
 	  "Gloabl System\n"
 	  "Jumboframe\n"
-	  "Jumboframe size\n"
-	  "Size Value\n")
+	  "Jumboframe size\n")
 {
 	int ret = ERROR;
 	zpl_uint32 value = 0;

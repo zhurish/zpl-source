@@ -17,7 +17,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/sudo-gdb",
+            "miDebuggerPath": "/usr/local/bin/sudo-gdb",
             "setupCommands": [
                 {
                     "description": "为 gdb 启用整齐打印",

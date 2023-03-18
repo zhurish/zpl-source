@@ -900,9 +900,11 @@ DEFUN(nsm_interface_speed,
 	  nsm_interface_speed_cmd,
 	  "speed (10|100|1000|10000|auto)",
 	  "Set Interface encapsulation informational parameter\n"
-	  "Set Interface auto duplex\n"
-	  "Set Interface full duplex\n"
-	  "Set Interface halt duplex\n")
+	  "Set Interface 10M duplex\n"
+	  "Set Interface 100M duplex\n"
+	  "Set Interface 1000M duplex\n"
+	  "Set Interface 10000M duplex\n"
+	  "Set Interface auto duplex\n")
 {
 	int ret = 0;
 	nsm_speed_en speed = 0;
@@ -1244,7 +1246,7 @@ DEFUN(no_nsm_interface_ip_address,
 	  NO_STR
 	  "Interface Internet Protocol config commands\n"
 	  "Set the IP address of an interface\n"
-	  "IP Address (e.g. 10.0.0.1/8)")
+	  "IP Address (e.g. 10.0.0.1/8)\n")
 {
 	int ret = 0;
 	if_mode_t mode = IF_MODE_NONE;
@@ -1395,6 +1397,7 @@ DEFUN_HIDDEN(nsm_interface_set_kernel,
 DEFUN_HIDDEN(no_nsm_interface_set_kernel,
 			 no_nsm_interface_set_kernel_cmd,
 			 "no set-kernel",
+			 NO_STR
 			 "Set the kernel of an interface\n")
 {
 	int ret = 0;

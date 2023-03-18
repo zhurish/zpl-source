@@ -594,7 +594,6 @@ DEFUN (config_password,
 		"password (8|) WORD",
 		"Assign the terminal connection password\n"
 		"Specifies a HIDDEN password will follow\n"
-		"dummy string \n"
 		"The HIDDEN line password string\n")
 {
 	/* Argument check. */
@@ -635,7 +634,6 @@ DEFUN (config_enable_password,
 		"Modify enable password parameters\n"
 		"Assign the privileged level password\n"
 		"Specifies a HIDDEN password will follow\n"
-		"dummy string \n"
 		"The HIDDEN 'enable' password string\n")
 {
 	/* Argument check. */

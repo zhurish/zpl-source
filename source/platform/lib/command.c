@@ -191,7 +191,7 @@ cmd_make_strvec(const char *string)
 /* Free allocated string vector. */
 void cmd_free_strvec(vector v)
 {
-  zpl_uint32 i;
+  zpl_int32 i;
   zpl_char *cp = NULL;
 
   if (!v)
@@ -204,7 +204,139 @@ void cmd_free_strvec(vector v)
   vector_free(v);
 }
 
-struct format_parser_state
+static char * cmd_skip_space(const char *string)
+{
+  const char *cp = string;
+  while (isspace((int)*cp) && *cp != '\0')
+    cp++;
+  return cp;  
+}
+
+/* 获取helpstr 个数 */
+static int cmd_descstr_getnum(const char *string)
+{
+  int num = 0;
+  const char *cp = string;
+  while (isspace((int)*cp) && *cp != '\0')
+    cp++;
+  while (*cp != '\0')
+  {
+    if(*cp == '\r' || *cp == '\n')
+    {
+      num++;
+    } 
+    cp++;
+  }
+  return num;
+}
+/* 获取keystr 个数 */
+static int cmd_keystr_getnum(const char *string)
+{
+  int num = 0, i = 0, flag = 0;
+  const char *cp = string;
+  char cmdstr[2048];
+  memset(cmdstr, '\0', sizeof(cmdstr));
+  num = 0;  
+  while (cp[i] != '\0')
+  {
+    switch(cp[i])
+    {
+      case '|':
+        cmdstr[num++] = cp[i];
+        flag = 1;
+        break;
+      case ')':
+      case '}':
+      case ']':
+      case '>':
+        if(flag)
+        {
+          cmdstr[num-1] = cp[i];
+        }
+        else
+        {
+          cmdstr[num++] = cp[i];
+        }
+        break;
+      default:
+        cmdstr[num++] = cp[i];
+        if(flag)
+          flag = 0;
+        break;
+    } 
+    i++;
+  }
+  //fprintf(stderr, "cmd_keystr_getnum cmd(%s)\n", cmdstr);  
+  strccreplace(cmdstr, '|', ' ');
+  num = strccnt(cmdstr, ' ');
+  return (num + 1);
+}
+
+/*删除多余空格和[]内空格*/
+static int cmd_keystr_split(const char *string, char *cmd)
+{
+  int i = 0, brkspace = 0,brkflag = 0;
+  const char *cp = string;
+  while (isspace(*cp) && *cp != '\0')
+    cp++;
+  while (*cp != '\0')
+  {
+    switch(*cp)
+    {
+      case '[':
+      case '{':
+      case '(':
+      case '<':
+      case '|':
+        cmd[i++] = *cp;
+        cp++;
+        while (isspace(*cp) && *cp != '\0')
+          cp++;
+        while (*cp != '\0')
+        {
+          switch(*cp)
+          {
+            case ']':
+            case ')':  
+            case '>':
+            case '}':
+              cmd[i++] = *cp;
+              brkflag = 1;
+              brkspace = 0;
+              cp++;
+              break;
+            case ' ':
+              cp++;
+              break;
+            default:
+              cmd[i++] = *cp;
+              cp++;
+              break;
+          }
+          if(brkflag)
+            break;
+        }  
+        break;
+      case ' ':
+        if(brkspace == 0)
+        {
+          cmd[i++] = *cp;
+          brkspace = 1;
+        }
+        cp++;
+        break;
+
+      default:
+        cmd[i++] = *cp;
+        brkspace = 0;
+        cp++;
+        break;   
+    }
+  }
+  return 0;
+}
+
+struct cmd_build_state
 {
   vector topvect; /* Top level vector */
   vector intvect; /* Intermediate level vector, used when there's
@@ -218,16 +350,16 @@ struct format_parser_state
   const char *dp;     /* pointer in description string, moved along while
                         parsing */
 
-  zpl_uint32 in_keyword;     /* flag to remember if we are in a keyword group */
-  zpl_uint32 in_multiple;    /* flag to remember if we are in a multiple group */
-  zpl_uint32 just_read_word; /* flag to remember if the last thing we red was a
+  zpl_int32 in_keyword;     /* flag to remember if we are in a keyword group */
+  zpl_int32 in_multiple;    /* flag to remember if we are in a multiple group */
+  zpl_int32 just_read_word; /* flag to remember if the last thing we red was a
                               * real word and not some abstract token */
 };
 
 static void
-format_parser_error(struct format_parser_state *state, const char *message)
+cmd_build_token_error(struct cmd_build_state *state, const char *message)
 {
-  zpl_uint32 offset = state->cp - state->string + 1;
+  zpl_int32 offset = state->cp - state->string + 1;
 
   fprintf(stderr, "\nError parsing command: \"%s\"\n", state->string);
   fprintf(stderr, "                        %*c\n", offset, '^');
@@ -237,11 +369,11 @@ format_parser_error(struct format_parser_state *state, const char *message)
 }
 
 static zpl_char *
-format_parser_desc_str(struct format_parser_state *state)
+cmd_build_token_desc_str(struct cmd_build_state *state)
 {
   const char *cp, *start;
   zpl_char *token;
-  zpl_uint32 strlen;
+  zpl_int32 strlen;
 
   cp = state->dp;
 
@@ -262,7 +394,7 @@ format_parser_desc_str(struct format_parser_state *state)
     cp++;
 
   strlen = cp - start;
-  token = XMALLOC(MTYPE_CMD_TOKENS, strlen + 1);
+  token = XMALLOC(MTYPE_CMD_DESC, strlen + 1);
   memcpy(token, start, strlen);
   *(token + strlen) = '\0';
 
@@ -272,13 +404,13 @@ format_parser_desc_str(struct format_parser_state *state)
 }
 
 static void
-format_parser_begin_keyword(struct format_parser_state *state)
+cmd_build_token_begin_keyword(struct cmd_build_state *state)
 {
   struct cmd_token *token = NULL;
   vector keyword_vect = NULL;
 
   if (state->in_keyword || state->in_multiple)
-    format_parser_error(state, "Unexpected '{'");
+    cmd_build_token_error(state, "Unexpected '{'");
 
   state->cp++;
   state->in_keyword = 1;
@@ -295,15 +427,15 @@ format_parser_begin_keyword(struct format_parser_state *state)
 }
 
 static void
-format_parser_begin_multiple(struct format_parser_state *state)
+cmd_build_token_begin_multiple(struct cmd_build_state *state)
 {
   struct cmd_token *token;
 
   if (state->in_keyword == 1)
-    format_parser_error(state, "Keyword starting with '('");
+    cmd_build_token_error(state, "Keyword starting with '('");
 
   if (state->in_multiple)
-    format_parser_error(state, "Nested group");
+    cmd_build_token_error(state, "Nested group");
 
   state->cp++;
   state->in_multiple = 1;
@@ -320,13 +452,13 @@ format_parser_begin_multiple(struct format_parser_state *state)
 }
 
 static void
-format_parser_end_keyword(struct format_parser_state *state)
+cmd_build_token_end_keyword(struct cmd_build_state *state)
 {
   if (state->in_multiple || !state->in_keyword)
-    format_parser_error(state, "Unexpected '}'");
+    cmd_build_token_error(state, "Unexpected '}'");
 
   if (state->in_keyword == 1)
-    format_parser_error(state, "Empty keyword group");
+    cmd_build_token_error(state, "Empty keyword group");
 
   state->cp++;
   state->in_keyword = 0;
@@ -334,15 +466,15 @@ format_parser_end_keyword(struct format_parser_state *state)
 }
 
 static void
-format_parser_end_multiple(struct format_parser_state *state)
+cmd_build_token_end_multiple(struct cmd_build_state *state)
 {
   zpl_char *dummy;
 
   if (!state->in_multiple)
-    format_parser_error(state, "Unexpected ')'");
+    cmd_build_token_error(state, "Unexpected ')'");
 
   if (vector_active(state->curvect) == 0)
-    format_parser_error(state, "Empty multiple section");
+    cmd_build_token_error(state, "Empty multiple section");
 
   if (!state->just_read_word)
   {
@@ -354,8 +486,8 @@ format_parser_end_multiple(struct format_parser_state *state)
      * Simulate this behvaior by dropping the next desc
      * string in such a case. */
 
-    dummy = format_parser_desc_str(state);
-    XFREE(MTYPE_CMD_TOKENS, dummy);
+    dummy = cmd_build_token_desc_str(state);
+    XFREE(MTYPE_CMD_DESC, dummy);
   }
 
   state->cp++;
@@ -368,7 +500,7 @@ format_parser_end_multiple(struct format_parser_state *state)
 }
 
 static void
-format_parser_handle_pipe(struct format_parser_state *state)
+cmd_build_token_handle_pipe(struct cmd_build_state *state)
 {
   struct cmd_token *keyword_token = NULL;
   vector keyword_vect = NULL;
@@ -391,30 +523,17 @@ format_parser_handle_pipe(struct format_parser_state *state)
   }
   else
   {
-    format_parser_error(state, "Unexpected '|'");
+    cmd_build_token_error(state, "Unexpected '|'");
   }
 }
 
-static void
-format_parser_read_word(struct format_parser_state *state)
+static struct cmd_token *cmd_build_token_new(enum cmd_token_type type, char *cmd, char *desc)
 {
-  const char *start;
-  zpl_uint32 len;
-  zpl_char *cmd;
   struct cmd_token *token;
-
-  start = state->cp;
-
-  while (state->cp[0] != '\0' && !strchr("\r\n(){}|", state->cp[0]) && !isspace((int)state->cp[0]))
-    state->cp++;
-
-  len = state->cp - start;
-  cmd = XMALLOC(MTYPE_CMD_TOKENS, len + 1);
-  memcpy(cmd, start, len);
-  cmd[len] = '\0';
-
   token = XCALLOC(MTYPE_CMD_TOKENS, sizeof(*token));
-  token->type = TOKEN_TERMINAL;
+  if(token == NULL)
+    return NULL;
+  token->type = type;//TOKEN_TERMINAL
   if (strcmp(cmd, CMD_KEY_IPV4 /*"A.B.C.D"*/) == 0)
     token->terminal = TERMINAL_IPV4;
   else if (strcmp(cmd, CMD_KEY_IPV4_PREFIX /*"A.B.C.D/M"*/) == 0)
@@ -423,11 +542,6 @@ format_parser_read_word(struct format_parser_state *state)
     token->terminal = TERMINAL_IPV6;
   else if (strcmp(cmd, CMD_KEY_IPV6_PREFIX /*"X:X::X:X/M"*/) == 0)
     token->terminal = TERMINAL_IPV6_PREFIX;
-  else if (cmd[0] == '[')
-    token->terminal = TERMINAL_OPTION;
-  else if (cmd[0] == '.')
-    token->terminal = TERMINAL_VARARG;
-
   else if (strcmp(cmd, CMD_USP_SUB_RANGE_STR) == 0)
     token->terminal = TERMINAL_IUSPV_SUB_RANGE;
   else if (strcmp(cmd, CMD_USP_RANGE_STR) == 0)
@@ -438,6 +552,24 @@ format_parser_read_word(struct format_parser_state *state)
     token->terminal = TERMINAL_IUSPV;
   else if (strcmp(cmd, CMD_MAC_STR) == 0)
     token->terminal = TERMINAL_MAC;
+#ifdef CMD_DATETIME_STR
+  else if (strcmp(cmd, CMD_DATETIME_STR) == 0)
+    token->terminal = TERMINAL_DATETIME;
+#endif 
+#ifdef CMD_DATE_STR   
+  else if (strcmp(cmd, CMD_DATE_STR) == 0)
+    token->terminal = TERMINAL_DATE;
+#endif
+#ifdef CMD_TIME_STR    
+  else if (strcmp(cmd, CMD_TIME_STR) == 0)
+    token->terminal = TERMINAL_TIME;
+#endif
+  else if (strcmp(cmd, CMD_URLKEY) == 0)
+    token->terminal = TERMINAL_URLSTR;
+  else if (cmd[0] == '[')
+    token->terminal = TERMINAL_OPTION;
+  else if (cmd[0] == '.')
+    token->terminal = TERMINAL_VARARG;
 
   else if (cmd[0] == '<')
     token->terminal = TERMINAL_RANGE;
@@ -447,8 +579,31 @@ format_parser_read_word(struct format_parser_state *state)
     token->terminal = TERMINAL_LITERAL;
 
   token->cmd = cmd;
-  token->desc = format_parser_desc_str(state);
-  vector_set(state->curvect, token);
+  token->desc = desc;  
+  return token;
+}
+
+static void
+cmd_build_token_read_word(struct cmd_build_state *state)
+{
+  const char *start = NULL;
+  zpl_int32 len = 0;
+  zpl_char *cmd = NULL;
+  struct cmd_token *token = NULL;
+  //zpl_char cmdtmp[512];
+  start = state->cp;
+
+  while (state->cp[0] != '\0' && !strchr("\r\n(){}|", state->cp[0]) && !isspace((int)state->cp[0]))
+    state->cp++;
+
+  len = state->cp - start;
+  cmd = XMALLOC(MTYPE_CMD_KEYSTR, len + 1);
+  memcpy(cmd, start, len);
+  cmd[len] = '\0';
+
+  token = cmd_build_token_new(TOKEN_TERMINAL, cmd,  cmd_build_token_desc_str(state));
+  if(token)
+    vector_set(state->curvect, token);
 
   if (state->in_keyword == 1)
     state->in_keyword = 2;
@@ -466,9 +621,9 @@ format_parser_read_word(struct format_parser_state *state)
  *         or NULL on error.
  */
 static vector
-cmd_parse_format(const char *string, const char *descstr)
+cmd_build_token(const char *string, const char *descstr)
 {
-  struct format_parser_state state;
+  struct cmd_build_state state;
 
   if (string == NULL)
     return NULL;
@@ -487,25 +642,25 @@ cmd_parse_format(const char *string, const char *descstr)
     {
     case '\0':
       if (state.in_keyword || state.in_multiple)
-        format_parser_error(&state, "Unclosed group/keyword");
+        cmd_build_token_error(&state, "Unclosed group/keyword");
       return state.topvect;
     case '{':
-      format_parser_begin_keyword(&state);
+      cmd_build_token_begin_keyword(&state);
       break;
     case '(':
-      format_parser_begin_multiple(&state);
+      cmd_build_token_begin_multiple(&state);
       break;
     case '}':
-      format_parser_end_keyword(&state);
+      cmd_build_token_end_keyword(&state);
       break;
     case ')':
-      format_parser_end_multiple(&state);
+      cmd_build_token_end_multiple(&state);
       break;
     case '|':
-      format_parser_handle_pipe(&state);
+      cmd_build_token_handle_pipe(&state);
       break;
     default:
-      format_parser_read_word(&state);
+      cmd_build_token_read_word(&state);
     }
   }
 }
@@ -541,8 +696,9 @@ struct cmd_element * new_element(const char *string, const char *doc, zpl_uint32
 /* Install a command into a node. */
 void install_element(enum node_type ntype, enum cmd_privilege privilege, struct cmd_element *cmd)
 {
-  struct cmd_node *cnode;
-
+  struct cmd_node *cnode = NULL;
+  char cmdstr[2048];
+  int hnum = 0, knum = 0;
   /* cmd_init hasn't been called */
   if (!cli_cmdvec_list)
   {
@@ -550,7 +706,23 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
             __func__);
     return;
   }
-
+  memset(cmdstr, '\0', sizeof(cmdstr));
+  cmd_keystr_split(cmd->string, cmdstr);
+  strrmtrim(cmdstr);
+  #ifdef CMD_STRICT_CHECK
+  //fprintf(stderr, " cmd keystr cmd_keystr_split cmd(%s)\n", cmdstr);
+  #endif
+  hnum = cmd_descstr_getnum(cmd->doc);
+  knum = cmd_keystr_getnum(cmdstr);
+  //if (cmd_descstr_getnum(cmd->doc) != cmd_keystr_getnum(cmdstr))
+  if (hnum != knum)
+  {
+    #ifdef CMD_STRICT_CHECK
+    fprintf(stderr, "%s cmd keystr num=%d is not same to desc num=%d cmd(%s)\n", __func__, knum, hnum, cmdstr);
+    exit(0);  
+    return;
+    #endif 
+  }
   cnode = vector_slot(cli_cmdvec_list, ntype);
 
   if (cnode == NULL)
@@ -574,7 +746,7 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
 
   vector_set(cnode->cmd_vector, cmd);
   if (cmd->tokens == NULL)
-    cmd->tokens = cmd_parse_format(cmd->string, cmd->doc);
+    cmd->tokens = cmd_build_token(cmd->string, cmd->doc);
 
   if (ntype == VIEW_NODE)
     install_element(ENABLE_NODE, cmd->privilege, cmd);
@@ -598,7 +770,6 @@ zencrypt(const char *passwd)
 {
   zpl_char salt[6];
   struct timeval tv;
-  //char *crypt(const char *, const char *);
 
   gettimeofday(&tv, 0);
 
@@ -631,18 +802,64 @@ enum match_type
   iuspv_sub_match,
   iuspv_range_match,
   iuspv_sub_range_match,
+  urlkey_match,
   mac_match,
   vararg_match,
   partly_match,
   exact_match
 };
 
+static enum match_type cmd_urlkey_match(const char *str)
+{
+  const char *sp;
+  zpl_int32 nums = 0;
+  if (str == NULL)
+    return partly_match;
+  sp = cmd_skip_space(str);
+  if(sp)
+  {
+    //tftp|ftp|sftp|scp|rtsp|ssh|http|https|ws
+    if(!strncmp(sp, "tftp", 4) ||
+      !strncmp(sp, "sftp", 4) ||
+      !strncmp(sp, "http", 5) ||
+      !strncmp(sp, "http", 4) ||
+      !strncmp(sp, "ftp", 3) ||
+      !strncmp(sp, "scp", 3) ||
+      !strncmp(sp, "rtsp", 4) ||
+      !strncmp(sp, "ssh", 3) ||
+      !strncmp(sp, "ws", 2))
+      {
+        nums = 1;
+      }
+  }
+  if (nums)
+  {
+    const char *cp = sp;
+    while (*cp != '\0' && *cp != ' ')
+    {
+      if(*cp == ':')
+      {
+        cp++;
+        if(*cp == '/')
+        {
+          cp++;
+          if(*cp == '/')
+          {
+            return urlkey_match;
+          }
+        }
+      }
+      cp++;
+    }
+  }
+  return no_match;
+}
 
 static enum match_type
 cmd_ipv4_match(const char *str)
 {
   const char *sp;
-  zpl_uint32 dots = 0, nums = 0;
+  zpl_int32 dots = 0, nums = 0;
   zpl_char buf[4];
 
   if (str == NULL)
@@ -699,7 +916,7 @@ static enum match_type
 cmd_ipv4_prefix_match(const char *str)
 {
   const char *sp;
-  zpl_uint32 dots = 0;
+  zpl_int32 dots = 0;
   zpl_char buf[4];
 
   if (str == NULL)
@@ -813,8 +1030,8 @@ cmd_ipv6_match(const char *str)
 static enum match_type
 cmd_ipv6_prefix_match(const char *str)
 {
-  zpl_uint32 state = STATE_START;
-  zpl_uint32 colons = 0, nums = 0, double_colon = 0;
+  zpl_int32 state = STATE_START;
+  zpl_int32 colons = 0, nums = 0, double_colon = 0;
   zpl_int32 mask;
   const char *sp = NULL;
   zpl_char *endptr = NULL;
@@ -996,66 +1213,31 @@ cmd_iuspv_match(const char *keystr, const char *str)
     return 1;
   if (strspn(str, base) == strlen(str))
   {  
-    if((strchr_count(keystr,'/') == strchr_count(str,'/')) && strchr_step_num(str, '/'))  
+    if((strccnt(keystr,'/') == strccnt(str,'/')) && strccstep(str, '/'))  
     {
-      if(strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+      if(strccnt(keystr,'.') && strccnt(keystr,'-'))
       {
-        if( (strchr_count(keystr,'.') == strchr_count(str,'.')) &&
-          strchr_count(keystr,'-') == strchr_count(str,'-') )
+        if( (strccnt(keystr,'.') == strccnt(str,'.')) &&
+          strccnt(keystr,'-') == strccnt(str,'-') )
           return 1;
       }
-      else if(strchr_count(keystr,'.') && !strchr_count(keystr,'-'))
+      else if(strccnt(keystr,'.') && !strccnt(keystr,'-'))
       {
-        if( (strchr_count(keystr,'.') == strchr_count(str,'.')))
+        if( (strccnt(keystr,'.') == strccnt(str,'.')))
           return 1;
       }
-      else if(!strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+      else if(!strccnt(keystr,'.') && strccnt(keystr,'-'))
       {
-        if( (strchr_count(keystr,'-') == strchr_count(str,'-')))
+        if( (strccnt(keystr,'-') == strccnt(str,'-')))
           return 1;
       }
-      else if(!strchr_count(keystr,'.') && !strchr_count(keystr,'-'))
+      else if(!strccnt(keystr,'.') && !strccnt(keystr,'-'))
       {
           return 1;
       }
     }
   }
   return 0;
-  #if 0
-  while (1)
-  {
-    math = strstr(math, "/");
-    if (math)
-    {
-      math++;
-      count++;
-    }
-    else
-      break;
-  }
-  math = (zpl_char *)str;
-  while (1)
-  {
-    math = strstr(math, "/");
-    if (math)
-    {
-      math++;
-      count--;
-    }
-    else
-      break;
-  }
-  if (count == 0)
-  {
-    if (strspn(str, base) == strlen(str))
-    {
-      //			fprintf(stdout,"%s:strspn(str,base)=%d strlen(str)=%d",__func__,strspn(str,base),strlen(str));
-      return 1;
-    }
-  }
-  //	fprintf(stdout,"%s:count=%d strspn(str,base)=%d strlen(str)=%d",__func__,count,strspn(str,base),strlen(str));
-  return 0;
-  #endif
 }
 
 static int
@@ -1138,11 +1320,11 @@ cmd_word_match(struct cmd_token *token,
   case TERMINAL_IUSPV_SUB_RANGE:
     if (cmd_iuspv_match(keystr, word))
     {
-      if(strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+      if(strccnt(keystr,'.') && strccnt(keystr,'-'))
         return iuspv_sub_range_match;
-      else if(strchr_count(keystr,'.') && !strchr_count(keystr,'-'))
+      else if(strccnt(keystr,'.') && !strccnt(keystr,'-'))
         return iuspv_sub_match;
-      else if(!strchr_count(keystr,'.') && strchr_count(keystr,'-'))
+      else if(!strccnt(keystr,'.') && strccnt(keystr,'-'))
         return iuspv_range_match;
       return iuspv_match;
     }
@@ -1151,6 +1333,11 @@ cmd_word_match(struct cmd_token *token,
     if (cmd_mac_match(keystr, word))
       return mac_match;
     break;
+  case TERMINAL_URLSTR:
+    if (cmd_urlkey_match(word))
+      return urlkey_match;
+    break;
+    
 #ifdef ZPL_BUILD_IPV6
   case TERMINAL_IPV6:
     match_type = cmd_ipv6_match(word);
@@ -1792,7 +1979,7 @@ is_cmd_ambiguous(vector cmd_vector,
 {
   zpl_uint32 i;
   zpl_uint32 j;
-  const char *str = NULL;
+  const char *keystr = NULL;
   const char *matched = NULL;
   vector match_vector = NULL;
   struct cmd_token *cmd_token = NULL;
@@ -1814,31 +2001,31 @@ is_cmd_ambiguous(vector cmd_vector,
           if (cmd_token->type != TOKEN_TERMINAL)
             continue;
 
-          str = cmd_token->cmd;
+          keystr = cmd_token->cmd;
 
           switch (type)
           {
           case exact_match:
-            if (!TERMINAL_RECORD(cmd_token->terminal) && strcmp(command, str) == 0)
+            if (!TERMINAL_RECORD(cmd_token->terminal) && strcmp(command, keystr) == 0)
               match++;
             break;
           case partly_match:
-            if (!TERMINAL_RECORD(cmd_token->terminal) && strncmp(command, str, strlen(command)) == 0)
+            if (!TERMINAL_RECORD(cmd_token->terminal) && strncmp(command, keystr, strlen(command)) == 0)
             {
-              if (matched && strcmp(matched, str) != 0)
+              if (matched && strcmp(matched, keystr) != 0)
                 return 1; /* There is ambiguous match. */
               else
-                matched = str;
+                matched = keystr;
               match++;
             }
             break;
           case range_match:
-            if (cmd_range_match(str, command))
+            if (cmd_range_match(keystr, command))
             {
-              if (matched && strcmp(matched, str) != 0)
+              if (matched && strcmp(matched, keystr) != 0)
                 return 1;
               else
-                matched = str;
+                matched = keystr;
               match++;
             }
             break;
@@ -1846,25 +2033,32 @@ is_cmd_ambiguous(vector cmd_vector,
           case iuspv_range_match:
           case iuspv_sub_match:
           case iuspv_match:
-            if (cmd_iuspv_match(str, command))
+            if (cmd_iuspv_match(keystr, command))
             {
-              if (matched && strcmp(matched, str) != 0)
+              if (matched && strcmp(matched, keystr) != 0)
                 return 1;
               else
-                matched = str;
+                matched = keystr;
               match++;
             }
             break;
           case mac_match:
-            if (cmd_mac_match(str, command))
+            if (cmd_mac_match(keystr, command))
             {
-              if (matched && strcmp(matched, str) != 0)
+              if (matched && strcmp(matched, keystr) != 0)
                 return 1;
               else
-                matched = str;
+                matched = keystr;
               match++;
             }
             break;
+          case urlkey_match:
+            if (cmd_urlkey_match(command))
+            {
+              if (cmd_token->terminal == TERMINAL_URLSTR)
+              match++;
+            }
+            break;  
 
 #ifdef ZPL_BUILD_IPV6
           case ipv6_match:
@@ -2885,11 +3079,11 @@ void install_default(enum node_type node)
 /* Initialize command interface. Install basic nodes and commands. */
 void cmd_init(zpl_bool terminal)
 {
-  command_cr = XSTRDUP(MTYPE_CMD_TOKENS, "<cr>");
+  command_cr = XSTRDUP(MTYPE_CMD_KEYSTR, "<cr>");
   token_cr.type = TOKEN_TERMINAL;
   token_cr.terminal = TERMINAL_LITERAL;
   token_cr.cmd = command_cr;
-  token_cr.desc = XSTRDUP(MTYPE_CMD_TOKENS, "");
+  token_cr.desc = XSTRDUP(MTYPE_CMD_DESC, "");
 
   /* Allocate initial top vector of commands. */
   cli_cmdvec_list = vector_init(VECTOR_MIN_SIZE);
@@ -2923,9 +3117,10 @@ cmd_terminate_token(struct cmd_token *token)
     vector_free(token->keyword);
     token->keyword = NULL;
   }
-
-  XFREE(MTYPE_CMD_TOKENS, token->cmd);
-  XFREE(MTYPE_CMD_TOKENS, token->desc);
+  if(token->cmd)
+    XFREE(MTYPE_CMD_KEYSTR, token->cmd);
+  if(token->desc)
+    XFREE(MTYPE_CMD_DESC, token->desc);
 
   XFREE(MTYPE_CMD_TOKENS, token);
 }
@@ -2987,8 +3182,8 @@ void cmd_terminate()
   }
 
   if (command_cr)
-    XFREE(MTYPE_CMD_TOKENS, command_cr);
+    XFREE(MTYPE_CMD_KEYSTR, command_cr);
   if (token_cr.desc)
-    XFREE(MTYPE_CMD_TOKENS, token_cr.desc);
+    XFREE(MTYPE_CMD_DESC, token_cr.desc);
   host_config_exit();
 }

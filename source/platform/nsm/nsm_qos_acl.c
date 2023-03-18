@@ -725,7 +725,7 @@ static int _qos_access_list_node_show_one(struct vty *vty, qos_access_filter_lis
     {
         if(lstCount(&node->list))
         {
-            vty_out(vty, "ip-access-list %s%s", node->name, VTY_NEWLINE);
+            vty_out(vty, "access-list %s%s", node->name, VTY_NEWLINE);
             _qos_access_filter_list_foreach_layer(node, _qos_access_filter_show_one, vty);
         }
     }

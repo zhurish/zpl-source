@@ -486,33 +486,33 @@ static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *s
 		zlog_err(MODULE_DEFAULT,"if iusp format ERROR input is:%s(%s)",str, string);
 		return 0;
 	}
-	if(strchr_count(str, '/') == 2)
+	if(strccnt(str, '/') == 2)
 	{
-		if(strstr(str, ".") && strchr_count(str, '-'))
+		if(strstr(str, ".") && strccnt(str, '-'))
 		{
 			//sscanf(str, "%d[^/]/%d[^/]/%d[^.].%d", &ounit, &oslot, &oport, &oid);
 			sscanf(str, "%d/%d/%d.%d-%d", &ounit, &oslot, &oport, &oid, rend);
 		}
-		else if(strstr(str, ".") && !strchr_count(str, '-'))
+		else if(strstr(str, ".") && !strccnt(str, '-'))
 			sscanf(str, "%d/%d/%d.%d", &ounit, &oslot, &oport, &oid);
-		else if(!strstr(str, ".") && strchr_count(str, '-'))
+		else if(!strstr(str, ".") && strccnt(str, '-'))
 			sscanf(str, "%d/%d/%d-%d", &ounit, &oslot, &oport, rend);
-		else if(!strstr(str, ".") && !strchr_count(str, '-'))
+		else if(!strstr(str, ".") && !strccnt(str, '-'))
 			sscanf(str, "%d/%d/%d", &ounit, &oslot, &oport);
 			//sscanf(str, "%d[^/]/%d[^/]/%d", &ounit, &oslot, &oport);
 	}
-	else if(strchr_count(str, '/') == 1)
+	else if(strccnt(str, '/') == 1)
 	{
-		if(strstr(str, ".") && strchr_count(str, '-'))
+		if(strstr(str, ".") && strccnt(str, '-'))
 		{
 			//sscanf(str, "%d[^/]/%d[^/]/%d[^.].%d", &ounit, &oslot, &oport, &oid);
 			sscanf(str, "%d/%d.%d-%d", &oslot, &oport, &oid, rend);
 		}
-		else if(strstr(str, ".") && !strchr_count(str, '-'))
+		else if(strstr(str, ".") && !strccnt(str, '-'))
 			sscanf(str, "%d/%d.%d", &oslot, &oport, &oid);
-		else if(!strstr(str, ".") && strchr_count(str, '-'))
+		else if(!strstr(str, ".") && strccnt(str, '-'))
 			sscanf(str, "%d/%d-%d", &oslot, &oport, rend);
-		else if(!strstr(str, ".") && !strchr_count(str, '-'))
+		else if(!strstr(str, ".") && !strccnt(str, '-'))
 			sscanf(str, "%d/%d", &oslot, &oport);
 	}
 	if(unit)

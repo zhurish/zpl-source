@@ -36,6 +36,7 @@ DEFUN (show_process_detail,
 		SHOW_STR
 		"system process information\n"
 		"process CPU usage\n"
+		"Detail Message\n"
 		"system process name\n")
 {
 	os_task_cli_hook_set(vty_out);

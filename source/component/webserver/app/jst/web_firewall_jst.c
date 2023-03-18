@@ -95,10 +95,10 @@ static int web_firewall_rule_forwards_one(firewall_t *rule, Webs *wp)
 		if (rule->d_ifindex)
 			sprintf(d_ifindex, "%s", ifindex2ifname(rule->d_ifindex));
 
-		if (!str_isempty(rule->s_mac, sizeof(rule->s_mac)))
+		if (!strisempty(rule->s_mac, sizeof(rule->s_mac)))
 			sprintf(s_mac, "%s", inet_ethernet(rule->s_mac));
 
-		if (!str_isempty(rule->d_mac, sizeof(rule->d_mac)))
+		if (!strisempty(rule->d_mac, sizeof(rule->d_mac)))
 			sprintf(d_mac, "%s", inet_ethernet(rule->d_mac));
 
 		if(wp->iValue)

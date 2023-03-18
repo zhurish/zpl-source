@@ -49,7 +49,7 @@ extern "C" {
  */
 struct ipstack_ethaddr {
     zpl_uchar octet[ETHER_ADDR_LEN];
-} __packed;
+} __attribute__ ((__packed__));
 
 /* Reference: RFC 5462, RFC 3032
  *

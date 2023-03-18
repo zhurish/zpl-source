@@ -65,17 +65,17 @@ int modem_operator_split(modem_client_t *client, char *buf)
 		os_sscanf(buf,"%*s %d", &stat);
 		client->nw_state = mode;
 	}
-	if(strchr_count(buf, ',') == 3)
+	if(strccnt(buf, ',') == 3)
 	{
 		//+COPS: 0,0,\"CHINA MOBILE\",7  OK"
 		//
-		zpl_uint32 offset = strchr_step(buf, ':', 1);
+		zpl_uint32 offset = strccntlast(buf, ':', 1);
 		if(offset)
 		{
 			//fprintf(stdout, "=========0=====%s\r\n", buf + offset + 1);
 			mode = os_atoi(buf + offset + 1);
 		}
-		offset = strchr_step(buf, ',', 1);
+		offset = strccntlast(buf, ',', 1);
 		if(offset)
 		{
 			//fprintf(stdout, "========1======%s\r\n", buf + offset + 1);
@@ -91,7 +91,7 @@ int modem_operator_split(modem_client_t *client, char *buf)
 			else if(os_strstr(buf, "UNICOM"))
 				client->operator = OPERATOR_UNICOM;
 
-			offset = strchr_step(buf, ',', 3);
+			offset = strccntlast(buf, ',', 3);
 			if(offset)
 				os_sscanf(buf + offset + 1, "%d", &act);
 		}
@@ -104,14 +104,14 @@ int modem_operator_split(modem_client_t *client, char *buf)
 			else if(os_strstr(buf, "UNICOM"))
 				client->operator = OPERATOR_UNICOM;
 
-			offset = strchr_step(buf, ',', 3);
+			offset = strccntlast(buf, ',', 3);
 			if(offset)
 				os_sscanf(buf + offset + 1, "%d", &act);
 		}
 		else if(format == OP_DIGIT_FORMAT)
 		{
 			int oper = 0;
-			offset = strchr_step(buf, ',', 2);
+			offset = strccntlast(buf, ',', 2);
 			if(offset)
 				os_sscanf(buf + offset + 1,"%x %d", &oper, &act);
 
@@ -143,7 +143,7 @@ int modem_qnwinfo_split(modem_client_t *client, char *buf)
 		client->operator = 0;
 		return OK;
 	}
-	if(strchr_count(buf, ',') == 3)
+	if(strccnt(buf, ',') == 3)
 	{
 		//+QNWINFO: "GSM","46000","GSM 900",66
 		//+QNWINFO: "TDD LTE","46000","LTE BAND 38",38098  OK

@@ -1382,9 +1382,10 @@ DEFUN(show_thread_cpu,
 
 DEFUN(show_thread_task_cpu,
 	  show_thread_task_cpu_cmd,
-	  "show thread " OS_THREAD_STR_TASK "cpu [FILTER]",
+	  "show thread " OS_THREAD_STR_TASK " cpu [FILTER]",
 	  SHOW_STR
-	  "Thread information\n" OS_THREAD_STR_TASK_HELP
+	  "Thread information\n" 
+	  OS_THREAD_STR_TASK_HELP
 	  "Thread CPU usage\n"
 	  "Display filter (rwtexb)\n")
 {
@@ -1467,7 +1468,7 @@ DEFUN(clear_thread_cpu,
 
 DEFUN(clear_thread_task_cpu,
 	  clear_thread_task_cpu_cmd,
-	  "clear thread " OS_THREAD_STR_TASK "cpu [FILTER]",
+	  "clear thread " OS_THREAD_STR_TASK " cpu [FILTER]",
 	  "Clear stored data\n"
 	  "Thread information\n" OS_THREAD_STR_TASK_HELP
 	  "Thread CPU usage\n"

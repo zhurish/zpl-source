@@ -586,7 +586,7 @@ static struct cmd_node vlan_node =
 DEFUN(hal_vlan_test_cli,
 	  hal_vlan_test_cli_cmd,
 	  "vlan test create <1-4096>",
-	  "Vlan Config"
+	  "Vlan Config\n"
 	  "Vlan Test information\n"
 	  "Create information\n"
 	  "Vlan ID\n")

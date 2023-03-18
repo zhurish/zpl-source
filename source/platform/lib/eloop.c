@@ -1384,7 +1384,7 @@ DEFUN(show_eloop_cpu,
 
 DEFUN(show_eloop_task_cpu,
 		show_eloop_task_cpu_cmd,
-		"show eloop " OS_ELOOP_STR_TASK "cpu [FILTER]",
+		"show eloop " OS_ELOOP_STR_TASK " cpu [FILTER]",
 		SHOW_STR
 		"Thread information\n"
 		OS_ELOOP_STR_TASK_HELP
@@ -1472,7 +1472,7 @@ DEFUN(clear_eloop_cpu,
 
 DEFUN(clear_eloop_task_cpu,
 		clear_eloop_task_cpu_cmd,
-		"clear eloop " OS_ELOOP_STR_TASK "cpu [FILTER]",
+		"clear eloop " OS_ELOOP_STR_TASK " cpu [FILTER]",
 		"Clear stored data\n"
 		"Thread information\n"
 		OS_ELOOP_STR_TASK_HELP

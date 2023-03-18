@@ -13,9 +13,6 @@ extern "C" {
 #endif
 
 
-#define array_size(ar) (sizeof(ar) / sizeof(ar[0]))
-//#define array_size(x) (sizeof (x) / sizeof (x[0]))
-
 
 /* Define BYTE_ORDER, if not defined. Useful for compiler conditional
  * code, rather than preprocessor conditional.
@@ -77,31 +74,6 @@ extern "C" {
 #define __attribute__(x)
 #endif  /* !__GNUC__ || VTYSH_EXTRACT_PL */
 
-
-#define OS_WAIT_NO	0
-#define OS_WAIT_FOREVER	-1
-
-
-/* Flag manipulation macros. */
-#define CHECK_FLAG(V,F)      ((V) & (F))
-#define SET_FLAG(V,F)        (V) |= (F)
-#define UNSET_FLAG(V,F)      (V) &= ~(F)
-#define RESET_FLAG(V)        (V) = 0
-
-#define FD_IS_STDOUT(f)	((f) < 3)
-
-#ifndef min
-#define min(a,b)	( (a) < (b)? (a):(b) )
-#endif
-#ifndef max
-#define max(a,b)	( (a) > (b)? (a):(b) )
-#endif
-#ifndef MIN
-#define MIN(a,b)	( (a) < (b)? (a):(b) )
-#endif
-#ifndef MAX
-#define MAX(a,b)	( (a) > (b)? (a):(b) )
-#endif
 
 #ifndef INT_MAX_MIN_SPACE
 #define INT_MAX_MIN_SPACE(v, m, M)	( ((int)(v) > (int)(m)) && ((int)(v) < (int)(M)) )

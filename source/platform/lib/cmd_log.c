@@ -230,6 +230,7 @@ DEFUN (no_config_log_file_size,
 		NO_STR
 		"Logging control\n"
 		"Logging to file\n"
+		"Logging buffer\n"
 		"Logging filename size\n")
 {
 	int size;
@@ -384,7 +385,7 @@ DEFUN (syslog_host,
 		"Syslog logging control\n"
 		"syslog host configure\n"
 		"Specify by IPv4 address(e.g. 0.0.0.0)\n"
-		"sntp server dynamics\n")
+		"Dynamics\n")
 {
 	int port = SYSLOGC_DEFAULT_PORT;
 	if (argc == 2)
@@ -436,9 +437,8 @@ ALIAS(syslog_host,
 		"Syslog logging control\n"
 		"syslog host configure\n"
 		"Specify by IPv4 address(e.g. 0.0.0.0)\n"
-		"sntp server dynamics\n"
-		"sntp server dynamics\n"
-		"syslog server UDP port\n"
+		"Dynamics\n"
+		"Syslog Server UDP port\n"
 		"Specify by UDP port(e.g. 514)\n")
 
 DEFUN (no_syslog_host,

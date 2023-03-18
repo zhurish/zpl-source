@@ -81,8 +81,8 @@ static int _web_video_stream_one_detail(Webs *wp, v9_video_stream_t *pstNode, zp
 			rtsp_status,
 			(pstNode->decode_status==zpl_true) ? "OK":"Failed",
 			pstNode->connect ? "OK":"Failed",
-			str_isempty(pstNode->mainstream, sizeof(pstNode->mainstream))? " ":pstNode->mainstream,
-			str_isempty(pstNode->secondary, sizeof(pstNode->secondary))? " ":pstNode->secondary);
+			strisempty(pstNode->mainstream, sizeof(pstNode->mainstream))? " ":pstNode->mainstream,
+			strisempty(pstNode->secondary, sizeof(pstNode->secondary))? " ":pstNode->secondary);
 		wp->iValue++;
 	}
 	return OK;
@@ -421,7 +421,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		if(stream && (stream->id != APP_BOARD_MAIN))
 			v9_video_sdk_get_rtsp_status_api(stream->id);
 	}
-	if(stream && stream->decode_status==zpl_true && !str_isempty(stream->secondary, sizeof(stream->secondary)))
+	if(stream && stream->decode_status==zpl_true && !strisempty(stream->secondary, sizeof(stream->secondary)))
 	{
 		sid = id;
 		sch = ch;
@@ -435,11 +435,11 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 		}
 		memset(ffmpegcmd, 0, sizeof(ffmpegcmd));
 		//rtsp://%s:%s@%s:%d/mpeg4/ch33/sub/av0_%d
-		if(!str_isempty(stream->username, sizeof(stream->username)) && !str_isempty(stream->secondary, sizeof(stream->secondary)))
+		if(!strisempty(stream->username, sizeof(stream->username)) && !strisempty(stream->secondary, sizeof(stream->secondary)))
 			sprintf(ffmpegcmd, "nohup ffmpeg -i 'rtsp://%s:%s@%s:%d/%s' -an -vcodec copy  -f flv rtmp://127.0.0.1:1935/live >/dev/null 2>&1 &",
 					stream->username, stream->password,
 					inet_address(stream->address), stream->port, stream->secondary);
-		else if(!str_isempty(stream->secondary, sizeof(stream->secondary)))
+		else if(!strisempty(stream->secondary, sizeof(stream->secondary)))
 			sprintf(ffmpegcmd, "nohup ffmpeg -i 'rtsp://%s:%d/%s' -an -vcodec copy  -f flv rtmp://127.0.0.1:1935/live >/dev/null 2>&1 &",
 					inet_address(stream->address), stream->port, stream->secondary);
 
@@ -459,7 +459,7 @@ static int web_video_stream_show_one(Webs *wp, void *p)
 	}
 	else
 	{
-		if(stream && str_isempty(stream->secondary, sizeof(stream->secondary)))
+		if(stream && strisempty(stream->secondary, sizeof(stream->secondary)))
 		{
 			if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 				zlog_debug(MODULE_WEB, "Stream Secondary Param null.");

@@ -1049,7 +1049,7 @@ static void parseFirstLine(Webs *wp)
     if (ext) {
         wp->ext = sclone(slower(ext));
     }
-    if((strchr_count(wp->path, '/') > 2) && (strstr(wp->path, "tmp")||strstr(wp->path, "mnt")) )
+    if((strccnt(wp->path, '/') > 2) && (strstr(wp->path, "tmp")||strstr(wp->path, "mnt")) )
     	wp->filename = sfmt("%s",wp->path);
     else
     	wp->filename = sfmt("%s%s", websGetDocuments(), wp->path);

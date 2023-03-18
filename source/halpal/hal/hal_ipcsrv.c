@@ -299,7 +299,7 @@ static void hal_ipcsrv_msg_read_start_done(struct hal_ipcclient *client, struct 
 
     client->t_hello = thread_add_timer(client->ipcsrv->master, hal_client_msg_hello_thread, client, HAL_IPCMSG_HELLO_TIME);
     host_bspinit_done();
-    return OK;
+    return;
 }
 
 static void hal_client_msg_read_report(struct hal_ipcclient *client, struct hal_ipcmsg *ipcmsg)

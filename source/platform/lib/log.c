@@ -1350,7 +1350,7 @@ void openzlog_start(struct zlog *zl)
 	zlp->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_MAX;
 	zlp->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
 	zlp->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
-	return OK;
+	return ;
 }
 
 void closezlog(struct zlog *zl) {

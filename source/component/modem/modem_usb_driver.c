@@ -227,7 +227,7 @@ static int modem_usb_driver_lookup_ttyusb(modem_usb_driver *driver, char *devnam
 	tmp.flag = 1;
 	for(j = 0; j < TTY_USB_MAX; j++)
 	{
-		 //if(!str_isempty(&driver->devname[j], sizeof(driver->devname[j])))
+		 //if(!strisempty(&driver->devname[j], sizeof(driver->devname[j])))
 		 if((driver->devname[j].flag))
 		 {
 			 if(os_strncmp(driver->devname[j].devname, tmp.devname, sizeof(tmp.devname)) == 0)
@@ -604,7 +604,7 @@ static int modem_usb_key_detection(char *input, char *output)
 		// usb2/2-2/2-2:1.0/ttyUSB0
 		//MODEM_DR_DEBUG("add usb key0: %s\n", input);
 		//MODEM_DR_DEBUG("add usb key0: %s\n", brk);
-		offset = strchr_step(brk, '/', 2);
+		offset = strccntlast(brk, '/', 2);
 
 		if (os_strlen(brk) > (offset + 4))
 		{
@@ -613,7 +613,7 @@ static int modem_usb_key_detection(char *input, char *output)
 			if(brk)
 			{
 				//MODEM_DR_DEBUG("add usb key1: %s\n", brk);
-				offset = strchr_step(brk, '.', 1);
+				offset = strccntlast(brk, '.', 1);
 				// .0/ttyUSB0
 				if(output)
 				{
@@ -661,9 +661,9 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 			if (realpath(path, fullpath))
 			{
 				// /sys/devices/platform/101c0000.ehci/usb2/2-1/2-1:1.0/ttyUSB0
-				if (strchr_count(fullpath, '/') >= 6)
+				if (strccnt(fullpath, '/') >= 6)
 				{
-					offset = strchr_step(fullpath, '/', 7);
+					offset = strccntlast(fullpath, '/', 7);
 					if (offset < os_strlen(fullpath))
 					{
 						os_memset(vender, 0, sizeof(vender));
@@ -697,20 +697,20 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 
 							//: /sys/devices/platform/101c0000.ehci/usb2/2-1/2-1:1.0/ttyUSB0
 							//: /sys/devices/pci0000:00/0000:00:14.0/usb2/2-2/2-2:1.0/ttyUSB0
-							if(str_isempty(musb_driver[i].usbkey, sizeof(musb_driver[i].usbkey)))
+							if(strisempty(musb_driver[i].usbkey, sizeof(musb_driver[i].usbkey)))
 							{
 								modem_usb_key_detection(fullpath, musb_driver[i].usbkey);
 /*								char *brk = os_strstr(fullpath, 'usb');
 								if(brk)
 								{
 									offset = brk - fullpath;
-									int offset1 = strchr_step(fullpath + offset, '/', 2);
+									int offset1 = strccntlast(fullpath + offset, '/', 2);
 									if (os_strlen(fullpath) > (offset1 + 4))
 									{
 										brk = fullpath + offset + offset1 + 1;
 										if(brk)
 										{
-											offset1 = strchr_step(brk, ':', 1);
+											offset1 = strccntlast(brk, ':', 1);
 											if(offset1 > 0 && offset1 < 4)
 												os_strncpy(musb_driver[i].usbkey, brk, offset1 - 1);
 										}
@@ -718,7 +718,7 @@ static int modem_sys_usb_detection_devname(modem_usb_driver *driver)
 									}
 								}*/
 							}
-							if(str_isempty(musb_driver[i].netdevname, sizeof(musb_driver[i].netdevname)))
+							if(strisempty(musb_driver[i].netdevname, sizeof(musb_driver[i].netdevname)))
 							{
 								modem_sys_usb_detection_netdevname(&musb_driver[i], musb_driver[i].usbkey);
 							}
@@ -833,12 +833,12 @@ static int usb_vendor_product_read(modem_usb_driver *driver, char *buf, zpl_uint
 	{
 		char *brk = NULL, *brk1 = NULL;
 		zpl_uint32 offset = 0;
-		if(strchr_count(buf, '/') >= 6)
+		if(strccnt(buf, '/') >= 6)
 		{
-			offset = strchr_step(buf, '/', 1);
+			offset = strccntlast(buf, '/', 1);
 			brk = buf + offset + 1;
 
-			offset = strchr_step(buf, '/', 6);
+			offset = strccntlast(buf, '/', 6);
 			brk1 = buf + offset;
 
 			if (brk1 && (brk1 > brk))
@@ -937,7 +937,7 @@ static int usb_event_del_detection(char *buf, zpl_uint32 len)
 			usb_event_key_detection(&driver, buf, len);
 			//MODEM_DR_DEBUG("usbkey:(%s)\n", driver.usbkey);
 
-			if(!str_isempty(driver.usbkey, sizeof(driver.usbkey)))
+			if(!strisempty(driver.usbkey, sizeof(driver.usbkey)))
 			//if(os_strlen(driver.usbkey))
 			{
 				int in = modem_usb_driver_usbkey_lookup(driver.usbkey);
@@ -989,7 +989,7 @@ static int usb_event_handle_finsh_one(modem_usb_driver *driver)
 	else if(driver->change == USB_EVENT_ADD)
 	{
 		if( driver->devcnt >= 3 &&
-				!str_isempty(driver->netdevname, sizeof(driver->netdevname)) &&
+				!strisempty(driver->netdevname, sizeof(driver->netdevname)) &&
 				//os_strlen(driver->netdevname) &&
 				driver->vendor &&
 				driver->product)

@@ -37,24 +37,25 @@ extern zpl_char * strndup (const char *, zpl_size_t);
 extern const char *string_have_space(zpl_char* src);
 extern int all_space (const char *str);
 extern int all_isdigit (const char *str);
-extern const char *str_trim(zpl_char* src);
+extern const char *strrmtrim(zpl_char* src);
 
 
 extern zpl_uint32 str_to_hex(zpl_char * room);
 extern zpl_char * hex_to_str(zpl_uint32 hex);
 
-
-extern int strchr_count(zpl_char *src, const char em);
+extern int strccnt(zpl_char *src, const char em);
 /*获取字符的数量，返回最后一个的位置*/
-extern int strchr_step(zpl_char *src, const char em, int step);
+extern int strccntlast(zpl_char *src, const char em, int step);
 /*获取字符的偏移位置*/
-extern int strchr_offset(zpl_char *src, const char em);
+extern int strcoffset(zpl_char *src, const char em);
 /*获取连续两个字符的间隔*/
-extern int strchr_step_num(zpl_char *src, const char em);
+extern int strccstep(zpl_char *src, const char em);
+
+extern int strccreplace(zpl_char *src, char em, char r);
 
 extern zpl_char *strstr_last(const char *dest,const char *src);
 
-extern int str_isempty(zpl_char *dest, zpl_uint32 len);
+extern int strisempty(zpl_char *dest, zpl_uint32 len);
 
 extern zpl_char *os_strstr_last(const char *dest,const char *src);
 

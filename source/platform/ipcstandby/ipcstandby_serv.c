@@ -29,6 +29,7 @@
 #include "stream.h"
 #include "network.h"
 #include "sockunion.h"
+#include "host.h"
 #include "log.h"
 #include "linklist.h"
 #include "sockopt.h"

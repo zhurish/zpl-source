@@ -236,7 +236,7 @@ DEFUN (ip_mroute_dist_vrf,
 
 ALIAS (ip_mroute_dist_vrf,
        ip_mroute_vrf_cmd,
-       "ip mroute "VRF_CMD_STR" A.B.C.D/M (A.B.C.D|INTERFACE) ",
+       "ip mroute "VRF_CMD_STR" A.B.C.D/M (A.B.C.D|INTERFACE)",
        IP_STR
        "Configure static unicast route into MRIB for multicast RPF lookup\n"
 	   VRF_CMD_HELP_STR
@@ -247,6 +247,7 @@ ALIAS (ip_mroute_dist_vrf,
 DEFUN (no_ip_mroute_dist,
        no_ip_mroute_dist_cmd,
        "no ip mroute A.B.C.D/M (A.B.C.D|INTERFACE) <1-255>",
+       NO_STR
        IP_STR
        "Configure static unicast route into MRIB for multicast RPF lookup\n"
        "IP destination prefix (e.g. 10.0.0.0/8)\n"
@@ -272,6 +273,7 @@ ALIAS (no_ip_mroute_dist,
 DEFUN (no_ip_mroute_dist_vrf,
        no_ip_mroute_dist_vrf_cmd,
        "no ip mroute "VRF_CMD_STR" A.B.C.D/M (A.B.C.D|INTERFACE) <1-255>",
+       NO_STR
        IP_STR
        "Configure static unicast route into MRIB for multicast RPF lookup\n"
 	   VRF_CMD_HELP_STR
@@ -2119,9 +2121,10 @@ DEFUN (no_ip_route_mask_flags_tag_distance2_vrf,
 DEFUN (ip_protocol,
        ip_protocol_cmd,
        "ip protocol PROTO route-map ROUTE-MAP",
-       NO_STR
-       "Apply route map to PROTO\n"
+       IP_STR
+       "IP protocol\n"
        "Protocol name\n"
+       "Apply route map to PROTO\n"
        "Route map name\n")
 {
   zpl_int32 i = 0;
@@ -2146,7 +2149,8 @@ DEFUN (no_ip_protocol,
        no_ip_protocol_cmd,
        "no ip protocol PROTO",
        NO_STR
-       "Remove route map from PROTO\n"
+       IP_STR
+       "IP protocol\n"
        "Protocol name\n")
 {
   zpl_int32 i = 0;

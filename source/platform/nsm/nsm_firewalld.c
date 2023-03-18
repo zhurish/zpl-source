@@ -409,9 +409,9 @@ int nsm_firewall_rule_show_api(struct vty *vty, firewall_zone_t *zone, zpl_char 
 				sprintf(s_ifindex, "%s", ifindex2ifname(pstNode->s_ifindex));
 			if(pstNode->d_ifindex)
 				sprintf(d_ifindex, "%s", ifindex2ifname(pstNode->d_ifindex));
-			if(!str_isempty(pstNode->s_mac, sizeof(pstNode->s_mac)))
+			if(!strisempty(pstNode->s_mac, sizeof(pstNode->s_mac)))
 				sprintf(s_mac, "%s", inet_ethernet(pstNode->s_mac));
-			if(!str_isempty(pstNode->d_mac, sizeof(pstNode->d_mac)))
+			if(!strisempty(pstNode->d_mac, sizeof(pstNode->d_mac)))
 				sprintf(d_mac, "%s", inet_ethernet(pstNode->d_mac));
 
 			if(head == 0)

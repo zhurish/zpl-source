@@ -174,6 +174,13 @@ extern "C" {
 #define CMD_MAC_STR			"HHHH-HHHH-HHHH"
 #define CMD_MAC_STR_HELP	"Specify MAC address:HHHH-HHHH-HHHH (e.g. 0012-2234-5631)\n"
 
+#define CMD_DATETIME_STR		"YYYY-MM-DD@HH:MM:SS"
+#define CMD_DATE_STR			"YYYY-MM-DD"
+#define CMD_TIME_STR			"HH:MM:SS"
+
+#define CMD_URLKEY			"PROTO://[USERNAME:PASS@]HOSTNAME[:PORT]"
+#define CMD_URLKEY_STR		"URL String (e.g. [tftp|ftp|sftp|scp|rtsp|ssh|http|https|ws]://[username[:password]@]A.B.C.D|HOSTNAME[:PORT])"
+
 #define CMD_FORWARD_STR			"forward"
 #define CMD_FORWARD_STR_HELP	"Forward\n"
 

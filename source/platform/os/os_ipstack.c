@@ -34,7 +34,7 @@ char * ipstack_sockstr(zpl_socket_t _sock)
 zpl_bool ipstack_invalid(zpl_socket_t _sock)
 {
 #ifdef ZPL_SOCKET_T_POINT	
-	if(_sock == NULL)
+	if(_sock == ZPL_SOCKET_INVALID)
 		return zpl_true;
 #endif		
 #ifdef ZPL_IPCOM_MODULE
@@ -102,7 +102,7 @@ int ipstack_drstroy(zpl_socket_t _sock)
 	if(_sock)
 	{
 		free(_sock);
-		_sock = NULL;
+		_sock = ZPL_SOCKET_INVALID;
 	}
 #endif	
 	return OK;
@@ -270,7 +270,7 @@ zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __
 	{
 		ipstack_drstroy(_sock);
 		#ifdef ZPL_SOCKET_T_POINT
-		_sock = NULL;
+		_sock = ZPL_SOCKET_INVALID;
 		#endif
 		return _sock;	
 	}
@@ -284,7 +284,7 @@ zpl_socket_t ipstack_socket (zpl_ipstack stack, int __domain, int __type, int __
 	{
 		ipstack_drstroy(_sock);
 		#ifdef ZPL_SOCKET_T_POINT
-		_sock = NULL;
+		_sock = ZPL_SOCKET_INVALID;
 		#endif
 		return _sock;	
 	}
@@ -308,7 +308,7 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 			ipstack_close(_sock);
 			ipstack_drstroy(_sock);
 			#ifdef ZPL_SOCKET_T_POINT
-			_sock = NULL;
+			_sock = ZPL_SOCKET_INVALID;
 			#endif
 		}
 	}
@@ -320,7 +320,7 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 			ipstack_close(_sock);
 			ipstack_drstroy(_sock);
 			#ifdef ZPL_SOCKET_T_POINT
-			_sock = NULL;
+			_sock = ZPL_SOCKET_INVALID;
 			#endif
 		}
 	}
@@ -334,7 +334,7 @@ zpl_socket_t ipstack_socket_vrf(zpl_ipstack stack, int domain, zpl_uint32 type, 
 	ipstack_close(_sock);
 	ipstack_drstroy(_sock);
 	#ifdef ZPL_SOCKET_T_POINT
-	_sock = NULL;
+	_sock = ZPL_SOCKET_INVALID;
 	#endif
 	return _sock;
 }
@@ -351,20 +351,20 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 	_socks[0] = ipstack_create(stack);
 	_socks[1] = ipstack_create(stack);
 #ifdef ZPL_SOCKET_T_POINT
-	if(_socks[0] == NULL)
+	if(_socks[0] == ZPL_SOCKET_INVALID)
 	{
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		return ERROR;
 	}
-	if(_socks[1] == NULL)
+	if(_socks[1] == ZPL_SOCKET_INVALID)
 	{
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		return ERROR;
 	}
 #endif	
@@ -386,8 +386,8 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
 		#ifdef ZPL_SOCKET_T_POINT
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		#endif
 	}
 	if(ipstack_invalid(_socks[1]))
@@ -395,8 +395,8 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
 		#ifdef ZPL_SOCKET_T_POINT
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		#endif
 	}
 	return ret;
@@ -405,20 +405,20 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 	_socks[0] = ipstack_create(stack);
 	_socks[1] = ipstack_create(stack);
 #ifdef ZPL_SOCKET_T_POINT
-	if(_socks[0] == NULL)
+	if(_socks[0] == ZPL_SOCKET_INVALID)
 	{
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		return ERROR;
 	}
-	if(_socks[1] == NULL)
+	if(_socks[1] == ZPL_SOCKET_INVALID)
 	{
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		return ERROR;
 	}
 #endif	
@@ -428,8 +428,8 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
 		#ifdef ZPL_SOCKET_T_POINT
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		#endif
 		return ret;
 	}
@@ -441,8 +441,8 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
 		#ifdef ZPL_SOCKET_T_POINT
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		#endif
 	}
 	if(ipstack_invalid(_socks[1]))
@@ -450,8 +450,8 @@ int ipstack_socketpair (zpl_ipstack stack, int __domain, int __type, int __proto
 		ipstack_drstroy(_socks[0]);
 		ipstack_drstroy(_socks[1]);
 		#ifdef ZPL_SOCKET_T_POINT
-		_socks[0] = NULL;
-		_socks[1] = NULL;
+		_socks[0] = ZPL_SOCKET_INVALID;
+		_socks[1] = ZPL_SOCKET_INVALID;
 		#endif
 	}
 	return ret;
@@ -825,7 +825,7 @@ zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
 	{
 		zpl_socket_t retaa;
 		#ifdef ZPL_SOCKET_T_POINT
-		retaa = NULL;
+		retaa = ZPL_SOCKET_INVALID;
 		#endif
 		return retaa;
 	}
@@ -847,7 +847,7 @@ zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
 	{
 		ipstack_drstroy(ret);
 		#ifdef ZPL_SOCKET_T_POINT
-		ret = NULL;
+		ret = ZPL_SOCKET_INVALID;
 		#endif
 	}
 	return ret;
@@ -861,7 +861,7 @@ zpl_socket_t ipstack_accept (zpl_socket_t _sock, void * __addr,
 	{
 		ipstack_drstroy(ret);
 		#ifdef ZPL_SOCKET_T_POINT
-		ret = NULL;
+		ret = ZPL_SOCKET_INVALID;
 		#endif
 	}
 	return ret;
@@ -924,7 +924,7 @@ int ipstack_close (zpl_socket_t _sock)
 		ipstack_fd(_sock) = ERROR;
 	ipstack_drstroy(_sock);	
 	#ifdef ZPL_SOCKET_T_POINT
-	_sock = NULL;
+	_sock = ZPL_SOCKET_INVALID;
 	#endif
 	return ret;
 #else
@@ -939,7 +939,7 @@ int ipstack_close (zpl_socket_t _sock)
 	OSSTACK_DEBUG_DETAIL("socket == close: %s" ,ipstack_sockstr(_sock));
 	ipstack_drstroy(_sock);
 	#ifdef ZPL_SOCKET_T_POINT
-	_sock = NULL;
+	_sock = ZPL_SOCKET_INVALID;
 	#endif
 	return ret;
 #endif

@@ -475,7 +475,7 @@ int modem_nwaddr_atcmd_get(modem_client_t *client)
 		MODEM_CMD_DEBUG("AT+CQPADDR:%s", client->response->buf);
 		if(os_strlen(client->response->buf) >= os_strlen("+CGPADDR: 1,1.1.1.1"))
 		{
-			offset = strchr_step(client->response->buf, ',', 1);
+			offset = strccntlast(client->response->buf, ',', 1);
 			brk = client->response->buf + offset + 1;
 			if(brk)
 			{
@@ -551,7 +551,7 @@ int modem_nwreq_addr_atcmd_get(modem_client_t *client)
 		strchr_empty(client->response->buf, '"');
 		if(os_strlen(client->response->buf) >= os_strlen("+CGPADDR: 1,1.1.1.1"))
 		{
-			offset = strchr_step(client->response->buf, ',', 1);
+			offset = strccntlast(client->response->buf, ',', 1);
 			brk = client->response->buf + offset + 1;
 			MODEM_CMD_DEBUG("AT+CQPADDR:%s", client->response->buf);
 
@@ -634,7 +634,7 @@ int modem_cell_information_atcmd_get(modem_client_t *client)
 		//+CREG: 2,1,"27A6","2CBCB2B",7
 		//int lac = 0, ci = 0;
 		strchr_empty(client->response->buf, '"');
-		if (strchr_count(client->response->buf, ',') == 4)
+		if (strccnt(client->response->buf, ',') == 4)
 		{
 			os_bzero(client->LAC, sizeof(client->LAC));
 			os_bzero(client->CI, sizeof(client->CI));
@@ -649,7 +649,7 @@ int modem_cell_information_atcmd_get(modem_client_t *client)
 			MODEM_CMD_DEBUG("AT+CREG?:%s(%s,%s)", client->response->buf, client->LAC, client->CI);
 			modem_register_state(client, state);
 		}
-		else if (strchr_count(client->response->buf, ',') == 1)
+		else if (strccnt(client->response->buf, ',') == 1)
 		{
 			os_sscanf(client->response->buf, "%*s %*d,%d", &state);
 			MODEM_CMD_DEBUG("AT+CREG?:%s", client->response->buf);

@@ -3380,15 +3380,18 @@ zpl_ulong rib_score_proto(zpl_uchar proto)
 void rib_close_table(struct route_table *table)
 {
 	struct route_node *rn = NULL;
-	zassert(table != NULL);
-	zassert(table->info != NULL);
+	//zassert(table != NULL);
+	//zassert(table->info != NULL);
 #ifdef ZPL_NSM_FPM 	
-	rib_table_info_t *info = table->info;
+	rib_table_info_t *info = NULL;
 #endif	
 	struct rib *rib = NULL;
 
 	if (table)
 	{
+#ifdef ZPL_NSM_FPM 	
+		info = table->info;
+#endif
 		if(table->mutex)
 			os_mutex_lock(table->mutex, OS_WAIT_FOREVER);
 		for (rn = route_top(table); rn; rn = route_next(rn))
@@ -3747,8 +3750,10 @@ int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf)
   		nsm_rtadv_terminate (ipvrf);
 #endif
 		nsm_vrf_free(ipvrf);
-		list_delete_all_node (ipvrf->rid_all_sorted_list);
-		list_delete_all_node (ipvrf->rid_lo_sorted_list);		
+		if(ipvrf->rid_all_sorted_list)
+			list_delete_all_node (ipvrf->rid_all_sorted_list);
+		if(ipvrf->rid_lo_sorted_list)	
+			list_delete_all_node (ipvrf->rid_lo_sorted_list);		
   	}
   	return 0;
 }

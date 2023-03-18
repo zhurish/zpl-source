@@ -2463,6 +2463,18 @@ static int vty_console_read(struct thread *thread)
 	return 0;
 }
 
+void vty_console_atexit (void)
+{
+	if (g_vtyshell.ttycom.fd >= 0)
+    {
+      //tcsetattr (0, TCSANOW, &stdio_orig_termios);
+	  zlog_info(MODULE_LIB, "console exit and resume");
+	  fprintf(stdout, "console exit and resume\r\n");
+	  tcsetattr(0, TCSANOW, &g_vtyshell.ttycom.old_termios);
+	  g_vtyshell.ttycom.fd = -1;
+    }
+}
+
 static struct vty *vty_console_new(const char *tty, zpl_socket_t vty_sock)
 {
 	struct vty *vty;
@@ -2476,6 +2488,7 @@ static struct vty *vty_console_new(const char *tty, zpl_socket_t vty_sock)
 	{
 		ipstack_fd(vty->wfd) = STDOUT_FILENO;
 	}
+	atexit (vty_console_atexit);
 	return vty;
 }
 
@@ -2597,9 +2610,14 @@ static void vty_console_close(struct vty *vty)
 	}
 	else
 	{
-		//tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
-		tcsetattr(ipstack_fd(vty->fd), TCSANOW, &g_vtyshell.ttycom.old_termios);
-		g_vtyshell.ttycom.fd = -1;
+		if(g_vtyshell.ttycom.fd >= 0)
+		{
+			//tcflush(ipstack_fd(vty->wfd), TCIOFLUSH);
+			zlog_info(MODULE_LIB, "console exit and resume");
+			fprintf(stdout, "console exit and resume\r\n");
+			tcsetattr(ipstack_fd(vty->fd), TCSANOW, &g_vtyshell.ttycom.old_termios);
+			g_vtyshell.ttycom.fd = -1;
+		}
 	}
 	/* OK free vty. */
 	XFREE(MTYPE_VTY, vty);
@@ -2671,6 +2689,8 @@ static int vty_stdio_attribute(void)
 	{
 		if (!tcgetattr(ipstack_fd(g_vtyshell.console_vty->fd), &g_vtyshell.ttycom.old_termios))
 		{
+			zlog_info(MODULE_LIB, "console open and save termios");
+	  		fprintf(stdout, "console open and save termios\r\n");
 			memcpy(&g_vtyshell.ttycom.termios, &g_vtyshell.ttycom.old_termios, sizeof(struct termios));
 			#if 0
 			cfmakeraw(&g_vtyshell.ttycom.termios);
@@ -2754,7 +2774,7 @@ void vty_tty_init(const char *tty)
 	else
 	{
 		ttyfd = ipstack_init(IPSTACK_OS, STDIN_FILENO);
-		ipstack_fd(ttyfd) = STDIN_FILENO;
+		ipstack_fd(ttyfd) = g_vtyshell.ttycom.fd = STDIN_FILENO;
 	}
 	if (g_vtyshell.init == 1)
 	{
@@ -2798,8 +2818,9 @@ static int vty_accept(struct eloop *thread)
 	zpl_char buf[SU_ADDRSTRLEN];
 	accept_sock = ELOOP_FD(thread);
 	g_vtyshell.t_eloop = NULL;
-		/* We continue hearing vty ipstack_socket. */
-		vty_event(VTY_SERV, accept_sock, NULL);
+
+	/* We continue hearing vty ipstack_socket. */
+	vty_event(VTY_SERV, accept_sock, NULL);
 
 	memset(&su, 0, sizeof(union sockunion));
 

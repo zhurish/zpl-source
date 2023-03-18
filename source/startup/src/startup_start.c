@@ -23,7 +23,9 @@
 #include "nsm_include.h"
 #include "nsm_main.h"
 #include "hal_include.h"
+#ifdef ZPL_BSP_MODULE
 #include "bsp_driver.h"
+#endif
 #include "startup_module.h"
 #include "startup_disk.h"
 #include "startup_start.h"
@@ -38,6 +40,7 @@ static void os_sighup(int signo, void *p)
 	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
+	vty_console_atexit();
 	startup_module_stop();
 	startup_module_exit();
 	_exit(0);
@@ -49,6 +52,7 @@ static void os_sigint(int signo, void *p)
 	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
+	vty_console_atexit();
 	startup_module_stop();
 	startup_module_exit();
 	_exit(0);
@@ -86,6 +90,7 @@ static void os_sigterm(int signo, void *p)
 	zlog_warn(MODULE_LIB, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fprintf(stdout, "++++++++++++++++++++%s++++++++++++++++++++signo=%d\r\n",__func__, signo);
 	fflush(stdout);
+	vty_console_atexit();
 	startup_module_stop();
 	startup_module_exit();
 	_exit(0);

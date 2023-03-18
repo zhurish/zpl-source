@@ -170,7 +170,7 @@ int all_isdigit (const char *str)
 
 }
 /*去除头尾空格*/
-const char *str_trim(zpl_char* src)
+const char *strrmtrim(zpl_char* src)
 {
 	zpl_char *start = NULL, *temp = NULL;			//定义去除空格后字符串的头尾指针和遍历指针
 	temp = src;
@@ -217,8 +217,8 @@ zpl_char * hex_to_str(zpl_uint32 hex)
 
 
 
-/*获取某个字符数量*/
-int strchr_count(zpl_char *src, const char em)
+/* 获取某个字符数量 strccnt */
+int strccnt(zpl_char *src, const char em)
 {
 	zpl_char *p = src;
 	assert(src);
@@ -233,7 +233,7 @@ int strchr_count(zpl_char *src, const char em)
 	return j;
 }
 /*获取字符的数量，返回最后一个的位置*/
-int strchr_step(zpl_char *src, const char em, int step)
+int strccntlast(zpl_char *src, const char em, int step)
 {
 	zpl_char *p = src;
 	assert(src);
@@ -250,7 +250,7 @@ int strchr_step(zpl_char *src, const char em, int step)
 	return (i < count)? i:0;
 }
 /*获取字符的偏移位置*/
-int strchr_offset(zpl_char *src, const char em)
+int strcoffset(zpl_char *src, const char em)
 {
 	zpl_char *p = src;
 	assert(src);
@@ -267,7 +267,7 @@ int strchr_offset(zpl_char *src, const char em)
 	return j ? i:0;
 }
 /*获取连续两个字符的间隔*/
-int strchr_step_num(zpl_char *src, const char em)
+int strccstep(zpl_char *src, const char em)
 {
 	zpl_char *p = src;
 	assert(src);
@@ -306,8 +306,22 @@ zpl_char *os_strstr_last(const char *dest,const char *src)
 	return (zpl_char *)last;
 }
 
+int strccreplace(zpl_char *src, char em, char r)
+{
+	zpl_char *p = src;
+	assert(src);
+	zpl_uint32 i = 0, j = 0, count = os_strlen(src);
+	for(i = 0; i < count; i++)
+	{
+		if(p[i] == em)
+		{
+			p[i] = r;
+		}
+	}
+	return j;
+}
 
-int str_isempty(zpl_char *dest, zpl_uint32 len)
+int strisempty(zpl_char *dest, zpl_uint32 len)
 {
 	zpl_char buf[2048];
 	os_memset(buf, 0, sizeof(buf));

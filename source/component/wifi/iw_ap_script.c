@@ -382,7 +382,7 @@ static int iw_ap_script_check(iw_ap_t *iw_ap)
 	*/
 	if(iw_ap->ifindex &&
 		strlen(iw_ap->SSID) &&
-		str_isempty(iw_ap->BSSID, sizeof(iw_ap->BSSID)))
+		strisempty(iw_ap->BSSID, sizeof(iw_ap->BSSID)))
 	{
 		struct interface *ifp = NULL;
 		ifp = if_lookup_by_index(iw_ap->ifindex);
@@ -394,7 +394,7 @@ static int iw_ap_script_check(iw_ap_t *iw_ap)
 	}
 	if(iw_ap->ifindex &&
 		strlen(iw_ap->SSID) &&
-		!str_isempty(iw_ap->BSSID, sizeof(iw_ap->BSSID))/* &&
+		!strisempty(iw_ap->BSSID, sizeof(iw_ap->BSSID))/* &&
 		//strlen(iw_ap->BSSID)
 		iw_ap->hw_mode*/)
 		return OK;

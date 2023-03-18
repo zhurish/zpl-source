@@ -440,6 +440,8 @@ extern void vty_self_insert(struct vty *vty, zpl_char c);
 extern int vty_write_hello(struct vty *vty);
 
 extern void vty_console_exit(struct vty *vty);
+extern void vty_console_atexit (void);
+
 extern int vty_shell(struct vty *);
 extern int vty_shell_serv (struct vty *);
 

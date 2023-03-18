@@ -22,7 +22,9 @@
 #include "nsm_include.h"
 #include "nsm_main.h"
 #include "hal_include.h"
+#ifdef ZPL_BSP_MODULE
 #include "bsp_driver.h"
+#endif
 #ifdef ZPL_ACTIVE_STANDBY
 #include "ipcstandby.h"
 #endif

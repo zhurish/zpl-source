@@ -42,7 +42,7 @@ const char *webs_get_var(Webs *wp, const char *var, const char *defaultGetValue)
 		if(strcasecmp(value, "undefined") == 0)
 			return NULL;
 
-		return str_trim(value);
+		return strrmtrim(value);
 	}
 	return NULL;
 }

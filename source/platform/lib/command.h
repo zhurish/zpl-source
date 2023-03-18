@@ -37,6 +37,8 @@ extern "C" {
 #define CMD_IUSPV_SUPPORT
 #endif
 
+//#define CMD_STRICT_CHECK //严格检测 
+
 #include "cli_node.h"
 #include "cli_helper.h"
 
@@ -121,6 +123,10 @@ enum cmd_terminal_type
   TERMINAL_IPV4_PREFIX,
   TERMINAL_IPV6,
   TERMINAL_IPV6_PREFIX,
+  TERMINAL_URLSTR,
+  TERMINAL_DATETIME,
+  TERMINAL_DATE,
+  TERMINAL_TIME,
 };
 
 /* argument to be recorded on argv[] if it's not a literal */
@@ -328,7 +334,7 @@ struct cmd_token
  * for a Terminal Token, the exception are optional variables and varag.
  *
  * There is one special case that is used in some places of Quagga that should be
- * pointed out here zpl_int16ly. An example would be "password (8|) WORD". This
+ * pointed out here shortly. An example would be "password (8|) WORD". This
  * construct is used to have fixed strings communicated as arguments. (The "8"
  * will be passed down as an argument in this case) It does not mean that
  * the "8" is optional. Another historic and possibly surprising property of
@@ -368,7 +374,7 @@ struct cmd_token
  * helpstr
  * =======
  *
- * The helpstr is used to show a zpl_int16 explantion for the commands that
+ * The helpstr is used to show a short explantion for the commands that
  * are available when the user presses '?' on the CLI. It is the concatenation
  * of the helpstrings for all the tokens that make up the command.
  *

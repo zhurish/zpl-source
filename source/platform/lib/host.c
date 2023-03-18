@@ -504,7 +504,7 @@ host_config_get_api (zpl_uint32 cmd, void *pVoid)
 		ret = OK;
 		break;
 	case API_GET_SYSMAC_CMD:
-		if (!str_isempty(_global_host.sysmac, sizeof(_global_host.sysmac)))
+		if (!strisempty(_global_host.sysmac, sizeof(_global_host.sysmac)))
 		{
 			if(strValue)
 				memcpy(strValue, _global_host.sysmac, 6);
@@ -512,7 +512,7 @@ host_config_get_api (zpl_uint32 cmd, void *pVoid)
 		ret = OK;
 		break;
 	case API_GET_SERIAL_CMD:
-		if (!str_isempty(_global_host.serial, sizeof(_global_host.serial)))
+		if (!strisempty(_global_host.serial, sizeof(_global_host.serial)))
 		{
 			if(strValue)
 				os_strcpy(strValue, _global_host.serial);
