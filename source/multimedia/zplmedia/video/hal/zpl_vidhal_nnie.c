@@ -616,7 +616,7 @@ int zpl_vidhal_svp_nnie_FillRect(VIDEO_FRAME_INFO_S *pstFrmInfo, ZPL_VIDHAL_SVP_
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(NNIE, EVENT) && ZPL_MEDIA_DEBUG(NNIE, HARDWARE))
-            zpl_media_debugmsg_err("Vgs begin job fail,Error(%#x)\n", s32Ret);
+            zm_msg_err("Vgs begin job fail,Error(%#x)\n", s32Ret);
         return s32Ret;
     }
 
@@ -637,7 +637,7 @@ int zpl_vidhal_svp_nnie_FillRect(VIDEO_FRAME_INFO_S *pstFrmInfo, ZPL_VIDHAL_SVP_
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(NNIE, EVENT) && ZPL_MEDIA_DEBUG(NNIE, HARDWARE))
-            		zpl_media_debugmsg_err("HI_MPI_VGS_AddCoverTask fail,Error(%#x)\n", s32Ret);
+            		zm_msg_err("HI_MPI_VGS_AddCoverTask fail,Error(%#x)\n", s32Ret);
                 HI_MPI_VGS_CancelJob(VgsHandle);
                 return s32Ret;
             }
@@ -650,7 +650,7 @@ int zpl_vidhal_svp_nnie_FillRect(VIDEO_FRAME_INFO_S *pstFrmInfo, ZPL_VIDHAL_SVP_
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(NNIE, EVENT) && ZPL_MEDIA_DEBUG(NNIE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob fail,Error(%#x)\n", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob fail,Error(%#x)\n", s32Ret);
         HI_MPI_VGS_CancelJob(VgsHandle);
         return s32Ret;
     }

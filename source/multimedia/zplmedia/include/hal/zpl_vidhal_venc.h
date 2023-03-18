@@ -18,23 +18,22 @@ extern "C" {
 
 
 
-extern int zpl_vidhal_venc_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
-extern int zpl_vidhal_venc_reset(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
-extern int zpl_vidhal_venc_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
-extern int zpl_vidhal_venc_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
-extern int zpl_vidhal_venc_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_create(zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_reset(zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_start(zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_stop(zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_destroy(zpl_media_video_encode_t *venc);
 
-extern int zpl_vidhal_venc_update_fd(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_update_fd(zpl_media_video_encode_t *venc);
 
-extern int zpl_vidhal_venc_snap_start(zpl_int32 vencchn, zpl_video_size_t* pstSize, zpl_bool bSupportDCF);
-extern int zpl_vidhal_venc_snap_stop(zpl_int32 vencchn);
-extern int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt);
+extern int zpl_vidhal_venc_snap_channel_create(zpl_int32 vencchn, zpl_video_size_t* pstSize, zpl_bool bSupportDCF);
+extern int zpl_vidhal_venc_snap_channel_destroy(zpl_int32 vencchn);
+extern int zpl_vidhal_venc_snap_channel_start(zpl_int32 vencchn, zpl_int32 SnapCnt, void *);
 
 
-extern int zpl_vidhal_venc_request_IDR(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
-extern int zpl_vidhal_venc_enable_IDR(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc, zpl_bool bEnableIDR);
-extern int zpl_vidhal_venc_frame_recvfrom(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
-extern int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_request_IDR(zpl_media_video_encode_t *venc);
+extern int zpl_vidhal_venc_enable_IDR(zpl_media_video_encode_t *venc, zpl_bool bEnableIDR);
+extern int zpl_vidhal_venc_frame_recvfrom(zpl_media_video_encode_t *venc);
 extern int zpl_vidhal_venc_frame_sendto(zpl_media_video_encode_t *venc, zpl_int32 id, zpl_int32 vencchn, void *p, zpl_int32 s32MilliSec);
 
 #ifdef __cplusplus

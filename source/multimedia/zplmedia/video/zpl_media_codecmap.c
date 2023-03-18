@@ -139,3 +139,138 @@ int zpl_media_codec_key(const char *name)
     }
     return RTP_MEDIA_PAYLOAD_NONE;
 }
+
+static const struct media_codec_desc media_format_descmap[] = {
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_NONE,        "NONE"),
+	MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_CIF,         "CIF"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_360P,        "360P(640*360)"),/* 640 * 360 */
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_D1_PAL,      "D1_PAL(720*576)"),/* 720 * 576 */
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_D1_NTSC,     "D1_NTSC(720*480)"),/* 720 * 480 */
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_720P,        "720P(1280*720)"),/* 1280 * 720  */
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_1080P,       "1080P(1920*1080)"),/* 1920 * 1080 */
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_2560x1440,   "2560x1440"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_2592x1520,   "2592x1520"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_2592x1536,   "2592x1944"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_2592x1944,   "2592x1944"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_2688x1536,   "2688x1536"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_2716x1524,   "2716x1524"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_3840x2160,   "3840x2160"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_4096x2160,   "4096x2160"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_3000x3000,   "3000x3000"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_4000x3000,   "4000x3000"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_7680x4320,   "7680x4320"),
+    MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_3840x8640,   "3840x8640"),
+	MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_640X480,     "640X480"),
+	MEDIA_CODEC_DESC_ENTRY(ZPL_VIDEO_FORMAT_MAX,         "MAX"),
+};
+
+const char *zpl_media_format_name(int key)
+{
+    int i = 0;
+    for(i = 0; i < sizeof(media_format_descmap)/sizeof(media_format_descmap[0]); i++)
+    {
+        if(media_format_descmap[i].type == key)
+            return media_format_descmap[i].string;
+    }
+    return "none";
+}
+
+int zpl_media_video_format_resolution(ZPL_VIDEO_FORMAT_E format, zpl_video_size_t* pstSize)
+{
+    switch (format)
+    {
+        case ZPL_VIDEO_FORMAT_CIF:   /* 352 * 288 */
+            pstSize->width  = 352;
+            pstSize->height = 288;
+            break;
+
+        case ZPL_VIDEO_FORMAT_360P:   /* 640 * 360 */
+            pstSize->width  = 640;
+            pstSize->height = 360;
+            break;
+
+        case ZPL_VIDEO_FORMAT_D1_PAL:   /* 720 * 576 */
+            pstSize->width  = 720;
+            pstSize->height = 576;
+            break;
+
+        case ZPL_VIDEO_FORMAT_D1_NTSC:   /* 720 * 480 */
+            pstSize->width  = 720;
+            pstSize->height = 480;
+            break;
+
+        case ZPL_VIDEO_FORMAT_720P:   /* 1280 * 720 */
+            pstSize->width  = 1280;
+            pstSize->height = 720;
+            break;
+
+        case ZPL_VIDEO_FORMAT_1080P:  /* 1920 * 1080 */
+            pstSize->width  = 1920;
+            pstSize->height = 1080;
+            break;
+
+        case ZPL_VIDEO_FORMAT_2592x1520:
+            pstSize->width  = 2592;
+            pstSize->height = 1520;
+            break;
+
+        case ZPL_VIDEO_FORMAT_2592x1944:
+            pstSize->width  = 2592;
+            pstSize->height = 1944;
+            break;
+
+        case ZPL_VIDEO_FORMAT_2592x1536:
+            pstSize->width  = 2592;
+            pstSize->height = 1536;
+            break;
+
+        case ZPL_VIDEO_FORMAT_2560x1440:
+            pstSize->width  = 2560;
+            pstSize->height = 1440;
+            break;
+
+        case ZPL_VIDEO_FORMAT_2716x1524:
+            pstSize->width  = 2716;
+            pstSize->height = 1524;
+            break;
+
+        case ZPL_VIDEO_FORMAT_3840x2160:
+            pstSize->width  = 3840;
+            pstSize->height = 2160;
+            break;
+
+        case ZPL_VIDEO_FORMAT_3000x3000:
+            pstSize->width  = 3000;
+            pstSize->height = 3000;
+            break;
+
+        case ZPL_VIDEO_FORMAT_4000x3000:
+            pstSize->width  = 4000;
+            pstSize->height = 3000;
+            break;
+
+        case ZPL_VIDEO_FORMAT_4096x2160:
+            pstSize->width  = 4096;
+            pstSize->height = 2160;
+            break;
+
+        case ZPL_VIDEO_FORMAT_7680x4320:
+            pstSize->width  = 7680;
+            pstSize->height = 4320;
+            break;
+        case ZPL_VIDEO_FORMAT_3840x8640:
+            pstSize->width = 3840;
+            pstSize->height = 8640;
+            break;
+
+        case ZPL_VIDEO_FORMAT_2688x1536:
+            pstSize->width  = 2688;
+            pstSize->height = 1536;
+            break;
+
+        default:
+            return ERROR;
+    }
+
+    return OK;
+}

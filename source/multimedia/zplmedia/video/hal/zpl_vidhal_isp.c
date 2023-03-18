@@ -436,7 +436,7 @@ int zpl_vidhal_sensor_get_ispattr(ZPL_SENSOR_TYPE_E snstype, void *p)
 
 static ISP_SNS_OBJ_S *zpl_vidhal_isp_get_sendor_obj(ZPL_SENSOR_TYPE_E enSnsType)
 {
-    zpl_media_debugmsg_debug("================zpl_vidhal_isp_get_sendor_obj==enSnsType=%d\n", enSnsType);
+    zm_msg_debug("================zpl_vidhal_isp_get_sendor_obj==enSnsType=%d\n", enSnsType);
     switch (enSnsType)
     {
 #if 1
@@ -520,13 +520,13 @@ static void *zpl_vidhal_isp_thread(void *param)
     snprintf(szThreadName, 20, "ISP%d_RUN", IspDev);
     prctl(PR_SET_NAME, szThreadName, 0, 0, 0);
 
-    zpl_media_debugmsg_debug("ISP Dev %d running\n", IspDev);
+    zm_msg_debug("ISP Dev %d running\n", IspDev);
     s32Ret = HI_MPI_ISP_Run(IspDev);
 
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_ISP_Run failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_ISP_Run failed with %#x!\n", s32Ret);
     }
 
     return NULL;
@@ -585,13 +585,13 @@ static int zpl_vidhal_isp_sensor_regiter_callback(ISP_DEV IspDev, ZPL_SENSOR_TYP
 
 
     if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-        zpl_media_debugmsg_info("============= snstype=%d ispdev=%d\n", snstype, IspDev);
+        zm_msg_info("============= snstype=%d ispdev=%d\n", snstype, IspDev);
     pstSnsObj = zpl_vidhal_isp_get_sendor_obj(snstype);
 
     if (HI_NULL == pstSnsObj)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("snstype %d not exist!\n", snstype);
+            zm_msg_err("snstype %d not exist!\n", snstype);
         return HI_FAILURE;
     }
     memset(&stAeLib, 0, sizeof(ALG_LIB_S));
@@ -609,14 +609,14 @@ static int zpl_vidhal_isp_sensor_regiter_callback(ISP_DEV IspDev, ZPL_SENSOR_TYP
         if (s32Ret != HI_SUCCESS)
         {
             if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("sensor_register_callback failed with %#x!\n", s32Ret);
+                zm_msg_err("sensor_register_callback failed with %#x!\n", s32Ret);
             return s32Ret;
         }
     }
     else
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("sensor_register_callback failed with HI_NULL!\n");
+            zm_msg_err("sensor_register_callback failed with HI_NULL!\n");
     }
     return HI_SUCCESS;
 }
@@ -650,14 +650,14 @@ static int zpl_vidhal_isp_sensor_unregiter_callback(ISP_DEV IspDev, ZPL_SENSOR_T
         if (s32Ret != HI_SUCCESS)
         {
             if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("sensor_unregister_callback failed with %#x!\n", s32Ret);
+                zm_msg_err("sensor_unregister_callback failed with %#x!\n", s32Ret);
             return s32Ret;
         }
     }
     else
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("sensor_unregister_callback failed with HI_NULL!\n");
+            zm_msg_err("sensor_unregister_callback failed with HI_NULL!\n");
     }
 
     return HI_SUCCESS;
@@ -676,7 +676,7 @@ static int zpl_vidhal_isp_start_hw(ISP_DEV IspDev)
     if (0 != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("create isp running thread failed!, error: %d, %s\r\n", s32Ret, strerror(s32Ret));
+            zm_msg_err("create isp running thread failed!, error: %d, %s\r\n", s32Ret, strerror(s32Ret));
         goto out;
     }
 
@@ -719,7 +719,7 @@ static int zpl_vidhal_isp_bind_sensor(ISP_DEV IspDev, ZPL_SENSOR_TYPE_E enSnsTyp
     if (HI_NULL == pstSnsObj)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("enSnsType %d not exist!\n", enSnsType);
+            zm_msg_err("enSnsType %d not exist!\n", enSnsType);
         return HI_FAILURE;
     }
 
@@ -742,14 +742,14 @@ static int zpl_vidhal_isp_bind_sensor(ISP_DEV IspDev, ZPL_SENSOR_TYPE_E enSnsTyp
         if (s32Ret != HI_SUCCESS)
         {
             if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("set sensor bus info failed with %#x!\n", s32Ret);
+                zm_msg_err("set sensor bus info failed with %#x!\n", s32Ret);
             return s32Ret;
         }
     }
     else
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("not support set sensor bus info!\n");
+            zm_msg_err("not support set sensor bus info!\n");
         return HI_FAILURE;
     }
 
@@ -797,7 +797,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("register sensor %d to ISP %d failed\n", sensor->sns_type, ViPipe);
+            zm_msg_err("register sensor %d to ISP %d failed\n", sensor->sns_type, ViPipe);
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -809,7 +809,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
         if (HI_SUCCESS != s32Ret)
         {
             if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
+                zm_msg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
             zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
             return HI_FAILURE;
         }
@@ -821,7 +821,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
         if (HI_SUCCESS != s32Ret)
         {
             if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
+                zm_msg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
             zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
             return HI_FAILURE;
         }
@@ -831,7 +831,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_ISP_Aelib_Callback failed\n");
+            zm_msg_err("SAMPLE_COMM_ISP_Aelib_Callback failed\n");
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -841,7 +841,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_ISP_Awblib_Callback failed\n");
+            zm_msg_err("SAMPLE_COMM_ISP_Awblib_Callback failed\n");
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -851,7 +851,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (s32Ret != HI_SUCCESS)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("Init Ext memory failed with(pipe=%d) %#x!\n", ViPipe, s32Ret);
+            zm_msg_err("Init Ext memory failed with(pipe=%d) %#x!\n", ViPipe, s32Ret);
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -860,7 +860,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (s32Ret != HI_SUCCESS)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("SetPubAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("SetPubAttr failed with %#x!\n", s32Ret);
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -870,7 +870,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("GetDehazeAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("GetDehazeAttr failed with %#x!\n", s32Ret);
         zpl_vidhal_isp_stop_hw(ViPipe, u32SnsId, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -886,7 +886,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("SetDehazeAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("SetDehazeAttr failed with %#x!\n", s32Ret);
         zpl_vidhal_isp_stop_hw(ViPipe, u32SnsId, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -901,7 +901,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (s32Ret != HI_SUCCESS)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("ISP Init failed with %#x!\n", s32Ret);
+            zm_msg_err("ISP Init failed with %#x!\n", s32Ret);
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -910,7 +910,7 @@ int zpl_vidhal_isp_start_one(zpl_vidhal_isp_sensor_t *sensor)
     if (s32Ret != HI_SUCCESS)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("ISP Run failed with %#x!\n", s32Ret);
+            zm_msg_err("ISP Run failed with %#x!\n", s32Ret);
         zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
         return HI_FAILURE;
     }
@@ -965,7 +965,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (HI_SUCCESS != s32Ret)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("register sensor %d to ISP %d failed\n", sensor->sns_type, ViPipe);
+                    zm_msg_err("register sensor %d to ISP %d failed\n", sensor->sns_type, ViPipe);
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -977,7 +977,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
                 if (HI_SUCCESS != s32Ret)
                 {
                     if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
+                        zm_msg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
                     zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                     return HI_FAILURE;
                 }
@@ -989,7 +989,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
                 if (HI_SUCCESS != s32Ret)
                 {
                     if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
+                        zm_msg_err("register sensor %d bus id %d failed\n", sensor->sns_type, sensor->s32BusId);
                     zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                     return HI_FAILURE;
                 }
@@ -999,7 +999,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (HI_SUCCESS != s32Ret)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("SAMPLE_COMM_ISP_Aelib_Callback failed\n");
+                    zm_msg_err("SAMPLE_COMM_ISP_Aelib_Callback failed\n");
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -1009,7 +1009,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (HI_SUCCESS != s32Ret)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("SAMPLE_COMM_ISP_Awblib_Callback failed\n");
+                    zm_msg_err("SAMPLE_COMM_ISP_Awblib_Callback failed\n");
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -1019,7 +1019,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (s32Ret != HI_SUCCESS)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Init Ext memory failed with(pipe=%d) %#x!\n", ViPipe, s32Ret);
+                    zm_msg_err("Init Ext memory failed with(pipe=%d) %#x!\n", ViPipe, s32Ret);
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -1029,7 +1029,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (s32Ret != HI_SUCCESS)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("SetPubAttr failed with %#x!\n", s32Ret);
+                    zm_msg_err("SetPubAttr failed with %#x!\n", s32Ret);
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -1039,7 +1039,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (s32Ret != HI_SUCCESS)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("ISP Init failed with %#x!\n", s32Ret);
+                    zm_msg_err("ISP Init failed with %#x!\n", s32Ret);
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -1049,7 +1049,7 @@ int zpl_vidhal_isp_start(zpl_vidhal_isp_sensor_t *sensor)
             if (s32Ret != HI_SUCCESS)
             {
                 if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("ISP Run failed with %#x!\n", s32Ret);
+                    zm_msg_err("ISP Run failed with %#x!\n", s32Ret);
                 zpl_vidhal_isp_stop_hw(ViPipe, sensor->sns_type);
                 return HI_FAILURE;
             }
@@ -1138,7 +1138,7 @@ int zpl_vidhal_isp_setparam(zpl_int32 pipe, zpl_uint32 frameRate)
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err(" HI_MPI_ISP_GetCtrlParam  failed(%s)", zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" HI_MPI_ISP_GetCtrlParam  failed(%s)", zpl_syshal_strerror(s32Ret));
         return s32Ret;
     }
     HI_U32 u32FrameRate = frameRate ? frameRate : 30U;
@@ -1148,7 +1148,7 @@ int zpl_vidhal_isp_setparam(zpl_int32 pipe, zpl_uint32 frameRate)
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ISP, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err(" HI_MPI_ISP_SetCtrlParam failed(%s)", zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" HI_MPI_ISP_SetCtrlParam failed(%s)", zpl_syshal_strerror(s32Ret));
         return s32Ret;
     }
     return HI_SUCCESS;

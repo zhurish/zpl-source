@@ -37,7 +37,7 @@ static int zpl_media_file_size(const char *name)
         fclose(fp);
     }
 #endif
-    zpl_media_debugmsg_debug(" filesize=%d", filesize);
+    zm_msg_debug(" filesize=%d", filesize);
     return (int)filesize;
 }
 
@@ -46,7 +46,7 @@ char *zpl_media_file_basename(const char *name)
     static char basename[128];
     memset(basename, 0, sizeof(basename));
     snprintf(basename, sizeof(basename), "%s%s", ZPL_MEDIA_BASE_PATH, name);
-    //zpl_media_debugmsg_debug(" basename=%s", basename);
+    //zm_msg_debug(" basename=%s", basename);
     return basename;
 }
 static char *zpl_media_filedesc_name(const char *name)
@@ -197,7 +197,7 @@ zpl_media_file_t *zpl_media_file_create(zpl_media_channel_t *chn, const char *na
             {
                 media_file->_mutex = os_mutex_name_create("media_file_mutex");
             }
-            zpl_media_debugmsg_debug("=====================Media file %p", media_file);
+            zm_msg_debug("=====================Media file %p", media_file);
             return media_file;
         }
         else
@@ -205,7 +205,7 @@ zpl_media_file_t *zpl_media_file_create(zpl_media_channel_t *chn, const char *na
             free(media_file);
         }
     }
-    zpl_media_debugmsg_error("can not create media file for media channel(%s)", name);
+    zm_msg_error("can not create media file for media channel(%s)", name);
     return NULL;
 }
 
@@ -226,7 +226,7 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
             media_file->file_size = zpl_media_file_size((name[0] == '/') ? name : zpl_media_file_basename(name));
             if (media_file->file_size <= 0)
             {
-                zpl_media_debugmsg_error("can not get media file size for media channel(%s)", name);
+                zm_msg_error("can not get media file size for media channel(%s)", name);
                 zpl_media_file_close(media_file);
                 free(media_file);
                 return NULL;
@@ -251,7 +251,7 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
                 if (media_file->filedesc.video.codectype != ZPL_VIDEO_CODEC_NONE)
                 {
                     media_file->get_frame = zpl_media_adap_get_frame_get(media_file->filedesc.video.codectype);
-                    zpl_media_debugmsg_debug("media channel(%s) is h264 media file", name);
+                    zm_msg_debug("media channel(%s) is h264 media file", name);
                 }
             }
             else
@@ -300,7 +300,7 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
             {
                 media_file->_mutex = os_mutex_name_create("media_file_mutex");
             }
-            zpl_media_debugmsg_debug("=====================Media file %p", media_file);
+            zm_msg_debug("=====================Media file %p", media_file);
             return media_file;
         }
         else
@@ -308,7 +308,7 @@ zpl_media_file_t *zpl_media_file_open(const char *name)
             free(media_file);
         }
     }
-    zpl_media_debugmsg_error("can not create media file for media channel(%s)", name);
+    zm_msg_error("can not create media file for media channel(%s)", name);
     return NULL;
 }
 int zpl_media_file_reopen(zpl_media_file_t *media_file)
@@ -324,7 +324,7 @@ int zpl_media_file_reopen(zpl_media_file_t *media_file)
         ZPL_MEDIA_FILE_UNLOCK(media_file);
         return 0;
     }
-    zpl_media_debugmsg_error("can not open media file size for media channel(%s)", media_file->filename);
+    zm_msg_error("can not open media file size for media channel(%s)", media_file->filename);
     ZPL_MEDIA_FILE_UNLOCK(media_file);
     return -1;
 }
@@ -447,7 +447,7 @@ int zpl_media_file_read(zpl_media_file_t *media_file, zpl_media_bufcache_t *bufc
             ZPL_MEDIA_FILE_UNLOCK(media_file);
             return len;
         }
-        zpl_media_debugmsg_error("can not get media frame data for media channel(%s)", media_file->filename);
+        zm_msg_error("can not get media frame data for media channel(%s)", media_file->filename);
         ZPL_MEDIA_FILE_UNLOCK(media_file);
         return -1;
     }
@@ -501,7 +501,7 @@ int zpl_media_file_extradata(zpl_media_file_t *media_file, zpl_video_extradata_t
             }
             else
             {
-                zpl_media_debugmsg_error("can not get media frame data for media channel(%s)", media_file->filename);
+                zm_msg_error("can not get media frame data for media channel(%s)", media_file->filename);
                 break;
             }
         }

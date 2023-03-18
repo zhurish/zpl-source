@@ -10,111 +10,577 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
+static int zpl_media_video_encode_read_thread(struct thread *encode);
+
+int zpl_media_video_encode_request_IDR(zpl_media_video_encode_t *encode)
+{
+	int ret = -1;
+	zpl_video_assert(encode);
+	zpl_video_assert(encode->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	ret = zpl_vidhal_venc_request_IDR(encode);
+	if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+	{
+		zm_msg_debug("request IDR encode channel(%d) ret=%d", encode->venc_channel, ret);
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+
+int zpl_media_video_encode_enable_IDR(zpl_media_video_encode_t *encode, zpl_bool bEnableIDR)
+{
+	int ret = -1;
+	zpl_video_assert(encode);
+	zpl_video_assert(encode->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	ret = zpl_vidhal_venc_enable_IDR(encode, bEnableIDR);
+	if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+	{
+		zm_msg_debug("enable IDR encode channel(%d) ret=%d", encode->venc_channel, ret);
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+
+int zpl_media_video_encode_encode_reset(zpl_media_video_encode_t *encode)
+{
+	int ret = -1;
+	zpl_video_assert(encode);
+	zpl_video_assert(encode->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (encode && encode->t_read)
+	{
+		thread_cancel(encode->t_read);
+		encode->t_read = NULL;
+	}
+	ret = zpl_vidhal_venc_reset(encode);
+	if (ret != OK)
+	{
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+		return ret;
+	}
+	if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+	{
+		zm_msg_debug("reset IDR encode channel(%d) ret=%d", encode->venc_channel, ret);
+	}
+	zpl_vidhal_venc_update_fd(encode);
+	if (encode->t_master && encode && encode->t_read == NULL && !ipstack_invalid(encode->vencfd))
+	{
+		encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
+	}
+	zpl_vidhal_venc_request_IDR(encode);
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+
+int zpl_media_video_encode_start(zpl_void *master, zpl_media_video_encode_t *encode)
+{
+	int ret = ERROR;
+	zpl_video_assert(encode);
+	zpl_video_assert(encode->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (encode->t_master == NULL)
+		encode->t_master = master;
+	if (!ZPL_TST_BIT(encode->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_venc_start(encode);
+		if (ret != OK)
+		{
+			zm_msg_error("start encode channel(%d) failed", encode->venc_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			return ret;
+		}
+	}
+	else
+	{
+		ret = OK;
+	}
+	if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+	{
+		zm_msg_debug("encode channel(%d) start", encode->venc_channel);
+	}
+	encode->online = zpl_true;
+	zpl_vidhal_venc_update_fd(encode);
+	if (master && encode && encode->t_read == NULL && !ipstack_invalid(encode->vencfd) && encode->hwbind == zpl_false)
+	{
+		encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
+	}
+	ZPL_SET_BIT(encode->flags, ZPL_MEDIA_STATE_START);
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	zpl_media_video_encode_enable_IDR(encode, zpl_true);
+	return ret;
+}
+
+int zpl_media_video_encode_stop(zpl_media_video_encode_t *encode)
+{
+	int ret = ERROR;
+	zpl_video_assert(encode);
+	zpl_video_assert(encode->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (encode && encode->t_read)
+	{
+		thread_cancel(encode->t_read);
+		encode->t_read = NULL;
+	}
+	if (ZPL_TST_BIT(encode->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_venc_stop(encode);
+		if (ret != OK)
+		{
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			zm_msg_error("stop encode channel(%d) failed.", encode->venc_channel);
+			return ERROR;
+		}
+	}
+	else
+		ret = OK;
+	if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+	{
+		zm_msg_debug("encode channel(%d) is stop", encode->venc_channel);
+	}
+	encode->online = zpl_false;
+	ZPL_CLR_BIT(encode->flags, ZPL_MEDIA_STATE_START);
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+
+zpl_media_video_encode_t *zpl_media_video_encode_create(zpl_int32 venc_channel, zpl_bool capture)
+{
+	zpl_media_video_encode_t *chn = NULL;
+	if (zpl_media_video_encode_lookup(venc_channel, capture) != NULL)
+	{
+		return NULL;
+	}
+	chn = os_malloc(sizeof(zpl_media_video_encode_t));
+	if (chn)
+	{
+		memset(chn, 0, sizeof(zpl_media_video_encode_t));
+		chn->venc_channel = venc_channel;
+		chn->b_capture = capture;
+		chn->vencfd = ipstack_create(IPSTACK_OS);
+		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+
+		zm_msg_debug("venc channel (%d) ", chn->venc_channel);
+
+		zpl_media_global_add(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, chn);
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+		return chn;
+	}
+	return NULL;
+}
+
+int zpl_media_video_encode_hal_create(zpl_media_video_encode_t *encode)
+{
+	int ret = ERROR;
+	zpl_media_video_encode_t *chn = encode;
+	if (chn && chn->pCodec && !ZPL_TST_BIT(encode->flags, ZPL_MEDIA_STATE_ACTIVE))
+	{
+		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+
+		ret = zpl_vidhal_venc_create(chn);
+		if (ret != OK)
+		{
+			zm_msg_error("Create encode channel(%d) failed.", chn->venc_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			return ret;
+		}
+
+		ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("active encode channel(%d) ret=%d", chn->venc_channel, ret);
+		}
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+		return ret;
+	}
+	return ret;
+}
+
+int zpl_media_video_encode_destroy(zpl_media_video_encode_t *chn)
+{
+	int ret = -1;
+	zpl_video_assert(chn);
+	zpl_video_assert(chn->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (chn && chn->t_read)
+	{
+		thread_cancel(chn->t_read);
+		chn->t_read = NULL;
+	}
+	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_venc_stop(chn);
+		if (ret != OK)
+		{
+			zm_msg_error("stop encode channel(%d) failed.", chn->venc_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			return ret;
+		}
+		chn->online = zpl_false;
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("stop encode channel(%d) ret=%d", chn->venc_channel, ret);
+		}
+		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+	}
+	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))
+	{
+		ret = zpl_vidhal_venc_destroy(chn);
+		if (ret != OK)
+		{
+			zm_msg_error("destroy encode channel(%d) failed.", chn->venc_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			return ret;
+		}
+		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("inactive encode channel(%d) ret=%d", chn->venc_channel, ret);
+		}
+	}
+	else
+	{
+		ret = OK;
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("encode channel(%d) is already inactive", chn->venc_channel);
+		}
+	}
+	if((chn->vencfd != ZPL_SOCKET_INVALID))
+	{
+		ipstack_drstroy(chn->vencfd);
+		chn->vencfd = ZPL_SOCKET_INVALID;
+	}
+	zpl_media_global_del(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, chn);
+	free(chn);
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+int zpl_media_video_encode_hal_destroy(zpl_media_video_encode_t *chn)
+{
+	int ret = -1;
+	zpl_video_assert(chn);
+	zpl_video_assert(chn->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+
+	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_venc_stop(chn);
+		if (ret != OK)
+		{
+			zm_msg_error("stop encode channel(%d) failed.", chn->venc_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			return ret;
+		}
+		chn->online = zpl_false;
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("stop encode channel(%d) ret=%d", chn->venc_channel, ret);
+		}
+		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+	}
+	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))
+	{
+		ret = zpl_vidhal_venc_destroy(chn);
+		if (ret != OK)
+		{
+			zm_msg_error("destroy encode channel(%d) failed.", chn->venc_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+			return ret;
+		}
+		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("inactive encode channel(%d) ret=%d", chn->venc_channel, ret);
+		}
+	}
+	else
+	{
+		ret = OK;
+		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+		{
+			zm_msg_debug("encode channel(%d) is already inactive", chn->venc_channel);
+		}
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+
+zpl_bool zpl_media_video_encode_state_check(zpl_media_video_encode_t *encode, int bit)
+{
+	zpl_bool ret = zpl_false;
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (encode)
+	{
+		if (ZPL_TST_BIT(encode->flags, bit))
+			ret = zpl_true;
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+
+int zpl_media_video_encode_thread(zpl_media_video_encode_t *encode, zpl_bool start)
+{
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (start == zpl_false && encode && encode->t_read)
+	{
+		thread_cancel(encode->t_read);
+		encode->t_read = NULL;
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+		return OK;
+	}
+	zpl_vidhal_vpss_channel_update_fd(encode);
+	if (start && encode && !ipstack_invalid(encode->vencfd))
+	{
+		encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return OK;
+}
 
 static int zpl_media_video_encode_cmp(zpl_media_video_encode_t *encode, zpl_media_gkey_t *gkey)
 {
-	if(encode->venc_channel == gkey->channel)
+	if (encode->venc_channel == gkey->channel && encode->b_capture == gkey->group)
 		return 0;
-	return 1;	
+	return 1;
 }
-
+static void zpl_media_video_encode_free(void *pVoid)
+{
+	zpl_media_video_encode_t *encode = pVoid;
+	if(encode)
+	{
+		zpl_media_video_encode_hal_destroy(encode);
+		if((encode->vencfd != ZPL_SOCKET_INVALID))
+		{
+			ipstack_drstroy(encode->vencfd);
+			encode->vencfd = ZPL_SOCKET_INVALID;
+		}
+		os_free(encode);
+	}
+	return ;
+}
 int zpl_media_video_encode_init(void)
 {
 	zpl_media_global_gkey_cmpset(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, zpl_media_video_encode_cmp);
+	zpl_media_global_freeset(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, zpl_media_video_encode_free);
 	return OK;
 }
 
-int zpl_media_video_encode_new(zpl_int32 venc_channel)
+zpl_media_video_encode_t *zpl_media_video_encode_lookup(zpl_int32 venc_channel, zpl_bool capture)
 {
-	zpl_media_video_encode_t *t = os_malloc(sizeof(zpl_media_video_encode_t));
-	zpl_video_assert(t);
-	if(t)
-	{
-		memset(t, 0, sizeof(zpl_media_video_encode_t));
-		t->venc_channel = venc_channel;
-#ifdef ZPL_VENC_READ_DEBUG
-		t->mem_buf = os_malloc(ZPL_VENC_READ_DEBUG); 
-		if(t->mem_buf)       
-    		t->mem_size = ZPL_VENC_READ_DEBUG;       
-#endif
-		zpl_media_global_add(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, t);
-		return OK;
-	}
-	return ERROR;
+	zpl_media_video_encode_t *encode = (zpl_media_video_encode_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, capture, 0);
+	return encode;
 }
 
-int zpl_media_video_encode_delete(zpl_int32 venc_channel)
+int zpl_media_video_encode_source_set(zpl_int32 venc_channel, void *halparam, zpl_bool hwbind)
 {
-	zpl_media_video_encode_t * t = (zpl_media_video_encode_t*)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
-	if(t)
-	{
-		zpl_media_global_del(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, t);
-		os_free(t);	
-	}
-	return OK;
-}
-
-zpl_media_video_encode_t * zpl_media_video_encode_lookup(zpl_int32 venc_channel)
-{
-	zpl_media_video_encode_t * t = (zpl_media_video_encode_t*)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
-	return t;
-}
-
-int zpl_media_video_encode_vpss_set(zpl_int32 venc_channel, void *halparam)
-{
-	zpl_media_video_encode_t * t = (zpl_media_video_encode_t*)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
+	int ret = ERROR;
+	zpl_media_video_encode_t *encode = (zpl_media_video_encode_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	if(t)
+	if (encode)
 	{
-		t->video_vpss = halparam;
-	}	
+		int vpssgrp = 0;
+		zpl_media_video_vpsschn_t *vpsschn = halparam;
+		if(vpsschn)
+		{
+			vpssgrp = vpsschn->vpss_group; // 发送目的ID
+			zpl_media_video_vpsschn_addref(vpsschn);
+			//encode->input_size.width = vpsschn->output_size.width;
+        	//encode->input_size.height = vpsschn->output_size.height;
+			//encode->output_size.width = vpsschn->input_size.width;
+        	//encode->output_size.height = vpsschn->input_size.height;
+			if (hwbind && encode->hwbind == zpl_false)
+			{
+				if (encode->t_read)
+				{
+					thread_cancel(encode->t_read);
+					encode->t_read = NULL;
+				}
+				if (zpl_syshal_vpss_bind_venc(vpssgrp, vpsschn->vpss_channel, encode->venc_channel) != OK)
+				{
+					zm_msg_error("vpssgrp %d vpsschn %d can not bind to encode channel(%d)", vpssgrp, vpsschn->vpss_channel, encode->venc_channel);
+					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+					return ERROR;
+				}
+				encode->hwbind = zpl_true;
+				ret = OK;
+				vpsschn->parent = encode;
+				encode->source_input = halparam;
+			}
+			else if (hwbind == zpl_false && encode->hwbind)
+			{
+				if (encode->t_read)
+				{
+					thread_cancel(encode->t_read);
+					encode->t_read = NULL;
+				}
+				if (zpl_syshal_vpss_unbind_venc(vpssgrp, vpsschn->vpss_channel, encode->venc_channel) != OK)
+				{
+					zm_msg_error("vpssgrp %d vpsschn %d can not unbind to encode channel(%d)", vpssgrp, vpsschn->vpss_channel, encode->venc_channel);
+					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+					return ERROR;
+				}
+				encode->hwbind = zpl_false;
+				zpl_vidhal_venc_update_fd(encode);
+				if (!ipstack_invalid(encode->vencfd))
+				{
+					if (ZPL_TST_BIT(encode->flags, ZPL_MEDIA_STATE_START))
+						encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
+				}
+				ret = OK;
+				vpsschn->parent = encode;
+				encode->source_input = halparam;
+			}
+			else if (hwbind == zpl_false && encode->hwbind == zpl_false)
+			{
+				vpsschn->parent = encode;
+				encode->source_input = halparam;
+				ret = OK;
+			}
+		}
+		else
+		{
+			if(encode->source_input)
+			{
+				vpsschn = encode->source_input;
+				vpssgrp = vpsschn->vpss_group; // 发送目的ID
+				zpl_media_video_vpsschn_delref(encode->source_input);
+				if (encode->t_read)
+				{
+					thread_cancel(encode->t_read);
+					encode->t_read = NULL;
+				}
+				if (encode->hwbind)
+				{
+					if (zpl_syshal_vpss_unbind_venc(vpssgrp, vpsschn->vpss_channel, encode->venc_channel) != OK)
+					{
+						zm_msg_error("vpssgrp %d vpsschn %d can not unbind to encode channel(%d)", vpssgrp, vpsschn->vpss_channel, encode->venc_channel);
+						zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+						return ERROR;
+					}
+					encode->hwbind = zpl_false;
+				}
+				vpsschn->parent = NULL;
+				encode->source_input = NULL;
+				ret = OK;
+			}
+		}
+	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	return OK;
+	return ret;
 }
 
 int zpl_media_video_encode_frame_queue_set(zpl_int32 venc_channel, void *frame_queue)
 {
-	zpl_media_video_encode_t * t = (zpl_media_video_encode_t*)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
+	zpl_media_video_encode_t *encode = (zpl_media_video_encode_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	if(t)
+	if (encode)
 	{
-		t->frame_queue = frame_queue;
-	}	
+		encode->frame_queue = frame_queue;
+	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	return OK;	
+	return OK;
 }
 
+/* 编码模块接收到数据后完成编码，编码输出数据有这里接收，接收到编码后的数据发送到通道的消息队列，*/
+static int zpl_media_video_encode_read_thread(struct thread *thread)
+{
+	int ret = 0;
+	zpl_media_video_encode_t *encode = THREAD_ARG(thread);
+	ZPL_MEDIA_CHANNEL_E channel;			// 通道号
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index; // 码流类型
 
+	if (encode && encode->media_channel && encode->get_encode_frame)
+	{
+		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+		encode->t_read = NULL;
+		channel = ((zpl_media_channel_t *)encode->media_channel)->channel;
+		channel_index = ((zpl_media_channel_t *)encode->media_channel)->channel_index;
+
+		ret = (encode->get_encode_frame)(encode);
+
+		if (encode->frame_queue && ret > 0)
+		{
+			zpl_media_bufqueue_signal(channel, channel_index);
+		}
+		if (!ipstack_invalid(encode->vencfd))
+			encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
+
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	}
+	return OK;
+}
+
+int zpl_media_video_encode_sendto(zpl_media_video_encode_t *encode, void *p, zpl_int timeout)
+{
+	int ret = -1;
+	zpl_video_assert(encode);
+	zpl_video_assert(encode->media_channel);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	if (encode->online)
+	{
+		ret = zpl_vidhal_venc_frame_sendto(encode, 0, encode->venc_channel, p, timeout);
+		//zm_msg_error("stop encode channel(%d) failed.", chn->venc_channel);
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
 
 #ifdef ZPL_SHELL_MODULE
 int zpl_media_video_encode_show(void *pvoid)
 {
 	NODE *node;
-	zpl_media_video_encode_t *t;	
+	zpl_media_video_encode_t *encode;
 	struct vty *vty = (struct vty *)pvoid;
-    LIST *_lst = NULL;
-    os_mutex_t *_mutex = NULL;
-    zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, &_lst, &_mutex);
+	LIST *_lst = NULL;
+	os_mutex_t *_mutex = NULL;
+	zpl_media_video_vpsschn_t	*vpsschn;
+	char *bitrate_typestr[] = {"none", "CBR", "VBR", "ABR"};
+	char *enRcMode_typestr[] = {"RC CBR", "RC VBR", "RC AVBR", "RC QVBR", "RC CVBR", "RC QPMAP","RC FIXQP"};
+	char *gopmode_typestr[] = {"NORMALP", "DUALP", "SMARTP","ADVSMARTP", "BIPREDB", "LOWDELAYB","BUTT"};
+	zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, &_lst, &_mutex);
 
-	if(_lst == NULL)
+	if (_lst == NULL)
 		return ERROR;
 	if (_mutex)
 		os_mutex_lock(_mutex, OS_WAIT_FOREVER);
 
-	if(lstCount(_lst))
+	if (lstCount(_lst))
 	{
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-8s %-16s %s", "----", "----", "------", "--------", "--------", "----------------", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-8s %-16s %s", "ID", "FLAG", "ONLINE", "BINDCNT", "BINDID",  "SIZE", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-8s %-16s %s", "----", "----", "------", "--------", "--------", "----------------", VTY_NEWLINE);
+		vty_out(vty, "-----------------------------------------%s", VTY_NEWLINE);
 	}
 	for (node = lstFirst(_lst); node != NULL; node = lstNext(node))
 	{
-		t = (zpl_media_video_encode_t *) node;
+		encode = (zpl_media_video_encode_t *)node;
 		if (node)
 		{
-			vty_out(vty, "%-4d 0x%-4x %-6s  %-8d %-8d %dx%d%s", t->venc_channel, t->res_flag, t->online ? "ONLINE":"OFFLINE", 
-					1, t->video_vpss?((zpl_media_video_vpss_channel_t*)t->video_vpss)->vpss_channel:-1, 
-					t->pCodec?t->pCodec->vidsize.width:-1, t->pCodec?t->pCodec->vidsize.height:-1, VTY_NEWLINE);
+			vty_out(vty, "channel            : %d%s", encode->venc_channel, VTY_NEWLINE);
+			if(encode->pCodec)
+			{
+				vty_out(vty, " size              : %dx%d%s", encode->pCodec->vidsize.width, encode->pCodec->vidsize.height, VTY_NEWLINE);
+				vty_out(vty, " format            : %s%s", zpl_media_format_name(encode->pCodec->format), VTY_NEWLINE);
+				vty_out(vty, " codectype         : %s%s", zpl_media_codec_name(encode->pCodec->codectype), VTY_NEWLINE);
+				vty_out(vty, " framerate         : %d fps%s", encode->pCodec->framerate, VTY_NEWLINE);
+				vty_out(vty, " bitrate           : %d%s", encode->pCodec->bitrate, VTY_NEWLINE);
+				vty_out(vty, " bitrate_type      : %s%s", bitrate_typestr[encode->pCodec->bitrate_type], VTY_NEWLINE);
+				vty_out(vty, " profile           : %d%s", encode->pCodec->profile, VTY_NEWLINE);
+				vty_out(vty, " ikey_rate         : %d%s", encode->pCodec->ikey_rate, VTY_NEWLINE);
+				vty_out(vty, " enRcMode          : %s%s", enRcMode_typestr[encode->pCodec->enRcMode], VTY_NEWLINE);
+				vty_out(vty, " gopmode           : %s%s", gopmode_typestr[encode->pCodec->gopmode], VTY_NEWLINE);
+				vty_out(vty, " packetization_mode: %d%s", encode->pCodec->packetization_mode, VTY_NEWLINE);
+			}
+			if(encode->vencfd != ZPL_SOCKET_INVALID)
+			{
+				vty_out(vty, " fd                : %d%s", ipstack_fd(encode->vencfd), VTY_NEWLINE);
+			}
+			vty_out(vty, " hwbind            : %d%s", encode->hwbind, VTY_NEWLINE);
+			vty_out(vty, " flags             : 0x%x%s", encode->flags, VTY_NEWLINE);
+			//vty_out(vty, " res_flag          : 0x%x%s", encode->res_flag, VTY_NEWLINE);
+			vty_out(vty, " online            : %s%s", encode->online ? "ONLINE" : "OFFLINE", VTY_NEWLINE);
+			vpsschn = (zpl_media_video_vpsschn_t *)encode->source_input;
+			if(vpsschn)
+			vty_out(vty, " source_input      : vpss group %d vpss channal %d%s", vpsschn ? vpsschn->vpss_group:-1, vpsschn ? vpsschn->vpss_channel : -1, VTY_NEWLINE);
 		}
 	}
 	if (_mutex)
@@ -122,332 +588,3 @@ int zpl_media_video_encode_show(void *pvoid)
 	return OK;
 }
 #endif
-
-
-
-/* 编码模块接收到数据后完成编码，编码输出数据有这里接收，接收到编码后的数据发送到通道的消息队列，*/
-static int zpl_media_video_encode_read_thread(struct thread *t)
-{
-	zpl_media_video_encode_t *encode = THREAD_ARG(t);
-	ZPL_MEDIA_CHANNEL_E         channel;	        //通道号
-	ZPL_MEDIA_CHANNEL_TYPE_E 	channel_index;	    //码流类型
-
-    if(encode && encode->media_channel)
-    {
-		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-        encode->t_read = NULL;
-		channel = ((zpl_media_channel_t*)encode->media_channel)->channel;
-		channel_index = ((zpl_media_channel_t*)encode->media_channel)->channel_index;
-        //zpl_vidhal_venc_frame_recvfrom(((zpl_media_channel_t*)encode->media_channel)->channel, 
-		//	((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-		zpl_vidhal_venc_frame_recvfrom_one(channel, channel_index, encode);
-#ifdef ZPL_VENC_READ_DEBUG
-#else /* ZPL_VENC_READ_DEBUG */
-		if(encode->frame_queue)
-		{
-			zpl_media_bufqueue_signal(channel, channel_index);
-			//zpl_media_debugmsg_warn(" =====================zpl_media_video_encode_read_thread:zpl_media_buffer_distribute");
-			//zpl_media_buffer_distribute(encode->frame_queue);
-		}
-#endif /* ZPL_VENC_READ_DEBUG */
-        if(!ipstack_invalid(encode->vencfd))
-           encode->t_read = thread_add_read(t->master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
-		
-		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE); 
-    }
-	return OK;
-}
-
-
-int zpl_media_video_encode_read_start(zpl_void *master, zpl_media_video_encode_t *encode)
-{
-    zpl_video_assert(master);
-    zpl_video_assert(encode);
-    zpl_video_assert(encode->media_channel);
-	if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-		zpl_media_debugmsg_debug(" start video encode channel %d read thread\n", encode->venc_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	zpl_vidhal_venc_update_fd(((zpl_media_channel_t*)encode->media_channel)->channel, 
-			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-    if(master && encode && !ipstack_invalid(encode->vencfd))
-	{
-		encode->t_master = master;
-		//zpl_media_debugmsg_debug(" =============== encode channel %d read thread  thread_add_read(%d)\n", encode->venc_channel, encode->vencfd);
-        encode->t_read = thread_add_read(master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
-	}
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return OK;    
-}
-
-int zpl_media_video_encode_read_stop(zpl_media_video_encode_t *encode)
-{
-    zpl_video_assert(encode);
-    zpl_video_assert(encode->media_channel);  
-	if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-		zpl_media_debugmsg_debug(" stop video encode channel %d read thread\n", encode->venc_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    if(encode && encode->t_read)
-    {
-        thread_cancel(encode->t_read);
-        encode->t_read = NULL;
-    }
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return OK; 
-}
-
-
-
-
-int zpl_media_video_encode_sendto(zpl_media_video_encode_t *encode,  void *p, zpl_int timeout)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-    zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    if(encode->online)
-        ret = zpl_vidhal_venc_frame_sendto(encode, 0, encode->venc_channel, p, timeout);
-    else
-        zpl_media_debugmsg_warn("Channel (%d %d) is offline", 0, 
-            encode->venc_channel);
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return ret;
-}
-
-static int zpl_media_video_encode_frame_putqueue(zpl_skbuffer_t *skb, zpl_media_video_encode_t *encode)
-{
-	ZPL_MEDIA_CHANNEL_E         channel;	        //通道号
-	ZPL_MEDIA_CHANNEL_TYPE_E 	channel_index;	    //码流类型
-
-    if(encode && encode->media_channel)
-    {
-		channel = ((zpl_media_channel_t*)encode->media_channel)->channel;
-		channel_index = ((zpl_media_channel_t*)encode->media_channel)->channel_index;	
-		if(encode->frame_queue)
-		{
-			zpl_skbqueue_async_enqueue(encode->frame_queue, skb);
-			zpl_media_bufqueue_signal(channel, channel_index);
-		}
-	}
-	return OK;
-}
-
-int zpl_media_video_encode_read(zpl_media_video_encode_t *encode)
-{
-    if(encode && encode->media_channel && encode->get_encode_frame)
-    {
-		zpl_skbuffer_t *skbf = NULL;
-		int ret = (encode->get_encode_frame)(encode, &skbf);
-		if(ret)
-		{
-			zpl_skbuffer_foreach(skbf, zpl_media_video_encode_frame_putqueue, encode);
-		}
-		return ret;
-    }
-	return 0;	
-}
-
-
-
-int zpl_media_video_encode_hal_create(zpl_media_video_encode_t *encode)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-	zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	zpl_media_debugmsg_debug("venc channel (%d)  Flags (0x%x)", encode->venc_channel, encode->res_flag);		
-	if(VIDHAL_RES_FLAG_CHECK(encode->res_flag, CREATE) && !VIDHAL_RES_FLAG_CHECK(encode->res_flag, INIT))	
-	{
-    	ret = zpl_vidhal_venc_create(((zpl_media_channel_t*)encode->media_channel)->channel, 
-			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-		if(ret == OK)	
-		{
-			VIDHAL_RES_FLAG_SET(encode->res_flag, INIT);
-		}
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("active encode channel(%d) ret=%d", encode->venc_channel, ret);
-		} 	
-	}
-	else
-	{
-		ret = OK;
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("encode channel(%d) is already active", encode->venc_channel);
-		} 
-	}	
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return ret;
-}
-
-int zpl_media_video_encode_start(zpl_media_video_encode_t *encode)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-	zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	if(!VIDHAL_RES_FLAG_CHECK(encode->res_flag, START))	
-	{
-    	ret = zpl_vidhal_venc_start(((zpl_media_channel_t*)encode->media_channel)->channel, 
-			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-		if(ret == OK)	
-		{
-			VIDHAL_RES_FLAG_SET(encode->res_flag, START);
-			encode->online = zpl_true;
-		}
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("start encode channel(%d) ret=%d", encode->venc_channel, ret);
-		} 
-	}
-	else
-	{
-		ret = OK;
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("encode channel(%d) is already start", encode->venc_channel);
-		} 
-	}
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	zpl_media_video_encode_enable_IDR(encode, zpl_true);
-	//zpl_media_video_encode_read_start(zpl_void *master, zpl_media_video_encode_t *encode)
-    return ret;
-}
-
-int zpl_media_video_encode_stop(zpl_media_video_encode_t *encode)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-	zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	if(VIDHAL_RES_FLAG_CHECK(encode->res_flag, START))
-	{	
-    	ret = zpl_vidhal_venc_stop(((zpl_media_channel_t*)encode->media_channel)->channel, 
-			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-		if(ret == OK)	
-		{
-			VIDHAL_RES_FLAG_UNSET(encode->res_flag, START);
-			encode->online = zpl_false;
-		}
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("stop encode channel(%d) ret=%d", encode->venc_channel, ret);
-		} 
-	}
-	else
-	{
-		ret = OK;
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("encode channel(%d) is already stop", encode->venc_channel);
-		} 
-	}
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return ret;
-}
-
-int zpl_media_video_encode_hal_destroy(zpl_media_video_encode_t *encode)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-	zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	if(VIDHAL_RES_FLAG_CHECK(encode->res_flag, CREATE) && VIDHAL_RES_FLAG_CHECK(encode->res_flag, INIT))
-	{	
-    	ret = zpl_vidhal_venc_destroy(((zpl_media_channel_t*)encode->media_channel)->channel, 
-			((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-		if(ret == OK)
-			VIDHAL_RES_FLAG_UNSET(encode->res_flag, INIT);
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("inactive encode channel(%d) ret=%d", encode->venc_channel, ret);
-		} 
-	}
-	else
-	{
-		ret = OK;
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zpl_media_debugmsg_debug("encode channel(%d) is already inactive", encode->venc_channel);
-		} 
-	}
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return ret;
-}
-
-int zpl_media_video_encode_online_set(zpl_media_video_encode_t *encode, zpl_bool online)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-	zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    ret = OK;
-	encode->online = online;
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return ret;
-}
-
-int zpl_media_video_encode_online_get(zpl_media_video_encode_t *encode, zpl_bool *online)
-{
-    int ret = -1;
-    zpl_video_assert(encode);
-	zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    ret = OK;
-	if(online)
-		*online = encode->online;
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    return ret;
-}
-
-
-int zpl_media_video_encode_request_IDR(zpl_media_video_encode_t *encode)
-{
-	int ret = -1;
-    zpl_video_assert(encode);
-    zpl_video_assert(encode->media_channel);
-
-    ret = zpl_vidhal_venc_request_IDR(((zpl_media_channel_t*)encode->media_channel)->channel, 
-		((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-	if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-	{
-		zpl_media_debugmsg_debug("request IDR encode channel(%d) ret=%d", encode->venc_channel, ret);
-	} 
-
-	return ret;	
-}
-
-int zpl_media_video_encode_enable_IDR(zpl_media_video_encode_t *encode, zpl_bool bEnableIDR)
-{
-	int ret = -1;
-    zpl_video_assert(encode);
-    zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    ret = zpl_vidhal_venc_enable_IDR(((zpl_media_channel_t*)encode->media_channel)->channel, 
-		((zpl_media_channel_t*)encode->media_channel)->channel_index, encode, bEnableIDR);
-	if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-	{
-		zpl_media_debugmsg_debug("enable IDR encode channel(%d) ret=%d", encode->venc_channel, ret);
-	} 
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	return ret;	
-}
-
-int zpl_media_video_encode_encode_reset(zpl_media_video_encode_t *encode)
-{
-	int ret = -1;
-    zpl_video_assert(encode);
-    zpl_video_assert(encode->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-    ret = zpl_vidhal_venc_reset(((zpl_media_channel_t*)encode->media_channel)->channel, 
-		((zpl_media_channel_t*)encode->media_channel)->channel_index, encode);
-	if(ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-	{
-		zpl_media_debugmsg_debug("reset IDR encode channel(%d) ret=%d", encode->venc_channel, ret);
-	} 
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	return ret;	
-}
-
-
-

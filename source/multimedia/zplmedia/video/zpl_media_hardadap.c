@@ -112,7 +112,7 @@ int zpl_media_hardadap_handle(zpl_media_hardadap_lst_t *lst, void *p, zpl_int ti
         {
             if (lst->callback[j].dst_device >= 0 || lst->callback[j].dst_channel >= 0) // 发送目的通道
             {
-                //if (callback[j].online && *callback[j].online == zpl_true)
+                if (lst->callback[j].online && *lst->callback[j].online == zpl_true)
                     (lst->callback[j].hardadap_sendto)(lst->callback[j].dst_private, lst->callback[j].dst_device, lst->callback[j].dst_channel, p, timeout);
             }
         }
@@ -126,15 +126,15 @@ int zpl_media_hardadap_handle(zpl_media_hardadap_lst_t *lst, void *p, zpl_int ti
 int zpl_media_hal_input_sendto_vpss_default(zpl_void *dst, zpl_int32 vpssgrp, zpl_int32 vpsschn,
                                             void *p, zpl_int32 timeout)
 {
-    if (((zpl_media_video_vpssgrp_t *)dst)->vpss_group != vpssgrp)
+    if (((zpl_media_video_vpsschn_t *)dst)->vpss_group != vpssgrp)
 	{
 		if(ZPL_MEDIA_DEBUG(INPUT, EVENT) && ZPL_MEDIA_DEBUG(INPUT, HARDWARE) && ZPL_MEDIA_DEBUG(INPUT, SEND))
 		{
-			//zpl_media_debugmsg_warn(" =====================vpss_group(%d) vpssgrp(%d) ", ((zpl_media_video_vpssgrp_t *)dst)->vpss_group, vpssgrp);
+			//zm_msg_warn(" =====================vpss_group(%d) vpssgrp(%d) ", ((zpl_media_video_vpssgrp_t *)dst)->vpss_group, vpssgrp);
 		}
         return ERROR;
 	}
-    return zpl_media_video_vpssgrp_sendto((zpl_media_video_vpssgrp_t *)dst, p, timeout);
+    return zpl_media_video_vpsschn_sendto((zpl_media_video_vpsschn_t *)dst, p, timeout);
 }
 
 int zpl_media_hal_vpss_sendto_encode_default(zpl_void *dst, zpl_int32 vencgrp, zpl_int32 vencchn,
@@ -144,7 +144,7 @@ int zpl_media_hal_vpss_sendto_encode_default(zpl_void *dst, zpl_int32 vencgrp, z
 	{
 		if(ZPL_MEDIA_DEBUG(VPSS, EVENT) && ZPL_MEDIA_DEBUG(VPSS, HARDWARE) && ZPL_MEDIA_DEBUG(VPSS, SEND))
 		{
-			//zpl_media_debugmsg_warn(" ====================venc_channel(%d) vencchn(%d) ", ((zpl_media_video_encode_t *)dst)->venc_channel, vencchn);
+			//zm_msg_warn(" ====================venc_channel(%d) vencchn(%d) ", ((zpl_media_video_encode_t *)dst)->venc_channel, vencchn);
 		}
         return ERROR;
 	}

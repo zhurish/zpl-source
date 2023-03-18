@@ -353,7 +353,7 @@ int zpl_vidhal_region_set_bitmap(zpl_media_video_hwregion_t *region, zpl_media_b
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_SetBitMap failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_SetBitMap failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;
@@ -373,7 +373,7 @@ int zpl_vidhal_region_update_canvas(zpl_media_video_hwregion_t *region)
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_GetCanvasInfo failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_GetCanvasInfo failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -382,7 +382,7 @@ int zpl_vidhal_region_update_canvas(zpl_media_video_hwregion_t *region)
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_UpdateCanvas failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_UpdateCanvas failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;
@@ -409,7 +409,7 @@ int zpl_vidhal_region_attachtochannel(zpl_media_video_hwregion_t *region, zpl_ui
         if(HI_SUCCESS != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_RGN_AttachToChn failed with %#x!\n", s32Ret);
+                zm_msg_err("HI_MPI_RGN_AttachToChn failed with %#x!\n", s32Ret);
             return HI_FAILURE;
         }
     }
@@ -419,7 +419,7 @@ int zpl_vidhal_region_attachtochannel(zpl_media_video_hwregion_t *region, zpl_ui
         if(HI_SUCCESS != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_RGN_DetachFromChn failed with %#x!\n", s32Ret);
+                zm_msg_err("HI_MPI_RGN_DetachFromChn failed with %#x!\n", s32Ret);
             return HI_FAILURE;
         }
     }
@@ -440,7 +440,7 @@ int zpl_vidhal_region_update_attribute(zpl_media_video_hwregion_t *region)
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_Create failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_Create failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -448,7 +448,7 @@ int zpl_vidhal_region_update_attribute(zpl_media_video_hwregion_t *region)
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_SetAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_SetAttr failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;
@@ -473,7 +473,7 @@ int zpl_vidhal_region_update_channel_attribute(zpl_media_video_hwregion_t *regio
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_GetDisplayAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_GetDisplayAttr failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     zpl_vidhal_region_chn_attribute_setup(region,  &stChnAttr);
@@ -482,7 +482,7 @@ int zpl_vidhal_region_update_channel_attribute(zpl_media_video_hwregion_t *regio
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_SetDisplayAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_SetDisplayAttr failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;
@@ -505,7 +505,7 @@ int zpl_vidhal_region_channel_show(zpl_media_video_hwregion_t *region, zpl_uint3
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_GetDisplayAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_GetDisplayAttr failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     stChnAttr.bShow = (show) ? HI_TRUE : HI_FALSE;
@@ -513,7 +513,7 @@ int zpl_vidhal_region_channel_show(zpl_media_video_hwregion_t *region, zpl_uint3
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_SetDisplayAttr failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_SetDisplayAttr failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;
@@ -562,7 +562,7 @@ int zpl_vidhal_region_create(zpl_media_video_hwregion_t *region)
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_Create failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_Create failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;
@@ -581,7 +581,7 @@ int zpl_vidhal_region_destroy(zpl_media_video_hwregion_t *region)
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(REGION, EVENT) && ZPL_MEDIA_DEBUG(REGION, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_RGN_Destroy failed with %#x!\n", s32Ret);
+            zm_msg_err("HI_MPI_RGN_Destroy failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;

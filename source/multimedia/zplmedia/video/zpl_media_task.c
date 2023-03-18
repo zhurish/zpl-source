@@ -14,14 +14,14 @@ static int media_main_task(void *argv);
 zpl_media_task_t tvideo_task;
 
 
-int zpl_media_task_ready( ZPL_MEDIA_NODE_E module)
+int zpl_media_task_ready( ZPL_MEDIA_GLOBAL_E module)
 {
 	if(tvideo_task.t_taskid)
 		tvideo_task.t_ready = 1;	
 	return OK;
 }
 
-int zpl_media_task_create( ZPL_MEDIA_NODE_E module, zpl_media_task_t *t_task)
+int zpl_media_task_create( ZPL_MEDIA_GLOBAL_E module, zpl_media_task_t *t_task)
 {
 	zpl_video_assert(t_task);
 	

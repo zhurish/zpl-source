@@ -25,7 +25,7 @@ static int zpl_vidhal_venc_CloseReEncode(zpl_int32 vencchn)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Get Attr failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Get Attr failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
 
@@ -33,7 +33,7 @@ static int zpl_vidhal_venc_CloseReEncode(zpl_int32 vencchn)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d)  Get RC Param failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d)  Get RC Param failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
 
@@ -61,7 +61,7 @@ static int zpl_vidhal_venc_CloseReEncode(zpl_int32 vencchn)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Set RC Param failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Set RC Param failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return HI_SUCCESS;
@@ -98,7 +98,7 @@ static int zpl_codec_build_hwgop_attr(ZPL_VENC_GOP_MODE_E enGopMode,VENC_GOP_ATT
 
         default:
             if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                zpl_media_debugmsg_err("not support the gop mode !\n");
+                zm_msg_err("not support the gop mode !\n");
             return HI_FAILURE;
         break;
     }
@@ -116,7 +116,7 @@ static int zpl_codec_build_hwh264(zpl_media_video_encode_t *venc, VENC_CHN_ATTR_
     /******************************************
      step 1:  Create Venc Channel
     ******************************************/
-    stVencChnAttr->stVencAttr.enType = PT_H264;//venc->pCodec->enctype;
+    stVencChnAttr->stVencAttr.enType = PT_H264;//venc->pCodec->codectype;
     stVencChnAttr->stVencAttr.u32MaxPicWidth = venc->pCodec->vidsize.width;
     stVencChnAttr->stVencAttr.u32MaxPicHeight = venc->pCodec->vidsize.height;
     stVencChnAttr->stVencAttr.u32PicWidth = venc->pCodec->vidsize.width;                                   /*the picture width*/
@@ -360,7 +360,7 @@ static int zpl_codec_build_hwh264(zpl_media_video_encode_t *venc, VENC_CHN_ATTR_
     else
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err("%s,%d,enRcMode(%d) not support\n", __FUNCTION__, __LINE__, venc->pCodec->enRcMode);
+            zm_msg_err("%s,%d,enRcMode(%d) not support\n", __FUNCTION__, __LINE__, venc->pCodec->enRcMode);
         return HI_FAILURE;
     }
     stVencChnAttr->stVencAttr.stAttrH264e.bRcnRefShareBuf = bRcnRefShareBuf;
@@ -378,7 +378,7 @@ static int zpl_codec_build_hwh265(zpl_media_video_encode_t *venc, VENC_CHN_ATTR_
     /******************************************
      step 1:  Create Venc Channel
     ******************************************/
-    stVencChnAttr->stVencAttr.enType = PT_H265;//venc->pCodec->enctype;
+    stVencChnAttr->stVencAttr.enType = PT_H265;//venc->pCodec->codectype;
     stVencChnAttr->stVencAttr.u32MaxPicWidth = venc->pCodec->vidsize.width;
     stVencChnAttr->stVencAttr.u32MaxPicHeight = venc->pCodec->vidsize.height;
     stVencChnAttr->stVencAttr.u32PicWidth = venc->pCodec->vidsize.width;                                   /*the picture width*/
@@ -613,7 +613,7 @@ static int zpl_codec_build_hwh265(zpl_media_video_encode_t *venc, VENC_CHN_ATTR_
     else
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err("%s,%d,enRcMode(%d) not support\n", __FUNCTION__, __LINE__, venc->pCodec->enRcMode);
+            zm_msg_err("%s,%d,enRcMode(%d) not support\n", __FUNCTION__, __LINE__, venc->pCodec->enRcMode);
         return HI_FAILURE;
     }
     stVencChnAttr->stVencAttr.stAttrH265e.bRcnRefShareBuf = bRcnRefShareBuf;
@@ -634,7 +634,7 @@ static int zpl_codec_build_hwmjpeg(zpl_media_video_encode_t *venc, PAYLOAD_TYPE_
     /******************************************
      step 1:  Create Venc Channel
     ******************************************/
-    stVencChnAttr->stVencAttr.enType = venc->pCodec->enctype;
+    stVencChnAttr->stVencAttr.enType = venc->pCodec->codectype;
     stVencChnAttr->stVencAttr.u32MaxPicWidth = venc->pCodec->vidsize.width;
     stVencChnAttr->stVencAttr.u32MaxPicHeight = venc->pCodec->vidsize.height;
     stVencChnAttr->stVencAttr.u32PicWidth = venc->pCodec->vidsize.width;                                   /*the picture width*/
@@ -711,7 +711,7 @@ static int zpl_codec_build_hwmjpeg(zpl_media_video_encode_t *venc, PAYLOAD_TYPE_
             if (ZPL_VENC_RC_AVBR == venc->pCodec->enRcMode)
             {
                 if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                    zpl_media_debugmsg_err("Mjpege not support AVBR, so change rcmode to VBR!\n");
+                    zm_msg_err("Mjpege not support AVBR, so change rcmode to VBR!\n");
             }
 
             stVencChnAttr->stRcAttr.enRcMode = VENC_RC_MODE_MJPEGVBR;
@@ -752,7 +752,7 @@ static int zpl_codec_build_hwmjpeg(zpl_media_video_encode_t *venc, PAYLOAD_TYPE_
         else
         {
             if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                zpl_media_debugmsg_err("cann't support other mode(%d) in this version!\n", venc->pCodec->enRcMode);
+                zm_msg_err("cann't support other mode(%d) in this version!\n", venc->pCodec->enRcMode);
             return HI_FAILURE;
         }
     }
@@ -779,7 +779,7 @@ static int zpl_codec_build_hwmjpeg(zpl_media_video_encode_t *venc, PAYLOAD_TYPE_
                 stVencChnAttr->stVencAttr.u32Profile = 1;
 
                 if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                    zpl_media_debugmsg_err("H.264 base profile not support BIPREDB, so change profile to main profile!\n");
+                    zm_msg_err("H.264 base profile not support BIPREDB, so change profile to main profile!\n");
             }
         }
 
@@ -790,7 +790,7 @@ static int zpl_codec_build_hwmjpeg(zpl_media_video_encode_t *venc, PAYLOAD_TYPE_
                 stVencChnAttr->stGopAttr.enGopMode = VENC_GOPMODE_SMARTP;
 
                 if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                    zpl_media_debugmsg_err("advsmartp not support QPMAP, so change gopmode to smartp!\n");
+                    zm_msg_err("advsmartp not support QPMAP, so change gopmode to smartp!\n");
             }
         }
     }
@@ -801,59 +801,72 @@ static int zpl_codec_build_hwmjpeg(zpl_media_video_encode_t *venc, PAYLOAD_TYPE_
 
 
 
-int zpl_vidhal_venc_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_create(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret = 0;
     VENC_CHN_ATTR_S stVencChnAttr;
-    VENC_PARAM_MOD_S stModParam;
+    //VENC_PARAM_MOD_S stModParam;
     zpl_bool bRcnRefShareBuf = zpl_true;
-    if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_H264)
+    memset(&stVencChnAttr, 0, sizeof(VENC_CHN_ATTR_S));
+    //memset(&stModParam, 0, sizeof(VENC_PARAM_MOD_S));
+    if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_H264)
         s32Ret = zpl_codec_build_hwh264(venc, &stVencChnAttr,  bRcnRefShareBuf);
-    else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_H265)
+    else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_H265)
         s32Ret = zpl_codec_build_hwh265(venc, &stVencChnAttr,  bRcnRefShareBuf);
-    else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_MJPEG)
+    else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_MJPEG)
         s32Ret = zpl_codec_build_hwmjpeg(venc, PT_MJPEG,  &stVencChnAttr, bRcnRefShareBuf);
-    else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_JPEG)
+    else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_JPEG)
         s32Ret = zpl_codec_build_hwmjpeg(venc, PT_JPEG, &stVencChnAttr, bRcnRefShareBuf);
     if(s32Ret != OK)
         return ERROR;
-    if(HI_MPI_VENC_GetModParam(&stModParam) == HI_SUCCESS)    
+#if 0        
+    s32Ret = HI_MPI_VENC_GetModParam(&stModParam);
+    if(s32Ret == HI_SUCCESS)    
     {
-        if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_H264)
+        if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_H264)
         {
             stModParam.stH264eModParam.u32OneStreamBuffer = venc->pCodec->packetization_mode;
         }
-        else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_H265)
+        else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_H265)
         {
             stModParam.stH265eModParam.u32OneStreamBuffer = venc->pCodec->packetization_mode;
         }
-        else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_MJPEG)
+        else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_MJPEG)
         {
             stModParam.stJpegeModParam.u32OneStreamBuffer = venc->pCodec->packetization_mode;
         }
-        else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_JPEG)
+        else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_JPEG)
         {
             stModParam.stJpegeModParam.u32OneStreamBuffer = venc->pCodec->packetization_mode;
         }
-        if(HI_MPI_VENC_SetModParam(&stModParam) != HI_SUCCESS)  
+        s32Ret = HI_MPI_VENC_SetModParam(&stModParam);
+        if(s32Ret != HI_SUCCESS)  
+        {
+            if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
+                zm_msg_err(" VENC Channel (%d) Set ModParam failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
             return ERROR;
+        }
     }
     else
+    {
+        if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
+            zm_msg_err(" VENC Channel (%d) Get ModParam failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return ERROR;
-
+    }
+#endif
     s32Ret = HI_MPI_VENC_CreateChn(venc->venc_channel, &stVencChnAttr);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Create failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Create failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return s32Ret;
     }
     s32Ret = zpl_vidhal_venc_CloseReEncode(venc->venc_channel);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) CloseReEncode failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) CloseReEncode failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         HI_MPI_VENC_DestroyChn(venc->venc_channel);
         return s32Ret;
     }
@@ -863,14 +876,14 @@ int zpl_vidhal_venc_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 #endif
 }
 
-int zpl_vidhal_venc_reset(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_reset(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
     int s32Ret = HI_MPI_VENC_ResetChn(venc->venc_channel);
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Reset failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Reset failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return s32Ret;
@@ -879,7 +892,7 @@ int zpl_vidhal_venc_reset(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E 
 #endif
 }
 
-int zpl_vidhal_venc_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_destroy(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
 
@@ -888,7 +901,7 @@ int zpl_vidhal_venc_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Destroy failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Destroy failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return s32Ret;
@@ -897,15 +910,15 @@ int zpl_vidhal_venc_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
 #endif
 }
 
-int zpl_vidhal_venc_update_fd(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_update_fd(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
-    if(venc->venc_channel >= 0)
+    if(venc->venc_channel >= 0 && venc->vencfd != ZPL_SOCKET_INVALID)
     {
         ipstack_type(venc->vencfd) = IPSTACK_OS;
         ipstack_fd(venc->vencfd) = HI_MPI_VENC_GetFd(venc->venc_channel);
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-			zpl_media_debugmsg_debug(" video venc channel %d fd %d\n", venc->venc_channel, venc->vencfd);
+			zm_msg_debug(" video venc channel %d fd %d\n", venc->venc_channel, venc->vencfd);
         return OK;
     }
     return ERROR;
@@ -914,7 +927,7 @@ int zpl_vidhal_venc_update_fd(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 #endif
 }
 
-int zpl_vidhal_venc_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_start(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
@@ -927,18 +940,19 @@ int zpl_vidhal_venc_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E 
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Start failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Start failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
-    zpl_media_debugmsg_err(" ==========VENC Channel (%d) zpl_vidhal_venc_start", venc->venc_channel);
-    ipstack_fd(venc->vencfd) = HI_MPI_VENC_GetFd(venc->venc_channel);
+    zm_msg_err(" ==========VENC Channel (%d) zpl_vidhal_venc_start", venc->venc_channel);
+    if(venc->venc_channel >= 0 && venc->vencfd != ZPL_SOCKET_INVALID)
+        ipstack_fd(venc->vencfd) = HI_MPI_VENC_GetFd(venc->venc_channel);
     return HI_SUCCESS;
 #else
     return OK;
 #endif
 }
 
-int zpl_vidhal_venc_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_stop(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
@@ -946,7 +960,7 @@ int zpl_vidhal_venc_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E c
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Stop failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Stop failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     HI_MPI_VENC_CloseFd(venc->venc_channel);
@@ -960,7 +974,7 @@ int zpl_vidhal_venc_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E c
 * funciton : Start snap
 ******************************************************************************/
 
-int zpl_vidhal_venc_snap_start(zpl_int32 vencchn, zpl_video_size_t *pstSize, zpl_bool bSupportDCF)
+int zpl_vidhal_venc_snap_channel_create(zpl_int32 vencchn, zpl_video_size_t *pstSize, zpl_bool bSupportDCF)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
@@ -985,7 +999,7 @@ int zpl_vidhal_venc_snap_start(zpl_int32 vencchn, zpl_video_size_t *pstSize, zpl
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Create failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Create failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return s32Ret;
     }
     return HI_SUCCESS;
@@ -997,7 +1011,7 @@ int zpl_vidhal_venc_snap_start(zpl_int32 vencchn, zpl_video_size_t *pstSize, zpl
 /******************************************************************************
 * funciton : Stop snap
 ******************************************************************************/
-int zpl_vidhal_venc_snap_stop(zpl_int32 vencchn)
+int zpl_vidhal_venc_snap_channel_destroy(zpl_int32 vencchn)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
@@ -1005,14 +1019,14 @@ int zpl_vidhal_venc_snap_stop(zpl_int32 vencchn)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Stop failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Stop failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     s32Ret = HI_MPI_VENC_DestroyChn(vencchn);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Destroy failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Destroy failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return HI_SUCCESS;
@@ -1025,7 +1039,7 @@ int zpl_vidhal_venc_snap_stop(zpl_int32 vencchn)
 * funciton : snap process
 ******************************************************************************/
 
-int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
+int zpl_vidhal_venc_snap_channel_start(zpl_int32 vencchn, zpl_int32 SnapCnt, void *p)
 {
 #ifdef ZPL_HISIMPP_MODULE
     struct timeval TimeoutVal;
@@ -1045,7 +1059,7 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Start failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Start failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     /******************************************
@@ -1055,7 +1069,7 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
     if (s32VencFd < 0)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Get FD failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Get FD failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
 
@@ -1068,12 +1082,12 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
         s32Ret = select(s32VencFd + 1, &read_fds, NULL, NULL, &TimeoutVal);
         if (s32Ret < 0)
         {
-            zpl_media_debugmsg_err("snap select failed!\n");
+            zm_msg_err("snap select failed!\n");
             return HI_FAILURE;
         }
         else if (0 == s32Ret)
         {
-            zpl_media_debugmsg_err("snap time out!\n");
+            zm_msg_err("snap time out!\n");
             return HI_FAILURE;
         }
         else
@@ -1084,27 +1098,27 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
                 if (s32Ret != HI_SUCCESS)
                 {
                     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                        zpl_media_debugmsg_err(" VENC Channel (%d) Query Status failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+                        zm_msg_err(" VENC Channel (%d) Query Status failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
                     return HI_FAILURE;
                 }
                 /*******************************************************
                 suggest to check both u32CurPacks and u32LeftStreamFrames at the same time,for example:
                  if(0 == stStat.u32CurPacks || 0 == stStat.u32LeftStreamFrames)
-                 {                zpl_media_debugmsg_err("NOTE: Current  frame is NULL!\n");
+                 {                zm_msg_err("NOTE: Current  frame is NULL!\n");
                     return HI_SUCCESS;
                  }
                  *******************************************************/
                 if (0 == stStat.u32CurPacks)
                 {
                     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                        zpl_media_debugmsg_err("NOTE: Current  frame is NULL!\n");
+                        zm_msg_err("NOTE: Current  frame is NULL!\n");
                     return HI_SUCCESS;
                 }
                 stStream.pstPack = (VENC_PACK_S *)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
                 if (NULL == stStream.pstPack)
                 {
                     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                        zpl_media_debugmsg_err("malloc memory failed!\n");
+                        zm_msg_err("malloc memory failed!\n");
                     return HI_FAILURE;
                 }
                 stStream.u32PackCount = stStat.u32CurPacks;
@@ -1112,17 +1126,26 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
                 if (HI_SUCCESS != s32Ret)
                 {
                     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                        zpl_media_debugmsg_err(" VENC Channel (%d) Get Stream failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+                        zm_msg_err(" VENC Channel (%d) Get Stream failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
 
                     free(stStream.pstPack);
                     stStream.pstPack = NULL;
                     return HI_FAILURE;
                 }
+                /*
+                    for (i = 0; i < pstStream->u32PackCount; i++)
+    {
+        fwrite(pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset,
+               pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset, 1, pFd);
+
+        fflush(pFd);
+    }
+                */
                 s32Ret = HI_MPI_VENC_ReleaseStream(vencchn, &stStream);
                 if (HI_SUCCESS != s32Ret)
                 {
                     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-                        zpl_media_debugmsg_err(" VENC Channel (%d) Release Stream failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+                        zm_msg_err(" VENC Channel (%d) Release Stream failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
 
                     free(stStream.pstPack);
                     stStream.pstPack = NULL;
@@ -1141,7 +1164,7 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Stop failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Stop failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return HI_SUCCESS;
@@ -1153,19 +1176,19 @@ int zpl_vidhal_venc_snap_process(zpl_int32 vencchn, zpl_int32 SnapCnt)
 
 
 
-int zpl_vidhal_venc_request_IDR(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+int zpl_vidhal_venc_request_IDR(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
     {
-        zpl_media_debugmsg_debug(" VENC Channel (%d) Request IDR", venc->venc_channel);
+        zm_msg_debug(" VENC Channel (%d) Request IDR", venc->venc_channel);
     }
     s32Ret = HI_MPI_VENC_RequestIDR(venc->venc_channel, zpl_true);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Request IDR failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Request IDR failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return HI_SUCCESS;
@@ -1174,19 +1197,19 @@ int zpl_vidhal_venc_request_IDR(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_T
 #endif
 }
 
-int zpl_vidhal_venc_enable_IDR(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc, zpl_bool bEnableIDR)
+int zpl_vidhal_venc_enable_IDR(zpl_media_video_encode_t *venc, zpl_bool bEnableIDR)
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
     if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
     {
-        zpl_media_debugmsg_debug(" VENC Channel (%d) Enable IDR", venc->venc_channel);
+        zm_msg_debug(" VENC Channel (%d) Enable IDR", venc->venc_channel);
     }
     s32Ret = HI_MPI_VENC_EnableIDR(venc->venc_channel, bEnableIDR);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Enable IDR failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Enable IDR failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return HI_SUCCESS;
@@ -1196,186 +1219,75 @@ int zpl_vidhal_venc_enable_IDR(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TY
 }
 
 #ifdef ZPL_HISIMPP_MODULE
-static int zpl_vidhal_venc_frame_code(zpl_media_video_encode_t *venc, VENC_DATA_TYPE_U enctype)
+static int zpl_vidhal_venc_frame_code(zpl_media_video_encode_t *venc, VENC_DATA_TYPE_U codectype)
 {
     int enc = 0;
-    if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_H264)
+    if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_H264)
     {
-        if(enctype.enH264EType == H264E_NALU_BSLICE)
+        if(codectype.enH264EType == H264E_NALU_BSLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_BSLICE;
-        else if(enctype.enH264EType == H264E_NALU_PSLICE)
+        else if(codectype.enH264EType == H264E_NALU_PSLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_PSLICE;
-        else if(enctype.enH264EType == H264E_NALU_ISLICE)
+        else if(codectype.enH264EType == H264E_NALU_ISLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_ISLICE;
-        else if(enctype.enH264EType == H264E_NALU_IDRSLICE)
+        else if(codectype.enH264EType == H264E_NALU_IDRSLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_IDRSLICE;
-        else if(enctype.enH264EType == H264E_NALU_SEI)
+        else if(codectype.enH264EType == H264E_NALU_SEI)
             enc = ZPL_VIDEO_FRAME_TYPE_SEI;
-         else if(enctype.enH264EType == H264E_NALU_SPS)
+         else if(codectype.enH264EType == H264E_NALU_SPS)
             enc = ZPL_VIDEO_FRAME_TYPE_SPS;
-        else if(enctype.enH264EType == H264E_NALU_PPS)
+        else if(codectype.enH264EType == H264E_NALU_PPS)
             enc = ZPL_VIDEO_FRAME_TYPE_PPS;
     }
-    else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_H265)
+    else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_H265)
     {
-        if(enctype.enH265EType == H265E_NALU_BSLICE)
+        if(codectype.enH265EType == H265E_NALU_BSLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_BSLICE;
-        else if(enctype.enH265EType == H265E_NALU_PSLICE)
+        else if(codectype.enH265EType == H265E_NALU_PSLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_PSLICE;
-        else if(enctype.enH265EType == H265E_NALU_ISLICE)
+        else if(codectype.enH265EType == H265E_NALU_ISLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_ISLICE;
-        else if(enctype.enH265EType == H265E_NALU_IDRSLICE)
+        else if(codectype.enH265EType == H265E_NALU_IDRSLICE)
             enc = ZPL_VIDEO_FRAME_TYPE_IDRSLICE;
-        else if(enctype.enH265EType == H265E_NALU_SEI)
+        else if(codectype.enH265EType == H265E_NALU_SEI)
             enc = ZPL_VIDEO_FRAME_TYPE_SEI;
-         else if(enctype.enH265EType == H265E_NALU_SPS)
+         else if(codectype.enH265EType == H265E_NALU_SPS)
             enc = ZPL_VIDEO_FRAME_TYPE_SPS;
-        else if(enctype.enH265EType == H265E_NALU_PPS)
+        else if(codectype.enH265EType == H265E_NALU_PPS)
             enc = ZPL_VIDEO_FRAME_TYPE_PPS;
-        else if(enctype.enH265EType == H265E_NALU_VPS)
+        else if(codectype.enH265EType == H265E_NALU_VPS)
             enc = ZPL_VIDEO_FRAME_TYPE_VPS;
     }
-    else if(venc->pCodec->enctype == ZPL_VIDEO_CODEC_MJPEG)
+    else if(venc->pCodec->codectype == ZPL_VIDEO_CODEC_MJPEG)
     {
-        if(enctype.enJPEGEType == JPEGE_PACK_ECS)
+        if(codectype.enJPEGEType == JPEGE_PACK_ECS)
             enc = ZPL_VIDEO_FRAME_TYPE_ECS;
-        else if(enctype.enJPEGEType == JPEGE_PACK_APP)
+        else if(codectype.enJPEGEType == JPEGE_PACK_APP)
             enc = ZPL_VIDEO_FRAME_TYPE_APP;
-        else if(enctype.enJPEGEType == JPEGE_PACK_VDO)
+        else if(codectype.enJPEGEType == JPEGE_PACK_VDO)
             enc = ZPL_VIDEO_FRAME_TYPE_VDO;
-        else if(enctype.enJPEGEType == JPEGE_PACK_PIC)
+        else if(codectype.enJPEGEType == JPEGE_PACK_PIC)
             enc = ZPL_VIDEO_FRAME_TYPE_PIC;
-        else if(enctype.enJPEGEType == JPEGE_PACK_DCF)
+        else if(codectype.enJPEGEType == JPEGE_PACK_DCF)
             enc = ZPL_VIDEO_FRAME_TYPE_DCF;
-        else if(enctype.enJPEGEType == JPEGE_PACK_DCF_PIC)
+        else if(codectype.enJPEGEType == JPEGE_PACK_DCF_PIC)
             enc = ZPL_VIDEO_FRAME_TYPE_DCF_PIC;
     }
     return enc;
 }
 #endif
 
-int zpl_vidhal_venc_frame_recvfrom(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
+
+
+int zpl_vidhal_venc_frame_recvfrom(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
-    zpl_int32 s32Ret, i;
+    zpl_int32 s32Ret = 0, i = 0, ret = 0, count = 0;
     VENC_CHN_STATUS_S stStat;
     VENC_STREAM_S stStream;
     VENC_PACK_S venc_pack[16];
     zpl_uint32 packsize = 0;
-    zpl_uint32 offset = 0;
-    zpl_skbuffer_t * bufdata = NULL;
-    zpl_video_assert(venc);
-    zpl_video_assert(venc->frame_queue);
-    memset(&stStat, 0, sizeof(stStat));
-    memset(&stStream, 0, sizeof(stStream));
-    memset(&venc_pack, 0, sizeof(venc_pack));
-    /*******************************************************
-     step 1 : query how many packs in one-frame stream.
-    *******************************************************/
-    s32Ret = HI_MPI_VENC_QueryStatus(venc->venc_channel, &stStat);
-    if (HI_SUCCESS != s32Ret)
-    {
-        if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Query Status failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
-        //DP(APP_ERR, MODULE_ENC, "HI_MPI_VENC_Query chn[%d] failed with %#x!\n", vencchn, s32Ret);
-        return ERROR;
-    }
 
-    /*******************************************************
-     step 2 : malloc corresponding number of pack nodes.
-    *******************************************************/
-    stStream.pstPack = venc_pack;
-    /*******************************************************
-     step 3 : call mpi to get one-frame stream
-    *******************************************************/
-    stStream.u32PackCount = stStat.u32CurPacks ? 16:stStat.u32CurPacks;
-    s32Ret = HI_MPI_VENC_GetStream(venc->venc_channel, &stStream, -1);
-    if (HI_SUCCESS != s32Ret)
-    {
-        if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Get Stream failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
-        //DP(APP_ERR, MODULE_ENC, "HI_MPI_VENC_GetStream failed with %#x!\n", s32Ret);
-        return ERROR;
-    }
-
-//    if (venc && venc->venc_frame_handle)
-//        (venc->venc_frame_handle)(&stStream, 0);
-    /*******************************************************
-     step 4 : save frame to buff
-    *******************************************************/
-    for (i = 0; i < (zpl_int32)(stStream.u32PackCount); i++)
-    {
-        packsize += (stStream.pstPack[i].u32Len - stStream.pstPack[i].u32Offset);
-    }
-#ifdef ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL
-	if(venc->dbg_recv_count == ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL)
-	{
-		venc->dbg_recv_count = 0;
-		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-		{
-			zpl_media_debugmsg_debug(" VENC Channel (%d) Get Stream Count=%d Total Size=%d", venc->venc_channel, stStream.u32PackCount, packsize);
-		}
-	}
-	venc->dbg_recv_count++;
-#endif
-
-    bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->frame_queue, packsize);
-    if(bufdata && bufdata->skb_data && bufdata->skb_maxsize >= packsize)
-    {
-        zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
-        zpl_media_buffer_header(venc->media_channel, bufdata, ZPL_MEDIA_VIDEO, stStream.pstPack->u64PTS / 1000U, packsize);
-        zpl_media_buffer_header_framedatatype(bufdata, ZPL_MEDIA_FRAME_DATA_ENCODE);
-        for (i = 0; i < (zpl_int32)(stStream.u32PackCount); i++)
-        {
-            packsize = (stStream.pstPack[i].u32Len - stStream.pstPack[i].u32Offset);
-            memcpy(ZPL_SKB_DATA(bufdata) + offset, stStream.pstPack[i].pu8Addr + stStream.pstPack[i].u32Offset, packsize);
-            offset += packsize;
-    
-            zpl_media_buffer_header_frame_type(bufdata, zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType));
-        
-        }
-#ifdef ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL
-		if(venc->dbg_recv_count == ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL)
-		{
-			venc->dbg_recv_count = 0;
-			if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-			{
-				zpl_media_debugmsg_debug(" VENC Channel (%d) Add Stream To frame_queue Total Size=%d", venc->venc_channel, packsize);
-			}
-		}
-		venc->dbg_recv_count++;
-#endif
-
-		zpl_skbqueue_enqueue(venc->frame_queue, bufdata);
-    }
-    /*******************************************************
-     step 5 : release stream
-    *******************************************************/
-    s32Ret = HI_MPI_VENC_ReleaseStream(venc->venc_channel, &stStream);
-    if (HI_SUCCESS != s32Ret)
-    {
-        if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Release Stream failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
-        return ERROR;
-    }
-    return HI_SUCCESS;
-#else
-    return ERROR;
-#endif
-}
-
-int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_video_encode_t *venc)
-{
-#ifdef ZPL_HISIMPP_MODULE
-    zpl_int32 s32Ret, i;
-    VENC_CHN_STATUS_S stStat;
-    VENC_STREAM_S stStream;
-    VENC_PACK_S venc_pack[16];
-    zpl_uint32 packsize = 0;
-    #ifndef ZPL_VENC_READ_DEBUG
-    zpl_uint32 offset = 0;
-    zpl_skbuffer_t * bufdata = NULL;
-    #endif
     memset(&stStat, 0, sizeof(stStat));
     memset(&stStream, 0, sizeof(stStream));
     memset(&venc_pack, 0, sizeof(venc_pack));
@@ -1390,14 +1302,14 @@ int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Query Status failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Query Status failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         //DP(APP_ERR, MODULE_ENC, "HI_MPI_VENC_Query chn[%d] failed with %#x!\n", vencchn, s32Ret);
         return ERROR;
     }
 	if (0 == stStat.u32CurPacks)
 	{
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Query Status no CurPacks(%d)", venc->venc_channel, stStat.u32CurPacks);
+            zm_msg_err(" VENC Channel (%d) Query Status no CurPacks(%d)", venc->venc_channel, stStat.u32CurPacks);
         return ERROR;
 	}
     /*******************************************************
@@ -1413,11 +1325,11 @@ int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" VENC Channel (%d) Get Stream failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" VENC Channel (%d) Get Stream failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         //DP(APP_ERR, MODULE_ENC, "HI_MPI_VENC_GetStream failed with %#x!\n", s32Ret);
         return ERROR;
     }
-    //zpl_media_debugmsg_debug(" ======================VENC Channel (%d) Get Stream Count=%d", venc->venc_channel, stStream.u32PackCount);
+    //zm_msg_debug(" ======================VENC Channel (%d) Get Stream Count=%d", venc->venc_channel, stStream.u32PackCount);
     /*******************************************************
      step 4 : save frame to buff
     *******************************************************/
@@ -1432,7 +1344,7 @@ int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
 		venc->dbg_recv_count = 0;
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
 		{
-			zpl_media_debugmsg_debug(" VENC Channel (%d) Get Stream Count=%d Total Size=%d", venc->venc_channel, stStream.u32PackCount, packsize);
+			zm_msg_debug(" VENC Channel (%d) Get Stream Count=%d Total Size=%d", venc->venc_channel, stStream.u32PackCount, packsize);
 		}
 	}
 	venc->dbg_recv_count++;
@@ -1444,53 +1356,22 @@ int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
         packsize = (stStream.pstPack[i].u32Len - stStream.pstPack[i].u32Offset);
         zpl_uint8 *pbuf = stStream.pstPack[i].pu8Addr + stStream.pstPack[i].u32Offset;
 
-#ifdef ZPL_VENC_READ_DEBUG 
-		if(venc->mem_buf && venc->mem_size && venc->mem_size >= packsize)       
-    	{
-			//packsize = (stStream.pstPack[i].u32Len - stStream.pstPack[i].u32Offset);
-            //if(stStream.pstPack[i].pu8Addr && (stStream.pstPack[i].pu8Addr + stStream.pstPack[i].u32Offset))
-			//    memcpy(venc->mem_buf, stStream.pstPack[i].pu8Addr + stStream.pstPack[i].u32Offset, packsize);
-            if(stStream.pstPack[i].pu8Addr && (pbuf))
-			    memcpy(venc->mem_buf + offset, pbuf, packsize);
-        }       
-#else/* ZPL_VENC_READ_DEBUG */
-
-        //zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_VIDEO, ZPL_MEDIA_FRAME_DATA_ENCODE, 
-	    //    zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType), 
-        //    stStream.pstPack->u64PTS / 1000U, pbuf, packsize);
-
-        bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, venc->frame_queue, packsize);
-        offset = 0;
-		if(bufdata != NULL
-            && bufdata->skb_data != NULL 
-            && bufdata->skb_maxsize >= packsize)
-		{
-            zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
-            zpl_media_buffer_header(venc->media_channel, bufdata, ZPL_MEDIA_VIDEO, stStream.pstPack->u64PTS / 1000U, packsize);
-            zpl_media_buffer_header_framedatatype(bufdata, ZPL_MEDIA_FRAME_DATA_ENCODE);
-			//packsize = (stStream.pstPack[i].u32Len - stStream.pstPack[i].u32Offset);
-            //if(stStream.pstPack[i].pu8Addr && (stStream.pstPack[i].pu8Addr + stStream.pstPack[i].u32Offset))
-			//    memcpy(bufdata->skb_data + offset, stStream.pstPack[i].pu8Addr + stStream.pstPack[i].u32Offset, packsize);
-			
-            if(stStream.pstPack[i].pu8Addr && (pbuf))
-			    memcpy(ZPL_SKB_DATA(bufdata) + offset, pbuf, packsize);
- 
-            zpl_media_buffer_header_frame_type(bufdata, zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType));
-
+        ret = zpl_media_channel_skbuffer_frame_put(venc->media_channel, ZPL_MEDIA_VIDEO, ZPL_MEDIA_FRAME_DATA_ENCODE, 
+	            zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType), 
+                stStream.pstPack->u64PTS / 1000U, pbuf, packsize);
+        if(ret == 0)
+            count++;
 	#ifdef ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL
-			if(venc->dbg_recv_count == ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL)
+		if(venc->dbg_recv_count == ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL)
+		{
+			venc->dbg_recv_count = 0;
+			if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
 			{
-				venc->dbg_recv_count = 0;
-				if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, RECV) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-				{
-					zpl_media_debugmsg_debug(" VENC Channel (%d) Add Stream To frame_queue Total Size=%d", venc->venc_channel, packsize);
-				}
+				zm_msg_debug(" VENC Channel (%d) Add Stream To frame_queue Total Size=%d", venc->venc_channel, packsize);
 			}
-			venc->dbg_recv_count++;
-	#endif
-			zpl_skbqueue_enqueue(venc->frame_queue, bufdata);    
 		}
-#endif /* ZPL_VENC_READ_DEBUG */
+		venc->dbg_recv_count++;
+	#endif   
 	}
 	/*******************************************************
 	 step 5 : release stream
@@ -1499,11 +1380,11 @@ int zpl_vidhal_venc_frame_recvfrom_one(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
 	if (HI_SUCCESS != s32Ret)
 	{
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-			zpl_media_debugmsg_err(" VENC Channel (%d) Release Stream failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+			zm_msg_err(" VENC Channel (%d) Release Stream failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
 		return ERROR;
 	}
 	
-    return HI_SUCCESS;
+    return count;
 #else
     return ERROR;
 #endif
@@ -1520,7 +1401,7 @@ int zpl_vidhal_venc_frame_sendto(zpl_media_video_encode_t *venc, zpl_int32 id, z
 		venc->dbg_send_count = 0;
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE) && ZPL_MEDIA_DEBUG(ENCODE, SEND) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
 		{
-			zpl_media_debugmsg_debug(" Frame sendto VENC Channel (%d)", vencchn);
+			zm_msg_debug(" Frame sendto VENC Channel (%d)", vencchn);
 		}
 	}
 	venc->dbg_send_count++;
@@ -1529,7 +1410,7 @@ int zpl_vidhal_venc_frame_sendto(zpl_media_video_encode_t *venc, zpl_int32 id, z
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
-            zpl_media_debugmsg_err(" Frame sendto VENC Channel (%d) failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
+            zm_msg_err(" Frame sendto VENC Channel (%d) failed(%s)", vencchn, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
     return HI_SUCCESS;

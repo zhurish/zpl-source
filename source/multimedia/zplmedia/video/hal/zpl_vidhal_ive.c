@@ -65,7 +65,7 @@ int zpl_vidhal_vgs_fillrect(VIDEO_FRAME_INFO_S* pstFrmInfo, ZPL_VIDHAL_RECT_ARRA
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("Vgs begin job fail,Error(%#x)\n", s32Ret);
+            zm_msg_err("Vgs begin job fail,Error(%#x)\n", s32Ret);
         return s32Ret;
     }
 
@@ -83,7 +83,7 @@ int zpl_vidhal_vgs_fillrect(VIDEO_FRAME_INFO_S* pstFrmInfo, ZPL_VIDHAL_RECT_ARRA
         if (s32Ret != HI_SUCCESS)
         {
             if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_VGS_AddCoverTask fail,Error(%#x)\n", s32Ret);
+                zm_msg_err("HI_MPI_VGS_AddCoverTask fail,Error(%#x)\n", s32Ret);
             HI_MPI_VGS_CancelJob(VgsHandle);
             return s32Ret;
         }
@@ -93,7 +93,7 @@ int zpl_vidhal_vgs_fillrect(VIDEO_FRAME_INFO_S* pstFrmInfo, ZPL_VIDHAL_RECT_ARRA
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob fail,Error(%#x)\n", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob fail,Error(%#x)\n", s32Ret);
         HI_MPI_VGS_CancelJob(VgsHandle);
         return s32Ret;
     }
@@ -115,12 +115,12 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
     if (feof(pFp))
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("end of file!\n");
+            zm_msg_err("end of file!\n");
         s32Ret = fseek(pFp, 0 , SEEK_SET );
         if (0 != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("fseek failed!\n");
+                zm_msg_err("fseek failed!\n");
             return s32Ret;
         }
 
@@ -131,14 +131,14 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
         if (0 != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("fseek failed!\n");
+                zm_msg_err("fseek failed!\n");
             return s32Ret;
         }
     }
 
     //if (feof(pFp))
     //{
-    //    zpl_media_debugmsg_err("end of file!\n");
+    //    zm_msg_err("end of file!\n");
     //    fseek(pFp, 0 , SEEK_SET);
     //}
 
@@ -155,7 +155,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fread(pU8, width, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -171,7 +171,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fread(pU8, width, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -184,7 +184,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fread(pU8, width, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -200,7 +200,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fread(pU8, width, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -213,7 +213,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fread(pU8, width, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -229,7 +229,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fread(pU8, width * 3, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -248,7 +248,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                     if ( 1 != fread(pU8, width, 1, pFp))
                     {
                         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                            zpl_media_debugmsg_err("Read file fail\n");
+                            zm_msg_err("Read file fail\n");
                         return HI_FAILURE;
                     }
 
@@ -267,7 +267,7 @@ int zpl_vidhal_ive_readfile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( sizeof(zpl_uint16) != fread(pU8, width, sizeof(zpl_uint16), pFp) )
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Read file fail\n");
+                        zm_msg_err("Read file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -303,7 +303,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( 1 != fwrite(pU8, width, 1, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -319,7 +319,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( width != fwrite(pU8, 1, width, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -332,7 +332,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( width != fwrite(pU8, 1, width, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -348,7 +348,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( width != fwrite(pU8, 1, width, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -361,7 +361,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( width != fwrite(pU8, 1, width, pFp))
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -378,7 +378,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( sizeof(zpl_uint16) != fwrite(pU8, width, sizeof(zpl_uint16), pFp) )
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -395,7 +395,7 @@ int zpl_vidhal_ive_writefile(IVE_IMAGE_S* pstImg, FILE* pFp)
                 if ( width != fwrite(pU8, sizeof(zpl_uint32), width, pFp) )
                 {
                     if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                        zpl_media_debugmsg_err("Write file fail\n");
+                        zm_msg_err("Write file fail\n");
                     return HI_FAILURE;
                 }
 
@@ -489,7 +489,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
     if (NULL == pstImg)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("pstImg is null\n");
+            zm_msg_err("pstImg is null\n");
         return HI_FAILURE;
     }
 
@@ -508,7 +508,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -520,7 +520,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
             pstImg->au32Stride[1] = pstImg->au32Stride[0];
@@ -536,7 +536,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
             pstImg->au32Stride[1] = pstImg->au32Stride[0];
@@ -562,7 +562,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -574,7 +574,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
             pstImg->au64VirAddr[1] = pstImg->au64VirAddr[0] + 1;
@@ -595,7 +595,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -609,7 +609,7 @@ int zpl_vidhal_ive_create_image(IVE_IMAGE_S* pstImg, IVE_IMAGE_TYPE_E enType, zp
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -631,7 +631,7 @@ int zpl_vidhal_ive_create_meminfo(IVE_MEM_INFO_S* pstMemInfo, zpl_uint32 u32Size
     if (NULL == pstMemInfo)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("pstMemInfo is null\n");
+            zm_msg_err("pstMemInfo is null\n");
         return HI_FAILURE;
     }
     pstMemInfo->u32Size = u32Size;
@@ -639,7 +639,7 @@ int zpl_vidhal_ive_create_meminfo(IVE_MEM_INFO_S* pstMemInfo, zpl_uint32 u32Size
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+            zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -656,7 +656,7 @@ int zpl_vidhal_ive_create_image_cached(IVE_IMAGE_S* pstImg,
     if (NULL == pstImg)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("pstImg is null\n");
+            zm_msg_err("pstImg is null\n");
         return HI_FAILURE;
     }
 
@@ -675,7 +675,7 @@ int zpl_vidhal_ive_create_image_cached(IVE_IMAGE_S* pstImg,
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -701,7 +701,7 @@ int zpl_vidhal_ive_create_image_cached(IVE_IMAGE_S* pstImg,
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -718,7 +718,7 @@ int zpl_vidhal_ive_create_image_cached(IVE_IMAGE_S* pstImg,
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -732,7 +732,7 @@ int zpl_vidhal_ive_create_image_cached(IVE_IMAGE_S* pstImg,
             if (s32Ret != HI_SUCCESS)
             {
                 if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                    zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+                    zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
                 return s32Ret;
             }
         }
@@ -752,7 +752,7 @@ int zpl_vidhal_ive_create_data(IVE_DATA_S* pstData,zpl_uint32 u32Width, zpl_uint
     if (NULL == pstData)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("pstData is null\n");
+            zm_msg_err("pstData is null\n");
         return HI_FAILURE;
     }
     pstData->u32Width = u32Width;
@@ -763,7 +763,7 @@ int zpl_vidhal_ive_create_data(IVE_DATA_S* pstData,zpl_uint32 u32Width, zpl_uint
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
+            zm_msg_err("Mmz Alloc fail,Error(%#x)\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -801,7 +801,7 @@ int zpl_vidhal_ive_dma_image(VIDEO_FRAME_INFO_S *pstFrameInfo,IVE_DST_IMAGE_S *p
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
+            zm_msg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
     }
 
     if (HI_TRUE == bInstant)
@@ -815,7 +815,7 @@ int zpl_vidhal_ive_dma_image(VIDEO_FRAME_INFO_S *pstFrameInfo,IVE_DST_IMAGE_S *p
         if(HI_SUCCESS != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_IVE_Query Error(%#x)\n", s32Ret);
+                zm_msg_err("HI_MPI_IVE_Query Error(%#x)\n", s32Ret);
         }
     }
     return HI_SUCCESS;
@@ -850,7 +850,7 @@ int zpl_vidhal_ive_dma_image2(IVE_SRC_IMAGE_S *pstSrc, IVE_DST_IMAGE_S *pstDst, 
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
+            zm_msg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
     }
     if (HI_TRUE == bInstant)
     {
@@ -863,7 +863,7 @@ int zpl_vidhal_ive_dma_image2(IVE_SRC_IMAGE_S *pstSrc, IVE_DST_IMAGE_S *pstDst, 
         if(HI_SUCCESS != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
+                zm_msg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
         }
     }
     return HI_SUCCESS;
@@ -898,7 +898,7 @@ int zpl_vidhal_ive_dma_image2frame(IVE_DST_IMAGE_S *pstSrc, VIDEO_FRAME_INFO_S *
     if(HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
+            zm_msg_err("HI_MPI_IVE_DMA Error(%#x)\n", s32Ret);
     }
     if (HI_TRUE == bInstant)
     {
@@ -911,7 +911,7 @@ int zpl_vidhal_ive_dma_image2frame(IVE_DST_IMAGE_S *pstSrc, VIDEO_FRAME_INFO_S *
         if(HI_SUCCESS != s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_IVE_Query Error(%#x)\n", s32Ret);
+                zm_msg_err("HI_MPI_IVE_Query Error(%#x)\n", s32Ret);
         }
     }
     return HI_SUCCESS;
@@ -946,7 +946,7 @@ int zpl_vidhal_ive_dma_frame(VIDEO_FRAME_INFO_S *SrcFrmInfo, VIDEO_FRAME_INFO_S 
 	if (HI_SUCCESS != s32Ret)
 	{
        if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_IVE_DMA fail, Error(%#x)\n",s32Ret);
+            zm_msg_err("HI_MPI_IVE_DMA fail, Error(%#x)\n",s32Ret);
        return s32Ret;
     }
     s32Ret = HI_MPI_IVE_Query(hIveHandle, &bFinish, bBlock); 
@@ -958,7 +958,7 @@ int zpl_vidhal_ive_dma_frame(VIDEO_FRAME_INFO_S *SrcFrmInfo, VIDEO_FRAME_INFO_S 
 	if (HI_SUCCESS != s32Ret)
 	{
        if(ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(ISP, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_IVE_Query fail, Error(%#x)\n",s32Ret);
+            zm_msg_err("HI_MPI_IVE_Query fail, Error(%#x)\n",s32Ret);
        return s32Ret;
     }
 

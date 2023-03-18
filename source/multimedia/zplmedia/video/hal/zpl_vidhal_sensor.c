@@ -2031,7 +2031,7 @@ int zpl_vidhal_sensor_get_comboattr(ZPL_SENSOR_TYPE_E snstype, zpl_uint32 MipiDe
         break;
 
     default:
-        zpl_media_debugmsg_error("not support enSnsType: %d\n", snstype);
+        zm_msg_error("not support enSnsType: %d\n", snstype);
         memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX327_12BIT_2M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
     }
 #endif
@@ -2362,7 +2362,3 @@ int zpl_vidhal_sensor_get_chnattr(ZPL_SENSOR_TYPE_E snstype, void *p)
     return OK;
 }
 
-int zpl_vidhal_sensor_get_extchnattr(ZPL_SENSOR_TYPE_E snstype, void *p)
-{
-    return ERROR;
-}

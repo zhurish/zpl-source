@@ -41,7 +41,7 @@ typedef enum
     SONY_IMX415_MIPI_8M_20FPS_12BIT,
     SAMPLE_SNS_TYPE_BUTT,
 } ZPL_SENSOR_TYPE_E;
-
+//Hi3516DV300 两个dev，分别对应两路mipi接口
 typedef enum 
 {
     ZPL_SNSDEV_0 = 0,
@@ -60,12 +60,13 @@ typedef enum
     ZPL_BUSID_1 = 1,
 } ZPL_BUSID_E;
 
+/*
 typedef enum 
 {
     ZPL_ISPDEV_0 = 0,
     ZPL_ISPDEV_1 = 1,
 } ZPL_ISPDEV_E;
-
+*/
 
 #define ZPL_SENSOR_TYPE_DEFAULT     SONY_IMX327_2L_MIPI_2M_30FPS_12BIT
 

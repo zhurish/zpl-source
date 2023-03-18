@@ -10,48 +10,60 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
+static int zpl_media_video_vpsschn_read(struct thread *t_thread);
 
-static int zpl_media_video_vpss_channel_cmp(zpl_media_video_vpss_channel_t *encode, zpl_media_gkey_t *gkey)
+static int zpl_media_video_vpsschn_cmp(zpl_media_video_vpsschn_t *encode, zpl_media_gkey_t *gkey)
 {
-	if(encode->vpss_channel == gkey->channel)
+	if (encode->vpss_channel == gkey->channel && encode->vpss_group == gkey->group)
 		return 0;
-	return 1;	
+	return 1;
 }
-#ifdef ZPL_VIDEO_VPSSGRP_ENABLE	
-static int zpl_media_video_vpssgrp_cmp(zpl_media_video_vpssgrp_t *encode, zpl_media_gkey_t *gkey)
+static void zpl_media_video_vpsschn_free(void *pVoid)
 {
-	if(encode->vpss_group == gkey->group)
-		return 0;
-	return 1;	
+	zpl_media_video_vpsschn_t *vpsschn = pVoid;
+	if(vpsschn)
+	{
+		zpl_media_video_vpsschn_hal_destroy(vpsschn);
+		if((vpsschn->vpssfd != ZPL_SOCKET_INVALID))
+		{
+			ipstack_drstroy(vpsschn->vpssfd);
+			vpsschn->vpssfd = ZPL_SOCKET_INVALID;
+		}
+		os_free(vpsschn);
+	}
+	return ;
 }
-#endif
 
-int zpl_media_video_vpss_init(void)
+zpl_media_video_vpsschn_t *zpl_media_video_vpsschn_lookup(zpl_int32 vpss_group, zpl_int32 vpss_channel)
 {
-	zpl_media_global_gkey_cmpset(ZPL_MEDIA_GLOAL_VIDEO_VPSS, zpl_media_video_vpss_channel_cmp);
-	#ifdef ZPL_VIDEO_VPSSGRP_ENABLE		
-	zpl_media_global_gkey_cmpset(ZPL_MEDIA_GLOAL_VIDEO_VPSSGRP, zpl_media_video_vpssgrp_cmp);	
-	#endif
+	zpl_media_video_vpsschn_t *vpsschn = (zpl_media_video_vpsschn_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_VPSS, vpss_channel, vpss_group, 0);
+	return vpsschn;
+}
+
+int zpl_media_video_vpsschn_init(void)
+{
+	zpl_media_global_gkey_cmpset(ZPL_MEDIA_GLOAL_VIDEO_VPSS, zpl_media_video_vpsschn_cmp);
+	zpl_media_global_freeset(ZPL_MEDIA_GLOAL_VIDEO_VPSS, zpl_media_video_vpsschn_free);
 	return OK;
 }
 
-int zpl_media_video_vpss_channel_count(zpl_int32 vpss_channel)
+int zpl_media_video_vpssgrp_lookup(zpl_int32 vpss_group)
 {
 	int count = 0;
 	NODE node;
-	zpl_media_video_vpss_channel_t *t = NULL;
-    LIST *_lst = NULL;
-    os_mutex_t *_mutex = NULL;
-    zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_VPSS, &_lst, &_mutex);
-	if(_lst == NULL)
+	zpl_media_video_vpsschn_t *vpsschn = NULL;
+	LIST *_lst = NULL;
+	os_mutex_t *_mutex = NULL;
+	zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_VPSS, &_lst, &_mutex);
+	if (_lst == NULL)
 		return 0;
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
 
-	for(t = (zpl_media_video_vpss_channel_t *)lstFirst(_lst); 
-		t != NULL; t = (zpl_media_video_vpss_channel_t *)lstNext(&node))
+	for (vpsschn = (zpl_media_video_vpsschn_t *)lstFirst(_lst);
+		 vpsschn != NULL; vpsschn = (zpl_media_video_vpsschn_t *)lstNext(&node))
 	{
-		node = t->node;
-		if(t && t->vpss_channel == vpss_channel)
+		node = vpsschn->node;
+		if (vpsschn && vpsschn->vpss_group == vpss_group)
 		{
 			count++;
 		}
@@ -60,295 +72,517 @@ int zpl_media_video_vpss_channel_count(zpl_int32 vpss_channel)
 	return count;
 }
 
-int zpl_media_video_vpss_channel_delete(zpl_int32 vpss_channel)
+static int zpl_media_video_vpssgrp_bind_count_update(zpl_int32 vpss_group)
 {
-	zpl_media_video_vpss_channel_t * t = (zpl_media_video_vpss_channel_t*)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_VPSS, vpss_channel, 0, 0);
-	if(t)
+	int count = 0;
+	NODE node;
+	zpl_media_video_vpsschn_t *vpsschn = NULL;
+	LIST *_lst = NULL;
+	os_mutex_t *_mutex = NULL;
+	zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_VPSS, &_lst, &_mutex);
+	if (_lst == NULL)
+		return 0;
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	for (vpsschn = (zpl_media_video_vpsschn_t *)lstFirst(_lst);
+		 vpsschn != NULL; vpsschn = (zpl_media_video_vpsschn_t *)lstNext(&node))
 	{
-		zpl_media_global_del(ZPL_MEDIA_GLOAL_VIDEO_VPSS, t);
-		os_free(t);	
+		node = vpsschn->node;
+		if (vpsschn && vpsschn->vpss_group == vpss_group)
+		{
+			count++;
+		}
 	}
-	return OK;
+	for (vpsschn = (zpl_media_video_vpsschn_t *)lstFirst(_lst);
+		 vpsschn != NULL; vpsschn = (zpl_media_video_vpsschn_t *)lstNext(&node))
+	{
+		node = vpsschn->node;
+		if (vpsschn && vpsschn->vpss_group == vpss_group)
+		{
+			vpsschn->grp_bind_count = count;
+		}
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	return count;
 }
 
-int zpl_media_video_vpss_channel_new(zpl_int32 vpss_channel)
+zpl_media_video_vpsschn_t *zpl_media_video_vpsschn_create(zpl_int32 vpss_group, zpl_int32 vpss_channel, zpl_video_size_t output_size)
 {
-	zpl_media_video_vpss_channel_t *t = os_malloc(sizeof(zpl_media_video_vpss_channel_t));
-	zpl_video_assert(t);
-	if(t)
+	zpl_media_video_vpsschn_t *vpsschn = NULL;
+
+	if (zpl_media_video_vpsschn_lookup(vpss_group, vpss_channel) != NULL)
 	{
-		memset(t, 0, sizeof(zpl_media_video_vpss_channel_t));
-		t->vpss_channel = vpss_channel;
-		zpl_media_global_add(ZPL_MEDIA_GLOAL_VIDEO_VPSS, t);
+		return NULL;
+	}
+	vpsschn = os_malloc(sizeof(zpl_media_video_vpsschn_t));
+	zpl_video_assert(vpsschn);
+	if (vpsschn)
+	{
+		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+		memset(vpsschn, 0, sizeof(zpl_media_video_vpsschn_t));
+		vpsschn->vpss_channel = vpss_channel;
+		vpsschn->vpss_group = vpss_group;
+		vpsschn->vpssfd = ipstack_create(IPSTACK_OS);
+		//vpsschn->channel = channel;
+		//vpsschn->input_size.width = input_size.width;	  // 宽度
+		//vpsschn->input_size.height = input_size.height;	  // 高度
+		vpsschn->output_size.width = output_size.width;	  // 宽度
+		vpsschn->output_size.height = output_size.height; // 高度
+		zm_msg_debug("vpsschn channel (%d)", vpsschn->vpss_channel);
+
+		zpl_media_global_add(ZPL_MEDIA_GLOAL_VIDEO_VPSS, vpsschn);
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+		zpl_media_video_vpssgrp_bind_count_update(vpss_group);
+		return vpsschn;
+	}
+	return NULL;
+}
+
+int zpl_media_video_vpsschn_outputsize_get(zpl_int32 vpss_group, zpl_int32 vpss_channel, zpl_video_size_t *output_size)
+{
+	zpl_media_video_vpsschn_t *vpsschn = zpl_media_video_vpsschn_lookup(vpss_group, vpss_channel);
+	if (vpsschn != NULL)
+	{
+		output_size->width = vpsschn->output_size.width;   // 宽度
+		output_size->height = vpsschn->output_size.height; // 高度
 		return OK;
 	}
 	return ERROR;
 }
 
-
-
-zpl_media_video_vpss_channel_t * zpl_media_video_vpss_channel_lookup(zpl_int32 vpss_channel)
+int zpl_media_video_vpsschn_hal_create(zpl_media_video_vpsschn_t *vpsschn)
 {
-	zpl_media_video_vpss_channel_t * t = (zpl_media_video_vpss_channel_t*)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_VPSS, vpss_channel, 0, 0);
-	return t;
-}
-
-#ifndef ZPL_VIDEO_VPSSGRP_ENABLE
-int zpl_media_video_vpss_channel_input_set(zpl_int32 vpss_channel, void *video_input)
-{
-	zpl_media_video_vpss_channel_t * t = zpl_media_video_vpss_channel_lookup(vpss_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(t)
+	int ret = ERROR;
+	zpl_video_assert(vpsschn);
+	if (vpsschn && !ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_ACTIVE))
 	{
-		t->video_input = video_input;
-	}	
+		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+
+		zm_msg_debug("vpsschn channel (%d) ", vpsschn->vpss_channel);
+
+		ret = zpl_vidhal_vpss_channel_create(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("create vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+
+		ZPL_SET_BIT(vpsschn->flags, ZPL_MEDIA_STATE_ACTIVE);
+
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("active vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+		return ret;
+	}
+	return ret;
+}
+int zpl_media_video_vpsschn_destroy(zpl_media_video_vpsschn_t *vpsschn)
+{
+	int ret = -1, vpss_group = -1;
+	zpl_video_assert(vpsschn);
+	vpss_group = vpsschn->vpss_group;
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	if (vpsschn && vpsschn->t_read)
+	{
+		thread_cancel(vpsschn->t_read);
+		vpsschn->t_read = NULL;
+	}
+	if (vpsschn->reference <= 1 && ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_vpss_channel_stop(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("stop vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+		vpsschn->online = zpl_false;
+		ZPL_CLR_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START);
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("stop vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+	}
+	if (ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_ACTIVE))
+	{
+		ret = zpl_vidhal_vpss_channel_destroy(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("destroy vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+		ZPL_CLR_BIT(vpsschn->flags, ZPL_MEDIA_STATE_ACTIVE);
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("inactive vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+	}
+	else
+		ret = OK;
+	zpl_media_global_del(ZPL_MEDIA_GLOAL_VIDEO_VPSS, vpsschn);
+	if((vpsschn->vpssfd != ZPL_SOCKET_INVALID))
+	{
+		ipstack_drstroy(vpsschn->vpssfd);
+		vpsschn->vpssfd = ZPL_SOCKET_INVALID;
+	}
+	os_free(vpsschn);
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	return OK;	
+	zpl_media_video_vpssgrp_bind_count_update(vpss_group);
+	return ret;
 }
-#else
-int zpl_media_video_vpss_channel_vpssgrp_set(zpl_int32 vpss_channel, void *vpssgrp)
+int zpl_media_video_vpsschn_hal_destroy(zpl_media_video_vpsschn_t *vpsschn)
 {
-	zpl_media_video_vpss_channel_t * t = zpl_media_video_vpss_channel_lookup(vpss_channel);
+	int ret = -1, vpss_group = -1;
+	zpl_video_assert(vpsschn);
+	vpss_group = vpsschn->vpss_group;
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(t)
+
+	if (vpsschn->reference <= 1 && ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START))
 	{
-		t->vpssgrp = vpssgrp;
-	}	
+		ret = zpl_vidhal_vpss_channel_stop(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("stop vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+		vpsschn->online = zpl_false;
+		ZPL_CLR_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START);
+
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("stop vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+	}
+	if (ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_ACTIVE))
+	{
+		ret = zpl_vidhal_vpss_channel_destroy(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("destroy vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+		ZPL_CLR_BIT(vpsschn->flags, ZPL_MEDIA_STATE_ACTIVE);
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("inactive vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+	}
+	else
+		ret = OK;
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	zpl_media_video_vpssgrp_bind_count_update(vpss_group);
+	return ret;
+}
+
+int zpl_media_video_vpsschn_start(void *master, zpl_media_video_vpsschn_t *vpsschn)
+{
+	int ret = -1;
+	zpl_video_assert(vpsschn);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+
+	if (!ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_vpss_channel_start(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("start vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+
+		vpsschn->online = zpl_true;
+		ZPL_SET_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START);
+		
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("start vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+	}
+	else
+		ret = OK;
+	zpl_vidhal_vpss_channel_update_fd(vpsschn);
+	if (master && vpsschn && !ipstack_invalid(vpsschn->vpssfd) && vpsschn->hwbind == zpl_false)
+	{
+		vpsschn->t_master = master;
+		vpsschn->t_read = thread_add_read(master, zpl_media_video_vpsschn_read, vpsschn, vpsschn->vpssfd);
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	return ret;
+}
+
+int zpl_media_video_vpsschn_stop(zpl_media_video_vpsschn_t *vpsschn)
+{
+	int ret = -1;
+	zpl_video_assert(vpsschn);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	if (vpsschn && vpsschn->t_read)
+	{
+		thread_cancel(vpsschn->t_read);
+		vpsschn->t_read = NULL;
+	}
+	if (vpsschn->reference <= 1 && ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START))
+	{
+		ret = zpl_vidhal_vpss_channel_stop(vpsschn->vpss_group, vpsschn->vpss_channel, vpsschn);
+		if (ret != OK)
+		{
+			zm_msg_error("stop vpss group %d channel %d failed.", vpsschn->vpss_group, vpsschn->vpss_channel);
+			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+			return ret;
+		}
+
+		vpsschn->online = zpl_false;
+		ZPL_CLR_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START);
+		if (ZPL_MEDIA_DEBUG(VPSS, EVENT))
+		{
+			zm_msg_debug("stop vpsschn channel(%d) ret=%d", vpsschn->vpss_channel, ret);
+		}
+	}
+	else
+		ret = OK;
+
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	return ret;
+}
+
+zpl_bool zpl_media_video_vpsschn_state_check(zpl_media_video_vpsschn_t *vpsschn, int bit)
+{
+	zpl_bool ret = zpl_false;
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	if (vpsschn)
+	{
+		if (ZPL_TST_BIT(vpsschn->flags, bit))
+			ret = zpl_true;
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	return ret;
+}
+
+int zpl_media_video_vpsschn_thread(zpl_media_video_vpsschn_t *vpsschn, zpl_bool start)
+{
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	if (start == zpl_false && vpsschn && vpsschn->t_read)
+	{
+		thread_cancel(vpsschn->t_read);
+		vpsschn->t_read = NULL;
+		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+		return OK;
+	}
+	zpl_vidhal_vpss_channel_update_fd(vpsschn);
+	if (start && vpsschn && !ipstack_invalid(vpsschn->vpssfd))
+	{
+		vpsschn->t_read = thread_add_read(vpsschn->t_master, zpl_media_video_vpsschn_read, vpsschn, vpsschn->vpssfd);
+	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
 	return OK;
 }
-#endif
-int zpl_media_video_vpss_channel_bindcount_set(zpl_media_video_vpss_channel_t *vpss, zpl_bool add)
+
+int zpl_media_video_vpsschn_source_set(zpl_int32 venc_group, zpl_int32 venc_channel, void *video_input, zpl_bool hwbind)
 {
+	int ret = ERROR;
+	zpl_media_video_vpsschn_t *vpsschn = (zpl_media_video_vpsschn_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_VPSS, venc_channel, venc_group, 0);
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(vpss)
+	if (vpsschn)
 	{
-		if(add)
-			vpss->bindcount++;
+		int vpssgrp = venc_group;
+		zpl_media_video_inputchn_t *inputchn = video_input;
+		if(inputchn)
+		{
+			vpsschn->input_size.width = inputchn->output_size.width;
+        	vpsschn->input_size.height = inputchn->output_size.height;
+			//vpsschn->output_size.width = inputchn->input_size.width;
+        	//vpsschn->output_size.height = inputchn->input_size.height;
+			if (hwbind && vpsschn->hwbind == zpl_false)
+			{
+				if (vpsschn->t_read)
+				{
+					thread_cancel(vpsschn->t_read);
+					vpsschn->t_read = NULL;
+				}
+				if (zpl_syshal_input_bind_vpss(inputchn->input_pipe, inputchn->input_chn, vpssgrp) != OK)
+				{
+					zm_msg_error("input_pipe %d input_chn %d can not bind to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+					return ERROR;
+				}
+				vpsschn->hwbind = zpl_true;
+				ret = OK;
+				vpsschn->source_input = video_input;
+				inputchn->parent = vpsschn;
+			}
+			else if (hwbind == zpl_false && vpsschn->hwbind)
+			{
+				if (vpsschn->t_read)
+				{
+					thread_cancel(vpsschn->t_read);
+					vpsschn->t_read = NULL;
+				}
+				if (zpl_syshal_input_unbind_vpss(inputchn->input_pipe, inputchn->input_chn, vpssgrp) != OK)
+				{
+					zm_msg_error("input_pipe %d input_chn %d can not unbind to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+					return ERROR;
+				}
+				vpsschn->hwbind = zpl_false;
+				zpl_vidhal_vpss_channel_update_fd(vpsschn);
+				if (!ipstack_invalid(vpsschn->vpssfd))
+				{
+					if (ZPL_TST_BIT(vpsschn->flags, ZPL_MEDIA_STATE_START))
+					vpsschn->t_read = thread_add_read(vpsschn->t_master, zpl_media_video_vpsschn_read, vpsschn, vpsschn->vpssfd);
+				}
+				vpsschn->source_input = video_input;
+				inputchn->parent = vpsschn;
+				ret = OK;
+			}
+			else if (hwbind == zpl_false && vpsschn->hwbind == zpl_false)
+			{
+				vpsschn->source_input = video_input;
+				inputchn->parent = vpsschn;
+				ret = OK;
+			}
+			zpl_media_video_inputchn_addref(inputchn);
+		}
 		else
-			vpss->bindcount++;
-	}	
+		{
+			if(vpsschn->source_input)
+			{
+				inputchn = vpsschn->source_input;
+				zpl_media_video_inputchn_delref(vpsschn->source_input);
+				if (vpsschn->t_read)
+				{
+					thread_cancel(vpsschn->t_read);
+					vpsschn->t_read = NULL;
+				}
+				if (vpsschn->hwbind)
+				{
+					if (zpl_syshal_input_unbind_vpss(inputchn->input_pipe, inputchn->input_chn, vpssgrp) != OK)
+					{
+						zm_msg_error("input_pipe %d input_chn %d can not unbind to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+						zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+						return ERROR;
+					}
+					vpsschn->hwbind = zpl_false;
+				}
+				inputchn->parent = NULL;
+				vpsschn->source_input = NULL;
+				ret = OK;
+			}
+		}
+	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	return OK;	
+	return ret;
 }
 
-int zpl_media_video_vpss_channel_bindcount_get(zpl_media_video_vpss_channel_t *vpss)
+static int zpl_media_video_vpsschn_reference_set(zpl_media_video_vpsschn_t *vpsschn, zpl_bool add)
 {
-	int bindcount = 0;
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(vpss)
+	if (vpsschn)
 	{
-		bindcount = vpss->bindcount;
-	}	
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	return bindcount;	
-}
-
-
-static int zpl_media_video_vpss_channel_read(struct thread *t)
-{
-	zpl_media_video_vpss_channel_t *vpss = THREAD_ARG(t);
-
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    if(vpss)
-    {
-        vpss->t_read = NULL;
-
-        zpl_vidhal_vpss_channel_frame_recvfrom(vpss);
-
-        if(!ipstack_invalid(vpss->vpssfd))
-           vpss->t_read = thread_add_read(t->master, zpl_media_video_vpss_channel_read, vpss, vpss->vpssfd);
-    }
+		if (add)
+			vpsschn->reference++;
+		else
+			vpsschn->reference++;
+	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
 	return OK;
 }
 
-int zpl_media_video_vpss_channel_read_start(zpl_void *master, zpl_media_video_vpss_channel_t *vpss)
+int zpl_media_video_vpsschn_addref(zpl_media_video_vpsschn_t *vpsschn)
 {
-    zpl_video_assert(master);
-    zpl_video_assert(vpss);
-	if(ZPL_MEDIA_DEBUG(VPSS, EVENT) && ZPL_MEDIA_DEBUG(VPSS, DETAIL))
-		zpl_media_debugmsg_debug(" start video VPSS channel (%d/%d) read thread\n", 
-			vpss->vpssgrp?vpss->vpssgrp->vpss_group:-1, vpss->vpss_channel);
+	return zpl_media_video_vpsschn_reference_set(vpsschn, zpl_true);
+}
+int zpl_media_video_vpsschn_delref(zpl_media_video_vpsschn_t *vpsschn)
+{
+	return zpl_media_video_vpsschn_reference_set(vpsschn, zpl_false);
+}
+
+int zpl_media_video_vpsschn_reference(zpl_media_video_vpsschn_t *vpsschn)
+{
+	int reference = 0;
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	zpl_vidhal_vpss_channel_update_fd(vpss);	
-    if(master && vpss && !ipstack_invalid(vpss->vpssfd))
+	if (vpsschn)
 	{
-		vpss->t_master = master;
-        vpss->t_read = thread_add_read(master, zpl_media_video_vpss_channel_read, vpss, vpss->vpssfd);
+		reference = vpsschn->reference;
 	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return OK;    
+	return reference;
 }
 
-int zpl_media_video_vpss_channel_read_stop(zpl_media_video_vpss_channel_t *vpss)
+static int zpl_media_video_vpsschn_read(struct thread *t_thread)
 {
-    zpl_video_assert(vpss);  
-	if(ZPL_MEDIA_DEBUG(VPSS, EVENT) && ZPL_MEDIA_DEBUG(VPSS, DETAIL))
-		zpl_media_debugmsg_debug(" stop video VPSS channel (%d/%d) read thread\n", 
-			vpss->vpssgrp?vpss->vpssgrp->vpss_group:-1, vpss->vpss_channel);
+	zpl_media_video_vpsschn_t *vpsschn = THREAD_ARG(t_thread);
+
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    if(vpss && vpss->t_read)
-    {
-        thread_cancel(vpss->t_read);
-        vpss->t_read = NULL;
-    }
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return OK; 
-}
-
-
-
-
-
-int zpl_meida_video_vpss_channel_hal_create(zpl_media_video_vpss_channel_t *vpss)
-{
-    int ret = -1;
-    zpl_video_assert(vpss);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	zpl_media_debugmsg_debug("vpss channel (%d)  Flags (0x%x)", vpss->vpss_channel, vpss->res_flag);	
-	if(VIDHAL_RES_FLAG_CHECK(vpss->res_flag, CREATE) && !VIDHAL_RES_FLAG_CHECK(vpss->res_flag, INIT))	
+	if (vpsschn)
 	{
-    	ret = zpl_vidhal_vpss_channel_create(vpss);
-		if(ret == OK)	
-			VIDHAL_RES_FLAG_SET(vpss->res_flag, INIT);
-		if(ZPL_MEDIA_DEBUG(VPSS, EVENT))
-		{
-			zpl_media_debugmsg_debug("active vpss channel(%d) ret=%d", vpss->vpss_channel, ret);
-		} 
+		vpsschn->t_read = NULL;
+
+		zpl_vidhal_vpss_channel_frame_recvfrom(vpsschn);
+
+		if (!ipstack_invalid(vpsschn->vpssfd))
+			vpsschn->t_read = thread_add_read(vpsschn->t_master, zpl_media_video_vpsschn_read, vpsschn, vpsschn->vpssfd);
 	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	return OK;
+}
+
+int zpl_media_video_vpsschn_sendto(zpl_media_video_vpsschn_t *vpsschn, void *p, zpl_int timeout)
+{
+	int ret = -1;
+	zpl_video_assert(vpsschn);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
+	if (vpsschn->online)
+		ret = zpl_vidhal_vpss_channel_frame_sendto(vpsschn, p, timeout);
 	else
-		ret = OK;
-
+		zm_msg_warn("Channel (%d) is offline",
+								vpsschn->vpss_group);
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return ret;
+	return ret;
 }
-
-int zpl_media_video_vpss_channel_start(zpl_media_video_vpss_channel_t *vpss)
-{
-    int ret = -1;
-    zpl_video_assert(vpss);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(!VIDHAL_RES_FLAG_CHECK(vpss->res_flag, START))	
-	{
-    	ret = zpl_vidhal_vpss_channel_start(vpss);
-		if(ret == OK)	
-		{
-			VIDHAL_RES_FLAG_SET(vpss->res_flag, START);
-			vpss->online = zpl_true;
-		}
-		if(ZPL_MEDIA_DEBUG(VPSS, EVENT))
-		{
-			zpl_media_debugmsg_debug("start vpss channel(%d) ret=%d", vpss->vpss_channel, ret);
-		} 
-	}
-	else
-		ret = OK;
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return ret;
-}
-
-int zpl_media_video_vpss_channel_stop(zpl_media_video_vpss_channel_t *vpss)
-{
-    int ret = -1;
-    zpl_video_assert(vpss);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(vpss->bindcount <= 1 && VIDHAL_RES_FLAG_CHECK(vpss->res_flag, START))	
-	{
-    	ret = zpl_vidhal_vpss_channel_stop(vpss);
-		if(ret == OK)	
-		{
-			VIDHAL_RES_FLAG_UNSET(vpss->res_flag, START);
-			vpss->online = zpl_false;
-		}
-		if(ZPL_MEDIA_DEBUG(VPSS, EVENT))
-		{
-			zpl_media_debugmsg_debug("stop vpss channel(%d) ret=%d", vpss->vpss_channel, ret);
-		} 
-	}
-	else
-		ret = OK;	
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return ret;
-}
-
-int zpl_meida_video_vpss_channel_hal_destroy(zpl_media_video_vpss_channel_t *vpss)
-{
-    int ret = -1;
-    zpl_video_assert(vpss);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-	if(VIDHAL_RES_FLAG_CHECK(vpss->res_flag, CREATE) && VIDHAL_RES_FLAG_CHECK(vpss->res_flag, INIT))
-	{	
-    	ret = zpl_vidhal_vpss_channel_destroy(vpss);
-		if(ret == OK)
-			VIDHAL_RES_FLAG_UNSET(vpss->res_flag, INIT);
-		if(ZPL_MEDIA_DEBUG(VPSS, EVENT))
-		{
-			zpl_media_debugmsg_debug("inactive vpss channel(%d) ret=%d", vpss->vpss_channel, ret);
-		} 
-	}
-	else
-		ret = OK;
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return ret;
-}
-
-int zpl_media_video_vpss_channel_online_set(zpl_media_video_vpss_channel_t *vpss, zpl_bool online)
-{
-    int ret = -1;
-    zpl_video_assert(vpss);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    ret = OK;
-	vpss->online = online;
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return ret;
-}
-int zpl_media_video_vpss_channel_online_get(zpl_media_video_vpss_channel_t *vpss, zpl_bool *online)
-{
-    int ret = -1;
-    zpl_video_assert(vpss);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    ret = OK;
-	if(online)
-		*online = vpss->online;
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
-    return ret;
-}
-
 
 #ifdef ZPL_SHELL_MODULE
-int zpl_media_video_vpss_channel_show(void *pvoid)
+int zpl_media_video_vpsschn_show(void *pvoid)
 {
 	NODE *node;
-	zpl_media_video_vpss_channel_t *t;	
+	zpl_media_video_vpsschn_t *vpsschn = NULL;
 	struct vty *vty = (struct vty *)pvoid;
-    LIST *_lst = NULL;
-    os_mutex_t *_mutex = NULL;
-    zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_VPSS, &_lst, &_mutex);
-	if(_lst == NULL)
+	LIST *_lst = NULL;
+	os_mutex_t *_mutex = NULL;
+	zpl_media_video_inputchn_t *inputchn;
+	zpl_media_global_get(ZPL_MEDIA_GLOAL_VIDEO_VPSS, &_lst, &_mutex);
+	if (_lst == NULL)
 		return ERROR;
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);
 
-	if(lstCount(_lst))
+	if (lstCount(_lst))
 	{
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-8s %-16s %s", "----", "----", "------", "--------", "--------", "----------------", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-8s %-16s %s", "ID", "FLAG", "ONLINE", "BINDCNT", "BINDID",  "SIZE", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-8s %-16s %s", "----", "----", "------", "--------", "--------", "----------------", VTY_NEWLINE);
+		vty_out(vty, "-----------------------------------------%s", VTY_NEWLINE);
 	}
 	for (node = lstFirst(_lst); node != NULL; node = lstNext(node))
 	{
-		t = (zpl_media_video_vpss_channel_t *) node;
+		vpsschn = (zpl_media_video_vpsschn_t *)node;
 		if (node)
 		{
-#ifdef ZPL_VIDEO_VPSSGRP_ENABLE
-			vty_out(vty, "%-4d  0x%-4x %-6s  %-8d %-8d %dx%d%s", t->vpss_channel, t->res_flag, t->online ? "ONLINE":"OFFLINE", 
-					t->bindcount, t->vpssgrp?t->vpssgrp->vpss_group:-1, 
-					t->input_size.width, t->input_size.height, VTY_NEWLINE);
-#else
-			vty_out(vty, "%-4d  0x%-4x %-6s  %-8d %-8d %dx%d%s", t->vpss_channel, t->res_flag, t->online ? "ONLINE":"OFFLINE", 
-					t->bindcount, t->video_input?t->video_input->vpss_group:-1, 
-					t->input_size.width, t->input_size.height, VTY_NEWLINE);
-#endif
+			vty_out(vty, "group               : %d%s", vpsschn->vpss_group, VTY_NEWLINE);
+			vty_out(vty, " channel            : %d%s", vpsschn->vpss_channel, VTY_NEWLINE);
+			vty_out(vty, "  input size        : %dx%d%s", vpsschn->input_size.width, vpsschn->input_size.height, VTY_NEWLINE);
+			vty_out(vty, "  output size       : %dx%d%s", vpsschn->output_size.width, vpsschn->output_size.height, VTY_NEWLINE);
+			vty_out(vty, "  reference         : %d%s", vpsschn->reference, VTY_NEWLINE);
+			vty_out(vty, "  grp chn count     : %d%s", vpsschn->grp_bind_count, VTY_NEWLINE);
+			vty_out(vty, "  hwbind            : %d%s", vpsschn->hwbind, VTY_NEWLINE);
+			vty_out(vty, "  flags             : 0x%x%s", vpsschn->flags, VTY_NEWLINE);
+			vty_out(vty, "  online            : %s%s", vpsschn->online ? "ONLINE" : "OFFLINE", VTY_NEWLINE);
+			if(vpsschn->vpssfd != ZPL_SOCKET_INVALID)
+			{
+				vty_out(vty, "  fd                : %d%s", ipstack_fd(vpsschn->vpssfd), VTY_NEWLINE);
+			}
+			inputchn = (zpl_media_video_inputchn_t *)vpsschn->source_input;
+			vty_out(vty, "  source_input      : pipe %d channel %d extchannel %d%s", inputchn ? inputchn->input_pipe:-1, 
+				inputchn ? inputchn->input_chn : -1, inputchn ? inputchn->input_extchn : -1, VTY_NEWLINE);
 		}
 	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_VPSS);

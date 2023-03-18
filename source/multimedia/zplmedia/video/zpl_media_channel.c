@@ -75,7 +75,7 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
         else if (chn->channel_index == ZPL_MEDIA_CHANNEL_TYPE_SUB1)
             chn->media_param.video_media.codec.format = ZPL_VIDHAL_DEFULT_FORMAT_SUB1;
    
-        zpl_syshal_get_video_resolution(chn->media_param.video_media.codec.format, &chn->media_param.video_media.codec.vidsize); // 视频分辨率
+        zpl_media_video_format_resolution(chn->media_param.video_media.codec.format, &chn->media_param.video_media.codec.vidsize); // 视频分辨率
 
         chn->media_param.video_media.codec.codectype = ZPL_VIDEO_CODEC_H264;          // 编码类型
         chn->media_param.video_media.codec.framerate = ZPL_VIDHAL_DEFULT_FRAMERATE; // 帧率
@@ -89,7 +89,8 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
         else
             chn->media_param.video_media.codec.bitrate = 2048;
         chn->media_param.video_media.codec.bitrate_type = ZPL_VIDHAL_DEFULT_BITRATE; // 码率类型
-        if (chn->media_param.video_media.codec.codectype == ZPL_VIDEO_CODEC_H264)
+        
+		if (chn->media_param.video_media.codec.codectype == ZPL_VIDEO_CODEC_H264)
             chn->media_param.video_media.codec.profile = ZPL_VIDEO_CODEC_PROFILE_BASELINE;
         else if (chn->media_param.video_media.codec.codectype == ZPL_VIDEO_CODEC_H265)
             chn->media_param.video_media.codec.profile = ZPL_VIDEO_CODEC_PROFILE_MAIN;
@@ -142,27 +143,6 @@ int zpl_media_channel_load_default(void)
 	return OK;
 }
 
-static int zpl_media_channel_hwdestroy(zpl_media_channel_t *chn)
-{
-    if (chn)
-    {
-        ZPL_MEDIA_CHANNEL_LOCK(chn);
-        zpl_media_hal_stop(chn);
-        zpl_media_hal_inactive(chn);
-        if (chn->media_param.video_media.enable && chn->media_param.video_media.halparam)
-            zpl_media_area_destroy_all(chn);      
-         
-        lstDelete(media_channel_list, (NODE *)chn);
-        if (chn->frame_queue)
-            chn->frame_queue = NULL;
-        ZPL_MEDIA_CHANNEL_UNLOCK(chn);  
-        if (os_mutex_destroy(chn->_mutex) == OK)
-			chn->_mutex = NULL;
-        free(chn);
-    }
-    return OK;
-}
-
 int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {
 	zpl_media_channel_t *chn = NULL;
@@ -170,7 +150,36 @@ int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
 	chn = zpl_media_channel_lookup_entry(channel, channel_index, 0);
     if(chn)
-        zpl_media_channel_hwdestroy(chn);
+	{
+		if(ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
+		{
+			if (zpl_media_video_encode_stop(chn->media_param.video_media.halparam) != OK)
+			{
+				zm_msg_error("can not stop media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+			ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+		}
+		if(ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))
+		{
+			if (zpl_media_video_encode_destroy(chn->media_param.video_media.halparam) != OK)
+			{
+				zm_msg_error("can not destroy media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+			ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+		}
+        lstDelete(media_channel_list, (NODE *)chn);
+        if (chn->frame_queue)
+            chn->frame_queue = NULL;
+        if (os_mutex_destroy(chn->_mutex) == OK)
+			chn->_mutex = NULL;
+        free(chn);
+	}
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);
 	return OK;
@@ -180,46 +189,74 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 							 ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {
     zpl_media_channel_t *chn = NULL;
+	zpl_media_video_encode_t *encode = NULL;
     chn = os_malloc(sizeof(zpl_media_channel_t));
 	zpl_video_assert(chn);
     if (chn)
     {
+		int vencchn = 0;
 		memset(chn, 0, sizeof(zpl_media_channel_t));
-     
-        
+		
         chn->channel = channel;
         chn->channel_index = channel_index;
     
         chn->bindcount = 0;
-        chn->media_param.video_media.enable = zpl_true;
-        zpl_media_channel_encode_default(chn);
-        
+		if(channel >= ZPL_MEDIA_CHANNEL_AUDIO_0)
+		{
+			chn->media_type = ZPL_MEDIA_AUDIO;
+			chn->media_param.audio_media.enable = zpl_true;
+		}
+		else
+		{
+			chn->media_type = ZPL_MEDIA_VIDEO;
+			chn->media_param.video_media.enable = zpl_true;
+		}
+		zpl_media_channel_encode_default(chn);
 		chn->frame_queue = zpl_media_bufqueue_get(channel, channel_index);	
 		if (chn->frame_queue == NULL)
 		{
-			zpl_media_debugmsg_error("can not create buffer for media channel(%d/%d)", channel, channel_index);
+			zm_msg_error("can not create buffer for media channel(%d/%d)", channel, channel_index);
 			os_free(chn);
 			return ERROR;
 		}
-		
-		if (zpl_media_hal_create(chn, chn->frame_queue) != OK)
+		vencchn = 0;//VIDHAL_RES_ID_LOAD(chn->channel, chn->channel_index, VENCCHN);
+		if(channel >= ZPL_MEDIA_CHANNEL_AUDIO_0)
 		{
-			zpl_media_debugmsg_error("can not create hal for media channel(%d/%d)", channel, channel_index);
-			chn->frame_queue = NULL;
-			os_free(chn);
-			return ERROR;
+
 		}
-		if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+		else
 		{
-			zpl_media_video_encode_t *encode = chn->media_param.video_media.halparam;
-			zpl_media_debugmsg_debug("create media channel(%d/%d) bind to encode(%d)", channel, channel_index, encode ? encode->venc_channel : -1);
-			zpl_media_debugmsg_debug("  format:%d %dx%d", chn->media_param.video_media.codec.format, chn->media_param.video_media.codec.vidsize.width, chn->media_param.video_media.codec.vidsize.height);
-			zpl_media_debugmsg_debug("    codectype:%d framerate:%d bitrate:%d profile:%d", chn->media_param.video_media.codec.codectype, chn->media_param.video_media.codec.framerate,
-										 chn->media_param.video_media.codec.bitrate, chn->media_param.video_media.codec.profile);
-			zpl_media_debugmsg_debug("    bitrate_type:%d ikey_rate:%d enRcMode:%d gopmode:%d", chn->media_param.video_media.codec.bitrate_type, chn->media_param.video_media.codec.ikey_rate,
-										 chn->media_param.video_media.codec.enRcMode, chn->media_param.video_media.codec.gopmode);
+			encode = zpl_media_video_encode_create( vencchn, zpl_false);
+			if (encode == NULL)
+			{
+				zm_msg_error("can not create hal for media channel(%d/%d)", channel, channel_index);
+				chn->frame_queue = NULL;
+				os_free(chn);
+				return ERROR;
+			}
+			chn->media_param.video_media.halparam = encode;
 		}
-		
+		encode->frame_queue = chn->frame_queue;
+		encode->media_channel = chn;
+		encode->t_master = chn->t_master;
+		if(channel >= ZPL_MEDIA_CHANNEL_AUDIO_0)
+		{
+
+		}
+		else
+		{
+			encode->pCodec = &chn->media_param.video_media.codec;
+			
+			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+			{
+				zm_msg_debug("create media channel(%d/%d) bind to encode(%d)", channel, channel_index, encode ? encode->venc_channel : -1);
+				zm_msg_debug("  format:%d %dx%d", chn->media_param.video_media.codec.format, chn->media_param.video_media.codec.vidsize.width, chn->media_param.video_media.codec.vidsize.height);
+				zm_msg_debug("    codectype:%d framerate:%d bitrate:%d profile:%d", chn->media_param.video_media.codec.codectype, chn->media_param.video_media.codec.framerate,
+											chn->media_param.video_media.codec.bitrate, chn->media_param.video_media.codec.profile);
+				zm_msg_debug("    bitrate_type:%d ikey_rate:%d enRcMode:%d gopmode:%d", chn->media_param.video_media.codec.bitrate_type, chn->media_param.video_media.codec.ikey_rate,
+											chn->media_param.video_media.codec.enRcMode, chn->media_param.video_media.codec.gopmode);
+			}
+		}
         if (chn->_mutex == NULL)
         {
             chn->_mutex = os_mutex_name_create("media_channel_mutex");
@@ -234,6 +271,60 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 		return OK;
 	}
 	return ERROR;
+}
+
+int zpl_media_channel_bind_encode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam)
+{
+	int ret = ERROR;
+	zpl_media_channel_t *chn = (zpl_media_channel_t *)zpl_media_channel_lookup(channel, channel_index);
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+	if (chn)
+	{
+		zpl_media_video_encode_t *encode = halparam;
+		if(encode)
+		{
+			if(chn->media_type == ZPL_MEDIA_VIDEO)
+				chn->media_param.video_media.halparam = halparam;
+			else
+				chn->media_param.audio_media.halparam = halparam;
+
+			encode->frame_queue = chn->frame_queue;
+			encode->media_channel = chn;
+			encode->t_master = chn->t_master;
+			if(chn->media_type == ZPL_MEDIA_VIDEO)
+				encode->pCodec = &chn->media_param.video_media.codec;
+			else
+				encode->pCodec = &chn->media_param.audio_media.codec;	
+			ret = OK;
+		}
+		else
+		{
+			if(chn->media_type == ZPL_MEDIA_VIDEO && chn->media_param.video_media.halparam)
+			{
+				encode = chn->media_param.video_media.halparam;
+				encode->media_channel = NULL;
+				encode->frame_queue = NULL;
+				encode->t_master = NULL;
+				encode->pCodec = NULL;
+				chn->media_param.video_media.halparam = NULL;
+				ret = OK;
+			}
+			else if(chn->media_type == ZPL_MEDIA_AUDIO && chn->media_param.audio_media.halparam)
+			{
+				encode = chn->media_param.audio_media.halparam;
+				encode->media_channel = NULL;
+				encode->frame_queue = NULL;
+				encode->t_master = NULL;
+				encode->pCodec = NULL;
+				chn->media_param.audio_media.halparam = NULL;
+				ret = OK;
+			}
+		}
+	}
+    if (media_channel_mutex)
+        os_mutex_unlock(media_channel_mutex);
+	return ret;
 }
 
 static zpl_media_channel_t *zpl_media_channel_lookup_entry(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, 
@@ -291,18 +382,18 @@ zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID)
 }
 ZPL_MEDIA_STATE_E zpl_media_channel_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {
-	ZPL_MEDIA_STATE_E state = ZPL_MEDIA_STATE_NONE;
+	ZPL_MEDIA_STATE_E flags = ZPL_MEDIA_STATE_NONE;
 	zpl_media_channel_t *chn = NULL;
     if (media_channel_mutex)
 		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
 	chn = zpl_media_channel_lookup_entry(channel, channel_index, 0);
     if(chn)
     {
-        state = chn->state;
+        flags = chn->flags;
     }
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);
-	return state;
+	return flags;
 }
 
 zpl_bool zpl_media_channel_isvideo(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
@@ -459,7 +550,7 @@ int zpl_media_channel_client_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNE
 	    ret = zpl_media_client_start(mchannel->media_client, index, start);
 	if(ret == OK && start)
 	{
-		zpl_media_hal_request_IDR(mchannel); /* 请求关键帧 */
+		zpl_media_channel_hal_request_IDR(mchannel); /* 请求关键帧 */
 	}
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);
@@ -516,6 +607,19 @@ int zpl_media_channel_codec_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_T
 		os_mutex_unlock(media_channel_mutex);
 	return ret;		
 }
+
+int zpl_media_channel_hal_request_IDR(zpl_media_channel_t *chn)
+{
+    zpl_int32 venc_channel = 0;//VIDHAL_RES_ID_LOAD(chn->channel, chn->channel_index, VENCCHN);
+    if (venc_channel >= 0)
+    {
+        zpl_media_video_encode_t *video_encode = zpl_media_video_encode_lookup(venc_channel, 0);
+        if (video_encode)
+            return zpl_media_video_encode_request_IDR(video_encode);
+    }
+    return ERROR;
+}
+
 /*分辨率*/
 int zpl_media_channel_video_resolving_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VIDEO_FORMAT_E val)
 {
@@ -528,7 +632,7 @@ int zpl_media_channel_video_resolving_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA
 	{
 		if(mchannel->media_type == ZPL_MEDIA_VIDEO)
 		{
-			if(ZPL_TST_BIT(mchannel->state, ZPL_MEDIA_STATE_START))
+			if(ZPL_TST_BIT(mchannel->flags, ZPL_MEDIA_STATE_START))
 			{
 				if (zpl_media_video_encode_stop(mchannel->media_param.video_media.halparam) != OK)
 				{
@@ -537,29 +641,19 @@ int zpl_media_channel_video_resolving_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA
 					return ret;	
 				}
 			}
-			if(ZPL_TST_BIT(mchannel->state, ZPL_MEDIA_STATE_ACTIVE))
+			if(ZPL_TST_BIT(mchannel->flags, ZPL_MEDIA_STATE_ACTIVE))
 			{
-				if (zpl_media_video_encode_hal_destroy(mchannel->media_param.video_media.halparam) != OK)
-				{
-					if (media_channel_mutex)
-						os_mutex_unlock(media_channel_mutex);
-					return ret;	
-				}
+
 			}
 			mchannel->media_param.video_media.codec.format = val;
 
-			if(ZPL_TST_BIT(mchannel->state, ZPL_MEDIA_STATE_ACTIVE))
+			if(ZPL_TST_BIT(mchannel->flags, ZPL_MEDIA_STATE_ACTIVE))
 			{
-				if (zpl_media_video_encode_hal_create(mchannel->media_param.video_media.halparam) != OK)
-				{
-					if (media_channel_mutex)
-						os_mutex_unlock(media_channel_mutex);
-					return ret;	
-				}
+
 			}
-			if(ZPL_TST_BIT(mchannel->state, ZPL_MEDIA_STATE_START))
+			if(ZPL_TST_BIT(mchannel->flags, ZPL_MEDIA_STATE_START))
 			{
-				if (zpl_media_video_encode_start(mchannel->media_param.video_media.halparam) != OK)
+				if (zpl_media_video_encode_start(mchannel->t_master, mchannel->media_param.video_media.halparam) != OK)
 				{
 					if (media_channel_mutex)
 						os_mutex_unlock(media_channel_mutex);
@@ -887,9 +981,9 @@ int zpl_media_channel_load(zpl_void *obj)
 			os_free(chn);
 			return ERROR;
 		}
-		if (zpl_media_hal_create(chn, chn->frame_queue) != OK)
+		//if (zpl_media_channel_hal_create(chn, chn->frame_queue) != OK)
 		{
-            zpl_media_debugmsg_error("can not create hal media channel(%d/%d)", chn->channel, chn->channel_index);
+            zm_msg_error("can not create hal media channel(%d/%d)", chn->channel, chn->channel_index);
 			chn->frame_queue = NULL;
 			os_free(chn);
 			return ERROR;
@@ -932,19 +1026,21 @@ int zpl_media_channel_active(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE
 	{
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-		if (zpl_media_hal_active(chn) != OK)
+		if(!ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))	
 		{
-            zpl_media_debugmsg_error("can not active media channel(%d/%d)", channel,channel_index);
-			if (media_channel_mutex)
-				os_mutex_unlock(media_channel_mutex);
-			return ERROR;
+			if (zpl_media_video_encode_hal_create(chn->media_param.video_media.halparam) != OK)
+			{
+				zm_msg_error("can not active media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+			{
+				zm_msg_debug("active media channel(%d/%d)", channel, channel_index);
+			}
+			ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
 		}
-		if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
-		{
-			zpl_media_debugmsg_debug("active media channel(%d/%d)", channel, channel_index);
-		}
-		ZPL_CLR_BIT(chn->state, ZPL_MEDIA_STATE_INACTIVE);
-		ZPL_SET_BIT(chn->state, ZPL_MEDIA_STATE_ACTIVE);
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
 		return OK;
@@ -960,21 +1056,22 @@ int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
 	{
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-
-		if (zpl_media_hal_start(chn) != OK)
+		if(!ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_START))
 		{
-            zpl_media_debugmsg_error("can not start media channel(%d/%d)", channel,channel_index);
-			if (media_channel_mutex)
-				os_mutex_unlock(media_channel_mutex);
-			return ERROR;
-		}
-		ZPL_SET_BIT(chn->state, ZPL_MEDIA_STATE_START);
-		ZPL_CLR_BIT(chn->state, ZPL_MEDIA_STATE_STOP);
-        ret = OK;
-        
-		if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
-		{
-			zpl_media_debugmsg_debug("start media channel(%d/%d)", channel, channel_index);
+			if (zpl_media_video_encode_start(chn->t_master, chn->media_param.video_media.halparam) != OK)
+			{
+				zm_msg_error("can not start media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+			ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+			ret = OK;
+			
+			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+			{
+				zm_msg_debug("start media channel(%d/%d)", channel, channel_index);
+			}
 		}
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
@@ -991,22 +1088,21 @@ int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 	{
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-#ifdef ZPL_MEDIA_BUFFER_DEBUG_ONFILE
-		//zpl_media_buffer_debug_onfile_close(chn->frame_queue);
-#endif
-		if (zpl_media_hal_stop(chn) != OK)
-		{
-            zpl_media_debugmsg_error("can not stop media channel(%d/%d)", channel,channel_index);
-			if (media_channel_mutex)
-				os_mutex_unlock(media_channel_mutex);
-			return ERROR;
-		}
-        ret = OK;
-		ZPL_CLR_BIT(chn->state, ZPL_MEDIA_STATE_START);
-		ZPL_SET_BIT(chn->state, ZPL_MEDIA_STATE_STOP);
-		if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
-		{
-			zpl_media_debugmsg_debug("stop media channel(%d/%d)", channel, channel_index);
+		if(ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_START))
+		{	
+			if (zpl_media_video_encode_stop(chn->media_param.video_media.halparam) != OK)
+			{
+				zm_msg_error("can not stop media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+			ret = OK;
+			ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+			{
+				zm_msg_debug("stop media channel(%d/%d)", channel, channel_index);
+			}
 		}
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
@@ -1022,21 +1118,20 @@ int zpl_media_channel_inactive(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TY
 	{
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-#ifdef ZPL_MEDIA_BUFFER_DEBUG_ONFILE
-		//zpl_media_buffer_debug_onfile_close(chn->frame_queue);
-#endif
-		if (zpl_media_hal_inactive(chn) != OK)
+		if(ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))
 		{
-            zpl_media_debugmsg_error("can not inactive media channel(%d/%d)", channel,channel_index);
-			if (media_channel_mutex)
-				os_mutex_unlock(media_channel_mutex);
-			return ERROR;
-		}
-		ZPL_CLR_BIT(chn->state, ZPL_MEDIA_STATE_ACTIVE);
-		ZPL_SET_BIT(chn->state, ZPL_MEDIA_STATE_INACTIVE);
-		if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
-		{
-			zpl_media_debugmsg_debug("inactive media channel(%d/%d)", channel, channel_index);
+			if (zpl_media_video_encode_hal_destroy(chn->media_param.video_media.halparam) != OK)
+			{
+				zm_msg_error("can not inactive media channel(%d/%d)", channel,channel_index);
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return ERROR;
+			}
+			ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
+			{
+				zm_msg_debug("inactive media channel(%d/%d)", channel, channel_index);
+			}
 		}
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
@@ -1047,44 +1142,6 @@ int zpl_media_channel_inactive(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TY
 
 int zpl_media_channel_handle_all(zpl_int32 active)
 {
-	NODE node;
-	zpl_media_channel_t *chn = NULL;
-	if (media_channel_mutex)
-		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-
-	for (chn = (zpl_media_channel_t *)lstFirst(media_channel_list);
-		 chn != NULL; chn = (zpl_media_channel_t *)lstNext(&node))
-	{
-		node = chn->node;
-		if (chn)
-		{
-				if (active == 1)
-					zpl_media_hal_active(chn);
-				else if (active == 2)
-					zpl_media_hal_inactive(chn);
-				else if (active == 3)
-				{
-					if (zpl_media_hal_start(chn) == OK)
-					{
-						zpl_media_hal_read_start(ZPL_MEDIA_NODE_INPUT, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
-						zpl_media_hal_read_start(ZPL_MEDIA_NODE_PROCESS, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
-						zpl_media_hal_read_start(ZPL_MEDIA_NODE_ENCODE, thread_master_module_lookup(MODULE_ZPLMEDIA), chn);
-						zpl_media_task_ready(MODULE_ZPLMEDIA);
-					}
-				}
-				else if (active == 4)
-				{
-					zpl_media_hal_read_stop(ZPL_MEDIA_NODE_INPUT, chn);
-					zpl_media_hal_read_stop(ZPL_MEDIA_NODE_PROCESS, chn);
-					zpl_media_hal_read_stop(ZPL_MEDIA_NODE_ENCODE, chn);
-					zpl_media_hal_stop(chn);
-				}
-				else if (active == -1)
-					zpl_media_hal_destroy(chn);
-		}
-	}
-	if (media_channel_mutex)
-		os_mutex_unlock(media_channel_mutex);
 	return OK;
 }
 
@@ -1093,7 +1150,11 @@ int zpl_media_channel_show(void *pvoid)
 {
 	NODE *node;
 	zpl_media_channel_t *chn;
+	zpl_media_video_encode_t *encode;
 	char *media_typestr[] = {"unknow", "video", "audio"};
+	char *bitrate_typestr[] = {"none", "CBR", "VBR", "ABR"};
+	char *enRcMode_typestr[] = {"RC CBR", "RC VBR", "RC AVBR", "RC QVBR", "RC CVBR", "RC QPMAP","RC FIXQP"};
+	char *gopmode_typestr[] = {"NORMALP", "DUALP", "SMARTP","ADVSMARTP", "BIPREDB", "LOWDELAYB","BUTT"};
 	struct vty *vty = (struct vty *)pvoid;
 
 	if (media_channel_mutex)
@@ -1101,18 +1162,29 @@ int zpl_media_channel_show(void *pvoid)
 
 	if (lstCount(media_channel_list))
 	{
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-16s %s", "----", "----", "------", "--------", "----------------", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-16s %s", "ID", "SUB", "TYPE", "BINDID", "SIZE", VTY_NEWLINE);
-		vty_out(vty, "%-4s %-4s %-6s %-8s %-16s %s", "----", "----", "------", "--------", "----------------", VTY_NEWLINE);
+		vty_out(vty, "-----------------------------------------%s", VTY_NEWLINE);
 	}
 	for (node = lstFirst(media_channel_list); node != NULL; node = lstNext(node))
 	{
 		chn = (zpl_media_channel_t *)node;
 		if(chn->media_type == ZPL_MEDIA_VIDEO)
 		{
-			vty_out(vty, "%-4d  %-4d %-6s %-8d %dx%d%s", chn->channel, chn->channel_index, media_typestr[chn->media_type],
-					chn->media_param.video_media.halparam ? ((zpl_media_video_encode_t *)chn->media_param.video_media.halparam)->venc_channel : -1,
-					chn->media_param.video_media.codec.vidsize.width, chn->media_param.video_media.codec.vidsize.height, VTY_NEWLINE);
+			encode = (zpl_media_video_encode_t *)chn->media_param.video_media.halparam;
+			vty_out(vty, "channel            : %d/%d%s", chn->channel, chn->channel_index, VTY_NEWLINE);
+			vty_out(vty, " type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);
+			vty_out(vty, " bindcount         : %d%s", chn->bindcount, VTY_NEWLINE);
+			vty_out(vty, " flags             : 0x%x%s", chn->flags, VTY_NEWLINE);
+			vty_out(vty, " size              : %dx%d%s", chn->media_param.video_media.codec.vidsize.width, chn->media_param.video_media.codec.vidsize.height, VTY_NEWLINE);
+			vty_out(vty, " format            : %s%s", zpl_media_format_name(chn->media_param.video_media.codec.format), VTY_NEWLINE);
+			vty_out(vty, " codectype         : %s%s", zpl_media_codec_name(chn->media_param.video_media.codec.codectype), VTY_NEWLINE);
+			vty_out(vty, " framerate         : %d fps%s", chn->media_param.video_media.codec.framerate, VTY_NEWLINE);
+			vty_out(vty, " bitrate           : %d%s", chn->media_param.video_media.codec.bitrate, VTY_NEWLINE);
+			vty_out(vty, " bitrate_type      : %s%s", bitrate_typestr[chn->media_param.video_media.codec.bitrate_type], VTY_NEWLINE);
+			vty_out(vty, " profile           : %d%s", chn->media_param.video_media.codec.profile, VTY_NEWLINE);
+			vty_out(vty, " ikey_rate         : %d%s", chn->media_param.video_media.codec.ikey_rate, VTY_NEWLINE);
+			vty_out(vty, " enRcMode          : %s%s", enRcMode_typestr[chn->media_param.video_media.codec.enRcMode], VTY_NEWLINE);
+			vty_out(vty, " gopmode           : %s%s", gopmode_typestr[chn->media_param.video_media.codec.gopmode], VTY_NEWLINE);
+			vty_out(vty, " packetization_mode: %d%s", chn->media_param.video_media.codec.packetization_mode, VTY_NEWLINE);
 		}
 		else if(chn->media_type == ZPL_MEDIA_AUDIO)
 		{

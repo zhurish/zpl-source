@@ -180,7 +180,6 @@ int zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_E type, ZPL_M
     zpl_skbuffer_t * bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, zpl_media_getptr(mchannel)->frame_queue, datalen);
     if(bufdata && bufdata->skb_data && bufdata->skb_maxsize >= datalen)
     {
-        //zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
         zpl_media_buffer_header(mchannel, bufdata, type, hwtimetick, datalen);
         zpl_media_buffer_header_framedatatype(bufdata, buffertype);
         memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);

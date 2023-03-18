@@ -24,7 +24,7 @@ extern "C" {
 #include "zpl_media_extradata.h"
 #include <zpl_media_client.h>
 #include <zpl_media_hardadap.h>
-#include <zpl_media_hal.h>
+
 #include <zpl_media_resources.h>
 #include <zpl_media_config.h>
 #include <zpl_media_record.h>
@@ -35,9 +35,11 @@ extern "C" {
 #include "zpl_media_area.h"
 #include "zpl_media_frame_adap.h"
 
-#include <zpl_media_video_input.h>
-#include <zpl_media_video_vpss.h>
 #include <zpl_media_video_encode.h>
+#include <zpl_media_video_vpss.h>
+#include <zpl_media_video_input.h>
+
+
 #include "zpl_media_video_region.h"
 #include "zpl_media_video_sys.h"
 

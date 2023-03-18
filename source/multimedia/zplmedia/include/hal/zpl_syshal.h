@@ -15,6 +15,7 @@ extern "C" {
 #include <zpl_media.h>
 #include <zpl_vidhal.h>
 
+
 const char *zpl_syshal_strerror(zpl_uint32 halerrno);
 
 extern int zpl_syshal_mem_init(void);
@@ -26,8 +27,8 @@ extern int zpl_sys_munmap(zpl_void* pVirAddr, zpl_uint32 u32Size);
 extern int zpl_syshal_vbmem_init(void);
 
 extern int zpl_syshal_vivpss_mode_set(zpl_int32 inputpipe, zpl_int32 mode);
-/* 获取视频分辨率大小 resolution ratio */
-extern int zpl_syshal_get_video_resolution(ZPL_VIDEO_FORMAT_E format, zpl_video_size_t* pstSize);
+
+
 /* 获取一帧图像的缓冲区大小 */
 extern zpl_uint32 zpl_syshal_get_buffer_size(ZPL_VIDEO_FORMAT_E format, zpl_uint32 pixelformat);
 extern zpl_uint32 zpl_syshal_get_membuf_size(zpl_uint32 u32Width, zpl_uint32 u32Height,

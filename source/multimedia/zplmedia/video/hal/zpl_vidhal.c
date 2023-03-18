@@ -29,7 +29,7 @@ int zpl_video_hal_scale(void *inframe, void *outframe, zpl_video_size_t vidsize)
     {
         //if (VIDEO_ISDEBUG(ERROR))
         {
-            zpl_media_debugmsg_debug("vgs scale error:%s", zpl_syshal_strerror(s32Ret));
+            zm_msg_debug("vgs scale error:%s", zpl_syshal_strerror(s32Ret));
         }
         return ERROR;
     }
@@ -50,7 +50,7 @@ int zpl_video_hal_exchange(void *inframe, zpl_video_size_t vidsize)
     {
         if (ZPL_MEDIA_DEBUG(IVE, ERROR))
         {
-            zpl_media_debugmsg_debug("vgs scale error:%s", zpl_syshal_strerror(s32Ret));
+            zm_msg_debug("vgs scale error:%s", zpl_syshal_strerror(s32Ret));
         }
         return ERROR;
     }
@@ -92,7 +92,7 @@ int zpl_video_hal_orign(void *srcframe, void *dstframe, zpl_point_t vidpoint)
         if (HI_SUCCESS != s32Ret)
         {
             if (ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(IVE, HARDWARE))
-                zpl_media_debugmsg_err("ds_dma_mode_copy fail,Error(%#x),in_frame->u32Width:%d,in_frame->u32Height:%d,out_frame.u32Width:%d,out_frame.u32Height:%d\n", s32Ret, in_frame->stVFrame.u32Width,
+                zm_msg_err("ds_dma_mode_copy fail,Error(%#x),in_frame->u32Width:%d,in_frame->u32Height:%d,out_frame.u32Width:%d,out_frame.u32Height:%d\n", s32Ret, in_frame->stVFrame.u32Width,
                                        in_frame->stVFrame.u32Height, out_frame->stVFrame.u32Width, out_frame->stVFrame.u32Height);
             return ERROR;
         }
@@ -113,7 +113,7 @@ int zpl_video_hal_orign(void *srcframe, void *dstframe, zpl_point_t vidpoint)
         if (HI_SUCCESS != s32Ret)
         {
             if (ZPL_MEDIA_DEBUG(IVE, EVENT) && ZPL_MEDIA_DEBUG(IVE, HARDWARE))
-                zpl_media_debugmsg_err("ds_dma_mode_copy fail,Error(%#x)\n", s32Ret);
+                zm_msg_err("ds_dma_mode_copy fail,Error(%#x)\n", s32Ret);
             return ERROR;
         }
     }

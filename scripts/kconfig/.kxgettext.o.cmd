@@ -1,4 +1,4 @@
-cmd_scripts/kconfig/kxgettext.o := gcc -Wp,-MD,scripts/kconfig/.kxgettext.o.d  -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer       -c -o scripts/kconfig/kxgettext.o scripts/kconfig/kxgettext.c
+cmd_scripts/kconfig/kxgettext.o := gcc -Wp,-MD,scripts/kconfig/.kxgettext.o.d -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer       -c -o scripts/kconfig/kxgettext.o scripts/kconfig/kxgettext.c
 
 deps_scripts/kconfig/kxgettext.o := \
   scripts/kconfig/kxgettext.c \
@@ -6,12 +6,14 @@ deps_scripts/kconfig/kxgettext.o := \
   /usr/include/stdlib.h \
   /usr/include/bits/libc-header-start.h \
   /usr/include/features.h \
-  /usr/include/sys/cdefs.h \
+  /usr/include/features-time64.h \
   /usr/include/bits/wordsize.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/sys/cdefs.h \
   /usr/include/bits/long-double.h \
   /usr/include/gnu/stubs.h \
   /usr/include/gnu/stubs-64.h \
-  /usr/lib/gcc/x86_64-redhat-linux/8/include/stddef.h \
+  /usr/lib/gcc/x86_64-redhat-linux/11/include/stddef.h \
   /usr/include/bits/waitflags.h \
   /usr/include/bits/waitstatus.h \
   /usr/include/bits/floatn.h \
@@ -19,6 +21,7 @@ deps_scripts/kconfig/kxgettext.o := \
   /usr/include/sys/types.h \
   /usr/include/bits/types.h \
   /usr/include/bits/typesizes.h \
+  /usr/include/bits/time64.h \
   /usr/include/bits/types/clock_t.h \
   /usr/include/bits/types/clockid_t.h \
   /usr/include/bits/types/time_t.h \
@@ -26,6 +29,7 @@ deps_scripts/kconfig/kxgettext.o := \
   /usr/include/bits/stdint-intn.h \
   /usr/include/endian.h \
   /usr/include/bits/endian.h \
+  /usr/include/bits/endianness.h \
   /usr/include/bits/byteswap.h \
   /usr/include/bits/uintn-identity.h \
   /usr/include/sys/select.h \
@@ -37,6 +41,8 @@ deps_scripts/kconfig/kxgettext.o := \
   /usr/include/bits/pthreadtypes.h \
   /usr/include/bits/thread-shared-types.h \
   /usr/include/bits/pthreadtypes-arch.h \
+  /usr/include/bits/struct_mutex.h \
+  /usr/include/bits/struct_rwlock.h \
   /usr/include/alloca.h \
   /usr/include/bits/stdlib-bsearch.h \
   /usr/include/bits/stdlib-float.h \
@@ -47,7 +53,7 @@ deps_scripts/kconfig/kxgettext.o := \
   scripts/kconfig/lkc.h \
   scripts/kconfig/expr.h \
   /usr/include/stdio.h \
-  /usr/lib/gcc/x86_64-redhat-linux/8/include/stdarg.h \
+  /usr/lib/gcc/x86_64-redhat-linux/11/include/stdarg.h \
   /usr/include/bits/types/__fpos_t.h \
   /usr/include/bits/types/__mbstate_t.h \
   /usr/include/bits/types/__fpos64_t.h \
@@ -55,9 +61,8 @@ deps_scripts/kconfig/kxgettext.o := \
   /usr/include/bits/types/FILE.h \
   /usr/include/bits/types/struct_FILE.h \
   /usr/include/bits/stdio_lim.h \
-  /usr/include/bits/sys_errlist.h \
   /usr/include/bits/stdio.h \
-  /usr/lib/gcc/x86_64-redhat-linux/8/include/stdbool.h \
+  /usr/lib/gcc/x86_64-redhat-linux/11/include/stdbool.h \
   /usr/include/libintl.h \
   /usr/include/locale.h \
   /usr/include/bits/locale.h \

@@ -2,6 +2,118 @@
 #include "zpl_media_event.h"
 #include "zpl_media_image.h"
 #include "zpl_media_buffer.h"
+#include "zpl_media_internal.h"
+
+
+
+static int zpl_media_capture_hal_create(zpl_media_channel_t *chn)
+{
+    zpl_int32 venc_channel = 0;//VIDHAL_RES_ID_LOAD(chn->channel, chn->channel_index, CAPTURE_VENCCHN);
+    if (venc_channel >= 0)
+    {
+        zpl_media_video_encode_t *video_encode = NULL;
+        zpl_media_video_encode_t *main_video_encode = chn->media_param.video_media.halparam;
+        
+        //zm_msg_debug("channel(%d/%d) VENC Flags (0x%x)", chn->channel, chn->channel_index, video_encode->res_flag);
+        
+        video_encode = zpl_media_video_encode_create(venc_channel, zpl_true);
+        if( video_encode == NULL)
+        {
+            if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
+            {
+                zm_msg_error("create video_encode channel(%d)", venc_channel);
+            } 
+            return ERROR;
+        } 
+        if (zpl_media_video_encode_frame_queue_set(venc_channel, chn->frame_queue) != OK)
+        {
+            zm_msg_error("can not set buffer queue for video_encode channel(%d)", venc_channel);
+            zpl_media_video_encode_destroy(video_encode);
+            return ERROR;
+        }
+        
+        video_encode->b_capture = zpl_true;
+        video_encode->media_channel = chn;
+        video_encode->source_input = main_video_encode->source_input;
+        video_encode->pCodec = &chn->p_capture.codec;
+		chn->p_capture.codec.vidsize.width = chn->media_param.video_media.codec.vidsize.width;
+		chn->p_capture.codec.vidsize.height = chn->media_param.video_media.codec.vidsize.height;
+        chn->p_capture.halparam = video_encode;
+        zpl_media_video_encode_source_set(venc_channel, main_video_encode->source_input, zpl_true);
+        return OK;
+    }
+    return ERROR;
+}
+
+static int zpl_media_capture_hal_destroy(zpl_media_channel_t *chn)
+{
+    zpl_media_video_encode_t *video_encode = NULL;
+    video_encode = chn->p_capture.halparam;
+    if (video_encode == NULL || video_encode->source_input == NULL)
+    {
+        if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
+        {
+            zm_msg_error("video_encode channel or vpss NULL");
+        } 
+        return ERROR;
+    } 
+    zpl_media_video_encode_source_set(video_encode->venc_channel, NULL, zpl_false);
+    zpl_media_video_encode_destroy(video_encode);
+    chn->p_capture.halparam = NULL;
+    return OK;
+}
+
+int zpl_media_channel_capture_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
+{
+    int ret = ERROR;
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
+    if(mediachn == NULL)
+        return ERROR;
+    ZPL_MEDIA_CHANNEL_LOCK(mediachn);
+    ret = zpl_media_capture_hal_create(mediachn);
+    ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
+    return ret;  
+}
+
+int zpl_media_channel_capture_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
+{
+    int ret = ERROR;
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
+    if(mediachn == NULL)
+        return ERROR;
+    ZPL_MEDIA_CHANNEL_LOCK(mediachn);
+    ret = zpl_media_capture_hal_destroy(mediachn);
+    ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
+    return ret;  
+}
+
+int zpl_media_channel_capture_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
+{
+    int ret = 0;
+    zpl_media_video_encode_t *video_encode = NULL;
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
+    if(mediachn == NULL || mediachn->p_capture.halparam == NULL)
+        return ERROR;
+    ZPL_MEDIA_CHANNEL_LOCK(mediachn);
+    video_encode = mediachn->p_capture.halparam;
+    ret = zpl_media_video_encode_start(video_encode->t_master, video_encode);
+    ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
+    return ret;  
+}
+
+int zpl_media_channel_capture_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
+{
+    int ret = 0;
+    zpl_media_video_encode_t *video_encode = NULL;
+    zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
+    if(mediachn == NULL || mediachn->p_capture.halparam == NULL)
+        return ERROR;
+    ZPL_MEDIA_CHANNEL_LOCK(mediachn);
+    video_encode = mediachn->p_capture.halparam;
+    ret = zpl_media_video_encode_stop(video_encode);
+    ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
+    return ret; 
+}
 
 static int media_buffer_data_capture_handle(zpl_media_event_t *event)
 {
@@ -30,7 +142,7 @@ static int zpl_media_buffer_data_capture(zpl_media_channel_t *mediachn,
         {
             zpl_media_image_enqueue(capture->images_queue, rdata);
             if(mediachn->p_capture.cbid <= 0)
-                mediachn->p_capture.cbid = zpl_media_event_register(capture->event_queue, ZPL_MEDIA_NODE_CAPTURE,  ZPL_MEDIA_EVENT_CAPTURE, 
+                mediachn->p_capture.cbid = zpl_media_event_register(capture->event_queue, ZPL_MEDIA_GLOAL_VIDEO_ENCODE,  ZPL_MEDIA_EVENT_CAPTURE, 
                 media_buffer_data_capture_handle, capture);
         }
     }
@@ -38,15 +150,6 @@ static int zpl_media_buffer_data_capture(zpl_media_channel_t *mediachn,
     return OK;
 }
 
-#if 0
-static char * zpl_media_channel_capture_filename(zpl_media_channel_t *mediachn)
-{
-    static zpl_uint32 data[128];
-    os_memset(data, 0, sizeof(data));
-    sprintf(data, "%d-%d-%s", mediachn->channel, mediachn->channel_index, os_time_fmt("filename",0));
-    return data;
-}
-#endif
 
 zpl_bool zpl_media_channel_capture_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {

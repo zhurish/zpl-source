@@ -47,12 +47,12 @@ static int  HisiPutH264DataToShareMem(char *pstStream, int len, shared_use_st *s
 static int zpl_video_frame_info(zpl_skbuffer_t *bufdata)
 {
     /*
-    zpl_media_debugmsg_info("  frame  ID                     =%d", bufdata->ID);
-    zpl_media_debugmsg_info("  frame  timetick               =%u", bufdata->timetick);
-    zpl_media_debugmsg_info("  frame  frame_seq              =%u", bufdata->frame_seq);
-    zpl_media_debugmsg_info("  frame  frame_key              =%d", bufdata->frame_key);
-    zpl_media_debugmsg_info("  frame  max_size               =%u", bufdata->max_size);
-    zpl_media_debugmsg_info("  frame  frame_len              =%u", bufdata->frame_len);
+    zm_msg_info("  frame  ID                     =%d", bufdata->ID);
+    zm_msg_info("  frame  timetick               =%u", bufdata->timetick);
+    zm_msg_info("  frame  frame_seq              =%u", bufdata->frame_seq);
+    zm_msg_info("  frame  frame_key              =%d", bufdata->frame_key);
+    zm_msg_info("  frame  max_size               =%u", bufdata->max_size);
+    zm_msg_info("  frame  frame_len              =%u", bufdata->frame_len);
     */
     return 0;
 }
@@ -67,7 +67,7 @@ static int zpl_media_rtsp_write_frame(zpl_media_channel_t *mediachn, zpl_skbuffe
     if(mediachn == NULL)
         return 0;
     zpl_media_video_encode_t *video_encode = (zpl_media_video_encode_t *)mediachn->halparam;
-	//zpl_media_debugmsg_warn(" =====================zpl_media_rtsp_write_frame");
+	//zm_msg_warn(" =====================zpl_media_rtsp_write_frame");
     if(m_queue)
     {
         /*if(sem_r == NULL)

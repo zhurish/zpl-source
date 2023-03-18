@@ -34,7 +34,7 @@ static int zpl_media_buffer_data_record(zpl_media_channel_t *mediachn,
             zpl_skbqueue_add(record->buffer_queue, rdata);
 
             if(record->cbid == 0)
-                record->cbid = zpl_media_event_register(record->event_queue, ZPL_MEDIA_NODE_RECORD,  ZPL_MEDIA_EVENT_RECORD,
+                record->cbid = zpl_media_event_register(record->event_queue, ZPL_MEDIA_GLOAL_VIDEO_ENCODE,  ZPL_MEDIA_EVENT_RECORD,
                     media_buffer_data_record_handle, record);
         }
     }

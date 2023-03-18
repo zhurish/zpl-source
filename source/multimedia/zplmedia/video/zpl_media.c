@@ -32,17 +32,15 @@ int zpl_media_global_init(void)
 	{
 		lstInit(&_media_global.vpss_channel_list);
 	}
-	if(os_mutex_name_init(&_media_global.vpss_group_mutex, "vpss_group_mutex") == OK)
-	{
-		lstInit(&_media_global.vpss_group_list);
-	}
+
 	if(os_mutex_name_init(&_media_global.video_input_mutex, "video_input_mutex") == OK)
 	{
 		lstInit(&_media_global.video_input_list);
 	}
-	if(os_mutex_name_init(&_media_global.input_pipe_mutex, "input_pipe_mutex") == OK)
+
+	if(os_mutex_name_init(&_media_global.input_dev_mutex, "input_dev_mutex") == OK)
 	{
-		lstInit(&_media_global.input_pipe_list);
+		lstInit(&_media_global.input_dev_list);
 	}
 	if(os_mutex_name_init(&_media_global.audio_output_mutex, "audio_output_mutex") == OK)
 	{
@@ -73,17 +71,13 @@ int zpl_media_global_exit(void)
 	{
 		lstFree(&_media_global.vpss_channel_list);
 	}
-	if(os_mutex_destroy(&_media_global.vpss_group_mutex) == OK)
-	{
-		lstFree(&_media_global.vpss_group_list);
-	}
 	if(os_mutex_destroy(&_media_global.video_input_mutex) == OK)
 	{
 		lstFree(&_media_global.video_input_list);
 	}
-	if(os_mutex_destroy(&_media_global.input_pipe_mutex) == OK)
+	if(os_mutex_destroy(&_media_global.input_dev_mutex) == OK)
 	{
-		lstFree(&_media_global.input_pipe_list);
+		lstFree(&_media_global.input_dev_list);
 	}
 	if(os_mutex_destroy(&_media_global.audio_output_mutex) == OK)
 	{
@@ -100,18 +94,16 @@ static int zpl_media_global_list_node_get(ZPL_MEDIA_GLOBAL_E type, LIST **lst, o
 {
     switch(type)
     {
-    case ZPL_MEDIA_GLOAL_VIDEO_INPUTPIPE: 
-        *lst = &_media_global.input_pipe_list; 
-        *mutex = &_media_global.input_pipe_mutex;
+    case ZPL_MEDIA_GLOAL_VIDEO_DEV: 
+        *lst = &_media_global.input_dev_list; 
+        *mutex = &_media_global.input_dev_mutex;
         break;
+
     case ZPL_MEDIA_GLOAL_VIDEO_INPUT: 
         *lst = &_media_global.video_input_list; 
         *mutex = &_media_global.video_input_mutex;
         break;
-    case ZPL_MEDIA_GLOAL_VIDEO_VPSSGRP:  
-        *lst = &_media_global.vpss_group_list; 
-        *mutex = &_media_global.vpss_group_mutex;
-        break;
+
     case ZPL_MEDIA_GLOAL_VIDEO_VPSS:  
         *lst = &_media_global.vpss_channel_list; 
         *mutex = &_media_global.vpss_channel_mutex;
@@ -220,6 +212,20 @@ int zpl_media_global_unlock(ZPL_MEDIA_GLOBAL_E type)
     LIST *_lst = NULL;
     os_mutex_t *_mutex = NULL;
     zpl_media_global_list_node_get(type, &_lst, &_mutex);
+	if(_mutex)
+		os_mutex_unlock(_mutex);
+    return OK;  
+}
+
+int zpl_media_global_freeset(ZPL_MEDIA_GLOBAL_E type, void (*cmpfunc)(void*))
+{
+    LIST *_lst = NULL;
+    os_mutex_t *_mutex = NULL;
+    zpl_media_global_list_node_get(type, &_lst, &_mutex);
+	if (_mutex)
+		os_mutex_lock(_mutex, OS_WAIT_FOREVER);
+    if(_lst)    
+        _lst->free = cmpfunc;
 	if(_mutex)
 		os_mutex_unlock(_mutex);
     return OK;  

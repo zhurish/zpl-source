@@ -28,14 +28,14 @@ static int zpl_vidhal_sensor_reset(zpl_int32 snsdev)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return -1;
     }
     s32Ret = ioctl(fd, HI_MIPI_RESET_SENSOR, &SnsDev);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_SET_HS_MODE failed\n");
+            zm_msg_err("HI_MIPI_SET_HS_MODE failed\n");
     }
     close(fd);
     return s32Ret;
@@ -50,14 +50,14 @@ static int zpl_vidhal_sensor_unreset(zpl_int32 snsdev)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return HI_FAILURE;
     }
     s32Ret = ioctl(fd, HI_MIPI_UNRESET_SENSOR, &SnsDev);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_UNRESET_SENSOR failed\n");
+            zm_msg_err("HI_MIPI_UNRESET_SENSOR failed\n");
         goto EXIT;
     }
 EXIT:
@@ -74,14 +74,14 @@ static int zpl_vidhal_sensor_clock(zpl_int32 snsdev, zpl_bool enable)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return HI_FAILURE;
     }
     s32Ret = ioctl(fd, enable ? HI_MIPI_ENABLE_SENSOR_CLOCK : HI_MIPI_DISABLE_SENSOR_CLOCK, &SnsDev);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_ENABLE_SENSOR_CLOCK failed\n");
+            zm_msg_err("HI_MIPI_ENABLE_SENSOR_CLOCK failed\n");
         goto EXIT;
     }
 EXIT:
@@ -97,14 +97,14 @@ static int zpl_vidhal_mipi_hsmode_set(lane_divide_mode_t enHsMode)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return -1;
     }
     s32Ret = ioctl(fd, HI_MIPI_SET_HS_MODE, &enHsMode);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_SET_HS_MODE failed\n");
+            zm_msg_err("HI_MIPI_SET_HS_MODE failed\n");
     }
     close(fd);
     return s32Ret;
@@ -119,14 +119,14 @@ static int zpl_vidhal_mipi_clock(zpl_int32 devno, zpl_bool enable)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return HI_FAILURE;
     }
     s32Ret = ioctl(fd, enable ? HI_MIPI_ENABLE_MIPI_CLOCK : HI_MIPI_DISABLE_MIPI_CLOCK, &MipiDev);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("MIPI_ENABLE_CLOCK %d failed\n", MipiDev);
+            zm_msg_err("MIPI_ENABLE_CLOCK %d failed\n", MipiDev);
         goto EXIT;
     }
 EXIT:
@@ -144,14 +144,14 @@ static int zpl_vidhal_mipi_reset(zpl_int32 devno)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return -1;
     }
     s32Ret = ioctl(fd, HI_MIPI_RESET_MIPI, &MipiDev);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_SET_HS_MODE failed\n");
+            zm_msg_err("HI_MIPI_SET_HS_MODE failed\n");
     }
     close(fd);
     return s32Ret;
@@ -166,14 +166,14 @@ static int zpl_vidhal_mipi_unreset(zpl_int32 devno)
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return HI_FAILURE;
     }
     s32Ret = ioctl(fd, HI_MIPI_UNRESET_MIPI, &MipiDev);
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_UNRESET_MIPI failed\n");
+            zm_msg_err("HI_MIPI_UNRESET_MIPI failed\n");
         goto EXIT;
     }
 EXIT:
@@ -191,7 +191,7 @@ static int zpl_vidhal_mipi_set_attr(zpl_int32 devno, combo_dev_attr_t *stcomboDe
     if (fd < 0)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("open hi_mipi dev failed\n");
+            zm_msg_err("open hi_mipi dev failed\n");
         return HI_FAILURE;
     }
     stcomboDevAttr->devno = MipiDev;
@@ -199,7 +199,7 @@ static int zpl_vidhal_mipi_set_attr(zpl_int32 devno, combo_dev_attr_t *stcomboDe
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("HI_MIPI_UNRESET_MIPI failed\n");
+            zm_msg_err("HI_MIPI_UNRESET_MIPI failed\n");
         goto EXIT;
     }
 EXIT:
@@ -243,7 +243,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_SetMipiHsMode failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_SetMipiHsMode failed!\n");
 
         return HI_FAILURE;
     }
@@ -252,7 +252,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_EnableMipiClock failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_EnableMipiClock failed!\n");
 
         return HI_FAILURE;
     }
@@ -262,7 +262,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_ResetMipi failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_ResetMipi failed!\n");
 
         return HI_FAILURE;
     }
@@ -271,7 +271,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_EnableSensorClock failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_EnableSensorClock failed!\n");
 
         return HI_FAILURE;
     }
@@ -281,7 +281,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_ResetSensor failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_ResetSensor failed!\n");
 
         return HI_FAILURE;
     }
@@ -291,7 +291,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_SetMipiAttr failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_SetMipiAttr failed!\n");
 
         return HI_FAILURE;
     }
@@ -301,7 +301,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_UnresetMipi failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_UnresetMipi failed!\n");
 
         return HI_FAILURE;
     }
@@ -311,7 +311,7 @@ int zpl_vidhal_mipi_start(zpl_int32 snsdev, zpl_int32 mipmdev, ZPL_SENSOR_TYPE_E
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_UnresetSensor failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_UnresetSensor failed!\n");
 
         return HI_FAILURE;
     }
@@ -331,7 +331,7 @@ int zpl_vidhal_mipi_stop(zpl_int32 snsdev, zpl_int32 mipmdev)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_ResetSensor failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_ResetSensor failed!\n");
 
         return HI_FAILURE;
     }
@@ -340,7 +340,7 @@ int zpl_vidhal_mipi_stop(zpl_int32 snsdev, zpl_int32 mipmdev)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_DisableSensorClock failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_DisableSensorClock failed!\n");
 
         return HI_FAILURE;
     }
@@ -349,7 +349,7 @@ int zpl_vidhal_mipi_stop(zpl_int32 snsdev, zpl_int32 mipmdev)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_ResetMipi failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_ResetMipi failed!\n");
 
         return HI_FAILURE;
     }
@@ -358,7 +358,7 @@ int zpl_vidhal_mipi_stop(zpl_int32 snsdev, zpl_int32 mipmdev)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(DEVICE, EVENT) && ZPL_MEDIA_DEBUG(DEVICE, HARDWARE))
-            zpl_media_debugmsg_err("SAMPLE_COMM_VI_DisableMipiClock failed!\n");
+            zm_msg_err("SAMPLE_COMM_VI_DisableMipiClock failed!\n");
 
         return HI_FAILURE;
     }

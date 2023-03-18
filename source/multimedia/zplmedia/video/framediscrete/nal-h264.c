@@ -619,14 +619,14 @@ int nal_h264_get_frame(FILE *fp, zpl_media_bufcache_t *outpacket)
         {
             if(feof(fp))
             {
-                zpl_media_debugmsg_error("===========can not get media frame data eof tatol_len=%d packetsize=%d, ret=%d error(%s)", tatol_len, packetsize, ret, strerror(errno));
+                zm_msg_error("===========can not get media frame data eof tatol_len=%d packetsize=%d, ret=%d error(%s)", tatol_len, packetsize, ret, strerror(errno));
                 break;
             }
             else
             {
                 if(ferror(fp))
                 {
-                    zpl_media_debugmsg_error("===========can not get media frame data tatol_len=%d packetsize=%d, ret=%d error(%s)", tatol_len, packetsize, ret, strerror(errno));
+                    zm_msg_error("===========can not get media frame data tatol_len=%d packetsize=%d, ret=%d error(%s)", tatol_len, packetsize, ret, strerror(errno));
                     break;
                 }
             }

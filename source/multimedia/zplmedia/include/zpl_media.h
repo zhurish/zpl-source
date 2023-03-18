@@ -29,6 +29,8 @@ extern "C" {
 #define     ZPL_MEDIA_BASE_PATH     "D:/qt-project/live555-test/"
 #endif
 
+#define ZPL_VIDEO_VPSSGRP_ENABLE
+
 #define ZPL_MEDIA_BUF_ALIGN(n)	(((n)+3)/4)*4
 
 #define ZPL_MEDIA_CHANNEL_SET(c,i,t)	    ((c) << 8)|((i)<<4)|(t)
@@ -36,24 +38,31 @@ extern "C" {
 #define ZPL_MEDIA_CHANNEL_GET_I(n)	        (((n) >> 4) & 0x0F)
 #define ZPL_MEDIA_CHANNEL_GET_T(n)	        ((n) & 0x0F)
 
+#define ZPL_MEDIA_CHANNEL_AUDIO(n)	        ((n) | 0x30)
+
 typedef enum
 {
     ZPL_MEDIA_CHANNEL_NONE = -1,
-    ZPL_MEDIA_CHANNEL_0 = 0,			//主码流
-    ZPL_MEDIA_CHANNEL_1 = 1,			//次码流
-    ZPL_MEDIA_CHANNEL_2 = 2,			//三码流
-    ZPL_MEDIA_CHANNEL_3 = 3,
+    ZPL_MEDIA_CHANNEL_0 = 0,			//通道0
+    ZPL_MEDIA_CHANNEL_1 = 1,			//通道1
+    ZPL_MEDIA_CHANNEL_2 = 2,			//通道2
+    ZPL_MEDIA_CHANNEL_3 = 3,            //通道3
+
+    ZPL_MEDIA_CHANNEL_AUDIO_0 = 0x30,			//通道0
+    ZPL_MEDIA_CHANNEL_AUDIO_1 = 0x31,			//通道1
+    ZPL_MEDIA_CHANNEL_AUDIO_2 = 0x32,			//通道2
+    ZPL_MEDIA_CHANNEL_AUDIO_3 = 0x33,            //通道3
     ZPL_MEDIA_CHANNEL_MAX,
-} ZPL_MEDIA_CHANNEL_E;
+} ZPL_MEDIA_CHANNEL_E; /* 通道 */
 
 typedef enum
 {
     ZPL_MEDIA_CHANNEL_TYPE_NONE = -1,
-    ZPL_MEDIA_CHANNEL_TYPE_MAIN = 0,			//主码流
+    ZPL_MEDIA_CHANNEL_TYPE_MAIN = 0,	//主码流
     ZPL_MEDIA_CHANNEL_TYPE_SUB,			//次码流
-    ZPL_MEDIA_CHANNEL_TYPE_SUB1,			//三码流
+    ZPL_MEDIA_CHANNEL_TYPE_SUB1,		//三码流
     ZPL_MEDIA_CHANNEL_TYPE_MAX,
-} ZPL_MEDIA_CHANNEL_TYPE_E;
+} ZPL_MEDIA_CHANNEL_TYPE_E;/* 码流 */
 
 
 typedef enum
@@ -61,19 +70,6 @@ typedef enum
     ZPL_MEDIA_VIDEO = 1,			//
     ZPL_MEDIA_AUDIO = 2,			//
 } ZPL_MEDIA_E;
-
-typedef enum
-{
-    ZPL_MEDIA_NODE_PIPE = ZPL_SUB_MODULE_ID(MODULE_ZPLMEDIA,1),
-    ZPL_MEDIA_NODE_INPUT,			//输入
-    ZPL_MEDIA_NODE_PROCESS,			//处理
-    ZPL_MEDIA_NODE_ENCODE,            //编码
-    ZPL_MEDIA_NODE_OUTPUT,            //输出
-    ZPL_MEDIA_NODE_RECORD,            //录制
-    ZPL_MEDIA_NODE_CAPTURE,           //抓拍
-} ZPL_MEDIA_NODE_E;
-
-
 
 typedef struct zpl_point_s
 {
@@ -105,10 +101,10 @@ typedef struct zpl_multarea_s
 
 
 typedef struct  {
-    zpl_uint32     enModId;
-    zpl_int32      s32DevId;
-    zpl_int32      s32ChnId;
-} zpl_media_syschs_t;
+    zpl_int32      modId;
+    zpl_int32      devId;
+    zpl_int32      chnId;
+} zpl_media_syschn_t;
 
 typedef enum
 {
@@ -135,20 +131,19 @@ typedef struct
 
 typedef enum 
 {
-    ZPL_MEDIA_GLOAL_VIDEO_INPUTPIPE  = 0x01,
-    ZPL_MEDIA_GLOAL_VIDEO_INPUT      = 0x02,
-    ZPL_MEDIA_GLOAL_VIDEO_VPSSGRP    = 0x03,
-    ZPL_MEDIA_GLOAL_VIDEO_VPSS       = 0x04,
-    ZPL_MEDIA_GLOAL_VIDEO_ENCODE     = 0x05,
-    ZPL_MEDIA_GLOAL_VIDEO_DECODE     = 0x06,
-    ZPL_MEDIA_GLOAL_VIDEO_OUTPUT     = 0x07,
+    ZPL_MEDIA_GLOAL_VIDEO_DEV  = 0x00,
+    ZPL_MEDIA_GLOAL_VIDEO_INPUT      = 0x02,    //输入
+    ZPL_MEDIA_GLOAL_VIDEO_VPSS       = 0x04,    //处理
+    ZPL_MEDIA_GLOAL_VIDEO_ENCODE     = 0x05,    //编码
+    ZPL_MEDIA_GLOAL_VIDEO_DECODE     = 0x06,    //解码
+    ZPL_MEDIA_GLOAL_VIDEO_OUTPUT     = 0x07,    //输出
 
     ZPL_MEDIA_GLOAL_AUDIO_INPUT      = 0x11,
     ZPL_MEDIA_GLOAL_AUDIO_ENCODE     = 0x12,
     ZPL_MEDIA_GLOAL_AUDIO_DECODE     = 0x13,
     ZPL_MEDIA_GLOAL_AUDIO_OUTPUT     = 0x14,
 
-    ZPL_MEDIA_GLOAL_MAX        = 0x10,
+    ZPL_MEDIA_GLOAL_MAX       ,
 } ZPL_MEDIA_GLOBAL_E;
 
 typedef struct
@@ -172,14 +167,11 @@ typedef struct
     LIST vpss_channel_list;
     os_mutex_t vpss_channel_mutex;
 
-    LIST vpss_group_list;
-    os_mutex_t vpss_group_mutex;
-
     LIST video_input_list;
     os_mutex_t video_input_mutex;
 
-    LIST input_pipe_list;
-    os_mutex_t input_pipe_mutex;
+    LIST input_dev_list;
+    os_mutex_t input_dev_mutex;
 
     LIST audio_output_list;
     os_mutex_t audio_output_mutex;
@@ -194,11 +186,17 @@ extern int zpl_media_global_exit(void);
 extern int zpl_media_global_lock(ZPL_MEDIA_GLOBAL_E type);
 extern int zpl_media_global_unlock(ZPL_MEDIA_GLOBAL_E type);
 extern int zpl_media_global_gkey_cmpset(ZPL_MEDIA_GLOBAL_E type, int (*cmpfunc)(void*, void*));
+extern int zpl_media_global_freeset(ZPL_MEDIA_GLOBAL_E type, void (*cmpfunc)(void*));
 extern int zpl_media_global_del(ZPL_MEDIA_GLOBAL_E type, void *node);
 extern int zpl_media_global_add(ZPL_MEDIA_GLOBAL_E type, void *node);
 extern void * zpl_media_global_lookup(ZPL_MEDIA_GLOBAL_E type, int channel, int group, int ID);
 extern int zpl_media_global_get(ZPL_MEDIA_GLOBAL_E type, LIST **lst, os_mutex_t **mutex);
 extern int zpl_media_global_foreach(ZPL_MEDIA_GLOBAL_E type, int (*func)(void*, void*), void *p);
+
+extern int zpl_media_system_bind(zpl_media_syschn_t src, zpl_media_syschn_t dst);
+extern int zpl_media_system_unbind(zpl_media_syschn_t src, zpl_media_syschn_t dst);
+
+int zpl_media_system_init(void);
 
 #endif
 

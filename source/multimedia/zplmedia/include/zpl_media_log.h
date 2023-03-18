@@ -15,16 +15,16 @@ extern "C" {
 #include "auto_include.h"
 #include "zplos_include.h"
 #include "lib_include.h"
-#include "zpl_media_hal.h"
 
-#define zpl_media_debugmsg_err(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_error(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_warn(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_info(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_notice(format, ...) 	    zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_debug(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_trap(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zpl_media_debugmsg_force_trap(format, ...) 	zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+
+#define zm_msg_err(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_error(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_warn(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_info(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_notice(format, ...) 	    zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_debug(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_trap(format, ...) 		zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_force_trap(format, ...) 	zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
 
 #define zpl_video_assert(EX) zassert(EX)
 

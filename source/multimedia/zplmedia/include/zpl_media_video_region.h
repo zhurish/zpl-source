@@ -33,7 +33,7 @@ typedef struct
     zpl_void			   *area;		    //
     ZPL_HWRGN_TYPE_E        rgn_type;       //
     zpl_int32               rgn_handle;     //描述符
-    zpl_media_syschs_t      rgn_chn;        //通道号
+    zpl_media_syschn_t      rgn_chn;        //通道号
     zpl_uint32		        bg_color;		//区域背景颜色 
     zpl_int32               fg_alpha;       //透明度
     zpl_int32               bg_alpha;       //背景透明度

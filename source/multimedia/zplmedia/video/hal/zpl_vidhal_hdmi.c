@@ -381,7 +381,7 @@ int zpl_vidhal_hdmi_getwh(VO_INTF_SYNC_E enIntfSync, zpl_uint32* pu32W, zpl_uint
             break;
         default:
             if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-                zpl_media_debugmsg_err("vo enIntfSync %d not support!\n", enIntfSync);
+                zm_msg_err("vo enIntfSync %d not support!\n", enIntfSync);
             return HI_FAILURE;
     }
 
@@ -398,7 +398,7 @@ int zpl_vidhal_hdmi_dev_start(zpl_int32 VoDev, void* pstPubAttr)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -406,7 +406,7 @@ int zpl_vidhal_hdmi_dev_start(zpl_int32 VoDev, void* pstPubAttr)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -421,7 +421,7 @@ int zpl_vidhal_hdmi_dev_stop(zpl_int32 VoDev)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -435,7 +435,7 @@ int zpl_vidhal_hdmi_layer_start(zpl_int32 VoLayer, const void* pstLayerAttr)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -443,7 +443,7 @@ int zpl_vidhal_hdmi_layer_start(zpl_int32 VoLayer, const void* pstLayerAttr)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -458,7 +458,7 @@ int zpl_vidhal_hdmi_layer_stop(zpl_int32 VoLayer)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
 
@@ -528,7 +528,7 @@ int zpl_vidhal_hdmi_channel_start(zpl_int32 VoLayer, ZPL_HDMI_VO_MODE_E enMode)
             break;
         default:
             if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
             return HI_FAILURE;
     }
 
@@ -536,13 +536,13 @@ int zpl_vidhal_hdmi_channel_start(zpl_int32 VoLayer, ZPL_HDMI_VO_MODE_E enMode)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-            zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+            zm_msg_err("failed with %#x!\n", s32Ret);
         return HI_FAILURE;
     }
     u32Width  = stLayerAttr.stImageSize.u32Width;
     u32Height = stLayerAttr.stImageSize.u32Height;
     if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-        zpl_media_debugmsg_debug("u32Width:%d, u32Height:%d, u32Square:%d\n", u32Width, u32Height, u32Square);
+        zm_msg_debug("u32Width:%d, u32Height:%d, u32Square:%d\n", u32Width, u32Height, u32Square);
     for (i = 0; i < u32WndNum; i++)
     {
         if( enMode == VO_MODE_1MUX  ||
@@ -577,7 +577,7 @@ int zpl_vidhal_hdmi_channel_start(zpl_int32 VoLayer, ZPL_HDMI_VO_MODE_E enMode)
         if (s32Ret != HI_SUCCESS)
         {
             if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-                zpl_media_debugmsg_err("%s(%d):failed with %#x!\n", \
+                zm_msg_err("%s(%d):failed with %#x!\n", \
                    __FUNCTION__, __LINE__,  s32Ret);
             return HI_FAILURE;
         }
@@ -586,7 +586,7 @@ int zpl_vidhal_hdmi_channel_start(zpl_int32 VoLayer, ZPL_HDMI_VO_MODE_E enMode)
         if (s32Ret != HI_SUCCESS)
         {
             if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-                zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+                zm_msg_err("failed with %#x!\n", s32Ret);
             return HI_FAILURE;
         }
     }
@@ -624,7 +624,7 @@ int zpl_vidhal_hdmi_channel_stop(zpl_int32 VoLayer, ZPL_HDMI_VO_MODE_E enMode)
         }
         default:
             if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-                zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+                zm_msg_err("failed with %#x!\n", s32Ret);
             return HI_FAILURE;
     }
 
@@ -635,7 +635,7 @@ int zpl_vidhal_hdmi_channel_stop(zpl_int32 VoLayer, ZPL_HDMI_VO_MODE_E enMode)
         if (s32Ret != HI_SUCCESS)
         {
             if(ZPL_MEDIA_DEBUG(HDMI, EVENT) && ZPL_MEDIA_DEBUG(HDMI, HARDWARE))
-                zpl_media_debugmsg_err("failed with %#x!\n", s32Ret);
+                zm_msg_err("failed with %#x!\n", s32Ret);
             return HI_FAILURE;
         }
     }

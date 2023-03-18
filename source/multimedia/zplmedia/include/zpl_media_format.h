@@ -66,6 +66,11 @@ typedef enum
 #define ZPL_AUDIO_FRAMERATE_DEFAULT ZPL_AUDIO_FRAMERATE_50
 #define ZPL_VIDEO_FRAMERATE_DEFAULT ZPL_VIDEO_FRAMERATE_30
 
+
+const char *zpl_media_format_name(int key);
+/* 获取视频分辨率大小 resolution ratio */
+int zpl_media_video_format_resolution(ZPL_VIDEO_FORMAT_E format, zpl_video_size_t* pstSize);
+
 #ifdef __cplusplus
 }
 #endif

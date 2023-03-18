@@ -14,7 +14,7 @@ OSOBJ	+= zpl_media_hardadap.o
 OSOBJ	+= zpl_media_api.o
 OSOBJ	+= zpl_media_codecmap.o
 OSOBJ	+= zpl_media.o
-OSOBJ	+= zpl_media_hal.o
+
 OSOBJ	+= zpl_media_cmd.o
 OSOBJ	+= zpl_media_config.o
 OSOBJ	+= zpl_media_task.o
@@ -32,13 +32,12 @@ OSOBJ	+= zpl_media_text.o
 OSOBJ	+= zpl_media_area.o
 OSOBJ	+= zpl_media_proxy.o
 OSOBJ	+= zpl_media_frame_adap.o
+OSOBJ	+= zpl_media_sys.o
 
 OSOBJ	+= zpl_media_video_encode.o
 OSOBJ	+= zpl_media_video_vpss.o
-OSOBJ	+= zpl_media_video_vpssgrp.o
 OSOBJ	+= zpl_media_video_input.o
-OSOBJ	+= zpl_media_video_input_pipe.o
-
+//OSOBJ	+= zpl_media_video_dev.o
 #
 OSOBJ	+= nal-h264.o
 OSOBJ	+= nal-hevc.o
@@ -48,6 +47,7 @@ OSOBJ	+= nal-rbsp.o
 OSOBJ	+= zpl_vidhal_mipi.o
 OSOBJ	+= zpl_vidhal_sensor.o
 OSOBJ	+= zpl_vidhal_isp.o
+#OSOBJ	+= zpl_vidhal_dev.o
 OSOBJ	+= zpl_vidhal_input.o
 OSOBJ	+= zpl_vidhal_hdmi.o
 OSOBJ	+= zpl_vidhal_region.o
@@ -61,6 +61,7 @@ OSOBJ	+= zpl_vidhal_nnie.o
 OSOBJ	+= zpl_syshal.o
 OSOBJ	+= zpl_vidhal.o	
 #endif
+
 
 ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 #OSOBJ	+= sample_comm_audio.o

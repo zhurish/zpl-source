@@ -253,7 +253,7 @@ int zpl_syshal_mem_init(void)
             if (s32Ret)
             {
                 if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-                    zpl_media_debugmsg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+                    zm_msg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
                 return HI_FAILURE;
             }
         }
@@ -270,7 +270,7 @@ int zpl_syshal_mem_init(void)
         if (s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+                zm_msg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
             return HI_FAILURE;
         }
     }
@@ -286,7 +286,7 @@ int zpl_syshal_mem_init(void)
         if (s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+                zm_msg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
             return HI_FAILURE;
         }
     }
@@ -303,7 +303,7 @@ int zpl_syshal_mem_init(void)
         if (s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_SYS_SetMemConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+                zm_msg_err("HI_MPI_SYS_SetMemConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
             return HI_FAILURE;
         }
     }
@@ -321,7 +321,7 @@ int zpl_syshal_mem_init(void)
             if (s32Ret)
             {
                 if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-                    zpl_media_debugmsg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+                    zm_msg_err("HI_MPI_SYS_SetMemConfig failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
                 return HI_FAILURE;
             }
         }
@@ -339,7 +339,7 @@ int zpl_syshal_mem_init(void)
         if (s32Ret)
         {
             if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-                zpl_media_debugmsg_err("HI_MPI_SYS_SetMemConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+                zm_msg_err("HI_MPI_SYS_SetMemConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
             return HI_FAILURE;
         }
     }
@@ -426,7 +426,7 @@ int zpl_syshal_vbmem_init(void)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VB_SetConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+            zm_msg_err("HI_MPI_VB_SetConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
         return HI_FAILURE;
     }
 	
@@ -436,7 +436,7 @@ int zpl_syshal_vbmem_init(void)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VB_SetSupplementConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+            zm_msg_err("HI_MPI_VB_SetSupplementConf failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
         return HI_FAILURE;
     }
 	
@@ -445,7 +445,7 @@ int zpl_syshal_vbmem_init(void)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VB_Init failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+            zm_msg_err("HI_MPI_VB_Init failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
         return HI_FAILURE;
     }
 
@@ -454,7 +454,7 @@ int zpl_syshal_vbmem_init(void)
     if (HI_SUCCESS != s32Ret)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_SYS_Init failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+            zm_msg_err("HI_MPI_SYS_Init failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
         HI_MPI_VB_Exit();
         return HI_FAILURE;
     }
@@ -467,7 +467,7 @@ int zpl_syshal_vbmem_init(void)
 zpl_uint32 zpl_syshal_get_buffer_size(ZPL_VIDEO_FORMAT_E format, zpl_uint32 pixelformat)
 {
     zpl_video_size_t stSize;
-    if(zpl_syshal_get_video_resolution(format, &stSize) == OK)
+    if(zpl_media_video_format_resolution(format, &stSize) == OK)
     {
         #ifdef ZPL_HISIMPP_MODULE 
         zpl_uint32 u64BlkSize = COMMON_GetPicBufferSize(stSize.width, stSize.height, 
@@ -494,107 +494,6 @@ zpl_uint32 zpl_syshal_get_membuf_size(zpl_uint32 u32Width, zpl_uint32 u32Height,
 /******************************************************************************
 * function : get picture size(w*h), according enPicSize
 ******************************************************************************/
-int zpl_syshal_get_video_resolution(ZPL_VIDEO_FORMAT_E format, zpl_video_size_t* pstSize)
-{
-    switch (format)
-    {
-        case ZPL_VIDEO_FORMAT_CIF:   /* 352 * 288 */
-            pstSize->width  = 352;
-            pstSize->height = 288;
-            break;
-
-        case ZPL_VIDEO_FORMAT_360P:   /* 640 * 360 */
-            pstSize->width  = 640;
-            pstSize->height = 360;
-            break;
-
-        case ZPL_VIDEO_FORMAT_D1_PAL:   /* 720 * 576 */
-            pstSize->width  = 720;
-            pstSize->height = 576;
-            break;
-
-        case ZPL_VIDEO_FORMAT_D1_NTSC:   /* 720 * 480 */
-            pstSize->width  = 720;
-            pstSize->height = 480;
-            break;
-
-        case ZPL_VIDEO_FORMAT_720P:   /* 1280 * 720 */
-            pstSize->width  = 1280;
-            pstSize->height = 720;
-            break;
-
-        case ZPL_VIDEO_FORMAT_1080P:  /* 1920 * 1080 */
-            pstSize->width  = 1920;
-            pstSize->height = 1080;
-            break;
-
-        case ZPL_VIDEO_FORMAT_2592x1520:
-            pstSize->width  = 2592;
-            pstSize->height = 1520;
-            break;
-
-        case ZPL_VIDEO_FORMAT_2592x1944:
-            pstSize->width  = 2592;
-            pstSize->height = 1944;
-            break;
-
-        case ZPL_VIDEO_FORMAT_2592x1536:
-            pstSize->width  = 2592;
-            pstSize->height = 1536;
-            break;
-
-        case ZPL_VIDEO_FORMAT_2560x1440:
-            pstSize->width  = 2560;
-            pstSize->height = 1440;
-            break;
-
-        case ZPL_VIDEO_FORMAT_2716x1524:
-            pstSize->width  = 2716;
-            pstSize->height = 1524;
-            break;
-
-        case ZPL_VIDEO_FORMAT_3840x2160:
-            pstSize->width  = 3840;
-            pstSize->height = 2160;
-            break;
-
-        case ZPL_VIDEO_FORMAT_3000x3000:
-            pstSize->width  = 3000;
-            pstSize->height = 3000;
-            break;
-
-        case ZPL_VIDEO_FORMAT_4000x3000:
-            pstSize->width  = 4000;
-            pstSize->height = 3000;
-            break;
-
-        case ZPL_VIDEO_FORMAT_4096x2160:
-            pstSize->width  = 4096;
-            pstSize->height = 2160;
-            break;
-
-        case ZPL_VIDEO_FORMAT_7680x4320:
-            pstSize->width  = 7680;
-            pstSize->height = 4320;
-            break;
-        case ZPL_VIDEO_FORMAT_3840x8640:
-            pstSize->width = 3840;
-            pstSize->height = 8640;
-            break;
-
-        case ZPL_VIDEO_FORMAT_2688x1536:
-            pstSize->width  = 2688;
-            pstSize->height = 1536;
-            break;
-
-        default:
-            return ERROR;
-    }
-
-    return OK;
-}
-
-
 int zpl_syshal_vivpss_mode_set(zpl_int32 inputpipe, zpl_int32 mode)
 {
 #ifdef ZPL_HISIMPP_MODULE
@@ -606,7 +505,7 @@ int zpl_syshal_vivpss_mode_set(zpl_int32 inputpipe, zpl_int32 mode)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_SYS_GetVIVPSSMode failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+            zm_msg_err("HI_MPI_SYS_GetVIVPSSMode failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
         return HI_FAILURE;
     }
     vivpss_mode.aenMode[inputpipe] = mode;
@@ -614,7 +513,7 @@ int zpl_syshal_vivpss_mode_set(zpl_int32 inputpipe, zpl_int32 mode)
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_SYS_SetVIVPSSMode failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
+            zm_msg_err("HI_MPI_SYS_SetVIVPSSMode failed:%s(%x)!\n", zpl_syshal_strerror(s32Ret), s32Ret);
         return HI_FAILURE;
     }
     return s32Ret;

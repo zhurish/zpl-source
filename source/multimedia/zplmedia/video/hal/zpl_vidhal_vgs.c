@@ -46,7 +46,7 @@ static zpl_int32 _zpl_vidhal_vgs_GetFrameVb(const ZPL_VB_BASE_INFO_S *pstVbInfo,
     if (VB_INVALID_HANDLE == pstVgsVbInfo->VbHandle)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VB_GetBlock failed!\n");
+            zm_msg_err("HI_MPI_VB_GetBlock failed!\n");
         return HI_FAILURE;
     }
     pstVgsVbInfo->bVbUsed = HI_TRUE;
@@ -55,7 +55,7 @@ static zpl_int32 _zpl_vidhal_vgs_GetFrameVb(const ZPL_VB_BASE_INFO_S *pstVbInfo,
     if (0 == u64PhyAddr)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VB_Handle2PhysAddr failed!.\n");
+            zm_msg_err("HI_MPI_VB_Handle2PhysAddr failed!.\n");
         HI_MPI_VB_ReleaseBlock(pstVgsVbInfo->VbHandle);
         pstVgsVbInfo->bVbUsed = HI_FALSE;
         return HI_FAILURE;
@@ -65,7 +65,7 @@ static zpl_int32 _zpl_vidhal_vgs_GetFrameVb(const ZPL_VB_BASE_INFO_S *pstVbInfo,
     if (HI_NULL == pstVgsVbInfo->pu8VirAddr)
     {
         if(ZPL_MEDIA_DEBUG(SYS, EVENT) && ZPL_MEDIA_DEBUG(SYS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_SYS_Mmap failed!.\n");
+            zm_msg_err("HI_MPI_SYS_Mmap failed!.\n");
         HI_MPI_VB_ReleaseBlock(pstVgsVbInfo->VbHandle);
         pstVgsVbInfo->bVbUsed = HI_FALSE;
         return HI_FAILURE;
@@ -152,7 +152,7 @@ int zpl_vidhal_vgs_scale_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S *ou
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
 
@@ -164,7 +164,7 @@ int zpl_vidhal_vgs_scale_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S *ou
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     /************************************************
@@ -175,7 +175,7 @@ int zpl_vidhal_vgs_scale_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S *ou
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     return s32Ret;
@@ -198,7 +198,7 @@ int zpl_vidhal_vgs_cover_job(VIDEO_FRAME_INFO_S *inframe, VGS_ADD_COVER_S pstVgs
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
 
@@ -210,7 +210,7 @@ int zpl_vidhal_vgs_cover_job(VIDEO_FRAME_INFO_S *inframe, VGS_ADD_COVER_S pstVgs
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     /************************************************
@@ -221,7 +221,7 @@ int zpl_vidhal_vgs_cover_job(VIDEO_FRAME_INFO_S *inframe, VGS_ADD_COVER_S pstVgs
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     return s32Ret;
@@ -247,7 +247,7 @@ int zpl_vidhal_vgs_osd_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S *outf
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
 
@@ -259,7 +259,7 @@ int zpl_vidhal_vgs_osd_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S *outf
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     /************************************************
@@ -270,7 +270,7 @@ int zpl_vidhal_vgs_osd_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S *outf
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     return s32Ret;
@@ -296,7 +296,7 @@ int zpl_vidhal_vgs_drawline_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S 
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
 
@@ -308,7 +308,7 @@ int zpl_vidhal_vgs_drawline_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S 
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     /************************************************
@@ -319,7 +319,7 @@ int zpl_vidhal_vgs_drawline_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S 
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     return s32Ret;
@@ -345,7 +345,7 @@ int zpl_vidhal_vgs_rotation_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S 
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_BeginJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
 
@@ -357,7 +357,7 @@ int zpl_vidhal_vgs_rotation_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S 
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_AddScaleTask failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     /************************************************
@@ -368,7 +368,7 @@ int zpl_vidhal_vgs_rotation_job(VIDEO_FRAME_INFO_S *inframe, VIDEO_FRAME_INFO_S 
     {
         HI_MPI_VGS_CancelJob(hHandle);
         if(ZPL_MEDIA_DEBUG(VGS, EVENT) && ZPL_MEDIA_DEBUG(VGS, HARDWARE))
-            zpl_media_debugmsg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
+            zm_msg_err("HI_MPI_VGS_EndJob failed, s32Ret:0x%x", s32Ret);
         return s32Ret;
     }
     return s32Ret;
