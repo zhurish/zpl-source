@@ -109,8 +109,8 @@ int zpl_media_client_foreach(zpl_skbuffer_t *bufdata, void *p)
 			}
 		}
 	}
-    else
-        zm_msg_debug("========zpl_media_client_foreach NULL");
+    //else
+        //zm_msg_debug("========zpl_media_client_foreach NULL");
 	return OK;
 }
 

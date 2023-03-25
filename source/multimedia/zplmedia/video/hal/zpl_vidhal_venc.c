@@ -1329,7 +1329,7 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_media_video_encode_t *venc)
         //DP(APP_ERR, MODULE_ENC, "HI_MPI_VENC_GetStream failed with %#x!\n", s32Ret);
         return ERROR;
     }
-    zm_msg_debug(" ======================VENC Channel (%d) Get Stream Count=%d", venc->venc_channel, stStream.u32PackCount);
+    //zm_msg_debug(" ======================VENC Channel (%d) Get Stream Count=%d", venc->venc_channel, stStream.u32PackCount);
     /*******************************************************
      step 4 : save frame to buff
     *******************************************************/

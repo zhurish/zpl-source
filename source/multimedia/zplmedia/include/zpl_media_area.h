@@ -71,6 +71,8 @@ extern int zpl_media_area_multrectsize(zpl_media_area_t * area, zpl_multarea_t *
 extern int zpl_media_area_osd_attr(zpl_media_area_t * area, ZPL_MEDIA_OSD_TYPE_E osd, zpl_uint32 bgcolor);
 extern int zpl_media_area_osd_show(zpl_media_area_t * area, zpl_bool bshow, zpl_char *osdstring, zpl_uint32 pixel,
                                zpl_uint32 color, zpl_bool bold);
+int zpl_media_area_osd_default(zpl_media_area_t * mareas, ZPL_MEDIA_OSD_TYPE_E osdtype);
+            
 extern int zpl_media_area_active(zpl_media_area_t * area, zpl_bool bactive);
 extern int zpl_media_area_destroy_all(void *chn);
 extern int zpl_media_area_channel_default(void *);

@@ -332,6 +332,7 @@ static int media_queue_task(void *p)
 			{
 				lstDelete(&_media_bufqueue->list, eventcb);
 				lstAdd (&_media_bufqueue->ulist, eventcb); 
+	
 				if(_media_bufqueue->media_queue[eventcb->channel][eventcb->channel_index])
 					zpl_skbqueue_async_wait_distribute(_media_bufqueue->media_queue[eventcb->channel][eventcb->channel_index], 
 						5,	zpl_media_client_foreach, NULL);

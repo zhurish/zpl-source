@@ -195,6 +195,8 @@ int rtsp_session_media_start(rtsp_session_t* session, zpl_bool bvideo, zpl_bool 
         {
             if(start)
             {
+                if(session->audio_session.rtsp_media_queue == NULL)
+                    session->audio_session.rtsp_media_queue = zpl_skbqueue_create(os_name_format("rtpSkbQueue-%d/%d", session->audio_session.mchannel, session->audio_session.mlevel), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false); 
                 session->audio_session._call_index = zpl_media_channel_client_add(session->audio_session.mchannel, session->audio_session.mlevel, rtsp_session_media_rtp_proxy, &session->audio_session);
                 if(session->audio_session._call_index > 0)
                     return zpl_media_channel_client_start(session->audio_session.mchannel, session->audio_session.mlevel, session->audio_session._call_index, zpl_true);
@@ -243,7 +245,9 @@ int rtsp_session_media_start(rtsp_session_t* session, zpl_bool bvideo, zpl_bool 
         {
             if(start)
             {
-                session->video_session._call_index = zpl_media_channel_client_add(session->video_session.mchannel, session->video_session.mlevel, rtsp_session_media_rtp_proxy, &session->audio_session);
+                if(session->video_session.rtsp_media_queue == NULL)
+                    session->video_session.rtsp_media_queue = zpl_skbqueue_create(os_name_format("rtpSkbQueue-%d/%d", session->video_session.mchannel, session->video_session.mlevel), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);
+                session->video_session._call_index = zpl_media_channel_client_add(session->video_session.mchannel, session->video_session.mlevel, rtsp_session_media_rtp_proxy, &session->video_session);
                 if(session->video_session._call_index > 0)
                     return zpl_media_channel_client_start(session->video_session.mchannel, session->video_session.mlevel, session->video_session._call_index, zpl_true);
                 else
@@ -966,7 +970,10 @@ int rtsp_session_media_rtp_proxy(zpl_media_channel_t *mediachn,
     {
         skb = zpl_skbuffer_clone(session->rtsp_media_queue, bufdata); 
         if(skb)
+        {
             ret = zpl_skbqueue_add(session->rtsp_media_queue, skb);
+            zm_msg_debug("======== rtsp_session_media_rtp_proxy");
+        }
     }
     return ret;
 }
@@ -1081,7 +1088,7 @@ static int rtsp_session_media_rtp_sendto(rtp_session_t *rtp_session)
         if(skb)
         {
             zpl_media_hdr_t *media_header = skb->skb_hdr.other_hdr;
-  
+            rtsp_log_debug("=====================RTSP Media send from queue");
             ret = rtsp_session_media_adap_rtp_sendto(media_header->codectype, rtp_session->rtsp_parent, media_header->frame_type,
                                             ZPL_SKB_DATA(skb), ZPL_SKB_DATA_LEN(skb));
             rtp_session->user_timestamp += rtp_session->timestamp_interval;
@@ -1091,7 +1098,7 @@ static int rtsp_session_media_rtp_sendto(rtp_session_t *rtp_session)
     else if(rtp_session->rtsp_media)
     {
         zpl_media_bufcache_t *bufcache = &zpl_media_file_getptr(rtp_session->rtsp_media)->bufcache;
-        //rtsp_log_debug("=====================RTSP Media read file %p", rtp_session->rtsp_media); 
+        rtsp_log_debug("=====================RTSP Media read file %p", rtp_session->rtsp_media); 
         if(zpl_media_file_read(rtp_session->rtsp_media, bufcache) > 0)
         {
             int type = zpl_media_file_getptr(rtp_session->rtsp_media)->b_audio?ZPL_MEDIA_AUDIO:ZPL_MEDIA_VIDEO;
@@ -1241,7 +1248,7 @@ static int rtsp_session_media_scheduler_callback(rtsp_session_t *session, void *
         {
             if (session_set_is_set(sche->r_session_set, ZPL_RTP_SESSION(rtp_session)))
             {
-                //rtsp_log_debug("RTSP Video Media Rtp read ready");
+                rtsp_log_debug("RTSP Video Media Rtp read ready");
                 if((session->video_session.rtp_session_recv))
                     (session->video_session.rtp_session_recv)(&session->video_session);
                 else
@@ -1252,7 +1259,7 @@ static int rtsp_session_media_scheduler_callback(rtsp_session_t *session, void *
         {
             if (session_set_is_set(sche->w_session_set, ZPL_RTP_SESSION(rtp_session)))
             {
-                //rtsp_log_debug("RTSP Video Media Rtp Send ready");
+                rtsp_log_debug("RTSP Video Media Rtp Send ready");
                 if((session->video_session.rtp_session_send))
                     (session->video_session.rtp_session_send)(&session->video_session);
                 else 
@@ -1263,7 +1270,7 @@ static int rtsp_session_media_scheduler_callback(rtsp_session_t *session, void *
         {
             if (session_set_is_set(sche->w_session_set, ZPL_RTP_SESSION(rtp_session)))
             {
-                //rtsp_log_debug("RTSP Video Media Rtp Send ready 2");
+                rtsp_log_debug("RTSP Video Media Rtp Send ready 2");
                 if((session->video_session.rtp_session_send))
                     (session->video_session.rtp_session_send)(&session->video_session);
                 else 
@@ -1331,11 +1338,11 @@ static int rtsp_session_media_scheduler_callback(rtsp_session_t *session, void *
 int rtsp_session_media_scheduler_handle(void)
 {
     int ret = 0;
-    //rtsp_log_debug("=====RTSP Media Rtp select befor");
+    rtsp_log_debug("=====RTSP Media Rtp select befor");
     session_set_copy(_media_scheduler.w_session_set, &_media_scheduler.all_session_set);
 	//ret = session_set_select(_media_scheduler.r_session_set, _media_scheduler.w_session_set, NULL);
     ret = session_set_select(NULL, _media_scheduler.w_session_set, NULL);
-    //rtsp_log_debug("=====RTSP Media Rtp select after %d", ret);
+    rtsp_log_debug("=====RTSP Media Rtp select after %d", ret);
     if(ret)
     {
         rtsp_session_foreach(rtsp_session_media_scheduler_callback, &_media_scheduler);

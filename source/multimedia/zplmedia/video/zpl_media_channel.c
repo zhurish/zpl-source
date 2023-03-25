@@ -600,6 +600,75 @@ int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 	return ERROR;
 }
 
+zpl_media_area_t * zpl_media_channel_area_lookup(zpl_media_channel_t *chn, ZPL_MEDIA_AREA_E type, ZPL_MEDIA_OSD_TYPE_E osd_type)
+{
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+	if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
+	{
+		int i = 0;
+		for(i = 0; i< ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
+		{
+			if(chn->media_param.video_media.m_areas[i] && chn->media_param.video_media.m_areas[i]->areatype == type &&
+				chn->media_param.video_media.m_areas[i]->osd_type == osd_type)
+			{
+				if (media_channel_mutex)
+					os_mutex_unlock(media_channel_mutex);
+				return chn->media_param.video_media.m_areas[i];
+			}
+		}
+	}	
+    if (media_channel_mutex)
+        os_mutex_unlock(media_channel_mutex);
+	return NULL;	
+}
+
+int zpl_media_channel_area_add(zpl_media_channel_t *chn, zpl_media_area_t *area)
+{
+	int ret = ERROR;
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+	if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
+	{
+		int i = 0;
+		for(i = 0; i< ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
+		{
+			if(chn->media_param.video_media.m_areas[i]  == NULL)
+			{
+				chn->media_param.video_media.m_areas[i] = area;
+				ret = zpl_media_area_active(chn->media_param.video_media.m_areas[i], zpl_true);
+				break;
+			}
+		}
+	}	
+    if (media_channel_mutex)
+        os_mutex_unlock(media_channel_mutex);
+	return ret;	
+}
+
+int zpl_media_channel_area_del(zpl_media_channel_t *chn, ZPL_MEDIA_AREA_E type, ZPL_MEDIA_OSD_TYPE_E osd_type)
+{
+	int ret = ERROR;
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+	if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
+	{
+		int i = 0;
+		for(i = 0; i< ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
+		{
+			if(chn->media_param.video_media.m_areas[i] && chn->media_param.video_media.m_areas[i]->areatype == type &&
+				chn->media_param.video_media.m_areas[i]->osd_type == osd_type)
+			{
+				ret = zpl_media_area_active(chn->media_param.video_media.m_areas[i], zpl_false);
+				chn->media_param.video_media.m_areas[i] = NULL;
+				break;
+			}
+		}
+	}	
+    if (media_channel_mutex)
+        os_mutex_unlock(media_channel_mutex);
+	return ret;	
+}
 
 static zpl_media_channel_t *zpl_media_channel_lookup_entry(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, 
     zpl_uint32 sseid)

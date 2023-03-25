@@ -108,6 +108,44 @@ int zpl_media_area_osd_show(zpl_media_area_t * area, zpl_bool bshow, zpl_char *o
 }
 
 
+int zpl_media_area_osd_default(zpl_media_area_t * mareas, ZPL_MEDIA_OSD_TYPE_E osdtype)
+{
+    if(mareas)
+    {
+        if(osdtype == ZPL_MEDIA_OSD_CHANNAL)
+        {
+            zpl_media_text_bitmap_auto_size(mareas, "channel", 
+                ZPL_FONT_SIZE_16X16, &mareas->media_area.m_rect);
+   
+            zpl_media_area_osd_attr(mareas, ZPL_MEDIA_OSD_CHANNAL, 0xffff);
+            zpl_media_area_osd_show(mareas, zpl_true, "channel", 16, 0x0000, zpl_true);
+            //area->m_text->m_rect.width;
+            //area->m_text->m_rect.height;
+            //zpl_media_area_rectsize(mareas, mareas->m_text->m_rect);
+            //zpl_media_area_active(mareas, zpl_true);
+        }
+        if(osdtype == ZPL_MEDIA_OSD_DATETIME)
+        {
+            zpl_media_text_bitmap_auto_size(mareas, "time:2021/10/19 11:13:33", 
+                ZPL_FONT_SIZE_16X16, &mareas->media_area.m_rect);
+            //zpl_media_area_rectsize(mareas, mareas->m_text->m_rect);
+            zpl_media_area_osd_attr(mareas, ZPL_MEDIA_OSD_DATETIME, 0xffff);
+            zpl_media_area_osd_show(mareas, zpl_true, "time:2021/10/19 11:13:33", 16, 0x0000, zpl_true);
+            //zpl_media_area_active(mareas, zpl_true);
+        }
+        if(osdtype == ZPL_MEDIA_OSD_BITRATE)
+        {
+            zpl_media_text_bitmap_auto_size(mareas, "channel", 
+                ZPL_FONT_SIZE_16X16, &mareas->media_area.m_rect);
+            //zpl_media_area_rectsize(mareas, mareas->m_text->m_rect);
+            zpl_media_area_osd_attr(mareas, ZPL_MEDIA_OSD_BITRATE, 0xffff);
+            zpl_media_area_osd_show(mareas, zpl_true, "channel", 16, 0x0000, zpl_true);
+            //zpl_media_area_active(mareas, zpl_true);
+        }
+        return OK;
+    }
+    return ERROR;
+}
 
 int zpl_media_area_active(zpl_media_area_t * area, zpl_bool bactive)
 {

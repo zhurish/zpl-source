@@ -163,7 +163,10 @@ int rtsp_session_destroy(rtsp_session_t *session)
 
         rtsp_header_transport_destroy(&session->video_session.transport);
         rtsp_header_transport_destroy(&session->audio_session.transport);
-
+        if(session->audio_session.rtsp_media_queue)
+            zpl_skbqueue_destroy(session->audio_session.rtsp_media_queue);
+        if(session->video_session.rtsp_media_queue)
+            zpl_skbqueue_destroy(session->video_session.rtsp_media_queue);
         sdp_text_free(&session->sdptext);
 
         if (session->username)
@@ -337,7 +340,7 @@ int rtsp_session_default(rtsp_session_t *newNode, bool srv)
     newNode->audio_session.mchannel = newNode->audio_session.mlevel = -1;  
     newNode->audio_session._call_index = -1;       //媒体回调索引, 音视频通道数据发送
     newNode->audio_session.rtsp_media = NULL;            //媒体数据结构
-    newNode->audio_session.rtsp_media_queue = NULL;      //媒体接收队列
+    newNode->audio_session.rtsp_media_queue = NULL;     //媒体接收队列
     newNode->audio_session.rtp_session_send = NULL;
     newNode->audio_session.rtp_session_recv = NULL;
     if (!srv)
