@@ -69,6 +69,7 @@ typedef enum
     ZPL_MEDIA_STATE_NONE    = 0,      //
     ZPL_MEDIA_STATE_ACTIVE  = 1,      //硬件通道创建并使能
     ZPL_MEDIA_STATE_START   = 2,      //硬件通道创建并开始
+    ZPL_MEDIA_STATE_HWBIND   = 3,      //硬件通道创建并开始    
 } ZPL_MEDIA_STATE_E;
 
 typedef struct zpl_media_channel_s
@@ -125,7 +126,22 @@ extern int zpl_media_channel_exit(void);
 extern int zpl_media_channel_count(void);
 extern int zpl_media_channel_load_default(void);
 extern int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern int zpl_media_channel_hal_create(zpl_media_channel_t *chn);
 extern int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+extern int zpl_media_channel_hal_destroy(zpl_media_channel_t *chn);
+
+
+/* 开始通道 -> 底层开始 */
+extern int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+/* 暂停通道 -> 底层结束 */
+extern int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+
+
+extern int zpl_media_channel_halparam_set(ZPL_MEDIA_CHANNEL_E channel, 
+    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam);
+extern int zpl_media_channel_bind_encode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam);
+
+
 extern zpl_media_channel_t * zpl_media_channel_lookup(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 extern zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID);
 
@@ -140,9 +156,6 @@ extern int zpl_media_channel_audio_codec_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_ME
 extern int zpl_media_channel_bindcount_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 extern int zpl_media_channel_bindcount_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int addsub);
 
-extern int zpl_media_channel_halparam_set(ZPL_MEDIA_CHANNEL_E channel, 
-    ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam);
-extern int zpl_media_channel_bind_encode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam);
 
 extern int zpl_media_channel_client_add(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_media_buffer_handler cb_handler, void *pUser);
 extern int zpl_media_channel_client_del(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_int32 index);
@@ -180,19 +193,6 @@ extern int zpl_media_channel_video_gopmode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_
 extern int zpl_media_channel_video_gopmode_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, ZPL_VENC_GOP_MODE_E *val);
 
 
-
-
-/* 激活通道 -> 创建底层资源 */
-extern int zpl_media_channel_active(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
-/* 开始通道 -> 底层开始 */
-extern int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
-/* 暂停通道 -> 底层结束 */
-extern int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
-/* 销毁通道 -> 销毁底层资源 */
-extern int zpl_media_channel_inactive(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
-
-/* active:1 使能所有 ，:2 去使能所有 :3 开始所有 :4 停止所有 :-1 销毁所有*/
-extern int zpl_media_channel_handle_all(zpl_int32 active);
 
 #ifdef ZPL_SHELL_MODULE
 int zpl_media_channel_show(void *pvoid);

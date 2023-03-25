@@ -243,7 +243,6 @@ int zpl_media_video_inputchn_hal_destroy(zpl_media_video_inputchn_t *inputchn)
 				zm_msg_debug("inactive inputchn channel(%d) ret=%d", inputchn->input_chn, ret);
 			}
 		}
-		
 		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
 		zpl_media_video_input_pipe_bind_count_update(input_pipe);
 	}
@@ -255,47 +254,11 @@ int zpl_media_video_inputchn_destroy(zpl_media_video_inputchn_t *inputchn)
 	int ret = 0, input_pipe = 0;
 	if (inputchn)
 	{
+		zpl_media_video_inputchn_hal_destroy(inputchn);
+
 		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
 		input_pipe = inputchn->input_pipe;
-		if (inputchn && inputchn->t_read)
-		{
-			thread_cancel(inputchn->t_read);
-			inputchn->t_read = NULL;
-		}
-
-		if (ZPL_TST_BIT(inputchn->flags, ZPL_MEDIA_STATE_START))
-		{
-			ret = zpl_vidhal_inputchn_stop(inputchn->input_pipe, inputchn->input_chn, inputchn);
-			if (ret != OK)
-			{
-				zm_msg_error("stop input channel pipe %d channel %d failed.", inputchn->input_pipe, inputchn->input_chn);
-				zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
-				return ret;
-			}
-	
-			ZPL_CLR_BIT(inputchn->flags, ZPL_MEDIA_STATE_START);
-
-			if (ZPL_MEDIA_DEBUG(INPUT, EVENT))
-			{
-				zm_msg_debug("stop inputchn channel(%d) ret=%d", inputchn->input_chn, ret);
-			}
-		}
-		if (ZPL_TST_BIT(inputchn->flags, ZPL_MEDIA_STATE_ACTIVE))
-		{
-			ret = zpl_vidhal_inputchn_destroy(inputchn->input_pipe, inputchn->input_chn, inputchn);
-			if (ret != OK)
-			{
-				zm_msg_error("destroy input channel pipe %d channel %d failed.", inputchn->input_pipe, inputchn->input_chn);
-				zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
-				return ret;
-			}
-			ZPL_CLR_BIT(inputchn->flags, ZPL_MEDIA_STATE_ACTIVE);
-
-			if (ZPL_MEDIA_DEBUG(INPUT, EVENT))
-			{
-				zm_msg_debug("inactive inputchn channel(%d) ret=%d", inputchn->input_chn, ret);
-			}
-		}
+		
 		if((inputchn->pipefd != ZPL_SOCKET_INVALID))
 		{
 			ipstack_drstroy(inputchn->pipefd);
@@ -314,6 +277,76 @@ int zpl_media_video_inputchn_destroy(zpl_media_video_inputchn_t *inputchn)
 	return ret;
 }
 
+int zpl_media_video_inputchn_connect(zpl_media_video_inputchn_t *inputchn, zpl_int32 vpss_group, zpl_int32 vpss_channel, zpl_bool hwbind)
+{
+	int ret = ERROR;
+	zpl_media_video_vpsschn_t *vpsschn = (zpl_media_video_vpsschn_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_VPSS, vpss_channel, vpss_group, 0);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
+	if (vpsschn && inputchn->dest_output == vpsschn)
+	{
+		int vpssgrp = vpss_group;
+		if(inputchn)
+		{
+			if (hwbind && !ZPL_TST_BIT(inputchn->flags, ZPL_MEDIA_STATE_HWBIND))
+			{
+				if (inputchn->t_read)
+				{
+					thread_cancel(inputchn->t_read);
+					inputchn->t_read = NULL;
+				}
+				if (zpl_syshal_input_bind_vpss(inputchn->input_pipe, inputchn->input_chn, vpssgrp) != OK)
+				{
+					zm_msg_error("input_pipe %d input_chn %d can not connect to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
+					return ERROR;
+				}
+				if (ZPL_MEDIA_DEBUG(INPUT, EVENT))
+				{
+					zm_msg_debug("input_pipe %d input_chn %d connect to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+				}
+				ZPL_SET_BIT(inputchn->flags, ZPL_MEDIA_STATE_HWBIND);
+				inputchn->hwbind = zpl_true;
+				ret = OK;
+			}
+			else if (hwbind == zpl_false && ZPL_TST_BIT(inputchn->flags, ZPL_MEDIA_STATE_HWBIND))
+			{
+				if (inputchn->t_read)
+				{
+					thread_cancel(inputchn->t_read);
+					inputchn->t_read = NULL;
+				}
+				if (zpl_syshal_input_unbind_vpss(inputchn->input_pipe, inputchn->input_chn, vpssgrp) != OK)
+				{
+					zm_msg_error("input_pipe %d input_chn %d can not unbind to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
+					return ERROR;
+				}
+				if (ZPL_MEDIA_DEBUG(INPUT, EVENT))
+				{
+					zm_msg_debug("input_pipe %d input_chn %d unbind to vpssgrp (%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+				}
+				inputchn->hwbind = zpl_false;
+				ZPL_CLR_BIT(inputchn->flags, ZPL_MEDIA_STATE_HWBIND);
+				zpl_vidhal_inputchn_update_fd(inputchn->input_pipe, inputchn->input_chn, inputchn);
+				if (!ipstack_invalid(inputchn->chnfd) && inputchn->t_master)
+				{
+					if (ZPL_TST_BIT(inputchn->flags, ZPL_MEDIA_STATE_START))
+					inputchn->t_read = thread_add_read(inputchn->t_master, zpl_media_video_inputchn_read, inputchn, inputchn->chnfd);
+				}
+
+				ret = OK;
+			}
+			else
+			{
+				ret = OK;
+			}
+		}
+		else
+			zm_msg_error("can not get source stream of input pipe %d input channel %d on vpss group(%d)", inputchn->input_pipe, inputchn->input_chn, vpssgrp);
+	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
+	return ret;
+}
 
 zpl_bool zpl_media_video_inputchn_state_check(zpl_media_video_inputchn_t *inputchn, int bit)
 {
@@ -358,7 +391,7 @@ int zpl_media_video_inputchn_start(zpl_void *master, zpl_media_video_inputchn_t 
 		}
 	}
 	zpl_vidhal_inputchn_update_fd(inputchn->input_pipe, inputchn->input_chn, inputchn);
-	if (master && inputchn && !ipstack_invalid(inputchn->chnfd))
+	if (inputchn->hwbind == zpl_false && master && inputchn && !ipstack_invalid(inputchn->chnfd))
 	{
 		inputchn->t_master = master;
 		inputchn->t_read = thread_add_read(master, zpl_media_video_inputchn_read, inputchn, inputchn->chnfd);
@@ -403,51 +436,6 @@ int zpl_media_video_inputchn_stop(zpl_media_video_inputchn_t *inputchn)
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
 	return ret;
 }
-
-int zpl_media_video_inputchn_source_set(zpl_int32 input_pipe, zpl_int32 input_channel, void *video_input)
-{
-	int ret = ERROR;
-	#if 0
-	zpl_media_video_inputchn_t *inputchn = (zpl_media_video_inputchn_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_INPUT, input_channel, input_pipe, 0);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
-	if (inputchn)
-	{
-		//zpl_media_video_dev_t *inputdev = video_input;
-		if(inputdev)
-		{
-			//zpl_media_video_dev_addref(inputdev);
-			inputchn->halparam = video_input;
-			inputdev->parent = inputchn;
-			ret = zpl_vidhal_inputdev_bindpipe(inputdev, inputchn->input_pipe, zpl_true);
-			if (ret != OK)
-			{
-				zm_msg_error("input dev %d can not bind to input pipe (%d)", inputdev->devnum, inputchn->input_pipe);
-				zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
-				return ERROR;
-			}
-		}
-		else
-		{
-			if(inputchn->halparam)
-			{
-				zpl_media_video_dev_delref(inputchn->halparam);
-				ret = zpl_vidhal_inputdev_bindpipe(inputchn->halparam, inputchn->input_pipe, zpl_false);
-				if (ret != OK)
-				{
-					zm_msg_error("input dev %d can not un bind to input pipe (%d)", inputdev->devnum, inputchn->input_pipe);
-					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
-					return ERROR;
-				}
-				inputchn->halparam = NULL;
-				inputdev->parent = NULL;
-			}
-		}
-	}
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_INPUT);
-	#endif
-	return ret;
-}
-
 
 int zpl_media_video_inputchn_thread(zpl_media_video_inputchn_t *inputchn, zpl_bool start)
 {
@@ -567,6 +555,7 @@ int zpl_media_video_inputchn_show(void *pvoid)
 			vty_out(vty, "  flags             : 0x%x%s", inputchn->flags, VTY_NEWLINE);
 			vty_out(vty, "  sns_type          : 0x%x%s", inputchn->inputdev.snstype, VTY_NEWLINE);
 			vty_out(vty, "  online            : %s%s", inputchn->online ? "ONLINE" : "OFFLINE", VTY_NEWLINE);
+			vty_out(vty, "  master            : %p%s", inputchn->t_master, VTY_NEWLINE);
 
 			if(inputchn->pipefd != ZPL_SOCKET_INVALID)
 			{
@@ -576,19 +565,6 @@ int zpl_media_video_inputchn_show(void *pvoid)
 			{
 				vty_out(vty, "  channel fd        : %d%s", ipstack_fd(inputchn->chnfd), VTY_NEWLINE);
 			}			
-/*
-			inputdev = (zpl_media_video_dev_t *)inputchn->halparam;
-			if(inputdev)
-			{
-				vty_out(vty, "  source            : %s", VTY_NEWLINE);
-				vty_out(vty, "   devnum           : %d%s", inputdev->devnum, VTY_NEWLINE);
-				vty_out(vty, "   dev_type         : %d%s", inputdev->dev_type, VTY_NEWLINE);
-				vty_out(vty, "   mipidev          : %d%s", inputdev->video_inputdev.mipidev, VTY_NEWLINE);
-				vty_out(vty, "   sns_dev          : %d%s", inputdev->video_inputdev.sns_dev, VTY_NEWLINE);
-				vty_out(vty, "   sns_type         : %d%s", inputdev->video_inputdev.sns_type, VTY_NEWLINE);
-				vty_out(vty, "   devnum           : %d%s", inputdev->video_inputdev.mipidev, VTY_NEWLINE);
-			}
-			*/
 		}
 	}
 	if (_mutex)

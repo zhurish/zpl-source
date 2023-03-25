@@ -918,7 +918,7 @@ int zpl_vidhal_venc_update_fd(zpl_media_video_encode_t *venc)
         ipstack_type(venc->vencfd) = IPSTACK_OS;
         ipstack_fd(venc->vencfd) = HI_MPI_VENC_GetFd(venc->venc_channel);
 		if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-			zm_msg_debug(" video venc channel %d fd %d\n", venc->venc_channel, venc->vencfd);
+			zm_msg_debug(" video venc channel %d fd %d\n", venc->venc_channel, ipstack_fd(venc->vencfd));
         return OK;
     }
     return ERROR;
@@ -1329,7 +1329,7 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_media_video_encode_t *venc)
         //DP(APP_ERR, MODULE_ENC, "HI_MPI_VENC_GetStream failed with %#x!\n", s32Ret);
         return ERROR;
     }
-    //zm_msg_debug(" ======================VENC Channel (%d) Get Stream Count=%d", venc->venc_channel, stStream.u32PackCount);
+    zm_msg_debug(" ======================VENC Channel (%d) Get Stream Count=%d", venc->venc_channel, stStream.u32PackCount);
     /*******************************************************
      step 4 : save frame to buff
     *******************************************************/

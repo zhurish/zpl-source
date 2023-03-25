@@ -37,12 +37,11 @@ typedef struct
 
 
     zpl_void            *source_input;   //绑定的输入
+    zpl_void            *dest_output;
     volatile zpl_uint32 reference;      //绑定的数量（VENC）
     zpl_void            *t_read;
     zpl_void            *t_master;
     
-    zpl_void            *parent;    //指向父级
-
     zpl_bool            online;         //资源状态，在线不在线
     zpl_bool            hwbind;         //硬件绑定
     //zpl_uint32          res_flag;       //资源标志 
@@ -70,7 +69,8 @@ extern zpl_bool zpl_media_video_vpsschn_state_check(zpl_media_video_vpsschn_t *v
 
 zpl_media_video_vpsschn_t * zpl_media_video_vpsschn_lookup(zpl_int32 vpss_group, zpl_int32 vpss_channel);
 int zpl_media_video_vpssgrp_lookup(zpl_int32 vpss_group);
-int zpl_media_video_vpsschn_source_set(zpl_int32 venc_group, zpl_int32 venc_channel, void *video_input, zpl_bool hwbind);
+int zpl_media_video_vpsschn_source_set(zpl_int32 vpss_group, zpl_int32 vpss_channel, void *video_input);
+int zpl_media_video_vpsschn_connect(zpl_int32 vpss_group, zpl_int32 vpss_channel, zpl_int32 venc_channel, zpl_bool hwbind);
 
 extern int zpl_media_video_vpsschn_addref(zpl_media_video_vpsschn_t *vpsschn);
 extern int zpl_media_video_vpsschn_delref(zpl_media_video_vpsschn_t *vpsschn);

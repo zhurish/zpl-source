@@ -23,3 +23,40 @@ verify=n
 
 
 bootargs=mem=256M console=ttyAMA0,115200 init=/linuxrc root=/dev/nfs rw nfsroot=192.168.10.100:${rootpath}
+
+
+
+
+
+
+
+
+
+
+
+
+git rev-list --objects --all | grep "$(git verify-pack -v .git/objects/pack/*.idx | sort -k 3 -n | tail -10 | awk '{print$1}')"
+
+
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/_install/bin/ffprobe' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/media-app/bus_cif.yuv' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/media-app/testmain' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/_install/bin/ffmpeg' --prune-empty --tag-name-filter cat -- --all
+
+
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch source/platform/sedqfon0a' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch component/onvif/tools/bin/wsdl2h' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/openh264-2.1.1/res/Cisco_Absolute_Power_1280x720_30fps.yuv' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/openh264-2.1.1/res/VID_1280x544_cabac_temporal_direct.264' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/openh264-2.1.1/res/VID_1280x544_cavlc_temporal_direct.264' --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch multimedia/openh264-2.1.1/res/test_cif_I_CABAC_PCM.264' --prune-empty --tag-name-filter cat -- --all
+
+
+
+
+
+rm -rf .git/refs/original/;git reflog expire --expire=now --all;git gc --prune=now;git gc --aggressive --prune=now
+
+
+git push ssh-gitee --force --all
+git push ssh-github --force --all

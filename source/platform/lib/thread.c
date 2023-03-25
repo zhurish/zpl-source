@@ -856,7 +856,7 @@ thread_fetch(struct thread_master *m)
 		if (m->bquit)
 		{
 			m->bquit = zpl_false;
-			zlog_debug(MODULE_DEFAULT, "thread_fetch quit RET NULL");
+			zlog_debug(MODULE_DEFAULT, "thread fetch (%s) ret null and quit", os_task_self_name_alisa());
 			if (m->mutex)
 				os_mutex_unlock(m->mutex);
 			return NULL;
@@ -954,7 +954,7 @@ thread_mainloop(struct thread_master *m)
 		}
 		else
 		{
-			zlog_debug(MODULE_LIB, "thread_fetch RET NULL");
+			zlog_debug(MODULE_LIB, "thread mainloop (%s) ret null and quit", os_task_self_name_alisa());
 			return NULL;
 		}
 		if (m->bquit)

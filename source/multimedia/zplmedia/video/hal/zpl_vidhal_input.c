@@ -417,7 +417,7 @@ int zpl_vidhal_inputchn_pipe_update_fd(zpl_int32 input_pipe, zpl_int32 input_cha
         ipstack_type(input->pipefd) = IPSTACK_OS;
         ipstack_fd(input->pipefd) = HI_MPI_VI_GetPipeFd(input->input_pipe);
         if (ZPL_MEDIA_DEBUG(INPUTPIPE, EVENT) && ZPL_MEDIA_DEBUG(INPUTPIPE, DETAIL))
-            zm_msg_debug(" video INPUT pipe %d fd %d\n", input->input_pipe, input->pipefd);
+            zm_msg_debug(" video INPUT pipe %d fd %d\n", input->input_pipe, ipstack_fd(input->pipefd));
         return OK;
     }
     return ERROR;
@@ -434,7 +434,7 @@ int zpl_vidhal_inputchn_update_fd(zpl_int32 input_pipe, zpl_int32 input_channel,
         ipstack_type(input->chnfd) = IPSTACK_OS;
         ipstack_fd(input->chnfd) = HI_MPI_VI_GetChnFd(input->input_pipe, input->input_chn);
         if (ZPL_MEDIA_DEBUG(INPUT, EVENT) && ZPL_MEDIA_DEBUG(INPUT, DETAIL))
-            zm_msg_debug(" video INPUT channel %d/%d fd %d\n", input->input_pipe, input->input_chn, input->chnfd);
+            zm_msg_debug(" video INPUT channel %d/%d fd %d\n", input->input_pipe, input->input_chn, ipstack_fd(input->chnfd));
         return OK;
     }
     return ERROR;
@@ -747,7 +747,20 @@ int zpl_vidhal_inputchn_destroy(zpl_int32 input_pipe, zpl_int32 input_channel, z
 {
 #ifdef ZPL_HISIMPP_MODULE
     zpl_int32 s32Ret;
-    int flag = ZPL_MEDIA_HALRES_GET(0, input_pipe, VIPIPE);
+    int flag = ZPL_MEDIA_HALRES_GET(0, input_channel, INPUTCHN);
+    if(ZPL_TST_BIT(flag, ZPL_MEDIA_STATE_ACTIVE))
+    {
+        s32Ret = HI_MPI_VI_DisableChn(input_pipe, input_channel);
+        if (s32Ret != HI_SUCCESS)
+        {
+            if (ZPL_MEDIA_DEBUG(INPUT, EVENT) && ZPL_MEDIA_DEBUG(INPUT, HARDWARE))
+                zm_msg_err(" INPUT channel (%d %d) disable failed(%s)", input_pipe, input_channel, zpl_syshal_strerror(s32Ret));
+            return HI_FAILURE;
+        }
+        ZPL_CLR_BIT(flag, ZPL_MEDIA_STATE_ACTIVE);
+        ZPL_MEDIA_HALRES_SET(-1, input_channel, flag, INPUTCHN);
+    }
+    flag = ZPL_MEDIA_HALRES_GET(0, input_pipe, VIPIPE);
     if(ZPL_TST_BIT(flag, ZPL_MEDIA_STATE_ACTIVE))
     {
         s32Ret = HI_MPI_VI_DestroyPipe(input_pipe);
@@ -760,19 +773,6 @@ int zpl_vidhal_inputchn_destroy(zpl_int32 input_pipe, zpl_int32 input_channel, z
         }
         ZPL_CLR_BIT(flag, ZPL_MEDIA_STATE_ACTIVE);
         ZPL_MEDIA_HALRES_SET(-1, input_pipe, flag, VIPIPE);
-    }
-    flag = ZPL_MEDIA_HALRES_GET(0, input_channel, INPUTCHN);
-    if(ZPL_TST_BIT(flag, ZPL_MEDIA_STATE_ACTIVE))
-    {
-        s32Ret = HI_MPI_VI_DisableChn(input_pipe, input_channel);
-        if (s32Ret != HI_SUCCESS)
-        {
-            if (ZPL_MEDIA_DEBUG(INPUT, EVENT) && ZPL_MEDIA_DEBUG(INPUT, HARDWARE))
-                zm_msg_err(" INPUT channel (%d %d) disable failed(%s)", input_pipe, input_channel, zpl_syshal_strerror(s32Ret));
-            return HI_FAILURE;
-        }
-        ZPL_CLR_BIT(flag, ZPL_MEDIA_STATE_ACTIVE);
-        ZPL_MEDIA_HALRES_SET(-1, input_channel, flag, INPUTCHN);
     }
     flag = ZPL_MEDIA_HALRES_GET(0, input->devnum, DEV );
     if(ZPL_TST_BIT(flag, ZPL_MEDIA_STATE_ACTIVE))

@@ -39,6 +39,8 @@ extern "C" {
 
 //#define CMD_STRICT_CHECK //严格检测 
 
+#define CLI_KEYSTR_MAX  64
+
 #include "cli_node.h"
 #include "cli_helper.h"
 
@@ -92,7 +94,6 @@ struct cmd_element
   vector tokens;		/* Vector of cmd_tokens */
   zpl_uint16 attr;			/* Command attributes */
   enum cmd_privilege privilege;
-  int (*cli_func) (void *, int, const char **);
   #ifdef ZPL_BUILD_DEBUG
   const char *sfuncname;
   #endif

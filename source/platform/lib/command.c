@@ -232,44 +232,120 @@ static int cmd_descstr_getnum(const char *string)
 /* 获取keystr 个数 */
 static int cmd_keystr_getnum(const char *string)
 {
-  int num = 0, i = 0, flag = 0;
+  int num = 0, i = 0;
+  zpl_int32 in_keyword = 0;
+  zpl_int32 in_multiple = 0;
+  zpl_int32 just_read_word = 0, in_pipe = 0;
   const char *cp = string;
-  char cmdstr[2048];
-  memset(cmdstr, '\0', sizeof(cmdstr));
-  num = 0;  
-  while (cp[i] != '\0')
+  char cmdstr[64][64];
+  memset(cmdstr, 0, sizeof(cmdstr));
+  while (*cp != '\0')
   {
-    switch(cp[i])
+    switch(*cp)
     {
-      case '|':
-        cmdstr[num++] = cp[i];
-        flag = 1;
-        break;
-      case ')':
+      case '{':
+      in_keyword++;
+      if(just_read_word)
+      {
+        num++;
+        i = 0;
+        just_read_word = 0;
+      }
+      cp++;
+      while (isspace((int)*cp) && *cp != '\0')
+        cp++;
+      break;
+
       case '}':
-      case ']':
-      case '>':
-        if(flag)
+      in_keyword--;
+      if(in_pipe == 0)
+      {
+        num++;
+        i = 0;
+      }
+      cp++;
+      while (isspace((int)*cp) && *cp != '\0')
+        cp++;
+      break;
+
+      case '(':
+      in_multiple++;
+      if(just_read_word)
+      {
+        num++;
+        i = 0;
+        just_read_word = 0;
+      }
+      cp++;
+      while (isspace((int)*cp) && *cp != '\0')
+        cp++;
+      break;
+
+      case ')':
+      in_multiple--;
+      if(in_pipe == 0)
+      {
+        num++;
+        i = 0;
+      }
+      cp++;
+      while (isspace((int)*cp) && *cp != '\0')
+        cp++;
+      break;
+
+      case '|':
+      in_pipe = 1;
+      if(in_multiple||in_keyword)
+      {
+        if(just_read_word)
         {
-          cmdstr[num-1] = cp[i];
+          num++;
+          i = 0;
+          just_read_word = 0;
         }
-        else
-        {
-          cmdstr[num++] = cp[i];
-        }
-        break;
+      }
+      cp++;
+      while (isspace((int)*cp) && *cp != '\0')
+        cp++;
+      break;
+
+      case ' ':
+      if(just_read_word)
+      {
+        num++;
+        i = 0;
+        just_read_word = 0;
+      }
+      cp++;
+      break;
+
       default:
-        cmdstr[num++] = cp[i];
-        if(flag)
-          flag = 0;
-        break;
+      in_pipe = 0;
+      cmdstr[num][i++] = *cp;
+      cp++;
+      just_read_word = 1;
+      break;
     } 
-    i++;
+  } 
+  num = 0;
+  for(i = 0; i < 64; i++)
+  {
+    if(cmdstr[i][0] != 0)
+      num++;
   }
-  //fprintf(stderr, "cmd_keystr_getnum cmd(%s)\n", cmdstr);  
-  strccreplace(cmdstr, '|', ' ');
-  num = strccnt(cmdstr, ' ');
-  return (num + 1);
+  #if 0
+  fprintf(stderr, " cmd keystr cmd(%s)\n", string);
+  if(num)
+    fprintf(stderr, " cmd split(%d) cmd(", num);
+  for(i = 0; i < 64; i++)
+  {
+    if(cmdstr[i][0] != 0)
+      fprintf(stderr, "%s ", cmdstr[i]);
+  }
+  if(num)
+    fprintf(stderr, ")\n");
+  #endif  
+  return (num);
 }
 
 /*删除多余空格和[]内空格*/
@@ -713,7 +789,7 @@ void install_element(enum node_type ntype, enum cmd_privilege privilege, struct 
   //fprintf(stderr, " cmd keystr cmd_keystr_split cmd(%s)\n", cmdstr);
   #endif
   hnum = cmd_descstr_getnum(cmd->doc);
-  knum = cmd_keystr_getnum(cmdstr);
+  knum = cmd_keystr_getnum(cmd->string);
   //if (cmd_descstr_getnum(cmd->doc) != cmd_keystr_getnum(cmdstr))
   if (hnum != knum)
   {
@@ -2874,14 +2950,6 @@ cmd_execute_command_real(vector vline,
   if(vty->type != VTY_FILE)
   zpl_backtrace_symb_set(matched_element->sfuncname, NULL, 1);
 #endif
-  if(matched_element->attr & CMD_ATTR_NEW && matched_element->cli_func)
-  {
-    struct cli cli;
-    cli_callback_init(&cli, vty);
-    ret = (*matched_element->cli_func)(&cli, argc, argv);
-    vty->node = cli.node; 
-    return ret;//(*matched_element->cli_func)(&cli, argc, argv);
-  }
   /* Execute matched command. */
   if(matched_element->func)
     return (*matched_element->func)(matched_element, vty, argc, argv);

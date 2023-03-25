@@ -47,9 +47,8 @@ typedef struct
 
     zpl_void                *t_read;
     zpl_void                *t_master;
-    zpl_void                *halparam;
+    zpl_void                *dest_output;
 
-    zpl_void                *parent;    //指向父级
     volatile zpl_uint32     reference;      //绑定的数量
     zpl_bool                online;         //资源状态，在线不在线
     zpl_bool                hwbind;         //硬件绑定
@@ -78,10 +77,9 @@ extern int zpl_media_video_input_pipe_lookup(zpl_int32 input_pipe);
 extern int zpl_media_video_inputchn_start(zpl_void *master, zpl_media_video_inputchn_t *inputchn);
 extern int zpl_media_video_inputchn_stop(zpl_media_video_inputchn_t *inputchn);
 extern int zpl_media_video_inputchn_thread(zpl_media_video_inputchn_t *inputchn, zpl_bool start);
+extern int zpl_media_video_inputchn_connect(zpl_media_video_inputchn_t *inputchn, zpl_int32 vpss_group, zpl_int32 vpss_channel, zpl_bool hwbind);
 
 extern int zpl_media_video_inputchn_sendto(zpl_media_video_inputchn_t *inputchn,  void *p, zpl_int timeout);
-
-extern int zpl_media_video_inputchn_source_set(zpl_int32 input_pipe, zpl_int32 input_channel, void *video_input);
 
 extern int zpl_media_video_inputchn_addref(zpl_media_video_inputchn_t *inputchn);
 extern int zpl_media_video_inputchn_delref(zpl_media_video_inputchn_t *inputchn);

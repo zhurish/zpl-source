@@ -20,17 +20,15 @@
 static int mediaservice_write_config(struct vty *vty, void *pVoid);
 
 
-DEFUN (media_channel_enable,
+DEFUN_HIDDEN (media_channel_enable,
 		media_channel_enable_cmd,
-		"media channel <0-1> (main|sub) (create|destroy|active|inactive|start|stop)" ,
+		"media channel <0-1> (main|sub) (create|destroy|start|stop)" ,
 		MEDIA_CHANNEL_STR
 		"Channel Number Select\n"
 		"Main Channel Configure\n"
 		"Submain Channel Configure\n"
 		"Create\n"
 		"Destroy\n"
-		"Active\n"
-		"Inactive\n"
 		"Start\n"
 		"Stop\n")
 {
@@ -58,48 +56,16 @@ DEFUN (media_channel_enable,
 	{
 		if(zpl_media_channel_lookup(channel,  channel_index) != NULL)
 		{
-			if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
+			/*if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
 				vty_out(vty, " media channel %d %s is already start. %s", channel, argv[1], VTY_NEWLINE);
 			else if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
 				vty_out(vty, " media channel %d %s is already active. %s", channel, argv[1], VTY_NEWLINE);	
-			else
+			else*/
 				ret = zpl_media_channel_destroy( channel,  channel_index);
 		}
 		else
 		{
 			vty_out(vty, " media channel %d %s is not exist. %s", channel, argv[1], VTY_NEWLINE);	
-		}
-	}
-	else if(strstr(argv[2],"active"))
-	{
-		if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
-		{
-			vty_out(vty, " media channel %d %s is not exist.%s", channel, argv[1], VTY_NEWLINE);
-		}
-		else
-		{
-			if(!ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
-				ret = zpl_media_channel_active(channel,  channel_index);
-			else
-			{
-				vty_out(vty, " media channel %d %s is already active %s", channel, argv[1], VTY_NEWLINE);
-			}	
-		}
-	}
-	else if(strstr(argv[2],"inactive"))
-	{
-		if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
-		{
-			vty_out(vty, " media channel %d %s is not exist.%s", channel, argv[1], VTY_NEWLINE);
-		}
-		else
-		{
-			if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
-				ret = zpl_media_channel_inactive(channel,  channel_index);
-			else
-			{
-				vty_out(vty, " media channel %d %s is not active %s", channel, argv[1], VTY_NEWLINE);
-			}	
 		}
 	}
 	if(strstr(argv[2],"start"))
@@ -151,6 +117,8 @@ DEFUN (media_channel_enable,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+
+
 DEFUN (show_video_channel_info,
 		show_video_channel_info_cmd,
 		"show media channel info" ,
@@ -165,7 +133,7 @@ DEFUN (show_video_channel_info,
 }
 
 
-DEFUN (media_encode_enable,
+DEFUN_HIDDEN (media_encode_enable,
 		media_encode_enable_cmd,
 		"media channel encode <0-8> (create|destroy|active|inactive|start|stop)" ,
 		MEDIA_CHANNEL_STR
@@ -289,7 +257,7 @@ DEFUN (media_encode_enable,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (media_encode_connect_vpsschn,
+DEFUN_HIDDEN (media_encode_connect_vpsschn,
 		media_encode_connect_vpsschn_cmd,
 		"media channel encode <0-8> connect vpsschn <0-4> <0-2>" ,
 		MEDIA_CHANNEL_STR
@@ -323,11 +291,12 @@ DEFUN (media_encode_connect_vpsschn,
 	}
 	if(argc == 4)
 		hwbind = zpl_true;
-	ret = zpl_media_video_encode_source_set(encchannel, vpsschn, hwbind);
+	ret = zpl_media_video_encode_source_set(encchannel, vpsschn);
+	ret |= zpl_media_video_vpsschn_connect(vpss_group, vpss_channel, encchannel, hwbind);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-ALIAS(media_encode_connect_vpsschn,
+ALIAS_HIDDEN(media_encode_connect_vpsschn,
 		media_encode_connect_vpsschn_alias_cmd,
 		"media channel encode <0-8> connect vpsschn <0-4> <0-2> (hwbind|)" ,
 		MEDIA_CHANNEL_STR
@@ -354,7 +323,7 @@ DEFUN (show_video_encode_info,
 
 
 
-DEFUN (media_vpsschn_enable,
+DEFUN_HIDDEN (media_vpsschn_enable,
 		media_vpsschn_enable_cmd,
 		"media channel vpsschn <0-4> <0-2> (create|destroy|active|inactive|start|stop)" ,
 		MEDIA_CHANNEL_STR
@@ -485,7 +454,7 @@ DEFUN (media_vpsschn_enable,
 }
 
 
-DEFUN (media_vpsschn_connect_inputchn,
+DEFUN_HIDDEN (media_vpsschn_connect_inputchn,
 		media_vpsschn_connect_inputchn_cmd,
 		"media channel vpsschn <0-4> <0-2> connect inputchn <0-1> <0-3> <0-8>" ,
 		MEDIA_CHANNEL_STR
@@ -526,11 +495,12 @@ DEFUN (media_vpsschn_connect_inputchn,
 	}
 	if(argc == 6 && argv[5])
 		hwbind = zpl_true;
-	ret = zpl_media_video_vpsschn_source_set(vpss_group, vpss_channel, inputchn, hwbind);
+	ret = zpl_media_video_vpsschn_source_set(vpss_group, vpss_channel, inputchn);
+	ret |= zpl_media_video_inputchn_connect(inputchn, vpss_group, vpss_channel, hwbind);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-ALIAS(media_vpsschn_connect_inputchn,
+ALIAS_HIDDEN(media_vpsschn_connect_inputchn,
 		media_vpsschn_connect_inputchn_alias_cmd,
 		"media channel vpsschn <0-4> <0-2> connect inputchn <0-1> <0-3> <0-8> (hwbind|)" ,
 		MEDIA_CHANNEL_STR
@@ -558,7 +528,7 @@ DEFUN (show_video_vpsschn_info,
 }
 
 
-DEFUN (media_inputchn_enable,
+DEFUN_HIDDEN (media_inputchn_enable,
 		media_inputchn_enable_cmd,
 		"media channel inputchn <0-1> <0-3> <0-8> (create|destroy|active|inactive|start|stop)" ,
 		MEDIA_CHANNEL_STR
@@ -691,7 +661,7 @@ DEFUN (media_inputchn_enable,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (media_inputchn_mipidev,
+DEFUN_HIDDEN (media_inputchn_mipidev,
 		media_inputchn_mipidev_cmd,
 		"media channel inputchn <0-1> <0-3> <0-8> snstype <0-100> snsdev <0-2> mipidev <0-2>" ,
 		MEDIA_CHANNEL_STR
@@ -760,6 +730,7 @@ DEFUN (media_channel_osd,
 {
 	int ret = ERROR;
 	//ret = zpl_media_video_vpssgrp_show(vty);
+	//zpl_media_config_write("./media.json");
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
@@ -900,6 +871,23 @@ DEFUN (no_mediaservice_template,
 	return CMD_WARNING;
 }
 
+/*
+* media channel <0-1> (main|sub)
+* media channel <0-1> (main|sub) (enable|disable)
+* media channel <0-1> (main|sub) (start|stop)
+* media channel <0-1> (main|sub) encode <0-7>
+* media channel <0-1> (main|sub) vpsschn group <0-3> channel <0-2>
+* media channel <0-1> (main|sub) inpuchn dev <0-1> pipe <0-1> channel <0-7>
+* media channel <0-1> (main|sub) inpuchn dev <0-1> pipe <0-1> channel <0-7> snstype <0-15> snsdev <0-1> mipidev <0-1>
+* media channel <0-1> (main|sub) record enable
+* media channel <0-1> (main|sub) capture enable
+* media channel <0-1> (main|sub) osd-channel enable
+* media channel <0-1> (main|sub) osd-datetime enable
+* media channel <0-1> (main|sub) osd-bitrate enable
+* media channel <0-1> (main|sub) osd-label enable
+* media channel <0-1> (main|sub) osd-rect enable
+* media channel <0-1> (main|sub) osd-other enable
+*/
 
 static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 {
@@ -954,7 +942,9 @@ static void cmd_mediaservice_init(void)
 		install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_mediaservice_template_cmd);
 
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_enable_cmd);
+		//install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_connect_encode_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_encode_enable_cmd);
+		
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_encode_connect_vpsschn_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_encode_connect_vpsschn_alias_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_vpsschn_enable_cmd);
@@ -962,8 +952,6 @@ static void cmd_mediaservice_init(void)
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_vpsschn_connect_inputchn_alias_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_inputchn_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_inputchn_mipidev_cmd);
-		//install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_inputchn_connect_inputdev_alias_cmd);
-
 
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_record_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_alarm_capture_cmd);

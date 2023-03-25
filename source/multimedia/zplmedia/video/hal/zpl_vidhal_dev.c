@@ -107,7 +107,7 @@ int zpl_vidhal_inputdev_start(zpl_media_video_inputchn_t *input, zpl_bool enable
         zpl_int32 vipipe[VI_MAX_PHY_PIPE_NUM] = {-1};
         VI_DEV_BIND_PIPE_S stDevBindPipe = {0};
 
-        zpl_video_resources_get_pipe(vipipe);
+        //zpl_video_resources_get_pipe(vipipe);
 
         s32Ret = HI_MPI_VI_EnableDev(input->devnum);
 
@@ -166,7 +166,7 @@ int zpl_vidhal_inputdev_create(zpl_media_video_inputchn_t *input)
     VI_DEV_BIND_PIPE_S stDevBindPipe = {0};
     VI_DEV_ATTR_S stViDevAttr;
 
-    zpl_video_resources_get_pipe(vipipe);
+    //zpl_video_resources_get_pipe(vipipe);
 
     // MIPI Start
     zpl_vidhal_mipi_start(input->inputdev.snsdev, input->inputdev.mipidev, input->inputdev.snstype /*ZPL_SENSOR_TYPE_DEFAULT*/);

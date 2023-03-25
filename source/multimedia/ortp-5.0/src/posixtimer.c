@@ -56,7 +56,7 @@ void posix_timer_do(void)
 	ortp_gettimeofday(&cur,NULL);
 	time=((cur.tv_usec-orig.tv_usec)/1000 ) + ((cur.tv_sec-orig.tv_sec)*1000 );
 	if ( (diff=time-posix_timer_time)>50){
-		ortp_warning("Must catchup %i miliseconds.",diff);
+		;//ortp_warning("Must catchup %i miliseconds.",diff);
 	}
 	while((diff = posix_timer_time-time) > 0)
 	{

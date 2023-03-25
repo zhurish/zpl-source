@@ -16,7 +16,6 @@ OSOBJ	+= zpl_media_codecmap.o
 OSOBJ	+= zpl_media.o
 
 OSOBJ	+= zpl_media_cmd.o
-OSOBJ	+= zpl_media_config.o
 OSOBJ	+= zpl_media_task.o
 OSOBJ	+= zpl_media_log.o
 OSOBJ	+= zpl_media_resources.o

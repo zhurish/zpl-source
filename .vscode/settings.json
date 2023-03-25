@@ -219,12 +219,17 @@
         "sample_comm.h": "c",
         "os_definc.h": "c",
         "cli_helper.h": "c",
-        "cli_node.h": "c"
+        "cli_node.h": "c",
+        "compare": "c",
+        "zpl_media_frame_adap.h": "c"
     },
     "editor.defaultFormatter": "jbenden.c-cpp-flylint",
     "editor.formatOnPaste": false,
     "C_Cpp.vcFormat.indent.accessSpecifiers": true,
     "C_Cpp.vcFormat.indent.caseLabels": true,
     "C_Cpp.vcFormat.indent.caseContentsWhenBlock": true,
-    "C_Cpp.vcFormat.indent.braces": true
+    "C_Cpp.vcFormat.indent.braces": true,
+    "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
+        "clang-diagnostic-incompatible-function-pointer-types"
+    ]
 }

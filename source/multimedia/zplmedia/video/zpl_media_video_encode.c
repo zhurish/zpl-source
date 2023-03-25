@@ -66,6 +66,8 @@ int zpl_media_video_encode_encode_reset(zpl_media_video_encode_t *encode)
 	zpl_vidhal_venc_update_fd(encode);
 	if (encode->t_master && encode && encode->t_read == NULL && !ipstack_invalid(encode->vencfd))
 	{
+		if(encode->get_encode_frame == NULL)
+			encode->get_encode_frame = zpl_vidhal_venc_frame_recvfrom;
 		encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
 	}
 	zpl_vidhal_venc_request_IDR(encode);
@@ -101,8 +103,10 @@ int zpl_media_video_encode_start(zpl_void *master, zpl_media_video_encode_t *enc
 	}
 	encode->online = zpl_true;
 	zpl_vidhal_venc_update_fd(encode);
-	if (master && encode && encode->t_read == NULL && !ipstack_invalid(encode->vencfd) && encode->hwbind == zpl_false)
+	if (master && encode && encode->t_read == NULL && !ipstack_invalid(encode->vencfd))
 	{
+		if(encode->get_encode_frame == NULL)
+			encode->get_encode_frame = zpl_vidhal_venc_frame_recvfrom;
 		encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
 	}
 	ZPL_SET_BIT(encode->flags, ZPL_MEDIA_STATE_START);
@@ -184,7 +188,8 @@ int zpl_media_video_encode_hal_create(zpl_media_video_encode_t *encode)
 			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
 			return ret;
 		}
-
+		if(encode->get_encode_frame == NULL)
+			encode->get_encode_frame = zpl_vidhal_venc_frame_recvfrom;
 		ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
 
 		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
@@ -200,8 +205,32 @@ int zpl_media_video_encode_hal_create(zpl_media_video_encode_t *encode)
 int zpl_media_video_encode_destroy(zpl_media_video_encode_t *chn)
 {
 	int ret = -1;
+	zpl_media_video_vpsschn_t *vpsschn = NULL;
 	zpl_video_assert(chn);
 	zpl_video_assert(chn->media_channel);
+	zpl_media_video_encode_hal_destroy(chn);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+		
+	vpsschn = chn->source_input;
+	if(vpsschn)
+		vpsschn->dest_output = NULL;
+	if((chn->vencfd != ZPL_SOCKET_INVALID))
+	{
+		ipstack_drstroy(chn->vencfd);
+		chn->vencfd = ZPL_SOCKET_INVALID;
+	}
+	zpl_media_global_del(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, chn);
+	free(chn);
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+	return ret;
+}
+int zpl_media_video_encode_hal_destroy(zpl_media_video_encode_t *chn)
+{
+	int ret = -1;
+	
+	zpl_video_assert(chn);
+	zpl_video_assert(chn->media_channel);
+	
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
 	if (chn && chn->t_read)
 	{
@@ -224,61 +253,25 @@ int zpl_media_video_encode_destroy(zpl_media_video_encode_t *chn)
 		}
 		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
 	}
-	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))
+	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_HWBIND))
 	{
-		ret = zpl_vidhal_venc_destroy(chn);
-		if (ret != OK)
+		zpl_media_video_vpsschn_t *vpsschn = NULL;
+		vpsschn = chn->source_input;
+		if(vpsschn)
 		{
-			zm_msg_error("destroy encode channel(%d) failed.", chn->venc_channel);
-			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-			return ret;
+			if (zpl_syshal_vpss_unbind_venc(vpsschn->vpss_group, vpsschn->vpss_channel, chn->venc_channel) != OK)
+			{
+				zm_msg_error("vpssgrp %d vpsschn %d can not unbind to encode channel(%d)", vpsschn->vpss_group, vpsschn->vpss_channel, chn->venc_channel);
+				zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
+				return ERROR;
+			}
+			if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
+			{
+				zm_msg_debug("vpssgrp %d vpsschn %d unbind to encode channel(%d)", vpsschn->vpss_group, vpsschn->vpss_channel, chn->venc_channel);
+			}
+			ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_HWBIND);
+			vpsschn->dest_output = NULL;
 		}
-		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
-		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zm_msg_debug("inactive encode channel(%d) ret=%d", chn->venc_channel, ret);
-		}
-	}
-	else
-	{
-		ret = OK;
-		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zm_msg_debug("encode channel(%d) is already inactive", chn->venc_channel);
-		}
-	}
-	if((chn->vencfd != ZPL_SOCKET_INVALID))
-	{
-		ipstack_drstroy(chn->vencfd);
-		chn->vencfd = ZPL_SOCKET_INVALID;
-	}
-	zpl_media_global_del(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, chn);
-	free(chn);
-	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-	return ret;
-}
-int zpl_media_video_encode_hal_destroy(zpl_media_video_encode_t *chn)
-{
-	int ret = -1;
-	zpl_video_assert(chn);
-	zpl_video_assert(chn->media_channel);
-	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-
-	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
-	{
-		ret = zpl_vidhal_venc_stop(chn);
-		if (ret != OK)
-		{
-			zm_msg_error("stop encode channel(%d) failed.", chn->venc_channel);
-			zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-			return ret;
-		}
-		chn->online = zpl_false;
-		if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
-		{
-			zm_msg_debug("stop encode channel(%d) ret=%d", chn->venc_channel, ret);
-		}
-		ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
 	}
 	if (ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE))
 	{
@@ -373,95 +366,33 @@ zpl_media_video_encode_t *zpl_media_video_encode_lookup(zpl_int32 venc_channel, 
 	return encode;
 }
 
-int zpl_media_video_encode_source_set(zpl_int32 venc_channel, void *halparam, zpl_bool hwbind)
+
+
+int zpl_media_video_encode_source_set(zpl_int32 venc_channel, void *halparam)
 {
 	int ret = ERROR;
 	zpl_media_video_encode_t *encode = (zpl_media_video_encode_t *)zpl_media_global_lookup(ZPL_MEDIA_GLOAL_VIDEO_ENCODE, venc_channel, 0, 0);
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
 	if (encode)
 	{
-		int vpssgrp = 0;
 		zpl_media_video_vpsschn_t *vpsschn = halparam;
 		if(vpsschn)
 		{
-			vpssgrp = vpsschn->vpss_group; // 发送目的ID
 			zpl_media_video_vpsschn_addref(vpsschn);
-			//encode->input_size.width = vpsschn->output_size.width;
-        	//encode->input_size.height = vpsschn->output_size.height;
-			//encode->output_size.width = vpsschn->input_size.width;
-        	//encode->output_size.height = vpsschn->input_size.height;
-			if (hwbind && encode->hwbind == zpl_false)
-			{
-				if (encode->t_read)
-				{
-					thread_cancel(encode->t_read);
-					encode->t_read = NULL;
-				}
-				if (zpl_syshal_vpss_bind_venc(vpssgrp, vpsschn->vpss_channel, encode->venc_channel) != OK)
-				{
-					zm_msg_error("vpssgrp %d vpsschn %d can not bind to encode channel(%d)", vpssgrp, vpsschn->vpss_channel, encode->venc_channel);
-					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-					return ERROR;
-				}
-				encode->hwbind = zpl_true;
-				ret = OK;
-				vpsschn->parent = encode;
-				encode->source_input = halparam;
-			}
-			else if (hwbind == zpl_false && encode->hwbind)
-			{
-				if (encode->t_read)
-				{
-					thread_cancel(encode->t_read);
-					encode->t_read = NULL;
-				}
-				if (zpl_syshal_vpss_unbind_venc(vpssgrp, vpsschn->vpss_channel, encode->venc_channel) != OK)
-				{
-					zm_msg_error("vpssgrp %d vpsschn %d can not unbind to encode channel(%d)", vpssgrp, vpsschn->vpss_channel, encode->venc_channel);
-					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-					return ERROR;
-				}
-				encode->hwbind = zpl_false;
-				zpl_vidhal_venc_update_fd(encode);
-				if (!ipstack_invalid(encode->vencfd))
-				{
-					if (ZPL_TST_BIT(encode->flags, ZPL_MEDIA_STATE_START))
-						encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
-				}
-				ret = OK;
-				vpsschn->parent = encode;
-				encode->source_input = halparam;
-			}
-			else if (hwbind == zpl_false && encode->hwbind == zpl_false)
-			{
-				vpsschn->parent = encode;
-				encode->source_input = halparam;
-				ret = OK;
-			}
+			vpsschn->dest_output = encode;
+			encode->source_input = halparam;
 		}
 		else
 		{
 			if(encode->source_input)
 			{
-				vpsschn = encode->source_input;
-				vpssgrp = vpsschn->vpss_group; // 发送目的ID
 				zpl_media_video_vpsschn_delref(encode->source_input);
 				if (encode->t_read)
 				{
 					thread_cancel(encode->t_read);
 					encode->t_read = NULL;
 				}
-				if (encode->hwbind)
-				{
-					if (zpl_syshal_vpss_unbind_venc(vpssgrp, vpsschn->vpss_channel, encode->venc_channel) != OK)
-					{
-						zm_msg_error("vpssgrp %d vpsschn %d can not unbind to encode channel(%d)", vpssgrp, vpsschn->vpss_channel, encode->venc_channel);
-						zpl_media_global_unlock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
-						return ERROR;
-					}
-					encode->hwbind = zpl_false;
-				}
-				vpsschn->parent = NULL;
+				vpsschn->dest_output = NULL;
 				encode->source_input = NULL;
 				ret = OK;
 			}
@@ -490,7 +421,6 @@ static int zpl_media_video_encode_read_thread(struct thread *thread)
 	zpl_media_video_encode_t *encode = THREAD_ARG(thread);
 	ZPL_MEDIA_CHANNEL_E channel;			// 通道号
 	ZPL_MEDIA_CHANNEL_TYPE_E channel_index; // 码流类型
-
 	if (encode && encode->media_channel && encode->get_encode_frame)
 	{
 		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
@@ -574,10 +504,10 @@ int zpl_media_video_encode_show(void *pvoid)
 			{
 				vty_out(vty, " fd                : %d%s", ipstack_fd(encode->vencfd), VTY_NEWLINE);
 			}
-			vty_out(vty, " hwbind            : %d%s", encode->hwbind, VTY_NEWLINE);
 			vty_out(vty, " flags             : 0x%x%s", encode->flags, VTY_NEWLINE);
 			//vty_out(vty, " res_flag          : 0x%x%s", encode->res_flag, VTY_NEWLINE);
 			vty_out(vty, " online            : %s%s", encode->online ? "ONLINE" : "OFFLINE", VTY_NEWLINE);
+			vty_out(vty, " master            : %p%s", encode->t_master, VTY_NEWLINE);
 			vpsschn = (zpl_media_video_vpsschn_t *)encode->source_input;
 			if(vpsschn)
 			vty_out(vty, " source_input      : vpss group %d vpss channal %d%s", vpsschn ? vpsschn->vpss_group:-1, vpsschn ? vpsschn->vpss_channel : -1, VTY_NEWLINE);

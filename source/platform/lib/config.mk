@@ -74,7 +74,6 @@ ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 OBJS	+= buffer.o
 OBJS	+= vector.o
 OBJS	+= command.o
-OBJS	+= cli.o
 OBJS	+= template.o
 OBJS	+= cli_node.o
 ifeq ($(strip $(ZPL_VRF_MODULE)),true)

@@ -50,6 +50,7 @@ source/product/sdk-robo-5.9.2
 source/product/bsp/pal/linux/iproute2-5.9.0
 source/product/bsp/pal/linux/libiproute
 source/quagga/*
+quagga/*
 source/rootfs_install
 *.libs/*
 *.deps/*

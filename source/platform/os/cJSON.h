@@ -158,6 +158,7 @@ extern double cJSON_GetObjectItemDoubleValue(cJSON *object,const char *string);
 #define cJSON_GetDoubleValue(object,name)		cJSON_GetObjectItemDoubleValue(object, name)
 
 
+
 #ifdef __cplusplus
 }
 #endif

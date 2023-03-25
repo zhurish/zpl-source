@@ -5,17 +5,16 @@
 #include "zpl_media_internal.h"
 
 
-
 static int zpl_media_capture_hal_create(zpl_media_channel_t *chn)
 {
-    zpl_int32 venc_channel = 0;//VIDHAL_RES_ID_LOAD(chn->channel, chn->channel_index, CAPTURE_VENCCHN);
-    if (venc_channel >= 0)
+    zpl_media_hwres_t *hwres = ZPL_MEDIA_HALRES_ID_LOAD(chn->channel, chn->channel_index, ALL);
+    zpl_int32 venc_channel = -1;//ZPL_MEDIA_HALRES_ID_LOAD(chn->channel, chn->channel_index, CAPTURE_VENCCHN);
+    if (hwres && hwres->capvencchn >= 0)
     {
+        venc_channel = hwres->capvencchn;
         zpl_media_video_encode_t *video_encode = NULL;
         zpl_media_video_encode_t *main_video_encode = chn->media_param.video_media.halparam;
-        
-        //zm_msg_debug("channel(%d/%d) VENC Flags (0x%x)", chn->channel, chn->channel_index, video_encode->res_flag);
-        
+        zpl_media_video_vpsschn_t *video_vpsschn = NULL;
         video_encode = zpl_media_video_encode_create(venc_channel, zpl_true);
         if( video_encode == NULL)
         {
@@ -39,7 +38,9 @@ static int zpl_media_capture_hal_create(zpl_media_channel_t *chn)
 		chn->p_capture.codec.vidsize.width = chn->media_param.video_media.codec.vidsize.width;
 		chn->p_capture.codec.vidsize.height = chn->media_param.video_media.codec.vidsize.height;
         chn->p_capture.halparam = video_encode;
-        zpl_media_video_encode_source_set(venc_channel, main_video_encode->source_input, zpl_true);
+        video_vpsschn = video_encode->source_input;
+        zpl_media_video_encode_source_set(venc_channel, main_video_encode->source_input);
+        zpl_media_video_vpsschn_connect(video_vpsschn->vpss_group, video_vpsschn->vpss_channel, venc_channel, zpl_true);
         return OK;
     }
     return ERROR;
@@ -48,6 +49,7 @@ static int zpl_media_capture_hal_create(zpl_media_channel_t *chn)
 static int zpl_media_capture_hal_destroy(zpl_media_channel_t *chn)
 {
     zpl_media_video_encode_t *video_encode = NULL;
+    zpl_media_video_vpsschn_t *video_vpsschn = NULL;
     video_encode = chn->p_capture.halparam;
     if (video_encode == NULL || video_encode->source_input == NULL)
     {
@@ -57,7 +59,9 @@ static int zpl_media_capture_hal_destroy(zpl_media_channel_t *chn)
         } 
         return ERROR;
     } 
-    zpl_media_video_encode_source_set(video_encode->venc_channel, NULL, zpl_false);
+    video_vpsschn = video_encode->source_input;
+    zpl_media_video_vpsschn_connect(video_vpsschn->vpss_group, video_vpsschn->vpss_channel, video_encode->venc_channel, zpl_false);
+    zpl_media_video_encode_source_set(video_encode->venc_channel, NULL);
     zpl_media_video_encode_destroy(video_encode);
     chn->p_capture.halparam = NULL;
     return OK;

@@ -111,7 +111,7 @@ int zpl_vidhal_vpss_channel_update_fd(zpl_media_video_vpsschn_t *vpss)
         ipstack_type(vpss->vpssfd) = IPSTACK_OS;
         ipstack_fd(vpss->vpssfd) = HI_MPI_VPSS_GetChnFd(vpss->vpss_group, vpss->vpss_channel);
 		if(ZPL_MEDIA_DEBUG(VPSS, EVENT) && ZPL_MEDIA_DEBUG(VPSS, DETAIL))
-			zm_msg_debug(" video VPSS channel %d/%d fd %d\n", vpss->vpss_group, vpss->vpss_channel, vpss->vpssfd);
+			zm_msg_debug(" video VPSS channel %d/%d fd %d\n", vpss->vpss_group, vpss->vpss_channel, ipstack_fd(vpss->vpssfd));
         return HI_SUCCESS;
     }
     return HI_FAILURE;

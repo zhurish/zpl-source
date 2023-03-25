@@ -26,7 +26,6 @@ extern "C" {
 #include <zpl_media_hardadap.h>
 
 #include <zpl_media_resources.h>
-#include <zpl_media_config.h>
 #include <zpl_media_record.h>
 #include <zpl_media_capture.h>
 #include "zpl_media_task.h"

@@ -383,7 +383,7 @@ int conf_write(const char *name)
 
 	fprintf(out, _("#\n"
 		       "# Automatically generated make config: don't edit\n"
-		       "# Busybox version: %s\n"
+		       "# ZPLSource version: %s\n"
 		       "%s%s"
 		       "#\n"),
 		     sym_get_string_value(sym),
@@ -409,7 +409,7 @@ int conf_write(const char *name)
 		}
 		fprintf(out_h, "/*\n"
 			       " * Automatically generated C config: don't edit\n"
-			       " * Busybox version: %s\n"
+			       " * ZPLSource version: %s\n"
 			       " */\n"
 			       "%s"
 			       "\n",

@@ -48,6 +48,15 @@ int zpl_media_task_destroy (zpl_media_task_t *t_task)
 	return OK;
 }
 
+
+/*static int media_main_timer(struct thread *thread)
+{
+	zm_msg_debug(" media timer thread");
+	if(tvideo_task.t_master)
+		thread_add_timer(tvideo_task.t_master, media_main_timer, NULL, 5);
+	return 0;	
+}
+*/
 static int media_main_task(void *argv)
 {
     zpl_media_task_t *video_task = argv;    
@@ -57,12 +66,12 @@ static int media_main_task(void *argv)
 	{
 		video_task->t_master = thread_master_module_create(MODULE_ZPLMEDIA);
 	}
+	//thread_add_timer(video_task->t_master, media_main_timer, NULL, 10);
 	host_waitting_loadconfig();
 	while(!video_task->t_ready)
 	{
 		os_sleep(1);
 	}
-	//master->debug = 1;
 	thread_mainloop(master);
 	return OK;
 }

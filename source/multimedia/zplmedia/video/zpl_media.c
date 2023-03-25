@@ -204,7 +204,7 @@ int zpl_media_global_lock(ZPL_MEDIA_GLOBAL_E type)
     os_mutex_t *_mutex = NULL;
     zpl_media_global_list_node_get(type, &_lst, &_mutex);
 	if (_mutex)
-		os_mutex_lock(_mutex, OS_WAIT_FOREVER);
+		;//os_mutex_lock(_mutex, OS_WAIT_FOREVER);
     return OK;  
 }
 int zpl_media_global_unlock(ZPL_MEDIA_GLOBAL_E type)
@@ -213,7 +213,7 @@ int zpl_media_global_unlock(ZPL_MEDIA_GLOBAL_E type)
     os_mutex_t *_mutex = NULL;
     zpl_media_global_list_node_get(type, &_lst, &_mutex);
 	if(_mutex)
-		os_mutex_unlock(_mutex);
+		;//os_mutex_unlock(_mutex);
     return OK;  
 }
 

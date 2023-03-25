@@ -44,7 +44,6 @@ typedef struct
 	zpl_void			*media_channel;		//指向父级
 
     zpl_bool            online;         //资源状态，在线不在线
-    zpl_bool            hwbind;         //硬件绑定
     zpl_uint32          flags;
 
 #ifdef ZPL_HISIMPP_HWDEBUG
@@ -66,7 +65,7 @@ int zpl_media_video_encode_stop(zpl_media_video_encode_t *encode);
 zpl_bool zpl_media_video_encode_state_check(zpl_media_video_encode_t *encode, int bit);
 int zpl_media_video_encode_thread(zpl_media_video_encode_t *encode, zpl_bool start);
 
-int zpl_media_video_encode_source_set(zpl_int32 venc_channel, void *halparam, zpl_bool hwbind);
+int zpl_media_video_encode_source_set(zpl_int32 venc_channel, void *halparam);
 
 int zpl_media_video_encode_frame_queue_set(zpl_int32 venc_channel, void *frame_queue);
 

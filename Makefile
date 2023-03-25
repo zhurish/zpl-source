@@ -143,6 +143,10 @@ make_prepare: def_make_prepare
 
 #def_make_prepare make_prepare
 all: 
+	@if ! test  -e source/include/plautoconf.h ; \
+	then \
+		make make_prepare ; \
+	fi
 	${MAKE} -C  source/ $@ 
 
 lib:  
@@ -152,6 +156,10 @@ obj:
 	${MAKE} -C  source/ $@ 	
 	
 app: 
+	@if ! test  -e source/include/plautoconf.h ; \
+	then \
+		make make_prepare ; \
+	fi
 	${MAKE} -C  source/ $@ 	
 
 kernel_module:
@@ -212,8 +220,8 @@ install:
 	cp -arf source/debug/sbin $(ZPL_INSTALL_PATH)/
 	cp -arf source/debug/bin $(ZPL_INSTALL_PATH)/
 
-help:
-	echo "make all make_prepare prebuilts"
+#help:
+#	echo "make all make_prepare prebuilts"
 # Declare the contents of the .PHONY variable as phony.  We keep that
 # information in a variable se we can use it in if_changed and friends.
 .PHONY: $(PHONY) all lib obj app install prebuilts make_prepare help kernel_module
