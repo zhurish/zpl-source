@@ -255,7 +255,7 @@ CONFIG_ZPL_PJ_SDL_LIB_PATH=""
 #
 # hwmedia Module Config
 #
-# CONFIG_ZPL_ZPLMEDIA_MODULE is not set
+# CONFIG_ZPL_LIBMEDIA_MODULE is not set
 # CONFIG_ZPL_HISIMPP_MODULE is not set
 # CONFIG_ZPL_HISIMPP_HWDEBUG is not set
 

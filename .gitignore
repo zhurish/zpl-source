@@ -41,10 +41,10 @@ source/halpal/pal/linux/tests/*
 source/multimedia/ortp-5.0/src/tests/*
 source/multimedia/ortp-5.0/tester/*
 source/multimedia/ortp-5.0-new/*
-source/multimedia/zplmedia/hisidir/
-source/multimedia/zplmedia/ikayaki/
-source/multimedia/zplmedia/rtsp源码/
-source/multimedia/zplmedia/bsp/
+source/multimedia/media/hisidir/
+source/multimedia/media/ikayaki/
+source/multimedia/media/rtsp源码/
+source/multimedia/media/bsp/
 source/multimedia/mu/
 source/product/sdk-robo-5.9.2
 source/product/bsp/pal/linux/iproute2-5.9.0

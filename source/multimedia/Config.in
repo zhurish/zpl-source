@@ -44,7 +44,7 @@ config ZPL_LIBJPEG_MODULE
 	Build Libjpeg Module.
 	
 
-config ZPL_ZPLMEDIA_MODULE
+config ZPL_LIBMEDIA_MODULE
 	bool "Media Module"
 	default n
 	depends on ZPL_MULTIMEDIA_MODULE
@@ -54,7 +54,7 @@ config ZPL_ZPLMEDIA_MODULE
 config ZPL_HISIMPP_MODULE
 	bool "Hisi MPP Module"
 	default n
-	depends on ZPL_ZPLMEDIA_MODULE
+	depends on ZPL_LIBMEDIA_MODULE
 	help
 	Build Hisi MPP Module.
 
@@ -269,20 +269,5 @@ config ZPL_FFMPEG_MODULE
 	depends on ZPL_MULTIMEDIA_MODULE
 	help
 	Build Ffmpeg Module.
-
-config ZPL_MEDIAAPP_MODULE
-	bool "Multimedia app Module"
-	default n
-	depends on ZPL_LIVE555_MODULE
-	help
-	Build Multimedia app Module.
-	
-config ZPL_LIBMEDIA_MODULE
-	bool "Multimedia Lib Module"
-	default n
-	depends on ZPL_MULTIMEDIA_MODULE
-	help
-	Build Multimedia Lib Module.
-
 
 endmenu

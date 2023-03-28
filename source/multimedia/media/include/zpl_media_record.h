@@ -13,14 +13,24 @@ extern "C" {
 
 typedef struct zpl_media_record_s
 {
-    zpl_uint32          cbid;
+    zpl_uint32          evid;
     void                *event_queue;
-    zpl_skbqueue_t                *buffer_queue;
+    #ifdef ZPL_MEDIA_QUEUE_DISTPATH
+    zpl_skbqueue_t      *buffer_queue;
+    #endif
     zpl_media_file_t    *record_file;
 }zpl_media_record_t;
 
 int zpl_media_channel_record_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable);
 zpl_bool zpl_media_channel_record_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+
+/*
+int zpl_media_channel_proxy_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable);
+zpl_bool zpl_media_channel_proxy_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+
+int zpl_media_channel_multicast_rtp_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable);
+zpl_bool zpl_media_channel_multicast_rtp_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
+*/
 
 #ifdef __cplusplus
 }

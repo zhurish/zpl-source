@@ -20,6 +20,7 @@ extern "C" {
 #include <zpl_media_text.h>
 #include <zpl_media_area.h>
 #include <zpl_media_channel.h>
+#include <zpl_media_event.h>
 #include "zpl_media_file.h"
 #include "zpl_media_extradata.h"
 #include <zpl_media_client.h>

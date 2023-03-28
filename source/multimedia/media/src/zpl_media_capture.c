@@ -4,6 +4,7 @@
 #include "zpl_media_buffer.h"
 #include "zpl_media_internal.h"
 
+#define zpl_media_capgetptr(m)             (((zpl_media_capture_t*)m->p_capture.param))
 
 static int zpl_media_capture_hal_create(zpl_media_channel_t *chn)
 {
@@ -34,10 +35,10 @@ static int zpl_media_capture_hal_create(zpl_media_channel_t *chn)
         video_encode->b_capture = zpl_true;
         video_encode->media_channel = chn;
         video_encode->source_input = main_video_encode->source_input;
-        video_encode->pCodec = &chn->p_capture.codec;
-		chn->p_capture.codec.vidsize.width = chn->media_param.video_media.codec.vidsize.width;
-		chn->p_capture.codec.vidsize.height = chn->media_param.video_media.codec.vidsize.height;
-        chn->p_capture.halparam = video_encode;
+        video_encode->pCodec = &zpl_media_capgetptr(chn)->codec;
+		zpl_media_capgetptr(chn)->codec.vidsize.width = chn->media_param.video_media.codec.vidsize.width;
+		zpl_media_capgetptr(chn)->codec.vidsize.height = chn->media_param.video_media.codec.vidsize.height;
+        zpl_media_capgetptr(chn)->halparam = video_encode;
         video_vpsschn = video_encode->source_input;
         zpl_media_video_encode_source_set(venc_channel, main_video_encode->source_input);
         zpl_media_video_vpsschn_connect(video_vpsschn->vpss_group, video_vpsschn->vpss_channel, venc_channel, zpl_true);
@@ -50,7 +51,7 @@ static int zpl_media_capture_hal_destroy(zpl_media_channel_t *chn)
 {
     zpl_media_video_encode_t *video_encode = NULL;
     zpl_media_video_vpsschn_t *video_vpsschn = NULL;
-    video_encode = chn->p_capture.halparam;
+    video_encode = zpl_media_capgetptr(chn)->halparam;
     if (video_encode == NULL || video_encode->source_input == NULL)
     {
         if(ZPL_MEDIA_DEBUG(CHANNEL, ERROR))
@@ -63,7 +64,7 @@ static int zpl_media_capture_hal_destroy(zpl_media_channel_t *chn)
     zpl_media_video_vpsschn_connect(video_vpsschn->vpss_group, video_vpsschn->vpss_channel, video_encode->venc_channel, zpl_false);
     zpl_media_video_encode_source_set(video_encode->venc_channel, NULL);
     zpl_media_video_encode_destroy(video_encode);
-    chn->p_capture.halparam = NULL;
+    zpl_media_capgetptr(chn)->halparam = NULL;
     return OK;
 }
 
@@ -96,10 +97,10 @@ int zpl_media_channel_capture_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANN
     int ret = 0;
     zpl_media_video_encode_t *video_encode = NULL;
     zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
-    if(mediachn == NULL || mediachn->p_capture.halparam == NULL)
+    if(mediachn == NULL || zpl_media_capgetptr(mediachn)->halparam == NULL)
         return ERROR;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);
-    video_encode = mediachn->p_capture.halparam;
+    video_encode = zpl_media_capgetptr(mediachn)->halparam;
     ret = zpl_media_video_encode_start(video_encode->t_master, video_encode);
     ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
     return ret;  
@@ -110,10 +111,10 @@ int zpl_media_channel_capture_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNE
     int ret = 0;
     zpl_media_video_encode_t *video_encode = NULL;
     zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
-    if(mediachn == NULL || mediachn->p_capture.halparam == NULL)
+    if(mediachn == NULL || zpl_media_capgetptr(mediachn)->halparam == NULL)
         return ERROR;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);
-    video_encode = mediachn->p_capture.halparam;
+    video_encode = zpl_media_capgetptr(mediachn)->halparam;
     ret = zpl_media_video_encode_stop(video_encode);
     ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
     return ret; 
@@ -123,7 +124,9 @@ static int media_buffer_data_capture_handle(zpl_media_event_t *event)
 {
     zpl_media_capture_t *capture = event->event_data;
     zpl_media_image_t *bufdata = zpl_media_image_dequeue(capture->images_queue);
-    while(bufdata)
+    if(capture)
+        capture->evid = 0;
+    while(capture && bufdata)
     {
         //TODO
         zpl_media_image_finsh(capture->images_queue, bufdata);
@@ -138,19 +141,17 @@ static int zpl_media_buffer_data_capture(zpl_media_channel_t *mediachn,
     zpl_media_capture_t *capture = pVoidUser;
     if(mediachn == NULL || bufdata == NULL || pVoidUser == NULL)
         return 0;
-    //ZPL_MEDIA_CHANNEL_LOCK(mediachn);     
     if(mediachn && mediachn->p_capture.enable && capture && capture->event_queue)
     {
         zpl_media_image_t *rdata = zpl_media_image_clone(capture->images_queue, bufdata);
         if(rdata)
         {
             zpl_media_image_enqueue(capture->images_queue, rdata);
-            if(mediachn->p_capture.cbid <= 0)
-                mediachn->p_capture.cbid = zpl_media_event_register(capture->event_queue, ZPL_MEDIA_GLOAL_VIDEO_ENCODE,  ZPL_MEDIA_EVENT_CAPTURE, 
+            if(zpl_media_capgetptr(mediachn)->evid <= 0)
+                zpl_media_capgetptr(mediachn)->evid = zpl_media_event_register(capture->event_queue, ZPL_MEDIA_GLOAL_VIDEO_ENCODE,  ZPL_MEDIA_EVENT_CAPTURE, 
                 media_buffer_data_capture_handle, capture);
         }
     }
-    //ZPL_MEDIA_CHANNEL_UNLOCK(mediachn); 
     return OK;
 }
 
@@ -192,7 +193,6 @@ int zpl_media_channel_capture_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHAN
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
             return ERROR;
         }
-        //mediachn->p_capture.cbid = zpl_media_channel_client_add(mediachn, zpl_media_buffer_data_capture, mediachn->p_capture.param);
         mediachn->p_capture.enable = enable; 
         ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
         return OK;
@@ -200,15 +200,14 @@ int zpl_media_channel_capture_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHAN
     else
     {
         mediachn->p_capture.enable = enable; 
-        //zpl_media_channel_client_del(mediachn, mediachn->p_capture.cbid);
-        mediachn->p_capture.cbid = 0;
+        zpl_media_capgetptr(mediachn)->evid = 0;
         if(mediachn->p_capture.param) 
         {
             capture = mediachn->p_capture.param;
-            if(mediachn->p_capture.cbid)
+            if(zpl_media_capgetptr(mediachn)->evid)
             {
-                zpl_media_event_del(capture->event_queue, mediachn->p_capture.cbid);
-                mediachn->p_capture.cbid = 0;
+                zpl_media_event_del(capture->event_queue, zpl_media_capgetptr(mediachn)->evid);
+                zpl_media_capgetptr(mediachn)->evid = 0;
             }
             zpl_media_imglst_destroy(capture->images_queue);
             free(capture);

@@ -18,9 +18,12 @@ extern "C" {
 typedef enum
 {
     ZPL_MEDIA_EVENT_NONE = 0x00,			//
-    ZPL_MEDIA_EVENT_CAPTURE ,		
+    ZPL_MEDIA_EVENT_DISTPATCH = 0x01,
+    ZPL_MEDIA_EVENT_CAPTURE = 0x02,		
     ZPL_MEDIA_EVENT_IMAGE   = ZPL_MEDIA_EVENT_CAPTURE,  //抓拍事件
-    ZPL_MEDIA_EVENT_RECORD,  //录制事件
+    ZPL_MEDIA_EVENT_RECORD = 0x04,  //录制事件
+    ZPL_MEDIA_EVENT_MS = 0x08, //多播发送
+    ZPL_MEDIA_EVENT_PROXY = 0x10, //多播发送
 } ZPL_MEDIA_EVENT_E;
 
 typedef enum
@@ -67,8 +70,7 @@ extern zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uin
 extern zpl_media_event_queue_t *zpl_media_event_default(void);
 extern int zpl_media_event_destroy(zpl_media_event_queue_t *queue);
 extern int zpl_media_event_start(zpl_media_event_queue_t *queue);
-//extern int zpl_media_event_register(zpl_media_event_queue_t *queue, zpl_uint32 module, zpl_uint32 event,
-//        eventcb_handler evcb, zpl_void *p);
+
 extern zpl_uint32 zpl_media_event_register_entry(zpl_media_event_queue_t *queue, zpl_uint32 module, zpl_uint32 event,
         eventcb_handler evcb, zpl_void *p, zpl_uint32 flag);
 
@@ -79,9 +81,12 @@ extern int zpl_media_event_dispatch(zpl_media_event_queue_t *queue);
 extern int zpl_media_event_scheduler(zpl_media_event_queue_t *queue);
 extern int zpl_media_event_distribute(zpl_media_event_queue_t *queue);
 
-#define zpl_media_event_register(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_NONE)
+#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+extern int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel);
+#endif
+#define zpl_media_event_register(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
 #define zpl_media_event_register_once(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
-#define zpl_media_event_add(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_NONE)
+#define zpl_media_event_add(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
 #define zpl_media_event_add_once(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
 
 #define zpl_media_event_del(q,i) zpl_media_event_unregister_entry(q,i)

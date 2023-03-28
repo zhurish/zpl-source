@@ -419,20 +419,27 @@ static int zpl_media_video_encode_read_thread(struct thread *thread)
 {
 	int ret = 0;
 	zpl_media_video_encode_t *encode = THREAD_ARG(thread);
+	#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 	ZPL_MEDIA_CHANNEL_E channel;			// 通道号
 	ZPL_MEDIA_CHANNEL_TYPE_E channel_index; // 码流类型
+	#endif
 	if (encode && encode->media_channel && encode->get_encode_frame)
 	{
 		zpl_media_global_lock(ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
 		encode->t_read = NULL;
+		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 		channel = ((zpl_media_channel_t *)encode->media_channel)->channel;
 		channel_index = ((zpl_media_channel_t *)encode->media_channel)->channel_index;
-
+		#endif
 		ret = (encode->get_encode_frame)(encode);
 
 		if (encode->frame_queue && ret > 0)
 		{
+			#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 			zpl_media_bufqueue_signal(channel, channel_index);
+			#else
+			zpl_media_event_dispatch_signal(encode->media_channel);
+			#endif
 		}
 		if (!ipstack_invalid(encode->vencfd))
 			encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);

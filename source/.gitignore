@@ -55,7 +55,7 @@ hisidir/
 ikayaki/
 rtsp源码/
 multimedia/ortp-5.0/src/tests/*
-multimedia/zplmedia/bsp/
+multimedia/media/bsp/
 multimedia/test/*
 component/ssh/test/*
 component/onvif/onvifgen/xml/*

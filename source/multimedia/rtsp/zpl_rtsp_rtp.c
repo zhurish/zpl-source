@@ -182,8 +182,53 @@ int rtsp_session_rtp_teardown(rtsp_session_t* session)
     return OK;
 }
 
+#if 0
+rtp_session_t *rtp_session_multicast_create(int lport, char *remote, int port)
+{
+    int ret = 0;
+    rtp_session_t *rtpnode = malloc(sizeof(rtp_session_t));
+    if(rtpnode)
+    {
+        rtpnode->rtpmode = RTP_SESSION_SENDRECV;
+        rtpnode->rtp_session = rtp_session_new(rtpnode->rtpmode);
+        if (rtpnode->local_ssrc == 0)
+            rtpnode->local_ssrc = (uint32_t)rtpnode->rtp_session;
+        rtp_session_set_recv_buf_size(rtpnode->rtp_session, 165530);
+        rtp_session_set_send_buf_size(rtpnode->rtp_session, 65530);
 
+        rtp_session_set_seq_number(rtpnode->rtp_session, 0);
 
+        rtp_session_set_ssrc(rtpnode->rtp_session, rtpnode->local_ssrc);
+
+        rtp_session_set_payload_type(rtpnode->rtp_session, rtpnode->payload);
+        rtp_session_enable_rtcp(rtpnode->rtp_session, true);
+        rtp_session_signal_connect(rtpnode->rtp_session, "timestamp_jump", (RtpCallback)rtsp_session_rtp_timestamp_jump, 0);
+        rtp_session_signal_connect(rtpnode->rtp_session, "ssrc_changed", (RtpCallback)rtp_session_reset, 0);
+        rtp_session_set_scheduling_mode(rtpnode->rtp_session, true);
+        rtp_session_set_blocking_mode(rtpnode->rtp_session, false);
+
+        rtpnode->transport.rtp.unicast.local_rtp_port = lport;
+        rtpnode->transport.rtp.unicast.local_rtcp_port = lport + 1;
+        rtpnode->transport.rtp.unicast.rtp_port = port;
+        rtpnode->transport.rtp.unicast.rtcp_port = port + 1;
+        ret = rtp_session_set_remote_addr_and_port(rtpnode->rtp_session,
+                                                 remote,
+                                                 rtpnode->transport.rtp.unicast.rtp_port,
+                                                 rtpnode->transport.rtp.unicast.rtcp_port);
+        ret = rtp_session_set_local_addr(rtpnode->rtp_session, NULL,
+                                   rtpnode->transport.rtp.unicast.local_rtp_port,
+                                   rtpnode->transport.rtp.unicast.local_rtcp_port);
+
+         rtsp_session_media_scheduler_add(rtpnode->rtp_session);    
+        if(rtpnode->rtsp_media_queue == NULL)
+            rtpnode->rtsp_media_queue = zpl_skbqueue_create(os_name_format("rtpSkbQueue-%d/%d", rtpnode->mchannel, rtpnode->mlevel), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false); 
+        rtpnode->_call_index = zpl_media_channel_client_add(rtpnode->mchannel, rtpnode->mlevel, rtsp_session_media_rtp_proxy, rtpnode);
+        if(rtpnode->_call_index > 0)
+            return zpl_media_channel_client_start(rtpnode->mchannel, rtpnode->mlevel, rtpnode->_call_index, zpl_true);                
+    }
+    return rtpnode;
+}
+#endif
 
 int rtsp_session_rtp_tcp_forward(rtsp_session_t* session, const uint8_t *buffer, uint32_t len)
 {

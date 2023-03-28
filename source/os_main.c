@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out.h264", 1);
+	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/media/out.h264", 1);
 #endif
 
 	//get_frame_h264_test();

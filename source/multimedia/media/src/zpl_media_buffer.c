@@ -10,9 +10,9 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
-
+#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 static zpl_media_bufqueue_t *_media_bufqueue = NULL;
-
+#endif
 
 char *zpl_media_timerstring(void)
 {
@@ -184,7 +184,11 @@ int zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_E type, ZPL_M
         zpl_media_buffer_header_framedatatype(bufdata, buffertype);
         memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);
 		zpl_media_buffer_header_frame_type(bufdata, key);
+		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 		return zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, bufdata);
+		#else
+		zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, bufdata);
+		#endif
 	}
 	return ERROR;
 }
@@ -211,6 +215,7 @@ int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
 	return OK;
 }
 
+#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 zpl_skbqueue_t * zpl_media_bufqueue_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
 {
 	if(_media_bufqueue)
@@ -351,3 +356,4 @@ int zpl_media_bufqueue_start(void)
 	               0, media_queue_task, NULL, OS_TASK_DEFAULT_STACK);
     return OK;               
 }
+#endif

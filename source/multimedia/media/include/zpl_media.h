@@ -18,18 +18,20 @@ extern "C" {
 #include "auto_include.h"
 #include "zplos_include.h"
 
-#ifdef ZPL_ZPLMEDIA_MODULE
+#ifdef ZPL_LIBMEDIA_MODULE
 
 #define ZPL_INVALID_VAL	-1
 
 
 #ifdef ZPL_BUILD_LINUX
-#define     ZPL_MEDIA_BASE_PATH     "/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/"
+#define     ZPL_MEDIA_BASE_PATH     "/home/zhurish/workspace/working/zpl-source/source/multimedia/media/"
 #else
 #define     ZPL_MEDIA_BASE_PATH     "D:/qt-project/live555-test/"
 #endif
 
 #define ZPL_VIDEO_VPSSGRP_ENABLE
+
+//#define ZPL_MEDIA_QUEUE_DISTPATH /* 使用独立的线程进行媒体数据分发调度 */
 
 #define ZPL_MEDIA_BUF_ALIGN(n)	(((n)+3)/4)*4
 

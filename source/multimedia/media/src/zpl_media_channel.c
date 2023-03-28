@@ -315,20 +315,33 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 		}
 		chn->t_master = tvideo_task.t_master;
 		zpl_media_channel_encode_default(chn);
+		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 		chn->frame_queue = zpl_media_bufqueue_get(channel, channel_index);	
+		#else
+		chn->frame_queue = zpl_skbqueue_create(os_name_format("mediaBufQueue-%d/%d", channel, channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);	
+		#endif
 		if (chn->frame_queue == NULL)
 		{
 			zm_msg_error("can not create buffer for media channel(%d/%d)", channel, channel_index);
 			os_free(chn);
 			return ERROR;
 		}
+		#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+		zpl_skbqueue_attribute_set(chn->frame_queue, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
+		#endif
 		if(zpl_media_channel_lstnode_create(chn) != OK)
 		{
+			#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+			zpl_skbqueue_destroy(chn->frame_queue);
+			#endif
 			os_free(chn);
 			return ERROR;
 		}
 		if(zpl_media_channel_hal_create(chn) != OK)
 		{
+			#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+			zpl_skbqueue_destroy(chn->frame_queue);
+			#endif
 			os_free(chn);
 			return ERROR;
 		}
@@ -448,8 +461,16 @@ int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 			return ERROR;
 		}
         lstDelete(media_channel_list, (NODE *)chn);
+		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
         if (chn->frame_queue)
             chn->frame_queue = NULL;
+		#else	
+		if(chn->frame_queue)	
+		{
+			zpl_skbqueue_destroy(chn->frame_queue);	
+			chn->frame_queue = NULL;
+		}
+		#endif
         if (os_mutex_destroy(chn->_mutex) == OK)
 			chn->_mutex = NULL;
         free(chn);
@@ -1310,35 +1331,7 @@ int zpl_media_channel_foreach(int (*callback)(zpl_media_channel_t *, zpl_void *o
 	return OK;
 }
 
-int zpl_media_channel_load(zpl_void *obj)
-{
-	zpl_media_channel_t *chn = obj;
-	zpl_video_assert(chn);
-	if (chn)
-	{
-		chn->frame_queue = zpl_media_bufqueue_get(chn->channel, chn->channel_index);
-		if (chn->frame_queue == NULL)
-		{
-			os_free(chn);
-			return ERROR;
-		}
-		//if (zpl_media_channel_hal_create(chn, chn->frame_queue) != OK)
-		{
-            zm_msg_error("can not create hal media channel(%d/%d)", chn->channel, chn->channel_index);
-			chn->frame_queue = NULL;
-			os_free(chn);
-			return ERROR;
-		}
-		if (media_channel_mutex)
-			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-		if (media_channel_list)
-			lstAdd(media_channel_list, (NODE *)chn);
-		if (media_channel_mutex)
-			os_mutex_unlock(media_channel_mutex);
-		return OK;
-	}
-	return ERROR;
-}
+
 
 
 #ifdef ZPL_SHELL_MODULE

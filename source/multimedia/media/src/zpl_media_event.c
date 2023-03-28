@@ -7,6 +7,7 @@
 
 
 #include "zpl_media.h"
+#include <zpl_media_channel.h>
 #include "zpl_media_event.h"
 #include "zpl_media_internal.h"
 
@@ -212,3 +213,23 @@ static int media_event_task(void *p)
 	}
 	return OK;
 }
+
+#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+static int zpl_media_event_dispatch_handle(zpl_media_event_t *event)
+{
+    zpl_media_channel_t *mchannel = event->event_data;
+    while(mchannel && mchannel->frame_queue)
+    {
+	    zpl_skbqueue_async_wait_distribute(mchannel->frame_queue, 5, zpl_media_client_foreach, NULL);
+    }
+    return OK;
+}
+
+int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel)
+{
+    if(_media_event_queue_default)
+        zpl_media_event_register(_media_event_queue_default, ZPL_MEDIA_GLOAL_VIDEO_ENCODE,  ZPL_MEDIA_EVENT_DISTPATCH, 
+                zpl_media_event_dispatch_handle, mchannel);
+    return OK;            
+}
+#endif

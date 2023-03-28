@@ -55,12 +55,8 @@ typedef struct zpl_media_audio_s
 typedef struct zpl_media_unit_s
 {
     zpl_bool                enable;
-    zpl_void                *param;      //
-    zpl_uint32              cbid;
-
-    zpl_video_codec_t	    codec;	    //视频编码参数
-    zpl_void                *halparam;  //通道绑定的硬件资源
-    zpl_uint32              t_timer;//抓拍定时器
+    zpl_uint32              cbid;       //通道客户端 media_client 回调
+    zpl_void                *param;     //子单元私有数据
 }zpl_media_unit_t;
 
 
@@ -84,6 +80,7 @@ typedef struct zpl_media_channel_s
         zpl_media_video_t           video_media;
         zpl_media_audio_t           audio_media;
     }media_param;
+    
     zpl_skbqueue_t              *frame_queue;      //通道对应的编码数据缓冲区
 
     zpl_uint32                  flags;
@@ -91,11 +88,13 @@ typedef struct zpl_media_channel_s
 
     zpl_uint32                  bindcount;      //绑定的数量
     zpl_media_channel_t         *bind_other;    //视频通道绑定的音频通道
-    zpl_media_unit_t            p_record;//通道使能录像
-    zpl_media_unit_t            p_capture;//通道使能抓拍
- 
-    zpl_void            *t_master;
-    os_mutex_t  *_mutex;
+
+    zpl_media_unit_t            p_capture;      //通道使能抓拍
+    zpl_media_unit_t            p_record;       //通道使能录像
+    zpl_media_unit_t            p_mucast;       //通道多播发送
+
+    zpl_void                    *t_master;
+    os_mutex_t                  *_mutex;
 }zpl_media_channel_t;
 
 #define ZPL_MEDIA_CHANNEL_LOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_lock(((zpl_media_channel_t*)m)->_mutex, OS_WAIT_FOREVER)
@@ -202,7 +201,6 @@ int zpl_media_channel_show(void *pvoid);
 #endif
 
 extern int zpl_media_channel_foreach(int (*callback)(zpl_media_channel_t*, zpl_void *obj), zpl_void *obj);
-extern int zpl_media_channel_load(zpl_void *obj);
 
 
 #ifdef __cplusplus

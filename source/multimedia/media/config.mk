@@ -1,10 +1,10 @@
 #############################################################################
 # DEFINE
 ###########################################################################
-MODULEDIR = multimedia/zplmedia
+MODULEDIR = multimedia/media
 #OS
 
-ZPLEX_INCLUDE += -I$(ZPLMEDIA_ROOT)/video/framediscrete -I$(ZPLMEDIA_ROOT)/bsp
+ZPLEX_INCLUDE += -I$(LIBMEDIA_ROOT)/src/framediscrete -I$(LIBMEDIA_ROOT)/bsp
 
 OSOBJ	+= zpl_media_channel.o
 OSOBJ	+= zpl_media_file.o

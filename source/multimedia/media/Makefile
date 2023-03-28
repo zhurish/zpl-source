@@ -4,7 +4,7 @@ include config.mk
 
 OBJS = $(OSOBJ)
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)/video
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)/src
 SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
@@ -13,14 +13,14 @@ MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
 
 -include $(MODULE_OBJS_DEP)
 
-$(OBJS_DIR)/%.o: $(SRC_DIR)/video/%.c
+$(OBJS_DIR)/%.o: $(SRC_DIR)/src/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
 
-$(OBJS_DIR)/%.o: $(SRC_DIR)/video/framediscrete/%.c
+$(OBJS_DIR)/%.o: $(SRC_DIR)/src/framediscrete/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -29,7 +29,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/video/framediscrete/%.c
 #
 
 #
-$(OBJS_DIR)/%.o: $(SRC_DIR)/video/hal/%.c
+$(OBJS_DIR)/%.o: $(SRC_DIR)/src/hal/%.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -49,7 +49,7 @@ $(LIBS) : $(MODULE_OBJS)
 
 
 make_prepare:
-	@for i in $(patsubst %.o,video/%.c,$(OBJS)); do	\
+	@for i in $(patsubst %.o,src/%.c,$(OBJS)); do	\
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
 	done
 

@@ -12,9 +12,12 @@ extern "C" {
 
 typedef struct zpl_media_capture_s
 {
+    zpl_bool            enable;
+    zpl_uint32          evid;
+    zpl_video_codec_t	codec;	    //视频编码参数
+    zpl_void            *halparam;  //通道绑定的硬件资源    
     void                *event_queue;
     void                *images_queue;
-   
 }zpl_media_capture_t;
 
 extern int zpl_media_channel_capture_create(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);

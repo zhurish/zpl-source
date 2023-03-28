@@ -757,9 +757,9 @@ static int zpl_media_file_get_frame_h264_test(FILE *fp)
 int get_frame_h264_test(void)
 {
     FILE *fp = NULL;
-    zpl_media_file_open("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out-video.h264");
+    zpl_media_file_open("/home/zhurish/workspace/working/zpl-source/source/multimedia/media/out-video.h264");
     exit(0);
-    fp = fopen("/home/zhurish/workspace/working/zpl-source/source/multimedia/zplmedia/out-video.h264", "r");
+    fp = fopen("/home/zhurish/workspace/working/zpl-source/source/multimedia/media/out-video.h264", "r");
     if(fp)
     {
         while(zpl_media_file_get_frame_h264_test(fp) > 0)

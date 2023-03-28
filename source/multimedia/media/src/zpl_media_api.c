@@ -34,7 +34,9 @@ int zpl_media_module_init(void)
 	zpl_media_hwres_load("./media.json");
 	zpl_media_system_init();
 	zpl_media_event_create("mediaEvent", 16);
+	#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 	zpl_media_bufqueue_init();
+	#endif
 	zpl_media_channel_init();
 	zpl_media_video_inputchn_init();
 	zpl_media_video_vpsschn_init();
@@ -47,7 +49,9 @@ int zpl_media_module_exit(void)
 {
 	zpl_media_channel_exit();
 	zpl_media_proxy_exit();
+	#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 	zpl_media_bufqueue_exit();
+	#endif
 	zpl_media_event_destroy(zpl_media_event_default());
 	zpl_media_global_exit();
 	return OK;
@@ -59,8 +63,9 @@ int zpl_media_task_init(void)
 
 	zpl_media_event_start(zpl_media_event_default());
 
-	//zpl_media_channel_load_default();
+	#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 	zpl_media_bufqueue_start();
+	#endif
 	return OK;
 }
 
