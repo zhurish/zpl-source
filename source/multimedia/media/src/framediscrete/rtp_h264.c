@@ -4,7 +4,9 @@
 #include <errno.h>
 
 #include <stdbool.h>
+#ifdef ZPL_LIBORTP_MODULE 
 #include <ortp/ortp.h>
+#endif
 #include "rtp_h264.h"
 
 
@@ -94,7 +96,7 @@ static int rtp_payload_h264_hdr_set(uint8_t *p, uint8_t NALU, uint8_t start, uin
     return 0;
 }
 
-int rtp_payload_send_h264(RtpSession *session, const uint8_t *buffer, uint32_t len, int user_ts)
+int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, int user_ts)
 {
     int ret = 0;
     uint8_t *p = (uint8_t *)buffer;
@@ -119,7 +121,9 @@ int rtp_payload_send_h264(RtpSession *session, const uint8_t *buffer, uint32_t l
                 //memcpy(payload + HEADER_SIZE_FU_A, p, MAX_RTP_PAYLOAD_LENGTH);
                 //rtp_payload_h264_hdr_set(payload, NALU, (i==0)?1:0, 0);
                 rtp_payload_h264_hdr_set(p-2, NALU, (i==0)?1:0, 0);
+                #ifdef ZPL_LIBORTP_MODULE 
                 ret = rtp_session_send_with_ts(session, p, MAX_RTP_PAYLOAD_LENGTH + HEADER_SIZE_FU_A, user_ts);
+                #endif
                 p +=  MAX_RTP_PAYLOAD_LENGTH;
                 plen -= MAX_RTP_PAYLOAD_LENGTH;
             }
@@ -128,7 +132,9 @@ int rtp_payload_send_h264(RtpSession *session, const uint8_t *buffer, uint32_t l
                 //memcpy(payload + HEADER_SIZE_FU_A, p, plen);
                 //rtp_payload_h264_hdr_set(payload, NALU, 0, 1);
                 rtp_payload_h264_hdr_set(p-2, NALU, 0, 1);
+                #ifdef ZPL_LIBORTP_MODULE 
                 ret = rtp_session_send_with_ts(session, p, plen + HEADER_SIZE_FU_A, user_ts);
+                #endif
                 break;
             }
             i++;
@@ -141,7 +147,9 @@ int rtp_payload_send_h264(RtpSession *session, const uint8_t *buffer, uint32_t l
         hdr->FU_NRI = H264_NALU_NRI(NALU);
         hdr->FU_Type = H264_NALU_TYPE(NALU);
         memcpy(payload + 1, p, plen);*/
+        #ifdef ZPL_LIBORTP_MODULE 
         ret = rtp_session_send_with_ts(session, p, plen, user_ts);
+        #endif
     }
     return ret;
 }

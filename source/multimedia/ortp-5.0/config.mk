@@ -42,9 +42,7 @@ OBJS += 	avprofile.o  \
 			rtpaudiolevel.o \
 			ortp_list.o \
 			dblk.o \
-			rtpbundle.o \
-			rtp_h264.o \
-			rtp_g7xx.o 
+			rtpbundle.o 
 
 
 #############################################################################

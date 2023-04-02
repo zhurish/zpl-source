@@ -315,7 +315,7 @@ static ortp_socket_t create_and_bind(const char *addr, int *port, int *sock_fami
         sock = -1;
         return -1;
     }
-
+	set_non_blocking_socket(sock);
 #if defined(_WIN32) || defined(_WIN32_WCE)
     if (ortp_WSARecvMsg == NULL)
     {
@@ -1617,9 +1617,22 @@ int rtp_session_rtp_recv_abstract(ortp_socket_t socket, mblk_t *msg, int flags, 
 	if(ret >= 0) {
 		ret = bytes_received;
 #else
+	fd_set rset;	
+	struct timeval tv;
 	struct msghdr msghdr = {0};
 	msghdr.msg_control = control;
 	msghdr.msg_controllen = sizeof(control);
+
+	FD_ZERO(&rset);		
+	FD_SET(socket, &rset);
+	tv.tv_sec = 0;
+	tv.tv_usec = 1000;
+	ret = select(socket+1, &rset, 0, 0, &tv);
+	if (ret <= 0)
+	{
+		return ret;
+	}
+
 #ifdef USE_RECVMSG
 	ret = rtp_recvmsg(socket, msg, flags, from, fromlen, &msghdr, bufsz);
 #else

@@ -32,15 +32,18 @@ OSOBJ	+= zpl_media_area.o
 OSOBJ	+= zpl_media_proxy.o
 OSOBJ	+= zpl_media_frame_adap.o
 OSOBJ	+= zpl_media_sys.o
+OSOBJ	+= zpl_media_rtp.o
 
 OSOBJ	+= zpl_media_video_encode.o
 OSOBJ	+= zpl_media_video_vpss.o
 OSOBJ	+= zpl_media_video_input.o
-//OSOBJ	+= zpl_media_video_dev.o
+#OSOBJ	+= zpl_media_video_dev.o
 #
 OSOBJ	+= nal-h264.o
 OSOBJ	+= nal-hevc.o
 OSOBJ	+= nal-rbsp.o
+OSOBJ	+= rtp_h264.o
+OSOBJ	+= rtp_g7xx.o
 
 #ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 OSOBJ	+= zpl_vidhal_mipi.o

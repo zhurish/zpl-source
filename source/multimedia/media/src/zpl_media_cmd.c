@@ -313,8 +313,85 @@ DEFUN (media_channel_alarm_capture,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+#ifdef ZPL_LIBORTP_MODULE
+DEFUN (media_channel_multicast_enable,
+		media_channel_multicast_enable_cmd,
+		"media channel <0-1> (main|sub) multicast A.B.C.D <1024-65530> local A.B.C.D enable" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"Multicast Configure\n"
+		CMD_KEY_IPV4_HELP
+		"Multicast Port Value\n"
+		"Local Configure\n"
+		CMD_KEY_IPV4_HELP
+		"Enable\n")
+{
+	int ret = ERROR;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	zpl_media_channel_t	*chn = NULL;
+	VTY_GET_INTEGER("channel",channel, argv[0]);
+	
+	if(strstr(argv[1],"main"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+	else if(strstr(argv[1],"sub"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 
+	chn = zpl_media_channel_lookup(channel,  channel_index);
+	if(chn)
+	{
+		if(!zpl_media_channel_multicast_state(channel,  channel_index))
+			ret = zpl_media_channel_multicast_enable(channel,  channel_index, zpl_true, argv[2], atoi(argv[3]), argv[4]);
+		else
+			ret = OK;	
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
+DEFUN (media_channel_multicast_disable,
+		media_channel_multicast_disable_cmd,
+		"media channel <0-1> (main|sub) multicast disable" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"Multicast Configure\n"
+		"Disable\n")
+{
+	int ret = ERROR;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	zpl_media_channel_t	*chn = NULL;
+	VTY_GET_INTEGER("channel",channel, argv[0]);
+	
+	if(strstr(argv[1],"main"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+	else if(strstr(argv[1],"sub"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+
+	chn = zpl_media_channel_lookup(channel,  channel_index);
+	if(chn )
+	{
+		if(zpl_media_channel_multicast_state(channel,  channel_index))
+			ret = zpl_media_channel_multicast_enable(channel,  channel_index, zpl_false, NULL, 0, NULL);
+		else
+			ret = OK;	
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+DEFUN (show_video_channel_sadadinfo,
+		show_video_channel_sadadinfo_cmd,
+		"show rtp sched" ,
+		SHOW_STR
+		MEDIA_CHANNEL_STR
+		"Information\n")
+{
+	rtp_sched_test();
+	return CMD_SUCCESS;
+}
+#endif
 
 DEFUN (show_video_channel_info,
 		show_video_channel_info_cmd,
@@ -445,6 +522,17 @@ static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 			vty_out(vty, " media channel %d %s alarm capture %s%s", chn->channel, 
 				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
 				chn->p_capture.enable?"enable":"disable", VTY_NEWLINE);
+
+#ifdef ZPL_LIBORTP_MODULE
+		if(chn->p_mucast.enable)
+		{
+			zpl_mediartp_session_t* my_session = chn->p_mucast.param;
+			if(my_session)
+				vty_out(vty, " media channel %d %s multicast %s %d %s enable%s", chn->channel, 
+					(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
+					my_session->address, my_session->rtp_port, my_session->local_address, VTY_NEWLINE);
+		}
+#endif
 		return OK;
 	}
 	else
@@ -491,7 +579,11 @@ static void cmd_mediaservice_init(void)
 */
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_record_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_alarm_capture_cmd);
-
+#ifdef ZPL_LIBORTP_MODULE
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_enable_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_disable_cmd);
+		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &show_video_channel_sadadinfo_cmd);
+#endif
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_cmd);
 	}
 	return;

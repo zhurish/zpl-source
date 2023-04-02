@@ -75,7 +75,7 @@ bool rtp_payload_h264_isnaluhdr(uint8_t *bufdata, RTP_H264_NALU_T *nalu);
 /*
  * 发送一帧数据
  */
-int rtp_payload_send_h264(RtpSession *session, const uint8_t *buffer, uint32_t len, int user_ts);
+int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, int user_ts);
 
 
 #ifdef __cplusplus

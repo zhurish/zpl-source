@@ -221,7 +221,15 @@
         "cli_helper.h": "c",
         "cli_node.h": "c",
         "compare": "c",
-        "zpl_media_frame_adap.h": "c"
+        "zpl_media_frame_adap.h": "c",
+        "rtp_payload.h": "c",
+        "rtp_h264.h": "c",
+        "numbers": "c",
+        "stdbool.h": "c",
+        "jrtp_rtpprofile.h": "c",
+        "jrtp_payloadtype.h": "c",
+        "rtp_g7xx.h": "c",
+        "upnp_igd.h": "c"
     },
     "editor.defaultFormatter": "jbenden.c-cpp-flylint",
     "editor.formatOnPaste": false,
@@ -231,5 +239,12 @@
     "C_Cpp.vcFormat.indent.braces": true,
     "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
         "clang-diagnostic-incompatible-function-pointer-types"
-    ]
+    ],
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "C_Cpp.errorSquiggles": "disabled",
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    }
 }

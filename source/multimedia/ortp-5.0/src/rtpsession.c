@@ -85,6 +85,7 @@ static void wait_point_uninit(WaitPoint *wp){
 static void wait_point_wakeup_at(WaitPoint *wp, uint32_t t, bool_t dosleep){
 	wp->time=t;
 	wp->wakeup=TRUE;
+	ortp_message("Using wait_point_wakeup_at");
 	if (dosleep) ortp_cond_wait(&wp->cond,&wp->lock);
 }
 
@@ -1146,7 +1147,7 @@ ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, u
 					 send_ts -
 					 session->rtp.snd_ts_offset) +
 					session->rtp.snd_time_offset;
-		/*ortp_message("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);*/
+		ortp_message("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);
 		if (TIME_IS_STRICTLY_NEWER_THAN (packet_time, sched->time_))
 		{
 			wait_point_wakeup_at(&session->snd.wp,packet_time,(session->flags & RTP_SESSION_BLOCKING_MODE)!=0);
@@ -1364,7 +1365,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 		}
 		if (session->flags & RTP_SESSION_SCHEDULED) {
 			session->rtp.rcv_time_offset = sched->time_;
-			//ortp_message("setting snd_time_offset=%i",session->rtp.snd_time_offset);
+			ortp_message("setting srcv_time_offset=%i",session->rtp.snd_time_offset);
 		}
 		rtp_session_unset_flag (session,RTP_SESSION_RECV_NOT_STARTED);
 	}else{
