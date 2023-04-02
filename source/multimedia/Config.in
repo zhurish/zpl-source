@@ -22,6 +22,13 @@ config ZPL_LIBORTP_MODULE
 	help
 	Build Libortp Module.
 
+config ZPL_JRTPLIB_MODULE
+	bool "Jrtplib Module"
+	default n
+	depends on ZPL_MULTIMEDIA_MODULE
+	help
+	Build Jrtplib Module.
+
 config ZPL_EXOSIP_MODULE
 	bool "eXosip of Multimedia Module"
 	default n

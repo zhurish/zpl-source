@@ -34,6 +34,15 @@ ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/ortp-5.0/playload
 ZPL_DEFINE += -DZPL_LIBORTP_MODULE
 #ZPL_LDLIBS += -L/home/zhurish/workspace/working/zpl-source/source/multimedia/ortp-5.0/include/lib -lbcunit  -lbctoolbox
 endif
+ifeq ($(strip $(ZPL_JRTPLIB_MODULE)),true)
+LIBORTP_ROOT=$(MULTIMEDIA_ROOT)/JRTPLIB
+ZPLPRODS_LAST += $(MULTIMEDIA_ROOT)/JRTPLIB
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/JRTPLIB/include
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/JRTPLIB/src
+ZPL_INCLUDE += -I$(MULTIMEDIA_ROOT)/JRTPLIB/c-layer
+ZPL_DEFINE += -DZPL_JRTPLIB_MODULE
+endif
+
 endif
 
 ifeq ($(strip $(ZPL_EXOSIP_MODULE)),true)
@@ -64,7 +73,7 @@ ZPL_DEFINE += -DZPL_LIBMEDIA_MODULE
 ZPLEX_INCLUDE += -I$(LIBMEDIA_ROOT)/include
 ZPLEX_INCLUDE += -I$(LIBMEDIA_ROOT)/include/hal
 ZPLEX_INCLUDE += -I$(LIBMEDIA_ROOT)/src/hal
-
+ZPLEX_INCLUDE += -I$(LIBMEDIA_ROOT)/src/framediscrete
 ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 ZPL_DEFINE += -DZPL_HISIMPP_MODULE
 ifeq ($(strip $(ZPL_HISIMPP_HWDEBUG)),true)

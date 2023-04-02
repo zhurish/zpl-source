@@ -82,6 +82,13 @@ config ZPL_OS_CPPJSON
 	help
 	Build CPPJSON Module.
 
+config ZPL_JTHREAD_MODULE
+	bool "Jthread Library Module"
+	default y
+	depends on ZPL_OS_MODULE
+	help
+	Build Jthread Module.
+
 config ZPL_LIB_MODULE
 	bool "Platform Lib Module"
 	default y

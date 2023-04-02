@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * ZPLSource version: 
  */
-#define MAKECONF_TIMESTAMP "2023-03-28 20:26:06 CST"
+#define MAKECONF_TIMESTAMP "2023-04-01 20:39:07 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -74,6 +74,7 @@
 #define ZPL_OS_TTYCOM 1
 #define ZPL_OS_XYZ_MODEM 1
 #define ZPL_OS_CPPJSON 1
+#define ZPL_JTHREAD_MODULE 1
 #define ZPL_LIB_MODULE 1
 #define ZPL_IPV6_MODULE 1
 #undef ZPL_LIBEVENT_MODULE
@@ -193,6 +194,7 @@
 #define ZPL_MULTIMEDIA_MODULE 1
 #define ZPL_LIBRTSP_MODULE 1
 #define ZPL_LIBORTP_MODULE 1
+#define ZPL_JRTPLIB_MODULE 1
 #undef ZPL_EXOSIP_MODULE
 #define ZPL_LIBRTMP_MODULE 1
 #define ZPL_LIBJPEG_MODULE 1
