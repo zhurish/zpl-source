@@ -620,7 +620,7 @@ void eloop_cancel(struct eloop *eloop)
 		//	list = eloop->master->background;
 		break;
 	default:
-		zlog_debug(MODULE_DEFAULT, "asdddddddd eloop->type=%d", eloop->type);
+		zlog_debug(MODULE_DEFAULT, "eloop->type=%d", eloop->type);
 		if (eloop->master && eloop->master->mutex)
 			os_mutex_unlock(eloop->master->mutex);
 		return;

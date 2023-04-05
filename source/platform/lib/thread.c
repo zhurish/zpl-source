@@ -626,7 +626,7 @@ void thread_cancel(struct thread *thread)
 		queue = thread->master->background;
 		break;
 	default:
-		zlog_debug(MODULE_DEFAULT, "asdddddddd thread->type=%d", thread->type);
+		zlog_debug(MODULE_DEFAULT, "thread->type=%d", thread->type);
 		if (thread->master->mutex)
 			os_mutex_unlock(thread->master->mutex);
 		return;
