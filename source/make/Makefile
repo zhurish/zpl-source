@@ -66,7 +66,7 @@ endif
 		$(ECHO) "  $$prod"; \
         done
 	@$(ZPLVERB)for prod in $(ZPLEX_DIR); do \
-		$(ECHO) "EX ：$$prod"; \
+		$(ECHO) "EX : $$prod"; \
         done
 	@$(ECHO) "Targets:"
 	@$(ECHO) "  all        build all"
