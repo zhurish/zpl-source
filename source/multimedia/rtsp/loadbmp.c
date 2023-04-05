@@ -590,7 +590,6 @@ int uglShowBitMap(UGL_BMP_ID *bitMapH,int x,int y,char *bmp)
     return (2*i);
 }
 */
-#include "zpl_rtsp_rtp.h"
 
 int test_init()
 {

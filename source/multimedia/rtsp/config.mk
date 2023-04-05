@@ -21,14 +21,12 @@ OBJS += 	\
 			zpl_rtsp_sdp_attr.o \
 			zpl_rtsp_sdp_hdr.o \
 			zpl_rtsp_util.o \
-			zpl_rtsp_rtp.o \
 			zpl_rtsp_transport.o \
 			zpl_rtsp_sdpfmtp.o \
-			zpl_rtsp_adap.o \
 			zpl_rtsp_auth.o \
 			zpl_rtsp_api.o
 endif			
-#OBJS +=list.o   			zpl_rtsp_socket.o \
+#OBJS +=list.o   			zpl_rtsp_socket.o \ 			zpl_rtsp_adap.o \
 #############################################################################
 # LIB
 ###########################################################################

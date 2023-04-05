@@ -5,22 +5,20 @@
 extern "C" {
 #endif
 
-#ifdef ZPL_LIVE555_MODULE
-typedef struct rtsp_srv_s {
+
+typedef struct rtsp_server_s 
+{
+    zpl_taskid_t    t_taskid;    
+    rtsp_srv_t      *rtsp_srv;
     void            *t_master;
-    void            *t_accept;
-    void            *t_read;
-    int             t_sock;
-    zpl_taskid_t    t_taskid;
-}rtsp_srv_t;
-#define RTSP_API extern
-#endif
-    int ortp_create_init(void);
-    int ortp_create_exit(void);
-    RTSP_API int rtsp_module_init(void);
-    RTSP_API int rtsp_module_exit(void);
-    RTSP_API int rtsp_module_task_init(void);
-    RTSP_API int rtsp_module_task_exit(void);
+    //rtsp_session_list rtsp_seslst;
+
+}rtsp_server_t;
+
+extern int rtsp_module_init(void);
+extern int rtsp_module_exit(void);
+extern int rtsp_module_task_init(void);
+extern int rtsp_module_task_exit(void);
 
 
 #ifdef __cplusplus

@@ -13,9 +13,10 @@ extern "C" {
 #include "zplos_include.h"
 #include "lib_include.h"
 
-#ifdef ZPL_LIBRTSP_MODULE
+#ifdef ZPL_LIBMEDIA_MODULE
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
+#include "zpl_media_rtp.h"
 typedef zpl_media_channel_t rtsp_media_t;//服务端指向zpl_media_channel_t， 客户端指向zpl_client_media_t
 #endif
 

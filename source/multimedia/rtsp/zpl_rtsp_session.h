@@ -5,12 +5,8 @@ extern "C" {
 #endif
 
 
+#define RTSP_PACKET_MAX     2048
 
-#define VIDEO_RTP_PORT_DEFAULT            28964
-#define VIDEO_RTCP_PORT_DEFAULT           28965
-
-#define AUDIO_RTP_PORT_DEFAULT            28974
-#define AUDIO_RTCP_PORT_DEFAULT           28975
 
 typedef enum
 {
@@ -22,15 +18,6 @@ typedef enum
 } rtsp_session_state;
 
 
-typedef enum
-{
-    RTP_SESSION_STATE_NONE          = 0,
-    RTP_SESSION_STATE_CLOSE,
-    RTP_SESSION_STATE_START,
-    RTP_SESSION_STATE_STOP,
-} rtp_session_state;
-
-
 typedef int rtp_media_pt;
 
 typedef struct rtsp_session_s rtsp_session_t;
@@ -38,78 +25,18 @@ typedef struct rtsp_session_s rtsp_session_t;
 typedef int(*rtsp_session_call) (rtsp_session_t*, void *);
 
 
-typedef struct rtp_session_s
+typedef struct rtsp_rtp_session_s
 {
-    bool            b_enable;           //使能
-    zpl_socket_t    rtp_sock;           //rtp socket
-    zpl_socket_t    rtcp_sock;          //rtcp socket
-    uint8_t         rtpmode;
-    void            *rtp_session;       //rtp session
-    rtp_session_state rtp_state;        //RTP流状态
-    int             i_trackid;          //视频通道
-    bool            b_issetup;          //视频是否设置
-
-    uint32_t        local_ssrc;
-    uint16_t        local_rtp_port;     //本地RTP端口
-    uint16_t        local_rtcp_port;    //本地RTCP端口
-
+    zpl_bool b_enable;
+    zpl_bool b_video;
+    int32_t         i_trackid;
     rtsp_transport_t    transport;
-    rtp_media_pt    payload;            //音视频编解码ID
-
-    uint16_t        packetization_mode; //封包解包模式
-    uint32_t        user_timestamp;     //用户时间戳
-    uint32_t        timestamp_interval; //用户时间戳间隔
-
-    uint32_t        framerate;          //帧率
-    uint16_t        video_height;       //视频的高度
-    uint16_t        video_width;        //视频的宽度
-    
-    uint32_t        frame_delay_msec;             //发包时间间隔，毫秒
-#ifdef ZPL_WORKQUEUE
-    void            *t_master;
-    void            *t_rtp_read;
-    void            *t_rtcp_read;
-#endif
-    void            *rtsp_parent;
-    int32_t         mchannel;
-    int32_t         mlevel;
-    int32_t         _call_index;       //媒体回调索引, 音视频通道数据发送
-    void            *rtsp_media;            //媒体数据结构
-    void            *rtsp_media_queue;      //媒体接收队列
-
-    int             (*rtp_session_send)(struct rtp_session_s *);
-    int             (*rtp_session_recv)(struct rtp_session_s *);
-}rtp_session_t;
-
-
-typedef struct rtsp_callback_s
-{
-    rtsp_session_call _options_func;
-    rtsp_session_call _describe_func;
-    rtsp_session_call _setup_func;
-    rtsp_session_call _teardown_func;
-    rtsp_session_call _play_func;
-    rtsp_session_call _pause_func;
-    rtsp_session_call _scale_func;
-    rtsp_session_call _set_parameter_func;
-    rtsp_session_call _get_parameter_func;
-
-    void * _options_user;
-    void * _describe_user;
-    void * _setup_user;
-    void * _teardown_user;
-    void * _play_user;
-    void * _pause_user;
-    void * _scale_user;
-    void * _set_parameter_user;
-    void * _get_parameter_user;
-
-}rtsp_callback_t;
+}rtsp_rtp_session_t;
 
 typedef struct rtsp_session_s {
-    struct osker_list_head node;          //指向双链表前后结点的指针
+    NODE node;          //指向双链表前后结点的指针
     bool            bsrv;           //是否为服务端
-    uint32_t        session;        //SESSION ID
+    uint32_t        sesid;        //SESSION ID
     zpl_socket_t    sock;           //rtsp socket
     uint16_t        port;           //客户端端口
     char            *address;       //客户端IP地址
@@ -122,32 +49,39 @@ typedef struct rtsp_session_s {
     int32_t         mchannel;
     int32_t         mlevel;
 
-    rtp_session_t   video_session;
-    rtp_session_t   audio_session;
-    
-#ifdef ZPL_WORKQUEUE
+    rtsp_rtp_session_t  mrtp_session[2];
+    //zpl_mediartp_session_t   *mediartp_session;
+
     void            *t_master;
     void            *t_read;
-#endif
     void            *parent;
-
-    rtsp_callback_t rtsp_callback;
-
-    int cseq;
+    char            *srvname;
+    char            *listen_address;    
+    int             cseq;
     struct sdp_session sdptext; //RTSP 的SDP信息
 
     rtsp_session_state   state;     //RTSP状态
+    rtsp_transport_t    transport;
 
-    void            *mutex;
+    uint8_t         _recv_buf[RTSP_PACKET_MAX];
+    uint8_t         _send_buf[RTSP_PACKET_MAX];
+    uint8_t         *_send_build;
+
+    uint32_t        _recv_offset;
+    uint32_t        _send_offset;
+    int32_t         _recv_length;
+    int32_t         _send_length;
     
 }rtsp_session_t;
 
 typedef struct
 {
-    osker_list_head_t     session_list_head;
-    void            *mutex;
+    LIST     _list_head;
+    void     *mutex;
+    
 } rtsp_session_list;
 
+extern int _rtsp_session_debug;
 
 //#define RTSP_SESSION_LOCK(x)    if(x && x->mutex) os_mutex_lock(x->mutex, OS_WAIT_FOREVER)
 //#define RTSP_SESSION_UNLOCK(x)  if(x && x->mutex) os_mutex_unlock(x->mutex)
@@ -157,29 +91,20 @@ typedef struct
 RTSP_API int rtsp_session_init(void);
 RTSP_API int rtsp_session_exit(void);
 
-RTSP_API zpl_socket_t rtsp_session_listen(const char *lip, uint16_t port);
 RTSP_API int rtsp_session_connect(rtsp_session_t * session, const char *ip, uint16_t port, int tomeout_ms);
 RTSP_API int rtsp_session_close(rtsp_session_t * session);
 RTSP_API int rtsp_session_sendto(rtsp_session_t * session, uint8_t *data, uint32_t length);
-RTSP_API int rtsp_session_recvfrom(rtsp_session_t * session, uint8_t *data, uint32_t length);
 
 
 RTSP_API int rtsp_session_default(rtsp_session_t * newNode, bool srv);
 
-RTSP_API rtsp_session_t * rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *parent);
+RTSP_API rtsp_session_t * rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *ctx, void *master, char *localip);
 RTSP_API int rtsp_session_destroy(rtsp_session_t *session);
-RTSP_API rtsp_session_t * rtsp_session_add(zpl_socket_t sock, const char *address, uint16_t port, void *parent);
-RTSP_API int rtsp_session_del(zpl_socket_t sock);
-RTSP_API int rtsp_session_del_byid(uint32_t sessionid);
-RTSP_API int rtsp_session_cleancache(void);
+
 RTSP_API rtsp_session_t *rtsp_session_lookup(zpl_socket_t sock);
-RTSP_API rtsp_session_t *rtsp_session_lookup_byid(uint32_t sessionid);
 RTSP_API int rtsp_session_count(void);
 RTSP_API int rtsp_session_update_maxfd(void);
 RTSP_API int rtsp_session_foreach(int (*calback)(rtsp_session_t *, void *), void * pVoid);
-
-RTSP_API int rtsp_session_install(rtsp_session_t * newNode, rtsp_method method, rtsp_session_call func, void *p);
-RTSP_API int rtsp_session_callback(rtsp_session_t * newNode, rtsp_method method);
 
 
 #ifdef __cplusplus

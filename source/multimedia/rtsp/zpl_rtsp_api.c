@@ -26,13 +26,12 @@
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
-#include "zpl_rtsp_adap.h"
 #include "zpl_rtsp_server.h"
-#include "zpl_rtsp_rtp.h"
 #endif
+
 #include "zpl_rtsp_api.h"
 
-static rtsp_srv_t *rtsp_srv = NULL;
+static rtsp_server_t rtsp_server;
 
 struct module_list module_list_rtsp = {
 		.module = MODULE_RTSP,
@@ -51,11 +50,11 @@ static int rtsp_main_task(void* argv)
     host_waitting_loadconfig();
     livertsp_server_loop(argv);
 #else
-    if(rtsp_srv)
+    if(rtsp_server.rtsp_srv)
     {
-		rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
+		rtsp_server.rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
         host_waitting_loadconfig();
-        eloop_mainloop(rtsp_srv->t_master);
+        eloop_mainloop(rtsp_server.rtsp_srv->t_master);
     }
 #endif
     return OK;
@@ -82,13 +81,8 @@ int rtsp_module_init(void)
     rtsp_srv = malloc(sizeof(rtsp_srv_t));
     livertsp_server_init(8554, BASEUSAGEENV_BASE_DIR, rtsp_logcb);
 #else
-    rtsp_srv = rtsp_srv_create(NULL, 554, MODULE_RTSP);
-    if(rtsp_srv)
-    {
-        rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
-        rtsp_session_rtp_init();
-        rtsp_session_rtp_start();
-    }
+    rtsp_server.t_master = eloop_master_module_create(MODULE_RTSP);
+    rtsp_server.rtsp_srv = rtsp_srv_create(rtsp_server.t_master, NULL, 554, MODULE_RTSP);
 #endif    
     return OK;
 }
@@ -98,10 +92,9 @@ int rtsp_module_exit(void)
 #ifdef ZPL_LIVE555_MODULE
     livertsp_server_exit();
 #else
-    if(rtsp_srv)
+    if(rtsp_server.rtsp_srv)
     {
-        rtsp_srv_destroy(rtsp_srv);
-        ortp_exit();
+        rtsp_srv_destroy(rtsp_server.rtsp_srv);
     }
 #endif    
     return OK;
@@ -109,10 +102,9 @@ int rtsp_module_exit(void)
 
 int rtsp_module_task_init(void)
 {
-    if(rtsp_srv)
+    if(rtsp_server.rtsp_srv)
     {
-        rtsp_session_media_scheduler_init();
-		rtsp_srv->t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
+		rtsp_server.t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
 								 0, rtsp_main_task, NULL, OS_TASK_DEFAULT_STACK*8);
         return OK;
     }
@@ -121,12 +113,11 @@ int rtsp_module_task_init(void)
 
 int rtsp_module_task_exit(void)
 {
-    if(rtsp_srv)
+    if(rtsp_server.rtsp_srv)
     {
-        rtsp_session_media_scheduler_exit();
-        if(rtsp_srv->t_taskid)
-		    os_task_destroy(rtsp_srv->t_taskid);
-	    rtsp_srv->t_taskid = 0;
+        if(rtsp_server.t_taskid)
+		    os_task_destroy(rtsp_server.t_taskid);
+	    rtsp_server.t_taskid = 0;
     }
     return OK;
 }

@@ -20,8 +20,7 @@
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
-#include "zpl_rtsp_adap.h"
-#include "zpl_rtsp_rtp.h"
+
 
 #if 0
 static int rtsp_client_event_handle(rtsp_client_t *client);

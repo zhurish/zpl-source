@@ -19,7 +19,7 @@ extern "C" {
 typedef struct rtsp_transport_s
 {
     rtsp_transport_rtp_t     proto;      // RTSP_TRANSPORT_xxx
-    rtsp_transport_type_t        type;     // 0-unicast/1-multicast, default multicast
+    rtsp_transport_type_t    type;     // 0-unicast/1-multicast, default multicast
     char        *destination;   // IPv4/IPv6
     char        *source;        // IPv4/IPv6
     uint8_t     layer;          // rtsp setup response only
