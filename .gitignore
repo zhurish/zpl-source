@@ -34,7 +34,6 @@ source/component/onvif/onvifgen/xml/*
 source/component/snmp/*
 source/component/mqtt/examples/*
 source/debug
-source/externsions/
 source/halpal/pal/linux/iproute2-5.9.0/*
 source/halpal/pal/linux/libiproute/*
 source/halpal/pal/linux/tests/*

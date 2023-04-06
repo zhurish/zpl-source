@@ -1,0 +1,9 @@
+[submodule "source/multimedia/live555"]
+	path = source/multimedia/live555
+	url = git@gitee.com:zhurish/live555.git
+[submodule "source/multimedia/pjproject-2.10"]
+	path = source/multimedia/pjproject-2.10
+	url = git@gitee.com:zhurish/pjproject.git
+[submodule "source/externsions/freetype-2.10.0"]
+	path = source/externsions/freetype-2.10.0
+	url = git@gitee.com:zhurish/freetype.git
