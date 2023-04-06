@@ -58,8 +58,8 @@ SHELL := sh
 #
 #
 #
-ifneq ($(TOP_DIR),)
-ROOT_DIR = $(TOP_DIR)
+ifneq ($(ZPLTOP_DIR),)
+ROOT_DIR = $(ZPLTOP_DIR)
 else
 ROOT_DIR = $(CURDIR)
 #$(shell pwd)

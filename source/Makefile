@@ -3,9 +3,9 @@
 #SHELL :=C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe
 SHELL := sh
 #
-export TOP_DIR =$(CURDIR)
-#export TOP_DIR =$(shell pwd)
-#export TOP_DIR=D:\source\SWPlatform\source
+export ZPLTOP_DIR =$(CURDIR)
+#export ZPLTOP_DIR =$(shell pwd)
+#export ZPLTOP_DIR=D:\source\SWPlatform\source
 #
 #
 #
@@ -19,7 +19,7 @@ export TOP_DIR =$(CURDIR)
 #GITVER_FILE=include/gitversion.h
 #include/gitversion.h: 
 #$(GITVER_FILE):
-#	@/bin/sh $(TOP_DIR)/make/version.sh
+#	@/bin/sh $(ZPLTOP_DIR)/make/version.sh
 #	#/usr/bin/perl $(SRC_DIR)/route_types.pl < $(SRC_DIR)/route_types.txt > $@
 #
 #
@@ -237,15 +237,15 @@ usage:
 	@$(ECHO) "  usage      make usage"
 	@$(ECHO) "  help       make help"	
 	@$(ECHO) ""
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 #
 #
 #
 make_prepare:
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 #
 objclean:  
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 	@if test -f os_main.o ; \
 		then \
 		$(RM) os_main.o; \
@@ -260,7 +260,7 @@ objclean:
 	fi
 
 clean: 
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 	@if test -f os_main.o ; \
 		then \
 		$(RM) os_main.o; \
@@ -279,11 +279,11 @@ clean:
 	fi
 	
 obj: 
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 
 #install: obj
 install: config_install
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 	$(INSTALL) -d ${ZPL_BIN_DIR}
 	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
 #
@@ -301,13 +301,13 @@ install: config_install
 	
 #all: install $(TAGET)
 all: 
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 #lib: install
 lib:
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 	
 kernel_module:
-	${MAKE} -C  $(TOP_DIR)/make/ $@ 
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 	
 rebuild: clean all $(TAGET)
 

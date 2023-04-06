@@ -91,7 +91,7 @@ static int zpl_video_region_bitmap_init(zpl_video_size_t vidsize, zpl_uint32 pix
 int zpl_video_region_exit(zpl_video_region_t *region)
 {
 
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
     zpl_video_region_freetype_exit(&region->m_font)
 #endif
     return OK;
@@ -123,7 +123,7 @@ static int zpl_video_region_bitmap_build_pixel(zpl_bitmap_t *vidbitmap, zpl_uint
     return OK;
 }
 
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
 static void zpl_video_region_bitmap_build_draw_key(zpl_bitmap_t *vidbitmap, FT_Bitmap*  bitmap, zpl_uint32 fw, zpl_uint32 fh, 
              FT_Int x,
              FT_Int y,
@@ -187,7 +187,7 @@ static int zpl_video_region_bitmap_build_char(zpl_bitmap_t *vidbitmap, zpl_uint3
                 fontbitmap->m_fontheight, x, y, fontbitmap->m_fontcolor);
     return OK;
 }
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
 static int zpl_video_region_bitmap_build(zpl_bitmap_t *vidbitmap, zpl_uint8 *osdstr, zpl_fontmapaa_t *fontbitmap)
 {
     zpl_uint8 *str = osdstr;
@@ -288,7 +288,7 @@ zpl_video_region_t *zpl_video_region_create(zpl_void *channel, ZPL_VIDEO_REGION_
         else if (type == ZPL_VIDEO_RGN_INTERESTED)
             chn->vdregion[ZPL_VIDEO_RGN_INTERESTED + index] = rgn;
 
-    #ifdef ZPL_FREETYPE_ENABLE
+    #ifdef ZPL_FREETYPE_MODULE
         if(_freetype_library == NULL)
             zpl_video_region_freetype_init(rgn, "./abcd");
     #endif
@@ -372,7 +372,7 @@ int zpl_video_region_setup(zpl_video_region_t *region, zpl_rect_t rect, zpl_uint
     region->m_fontsize = fontsize; //字体大小
     vidsize.width = rect.width;
     vidsize.height = rect.height;
-    #ifdef ZPL_FREETYPE_ENABLE
+    #ifdef ZPL_FREETYPE_MODULE
     if(_freetype_face != NULL)
         region->m_font.m_fontbitmap = _freetype_face;
     #endif

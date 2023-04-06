@@ -1,0 +1,71 @@
+# DO NOT EDIT. This file is generated from Config.src
+#
+#
+
+menu "Externsions Module Config"
+
+config ZPL_EXTERNSIONS_MODULE
+	bool "Externsions Module"
+	default y
+
+config ZPL_ZLIB_MODULE
+	bool "zlib Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE
+	help
+	Build zlib Module.
+
+config ZPL_OPENSSL_MODULE
+	bool "OpenSSL Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE
+	help
+	Build OpenSSL Module.
+
+config ZPL_FREETYPE_MODULE
+	bool "Freetype Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE 
+	help
+	Build Freetype Module.
+
+config ZPL_EXFREETYPE_MODULE
+	bool "Extern Freetype Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE 
+	help
+	Build Extern Freetype Module.
+
+config ZPL_EXFREETYPE_INC_PATH
+	string
+	prompt "Extern Include Path"
+	depends on ZPL_EXFREETYPE_MODULE
+	default "./exDevLib/include"
+	help
+		Specify additional directories searched for header path
+
+config ZPL_EXFREETYPE_LIB_PATH
+	string
+	prompt "Extern Library Path"
+	depends on ZPL_EXFREETYPE_MODULE
+	default "./exDevLib/lib"
+	help
+		Specify additional directories searched for libraries.
+
+
+config ZPL_READLINE_MODULE
+	bool "extern readline Module"
+	default n
+	depends on  ZPL_SHRL_MODULE
+	select ZPL_EXTERNSIONS_MODULE
+	help
+	Build extern readline Module.
+
+config ZPL_LIBNL_MODULE
+	bool "libnl Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE
+	help
+	Build libnl Module.
+	
+endmenu

@@ -20,7 +20,7 @@ static int zpl_media_text_bitmap_build_pixel(zpl_media_bitmap_t *vidbitmap, zpl_
                                              zpl_uint32 y, zpl_uint32 color);
 static int zpl_media_text_bitmap_size(zpl_media_text_t *text);
 
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
 
 static FT_Face    _freetype_face = NULL;
 static FT_Library _freetype_library = NULL;
@@ -89,7 +89,7 @@ static void zpl_freetype_text_draw_key(zpl_media_bitmap_t *vidbitmap, zpl_void *
                                        zpl_uint32 x, zpl_uint32 y, zpl_uint32 color)
 {
     FT_Bitmap *bitmap = (FT_Bitmap *)pdata;
-    FT_UInt i, j, p, q;
+    FT_Int i, j, p, q;
     FT_UInt x_max = x + bitmap->width;
     FT_UInt y_max = y + bitmap->rows;
 
@@ -243,7 +243,8 @@ static int zpl_media_text_bitmap_build_char(zpl_media_bitmap_t *vidbitmap, zpl_u
                                fontbitmap->m_fontheight, x, y, fontbitmap->m_fontcolor);
     return OK;
 }
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
+#if 0
 static int zpl_media_text_bitmap_buildaa(zpl_media_bitmap_t *vidbitmap, zpl_char *osdstr, zpl_media_fontmap_t *fontbitmap)
 {
     FT_Error error = 0;
@@ -284,7 +285,7 @@ static int zpl_media_text_bitmap_buildaa(zpl_media_bitmap_t *vidbitmap, zpl_char
     }
     return OK;
 }
-
+#endif
 static int zpl_media_text_bitmap_build(zpl_media_bitmap_t *vidbitmap, zpl_char *osdstr, zpl_media_fontmap_t *fontbitmap)
 {
     FT_Error error = 0;
@@ -387,7 +388,7 @@ int zpl_media_text_bitmap_show(zpl_media_text_t *text, zpl_bool bshow, zpl_char 
     text->m_font.m_fontcolor = color;     //字体颜色
     if(zpl_media_text_bitmap_size(text) != OK)
         return ERROR;
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
     FT_Error error = 0;
     error = FT_Set_Pixel_Sizes(_freetype_face, pixel, pixel);
     if (error)
@@ -543,7 +544,7 @@ zpl_media_text_t * zpl_media_text_bitmap_create(zpl_char *filename)
         memset(text, 0, sizeof(zpl_media_text_t));
 
         text->m_bitmap.enPixelFormat = BITMAP_PIXEL_FORMAT_RGB_565;
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
         if(zpl_freetype_text_init(&text->m_font, filename) == OK)
         {
             return text;
@@ -558,7 +559,7 @@ zpl_media_text_t * zpl_media_text_bitmap_create(zpl_char *filename)
 
 int zpl_media_text_bitmap_destroy(zpl_media_text_t *text)
 {
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
     if(zpl_freetype_text_exit(&text->m_font) != OK)
     {
         return ERROR;

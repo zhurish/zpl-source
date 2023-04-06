@@ -1,0 +1,20 @@
+openssl:
+	CC=/opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc/bin/mipsel-openwrt-linux-gnu-gcc ./config enable-shared --prefix=/home/zhurish/workspace/SWPlatform/externsions/openssl/mipsl
+
+	edit Makefile
+
+
+zlib:
+	export CC=/opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc/bin/mipsel-openwrt-linux-gnu-gcc
+	./configure --prefix=/home/zhurish/workspace/SWPlatform/externsions/zlib/zlib
+	edit Makefile
+
+	
+openssh:
+    ./configure --prefix=/home/zhurish/workspace//home/zhurish/workspace/SWPlatform/externsions/openssh --without-selinux --without-bsd-auth --without-kerberos5 --without-osfsia --host=mipsel-openwrt-linux CC=/opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc/bin/mipsel-openwrt-linux-gnu-gcc
+
+
+
+
+freetype:
+	./configure --prefix=/home/zhurish/workspace/working/zpl-source/source/externsions/freetype-2.10.0/_install --host=arm-himix200-linux --enable-biarch-config --without-pic --without-zlib --without-bzip2 --without-png --without-harfbuzz CFLAGS="-fPIC"

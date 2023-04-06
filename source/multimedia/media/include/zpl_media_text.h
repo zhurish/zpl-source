@@ -14,8 +14,8 @@ extern "C" {
 
 #include "zpl_media.h"
 
-//#define ZPL_FREETYPE_ENABLE
-#ifdef ZPL_FREETYPE_ENABLE
+//#define ZPL_FREETYPE_MODULE
+#ifdef ZPL_FREETYPE_MODULE
 #include <ft2build.h>
 #include <freetype/freetype.h>
 #endif

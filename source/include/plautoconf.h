@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * ZPLSource version: 
  */
-#define MAKECONF_TIMESTAMP "2023-04-01 20:39:07 CST"
+#define MAKECONF_TIMESTAMP "2023-04-06 21:35:35 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -245,10 +245,11 @@
  */
 #define ZPL_EXTERNSIONS_MODULE 1
 #undef ZPL_ZLIB_MODULE
-#define ZPL_OPENSSL_MODULE 1
+#undef ZPL_OPENSSL_MODULE
+#define ZPL_FREETYPE_MODULE 1
 #undef ZPL_EXFREETYPE_MODULE
-#define ZPL_EXFREETYPE_LIB_PATH ""
 #define ZPL_EXFREETYPE_INC_PATH ""
+#define ZPL_EXFREETYPE_LIB_PATH ""
 #undef ZPL_READLINE_MODULE
 #undef ZPL_LIBNL_MODULE
 

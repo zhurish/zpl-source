@@ -9,7 +9,7 @@
 #include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_bmp.h"
-#ifdef ZPL_FREETYPE_ENABLE
+#ifdef ZPL_FREETYPE_MODULE
 #include <ft2build.h>
 #include <freetype/freetype.h>
 #endif
@@ -648,7 +648,7 @@ int test_init()
         if(bitMapH->bmpData)
         {
             uglBitMapReadD(bitMapH,(char *)bitMapH->bmpData);
-            #ifdef ZPL_FREETYPE_ENABLE
+            #if 0//def ZPL_FREETYPE_MODULE
             ST_Point_T stPoint;
             stPoint.u32X=100;
             stPoint.u32Y=100;
