@@ -66,13 +66,13 @@ rtsp_srv_t *rtsp_srv_create(void *m, const char *ip, uint16_t port, int pro)
         if (ipstack_sock_bind(listen_sock, ip, port) != OK)
         {
             ipstack_close(listen_sock);
-            rtsp_log_error("Can not bind to %s:%d rtsp server sock, error:%s", ip ? ip : "127.0.0.1", port, ipstack_strerror(ipstack_errno));
+            rtsp_log_error("Can not bind to %s:%d rtsp server sock, error:%s", ip ? ip : "0.0.0.0", port, ipstack_strerror(ipstack_errno));
             return NULL;
         }
         if (ipstack_sock_listen(listen_sock, 5) != OK)
         {
             ipstack_close(listen_sock);
-            rtsp_log_error( "Can not bind to %s:%d rtsp server sock, error:%s", ip ? ip : "127.0.0.1", port, ipstack_strerror(ipstack_errno));
+            rtsp_log_error( "Can not bind to %s:%d rtsp server sock, error:%s", ip ? ip : "0.0.0.0", port, ipstack_strerror(ipstack_errno));
             return NULL;
         }
         ipstack_set_nonblocking(listen_sock);
@@ -108,6 +108,7 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
     char address[128];
     zpl_socket_t sock = 0;
     struct ipstack_sockaddr_in client;
+
     rtsp_srv_t *pctx = ELOOP_ARG(ctx);
     pctx->t_accept = NULL;
     if (!ipstack_invalid(pctx->listen_sock))
@@ -128,6 +129,7 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
         ipstack_set_nonblocking(sock);
         sockopt_reuseaddr(sock);
         ipstack_tcp_nodelay(sock, 1);
+
         pctx->t_accept = eloop_add_read(pctx->t_master, rtsp_srv_accept_eloop, pctx, pctx->listen_sock);
         if(rtsp_session_create(sock, address, ntohs(client.sin_port), pctx, pctx->t_master, pctx->listen_address))
             return OK;

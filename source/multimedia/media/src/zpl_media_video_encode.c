@@ -438,9 +438,12 @@ static int zpl_media_video_encode_read_thread(struct thread *thread)
 			#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 			zpl_media_bufqueue_signal(channel, channel_index);
 			#else
+			//zm_msg_debug("======== zpl_media_event_dispatch_signal");
 			zpl_media_event_dispatch_signal(encode->media_channel);
 			#endif
 		}
+		else
+			;//zm_msg_debug("======== zpl_media_event_dispatch_signal get_encode_frame");
 		if (!ipstack_invalid(encode->vencfd))
 			encode->t_read = thread_add_read(encode->t_master, zpl_media_video_encode_read_thread, encode, encode->vencfd);
 

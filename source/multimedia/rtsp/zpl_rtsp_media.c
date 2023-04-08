@@ -48,7 +48,7 @@ int rtsp_session_media_destroy(rtsp_session_t *session)
         return OK;
     
     rtsp_session_media_start(session, zpl_false);
-    zpl_mediartp_session_active(session->mchannel, session->mlevel, session->mfilepath, zpl_false);
+
     zpl_mediartp_session_destroy(session->mchannel, session->mlevel, session->mfilepath);
 
     return OK;
@@ -370,7 +370,6 @@ rtsp_code rtsp_session_media_describe(rtsp_session_t * session, void *pUser, cha
 rtsp_code rtsp_session_media_setup(rtsp_session_t * session, void *pUser)
 {    
     zpl_mediartp_session_setup(session->mchannel, session->mlevel, session->mfilepath);
-    zpl_mediartp_session_active(session->mchannel, session->mlevel, session->mfilepath, zpl_true);
     if(session->bsrv)
         return RTSP_STATE_CODE_200;
     else
@@ -380,7 +379,6 @@ rtsp_code rtsp_session_media_setup(rtsp_session_t * session, void *pUser)
 rtsp_code rtsp_session_media_teardown(rtsp_session_t * session, void *pUser)
 {
     rtsp_session_media_start(session, zpl_false);
-    zpl_mediartp_session_active(session->mchannel, session->mlevel, session->mfilepath, zpl_false);
     zpl_mediartp_session_destroy(session->mchannel, session->mlevel, session->mfilepath);
     if(session->bsrv)
         return RTSP_STATE_CODE_200;

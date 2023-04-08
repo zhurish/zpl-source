@@ -124,7 +124,6 @@ zpl_mediartp_session_t * zpl_mediartp_session_create(int channel, int level, con
 int zpl_mediartp_session_destroy(int channel, int level, const char *path);
 
 zpl_mediartp_session_t *zpl_mediartp_session_lookup(int channel, int level, const char *path);
-int zpl_mediartp_session_active(int channel, int level, const char *path, zpl_bool start);
 int zpl_mediartp_session_setup(int channel, int level, const char *path);
 int zpl_mediartp_session_suspend(int channel, int level, const char *path);
 int zpl_mediartp_session_resume(int channel, int level, const char *path);

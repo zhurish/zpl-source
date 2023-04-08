@@ -80,7 +80,10 @@ typedef int (*OrtpLogFunc)(OrtpLogLevel, char*);
  void ortp_error(const char *fmt,...);
  void ortp_fatal(const char *fmt,...);
  void ortp_debug(const char *fmt,...);
+ void ortp_trace(format, ...);
 #else
+
+#define ortp_trace(format, ...)   ortp_log_out(ORTP_TRACE, __func__, __LINE__, format, ##__VA_ARGS__)
 #define ortp_message(format, ...)   ortp_log_out(ORTP_MESSAGE, __func__, __LINE__, format, ##__VA_ARGS__)
 #define ortp_warning(format, ...)   ortp_log_out(ORTP_WARNING, __func__, __LINE__, format, ##__VA_ARGS__)
 #define ortp_error(format, ...)     ortp_log_out(ORTP_ERROR, __func__, __LINE__, format, ##__VA_ARGS__)

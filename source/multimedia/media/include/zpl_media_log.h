@@ -48,8 +48,8 @@ extern "C" {
 extern zpl_uint32   _video_debug;
 */
 #ifdef ZPL_HISIMPP_HWDEBUG
-#define ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL		300
-#define ZPL_VIDEO_VIDHAL_DEBUG_SEND_DETAIL		300
+#define ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL		1000
+#define ZPL_VIDEO_VIDHAL_DEBUG_SEND_DETAIL		1000
 #endif
 
 typedef enum 

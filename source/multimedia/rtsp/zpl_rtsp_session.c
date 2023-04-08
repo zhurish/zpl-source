@@ -465,7 +465,7 @@ static int rtsp_session_handle_describe(rtsp_session_t *session)
         sdplength += sprintf((char*)(buftmp + sdplength), "o=%s %lu %u IN IPV4 0.0.0.0\r\n", session->srvname, time(NULL), rand());
         sdplength += sprintf((char*)(buftmp + sdplength), "c=IN IPV4 %s\r\n", session->listen_address ? session->listen_address : "0.0.0.0");
         sdplength += sprintf((char*)(buftmp + sdplength), "a=control:*\r\n");
-        sdplength += sprintf((char*)(buftmp + sdplength), "t=0 0\r\n");
+        //sdplength += sprintf((char*)(buftmp + sdplength), "t=0 0\r\n");
  
         //code = rtsp_session_media_describe(session, NULL);
         //sdplength += rtsp_session_media_build_sdptext(session, buftmp + sdplength);
@@ -511,14 +511,16 @@ static int rtsp_session_handle_setup(rtsp_session_t *session)
 
             if (session->transport.proto == RTSP_TRANSPORT_RTP_UDP)
             {
-                char *addr[64];
                 int rtp_port = 0, rtcp_port = 0;
                 
                 zpl_mediartp_session_remoteport(session->mchannel, session->mlevel, session->mfilepath, 
-                    session->transport.destination, session->transport.rtp.unicast.rtp_port, session->transport.rtp.unicast.rtcp_port);
+                    session->transport.destination?session->transport.destination:session->address, 
+                    session->transport.rtp.unicast.rtp_port, session->transport.rtp.unicast.rtcp_port);
 
-                zpl_mediartp_session_get_localport(session->mchannel, session->mlevel, session->mfilepath, addr, &rtp_port, &rtcp_port);
-
+                zpl_mediartp_session_get_localport(session->mchannel, session->mlevel, session->mfilepath, NULL, &rtp_port, &rtcp_port);
+                
+                //zm_msg_debug("======== zpl_mediartp_session_localport %s", my_session->local_address);  
+                zpl_mediartp_session_localport(session->mchannel, session->mlevel, session->mfilepath, session->listen_address, rtp_port, rtcp_port);
                 length += sprintf((char*)(session->_send_build + length), "Transport: %s;server_port=%d-%d\r\n",
                                   session->sdptext.header.Transport,
                                   rtp_port, rtcp_port);
@@ -763,6 +765,8 @@ static int rtsp_session_event_handle(rtsp_session_t *session)
             length += sprintf((char*)(session->_send_build + length), "\r\n");
             rtsp_session_sendto(session, session->_send_build, length);
         }
+        if(RTSP_DEBUG_FLAG(_rtsp_session_debug , DEBUG) && RTSP_DEBUG_FLAG(_rtsp_session_debug , DETAIL))
+            rtsp_log_debug("\r\nS -> C(ret=%d):\r\n%s\r\n", ret, session->_send_build);
         return ERROR;
     }
     switch (session->sdptext.method)

@@ -63,7 +63,7 @@ static void payload_type_changed(RtpSession *session, PayloadType *pt){
 	rtp_session_set_time_jump_limit(session,session->rtp.time_jump);
 	if (pt->type==PAYLOAD_VIDEO){
 		session->permissive=TRUE;
-		ortp_message("Using permissive algorithm");
+		ortp_debug("Using permissive algorithm");
 	}
 	else session->permissive=FALSE;
 }
@@ -85,7 +85,6 @@ static void wait_point_uninit(WaitPoint *wp){
 static void wait_point_wakeup_at(WaitPoint *wp, uint32_t t, bool_t dosleep){
 	wp->time=t;
 	wp->wakeup=TRUE;
-	ortp_message("Using wait_point_wakeup_at");
 	if (dosleep) ortp_cond_wait(&wp->cond,&wp->lock);
 }
 
@@ -496,7 +495,7 @@ void rtp_session_set_rtcp_report_interval(RtpSession *session, int value_ms) {
 }
 
 void rtp_session_set_target_upload_bandwidth(RtpSession *session, int target_bandwidth) {
-	ortp_message("RtpSession: target upload bandwidth set to %i", target_bandwidth);
+	ortp_debug("RtpSession: target upload bandwidth set to %i", target_bandwidth);
 	session->target_upload_bandwidth = target_bandwidth;
 }
 int rtp_session_get_target_upload_bandwidth(RtpSession *session) {
@@ -759,7 +758,7 @@ void rtp_session_update_payload_type(RtpSession *session, int paytype){
 	PayloadType *pt=rtp_profile_get_payload(session->rcv.profile,paytype);
 	if (pt!=0){
 		session->hw_recv_pt=paytype;
-		ortp_message ("payload type changed to %i(%s) !",
+		ortp_debug ("payload type changed to %i(%s) !",
 				 paytype,pt->mime_type);
 		payload_type_changed(session,pt);
 	}else{
@@ -1147,7 +1146,7 @@ ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, u
 					 send_ts -
 					 session->rtp.snd_ts_offset) +
 					session->rtp.snd_time_offset;
-		ortp_message("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);
+		//ortp_debug("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);
 		if (TIME_IS_STRICTLY_NEWER_THAN (packet_time, sched->time_))
 		{
 			wait_point_wakeup_at(&session->snd.wp,packet_time,(session->flags & RTP_SESSION_BLOCKING_MODE)!=0);
@@ -1365,7 +1364,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 		}
 		if (session->flags & RTP_SESSION_SCHEDULED) {
 			session->rtp.rcv_time_offset = sched->time_;
-			ortp_message("setting srcv_time_offset=%i",session->rtp.snd_time_offset);
+			//ortp_debug("setting srcv_time_offset=%i",session->rtp.snd_time_offset);
 		}
 		rtp_session_unset_flag (session,RTP_SESSION_RECV_NOT_STARTED);
 	}else{
@@ -1403,7 +1402,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 		queue_t *q = &session->rtp.rq;
 		if (qempty(q))
 		{
-			ortp_debug ("Queue is empty.");
+			//ortp_debug ("Queue is empty.");
 			goto end;
 		}
 		rtp = (rtp_header_t *) qfirst(q)->b_rptr;
@@ -1438,13 +1437,13 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 				OrtpEventData *evdata;
 
 				mp = fec_mp;
-				ortp_message("Source packet reconstructed : SeqNum = %d ; TimeStamp = %u" ,(int)rtp_get_seqnumber(mp), (unsigned int)rtp_get_timestamp(mp));
+				//ortp_debug("Source packet reconstructed : SeqNum = %d ; TimeStamp = %u" ,(int)rtp_get_seqnumber(mp), (unsigned int)rtp_get_timestamp(mp));
 				ev = ortp_event_new(ORTP_EVENT_SOURCE_PACKET_RECONSTRUCTED);
 				evdata = ortp_event_get_data(ev);
 				evdata->info.reconstructed_packet_seq_number = rtp_get_seqnumber(mp);
 				rtp_session_dispatch_event(session, ev);
 			} else {
-				ortp_message("Unable to reconstruct source packet : SeqNum = %d", (int)(session->rtp.rcv_last_seq + 1));
+				//ortp_debug("Unable to reconstruct source packet : SeqNum = %d", (int)(session->rtp.rcv_last_seq + 1));
 				if(!qempty(&session->rtp.rq) && mp != NULL) remq(&session->rtp.rq, mp);
 			}
 		} else {
@@ -1462,7 +1461,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 		session->stats.recv += msgsize;
 		rtp = (rtp_header_t *) mp->b_rptr;
 		packet_ts = rtp_header_get_timestamp(rtp);
-		ortp_debug("Returning mp with ts=%i", packet_ts);
+		//ortp_debug("Returning mp with ts=%i", packet_ts);
 		/* check for payload type changes */
 		if (session->rcv.pt != rtp->paytype)
 		{
@@ -1499,7 +1498,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 	}
 	else
 	{
-		ortp_debug ("No mp for timestamp queried");
+		//ortp_debug ("No mp for timestamp queried");
 	}
 
 	rtp_session_rtcp_process_recv(session);
@@ -1516,7 +1515,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 					 user_ts -
 					 session->rtp.rcv_query_ts_offset) +
 			session->rtp.rcv_time_offset;
-		ortp_debug ("rtp_session_recvm_with_ts: packet_time=%i, time=%i",packet_time, sched->time_);
+		//ortp_debug ("rtp_session_recvm_with_ts: packet_time=%i, time=%i",packet_time, sched->time_);
 
 		if (TIME_IS_STRICTLY_NEWER_THAN (packet_time, sched->time_))
 		{
@@ -2893,7 +2892,7 @@ int rtp_session_splice(RtpSession *session, RtpSession *to_session){
 	}
 	session->spliced_session = to_session;
 	to_session->is_spliced = TRUE;
-	ortp_message("rtp_session_splice(): session %p splicing to %p", session, to_session);
+	ortp_debug("rtp_session_splice(): session %p splicing to %p", session, to_session);
 	return 0;
 }
 
@@ -2904,7 +2903,7 @@ int rtp_session_unsplice(RtpSession *session, RtpSession *to_session){
 	}
 	session->spliced_session = NULL;
 	to_session->is_spliced = FALSE;
-	ortp_message("rtp_session_unsplice(): session %p no longer splicing to %p", session, to_session);
+	ortp_debug("rtp_session_unsplice(): session %p no longer splicing to %p", session, to_session);
 	return 0;
 }
 

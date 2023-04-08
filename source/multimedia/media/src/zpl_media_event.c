@@ -218,7 +218,7 @@ static int media_event_task(void *p)
 static int zpl_media_event_dispatch_handle(zpl_media_event_t *event)
 {
     zpl_media_channel_t *mchannel = event->event_data;
-    while(mchannel && mchannel->frame_queue)
+    if(mchannel && mchannel->frame_queue)
     {
 	    zpl_skbqueue_async_wait_distribute(mchannel->frame_queue, 5, zpl_media_client_foreach, NULL);
     }

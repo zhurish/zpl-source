@@ -167,9 +167,9 @@ static int set_multicast_group(ortp_socket_t sock, const char *addr){
 				mreq.imr_interface.s_addr = INADDR_ANY;
 				err = setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (SOCKET_OPTION_VALUE) &mreq, sizeof(mreq));
 				if (err < 0){
-					ortp_warning ("Fail to join address group: %s.", getSocketError());
+					ortp_error ("Fail to join address group: %s.", getSocketError());
 				} else {
-					ortp_message ("RTP socket [%i] has joined address group [%s]",sock, addr);
+					 ortp_debug ("RTP socket [%i] has joined address group [%s]",sock, addr);
 				}
 			}
 		break;
@@ -181,9 +181,9 @@ static int set_multicast_group(ortp_socket_t sock, const char *addr){
 				mreq.ipv6mr_interface = 0;
 				err = setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, (SOCKET_OPTION_VALUE)&mreq, sizeof(mreq));
 				if (err < 0 ){
-					ortp_warning ("Fail to join address group: %s.", getSocketError());
+					ortp_error ("Fail to join address group: %s.", getSocketError());
 				} else {
-					ortp_message ("RTP socket 6 [%i] has joined address group [%s]",sock, addr);
+					ortp_debug ("RTP socket 6 [%i] has joined address group [%s]",sock, addr);
 				}
 			}
 		break;
@@ -222,7 +222,7 @@ static ortp_socket_t create_and_bind(const char *addr, int *port, int *sock_fami
     if (addr == NULL)
     {
         struct sockaddr_in *saddr4 = (struct sockaddr_in *)&saddr;
-        saddr4->sin_addr.s_addr = inet_addr("127.0.0.1");
+        saddr4->sin_addr.s_addr = inet_addr("0.0.0.0");
         saddr4->sin_family = AF_INET;
         saddr4->sin_port = htons(*port);
     }
@@ -424,10 +424,10 @@ rtp_session_set_local_addr (RtpSession * session, const char * addr, int rtp_por
 		rtp_session_set_multicast_ttl( session, -1 );
 		rtp_session_set_multicast_loopback( session, -1 );
 		if (session->use_pktinfo) rtp_session_set_pktinfo(session, TRUE);
-		ortp_message("RtpSession bound to [%s] ports [%i] [%i]", addr?addr:"127.0.0.1", rtp_port, rtcp_port);
+		ortp_debug("RtpSession bound to [%s] ports [%i] [%i]", addr?addr:"0.0.0.0", rtp_port, rtcp_port);
 		return 0;
 	}
-	ortp_error("Could not bind RTP socket to %s on port %i for session [%p]",addr?addr:"127.0.0.1",rtp_port,session);
+	ortp_error("Could not bind RTP socket to %s on port %i for session [%p]",addr?addr:"0.0.0.0",rtp_port,session);
 	return -1;
 }
 
@@ -436,7 +436,7 @@ static void _rtp_session_recreate_sockets(RtpSession *session){
 	int err = ortp_sockaddr_to_address((struct sockaddr *)&session->rtp.gs.loc_addr, session->rtp.gs.loc_addrlen, addr, sizeof(addr), NULL);
 	if (err != 0) return;
 	/*re create and bind sockets as they were done previously*/
-	ortp_message("RtpSession %p is going to re-create its socket.", session);
+	ortp_debug("RtpSession %p is going to re-create its socket.", session);
 	rtp_session_set_local_addr(session, addr, session->rtp.gs.loc_port, session->rtcp.gs.loc_port);
 }
 
@@ -919,9 +919,9 @@ _rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, 
 			session->flags&=~RTCP_SOCKET_CONNECTED;
 		}
 
-		ortp_message("RtpSession [%p] sending to rtp %s rtcp %s %s", session, rtp_printable_addr, rtcp_printable_addr, is_aux ? "as auxiliary destination" : "");
+		ortp_debug("RtpSession [%p] sending to rtp %s rtcp %s %s", session, rtp_printable_addr, rtcp_printable_addr, is_aux ? "as auxiliary destination" : "");
 	} else {
-		ortp_message("RtpSession [%p] sending to rtp %s %s", session, rtp_printable_addr, is_aux ? "as auxiliary destination" : "");
+		ortp_debug("RtpSession [%p] sending to rtp %s %s", session, rtp_printable_addr, is_aux ? "as auxiliary destination" : "");
 	}
 	/*Apply DSCP setting. On windows the destination address is required for doing this.*/
 	rtp_session_set_dscp(session, -1);
@@ -1334,7 +1334,7 @@ int rtp_session_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags,
 	}else{
 		ortp_socket_t sockfd = rtp_session_get_socket(session, is_rtp || session->rtcp_mux);
 		if (sockfd != (ortp_socket_t)-1){
-			ret=_ortp_sendto(session, is_rtp, m, flags, destaddr, destlen);
+			ret=_ortp_sendto(session, is_rtp, m, flags, destaddr, destlen);	
 		}else{
 			ret = -1;
 		}
@@ -1435,6 +1435,7 @@ static void log_send_error(RtpSession *session, const char *type, mblk_t *m, str
 	const char *errstr = getSocketError();
 	if(destaddr && destlen)
 		ortp_sockaddr_to_print_address(destaddr, destlen, printable_ip_address, sizeof(printable_ip_address));
+	if(*type == 1)	
 	ortp_error ("RtpSession [%p] error sending [%s] packet [%p] to %s: %s [%d]",
 		session, type, m, printable_ip_address, errstr, errnum);
 }
@@ -1561,7 +1562,7 @@ rtp_session_rtcp_send (RtpSession * session, mblk_t * m){
 			OrtpAddress *addr=(OrtpAddress*)elem->data;
 			rtp_session_rtcp_sendto(session,m,(struct sockaddr*)&addr->addr,addr->len,TRUE);
 		}
-	}else ortp_message("Not sending rtcp report, rtcp disabled.");
+	}else ortp_warning("Not sending rtcp report, rtcp disabled.");
 	freemsg(m);
 	return error;
 }
@@ -2250,7 +2251,7 @@ int rtp_session_update_remote_sock_addr(RtpSession * session, mblk_t * mp, bool_
 
 		ortp_sockaddr_to_print_address((struct sockaddr *)rem_addr, *rem_addrlen, current_ip_address, sizeof(current_ip_address));
 		ortp_sockaddr_to_print_address((struct sockaddr *)&mp->net_addr, mp->net_addrlen, new_ip_address, sizeof(new_ip_address));
-		ortp_message("Switching %s destination from %s to %s for session [%p]"
+		ortp_warning("Switching %s destination from %s to %s for session [%p]"
 			   , socket_type
 			   , current_ip_address
 			   , new_ip_address
@@ -2284,7 +2285,7 @@ void rtp_session_use_local_addr(RtpSession * session, const char * rtp_local_add
         session->rtcp.gs.used_loc_addrlen = 0;
         memset(&session->rtcp.gs.used_loc_addr, 0, sizeof(session->rtcp.gs.used_loc_addr)); // To not let tracks on memory
     }
-    ortp_message("RtpSession set sources to [%s] and [%s]",rtp_local_addr, rtcp_local_addr );
+    ortp_debug("RtpSession set sources to [%s] and [%s]",rtp_local_addr, rtcp_local_addr );
 }
 #if 0
 void rtp_session_use_local_addr(RtpSession * session, const char * rtp_local_addr, const char * rtcp_local_addr) {
