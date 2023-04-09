@@ -402,132 +402,8 @@ DEFUN (media_channel_multicast_disable,
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-
-DEFUN (show_video_channel_sadadinfo,
-		show_video_channel_sadadinfo_cmd,
-		"show rtp sched" ,
-		SHOW_STR
-		MEDIA_CHANNEL_STR
-		"Information\n")
-{
-	rtp_sched_test();
-	return CMD_SUCCESS;
-}
 #endif
 
-
-static int zpl_media_channel_extradatasadsa_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index,
-												 int brief, struct vty *vty)
-{
-	zpl_media_channel_t *chn = NULL;
-	zpl_video_extradata_t lextradata;
-	zpl_char hexformat[2048];
-	char *media_typestr[] = {"unknow", "video", "audio"};
-
-	chn = zpl_media_channel_lookup(channel, channel_index);
-	if (chn && chn->media_type == ZPL_MEDIA_VIDEO)
-	{
-		if (channel != ZPL_MEDIA_CHANNEL_NONE && channel_index != ZPL_MEDIA_CHANNEL_TYPE_NONE)
-		{
-			if (chn->channel == channel && chn->channel_index == channel_index)
-			{
-				memset(&lextradata, 0, sizeof(zpl_video_extradata_t));
-				zpl_media_channel_extradata_get(chn, &lextradata);
-				vty_out(vty, "channel            : %d/%d%s", chn->channel, chn->channel_index, VTY_NEWLINE);
-				vty_out(vty, " type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);
-				if (lextradata.fPPSSize)
-				{
-					vty_out(vty, " PPS Len           : %d%s", lextradata.fPPSSize, VTY_NEWLINE);
-					if (brief)
-					{
-						memset(hexformat, 0, sizeof(hexformat));
-						os_loghex(hexformat, sizeof(hexformat), lextradata.fPPS, lextradata.fPPSSize);
-						vty_out(vty, "  PPS Date         : %s%s", hexformat, VTY_NEWLINE);
-					}
-				}
-				if (lextradata.fSPSSize)
-				{
-					vty_out(vty, " SPS Len           : %d%s", lextradata.fSPSSize, VTY_NEWLINE);
-					if (brief)
-					{
-						memset(hexformat, 0, sizeof(hexformat));
-						os_loghex(hexformat, sizeof(hexformat), lextradata.fSPS, lextradata.fSPSSize);
-						vty_out(vty, "  SPS Date         : %s%s", hexformat, VTY_NEWLINE);
-					}
-				}
-				if (lextradata.fVPSSize)
-				{
-					vty_out(vty, " VPS Len           : %d%s", lextradata.fVPSSize, VTY_NEWLINE);
-					if (brief)
-					{
-						memset(hexformat, 0, sizeof(hexformat));
-						os_loghex(hexformat, sizeof(hexformat), lextradata.fVPS, lextradata.fVPSSize);
-						vty_out(vty, "  VPS Date         : %s%s", hexformat, VTY_NEWLINE);
-					}
-				}
-				if (lextradata.fSEISize)
-				{
-					vty_out(vty, " SEI Len           : %d%s", lextradata.fSEISize, VTY_NEWLINE);
-					if (brief)
-					{
-						memset(hexformat, 0, sizeof(hexformat));
-						os_loghex(hexformat, sizeof(hexformat), lextradata.fSEI, lextradata.fSEISize);
-						vty_out(vty, "  SEI Date         : %s%s", hexformat, VTY_NEWLINE);
-					}
-				}
-				return 0;
-			}
-		}
-		else
-		{
-			memset(&lextradata, 0, sizeof(zpl_video_extradata_t));
-			zpl_media_channel_extradata_get(chn, &lextradata);
-			vty_out(vty, "channel            : %d/%d%s", chn->channel, chn->channel_index, VTY_NEWLINE);
-			vty_out(vty, " type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);
-			if (lextradata.fPPSSize)
-			{
-				vty_out(vty, " PPS Len           : %d%s", lextradata.fPPSSize, VTY_NEWLINE);
-				if (brief)
-				{
-					memset(hexformat, 0, sizeof(hexformat));
-					os_loghex(hexformat, sizeof(hexformat), lextradata.fPPS, lextradata.fPPSSize);
-					vty_out(vty, "  PPS Date         : %s%s", hexformat, VTY_NEWLINE);
-				}
-			}
-			if (lextradata.fSPSSize)
-			{
-				vty_out(vty, " SPS Len           : %d%s", lextradata.fSPSSize, VTY_NEWLINE);
-				if (brief)
-				{
-					memset(hexformat, 0, sizeof(hexformat));
-					os_loghex(hexformat, sizeof(hexformat), lextradata.fSPS, lextradata.fSPSSize);
-					vty_out(vty, "  SPS Date         : %s%s", hexformat, VTY_NEWLINE);
-				}
-			}
-			if (lextradata.fVPSSize)
-			{
-				vty_out(vty, " VPS Len           : %d%s", lextradata.fVPSSize, VTY_NEWLINE);
-				if (brief)
-				{
-					memset(hexformat, 0, sizeof(hexformat));
-					os_loghex(hexformat, sizeof(hexformat), lextradata.fVPS, lextradata.fVPSSize);
-					vty_out(vty, "  VPS Date         : %s%s", hexformat, VTY_NEWLINE);
-				}
-			}
-			if (lextradata.fSEISize)
-			{
-				vty_out(vty, " SEI Len           : %d%s", lextradata.fSEISize, VTY_NEWLINE);
-				if (brief)
-				{
-					memset(hexformat, 0, sizeof(hexformat));
-					os_loghex(hexformat, sizeof(hexformat), lextradata.fSEI, lextradata.fSEISize);
-					vty_out(vty, "  SEI Date         : %s%s", hexformat, VTY_NEWLINE);
-				}
-			}
-		}
-	}
-	return OK;
-}
 
 DEFUN (show_video_channel_extradata_info,
 		show_video_channel_extradata_info_cmd,
@@ -540,19 +416,33 @@ DEFUN (show_video_channel_extradata_info,
 		"Extradata Configure\n")
 {
 	int ret = ERROR;
-	int brief = 0;
-	ZPL_MEDIA_CHANNEL_E channel = -1;
-	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
-	VTY_GET_INTEGER("channel",channel, argv[0]);
-	if(strstr(argv[1],"main"))
-		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
-	else if(strstr(argv[1],"sub"))
-		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
-	if(argc >= 3)
+	/*int brief = 1;
+	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_NONE;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_NONE;
+	if(argv[0][0] != 'b')
+	{
+		VTY_GET_INTEGER("channel",channel, argv[0]);
+		if(strstr(argv[1],"main"))
+			channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+		else if(strstr(argv[1],"sub"))
+			channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	}
+	else
 		brief = 1;	
-	ret = zpl_media_channel_extradatasadsa_show( channel,  channel_index,  brief, vty);
+	if(argc >= 3)
+		brief = 1;	*/
+	//ret = zpl_media_channel_extradata_show( channel, channel_index, brief, (struct vty *)vty);
+	ret = zpl_media_channel_extradata_show(vty);
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
+
+ALIAS (show_video_channel_extradata_info,
+		show_video_channel_extradata_brief_cmd,
+		"show media channel extradata (brief|)" ,
+		SHOW_STR
+		MEDIA_CHANNEL_STR
+		"Extradata Configure\n"
+		"Brief Information\n")
 
 ALIAS (show_video_channel_extradata_info,
 		show_video_channel_extradata_info_brief_cmd,
@@ -754,7 +644,6 @@ static void cmd_mediaservice_init(void)
 #ifdef ZPL_LIBORTP_MODULE
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_disable_cmd);
-		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &show_video_channel_sadadinfo_cmd);
 #endif
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_cmd);
 	}
@@ -771,8 +660,8 @@ void cmd_video_init(void)
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_info_cmd);
 
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_brief_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_brief_cmd);
-	
 }
 
 #endif

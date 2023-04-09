@@ -277,12 +277,17 @@ int zpl_media_channel_nalu_show(H264_NALU_T *nalu)
             sprintf(idc_str, "IDC-%d", nalu->nal_idc);
             break;  
         }
-        /*
-        zlog_debug(MODULE_ZPLMEDIA, "-------- NALU Table ------+---------+");
-        zlog_debug(MODULE_ZPLMEDIA, "       IDC |  TYPE |   LEN   |");
-        zlog_debug(MODULE_ZPLMEDIA, "---------+--------+-------+---------+");
-        zlog_debug(MODULE_ZPLMEDIA, " %7s| %6s| %8d|", idc_str, type_str, nalu->len-nalu->hdr_len);
-        */
+        switch (nalu->nal_unit_type)
+        {
+            case NALU_TYPE_SEI:
+            case NALU_TYPE_SPS:
+            case NALU_TYPE_PPS:
+            zlog_debug(MODULE_ZPLMEDIA, "-------- NALU Table ------+---------+");
+            zlog_debug(MODULE_ZPLMEDIA, "       IDC |  TYPE |   LEN   |");
+            zlog_debug(MODULE_ZPLMEDIA, "---------+--------+-------+---------+");
+            zlog_debug(MODULE_ZPLMEDIA, " %7s| %6s| %8d|", idc_str, type_str, nalu->len-nalu->hdr_len);
+            break;
+        }
     }
     return 0;
 }

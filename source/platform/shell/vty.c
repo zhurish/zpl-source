@@ -2771,12 +2771,12 @@ void vty_tty_init(const char *tty)
 		}
 		ipstack_fd(ttyfd) = g_vtyshell.ttycom.fd;
 	}
-	else
+	else if(_global_host.console_enable)
 	{
 		ttyfd = ipstack_init(IPSTACK_OS, STDIN_FILENO);
 		ipstack_fd(ttyfd) = g_vtyshell.ttycom.fd = STDIN_FILENO;
 	}
-	if (g_vtyshell.init == 1)
+	if (_global_host.console_enable && g_vtyshell.init == 1)
 	{
 		if (g_vtyshell.console_vty == NULL)
 			g_vtyshell.console_vty = vty_console_new(tty, ttyfd);
@@ -2799,9 +2799,9 @@ void vty_tty_init(const char *tty)
 				}
 			}
 			g_vtyshell.console_vty->priv = &g_vtyshell;
-			g_vtyshell.init = 2;
 		}
 	}
+	g_vtyshell.init = 2;
 }
 /* Accept connection from the network. */
 static int vty_accept(struct eloop *thread)

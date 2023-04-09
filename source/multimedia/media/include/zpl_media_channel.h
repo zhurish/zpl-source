@@ -98,8 +98,10 @@ typedef struct zpl_media_channel_s
     os_mutex_t                  *_mutex;
 }zpl_media_channel_t;
 
-#define ZPL_MEDIA_CHANNEL_LOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_lock(((zpl_media_channel_t*)m)->_mutex, OS_WAIT_FOREVER)
-#define ZPL_MEDIA_CHANNEL_UNLOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_unlock(((zpl_media_channel_t*)m)->_mutex)
+//#define ZPL_MEDIA_CHANNEL_LOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_lock(((zpl_media_channel_t*)m)->_mutex, OS_WAIT_FOREVER)
+//#define ZPL_MEDIA_CHANNEL_UNLOCK(m)  if(((zpl_media_channel_t*)m) && ((zpl_media_channel_t*)m)->_mutex) os_mutex_unlock(((zpl_media_channel_t*)m)->_mutex)
+#define ZPL_MEDIA_CHANNEL_LOCK(m)  
+#define ZPL_MEDIA_CHANNEL_UNLOCK(m) 
 
 #define zm_get_video_encode(m)             (((zpl_media_channel_t*)m)->media_param.video_media.halparam)
 #define zm_get_audio_encode(m)             (((zpl_media_channel_t*)m)->media_param.audio_media.halparam)
@@ -198,7 +200,8 @@ extern int zpl_media_channel_video_gopmode_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_
 
 
 #ifdef ZPL_SHELL_MODULE
-int zpl_media_channel_extradata_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int brief, void *);
+//int zpl_media_channel_extradata_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int brief, struct vty *vty);
+int zpl_media_channel_extradata_show(void *pvoid);
 int zpl_media_channel_show(void *pvoid);
 #endif
 

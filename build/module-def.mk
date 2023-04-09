@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ZPLSource version: 
-# Fri Apr  7 23:17:03 2023
+# Sun Apr  9 21:22:03 2023
 #
 CONFIG_HAVE_DOT_CONFIG=true
 

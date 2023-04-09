@@ -231,7 +231,11 @@
         "upnp_igd.h": "c",
         "zpl_rtsp_ortp.h": "c",
         "loadbmp.h": "c",
-        "zpl_media_text.h": "c"
+        "zpl_media_text.h": "c",
+        "h264_packetizer.h": "c",
+        "bitset": "c",
+        "zpl_media_file.h": "c",
+        "assert.h": "c"
     },
     "editor.defaultFormatter": "jbenden.c-cpp-flylint",
     "editor.formatOnPaste": false,
