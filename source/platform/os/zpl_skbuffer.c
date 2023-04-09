@@ -44,6 +44,8 @@ zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem
 		os_memset(queue, 0, sizeof(zpl_skbqueue_t));
 		if(name)
 			queue->name = strdup(name);
+		if(max_num)
+			ZPL_SET_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
 		queue->max_num = max_num;
 		queue->mutex = os_mutex_name_create(os_name_format("%s-mutex",name));
 		if (sem)
@@ -319,7 +321,7 @@ int zpl_skbqueue_async_wait_distribute(zpl_skbqueue_t *queue, int sync_wait_ms, 
 		{
 			lstDelete(&queue->list, (NODE *)skbuf);
 			(func)(skbuf, p);
-			lstAdd(&queue->ulist, skbuf);
+			lstAdd(&queue->ulist, (NODE *)skbuf);
 		}
 	}
 	if (queue->mutex)
@@ -353,11 +355,14 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbuf_type_t skbtype, zpl_skb
 		assert(queue);
 		if (queue->mutex)
 			os_mutex_lock(queue->mutex, OS_WAIT_FOREVER);
-		if (lstCount(&queue->list) >= queue->max_num)
-		{
-			if (queue->mutex)
-				os_mutex_unlock(queue->mutex);
-			return NULL;
+		if(ZPL_TST_BIT(queue->queue_flag, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX))
+		{	
+			if (lstCount(&queue->list) >= queue->max_num)
+			{
+				if (queue->mutex)
+					os_mutex_unlock(queue->mutex);
+				return NULL;
+			}
 		}
 		for (skbuf = (zpl_skbuffer_t *)lstFirst(&queue->ulist); skbuf != NULL;
 			skbuf = (zpl_skbuffer_t *)lstNext(&node))
@@ -367,12 +372,6 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbuf_type_t skbtype, zpl_skb
 			{
 				lstDelete(&queue->ulist, (NODE *)skbuf);
 				zpl_skbuffer_init_default(skbuf, skbtype, 0);
-				/*
-				skbuf->skbtype = skbtype;
-				skbuf->skb_start = ZPL_SKB_START_OFFSET;
-				skbuf->skb_len = 0;
-				skbuf->reference = 0;
-				skbuf->skb_timetick = 0;*/
 				break;
 			}
 		}
@@ -384,14 +383,6 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbuf_type_t skbtype, zpl_skb
 		{
 			memset(skbuf, 0, sizeof(zpl_skbuffer_t));
 			zpl_skbuffer_init_default(skbuf, skbtype, len);
-			/*
-			skbuf->skbtype = skbtype;
-			skbuf->skb_maxsize = (len); //buffer 的长度
-			skbuf->skb_start = ZPL_SKB_START_OFFSET;
-			skbuf->skb_len = 0;
-			skbuf->reference = 0;
-			skbuf->skb_timetick = 0;
-			*/
 			skbuf->skb_data = os_malloc(skbuf->skb_maxsize);				//buffer
 			if (skbuf->skb_data == NULL)
 			{
@@ -422,8 +413,9 @@ zpl_skbuffer_t *zpl_skbuffer_clone(zpl_skbqueue_t *queue, zpl_skbuffer_t *skbuf)
 		skbuftmp->skb_timetick = skbuf->skb_timetick; //时间戳 毫秒
 		skbuftmp->skb_len = skbuf->skb_len;			//当前缓存帧的长度
 		skbuftmp->skb_maxsize = skbuf->skb_maxsize; //buffer 的长度
-		memset(skbuftmp->skb_data, 0, skbuf->skb_maxsize);
-		memcpy(skbuftmp->skb_data, skbuf->skb_data, skbuf->skb_len);
+		skbuftmp->skb_start = skbuf->skb_start;
+		memset(skbuftmp->skb_data, 0, skbuftmp->skb_maxsize);
+		memcpy(skbuftmp->skb_data + skbuftmp->skb_start, skbuf->skb_data + skbuf->skb_start, skbuf->skb_len);
 		return skbuftmp;
 	}
 	return NULL;
