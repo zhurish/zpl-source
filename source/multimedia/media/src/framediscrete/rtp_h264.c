@@ -95,11 +95,6 @@ static int rtp_payload_h264_hdr_set(uint8_t *p, uint8_t NALU, uint8_t start, uin
     hdr->FU_HDR_Type = H264_NALU_TYPE(NALU);
     return 0;
 }
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
-#include "log.h"
 
 static int rtp_payload_send_h264_oneframe(void *session, const uint8_t *buffer, uint32_t len, int user_ts)
 {

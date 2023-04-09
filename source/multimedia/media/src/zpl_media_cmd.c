@@ -404,57 +404,6 @@ DEFUN (media_channel_multicast_disable,
 }
 #endif
 
-
-DEFUN (show_video_channel_extradata_info,
-		show_video_channel_extradata_info_cmd,
-		"show media channel <0-1> (main|sub) extradata" ,
-		SHOW_STR
-		MEDIA_CHANNEL_STR
-		"Channel Number Select\n"
-		"Main Configure\n"
-		"Submain Configure\n"
-		"Extradata Configure\n")
-{
-	int ret = ERROR;
-	/*int brief = 1;
-	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_NONE;
-	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_NONE;
-	if(argv[0][0] != 'b')
-	{
-		VTY_GET_INTEGER("channel",channel, argv[0]);
-		if(strstr(argv[1],"main"))
-			channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
-		else if(strstr(argv[1],"sub"))
-			channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
-	}
-	else
-		brief = 1;	
-	if(argc >= 3)
-		brief = 1;	*/
-	//ret = zpl_media_channel_extradata_show( channel, channel_index, brief, (struct vty *)vty);
-	ret = zpl_media_channel_extradata_show(vty);
-	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-ALIAS (show_video_channel_extradata_info,
-		show_video_channel_extradata_brief_cmd,
-		"show media channel extradata (brief|)" ,
-		SHOW_STR
-		MEDIA_CHANNEL_STR
-		"Extradata Configure\n"
-		"Brief Information\n")
-
-ALIAS (show_video_channel_extradata_info,
-		show_video_channel_extradata_info_brief_cmd,
-		"show media channel <0-1> (main|sub) extradata (brief|)" ,
-		SHOW_STR
-		MEDIA_CHANNEL_STR
-		"Channel Number Select\n"
-		"Main Configure\n"
-		"Submain Configure\n"
-		"Extradata Configure\n"
-		"Brief Information\n")
-
 DEFUN (show_video_channel_info,
 		show_video_channel_info_cmd,
 		"show media channel info" ,
@@ -658,10 +607,6 @@ void cmd_video_init(void)
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_inputchn_info_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_encode_info_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_info_cmd);
-
-	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_cmd);
-	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_brief_cmd);
-	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_brief_cmd);
 }
 
 #endif
