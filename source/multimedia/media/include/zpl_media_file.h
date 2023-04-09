@@ -57,6 +57,7 @@ extern zpl_media_file_t *zpl_media_file_open(const char *name);
 extern int zpl_media_file_destroy(zpl_media_file_t *media_file);
 extern int zpl_media_file_reopen(zpl_media_file_t *media_file);
 extern int zpl_media_file_close(zpl_media_file_t *media_file);
+extern int zpl_media_file_remove(zpl_media_file_t *media_file);
 extern int zpl_media_file_write(zpl_media_file_t *media_file, zpl_skbuffer_t *bufdata);
 extern int zpl_media_file_check(zpl_media_file_t *media_file, const char *name);
 extern int zpl_media_file_lookup(const char *name);

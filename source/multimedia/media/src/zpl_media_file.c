@@ -369,6 +369,31 @@ int zpl_media_file_destroy(zpl_media_file_t *media_file)
     return 0;
 }
 
+int zpl_media_file_remove(zpl_media_file_t *media_file)
+{
+    ZPL_MEDIA_FILE_LOCK(media_file);
+    if (media_file && media_file->fp)
+    {
+        if(media_file->b_create == zpl_true)
+        {
+            if (media_file->filename[0] == '/')
+                remove(zpl_media_filedesc_name(media_file->filename));
+            else
+                remove(zpl_media_filedesc_name(zpl_media_file_basename(media_file->filename)));
+        }
+        if (media_file->fp)
+        {
+            fclose(media_file->fp);
+            media_file->fp = NULL;
+        }
+        remove(zpl_media_file_basename(media_file->filename));
+        ZPL_MEDIA_FILE_UNLOCK(media_file);
+        return 0;
+    }
+    ZPL_MEDIA_FILE_UNLOCK(media_file);
+    return -1;
+}
+
 int zpl_media_file_write(zpl_media_file_t *media_file, zpl_skbuffer_t *bufdata)
 {
     if (media_file)

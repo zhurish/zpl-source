@@ -24,7 +24,11 @@ extern "C" {
 
 
 #ifdef ZPL_BUILD_LINUX
+#ifdef ZPL_HISIMPP_MODULE
+#define     ZPL_MEDIA_BASE_PATH     "/nfsroot/"
+#else
 #define     ZPL_MEDIA_BASE_PATH     "/home/zhurish/workspace/working/zpl-source/source/multimedia/media/"
+#endif
 #else
 #define     ZPL_MEDIA_BASE_PATH     "D:/qt-project/live555-test/"
 #endif

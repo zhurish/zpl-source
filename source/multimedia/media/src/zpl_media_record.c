@@ -1,4 +1,5 @@
-﻿#include "zpl_media_record.h"
+﻿#include "zpl_media_internal.h"
+#include "zpl_media_record.h"
 #include "zpl_media_event.h"
 #include "zpl_media_buffer.h"
 
@@ -133,13 +134,12 @@ static int zpl_media_buffer_data_record(zpl_media_channel_t *mediachn,
 {
     zpl_media_record_t *record = pVoidUser;
     if(mediachn == NULL || bufdata == NULL || pVoidUser == NULL)
-        return 0;
+        return ERROR;
     ZPL_MEDIA_CHANNEL_LOCK(mediachn);    
-    if(mediachn && mediachn->p_record.enable && record && record->event_queue)
+    if(mediachn && mediachn->p_record.enable && record)
     {
-        //memcpy(&record->record_file->packet.data, bufdata, sizeof(zpl_skbuffer_t));
-        //record->record_file->packet.data.buffer_data = bufdata->buffer_data;
-        zpl_media_file_write(record->record_file, bufdata);
+        if(zpl_media_file_write(record->record_file, bufdata))
+            record->record_frame++;
     }
     ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
     return OK;
@@ -162,15 +162,23 @@ int zpl_media_channel_record_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANN
             return ERROR;
         }
         memset(record, 0, sizeof(zpl_media_record_t));    
-        record->event_queue = zpl_media_event_default();
         record->record_file = zpl_media_file_create(mediachn, zpl_media_channel_record_filename(mediachn));
         if (record->record_file == NULL)
         {
             free(record);
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
             return ERROR;
+        } 
+        mediachn->p_record.cbid = zpl_media_channel_client_add(channel, channel_index, zpl_media_buffer_data_record, mediachn->p_record.param);
+        if(mediachn->p_record.cbid && zpl_media_channel_client_start(channel, channel_index, mediachn->p_record.cbid, zpl_true) != OK)
+        { 
+            zpl_media_file_close(record->record_file);
+            zpl_media_file_remove(record->record_file);
+            zpl_media_file_destroy(record->record_file);
+            free(record);
+            ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
+            return ERROR;
         }
-        mediachn->p_record.cbid = zpl_media_channel_client_add(mediachn->channel, mediachn->channel_index, zpl_media_buffer_data_record, mediachn->p_record.param);
         mediachn->p_record.enable = enable; 
         ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
         return OK;
@@ -178,19 +186,24 @@ int zpl_media_channel_record_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANN
     else
     {
         mediachn->p_record.enable = enable; 
-        zpl_media_channel_client_del(mediachn->channel, mediachn->channel_index, mediachn->p_record.cbid);
-        
+        if(mediachn->p_record.cbid)
+        { 
+            zpl_media_channel_client_start(channel, channel_index, mediachn->p_record.cbid, zpl_false);
+            zpl_media_channel_client_del(channel, channel_index, mediachn->p_record.cbid);
+        }
         mediachn->p_record.cbid = 0;
         if(mediachn->p_record.param) 
         {
             record = mediachn->p_record.param;
             zpl_media_file_close(record->record_file);
+            if(record->record_frame == 0)
+                zpl_media_file_remove(record->record_file);
             zpl_media_file_destroy(record->record_file);
             free(record);
             mediachn->p_record.param = NULL;
-            ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
-            return OK;
         }
+        ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
+        return OK;
     }
     ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
     return ERROR;

@@ -13,12 +13,13 @@ extern "C" {
 
 typedef struct zpl_media_record_s
 {
+    #ifdef ZPL_MEDIA_QUEUE_DISTPATH
     zpl_uint32          evid;
     void                *event_queue;
-    #ifdef ZPL_MEDIA_QUEUE_DISTPATH
     zpl_skbqueue_t      *buffer_queue;
     #endif
     zpl_media_file_t    *record_file;
+    zpl_uint32          record_frame;
 }zpl_media_record_t;
 
 int zpl_media_channel_record_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable);
