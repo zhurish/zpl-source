@@ -198,6 +198,7 @@ extern int zpl_media_channel_video_gopmode_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_
 
 
 #ifdef ZPL_SHELL_MODULE
+int zpl_media_channel_extradata_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int brief, void *);
 int zpl_media_channel_show(void *pvoid);
 #endif
 

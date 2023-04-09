@@ -33,8 +33,8 @@ static zpl_mediartp_scheduler_t _rtp_scheduler;
 #endif
 static zpl_mediartp_session_adap_t _rtp_media_adap_tbl[] =
 {
-        {"H264", RTP_MEDIA_PAYLOAD_H264, rtp_payload_send_h264, NULL},
-        {"G711A", RTP_MEDIA_PAYLOAD_G711A, rtp_payload_send_g7xx, NULL},
+        {"H264", RTP_MEDIA_PAYLOAD_H264, rtp_payload_send_h264 , NULL},
+        {"G711A", RTP_MEDIA_PAYLOAD_G711A, rtp_payload_send_h264, NULL},
         {"G711U", RTP_MEDIA_PAYLOAD_G711U, rtp_payload_send_g7xx, NULL},
 
         {"G722", RTP_MEDIA_PAYLOAD_G722, rtp_payload_send_g7xx, NULL},
@@ -100,7 +100,71 @@ static int zpl_mediartp_session_rtp_clone(zpl_media_channel_t *mediachn,
         if (skb)
         {
             ret = zpl_skbqueue_add(session->rtp_media_queue, skb);
+            session->spspps_interval++;
+            if(session->spspps_interval == 30)
+            {
+                zpl_video_extradata_t lextradata;
+                zpl_skbuffer_t * spsppsskb = NULL;
+                session->spspps_interval = 0;
+                zpl_media_channel_extradata_get(mediachn, &lextradata);
+                if(lextradata.fPPSSize)
+                {
+                    spsppsskb = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, session->rtp_media_queue, lextradata.fPPSSize);
+                    if(spsppsskb && spsppsskb->skb_data && spsppsskb->skb_maxsize >= lextradata.fPPSSize)
+                    {
+                        zpl_media_buffer_header(mediachn, spsppsskb, ZPL_MEDIA_VIDEO, 0, lextradata.fPPSSize);
+                        zpl_media_buffer_header_framedatatype(spsppsskb, ZPL_MEDIA_FRAME_DATA_ENCODE);
+                        memcpy(ZPL_SKB_DATA(spsppsskb), lextradata.fPPS, lextradata.fPPSSize);
+                        zpl_media_buffer_header_frame_type(spsppsskb, ZPL_VIDEO_FRAME_TYPE_PPS);
+                        ret = zpl_skbqueue_add(session->rtp_media_queue, spsppsskb);
+                    }
+                }
+                if(lextradata.fSPSSize)
+                {
+                    spsppsskb = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, session->rtp_media_queue, lextradata.fSPSSize);
+                    if(spsppsskb && spsppsskb->skb_data && spsppsskb->skb_maxsize >= lextradata.fSPSSize)
+                    {
+                        zpl_media_buffer_header(mediachn, spsppsskb, ZPL_MEDIA_VIDEO, 0, lextradata.fSPSSize);
+                        zpl_media_buffer_header_framedatatype(spsppsskb, ZPL_MEDIA_FRAME_DATA_ENCODE);
+                        memcpy(ZPL_SKB_DATA(spsppsskb), lextradata.fSPS, lextradata.fSPSSize);
+                        zpl_media_buffer_header_frame_type(spsppsskb, ZPL_VIDEO_FRAME_TYPE_SPS);
+                        ret = zpl_skbqueue_add(session->rtp_media_queue, spsppsskb);
+                    }
+                }
+                if(lextradata.fVPSSize)
+                {
+                    spsppsskb = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, session->rtp_media_queue, lextradata.fVPSSize);
+                    if(spsppsskb && spsppsskb->skb_data && spsppsskb->skb_maxsize >= lextradata.fVPSSize)
+                    {
+                        zpl_media_buffer_header(mediachn, spsppsskb, ZPL_MEDIA_VIDEO, 0, lextradata.fVPSSize);
+                        zpl_media_buffer_header_framedatatype(spsppsskb, ZPL_MEDIA_FRAME_DATA_ENCODE);
+                        memcpy(ZPL_SKB_DATA(spsppsskb), lextradata.fVPS, lextradata.fVPSSize);
+                        zpl_media_buffer_header_frame_type(spsppsskb, ZPL_VIDEO_FRAME_TYPE_VPS);
+                        ret = zpl_skbqueue_add(session->rtp_media_queue, spsppsskb);
+                    }
+                }
+                if(lextradata.fSEISize)
+                {
+                    spsppsskb = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, session->rtp_media_queue, lextradata.fSEISize);
+                    if(spsppsskb && spsppsskb->skb_data && spsppsskb->skb_maxsize >= lextradata.fSEISize)
+                    {
+                        zpl_media_buffer_header(mediachn, spsppsskb, ZPL_MEDIA_VIDEO, 0, lextradata.fSEISize);
+                        zpl_media_buffer_header_framedatatype(spsppsskb, ZPL_MEDIA_FRAME_DATA_ENCODE);
+                        memcpy(ZPL_SKB_DATA(spsppsskb), lextradata.fSEI, lextradata.fSEISize);
+                        zpl_media_buffer_header_frame_type(spsppsskb, ZPL_VIDEO_FRAME_TYPE_SEI);
+                        ret = zpl_skbqueue_add(session->rtp_media_queue, spsppsskb);
+                    }
+                }
+            }
+
             //zm_msg_debug("======== zpl_mediartp_session_rtp_clone");
+            /*if(ZPL_SKB_DATA_LEN(skb) < 100)
+            {
+                zpl_char hexformat[2048];
+                memset(hexformat, 0, sizeof(hexformat));
+                os_loghex(hexformat, sizeof(hexformat), ZPL_SKB_DATA(skb), ZPL_SKB_DATA_LEN(skb));
+                zm_msg_debug("======== zpl_mediartp_session_rtp_clone:\r\n%s", hexformat);
+            }*/
         }
     }
     return ret;
@@ -617,6 +681,8 @@ int zpl_mediartp_session_start(int channel, int level, const char *path, zpl_boo
             zpl_mediartp_session_sched_add(my_session);
         else    
             zpl_mediartp_session_sched_delete(my_session);
+
+        zpl_mediartp_session_overtcp_start(my_session, start);    
         if ((my_session->mchannel != -1 && my_session->mlevel != -1))
         {
             if (start)
@@ -775,6 +841,7 @@ int zpl_mediartp_session_tcp_interleaved(int channel, int level, const char *pat
             os_mutex_lock(_rtp_scheduler.mutex, OS_WAIT_FOREVER);
         my_session->rtp_interleaved = rtp_interleaved;
         my_session->rtcp_interleaved = rtcp_interleaved;
+        my_session->overtcp = (rtp_interleaved>=0)?zpl_true:zpl_false;
         if (_rtp_scheduler.mutex)
             os_mutex_unlock(_rtp_scheduler.mutex);
         return ret;
@@ -1321,7 +1388,7 @@ int zpl_mediartp_session_scheduler_exit(void)
 int zpl_mediartp_session_scheduler_start(void)
 {
     if (_rtp_scheduler.taskid == 0)
-        _rtp_scheduler.taskid = os_task_create("mediaRtpScheduler", OS_TASK_DEFAULT_PRIORITY,
+        _rtp_scheduler.taskid = os_task_create("mediaRtpSched", OS_TASK_DEFAULT_PRIORITY,
                                                0, media_rtp_task, &_rtp_scheduler, OS_TASK_DEFAULT_STACK);
     ortp_scheduler_init();
     return OK;

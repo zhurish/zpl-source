@@ -1335,11 +1335,142 @@ int zpl_media_channel_foreach(int (*callback)(zpl_media_channel_t *, zpl_void *o
 
 
 #ifdef ZPL_SHELL_MODULE
+int zpl_media_channel_extradata_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, 
+	int brief, void *pvoid)
+{
+	NODE *node = NULL;
+	zpl_media_channel_t *chn = NULL;
+	zpl_video_extradata_t lextradata;
+	zpl_char hexformat[2048];
+	char *media_typestr[] = {"unknow", "video", "audio"};
+	struct vty *vty = (struct vty *)pvoid;
+	if (media_channel_mutex)
+		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+
+	if (lstCount(media_channel_list))
+	{
+		vty_out(vty, "-----------------------------------------%s", VTY_NEWLINE);
+	}
+	for (node = lstFirst(media_channel_list); node != NULL; node = lstNext(node))
+	{
+		chn = (zpl_media_channel_t *)node;
+		if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
+		{
+			if(channel != ZPL_MEDIA_CHANNEL_NONE && channel_index != ZPL_MEDIA_CHANNEL_TYPE_NONE)
+			{
+				if(chn->channel == channel && chn->channel_index == channel_index)
+				{
+					memset(&lextradata, 0, sizeof(zpl_video_extradata_t));
+					zpl_media_channel_extradata_get(chn, &lextradata);
+					vty_out(vty, "channel            : %d/%d%s", chn->channel, chn->channel_index, VTY_NEWLINE);
+					vty_out(vty, " type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);
+					if (lextradata.fPPSSize)
+					{
+						vty_out(vty, " PPS Len           : %d%s", lextradata.fPPSSize, VTY_NEWLINE);
+						if(brief)
+						{              
+							memset(hexformat, 0, sizeof(hexformat));
+							os_loghex(hexformat, sizeof(hexformat), lextradata.fPPS, lextradata.fPPSSize);
+							vty_out(vty, "  PPS Date         : %s%s", hexformat, VTY_NEWLINE);
+						}
+					}
+					if (lextradata.fSPSSize)
+					{
+						vty_out(vty, " SPS Len           : %d%s", lextradata.fSPSSize, VTY_NEWLINE);
+						if(brief)
+						{              
+							memset(hexformat, 0, sizeof(hexformat));
+							os_loghex(hexformat, sizeof(hexformat), lextradata.fSPS, lextradata.fSPSSize);
+							vty_out(vty, "  SPS Date         : %s%s", hexformat, VTY_NEWLINE);
+						}
+					}
+					if (lextradata.fVPSSize)
+					{
+						vty_out(vty, " VPS Len           : %d%s", lextradata.fVPSSize, VTY_NEWLINE);
+						if(brief)
+						{              
+							memset(hexformat, 0, sizeof(hexformat));
+							os_loghex(hexformat, sizeof(hexformat), lextradata.fVPS, lextradata.fVPSSize);
+							vty_out(vty, "  VPS Date         : %s%s", hexformat, VTY_NEWLINE);
+						}
+					}
+					if (lextradata.fSEISize)
+					{
+						vty_out(vty, " SEI Len           : %d%s", lextradata.fSEISize, VTY_NEWLINE);
+						if(brief)
+						{              
+							memset(hexformat, 0, sizeof(hexformat));
+							os_loghex(hexformat, sizeof(hexformat), lextradata.fSEI, lextradata.fSEISize);
+							vty_out(vty, "  SEI Date         : %s%s", hexformat, VTY_NEWLINE);
+						}
+					}
+					break;
+				}
+			}
+			else
+			{
+				memset(&lextradata, 0, sizeof(zpl_video_extradata_t));
+				zpl_media_channel_extradata_get(chn, &lextradata);
+				vty_out(vty, "channel            : %d/%d%s", chn->channel, chn->channel_index, VTY_NEWLINE);
+				vty_out(vty, " type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);
+				if (lextradata.fPPSSize)
+				{
+					vty_out(vty, " PPS Len           : %d%s", lextradata.fPPSSize, VTY_NEWLINE);
+					if(brief)
+					{              
+						memset(hexformat, 0, sizeof(hexformat));
+						os_loghex(hexformat, sizeof(hexformat), lextradata.fPPS, lextradata.fPPSSize);
+						vty_out(vty, "  PPS Date         : %s%s", hexformat, VTY_NEWLINE);
+					}
+				}
+				if (lextradata.fSPSSize)
+				{
+					vty_out(vty, " SPS Len           : %d%s", lextradata.fSPSSize, VTY_NEWLINE);
+					if(brief)
+					{              
+						memset(hexformat, 0, sizeof(hexformat));
+						os_loghex(hexformat, sizeof(hexformat), lextradata.fSPS, lextradata.fSPSSize);
+						vty_out(vty, "  SPS Date         : %s%s", hexformat, VTY_NEWLINE);
+					}
+				}
+				if (lextradata.fVPSSize)
+				{
+					vty_out(vty, " VPS Len           : %d%s", lextradata.fVPSSize, VTY_NEWLINE);
+					if(brief)
+					{              
+						memset(hexformat, 0, sizeof(hexformat));
+						os_loghex(hexformat, sizeof(hexformat), lextradata.fVPS, lextradata.fVPSSize);
+						vty_out(vty, "  VPS Date         : %s%s", hexformat, VTY_NEWLINE);
+					}
+				}
+				if (lextradata.fSEISize)
+				{
+					vty_out(vty, " SEI Len           : %d%s", lextradata.fSEISize, VTY_NEWLINE);
+					if(brief)
+					{              
+						memset(hexformat, 0, sizeof(hexformat));
+						os_loghex(hexformat, sizeof(hexformat), lextradata.fSEI, lextradata.fSEISize);
+						vty_out(vty, "  SEI Date         : %s%s", hexformat, VTY_NEWLINE);
+					}
+				}
+			}
+
+		}
+		else if(chn->media_type == ZPL_MEDIA_AUDIO)
+		{
+
+		}	
+	}
+	if (media_channel_mutex)
+		os_mutex_unlock(media_channel_mutex);
+	return OK;
+}
+
 int zpl_media_channel_show(void *pvoid)
 {
-	NODE *node;
-	zpl_media_channel_t *chn;
-	zpl_media_video_encode_t *encode;
+	NODE *node = NULL;
+	zpl_media_channel_t *chn = NULL;
+	zpl_media_video_encode_t *encode = NULL;
 	char *media_typestr[] = {"unknow", "video", "audio"};
 	char *bitrate_typestr[] = {"none", "CBR", "VBR", "ABR"};
 	char *enRcMode_typestr[] = {"RC CBR", "RC VBR", "RC AVBR", "RC QVBR", "RC CVBR", "RC QPMAP","RC FIXQP"};

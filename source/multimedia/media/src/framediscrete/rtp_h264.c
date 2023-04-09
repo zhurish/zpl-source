@@ -95,8 +95,13 @@ static int rtp_payload_h264_hdr_set(uint8_t *p, uint8_t NALU, uint8_t start, uin
     hdr->FU_HDR_Type = H264_NALU_TYPE(NALU);
     return 0;
 }
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
+#include "log.h"
 
-int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, int user_ts)
+static int rtp_payload_send_h264_oneframe(void *session, const uint8_t *buffer, uint32_t len, int user_ts)
 {
     int ret = 0;
     uint8_t *p = (uint8_t *)buffer;
@@ -111,29 +116,25 @@ int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, in
         plen = len - nalu.hdr_len;
         NALU = nalu.buf[nalu.hdr_len];
     }
-    if(len > MAX_RTP_PAYLOAD_LENGTH)
+    if(plen > MAX_RTP_PAYLOAD_LENGTH)
     {
         int i = 0;
         while(plen)
         {
             if(plen > MAX_RTP_PAYLOAD_LENGTH)
             {
-                //memcpy(payload + HEADER_SIZE_FU_A, p, MAX_RTP_PAYLOAD_LENGTH);
-                //rtp_payload_h264_hdr_set(payload, NALU, (i==0)?1:0, 0);
                 rtp_payload_h264_hdr_set(p-2, NALU, (i==0)?1:0, 0);
                 #ifdef ZPL_LIBORTP_MODULE 
-                ret = rtp_session_send_with_ts(session, p, MAX_RTP_PAYLOAD_LENGTH + HEADER_SIZE_FU_A, user_ts);
+                ret = rtp_session_send_with_ts(session, p-2, MAX_RTP_PAYLOAD_LENGTH + HEADER_SIZE_FU_A, user_ts);
                 #endif
                 p +=  MAX_RTP_PAYLOAD_LENGTH;
                 plen -= MAX_RTP_PAYLOAD_LENGTH;
             }
             else
             {
-                //memcpy(payload + HEADER_SIZE_FU_A, p, plen);
-                //rtp_payload_h264_hdr_set(payload, NALU, 0, 1);
                 rtp_payload_h264_hdr_set(p-2, NALU, 0, 1);
                 #ifdef ZPL_LIBORTP_MODULE 
-                ret = rtp_session_send_with_ts(session, p, plen + HEADER_SIZE_FU_A, user_ts);
+                ret = rtp_session_send_with_ts(session, p-2, plen + HEADER_SIZE_FU_A, user_ts);
                 #endif
                 break;
             }
@@ -142,14 +143,77 @@ int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, in
     }
     else
     {
-        /*H264_NALU_FUHDR *hdr = (H264_NALU_FUHDR*)(payload);
-        hdr->FU_F = H264_NALU_F(NALU);
-        hdr->FU_NRI = H264_NALU_NRI(NALU);
-        hdr->FU_Type = H264_NALU_TYPE(NALU);
-        memcpy(payload + 1, p, plen);*/
         #ifdef ZPL_LIBORTP_MODULE 
+      /*  zpl_char hexformat[2048];
+
+                memset(hexformat, 0, sizeof(hexformat));
+                os_loghex(hexformat, sizeof(hexformat), buffer, len);
+                zlog_debug(MODULE_ZPLMEDIA, "-------- rtp send Table ------+---------+");
+                zlog_debug(MODULE_ZPLMEDIA, " hex :\n%s", hexformat);
+                zlog_debug(MODULE_ZPLMEDIA, "---------+--------+-------+---------+");
+*/
         ret = rtp_session_send_with_ts(session, p, plen, user_ts);
         #endif
     }
     return ret;
+}
+
+
+
+int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, int user_ts)
+{
+    RTP_H264_NALU_T nalu;
+    uint8_t *tmpbuf = buffer;
+    int data_offset=0, pos = 0;
+    return rtp_payload_send_h264_oneframe(session, buffer, len,  user_ts);
+
+    memset(&nalu, 0, sizeof(RTP_H264_NALU_T));
+    while(data_offset <(len-4))
+    {
+        if(rtp_payload_h264_isnaluhdr(tmpbuf, &nalu))
+        {
+            tmpbuf += nalu.hdr_len;
+            data_offset += nalu.hdr_len;
+        }
+        if(nalu.hdr_len)
+        {
+            pos = rtp_payload_h264_get_nextnalu(tmpbuf, (len-4)-data_offset);
+            if(pos)
+            {
+                nalu.len += pos;
+                //zpl_media_channel_nalu2extradata(&nalu, &chn->media_param.video_media.extradata);
+                //memcpy(extradata->fSEI, nalu->buf, nalu->len);
+                rtp_payload_send_h264_oneframe(session, nalu.buf, nalu.len,  user_ts);
+                memset(&nalu, 0, sizeof(RTP_H264_NALU_T));
+                tmpbuf += pos;
+                data_offset += pos;
+                continue;
+            }
+            else
+            {
+                nalu.len += ((len)-data_offset);
+                //zpl_media_channel_nalu2extradata(&nalu, &chn->media_param.video_media.extradata);
+                //memcpy(extradata->fSEI, nalu->buf, nalu->len);
+                rtp_payload_send_h264_oneframe(session, nalu.buf, nalu.len,  user_ts);
+                memset(&nalu, 0, sizeof(RTP_H264_NALU_T));
+                return 0;
+            }
+        }
+        tmpbuf++;
+        data_offset++;
+    }
+    
+    /*while(1)
+    {
+        pos = rtp_payload_h264_get_nextnalu(p + 4, plen - 4);
+        if(pos == 0)
+            return rtp_payload_send_h264_oneframe(session, p,  plen,  user_ts);
+        else
+        {
+            rtp_payload_send_h264_oneframe(session, p,  pos + 4,  user_ts);
+            p += (pos+4);
+            plen -= (pos+4);
+        }    
+    }*/
+    return 0;
 }

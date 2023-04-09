@@ -25,6 +25,7 @@ int _rtsp_session_debug = 0xffffff;
 
 static int rtsp_session_event_handle(rtsp_session_t *session);
 static int rtsp_session_read_eloop(struct eloop *ctx);
+static int rtsp_session_destroy(rtsp_session_t *session);
 
 int rtsp_session_sendto(rtsp_session_t *session, uint8_t *req, uint32_t req_length)
 {
@@ -100,7 +101,6 @@ int rtsp_session_exit(void)
 
 int rtsp_session_default(rtsp_session_t *newNode, bool srv)
 {
-    RTSP_SESSION_LOCK(newNode);
     newNode->bsrv = srv;
     newNode->sesid = (int)newNode;
     newNode->state = RTSP_SESSION_STATE_CONNECT;
@@ -123,8 +123,6 @@ int rtsp_session_default(rtsp_session_t *newNode, bool srv)
     memcpy(&newNode->mrtp_session[1], &newNode->mrtp_session[0], sizeof(rtsp_rtp_session_t));
     newNode->mfilepath = NULL;
     newNode->mchannel = newNode->mlevel = -1;
-
-    RTSP_SESSION_UNLOCK(newNode);
     return OK;
 }
 
@@ -145,6 +143,7 @@ rtsp_session_t *rtsp_session_create(zpl_socket_t sock, const char *address, uint
         newNode->listen_address = localip;
         rtsp_session_default(newNode, true);
 
+        //newNode->mutex = _rtsp_session_lst.mutex;
         lstAdd(&_rtsp_session_lst._list_head, (NODE*)newNode); // 调用list.h中的添加节点的函数osker_list_add_tail
         newNode->t_master = master;
         newNode->t_read = eloop_add_read(newNode->t_master, rtsp_session_read_eloop, newNode, sock);
@@ -154,12 +153,10 @@ rtsp_session_t *rtsp_session_create(zpl_socket_t sock, const char *address, uint
 }
 
 
-int rtsp_session_destroy(rtsp_session_t *session)
+static int rtsp_session_destroy(rtsp_session_t *session)
 {
     if (session)
     {
-        RTSP_SESSION_LOCK(session);
-
         if (!ipstack_invalid(session->sock))
         {
             ipstack_close(session->sock);
@@ -198,8 +195,6 @@ int rtsp_session_destroy(rtsp_session_t *session)
             free(session->srvname);
             session->srvname = NULL;
         }
-        RTSP_SESSION_UNLOCK(session);
-
         free(session);
     }
     return OK;
@@ -212,6 +207,7 @@ int rtsp_session_close(rtsp_session_t *session)
         eloop_cancel(session->t_read);
     lstDelete(&_rtsp_session_lst._list_head, (NODE *)session);
     rtsp_session_destroy(session);
+    
     return OK;
 }
 
@@ -359,7 +355,7 @@ static int rtsp_session_read_eloop(struct eloop *ctx)
                     memset(session->_recv_buf + sdplen, 0, sizeof(session->_recv_buf) - sdplen);
                     ret = session->_recv_length - sdplen;
                     session->_recv_length = sdplen;
-                    if(rtsp_session_event_handle(session) == ERROR)
+                    if(rtsp_session_event_handle(session) == ERROR || session->state == RTSP_SESSION_STATE_CLOSE)
                     {
                         rtsp_session_close(session);
                         return ERROR;
@@ -566,10 +562,6 @@ static int rtsp_session_handle_setup(rtsp_session_t *session)
         }
         else
             length = sdp_build_respone_header(session->_send_build, session->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->sesid);
-
-//int zpl_mediartp_session_tcp_interleaved(session->mchannel, session->mlevel, session->mfilepath, int rtp_interleaved, int rtcp_interleaved);
-//int zpl_mediartp_session_trackid(session->mchannel, session->mlevel, session->mfilepath, int i_trackid);
-//int zpl_mediartp_session_localport(session->mchannel, session->mlevel, session->mfilepath, char *addr, int rtp_port, int rtcp_port);
 
         code = rtsp_session_media_setup(session, NULL);
 

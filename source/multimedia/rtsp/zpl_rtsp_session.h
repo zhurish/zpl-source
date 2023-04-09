@@ -71,7 +71,8 @@ typedef struct rtsp_session_s {
     uint32_t        _send_offset;
     int32_t         _recv_length;
     int32_t         _send_length;
-    
+
+    //void     *mutex;
 }rtsp_session_t;
 
 typedef struct
@@ -85,8 +86,8 @@ extern int _rtsp_session_debug;
 
 //#define RTSP_SESSION_LOCK(x)    if(x && x->mutex) os_mutex_lock(x->mutex, OS_WAIT_FOREVER)
 //#define RTSP_SESSION_UNLOCK(x)  if(x && x->mutex) os_mutex_unlock(x->mutex)
-#define RTSP_SESSION_LOCK(x)    
-#define RTSP_SESSION_UNLOCK(x)  
+//#define RTSP_SESSION_LOCK(x)    
+//#define RTSP_SESSION_UNLOCK(x)  
 
 RTSP_API int rtsp_session_init(void);
 RTSP_API int rtsp_session_exit(void);
@@ -99,7 +100,6 @@ RTSP_API int rtsp_session_sendto(rtsp_session_t * session, uint8_t *data, uint32
 RTSP_API int rtsp_session_default(rtsp_session_t * newNode, bool srv);
 
 RTSP_API rtsp_session_t * rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *ctx, void *master, char *localip);
-RTSP_API int rtsp_session_destroy(rtsp_session_t *session);
 
 RTSP_API rtsp_session_t *rtsp_session_lookup(zpl_socket_t sock);
 RTSP_API int rtsp_session_count(void);

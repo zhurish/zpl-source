@@ -82,7 +82,7 @@ struct zpl_mediartp_session_s
     void            *rtp_media_queue;      //媒体接收队列
     void            *rtsp_parent;
     void            *bind_other;
-
+    int             spspps_interval;
 
     int             (*rtp_session_send)(zpl_mediartp_session_t *);
     int             (*rtp_session_recv)(zpl_mediartp_session_t *);
