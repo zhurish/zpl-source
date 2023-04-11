@@ -13,8 +13,7 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
+
 #ifdef ZPL_VIDEO_VPSSGRP_ENABLE
 //#include <zpl_media_video_vpssgrp.h>
 #endif

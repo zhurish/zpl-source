@@ -5,12 +5,10 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
-#include "zpl_media_video_region.h"
-
+#include "zpl_vidhal.h"
+#include "zpl_vidhal_internal.h"
 
 
 int zpl_media_video_hwregion_destroy(zpl_media_video_hwregion_t *hwregion)

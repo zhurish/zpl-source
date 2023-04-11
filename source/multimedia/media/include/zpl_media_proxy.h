@@ -12,10 +12,7 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-#include "zpl_media_internal.h"
+
 
 #define ZPL_MEDIA_PROXY_PORT    63000
 struct zpl_media_msg

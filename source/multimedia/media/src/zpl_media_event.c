@@ -7,8 +7,6 @@
 
 
 #include "zpl_media.h"
-#include <zpl_media_channel.h>
-#include "zpl_media_event.h"
 #include "zpl_media_internal.h"
 
 static zpl_media_event_queue_t *_media_event_queue_default = NULL;

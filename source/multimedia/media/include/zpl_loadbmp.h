@@ -1,8 +1,6 @@
 #ifndef     __LOAD_BMP_H__
 #define     __LOAD_BMP_H__
 
-#include "zpl_type.h"
-
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {

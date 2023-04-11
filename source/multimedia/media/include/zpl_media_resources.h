@@ -15,8 +15,9 @@ extern "C" {
 #include <zpl_type.h>
 
 #include <zpl_media.h>
-#include <zpl_vidhal.h>
+//#include <zpl_vidhal.h>
 
+#define ZPL_MEDIA_HALRES_PATH   ZPL_MEDIA_BASE_PATH"/media.json"
 #define ZPL_MEDIA_HALRES_NUM 8
 
 #ifndef VI_MAX_DEV_NUM

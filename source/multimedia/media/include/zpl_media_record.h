@@ -5,10 +5,7 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
-#include <zpl_media_channel.h>
-#include <zpl_media_file.h>
+
 
 
 typedef struct zpl_media_record_s

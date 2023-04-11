@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include <zpl_media.h>
-#include <zpl_vidhal.h>
 
 
 

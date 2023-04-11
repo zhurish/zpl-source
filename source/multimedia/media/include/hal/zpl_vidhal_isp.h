@@ -12,7 +12,6 @@
 extern "C" {
 #endif
 
-#include "zpl_media_sensor_type.h"
 
 #ifdef ZPL_HISIMPP_MODULE
 #include "zpl_hal_hisi.h"

@@ -1,7 +1,4 @@
-﻿#include "zpl_media_capture.h"
-#include "zpl_media_event.h"
-#include "zpl_media_image.h"
-#include "zpl_media_buffer.h"
+﻿#include "zpl_media.h"
 #include "zpl_media_internal.h"
 
 #define zpl_media_capgetptr(m)             (((zpl_media_capture_t*)m->p_capture.param))

@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
 
 
 #define ZPL_MEDIA_BUFFER_DEBUG_ONFILE

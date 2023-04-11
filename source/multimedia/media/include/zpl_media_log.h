@@ -12,9 +12,7 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
+
 
 
 #define zm_msg_err(format, ...) 		zlog_err (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)

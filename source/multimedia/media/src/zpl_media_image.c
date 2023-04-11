@@ -1,5 +1,5 @@
-﻿#include "zpl_media_image.h"
-#include "zpl_media_buffer.h"
+﻿#include "zpl_media.h"
+#include "zpl_media_internal.h"
 
 int zpl_media_image_free(zpl_media_image_t *data)
 {

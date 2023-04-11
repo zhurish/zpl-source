@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
 
 #define MEMBLOCK_INVALID_POOLID              (-1U)
 #define MEMBLOCK_INVALID_HANDLE              (-1U)

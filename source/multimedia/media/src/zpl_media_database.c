@@ -1,4 +1,5 @@
-﻿#include "zpl_media_database.h"
+﻿#include "zpl_media.h"
+#include "zpl_media_internal.h"
 
 #ifdef ZPL_SQLITE_MODULE
 

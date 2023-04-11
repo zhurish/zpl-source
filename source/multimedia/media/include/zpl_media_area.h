@@ -13,8 +13,6 @@ extern "C"
 {
 #endif
 
-#include "zpl_media.h"
-#include "zpl_media_text.h"
 
 #define ZPL_MEDIA_AREA_OVERLAY_MAX      6 //叠加区域最大数量
 #define ZPL_MEDIA_AREA_MOSAIC_MAX       6 //打马赛克区域最大数量

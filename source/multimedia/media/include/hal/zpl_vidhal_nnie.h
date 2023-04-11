@@ -8,9 +8,7 @@ extern "C"{
 #endif
 #endif /* __cplusplus */
 #ifdef ZPL_HISIMPP_MODULE
-#include "zpl_hal_hisi.h"
-#include "zpl_vidhal_ive.h"
-#include <sys/time.h>
+
 
 /*16Byte align*/
 #define ZPL_VIDHAL_SVP_NNIE_ALIGN_16 16

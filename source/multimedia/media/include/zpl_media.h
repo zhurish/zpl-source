@@ -12,11 +12,12 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <thread.h>
-#include <module.h>
+
+
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "lib_include.h" /* 不知为何 添加这个头文件出现venc编码没有启动 */
+#include "vty_include.h" 
 
 #ifdef ZPL_LIBMEDIA_MODULE
 
@@ -158,6 +159,10 @@ typedef struct
     zpl_int32 	group;   
     zpl_int32   ID;
 }zpl_media_gkey_t ;
+
+
+typedef struct zpl_media_channel_s zpl_media_channel_t;
+
 
 typedef struct
 {

@@ -12,10 +12,6 @@
 extern "C" {
 #endif
 
-#include "zpl_media.h"
-#include <zpl_vidhal.h>
-#include "zpl_media_buffer.h"
-
 
 
 extern int zpl_vidhal_venc_create(zpl_media_video_encode_t *venc);

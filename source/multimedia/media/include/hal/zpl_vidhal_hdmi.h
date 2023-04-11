@@ -12,11 +12,8 @@
 extern "C" {
 #endif
 
-#include <zpl_media.h>
-#include <zpl_vidhal.h>
 
 #ifdef ZPL_HISIMPP_MODULE
-#include "zpl_hal_hisi.h"
 
 int zpl_vidhal_hdmi_getwh(VO_INTF_SYNC_E enIntfSync, zpl_uint32* pu32W, zpl_uint32* pu32H, zpl_uint32* pu32Frm);
 int zpl_vidhal_hdmi_dev_start(zpl_int32 VoDev, void* pstPubAttr);

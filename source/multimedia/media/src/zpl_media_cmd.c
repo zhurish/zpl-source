@@ -4,13 +4,9 @@
  *  Created on: Jul 17, 2018
  *      Author: zhurish
  */
-
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
 #include "zpl_media.h"
-#include "zpl_media_api.h"
 #include "zpl_media_internal.h"
+#include "zpl_media_api.h"
 
 #ifdef ZPL_SHELL_MODULE
 
@@ -404,6 +400,118 @@ DEFUN (media_channel_multicast_disable,
 }
 #endif
 
+static int show_video_channel_callback(zpl_media_channel_t *chn, zpl_void *obj)
+{
+	struct vty *vty = (struct vty *)obj;
+	zpl_video_extradata_t lextradata;
+	int brief = 1;
+	zpl_char hexformat[2048];
+	char *media_typestr[] = {"unknow", "video", "audio"};
+
+	if (chn && vty)
+	{
+		if (chn && chn->media_type == ZPL_MEDIA_VIDEO)
+		{
+			vty_out(vty, "-----------------------------------------%s", VTY_NEWLINE);
+			memset(&lextradata, 0, sizeof(zpl_video_extradata_t));
+			zpl_media_channel_extradata_get(chn, &lextradata);
+			vty_out(vty, "channel            : %d/%d%s", chn->channel, chn->channel_index, VTY_NEWLINE);
+			vty_out(vty, " type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);
+			if (lextradata.fPPSSize)
+			{
+				vty_out(vty, " PPS Len           : %d%s", lextradata.fPPSSize, VTY_NEWLINE);
+				if (brief)
+				{
+					memset(hexformat, 0, sizeof(hexformat));
+					os_loghex(hexformat, sizeof(hexformat), lextradata.fPPS, lextradata.fPPSSize);
+					vty_out(vty, "  PPS Date         : %s%s", hexformat, VTY_NEWLINE);
+				}
+			}
+			if (lextradata.fSPSSize)
+			{
+				vty_out(vty, " SPS Len           : %d%s", lextradata.fSPSSize, VTY_NEWLINE);
+				if (brief)
+				{
+					memset(hexformat, 0, sizeof(hexformat));
+					os_loghex(hexformat, sizeof(hexformat), lextradata.fSPS, lextradata.fSPSSize);
+					vty_out(vty, "  SPS Date         : %s%s", hexformat, VTY_NEWLINE);
+				}
+			}
+			if (lextradata.fVPSSize)
+			{
+				vty_out(vty, " VPS Len           : %d%s", lextradata.fVPSSize, VTY_NEWLINE);
+				if (brief)
+				{
+					memset(hexformat, 0, sizeof(hexformat));
+					os_loghex(hexformat, sizeof(hexformat), lextradata.fVPS, lextradata.fVPSSize);
+					vty_out(vty, "  VPS Date         : %s%s", hexformat, VTY_NEWLINE);
+				}
+			}
+			if (lextradata.fSEISize)
+			{
+				vty_out(vty, " SEI Len           : %d%s", lextradata.fSEISize, VTY_NEWLINE);
+				if (brief)
+				{
+					memset(hexformat, 0, sizeof(hexformat));
+					os_loghex(hexformat, sizeof(hexformat), lextradata.fSEI, lextradata.fSEISize);
+					vty_out(vty, "  SEI Date         : %s%s", hexformat, VTY_NEWLINE);
+				}
+			}
+		}
+	}
+	return OK;
+}
+
+DEFUN (show_video_channel_extradata_info,
+		show_video_channel_extradata_info_cmd,
+		"show media channel <0-1> (main|sub) extradata" ,
+		SHOW_STR
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"Extradata Configure\n")
+{
+	int ret = ERROR;
+	int brief = 1;
+	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_NONE;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_NONE;
+	if(argv[0][0] != 'b')
+	{
+		VTY_GET_INTEGER("channel",channel, argv[0]);
+		if(strstr(argv[1],"main"))
+			channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+		else if(strstr(argv[1],"sub"))
+			channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	}
+	else
+		brief = 1;	
+	if(argc >= 3)
+		brief = 1;	
+	ret = zpl_media_channel_foreach(show_video_channel_callback, vty);	
+	//ret = zpl_media_channel_extradata_show( channel, channel_index, brief, vty);
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+ALIAS (show_video_channel_extradata_info,
+		show_video_channel_extradata_brief_cmd,
+		"show media channel extradata (brief|)" ,
+		SHOW_STR
+		MEDIA_CHANNEL_STR
+		"Extradata Configure\n"
+		"Brief Information\n")
+
+ALIAS (show_video_channel_extradata_info,
+		show_video_channel_extradata_info_brief_cmd,
+		"show media channel <0-1> (main|sub) extradata (brief|)" ,
+		SHOW_STR
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"Extradata Configure\n"
+		"Brief Information\n")
+
 DEFUN (show_video_channel_info,
 		show_video_channel_info_cmd,
 		"show media channel info" ,
@@ -607,6 +715,10 @@ void cmd_video_init(void)
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_inputchn_info_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_encode_info_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_info_cmd);
+
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_brief_cmd);
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_brief_cmd);
 }
 
 #endif

@@ -13,9 +13,7 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
-#include <zpl_media_format.h>
+
 
 //#define ZPL_VENC_READ_DEBUG		0x200000
 #define ZPL_VIDHAL_DEFULT_FRAMERATE     30      //默认帧率

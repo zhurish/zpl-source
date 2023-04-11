@@ -12,7 +12,6 @@
 extern "C" {
 #endif
 
-#include "zpl_media.h"
 
 //#define ZPL_FREETYPE_MODULE
 #ifdef ZPL_FREETYPE_MODULE

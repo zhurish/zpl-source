@@ -2291,10 +2291,11 @@ static struct vty *
 vty_create(zpl_socket_t vty_sock, union sockunion *su)
 {
 	zpl_char buf[SU_ADDRSTRLEN];
-	struct vty *vty;
+	struct vty *vty = NULL;
 
 	sockunion2str(su, buf, SU_ADDRSTRLEN);
-
+	if (g_vtyshell.mutex)
+		os_mutex_lock(g_vtyshell.mutex, OS_WAIT_FOREVER);
 	/* Allocate new vty structure and set up default values. */
 	vty = vty_new_init(vty_sock);
 
@@ -2327,7 +2328,8 @@ vty_create(zpl_socket_t vty_sock, union sockunion *su)
 	/* Add read/write thread. */
 	vty_event(VTY_WRITE, vty_sock, vty);
 	vty_event(VTY_READ, vty_sock, vty);
-
+	if (g_vtyshell.mutex)
+		os_mutex_unlock(g_vtyshell.mutex);
 	return vty;
 }
 
@@ -4293,7 +4295,7 @@ static int cli_telnet_task_init(void)
 
 	if (g_vtyshell.telnet_taskid == 0)
 		g_vtyshell.telnet_taskid = os_task_create("telnetdTask", OS_TASK_DEFAULT_PRIORITY,
-												 0, cli_telnet_task, g_vtyshell.m_eloop_master, OS_TASK_DEFAULT_STACK);
+												 0, cli_telnet_task, g_vtyshell.m_eloop_master, OS_TASK_DEFAULT_STACK*4);
 	if (g_vtyshell.telnet_taskid)
 	{
 		module_setup_task(MODULE_TELNET, g_vtyshell.telnet_taskid);
@@ -4329,11 +4331,11 @@ static int cli_console_task_init(void)
 #ifdef ZPL_IPCOM_MODULE
 	if (g_vtyshell.console_taskid == 0)
 		g_vtyshell.console_taskid = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
-												  0, cli_console_task, g_vtyshell.m_thread_master, OS_TASK_DEFAULT_STACK);
+												  0, cli_console_task, g_vtyshell.m_thread_master, OS_TASK_DEFAULT_STACK*4);
 #else
 	if (g_vtyshell.console_taskid == 0)
 		g_vtyshell.console_taskid = os_task_create("shellTask", OS_TASK_DEFAULT_PRIORITY,
-												  0, cli_console_task, g_vtyshell.m_thread_master, OS_TASK_DEFAULT_STACK);
+												  0, cli_console_task, g_vtyshell.m_thread_master, OS_TASK_DEFAULT_STACK*4);
 #endif
 	if (g_vtyshell.console_taskid)
 	{

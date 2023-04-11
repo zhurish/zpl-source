@@ -5,15 +5,14 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 #include "zpl_vidhal.h"
-#include "zpl_vidhal_mipi.h"
-#include "zpl_vidhal_sensor.h"
+#include "zpl_vidhal_internal.h"
+
+
 #ifdef ZPL_HISIMPP_MODULE
-#include "zpl_hal_hisi.h"
+
 
 
 #define MIPI_DEV_NODE "/dev/hi_mipi"

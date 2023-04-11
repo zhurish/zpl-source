@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <zpl_type.h>
 #include "zpl_loadbmp.h"
 #ifdef ZPL_HISIMPP_MODULE
 //#include "zpl_hal_hisi.h"

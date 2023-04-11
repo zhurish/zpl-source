@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
+
 
 
 /* type of video regions */

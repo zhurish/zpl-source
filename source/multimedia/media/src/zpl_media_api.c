@@ -5,13 +5,10 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
 #include "zpl_media.h"
 #include "zpl_media_api.h"
 #include "zpl_media_internal.h"
-#include "zpl_media_event.h"
+
 
 
 
@@ -31,7 +28,7 @@ int zpl_media_module_init(void)
 {
 	zpl_media_global_init();
 	zpl_media_debugmsg_init();
-	zpl_media_hwres_load("./media.json");
+	zpl_media_hwres_load(ZPL_MEDIA_HALRES_PATH);
 	zpl_media_system_init();
 	zpl_media_event_create("mediaEvent", 16);
 	#ifdef ZPL_MEDIA_QUEUE_DISTPATH

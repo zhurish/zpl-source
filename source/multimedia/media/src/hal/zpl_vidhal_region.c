@@ -5,16 +5,10 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
-#include "zpl_loadbmp.h"
 #include "zpl_vidhal.h"
-#include "zpl_vidhal_region.h"
-#ifdef ZPL_HISIMPP_MODULE
-#include "zpl_hal_hisi.h"
-#endif
+#include "zpl_vidhal_internal.h"
 
 int zpl_vidhal_region_mst_load_bmp(const char *filename, zpl_media_bitmap_t *pstBitmap, zpl_bool bFil, 
         zpl_uint32 u16FilColor, zpl_uint32 enPixelFormat)

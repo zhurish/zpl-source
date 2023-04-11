@@ -5,11 +5,8 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
-#include "zpl_media_area.h"
-#include "zpl_media_channel.h"
+#include "zpl_media_internal.h"
 
 zpl_media_area_t *zpl_media_area_create(ZPL_MEDIA_AREA_E type)
 {

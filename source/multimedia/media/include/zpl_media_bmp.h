@@ -12,9 +12,6 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
 
 
 /***************************************************************/

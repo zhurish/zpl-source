@@ -12,29 +12,8 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include "zpl_media.h"
-#include "zpl_media_codec.h"
-#include "zpl_media_buffer.h"
-#include "zpl_media_area.h"
-#include "zpl_media_extradata.h"
 
 
-#define ZPL_MEDIA_CLIENT_MAX    32
-
-
-
-typedef struct zpl_media_channel_s zpl_media_channel_t;
-
-typedef int	(*zpl_media_buffer_handler)(zpl_media_channel_t *, const zpl_skbuffer_t *,  void *);
-
-typedef struct zpl_media_client_s
-{
-    zpl_bool                is_use;
-    zpl_bool                enable;
-	zpl_media_buffer_handler _pmedia_buffer_handler;
-	void					*pVoidUser;
-}zpl_media_client_t;
 
 typedef struct zpl_media_video_s
 {
@@ -198,6 +177,7 @@ extern int zpl_media_channel_video_gopmode_get(ZPL_MEDIA_CHANNEL_E channel, ZPL_
 
 
 #ifdef ZPL_SHELL_MODULE
+int zpl_media_channel_extradata_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int brief, struct vty *vty);
 int zpl_media_channel_show(void *pvoid);
 #endif
 

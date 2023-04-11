@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include <zpl_media.h>
-#include <zpl_vidhal.h>
 
 
 extern int zpl_vidhal_vpss_crop(zpl_int32 vpssgrp, zpl_int32 vpsschn, zpl_video_size_t cropsize);//裁剪

@@ -12,10 +12,6 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
 
 #ifdef ZPL_LIBORTP_MODULE
 #include <ortp/ortp.h>

@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include "zpl_media_sensor_type.h"
-
 
 
 

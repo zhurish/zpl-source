@@ -5,8 +5,6 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_bmp.h"
 #ifdef ZPL_FREETYPE_MODULE

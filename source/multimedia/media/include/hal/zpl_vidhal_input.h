@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include "zpl_media.h"
-
 
 
 extern int zpl_vidhal_inputchn_crop(zpl_int32 input_pipe, zpl_int32 input_chn, zpl_bool out, zpl_video_size_t cropsize);

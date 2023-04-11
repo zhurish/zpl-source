@@ -1,22 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <signal.h>
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
+#include "zpl_vidhal.h"
+#include "zpl_vidhal_internal.h"
+
+
 #ifdef ZPL_HISIMPP_MODULE
-#include "zpl_hal_hisi.h"
-#include <zpl_vidhal.h>
-#include "zpl_vidhal_ive.h"
+
 
 
 //free mmz

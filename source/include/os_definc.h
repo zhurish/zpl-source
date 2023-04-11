@@ -35,7 +35,8 @@ extern "C" {
 #include <stdarg.h>
 #include <endian.h>
 #include <netdb.h>
-
+#include <sys/prctl.h>
+#include <sys/syscall.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/param.h>

@@ -5,9 +5,7 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
-#include <zpl_media_channel.h>
+
 
 typedef enum {
     ZPL_COLOR_UNKNOWN,		/* error/unspecified */

@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
+
 
 /* we ONLY define picture format used, all unused will be deleted! */
 typedef enum ZPL_PIXEL_FORMAT_E {

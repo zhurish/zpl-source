@@ -5,11 +5,8 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
-#include "zpl_media_bmp.h"
-#include "zpl_media_text.h"
+#include "zpl_media_internal.h"
 
 #define BITMAP_A(c)     ((c)>>24)&0xff
 #define BITMAP_R(c)     ((c)>>16)&0xff

@@ -5,8 +5,8 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
 
 #ifdef ZPL_LIBORTP_MODULE
 #include <ortp/ortp.h>
@@ -14,9 +14,6 @@
 #ifdef ZPL_JRTPLIB_MODULE
 #include "jrtplib_api.h"
 #endif
-
-#include "zpl_media.h"
-#include "zpl_media_internal.h"
 
 #include "rtp_payload.h"
 

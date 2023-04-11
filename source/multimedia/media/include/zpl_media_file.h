@@ -5,12 +5,6 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
-#include <zpl_media_extradata.h>
-#include <zpl_media_buffer.h>
-#include <zpl_media_codec.h>
-
 
 #define ZPL_MEDIA_FILE_NAME_MAX 128
 #pragma pack(1)

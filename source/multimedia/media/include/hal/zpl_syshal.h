@@ -12,9 +12,6 @@
 extern "C" {
 #endif
 
-#include <zpl_media.h>
-#include <zpl_vidhal.h>
-
 
 const char *zpl_syshal_strerror(zpl_uint32 halerrno);
 

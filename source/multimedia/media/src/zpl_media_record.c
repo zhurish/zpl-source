@@ -1,7 +1,5 @@
-﻿#include "zpl_media_internal.h"
-#include "zpl_media_record.h"
-#include "zpl_media_event.h"
-#include "zpl_media_buffer.h"
+﻿#include "zpl_media.h"
+#include "zpl_media_internal.h"
 
 #define zpl_media_recordgetptr(m)             (((zpl_media_record_t*)m->p_record.param))
 

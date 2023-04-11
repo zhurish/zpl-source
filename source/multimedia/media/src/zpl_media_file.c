@@ -3,13 +3,8 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
-#include "auto_include.h"
-#include "zplos_include.h"
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
-#include "zpl_media_extradata.h"
-#include "zpl_media_file.h"
-#include "zpl_media_api.h"
 
 
 #define ZPL_MEDIA_FILE_LOCK(n)  if((n) && (n)->_mutex) os_mutex_lock((n)->_mutex, OS_WAIT_FOREVER)

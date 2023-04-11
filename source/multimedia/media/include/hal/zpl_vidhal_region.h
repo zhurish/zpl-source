@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-#include "zpl_media.h"
-#include <zpl_vidhal.h>
+
 
 
 int zpl_vidhal_region_mst_load_bmp(const char *filename, zpl_media_bitmap_t *pstBitmap, 

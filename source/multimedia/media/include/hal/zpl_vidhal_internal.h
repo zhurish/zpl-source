@@ -13,9 +13,6 @@
 extern "C" {
 #endif
 
-#include <zpl_type.h>
-#include <zpl_media.h>
-
 #ifdef ZPL_HISIMPP_MODULE
 #include "zpl_hal_hisi.h"
 #endif
@@ -28,7 +25,6 @@ extern "C" {
 #include <zpl_vidhal_crop.h>
 #include <zpl_vidhal_region.h>
 
-
 #include <zpl_vidhal_sensor.h>
 #include <zpl_vidhal_vgs.h>
 #include <zpl_vidhal_yuv.h>
@@ -37,6 +33,8 @@ extern "C" {
 #include <zpl_vidhal_ive.h>
 #include <zpl_vidhal_svp.h>
 #include <zpl_vidhal_nnie.h>
+#include <zpl_vidhal_hdmi.h>
+
 
 #ifdef __cplusplus
 }

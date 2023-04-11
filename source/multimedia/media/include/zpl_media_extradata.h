@@ -12,8 +12,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <zpl_type.h>
-#include <zpl_media.h>
+
+
 
 #define NALU_PACKET_SIZE_MAX    1600
 

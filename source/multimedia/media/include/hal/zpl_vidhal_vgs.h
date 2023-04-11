@@ -12,10 +12,8 @@
 extern "C" {
 #endif
 
-#include "zpl_media.h"
 
 #ifdef ZPL_HISIMPP_MODULE
-#include "zpl_hal_hisi.h"
 
 typedef struct
 {
