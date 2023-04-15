@@ -2,7 +2,8 @@ include $(ZPL_MAKE_DIR)/makelinux.mk
 
 include config.mk
 
-ZPL_PJINC = -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+#ZPL_PJINC = -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+#PJPROJDIR=$(PJPROJECT_ROOT)
 
 #PJPROJDIR=$(ZPLBASE)/externsions/pjproject-2.10
 #PJCC=$(CC)
@@ -14,8 +15,8 @@ ZPL_PJINC = -I$(ZPL_INSTALL_ROOTFS_DIR)/include
 #	make -C $(PJPROJDIR)
 	
 	
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(PJSIP_ROOT)
+SRC_DIR = $(BASE_ROOT)/$(PJSIP_ROOT)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
@@ -33,8 +34,8 @@ MODULE_2OBJS_DEP +=$(PJSUA2TEST_OBJS:%.o=%.d)
 
 endif
 
-ZPLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
-ZPLCPPFLAGS += -g -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 
+ZPLCFLAGS +=-DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -Wno-error=overlength-strings
+ZPLCPPFLAGS += -g -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1  -Wno-error=overlength-strings
 #ZPLCFLAGS += -Werror=format
 #
 #CFLAGS += -UHAVE_CONFIG_H
@@ -46,10 +47,6 @@ ZPLCPPFLAGS += -g -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1
 
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c 
-#ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),true)
-#	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
-#	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
-#endif	
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -95,14 +92,14 @@ SDL2CLEAN:
 endif
 
 
-ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),0)
+ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),true)
 ZPL_PJPROJECT_LIBS:
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl lib
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl install
+	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl lib
+	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl install
 
 ZPL_PJPROJECT_UNLIBS:
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl uninstall
-	$(MAKE) -C $(PJPROJDIR) -f Makefile-pl clean
+	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl uninstall
+	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl clean
 
 else
 ZPL_PJPROJECT_LIBS:
@@ -118,7 +115,7 @@ make_prepare:
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
-$(LIBS) : $(ZPL_PJPROJECT_LIBS) $(SDL2LIBS) $(MODULE_OBJS) 
+$(LIBS) : ZPL_PJPROJECT_LIBS SDL2LIBS $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
 ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
@@ -126,7 +123,7 @@ $(PJSUA2LIBS) : $(MODULE_PJSUA2_OBJS)
 	#$(CXX) -shared -o  $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 	@$(AR) -rs $(PJSUA2LIBS) $(MODULE_PJSUA2_OBJS)
 
-PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ZPL_ULIB_DIR) -L$(LIB_DIR) -L$(ZPL_INSTALL_ROOTFS_DIR)/lib
+PJPLLDCLFLAG += -L$(BASE_ROOT)/$(ZPL_ULIB_DIR) -L$(LIB_DIR) 
 
 
 $(PJSUA2TEST_BIN) : $(PJSUA2TEST_OBJS) 
@@ -156,7 +153,7 @@ install-lib:
 install: install-lib 
 #	@install -m 755 ${PJSUA2TEST_BIN} ${ZPL_INSTALL_SBIN_DIR}
 
-clean: $(SDL2CLEAN) objclean
+clean: SDL2CLEAN objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
 		$(RM) $(LIB_DIR)/$(LIBS) ; \
@@ -198,7 +195,7 @@ clean: objclean
 
 endif
 
-objclean: $(ZPL_PJPROJECT_LIBS) 
+objclean: ZPL_PJPROJECT_UNLIBS
 	@$(RM) -rf $(OBJS_DIR)/*
 
 all: lib install

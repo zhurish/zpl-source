@@ -34,6 +34,7 @@
 #endif
 #define THIS_FILE	"pjsip_main.c"
 
+extern zpl_bool host_waitting_loadconfig(void);
 
 static pjsua_app_cfg_t	    cfg;
 
@@ -190,13 +191,13 @@ static int pjmain(void *p)
 
 
 
-int pjsip_module_init()
+int pjsip_module_init(void)
 {
 	memset(&app_config, 0, sizeof(app_config));
 	return OK;
 }
 
-int pjsip_module_exit()
+int pjsip_module_exit(void)
 {
 	pjsua_app_exit();
 	pjsip_media_wait_quit();
@@ -205,7 +206,7 @@ int pjsip_module_exit()
 	return OK;
 }
 
-int pjsip_module_task_init()
+int pjsip_module_task_init(void)
 {
 	return os_task_create("pjMainTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, pjmain, NULL, OS_TASK_DEFAULT_STACK*4);
@@ -214,7 +215,7 @@ int pjsip_module_task_init()
 	return OK;
 }
 
-int pjsip_module_task_exit()
+int pjsip_module_task_exit(void)
 {
 	return OK;
 }

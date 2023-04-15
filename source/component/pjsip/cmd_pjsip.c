@@ -18,7 +18,7 @@
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
 #include "pjsip_app_api.h"
-
+#include "pjsua_app.h"
 
 /*
  * SIP Global

@@ -198,12 +198,12 @@ extern pjsua_app_config	    app_config;
 
 
 
-pj_bool_t app_incoming_call();
+pj_bool_t app_incoming_call(void);
 
 int my_atoi(const char *cs);
-pj_bool_t find_next_call();
-pj_bool_t find_prev_call();
-pjsua_call_id find_current_call();
+pj_bool_t find_next_call(void);
+pj_bool_t find_prev_call(void);
+pjsua_call_id find_current_call(void);
 void send_request(char *cstr_method, const pj_str_t *dst_uri);
 void log_call_dump(pjsua_call_id call_id);
 //int write_settings(pjsua_app_config *cfg, char *buf, pj_size_t max);
@@ -211,7 +211,7 @@ void app_config_init_video(pjsua_acc_config *acc_cfg);
 void arrange_window(pjsua_vid_win_id wid);
 
 /** Defined in pjsua_cli_cmd.c **/
-pj_bool_t is_cli_inited();
+pj_bool_t is_cli_inited(void);
 
 /** Defined in pjsua_config.c **/
 /** This is to load the configuration **/
@@ -228,20 +228,20 @@ void cli_on_stopped(pj_bool_t restart, int argc, char **argv);
 void legacy_on_stopped(pj_bool_t restart);
 
 /** Pjsua cli method **/
-pj_status_t cli_init();
+pj_status_t cli_init(void);
 pj_status_t cli_main(pj_bool_t wait_telnet_cli);
 
 extern int pj_cli_execute_cmd(char *cmd);
 
-void cli_destroy();
+void cli_destroy(void);
 void cli_get_info(char *info, pj_size_t size); 
 
 /** Legacy method **/
-void legacy_main();
+void legacy_main(void);
 
 #if PJSUA_HAS_VIDEO
 void vid_print_dev(zpl_uint32 id, const pjmedia_vid_dev_info *vdi, const char *title);
-void vid_list_devs();
+void vid_list_devs(void);
 void app_config_show_video(zpl_uint32 acc_id, const pjsua_acc_config *acc_cfg);
 #endif
 

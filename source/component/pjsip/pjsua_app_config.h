@@ -166,7 +166,7 @@ extern int pl_pjsip_null_audio(pjsua_app_config *cfg, zpl_bool enable);
 extern int pl_pjsip_clock_rate(pjsua_app_config *cfg, int lval);
 extern int pl_pjsip_snd_clock_rate(pjsua_app_config *cfg, int lval);
 extern int pl_pjsip_stereo(pjsua_app_config *cfg);
-extern int pl_pjsip_local_port(pjsua_app_config *cfg, zpl_uint16 lval);
+extern int pl_pjsip_local_port(pjsua_app_config *cfg, zpl_int32 lval);
 extern int pl_pjsip_public_address(pjsua_app_config *cfg, char * lval);
 extern int pl_pjsip_bound_address(pjsua_app_config *cfg, char * lval);
 extern int pl_pjsip_no_udp(pjsua_app_config *cfg);
@@ -279,7 +279,7 @@ extern int pl_pjsip_cli_enable(pjsua_app_config *cfg, zpl_bool enable);
 extern int pl_pjsip_cli_telnet_port(pjsua_app_config *cfg, int port);
 extern int pl_pjsip_cli_console(pjsua_app_config *cfg, zpl_bool enable);
 /* Set default config. */
-extern void pjsip_default_config();
+extern void pjsip_default_config(void);
 extern int load_config(void);
 extern int pjsip_load_config(void);
 

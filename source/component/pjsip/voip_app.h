@@ -180,11 +180,11 @@ extern voip_app_t  *voip_app;
 
 extern int void_module_init(pl_pjsip_t *pj);
 extern int void_module_exit(pl_pjsip_t *pj);
-extern int void_module_task_init();
-extern int void_module_task_exit();
+extern int void_module_task_init(void);
+extern int void_module_task_exit(void);
 
 #ifdef ZPL_OPENWRT_UCI
-extern int pl_pjsip_module_reload();
+extern int pl_pjsip_module_reload(void);
 #endif
 extern voip_app_state_t voip_app_state_get(voip_app_t *osip);
 extern int voip_app_state_set(voip_app_t *osip, voip_app_state_t state);
@@ -207,8 +207,8 @@ extern int voip_app_call_make(voip_call_t *call, app_call_source_t source, zpl_u
 //extern int voip_app_multi_call_next();
 
 
-extern zpl_bool voip_app_call_event_from_cli_web();
-extern zpl_bool voip_app_call_event_from_ui();
+extern zpl_bool voip_app_call_event_from_cli_web(void);
+extern zpl_bool voip_app_call_event_from_ui(void);
 
 extern int voip_app_start_call_event_ui(voip_event_t *ev);
 extern int voip_app_stop_call_event_ui(voip_event_t *ev);
@@ -224,7 +224,7 @@ extern int voip_app_stop_call_event_cli_web(voip_call_t *call);
 		zpl_uint8 *unit, zpl_uint16 *room, char *phonelist, int len);*/
 
 
-extern void *voip_app_call_event_current();
+extern void *voip_app_call_event_current(void);
 
 /*
 int voip_app_dtmf_recv_callback(int id, void *p, int input);
@@ -233,7 +233,7 @@ int voip_app_call_state_callback(int id, void *p, int input);
 */
 
 extern int voip_app_debug_set_api(int);
-extern int voip_app_debug_get_api();
+extern int voip_app_debug_get_api(void);
 
 
 #ifdef __cplusplus

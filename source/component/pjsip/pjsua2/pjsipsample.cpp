@@ -167,7 +167,7 @@ int pjsipSample::pjsipSampleCfgServer(string &server)
 
 
         pjsipSampleCfg->pjsip_address = server;
-        if (server.find(':') >= 0)
+        if (server.find(':') > 0)
         {
             string port = server.substr(server.find(":") + 1);
             if (port.length() > 0)

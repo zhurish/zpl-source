@@ -45,7 +45,7 @@ int pjsip_buddy_clean(void)
 	return OK;
 }
 
-int pjsip_buddy_exit()
+int pjsip_buddy_exit(void)
 {
 	pjsip_buddy_clean();
 	if(pjsip_buddy_mutex)
@@ -65,7 +65,7 @@ int pjsip_buddy_exit()
 
 
 
-int pjsip_buddy_load()
+int pjsip_buddy_load(void)
 {
 	if (pjsip_buddy_table == NULL)
 	{

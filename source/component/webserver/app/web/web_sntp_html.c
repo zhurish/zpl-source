@@ -64,7 +64,8 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	sntpc_client_get_api(NULL, API_SNTPC_GET_ENABLE, &enable);
 	if (strstr(strval, "GET"))
 	{
-		zpl_uint32	address = 0, port = 0, interval = 0, timezone = 0;
+		zpl_uint32	address = 0, port = 0, interval = 0;
+		zpl_int32 timezone = 0;
 		char timezonestr[32];
 
 		sntpc_client_get_api(NULL, API_SNTPC_GET_ADDRESS, &address);
@@ -85,7 +86,7 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 			sprintf(timezonestr, "GTM0");
 		else if(timezone > 0)
 			sprintf(timezonestr, "GTM-%d", timezone);
-		else if(timezone == 0)
+		else if(timezone < 0)
 			sprintf(timezonestr, "GTM+%d", abs(timezone));
 
 		websWrite(wp,

@@ -16,11 +16,11 @@ extern "C" {
 
 //int pjmain(void *p);
 
-int pjsip_module_init();
-int pjsip_module_exit();
+int pjsip_module_init(void);
+int pjsip_module_exit(void);
 
-int pjsip_module_task_init();
-int pjsip_module_task_exit();
+int pjsip_module_task_init(void);
+int pjsip_module_task_exit(void);
 int pjsip_media_wait_quit(void);
 
 #ifdef __cplusplus

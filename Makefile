@@ -155,6 +155,14 @@ lib:
 obj: 
 	${MAKE} -C  source/ $@ 	
 	
+
+exlib:
+	${MAKE} -C  source/ $@ 
+
+
+exlib_clean:
+	${MAKE} -C  source/ $@  
+
 app: 
 	@if ! test  -e source/include/plautoconf.h ; \
 	then \
@@ -224,4 +232,4 @@ install:
 #	echo "make all make_prepare prebuilts"
 # Declare the contents of the .PHONY variable as phony.  We keep that
 # information in a variable se we can use it in if_changed and friends.
-.PHONY: $(PHONY) all lib obj app install prebuilts make_prepare help kernel_module
+.PHONY: $(PHONY) all lib obj app exlib exlib_clean install prebuilts make_prepare help kernel_module

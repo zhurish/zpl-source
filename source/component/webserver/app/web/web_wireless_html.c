@@ -14,7 +14,7 @@
 #include "if_name.h"
 #include "linklist.h"
 #include "log.h"
-#include "zmemory.hh"
+#include "zmemory.h"
 #include "prefix.h"
 #include "sockunion.h"
 #include "str.h"
@@ -193,7 +193,7 @@ static int web_wireless_sta(Webs *wp, char *path, char *query)
 						  "{\"response\":\"%s\", \"enable\":%s, \"name\":\"%s\", \"mode\":\"%s\", \"password\":\"%s\"}",
 						  "OK", iw->enable ? "true" : "false", ssid, "STA", pass);
 				websDone(wp);
-				vty_execute_shell("write memory");
+				vty_execute_shell(NULL, "write memory");
 				return OK;
 			}
 		}
@@ -372,7 +372,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 			  "\"type\":\"%s\", \"freq\":\"%s\", \"chennel\":\"%s\", \"hiden\":\"%s\"}",
 			  "OK", iw->enable ? "true" : "false", name, "AP", password ? password : "", encrytype, type, freq, chennel, hiden ? hiden : "false");
 	websDone(wp);
-	vty_execute_shell("write memory");
+	vty_execute_shell(NULL, "write memory");
 	return OK;
 }
 #else
@@ -749,7 +749,7 @@ static int web_wireless_disable_job(void *p)
 	struct interface *ifp = p;
 	os_sleep(1);
 	nsm_iw_enable_api(ifp, zpl_false);
-	vty_execute_shell("write memory");
+	vty_execute_shell(NULL, "write memory");
 #else
 #ifdef WEB_OPENWRT_PROCESS
 	os_sleep(1);
@@ -778,14 +778,14 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 				if (strstr(strval, "true"))
 				{
 					nsm_iw_enable_api(ifp, zpl_true);
-					vty_execute_shell("write memory");
+					vty_execute_shell(NULL, "write memory");
 					return web_return_text_plain(wp, OK);
 				}
 				else if (strstr(strval, "false"))
 				{
 					os_job_add(OS_JOB_NONE,web_wireless_disable_job, ifp);
 /*					nsm_iw_enable_api(ifp, zpl_false);
-					vty_execute_shell("write memory");*/
+					vty_execute_shell(NULL, "write memory");*/
 					return web_return_text_plain(wp, OK);
 				}
 			}
@@ -826,7 +826,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 			return ERROR;
 		}
 #endif
-		//vty_execute_shell("write memory");
+		//vty_execute_shell(NULL, "write memory");
 		//return web_return_text_plain(wp, OK);
 	}
 	strval = webs_get_var(wp, T("mac"), T(""));
@@ -852,7 +852,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 	if (ret != OK)
 		return ERROR; //
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)		
-	vty_execute_shell("write memory");
+	vty_execute_shell(NULL, "write memory");
 #endif	
 	return web_return_text_plain(wp, ret);
 }

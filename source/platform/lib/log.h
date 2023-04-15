@@ -241,7 +241,7 @@ extern void pl_zlog_trap (const char *file, const char *func, const zpl_uint32 l
 #define vzlog(obj, module, pri, format, arg) 		pl_vzlog (__FILE__, __FUNCTION__, __LINE__, obj, module, pri, format, arg)
 #define vzlog_other(obj, module, pri, format, arg) 		pl_vzlog (NULL, NULL, NULL, obj, module, pri, format, arg)
 #define zlog(module, pri, format, ...) 				pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, pri, format, ##__VA_ARGS__)
-#define zlog_other(module, pri, format, ...) 		pl_zlog (NULL, NULL, NULL, module, pri, format, ##__VA_ARGS__)
+#define zlog_other(module, pri, format, ...) 		pl_zlog (NULL, NULL, 0, module, pri, format, ##__VA_ARGS__)
 
 
 #define zlog_emergencies(module, format, ...) 	pl_zlog_emergencies (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)

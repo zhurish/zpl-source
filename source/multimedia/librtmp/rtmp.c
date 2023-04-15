@@ -39,6 +39,7 @@
 #else	/* USE_OPENSSL */
 #include <openssl/ssl.h>
 #include <openssl/rc4.h>
+#include <openssl/types.h>
 #endif
 TLS_CTX RTMP_TLS_ctx;
 #endif
@@ -123,7 +124,7 @@ static int clk_tck;
 #endif
 
 #ifdef CRYPTO
-#include "handshake.h"
+#include "rtmphandshake.h"
 #endif
 
 uint32_t

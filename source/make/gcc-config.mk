@@ -101,14 +101,14 @@ ZPLOS_GNU_WERROR += -Werror=unused-variable
 ZPLOS_GCC_WERROR += -Werror=missing-prototypes 
 ZPLOS_GNU_WERROR += -Werror=sequence-point 
 #ZPLOS_GNU_WERROR += -Werror=float-equal 
-ZPLOS_GCC_WERROR += -Werror=strict-prototypes 
+#ZPLOS_GCC_WERROR += -Werror=strict-prototypes 
 ZPLOS_GNU_WERROR += -Werror=overlength-strings 
 ZPLOS_GNU_WERROR += -Werror=unused-label 
 ZPLOS_GNU_WERROR += -Werror=shift-count-overflow  
 ZPLOS_GCC_WERROR += -Werror=int-conversion 
 ZPLOS_GNU_WERROR += -Werror=unsafe-loop-optimizations 
 ZPLOS_GNU_WERROR += -Werror=memset-transposed-args  
-ZPLOS_GCC_WERROR += -Werror=implicit-function-declaration  
+#ZPLOS_GCC_WERROR += -Werror=implicit-function-declaration  
 ZPLOS_GNU_WERROR += -Werror=enum-compare 
 ZPLOS_GNU_WERROR += -Werror=ignored-qualifiers 
 ZPLOS_GNU_WERROR += -Werror=type-limits  

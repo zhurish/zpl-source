@@ -7,8 +7,7 @@
 ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 OBJS += DynamicRTSPServer.o \
 			livertsp_server.o \
-			livertsp_client.o \
-			zpl_rtsp_api.o
+			livertsp_client.o 
 #RTSPServerSupportingHTTPStreaming.o \	
 endif		
 ifeq ($(strip $(ZPL_LIBRTSP_MODULE)),true)

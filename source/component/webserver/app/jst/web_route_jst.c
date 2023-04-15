@@ -13,7 +13,7 @@
 #include "if_name.h"
 #include "linklist.h"
 #include "log.h"
-#include "zmemory.hh"
+#include "zmemory.h"
 #include "prefix.h"
 #include "sockunion.h"
 #include "str.h"

@@ -23,7 +23,9 @@
 #include "nsm_ipvrf.h"
 #include "nsm_interface.h"
 #include "nsm_dhcp.h"
-
+#ifdef ZPL_WIFI_MODULE
+#include "iw_interface.h"
+#endif
 #include "web_util.h"
 #include "web_jst.h"
 #include "web_app.h"

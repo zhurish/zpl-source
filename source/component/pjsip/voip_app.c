@@ -39,7 +39,7 @@ static int voip_app_call_session_delete(voip_app_t *app, voip_call_t *call);
 
 static int voip_app_call_timeout(void *p);
 static int voip_app_call_next_number(void *p);
-static zpl_bool voip_app_call_next();
+static zpl_bool voip_app_call_next(void);
 
 int void_module_init(pl_pjsip_t *pj)
 {
@@ -91,7 +91,7 @@ int void_module_init(pl_pjsip_t *pj)
 }
 
 #ifdef ZPL_OPENWRT_UCI
-int pl_pjsip_module_reload()
+int pl_pjsip_module_reload(void)
 {
 	voip_uci_sip_config_load(pl_pjsip);
 	voip_stream_config_load(pl_pjsip);
@@ -116,7 +116,7 @@ int void_module_exit(pl_pjsip_t *pj)
 }
 
 
-int void_module_task_init()
+int void_module_task_init(void)
 {
 #ifdef APP_X5BA_MODULE
 	x5b_app_module_task_init();
@@ -124,7 +124,7 @@ int void_module_task_init()
 	return OK;
 }
 
-int void_module_task_exit()
+int void_module_task_exit(void)
 {
 #ifdef APP_X5BA_MODULE
 	x5b_app_module_task_exit();
@@ -162,7 +162,7 @@ int voip_app_debug_set_api(int value)
 	return OK;
 }
 
-int voip_app_debug_get_api()
+int voip_app_debug_get_api(void)
 {
 	zassert(voip_app != NULL);
 	return voip_app->debug;

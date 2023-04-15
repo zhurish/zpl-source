@@ -12,8 +12,10 @@
 
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
+#include "pjsua_app.h"
 #include "pjsip_app_api.h"
-
+#include "pjsip_main.h"
+#include "pjsip_util.h"
 
 
 pl_pjsip_t *pl_pjsip = NULL;
@@ -244,7 +246,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 #include "pjsip_jsoncfg.h"
 #include "pjsip_cfg.h"
 //handle SIGUSR2 nostop noprint
-int pl_pjsip_json_test()
+int pl_pjsip_json_test(void)
 {
 	pjsip_config_t pj_config_tmp;
 /*
@@ -263,7 +265,7 @@ int pl_pjsip_json_test()
 	printf("lllllllllllllllllllllllllllllllllllllllllllllll :%d \r\n", pj_config_tmp.table_cnt);
 	return 0;
 }
-int pl_pjsip_module_init()
+int pl_pjsip_module_init(void)
 {
 	if(pl_pjsip == NULL)
 		pl_pjsip = XMALLOC(MTYPE_VOIP, sizeof(pl_pjsip_t));
@@ -280,7 +282,7 @@ int pl_pjsip_module_init()
 }
 
 
-int pl_pjsip_module_exit()
+int pl_pjsip_module_exit(void)
 {
 #ifdef APP_X5BA_MODULE
 	void_module_exit(pl_pjsip);
@@ -293,7 +295,7 @@ int pl_pjsip_module_exit()
 	return OK;
 }
 
-int pl_pjsip_module_task_init()
+int pl_pjsip_module_task_init(void)
 {
 	pjsip_module_task_init();
 #ifdef APP_X5BA_MODULE
@@ -302,7 +304,7 @@ int pl_pjsip_module_task_init()
 	return OK;
 }
 
-int pl_pjsip_module_task_exit()
+int pl_pjsip_module_task_exit(void)
 {
 #ifdef APP_X5BA_MODULE
 	void_module_task_exit();
@@ -598,7 +600,7 @@ int pl_pjsip_global_get_api(zpl_bool *enable)
 	return OK;
 }
 
-zpl_bool pl_pjsip_global_isenable()
+zpl_bool pl_pjsip_global_isenable(void)
 {
 	zpl_bool enable = zpl_false;
 	zassert(pl_pjsip != NULL);
@@ -3082,7 +3084,7 @@ int pl_pjsip_debug_level_set_api(zpl_uint32 level)
 	int inlevel = 0;
 	switch(level)
 	{
-	case LOG_TRAP:
+	case ZLOG_LEVEL_TRAP:
 		inlevel = 6;
 		break;
 	case ZLOG_LEVEL_DEBUG:
@@ -3116,7 +3118,7 @@ int pl_pjsip_debug_level_get_api(zpl_uint32 *level)
 	switch(outlevel)
 	{
 	case (6):
-		outlevel = LOG_TRAP;
+		outlevel = ZLOG_LEVEL_TRAP;
 		break;
 	case 4:
 		outlevel = ZLOG_LEVEL_DEBUG;
@@ -3292,7 +3294,7 @@ zpl_bool pl_pjsip_isregister_api(void)
 	pjsip_server_t		sip_server;
 	pjsip_server_t		sip_server_sec;
 */
-#ifndef ZPL_BUILD_ARCH_X86
+#if 0//ndef ZPL_BUILD_ARCH_X86
 	if(x5b_app_port_status_get() == zpl_false)
 	{
 		if(pl_pjsip->mutex)
@@ -3329,7 +3331,7 @@ zpl_bool pl_pjsip_isregister_api(void)
 /***************************************************************************/
 int pl_pjsip_payload_name_add_api(char * value)
 {
-	zpl_uint32 i = 0, val = 0;
+	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3366,7 +3368,7 @@ int pl_pjsip_payload_name_add_api(char * value)
 
 int pl_pjsip_payload_name_del_api(char * value)
 {
-	zpl_uint32 i = 0, val = 0;
+	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3395,7 +3397,7 @@ int pl_pjsip_payload_name_del_api(char * value)
 
 int pl_pjsip_dis_payload_name_add_api(char * value)
 {
-	zpl_uint32 i = 0, val = 0;
+	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3433,7 +3435,7 @@ int pl_pjsip_dis_payload_name_add_api(char * value)
 
 int pl_pjsip_dis_payload_name_del_api(char * value)
 {
-	zpl_uint32 i = 0, val = 0;
+	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
 	zassert(pl_pjsip != NULL);
 	val = codec_payload_index(value);
@@ -3732,7 +3734,7 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 	if(app_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
 	//zlog_debug(MODULE_VOIP, "========%s->voip_volume_control_api", __func__);
-	voip_volume_control_api(zpl_true);
+	//voip_volume_control_api(zpl_true);
 	//zlog_debug(MODULE_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
 
 #ifndef ZPL_PJSIP_CALL_SHELL
@@ -3762,7 +3764,7 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
  * handle SIGUSR2 nostop noprint
 */
 	//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
-	voip_volume_control_api(zpl_false);
+	//voip_volume_control_api(zpl_false);
 	return ERROR;
 }
 
@@ -4139,7 +4141,7 @@ int pl_pjsip_multiuser_set_api(zpl_bool enable)
 	return OK;
 }
 
-zpl_bool pl_pjsip_multiuser_get_api()
+zpl_bool pl_pjsip_multiuser_get_api(void)
 {
 	zassert(pl_pjsip != NULL);
 	return pl_pjsip->sip_multi_user;
@@ -4159,7 +4161,7 @@ int pl_pjsip_active_standby_set_api(zpl_bool enable)
 	return OK;
 }
 
-zpl_bool pl_pjsip_active_standby_get_api()
+zpl_bool pl_pjsip_active_standby_get_api(void)
 {
 	zassert(pl_pjsip != NULL);
 	return pl_pjsip->sip_active_standby;
@@ -4351,11 +4353,11 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 		else if(sip->sip_srtp_keying == PJSIP_SRTP_KEYING_DTLS)
 			vty_out(vty, " ip sip srtp keying method dtls%s", VTY_NEWLINE);
 	}
-	if (sip->sip_timer == PJSIP_SRTP_SEC_NO)
+	if (sip->sip_timer == PJSIP_TIMER_INACTIVE)
 		vty_out(vty, " ip sip session-timers inactive%s", VTY_NEWLINE);
-	else if (sip->sip_timer == PJSIP_SRTP_SEC_TLS)
+	else if (sip->sip_timer == PJSIP_TIMER_OPTIONAL)
 		vty_out(vty, " ip sip session-timers optional%s", VTY_NEWLINE);
-	else if (sip->sip_timer == PJSIP_SRTP_SEC_SIPS)
+	else if (sip->sip_timer == PJSIP_TIMER_MANDATORY)
 		vty_out(vty, " ip sip session-timers mandatory%s", VTY_NEWLINE);
 	else if (sip->sip_timer == PJSIP_TIMER_ALWAYS)
 		vty_out(vty, " ip sip session-timers always%s", VTY_NEWLINE);
@@ -4747,11 +4749,11 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_b
 	else if (sip->sip_srtp_secure == PJSIP_SRTP_SEC_SIPS)
 		vty_out(vty, " sip srtp secure              : sips%s", VTY_NEWLINE);
 
-	if (sip->sip_timer == PJSIP_SRTP_SEC_NO)
+	if (sip->sip_timer == PJSIP_TIMER_INACTIVE)
 		vty_out(vty, " sip session-timers           : inactive%s", VTY_NEWLINE);
-	else if (sip->sip_timer == PJSIP_SRTP_SEC_TLS)
+	else if (sip->sip_timer == PJSIP_TIMER_OPTIONAL)
 		vty_out(vty, " sip session-timers           : optional%s", VTY_NEWLINE);
-	else if (sip->sip_timer == PJSIP_SRTP_SEC_SIPS)
+	else if (sip->sip_timer == PJSIP_TIMER_MANDATORY)
 		vty_out(vty, " sip session-timers           : mandatory%s", VTY_NEWLINE);
 	else if (sip->sip_timer == PJSIP_TIMER_ALWAYS)
 		vty_out(vty, " sip session-timers           : always%s", VTY_NEWLINE);
@@ -5024,7 +5026,7 @@ int pl_pjsip_write_config(void *p)
 		pl_pjsip_video_options_write_config(sip, vty, zpl_false, zpl_true);
 		pl_pjsip_media_transport_options_write_config(sip, vty, zpl_false, zpl_true);
 		pl_pjsip_user_agent_options_write_config(sip, vty, zpl_false, zpl_true);
-		voip_volume_write_config(vty);
+		//voip_volume_write_config(vty);
 		vty_out(vty, "!%s",VTY_NEWLINE);
 	}
 	if(pl_pjsip->mutex)
@@ -5051,7 +5053,7 @@ int pl_pjsip_show_config(void *p, zpl_bool detail)
 		pl_pjsip_media_transport_options_show(sip, vty, zpl_false, zpl_true);
 		pl_pjsip_user_agent_options_show(sip, vty, zpl_false, zpl_true);
 
-		voip_volume_show_config(vty, zpl_false);
+		//voip_volume_show_config(vty, zpl_false);
 		vty_out(vty, "%s",VTY_NEWLINE);
 	}
 	else

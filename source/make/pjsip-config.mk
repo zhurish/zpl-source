@@ -3,6 +3,7 @@
 ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),true)
 PJPROJECT_ROOT=$(MULTIMEDIA_DIR)/pjproject-2.10
 ZPLEX_DIR += $(ZPLBASE)/$(PJPROJECT_ROOT)
+#ZPLEX_INCLUDE += -I$(ZPLBASE)/$(PJPROJECT_ROOT)/_install/include
 
 ifeq ($(ZPL_PJ_RESAMPLE_ENABLE),true)
 export PJMEDIA_RESAMPLE_ENABLE = true
@@ -16,8 +17,10 @@ export PJMEDIA_SIMPLE_ENABLE = false
 endif
 ifeq ($(ZPL_PJ_SRTP_ENABLE),true)
 export PJMEDIA_SRTP_ENABLE = true
+ZPL_DEFINE += -DPJMEDIA_HAS_SRTP=1
 else
 export PJMEDIA_SRTP_ENABLE = false
+ZPL_DEFINE += -DPJMEDIA_HAS_SRTP=0
 endif
 ifeq ($(ZPL_PJ_VIDEO_ENABLE),true)
 export PJMEDIA_VIDEODEV_ENABLE = true
@@ -171,15 +174,16 @@ endif #ZPL_PJPROJECT_MODULE
 
 ifeq ($(strip $(ZPL_PJSIP_MODULE)),true)
 PJSIP_ROOT=$(COMPONENT_DIR)/pjsip
-#export PJPROJDIR = $(ZPLBASE)/externsions/pjproject-2.10
-#ZPL_INCLUDE += -I$(ZPLBASE)/externsions/pjproject-2.8
 ZPLPRODS += $(ZPLBASE)/$(PJSIP_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)
 ZPL_DEFINE += -DZPL_PJSIP_MODULE
 ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+ZPL_LDLIBS += -lpj -lpjlib-util -lpjsip 
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
+ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)/pjsua2
+ZPL_LDLIBS += -lpjsua2
+endif
 
-
-ZPL_LDLIBS += -lpj -lpjlib-util -lpjsip  -lpjsua2
 			 
 	
 ifeq ($(PJSHARE_ENABLE),true)			 

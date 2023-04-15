@@ -58,7 +58,7 @@ int my_atoi(const char *cs)
     }
 }
 
-pj_bool_t app_incoming_call()
+pj_bool_t app_incoming_call(void)
 {
 	return app_config.incomeing;
 }
@@ -66,7 +66,7 @@ pj_bool_t app_incoming_call()
  * Find next call when current call is disconnected or when user
  * press ']'
  */
-pj_bool_t find_next_call()
+pj_bool_t find_next_call(void)
 {
     int i, max;
 
@@ -89,7 +89,7 @@ pj_bool_t find_next_call()
     return PJ_FALSE;
 }
 
-pj_bool_t find_prev_call()
+pj_bool_t find_prev_call(void)
 {
     int i, max;
 
@@ -112,7 +112,7 @@ pj_bool_t find_prev_call()
     return PJ_FALSE;
 }
 
-pjsua_call_id find_current_call()
+pjsua_call_id find_current_call(void)
 {
 	return app_config.current_call;
 }
@@ -281,7 +281,7 @@ void vid_print_dev(zpl_uint32 id, const pjmedia_vid_dev_info *vdi, const char *t
     char formats[200];
     const char *dirname;
     unsigned i;
-    zpl_uint32 st_len;
+    zpl_int32 st_len;
 
     if (vdi->dir == PJMEDIA_DIR_CAPTURE_RENDER) {
 	dirname = "capture, render";
@@ -336,7 +336,7 @@ void vid_print_dev(zpl_uint32 id, const pjmedia_vid_dev_info *vdi, const char *t
 			      (st_len<0? " ..." : "")));
 }
 
-void vid_list_devs()
+void vid_list_devs(void)
 {
     unsigned i, count;
     pjmedia_vid_dev_info vdi;

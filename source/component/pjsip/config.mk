@@ -2,9 +2,9 @@
 # DEFINE
 ###########################################################################
 #
-MODULEDIR = component/pjsip
+
 #
-ZPLINCLUDE += -I$(PJSIP_ROOT)/include
+#ZPLINCLUDE += -I$(PJSIP_ROOT)/include
 #
 #
 #OS

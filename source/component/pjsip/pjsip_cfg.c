@@ -87,7 +87,7 @@ static int pjsip_ua_config_default(pjsip_ua_config_t *ua)
 	return ERROR;
 }
 
-static pjsip_ua_config_t *pjsip_ua_config_new()
+static pjsip_ua_config_t *pjsip_ua_config_new(void)
 {
 	pjsip_ua_config_t *ua = malloc(sizeof(pjsip_ua_config_t));
 	if (ua)
@@ -155,7 +155,7 @@ static int pjsip_log_config_default(pjsip_log_config_t *ua)
 	return ERROR;
 }
 
-static pjsip_log_config_t *pjsip_log_config_new()
+static pjsip_log_config_t *pjsip_log_config_new(void)
 {
 	pjsip_log_config_t *ua = malloc(sizeof(pjsip_log_config_t));
 	if (ua)
@@ -213,7 +213,7 @@ static int pjsip_media_config_default(pjsip_media_config_t *ua)
 	return ERROR;
 }
 
-static pjsip_media_config_t *pjsip_media_config_new()
+static pjsip_media_config_t *pjsip_media_config_new(void)
 {
 	pjsip_media_config_t *ua = malloc(sizeof(pjsip_media_config_t));
 	if (ua)
@@ -274,7 +274,7 @@ static int pjsip_tls_config_default(pjsip_tls_config_t *ua)
 	return ERROR;
 }
 
-static pjsip_tls_config_t *pjsip_tls_config_new()
+static pjsip_tls_config_t *pjsip_tls_config_new(void)
 {
 	pjsip_tls_config_t *ua = malloc(sizeof(pjsip_tls_config_t));
 	if (ua)
@@ -338,7 +338,7 @@ static int pjsip_transport_config_default(pjsip_transport_config_t *ua)
 	return ERROR;
 }
 
-static pjsip_transport_config_t *pjsip_transport_config_new()
+static pjsip_transport_config_t *pjsip_transport_config_new(void)
 {
 	pjsip_transport_config_t *ua = malloc(sizeof(pjsip_transport_config_t));
 	if (ua)
@@ -432,7 +432,7 @@ static int pjsip_srtp_option_default(pjsip_srtp_option_t *ua)
 	return ERROR;
 }
 
-static pjsip_srtp_option_t *pjsip_srtp_option_new()
+static pjsip_srtp_option_t *pjsip_srtp_option_new(void)
 {
 	pjsip_srtp_option_t *ua = malloc(sizeof(pjsip_srtp_option_t));
 	if (ua)
@@ -485,7 +485,7 @@ static int pjsip_rtcp_fb_config_default(pjsip_rtcp_fb_config_t *ua)
 	return ERROR;
 }
 
-static pjsip_rtcp_fb_config_t *pjsip_rtcp_fb_config_new()
+static pjsip_rtcp_fb_config_t *pjsip_rtcp_fb_config_new(void)
 {
 	pjsip_rtcp_fb_config_t *ua = malloc(sizeof(pjsip_rtcp_fb_config_t));
 	if (ua)

@@ -29,7 +29,7 @@ ZPLPRODS_OBJ += $(BASE_ROOT)/empty
 #
 #
 #
-.PHONY:	obj all demo lib clean rebuild install help usage objclean packet debug prebuilts make_prepare kernel_module
+.PHONY:	obj all lib clean exlib exlib_clean rebuild install objclean help usage  packet debug prebuilts make_prepare kernel_module
 #
 #
 help:usage
@@ -113,24 +113,11 @@ install:
 
 #
 clean: 
-	@for i in $(ZPLEX_DIR); do	\
-		$(MAKE) -C $$i clean; 	\
-	done
 	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i clean; 	\
-	done
-
-demo: 	
-
-	@for i in $(ZPLPRODS); do	\
-		$(MAKE) -C $$i demo || exit "$$?"; 	\
 	done
 
 lib: 
-	@for i in $(ZPLEX_DIR); do	\
-		$(MAKE) -C $$i all || exit "$$?"; 	\
-		$(MAKE) -C $$i install || exit "$$?"; 	\
-	done
 	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i lib || exit "$$?"; 	\
 	done
@@ -143,6 +130,29 @@ all:
 	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 	done
+
+#
+LEXLIBDIR=${EXLIBDIR}
+ifeq ($(LEXLIBDIR),)
+exlib:
+	@for i in $(ZPLEX_DIR); do	\
+		$(MAKE) -C $$i all || exit "$$?"; 	\
+		$(MAKE) -C $$i install || exit "$$?"; 	\
+	done
+
+exlib_clean:
+	@for i in $(ZPLEX_DIR); do	\
+		$(MAKE) -C $$i clean; 	\
+	done
+else
+exlib:
+	$(MAKE) -C $(EXTERNSION_BASE_ROOT)/${LEXLIBDIR} all || exit "$$?"; 
+	$(MAKE) -C $(EXTERNSION_BASE_ROOT)/${LEXLIBDIR} install || exit "$$?"; 
+
+exlib_clean:
+	$(MAKE) -C $(EXTERNSION_BASE_ROOT)/${LEXLIBDIR} clean;
+endif
+
 
 debug:
 	@$(ECHO) " CROSS_COMPILE: $(CROSS_COMPILE)"

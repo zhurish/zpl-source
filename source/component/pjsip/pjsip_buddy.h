@@ -52,8 +52,8 @@ typedef struct
 #pragma pack(0)
 
 int pjsip_buddy_clean(void);
-int pjsip_buddy_exit();
-int pjsip_buddy_load();
+int pjsip_buddy_exit(void);
+int pjsip_buddy_load(void);
 int pjsip_buddy_update_save(void);
 
 pjsip_buddy_t * pjsip_buddy_node_lookup_by_phonenumber(char *phone);

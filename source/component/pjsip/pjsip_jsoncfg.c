@@ -30,6 +30,8 @@
 #include "pjsip_jsoncfg.h"
 
 #include "cJSON.h"
+extern void *cjson_malloc (zpl_size_t size);
+extern void cjson_free (void *ptr);
 
 #define THIS_FILE "pjsip_jsoncfg.c"
 

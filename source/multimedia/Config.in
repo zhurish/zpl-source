@@ -101,6 +101,7 @@ menuconfig ZPL_PJPROJECT_OPTIONS
 		bool "pjproject Srtp Module"
 		default y
 		depends on ZPL_PJPROJECT_OPTIONS
+		select ZPL_OPENSSL_MODULE
 		help
 		Build Srtp of pjproject Module.
 

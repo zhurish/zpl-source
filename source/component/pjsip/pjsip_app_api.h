@@ -429,7 +429,7 @@ char *pl_pjsip_call_state_name(pjsip_call_state_t );
 /************************************************************************/
 int pl_pjsip_global_set_api(zpl_bool enable);
 int pl_pjsip_global_get_api(zpl_bool *enable);
-zpl_bool pl_pjsip_global_isenable();
+zpl_bool pl_pjsip_global_isenable(void);
 
 int pl_pjsip_server_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec);
 int pl_pjsip_server_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec);
@@ -746,9 +746,9 @@ int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type);
 /************************************************************************/
 /************************************************************************/
 int pl_pjsip_multiuser_set_api(zpl_bool enable);
-zpl_bool pl_pjsip_multiuser_get_api();
+zpl_bool pl_pjsip_multiuser_get_api(void);
 int pl_pjsip_active_standby_set_api(zpl_bool enable);
-zpl_bool pl_pjsip_active_standby_get_api();
+zpl_bool pl_pjsip_active_standby_get_api(void);
 /************************************************************************/
 /************************************************************************/
 int pl_pjsip_show_account_state(void *p);
@@ -757,11 +757,11 @@ int pl_pjsip_show_config(void *p, zpl_bool detail);
 void cmd_voip_init(void);
 void cmd_voip_test_init(int node);
 /************************************************************************/
-int pl_pjsip_module_init();
-int pl_pjsip_module_exit();
-int pl_pjsip_module_task_init();
-int pl_pjsip_module_task_exit();
-int pl_pjsip_json_test();
+int pl_pjsip_module_init(void);
+int pl_pjsip_module_exit(void);
+int pl_pjsip_module_task_init(void);
+int pl_pjsip_module_task_exit(void);
+int pl_pjsip_json_test(void);
 /************************************************************************/
 
 

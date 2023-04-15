@@ -113,7 +113,7 @@ OBJS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 #
 #
 #	
-.PHONY:	obj objclean clean install all lib rebuild dist demo app target usage help config_install prebuilts
+.PHONY:	obj objclean all lib clean exlib exlib_clean install rebuild dist  app target usage help config_install prebuilts
 #
 # awk -F= '/^NAME/{print $2}' /etc/os-release
 # ubuntu 系统要把链接库放在行的末尾处
@@ -281,6 +281,12 @@ clean:
 obj: 
 	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
 
+exlib:
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@
+
+exlib_clean:
+	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@
+
 #install: obj
 install: config_install
 	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
@@ -311,9 +317,7 @@ kernel_module:
 	
 rebuild: clean all $(TAGET)
 
-app: demo
-
-demo: all
+app: all
 	@if test -f os_main.o ; \
 		then \
 		$(RM) os_main.o; \

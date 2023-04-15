@@ -177,7 +177,7 @@ void displayLog(const char *msg, int len);
 
 /** Forward declaration **/
 pj_status_t cli_setup_command(pj_cli_t *cli);
-void cli_destroy();
+
 
 
 PJ_DEF(void) cli_get_info(char *info, pj_size_t size)
@@ -911,14 +911,14 @@ static pj_status_t cmd_mod_account(pj_cli_cmd_val *cval)
 }
 
 /* Register account */
-static pj_status_t cmd_reg_account()
+static pj_status_t cmd_reg_account(void)
 {
     pjsua_acc_set_registration(current_acc, PJ_TRUE);
     return PJ_SUCCESS;
 }
 
 /* Unregister account */
-static pj_status_t cmd_unreg_account()
+static pj_status_t cmd_unreg_account(void)
 {
     pjsua_acc_set_registration(current_acc, PJ_FALSE);
     return PJ_SUCCESS;
@@ -1483,7 +1483,7 @@ static pj_status_t cmd_stat_dump(pj_bool_t detail)
     return PJ_SUCCESS;
 }
 
-static pj_status_t cmd_show_config()
+static pj_status_t cmd_show_config(void)
 {
     char settings[2000];
     int len;
@@ -1729,7 +1729,7 @@ static pj_status_t cmd_hangup_call(pj_cli_cmd_val *cval, pj_bool_t all)
 }
 
 /* Hold call */
-static pj_status_t cmd_hold_call()
+static pj_status_t cmd_hold_call(void)
 {
     if (app_config.current_call != PJSUA_INVALID_ID) {
 	pjsua_call_set_hold(app_config.current_call, NULL);
@@ -1741,7 +1741,7 @@ static pj_status_t cmd_hold_call()
 }
 
 /* Call reinvite */
-static pj_status_t cmd_call_reinvite()
+static pj_status_t cmd_call_reinvite(void)
 {
     if (app_config.current_call != PJSUA_INVALID_ID) {
 	/*
@@ -1757,7 +1757,7 @@ static pj_status_t cmd_call_reinvite()
 }
 
 /* Send update */
-static pj_status_t cmd_call_update()
+static pj_status_t cmd_call_update(void)
 {
     if (app_config.current_call != PJSUA_INVALID_ID) {
 	pjsua_call_update2(app_config.current_call, &app_config.call_opt, NULL);
@@ -2050,7 +2050,7 @@ static pj_status_t cmd_call_info(pj_cli_cmd_val *cval)
 }
 
 /* Dump call quality */
-static pj_status_t cmd_call_quality()
+static pj_status_t cmd_call_quality(void)
 {
     if (app_config.current_call != PJSUA_INVALID_ID) {
 	log_call_dump(app_config.current_call);
@@ -2236,7 +2236,7 @@ static pj_status_t modify_video_account(pjsua_acc_config *acc_cfg)
     return status;
 }
 
-static pj_status_t cmd_show_account_video()
+static pj_status_t cmd_show_account_video(void)
 {
     pjsua_acc_config acc_cfg;
     pj_pool_t *pool = pjsua_pool_create("tmp-pjsua", 1000, 1000);
@@ -2286,7 +2286,7 @@ static pj_status_t cmd_video_acc_handler(pj_cli_cmd_val *cval)
     return PJ_SUCCESS;
 }
 
-static pj_status_t cmd_add_vid_strm()
+static pj_status_t cmd_add_vid_strm(void)
 {
     return pjsua_call_set_vid_strm(app_config.current_call,
 				   PJSUA_CALL_VID_STRM_ADD, NULL);
@@ -2366,13 +2366,13 @@ static pj_status_t cmd_set_cap_dev_id(pj_cli_cmd_val *cval)
 				   &param);
 }
 
-static pj_status_t cmd_list_vid_dev()
+static pj_status_t cmd_list_vid_dev(void)
 {
     vid_list_devs();
     return PJ_SUCCESS;
 }
 
-static pj_status_t cmd_vid_device_refresh()
+static pj_status_t cmd_vid_device_refresh(void)
 {
     pjmedia_vid_dev_refresh();
     return PJ_SUCCESS;
@@ -2404,7 +2404,7 @@ static pj_status_t cmd_vid_device_preview(pj_cli_cmd_val *cval)
     return PJ_SUCCESS;
 }
 
-static pj_status_t cmd_vid_codec_list()
+static pj_status_t cmd_vid_codec_list(void)
 {
     pjsua_codec_info ci[PJMEDIA_CODEC_MGR_MAX_CODECS];
     unsigned count = PJ_ARRAY_SIZE(ci);
@@ -2510,7 +2510,7 @@ static pj_status_t cmd_set_vid_codec_size(pj_cli_cmd_val *cval)
     return status;
 }
 
-static pj_status_t cmd_vid_win_list()
+static pj_status_t cmd_vid_win_list(void)
 {
     pjsua_vid_win_id wids[PJSUA_MAX_VID_WINS];
     unsigned i, cnt = PJ_ARRAY_SIZE(wids);
@@ -2530,7 +2530,7 @@ static pj_status_t cmd_vid_win_list()
     return PJ_SUCCESS;
 }
 
-static pj_status_t cmd_arrange_vid_win()
+static pj_status_t cmd_arrange_vid_win(void)
 {
     arrange_window(PJSUA_INVALID_ID);
     return PJ_SUCCESS;

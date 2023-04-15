@@ -56,9 +56,9 @@ static int web_firewall_rule_forwards_one(firewall_t *rule, Webs *wp)
 		memset(d_mac, 0, sizeof(d_mac));
 
 		sprintf(id, "%d", rule->ID);
-		sprintf(type, "%s", firewall_type_string(rule->type));
-		sprintf(action, "%s", firewall_action_string(rule->action));
-		sprintf(proto, "%s", firewall_proto_string(rule->proto));
+		sprintf(type, "%s", nsm_firewall_type_string(rule->type));
+		sprintf(action, "%s", nsm_firewall_action_string(rule->action));
+		sprintf(proto, "%s", nsm_firewall_proto_string(rule->proto));
 
 		if (rule->source.family)
 		{
@@ -138,7 +138,7 @@ static int web_firewall_rule_forwards_one(firewall_t *rule, Webs *wp)
 
 static int web_firewall_zone_foreach_one(firewall_zone_t *zone, Webs *wp)
 {
-	return firewall_rule_foreach_api(zone, web_firewall_rule_forwards_one, wp);
+	return nsm_firewall_rule_foreach_api(zone, web_firewall_rule_forwards_one, wp);
 }
 
 static int web_firewall_port_map_rule_tbl(Webs *wp, char *path, char *query)
@@ -151,7 +151,7 @@ static int web_firewall_port_map_rule_tbl(Webs *wp, char *path, char *query)
 	wp->iValue = 0;
 	wp->iValue1 = FIREWALL_C_PORT;
 
-	firewall_zone_foreach_api(web_firewall_zone_foreach_one, wp);
+	nsm_firewall_zone_foreach_api(web_firewall_zone_foreach_one, wp);
 	wp->iValue = 0;
 	wp->iValue1 = 0;
 	websWrite(wp, "%s", "]");
@@ -169,7 +169,7 @@ static int web_firewall_port_filter_rule_tbl(Webs *wp, char *path, char *query)
 	websWrite(wp, "%s", "[");
 	wp->iValue = 0;
 	wp->iValue1 = FIREWALL_C_FILTER;
-	firewall_zone_foreach_api(web_firewall_zone_foreach_one, wp);
+	nsm_firewall_zone_foreach_api(web_firewall_zone_foreach_one, wp);
 	wp->iValue = 0;
 	wp->iValue1 = 0;
 	websWrite(wp, "%s", "]");
@@ -188,7 +188,7 @@ static int web_firewall_snat_rule_tbl(Webs *wp, char *path, char *query)
 	websWrite(wp, "%s", "[");
 	wp->iValue = 0;
 	wp->iValue1 = FIREWALL_C_SNAT;
-	firewall_zone_foreach_api(web_firewall_zone_foreach_one, wp);
+	nsm_firewall_zone_foreach_api(web_firewall_zone_foreach_one, wp);
 	wp->iValue = 0;
 	wp->iValue1 = 0;
 	websWrite(wp, "%s", "]");
@@ -264,7 +264,7 @@ static int web_firewall_port_map_rule_handle(Webs *wp, void *p)
 				rule.d_port = atoi(lanport);
 			//iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
 
-			if(firewall_rule_del_api(zone, &rule) == OK)
+			if(nsm_firewall_rule_del_api(zone, &rule) == OK)
 				return web_return_text_plain(wp, OK);
 			else
 				return ERROR;//
@@ -313,9 +313,9 @@ static int web_firewall_port_map_rule_handle(Webs *wp, void *p)
 			if(lanport)
 				rule.d_port = atoi(lanport);
 
-			if(firewall_rule_lookup_api(zone, &rule))
+			if(nsm_firewall_rule_lookup_api(zone, &rule))
 				return ERROR;
-			if(firewall_rule_add_api(zone, &rule) == OK)
+			if(nsm_firewall_rule_add_api(zone, &rule) == OK)
 				return web_return_text_plain(wp, OK);
 			else
 				return ERROR;//
@@ -400,7 +400,7 @@ static int web_firewall_port_filter_handle(Webs *wp, void *p)
 				rule.d_port = atoi(wanport);
 			//if(lanport)
 			//	rule.d_port = atoi(lanport);
-			if(firewall_rule_del_api(zone, &rule) == OK)
+			if(nsm_firewall_rule_del_api(zone, &rule) == OK)
 				return web_return_text_plain(wp, OK);
 			else
 				return ERROR;//
@@ -457,10 +457,10 @@ static int web_firewall_port_filter_handle(Webs *wp, void *p)
 			//if(lanport)
 			//	rule.d_port = atoi(lanport);
 
-			if(firewall_rule_lookup_api(zone, &rule))
+			if(nsm_firewall_rule_lookup_api(zone, &rule))
 				return ERROR;
 
-			if(firewall_rule_add_api(zone, &rule) == OK)
+			if(nsm_firewall_rule_add_api(zone, &rule) == OK)
 				return web_return_text_plain(wp, OK);
 			else
 				return ERROR;//
@@ -535,7 +535,7 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 				rule.d_port = atoi(wanport);
 			//if(lanport)
 			//	rule.d_port = atoi(lanport);
-			if(firewall_rule_del_api(zone, &rule) == OK)
+			if(nsm_firewall_rule_del_api(zone, &rule) == OK)
 				return web_return_text_plain(wp, OK);
 			else
 				return ERROR;//
@@ -591,10 +591,10 @@ static int web_firewall_snat_handle(Webs *wp, void *p)
 			//if(lanport)
 			//	rule.d_port = atoi(lanport);
 
-			if(firewall_rule_lookup_api(zone, &rule))
+			if(nsm_firewall_rule_lookup_api(zone, &rule))
 				return ERROR;
 
-			if(firewall_rule_add_api(zone, &rule) == OK)
+			if(nsm_firewall_rule_add_api(zone, &rule) == OK)
 				return web_return_text_plain(wp, OK);
 			else
 				return ERROR;//

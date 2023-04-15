@@ -11,10 +11,10 @@ OBJS += rtmp.o rtmplog.o rtmpamf.o rtmphashswf.o rtmpparseurl.o
 #OBJS += rtmp_thread.o rtmpgw.o rtmpsuck.o rtmpsrv.o rtmpdump.o 
 
 ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
-ZPL_DEFINE += -DUSE_OPENSSL
-ZPL_LDLIBS += -lssl -lcrypto -lz
+#ZPL_DEFINE += -DUSE_OPENSSL
+#ZPL_LDLIBS += -lssl -lcrypto -lz
 else
-ZPL_DEFINE += -DNO_CRYPTO
+ZPL_DEFINE += -DNO_CRYPTO -DNO_SSL
 endif
 ifeq ($(strip $(ZPL_POLARSSL_MODULE)),true)
 ZPL_DEFINE += -DUSE_POLARSSL

@@ -20,6 +20,7 @@
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
 #include "pjsip_app_api.h"
+#include "pjsip_util.h"
 
 #define THIS_FILE	"pjsua_app_config.c"
 
@@ -46,7 +47,7 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(MODULE_PJSIP, LOG_TRAP, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_TRAP, "%s", buffer);
 			break;
 		case 4:
 			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_DEBUG, "%s", buffer);
@@ -86,7 +87,7 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(MODULE_PJSIP, LOG_TRAP, "%s", buffer);
+			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_TRAP, "%s", buffer);
 			break;
 		case 4:
 			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_DEBUG, "%s", buffer);
@@ -230,7 +231,7 @@ int pl_pjsip_stereo(pjsua_app_config *cfg)
 	return OK;
 }
 
-int pl_pjsip_local_port(pjsua_app_config *cfg, zpl_uint16 lval)
+int pl_pjsip_local_port(pjsua_app_config *cfg, zpl_int32 lval)
 {
 	zassert(cfg != NULL);
 	if (lval < 0 || lval > 65535)
@@ -1665,7 +1666,7 @@ int pl_pjsip_cli_console(pjsua_app_config *cfg, zpl_bool enable)
  */
 
 /* Set default config. */
-void pjsip_default_config()
+void pjsip_default_config(void)
 {
 	char tmp[80];
 	unsigned i;

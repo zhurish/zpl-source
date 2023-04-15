@@ -63,8 +63,8 @@ typedef struct voip_volume_s
 } voip_volume_t;
 
 
-extern int voip_volume_module_init();
-extern int voip_volume_module_exit();
+extern int voip_volume_module_init(void);
+extern int voip_volume_module_exit(void);
 
 //extern int voip_volume_apply();
 

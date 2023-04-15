@@ -31,7 +31,7 @@ static voip_volume_t *voip_volume = NULL;
 /*
  * playback
  */
-static int voip_volume_playback_init()
+static int voip_volume_playback_init(void)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	super_system("amixer cset numid=92 1" VOIP_NOHUP);		//Stereo DAC MIXR DAC L1 Switch
@@ -60,7 +60,7 @@ static int voip_volume_playback_init()
 	return OK;
 }
 
-static int voip_volume_playback_exit()
+static int voip_volume_playback_exit(void)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	super_system("amixer cset numid=92 0" VOIP_NOHUP);		//Stereo DAC MIXR DAC L1 Switch
@@ -155,7 +155,7 @@ static int voip_volume_playback_volume_init(int out, int dac, int mono)
 	return OK;
 }
 
-static int voip_volume_dsp_init()
+static int voip_volume_dsp_init(void)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	super_system("amixer cset numid=132 1" VOIP_NOHUP);//IF1 ADC1 IN2 Mux
@@ -173,7 +173,7 @@ static int voip_volume_dsp_init()
 	return OK;
 }
 
-static int voip_volume_dsp_exit()
+static int voip_volume_dsp_exit(void)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	super_system("amixer cset numid=132 0" VOIP_NOHUP);//IF1 ADC1 IN2 Mux
@@ -191,7 +191,7 @@ static int voip_volume_dsp_exit()
 /*
  * Capture
  */
-static int voip_volume_capture_init()
+static int voip_volume_capture_init(void)
 {
 /*
 	super_system("amixer cset numid=45 1");		//IF1 ADC1 IN2 Mux
@@ -222,7 +222,7 @@ static int voip_volume_capture_init()
 	return OK;
 }
 
-static int voip_volume_capture_exit()
+static int voip_volume_capture_exit(void)
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
 	super_system("amixer cset numid=64 0" VOIP_NOHUP);		//Sto1 ADC MIXL ADC1 Switch
@@ -362,7 +362,7 @@ static int voip_volume_capture_boost_gain_init(int value)
 
 
 
-int voip_volume_module_init()
+int voip_volume_module_init(void)
 {
 	//zassert(voip_app != NULL);
 	voip_volume = XMALLOC(MTYPE_VOIP_VOLUME, sizeof(voip_volume_t));
@@ -388,7 +388,7 @@ int voip_volume_module_init()
 	return OK;
 }
 
-int voip_volume_module_exit()
+int voip_volume_module_exit(void)
 {
 	zassert(voip_volume != NULL);
 	memset(voip_volume, 0, sizeof(voip_volume_t));

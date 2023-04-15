@@ -7,7 +7,7 @@
 
 #include "zplos_include.h"
 #include "module.h"
-#include "zmemory.hh"
+#include "zmemory.h"
 #include "zassert.h"
 #include "command.h"
 #include "prefix.h"
