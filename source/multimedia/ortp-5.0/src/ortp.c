@@ -94,7 +94,7 @@ void ortp_init(void)
  *	scheduled mode of the RtpSession in your application.
  *
 **/
-void ortp_scheduler_init(void)
+void ortp_scheduler_init(int start)
 {
 	static bool_t initialized=FALSE;
 	if (initialized) return;
@@ -110,7 +110,8 @@ void ortp_scheduler_init(void)
 #endif /* __hpux */
 
 	__ortp_scheduler=rtp_scheduler_new();
-	rtp_scheduler_start(__ortp_scheduler);
+	if(start)
+		rtp_scheduler_start(__ortp_scheduler);
 }
 
 
@@ -136,7 +137,8 @@ void ortp_exit(void)
 
 RtpScheduler * ortp_get_scheduler(void)
 {
-	if (__ortp_scheduler==NULL) ortp_error("Cannot use the scheduled mode: the scheduler is not "
+	if (__ortp_scheduler==NULL) 
+		ortp_error("Cannot use the scheduled mode: the scheduler is not "
 									"started. Call ortp_scheduler_init() at the begginning of the application.");
 	return __ortp_scheduler;
 }

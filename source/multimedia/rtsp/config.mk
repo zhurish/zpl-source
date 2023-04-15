@@ -1,17 +1,17 @@
 #############################################################################
 # DEFINE
 ###########################################################################
-MODULEDIR = multimedia/rtsp
 
-ifeq ($(strip $(ZPL_LIBRTSP_MODULE)),true)
-endif
+
+
 ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 OBJS += DynamicRTSPServer.o \
 			livertsp_server.o \
 			livertsp_client.o \
 			zpl_rtsp_api.o
-#RTSPServerSupportingHTTPStreaming.o \			
-else
+#RTSPServerSupportingHTTPStreaming.o \	
+endif		
+ifeq ($(strip $(ZPL_LIBRTSP_MODULE)),true)
 OBJS += 	\
 			zpl_rtsp_client.o \
 			zpl_rtsp_session.o \

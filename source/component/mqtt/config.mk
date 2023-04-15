@@ -2,10 +2,10 @@
 # DEFINE
 ###########################################################################
 #
-MODULEDIR = component/mqtt/mqttlib
+MODULEDIR = $(MQTT_ROOT)
 MODULEAPPDIR = component/mqtt
 #
-
+vpath %.c mqttlib
 
 #
 MOSQ_OBJS=mosquitto.o \

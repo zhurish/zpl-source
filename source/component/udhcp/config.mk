@@ -1,8 +1,9 @@
 #############################################################################
 #ZPLM_INCLUDE += -I-$(ZPLBASE)/$(COMPONENTDIR)/$(DHCP_ROOT)
 ###########################################################################
-MODULEDIR = component/udhcp
+
 #OS
+#vpath %.c udhcp
 
 OBJS += dhcp_arpping.o
 OBJS += dhcp_lease.o

@@ -172,7 +172,7 @@ int  safe_poll(zpl_socket_t ufds, int maxfd, zpl_uint32 timeout)
 	{
 		IPSTACK_FD_ZERO(&rfdset);
 		IPSTACK_FD_SET(ipstack_fd(ufds), &rfdset);
-		n = ipstack_select_wait( maxfd, &rfdset, NULL, timeout);
+		n = ipstack_select_wait(IPSTACK_OS, maxfd, &rfdset, NULL, timeout);
 		if (n >= 0)
 			return n;
 		if (timeout > 0)

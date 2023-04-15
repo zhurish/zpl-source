@@ -46,6 +46,7 @@ struct _RtpScheduler {
 	struct _RtpTimer *timer;
 	uint32_t time_;       /*number of miliseconds elapsed since the start of the thread */
 	uint32_t timer_inc;	/* the timer increment in milisec */
+	int	self_start;
 };
 
 typedef struct _RtpScheduler RtpScheduler;

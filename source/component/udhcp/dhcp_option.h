@@ -154,12 +154,12 @@ extern int dhcp_option_flags(zpl_uint8 code);
 /*
  * for dhcp pool option handle
  */
-extern int dhcp_option_add(dhcp_option_set_t *option_tbl, zpl_uint8 code, const zpl_uint8 *opt, zpl_uint32 len);
-extern int dhcp_option_add_hex(dhcp_option_set_t *option_tbl, zpl_uint8 code, const zpl_uint32  value, zpl_uint32 len);
-extern int dhcp_option_del(dhcp_option_set_t *option_tbl, zpl_uint8 code);
+extern int dhcp_option_add(dhcp_option_set_t *option_tbl, zpl_uint16 code, const zpl_uint8 *opt, zpl_uint32 len);
+extern int dhcp_option_add_hex(dhcp_option_set_t *option_tbl, zpl_uint16 code, const zpl_uint32  value, zpl_uint32 len);
+extern int dhcp_option_del(dhcp_option_set_t *option_tbl, zpl_uint16 code);
 extern int dhcp_option_clean(dhcp_option_set_t *option_tbl);
-extern int dhcp_option_lookup(dhcp_option_set_t *option_tbl, zpl_uint8 code);
-extern int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint8 code,
+extern int dhcp_option_lookup(dhcp_option_set_t *option_tbl, zpl_uint16 code);
+extern int dhcp_option_string_set(dhcp_option_set_t *option_tbl, zpl_uint16 code,
 		const char *const_str);
 
 extern int dhcp_option_packet(dhcp_option_set_t *option_tbl, char *data, zpl_uint32 len);

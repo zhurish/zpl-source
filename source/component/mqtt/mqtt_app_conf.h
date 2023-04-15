@@ -135,7 +135,7 @@ struct mqtt_app_config {
 
 	zpl_char 		*bind_address;//服务绑定的IP地址
 	zpl_char 		*host;
-	zpl_uint16 		port;
+	zpl_int16 		port;
 
 	mqtt_qos_level qos;
 	/*

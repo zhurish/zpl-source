@@ -22,7 +22,6 @@ static const char *process_log_priority[] = { "emergencies", "alerts", "critical
 
 
 
-
 int open_log(char *file)
 {
 	char path[256];

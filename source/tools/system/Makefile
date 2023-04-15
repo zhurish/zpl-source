@@ -7,8 +7,8 @@ UPGREATE_TARGET = app-upgrade
 NVRAMENV_TARGET = nvramenv
 #I2CSET_TARGET = codecreg
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(SYSTEM_DIR)
+SRC_DIR = $(BASE_ROOT)/$(SYSTEM_DIR)
 
 upgrade_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(upgrade_OBJS))
 nvramenv_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(nvramenv_OBJS))
@@ -39,7 +39,7 @@ $(I2CSET_TARGET): $(i2cset_MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(upgrade_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 lib: $(upgrade_MODULE_OBJS) $(nvramenv_MODULE_OBJS) 

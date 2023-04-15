@@ -115,7 +115,7 @@ int modem_usb_driver_lookup(modem_usb_driver *driver)
 
 int modem_usb_driver_add(modem_usb_driver *driver)
 {
-	zpl_uint32 i = 0;
+	zpl_int32 i = 0;
 	assert(driver);
 	if(modem_usb_driver_lookup(driver) != ERROR)
 	{
@@ -164,7 +164,7 @@ int modem_usb_driver_add(modem_usb_driver *driver)
 int modem_usb_driver_del(modem_usb_driver *driver)
 {
 	assert(driver);
-	zpl_uint32 i = modem_usb_driver_lookup(driver);
+	zpl_int32 i = modem_usb_driver_lookup(driver);
 	if(i == ERROR)
 		return -1;
 	if(i >= 0)

@@ -35,7 +35,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/onvifgen/%.c
 #	
 #
 make_prepare:
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $(SRC_DIR)/onvifgen/onvif_api.c $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $(SRC_DIR)/onvifgen/onvif_api.c $(PLATFORM_BASE_ROOT); \
 
 $(LIBS) : $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 

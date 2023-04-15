@@ -338,7 +338,7 @@ int linux_ioctl_vrf_enable(struct ip_vrf *vrf)
 	netns_enable(vrf);
 #endif /* ZPL_NETNS_ENABLE */
 #ifdef ZPL_LIBNL_MODULE
-	if(rtnl_ipvrf_create(, ) == 0)
+	if(rtnl_ipvrf_create(vrf->vrf_id, vrf->name) == 0)
 	{
 		libnl_netlink_link_updown(&netlink_cmd, vrf->name, 1);
 	}

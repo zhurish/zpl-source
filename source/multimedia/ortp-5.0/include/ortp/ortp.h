@@ -75,7 +75,7 @@ extern "C"
 
 ORTP_PUBLIC bool_t ortp_min_version_required(int major, int minor, int micro);
 ORTP_PUBLIC void ortp_init(void);
-ORTP_PUBLIC void ortp_scheduler_init(void);
+ORTP_PUBLIC void ortp_scheduler_init(int start);
 ORTP_PUBLIC void ortp_exit(void);
 
 /****************/

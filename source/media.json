@@ -1,0 +1,37 @@
+{
+	"mediahwres":	{
+		"hwres":	[{
+				"channel":	0,
+				"chnindex":	0,
+				"vencchn":	0,
+				"capvencchn": 2,
+				"vpssgrp":	0,
+				"vpsschn":	0,
+				"inputchn":	0,
+				"inputpipe":	0,
+				"devid":	0,
+				"mipidev":	0,
+				"sensordev":	0,
+				"sensortype":	2,
+				"ispdev":	0,
+				"inputchn_hwconnect":	true,
+				"vpsschn_hwconnect":	true
+			}, {
+				"channel":	0,
+				"chnindex":	1,
+				"vencchn":	1,
+				"capvencchn": -1,
+				"vpssgrp":	0,
+				"vpsschn":	1,
+				"inputchn":	0,
+				"inputpipe":	0,
+				"devid":	0,
+				"mipidev":	0,
+				"sensordev":	0,
+				"sensortype":	2,
+				"ispdev":	0,
+				"inputchn_hwconnect":	true,
+				"vpsschn_hwconnect":	true
+			}]
+	}
+}

@@ -2,7 +2,7 @@
 # DEFINE
 ###########################################################################
 #OS
-#APP_OBJ_DIR = $(APP_ROOT)/X5-B/mgt
+#APP_OBJ_DIR = $(APP_BASE_ROOT)/X5-B/mgt
 APP_OBJ_DIR = application/V9
 
 APP_OBJS += v9_serial.o

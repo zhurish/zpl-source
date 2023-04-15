@@ -4,8 +4,8 @@ include config.mk
 
 #OBJS = $(OSOBJ)
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SSHSRC_DIR = $(BASE_ROOT)/$(MODULEDIR)/libssh
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(LIBSSH_ROOT)
+SSHSRC_DIR = $(BASE_ROOT)/$(LIBSSH_ROOT)/libssh
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_LIBOBJS  := $(addprefix $(OBJS_DIR)/,$(LIBSSHOBJS))
@@ -13,7 +13,7 @@ MODULE_LIBOBJS_DEP:=$(MODULE_LIBOBJS:%.o=%.d)
 
 
 
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+SRC_DIR = $(BASE_ROOT)/$(LIBSSH_ROOT)
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
 MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
@@ -64,13 +64,13 @@ $(LIBS) :  $(MODULE_LIBOBJS) $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 lib: $(LIBS)
 
 
-obj: $(BUILT_SOURCES) $(MODULE_OBJS)
+obj: $(MODULE_OBJS)
 
 install: $(LIBS)
 	@install -d $(LIB_DIR)

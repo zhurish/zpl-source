@@ -115,7 +115,7 @@ endif
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 $(LIBS) : $(ZPL_PJPROJECT_LIBS) $(SDL2LIBS) $(MODULE_OBJS) 

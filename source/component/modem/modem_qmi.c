@@ -144,11 +144,11 @@ zpl_bool modem_qmi_islinkup(modem_t *modem)
 	{
 		if(modem->pid[modem->dialtype])
 		{
-			if(nsm_halpal_interface_ifindex(ifp->k_name))
+			if(nsm_halpal_interface_ifindex(ifp->ker_name))
 			{
 				if(if_is_running(ifp))
 				{
-					modem_serial_interface_update_kernel(modem, ifp->k_name);
+					modem_serial_interface_update_kernel(modem, ifp->ker_name);
 				}
 				return zpl_true;
 			}

@@ -4,8 +4,8 @@ include config.mk
 
 #OBJS = $(OSOBJ)
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(KER_DIR)
+SRC_DIR = $(BASE_ROOT)/$(KER_DIR)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 
@@ -47,7 +47,7 @@ $(LIBS) : $(MODULE_OBJS) $(MODULE_IPOBJS)
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 lib: $(LIBS)

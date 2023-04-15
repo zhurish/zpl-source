@@ -45,12 +45,12 @@
 #ifdef PATH_WATCHQUAGGA_PID
 #define DEFAULT_PIDFILE PATH_WATCHQUAGGA_PID
 #else
-#define DEFAULT_PIDFILE STATEDIR "/watchquagga.pid"
+#define DEFAULT_PIDFILE SYSVARDIR "/watchquagga.pid"
 #endif
 #ifdef DAEMON_VTY_DIR
 #define VTYDIR DAEMON_VTY_DIR
 #else
-#define VTYDIR STATEDIR
+#define VTYDIR SYSVARDIR
 #endif
 
 #define PING_TOKEN "PING"
@@ -171,7 +171,7 @@ static struct global_state
 } gs = {
     .mode = MODE_MONITOR,
     .phase = PHASE_NONE,
-    .vtydir = NSM_VTYSH_PATH,
+    .vtydir = NULL,
     .period = 1000 * DEFAULT_PERIOD,
     .timeout = 1000 * DEFAULT_TIMEOUT,
     .restart_timeout = 1000 * DEFAULT_RESTART_TIMEOUT,
@@ -797,7 +797,7 @@ try_connect(struct daemon *dmn)
            gs.vtydir, dmn->name);
            */
   snprintf(addr.sun_path, sizeof(addr.sun_path), "%s",
-           gs.vtydir);
+           /*gs.vtydir*/os_netservice_sockpath_get(SHELL_SOCKET_PATH));
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
   len = addr.sun_len = SUN_LEN(&addr);
 #else

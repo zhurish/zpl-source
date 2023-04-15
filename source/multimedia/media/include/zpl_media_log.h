@@ -15,14 +15,14 @@ extern "C" {
 
 
 
-#define zm_msg_err(format, ...) 		zlog_err (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_error(format, ...) 		zlog_err (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_warn(format, ...) 		zlog_warn (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_info(format, ...) 		zlog_info (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_notice(format, ...) 	    zlog_notice (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_debug(format, ...) 		zlog_debug (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_trap(format, ...) 		zlog_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
-#define zm_msg_force_trap(format, ...) 	zlog_force_trap (MODULE_ZPLMEDIA, format, ##__VA_ARGS__)
+#define zm_msg_err(format, ...) 		zlog_err (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_error(format, ...) 		zlog_err (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_warn(format, ...) 		zlog_warn (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_info(format, ...) 		zlog_info (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_notice(format, ...) 	    zlog_notice (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_debug(format, ...) 		zlog_debug (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_trap(format, ...) 		zlog_trap (MODULE_MEDIA, format, ##__VA_ARGS__)
+#define zm_msg_force_trap(format, ...) 	zlog_force_trap (MODULE_MEDIA, format, ##__VA_ARGS__)
 
 #define zpl_video_assert(EX) zassert(EX)
 	

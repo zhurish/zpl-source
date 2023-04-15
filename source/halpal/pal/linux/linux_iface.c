@@ -203,7 +203,7 @@ int iplink_test(void)
 }
 #endif
 
-#if 0//def ZPL_LIBNL_MODULE
+#ifdef ZPL_LIBNL_MODULE
 static int rtnl_bond_interface_create(char *name)
 {
 	struct rtnl_link *link;

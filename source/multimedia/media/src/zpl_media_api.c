@@ -13,8 +13,8 @@
 
 
 struct module_list module_list_zplmedia = {
-		.module = MODULE_ZPLMEDIA,
-		.name = "ZPLMEDIA\0",
+		.module = MODULE_MEDIA,
+		.name = "MEDIA\0",
 		.module_init = zpl_media_module_init,
 		.module_exit = zpl_media_module_exit,
 		.module_task_init = zpl_media_task_init,
@@ -62,7 +62,7 @@ int zpl_media_module_exit(void)
 
 int zpl_media_task_init(void)
 {
-	zpl_media_task_create(MODULE_ZPLMEDIA, &tvideo_task);
+	zpl_media_task_create(MODULE_MEDIA, &tvideo_task);
 
 	zpl_media_event_start(zpl_media_event_default());
 	#ifdef ZPL_LIBORTP_MODULE

@@ -35,7 +35,7 @@ int modem_main_change_set_api(modem_t *modem, modem_event event)
 		return OK;
 	char *start = &modem->dialtype;
 	char *end = &modem->eth2;
-	zpl_uint32 checksum = crc_checksum(start, end - start + sizeof(void));
+	zpl_uint32 checksum = crc_checksum(start, end - start + 1);
 	if(modem->checksum != checksum)
 	{
 		modem->checksum = checksum;

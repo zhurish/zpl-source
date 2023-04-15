@@ -32,7 +32,7 @@ $(LIBS) : $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(APP_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 #
 lib: $(LIBS)

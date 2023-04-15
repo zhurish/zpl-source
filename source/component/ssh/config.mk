@@ -18,7 +18,7 @@
 
 
 ###########################################################################
-MODULEDIR = component/ssh
+
 #ZPLINCLUDE += -I$(OPENSSH_ROOT)/include
 #OS
 LIBSSHOBJS += agent.o \

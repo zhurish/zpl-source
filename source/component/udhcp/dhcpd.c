@@ -58,7 +58,7 @@ static dhcpd_interface_t * dhcpd_pool_create_interface(ifindex_t ifindex) {
 		ifter->ifindex = ifindex;
 
 		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->server_mac);
-		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
+		zlog_debug(MODULE_DHCP, "===========%s", ifp->ker_name);
 		return ifter;
 		//ifter->port;
 		//ifter->server_mac[6];          /* our MAC address (used only for ARP probing) */

@@ -226,6 +226,10 @@ extern void pl_zlog (const char *file, const char *func, const zpl_uint32 line, 
   PRINTF_ATTRIBUTE(6, 7);
 
 /* Handy zlog functions. */
+
+extern void pl_zlog_emergencies (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_alerts (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
+extern void pl_zlog_critical (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
 extern void pl_zlog_err (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
 extern void pl_zlog_warn (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
 extern void pl_zlog_info (const char *file, const char *func, const zpl_uint32 line, zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(5, 6);
@@ -239,6 +243,10 @@ extern void pl_zlog_trap (const char *file, const char *func, const zpl_uint32 l
 #define zlog(module, pri, format, ...) 				pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, pri, format, ##__VA_ARGS__)
 #define zlog_other(module, pri, format, ...) 		pl_zlog (NULL, NULL, NULL, module, pri, format, ##__VA_ARGS__)
 
+
+#define zlog_emergencies(module, format, ...) 	pl_zlog_emergencies (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_alerts(module, format, ...) 				pl_zlog_alerts (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
+#define zlog_critical(module, format, ...) 			pl_zlog_critical (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_err(module, format, ...) 				pl_zlog_err (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_warn(module, format, ...) 				pl_zlog_warn (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)
 #define zlog_info(module, format, ...) 				pl_zlog_info (__FILE__, __FUNCTION__, __LINE__, module, format, ##__VA_ARGS__)

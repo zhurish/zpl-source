@@ -32,8 +32,9 @@
 #include <ctype.h>
 #include "cJSON.h"
 
-extern void *cjson_malloc (size_t size);
-extern void cjson_free (void *ptr);
+//extern void *cjson_malloc (size_t size);
+//extern void cjson_free (void *ptr);
+
 #define double_eq(a,b) (fabs((a)-(b)) < 1e-8)
 static const char *ep;
 
@@ -46,8 +47,8 @@ static int cJSON_strcasecmp(const char *s1,const char *s2)
 	return tolower(*(const unsigned char *)s1) - tolower(*(const unsigned char *)s2);
 }
 
-static void *(*cJSON_malloc)(size_t sz) = cjson_malloc;
-static void (*cJSON_free)(void *ptr) = cjson_free;
+static void *(*cJSON_malloc)(size_t sz) = malloc;
+static void (*cJSON_free)(void *ptr) = free;
 
 static char* cJSON_strdup(const char* str)
 {

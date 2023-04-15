@@ -73,6 +73,7 @@ void rtp_scheduler_start(RtpScheduler *sched)
 {
 	if (sched->thread_running==0){
 		sched->thread_running=1;
+		sched->self_start = 1;
 		ortp_mutex_lock(&sched->lock);
 		ortp_thread_create(&sched->thread, NULL, rtp_scheduler_schedule,(void*)sched);
 		ortp_cond_wait(&sched->unblock_select_cond,&sched->lock);
@@ -105,7 +106,8 @@ void * rtp_scheduler_schedule(void * psched)
 	RtpScheduler *sched=(RtpScheduler*) psched;
 	RtpTimer *timer=sched->timer;
 	RtpSession *current;
-    prctl(PR_SET_NAME, "rtpScheduler", 0);
+	if(sched->self_start)
+    	prctl(PR_SET_NAME, "rtpScheduler", 0);
 	/* take this lock to prevent the thread to start until g_thread_create() returns
 		because we need sched->thread to be initialized */
 	ortp_mutex_lock(&sched->lock);

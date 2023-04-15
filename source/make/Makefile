@@ -14,14 +14,14 @@ ZPLPRODS_OBJ += $(BASE_ROOT)/empty
 #
 #
 #
-ifeq ($(MKDIR_TEST),true)
-define _MODULE_OBJ
-TMP_OBJ := $$(shell basename $(strip $(1)))
-MK_OBJ := $$(shell $(ZPL_MAKE_DIR) -p  $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(TMP_OBJ) $(BASE_ROOT)/$(ZPL_LIB_DIR))
-endef
+#ifeq ($(MKDIR_TEST),true)
+#define _MODULE_OBJ
+#TMP_OBJ := $$(shell basename $(strip $(1)))
+#MK_OBJ := $$(shell $(ZPL_MAKE_DIR) -p  $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(TMP_OBJ) $(BASE_ROOT)/$(ZPL_LIB_DIR))
+#endef
 #
-$(foreach objdir,$(ZPLPRODS_OBJ), $(eval $(call _MODULE_OBJ,$(objdir))))
-endif
+#$(foreach objdir,$(ZPLPRODS_OBJ), $(eval $(call _MODULE_OBJ,$(objdir))))
+#endif
 #
 #
 
@@ -81,18 +81,18 @@ endif
 #rebuild:clean all
 #
 prebuilts:
-	./moduletypes.sh header make $(PLATFORM_ROOT)
+	./moduletypes.sh header make $(PLATFORM_BASE_ROOT)
 	@for i in $(ZPLPRODS); do	\
-		./moduletypes.sh def $$i $(PLATFORM_ROOT); \
+		./moduletypes.sh def $$i $(PLATFORM_BASE_ROOT); \
 	done
-	./moduletypes.sh tail make $(PLATFORM_ROOT)
+	./moduletypes.sh tail make $(PLATFORM_BASE_ROOT)
 #	
 make_prepare:
-	./moduletypes.sh header make $(PLATFORM_ROOT)
+	./moduletypes.sh header make $(PLATFORM_BASE_ROOT)
 	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i make_prepare || exit "$$?"; 	\
 	done
-	./moduletypes.sh tail make $(PLATFORM_ROOT)
+	./moduletypes.sh tail make $(PLATFORM_BASE_ROOT)
 #
 objclean:
 	@for i in $(ZPLPRODS); do	\

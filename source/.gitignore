@@ -30,6 +30,7 @@
 *.m4
 *_install/*
 externsions/openssl
+externsions/test
 externsions/freetype-2.10.0
 externsions/gsoap-2.8
 externsions/SDL2-2.0.12

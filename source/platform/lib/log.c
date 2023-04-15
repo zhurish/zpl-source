@@ -1194,6 +1194,10 @@ FUNCNAME(const char *file, const char *func, const zpl_uint32 line, zpl_uint32 m
   va_end(args); \
 }
 
+ZLOG_FUNC(pl_zlog_emergencies, ZLOG_LEVEL_EMERG)
+ZLOG_FUNC(pl_zlog_alerts, ZLOG_LEVEL_ALERT)
+ZLOG_FUNC(pl_zlog_critical, ZLOG_LEVEL_CRIT)
+
 ZLOG_FUNC(pl_zlog_err, ZLOG_LEVEL_ERR)
 
 ZLOG_FUNC(pl_zlog_warn, ZLOG_LEVEL_WARNING)

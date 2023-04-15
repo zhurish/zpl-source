@@ -36,7 +36,7 @@ int zpl_bufdata_detail_debug(zpl_uint8 *buf, zpl_uint32 len)
 			strcat(buftmp, "   ");
 		if((i+1)%16 == 0)
 		{
-			zlog_debug(MODULE_ZPLMEDIA, "%s", buftmp);
+			zlog_debug(MODULE_MEDIA, "%s", buftmp);
 			memset(buftmp, 0, sizeof(buftmp));
 		}
 	}

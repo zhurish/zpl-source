@@ -4,8 +4,8 @@ include config.mk
 
 #OBJS = $(OSOBJ)
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(OS_ZPLIB_DIR)
+SRC_DIR = $(BASE_ROOT)/$(OS_ZPLIB_DIR)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
@@ -54,7 +54,7 @@ route_types.h: $(SRC_DIR)/route_types.txt $(SRC_DIR)/route_types.pl
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare: route_types.h 
 	@for i in $(files); do	\
-		sh $(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); 	\
+		sh $(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); 	\
 	done
 
 

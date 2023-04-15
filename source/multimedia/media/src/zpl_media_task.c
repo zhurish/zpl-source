@@ -25,7 +25,7 @@ int zpl_media_task_create( ZPL_MEDIA_GLOBAL_E module, zpl_media_task_t *t_task)
 	
 	if(t_task->t_taskid == 0)
     {
-		t_task->t_master = thread_master_module_create(MODULE_ZPLMEDIA);
+		t_task->t_master = thread_master_module_create(MODULE_MEDIA);
 		t_task->t_taskid = os_task_create("mediaProcessTask", OS_TASK_DEFAULT_PRIORITY,
 								 0, media_main_task, t_task, OS_TASK_DEFAULT_STACK);
     }
@@ -62,7 +62,7 @@ static int media_main_task(void *argv)
 	struct thread_master *master = (struct thread_master *)video_task->t_master;
 	if(master == NULL)
 	{
-		video_task->t_master = thread_master_module_create(MODULE_ZPLMEDIA);
+		video_task->t_master = thread_master_module_create(MODULE_MEDIA);
 	}
 	//thread_add_timer(video_task->t_master, media_main_timer, NULL, 10);
 	host_waitting_loadconfig();

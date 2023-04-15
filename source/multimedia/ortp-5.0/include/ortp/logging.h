@@ -54,7 +54,7 @@ typedef int (*OrtpLogFunc)(OrtpLogLevel, char*);
 
 	
 /*#define ortp_set_log_handler ortp_set_log_handler*/
- void ortp_set_log_handler(OrtpLogFunc func);
+ void ortp_set_log_handler(OrtpLogFunc func, int detail);
 /* This function does not have any means by now, as even ortp_set_log_handler is deprecated. use ortp_log_handler_t instead*/
  OrtpLogFunc ortp_get_log_handler(void);
 

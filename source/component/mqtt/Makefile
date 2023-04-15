@@ -4,8 +4,8 @@ ZPL_MQTT_BROKER=false
 include config-def.mk
 include config.mk
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MQTT_ROOT)
+SRC_DIR = $(BASE_ROOT)/$(MQTT_ROOT)
 ifeq ($(WITH_SHARED_LIBRARIES),yes)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_ULIB_DIR)
 endif
@@ -18,7 +18,7 @@ MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
 
 -include $(MODULE_OBJS_DEP)
 
-$(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJS_DIR)/%.o: %.c
 	@if test ! -d $(OBJS_DIR) ; \
 		then \
 		$(MKDIR) -p $(OBJS_DIR) ; \
@@ -66,7 +66,7 @@ endif
 files = $(patsubst %.o,%.c,$(MQTT_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 #
 #

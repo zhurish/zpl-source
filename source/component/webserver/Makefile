@@ -36,8 +36,8 @@ ifeq ($(THEME_V9UI),true)
 WEB_DEFINE += -DTHEME_V9UI
 endif
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)/src
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(WEBGUI_ROOT)
+SRC_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/src
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
@@ -45,15 +45,15 @@ MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
 
 
 
-WEB_DIR = $(BASE_ROOT)/$(MODULEDIR)
+WEB_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)
 ZPL_WEBSERVER_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(WEBOBJS))
 MODULE_OBJS_DEP +=$(ZPL_WEBSERVER_MODULE_OBJS:%.o=%.d)
 
-APP_WEB_DIR = $(BASE_ROOT)/$(MODULEDIR)/app/web
+APP_WEB_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/app/web
 ZPL_APPLICATION_MODULE_WEB_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPWEBOBJS))
 MODULE_OBJS_DEP +=$(ZPL_APPLICATION_MODULE_WEB_OBJS:%.o=%.d)
 
-APP_JST_DIR = $(BASE_ROOT)/$(MODULEDIR)/app/jst
+APP_JST_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/app/jst
 ZPL_APPLICATION_MODULE_JST_OBJS  := $(addprefix $(OBJS_DIR)/,$(APPJSTOBJS))
 MODULE_OBJS_DEP +=$(ZPL_APPLICATION_MODULE_JST_OBJS:%.o=%.d)
 
@@ -61,21 +61,20 @@ MODULE_OBJS_DEP +=$(ZPL_APPLICATION_MODULE_JST_OBJS:%.o=%.d)
 
 
 ZPLCFLAGS +=$(ME_DFLAGS) $(WEB_DEFINE) 
-#-DME_GOAHEAD_UPLOAD_DIR=\"/tmp/app/tftpboot\"
-ZPLINCLUDE +=-I$(WEBGUI_ROOT)/src
+ZPLINCLUDE +=-I$(BASE_ROOT)/$(WEBGUI_ROOT)/src
 
 ifeq ($(ME_COM_MBEDTLS),1)
-mbedtls_DIR = $(BASE_ROOT)/$(MODULEDIR)/src/mbedtls
+mbedtls_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/src/mbedtls
 mbedtls_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(mbedtls_OBJS))
 
-goahead_mbedtls_DIR = $(BASE_ROOT)/$(MODULEDIR)/src/goahead-mbedtls
+goahead_mbedtls_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/src/goahead-mbedtls
 goahead_mbedtls_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(goahead_mbedtls_OBJS))
 endif
 ifeq ($(ME_COM_OPENSSL),1)
-goahead_openssl_DIR = $(BASE_ROOT)/$(MODULEDIR)/src/goahead-openssl
+goahead_openssl_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/src/goahead-openssl
 goahead_openssl_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(goahead_openssl_OBJS))
 endif
-gopass_DIR = $(BASE_ROOT)/$(MODULEDIR)/src/utils
+gopass_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/src/utils
 gopass_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(gopass_OBJS))
 
 # It's a kind of magic...
@@ -243,7 +242,7 @@ endif
 files = $(patsubst %.o,%.c,$(WEBOBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 #
 lib: $(LIBS)

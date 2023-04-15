@@ -1,7 +1,6 @@
 #############################################################################
 # DEFINE
 ###########################################################################
-MODULEDIR = service/traceroute
 #OS
 ifeq ($(strip $(ZPL_SERVICE_TRACEROUTE)),true)
 OBJS	+= tracerouteLib.o

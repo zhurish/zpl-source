@@ -16,7 +16,7 @@ extern "C" {
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "lib_include.h" /* 不知为何 添加这个头文件出现venc编码没有启动 */
+#include "lib_include.h" 
 #include "vty_include.h" 
 
 #ifdef ZPL_LIBMEDIA_MODULE

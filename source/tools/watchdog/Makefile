@@ -5,12 +5,12 @@ include config.mk
 
 WATCHDOG_TARGET = watchdog
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(WATCHDOG_DIR)
+SRC_DIR = $(BASE_ROOT)/$(WATCHDOG_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
-LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -Xlinker "-(" -los  -lbase -lshell -Xlinker "-)" 
+LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -Xlinker "-(" -los  -lbase -lshell -lipcstandby -lsyslog -Xlinker "-)" 
 #-lbase -lshell -lnsm -lpal -lhal -lkernel -lproduct -lsdk -lipcbc
 
 
@@ -27,7 +27,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 files = $(patsubst %.o,%.c,$(MODULE_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 

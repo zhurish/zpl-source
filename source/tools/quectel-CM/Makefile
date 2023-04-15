@@ -7,10 +7,8 @@ TARGET = quectel-CM
 ZPLCFLAGS += -lpthread
 
 
-MODULEDIR = tools/quectel-CM
-
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(QUECTEL_DIR)
+SRC_DIR = $(BASE_ROOT)/$(QUECTEL_DIR)
 
 
 OBJS = QmiWwanCM.o GobiNetCM.o MPQMUX.o QMIThread.o \
@@ -37,7 +35,7 @@ $(TARGET): $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 lib: $(TARGET)

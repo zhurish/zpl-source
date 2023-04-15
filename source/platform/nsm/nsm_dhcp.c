@@ -35,19 +35,20 @@ int nsm_dhcp_interface_create_api(struct interface *ifp)
 			if_is_brigde(ifp) || if_is_wireless(ifp))
 	{
 		nsm_dhcp_ifp_t *dhcp = ifp->info[MODULE_DHCP];
-		if(ifp->info[MODULE_DHCP] == NULL)
+		if(dhcp == NULL)
 		{
 			ifp->info[MODULE_DHCP] = XMALLOC(MTYPE_DHCP, sizeof(nsm_dhcp_ifp_t));
+			dhcp = ifp->info[MODULE_DHCP] ;
 			zassert(ifp->info[MODULE_DHCP]);
 			os_memset(ifp->info[MODULE_DHCP], 0, sizeof(nsm_dhcp_ifp_t));
-			((nsm_dhcp_ifp_t *)(ifp->info[MODULE_DHCP]))->ifp = ifp;
+			dhcp->ifp = ifp;
 
 			if (dhcp->mutex == NULL)
 				dhcp->mutex = os_mutex_name_create("if_dhcp_mutex");
 		}
 		else
 		{
-			nsm_dhcp_ifp_t *dhcp = ifp->info[MODULE_DHCP];
+			//nsm_dhcp_ifp_t *dhcp = ifp->info[MODULE_DHCP];
 			//dhcp->ifp = ifp;
 		}
 	}

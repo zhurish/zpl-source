@@ -2,9 +2,7 @@
 # DEFINE
 ###########################################################################
 #
-MODULEDIR = component/wifi
 #
-ZPLINCLUDE += -I$(WIFI_ROOT)/include
 #
 #
 #OS

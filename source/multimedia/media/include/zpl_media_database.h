@@ -41,6 +41,16 @@ typedef struct zpl_media_db_s
 
 }zpl_media_db_t;
 
+
+int zpl_media_database_create(zpl_media_db_t *zdb, const char *tbl);
+int zpl_media_insert(zpl_media_db_t *zdb, int captureid, const char *datetime, int channel, const char *urlpath);
+int zpl_media_deletebyid(zpl_media_db_t *zdb, int id);
+int zpl_media_deletebycaptureid(zpl_media_db_t *zdb, int id);
+int zpl_media_deletebydatetime(zpl_media_db_t *zdb, const char *sdatetime, const char *edatetime);
+int zpl_media_deletebychannel(zpl_media_db_t *zdb, int channel);
+int zpl_media_select(zpl_media_db_t *zdb, zpl_media_table_t *table, int num, bool sort);
+
+
 #endif
 
 #ifdef __cplusplus

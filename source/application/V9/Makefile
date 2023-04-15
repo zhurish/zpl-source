@@ -40,7 +40,7 @@ $(LIBS) : $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(APP_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 #$(LIBS) : $(MODULE_OBJS)
 #	$(ZPL_MAKE_LIB) $(LIBS) $(MODULE_OBJS)
@@ -54,9 +54,9 @@ obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
 install: $(LIBS)
 	@install -d $(LIB_DIR)
 	@install -m 755 $(LIBS) $(LIB_DIR)
-	@install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.a $(LIB_DIR)
+	@install -m 755 $(APP_BASE_ROOT)/V9/lib/liboal_privateProtocol.a $(LIB_DIR)
 #	install -d $(BASE_ROOT)/$(ZPL_ULIB_DIR)
-#	install -m 755 $(APP_ROOT)/V9/lib/liboal_privateProtocol.so $(BASE_ROOT)/$(ZPL_ULIB_DIR)
+#	install -m 755 $(APP_BASE_ROOT)/V9/lib/liboal_privateProtocol.so $(BASE_ROOT)/$(ZPL_ULIB_DIR)
 
 
 clean: objclean

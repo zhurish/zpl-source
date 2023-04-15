@@ -9,11 +9,18 @@ config ZPL_EXTERNSIONS_MODULE
 	default y
 
 config ZPL_ZLIB_MODULE
-	bool "zlib Module"
+	bool "Build Zlib Module"
 	default n
 	depends on ZPL_EXTERNSIONS_MODULE
 	help
-	Build zlib Module.
+	Build Zlib Module.
+
+config ZPL_EXZLIB_MODULE
+	bool "Include Extern Zlib Module"
+	default n
+	depends on ZPL_ZLIB_MODULE
+	help
+	Include Extern zlib Module.
 
 config ZPL_OPENSSL_MODULE
 	bool "OpenSSL Module"

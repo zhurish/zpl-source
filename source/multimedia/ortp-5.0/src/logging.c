@@ -26,10 +26,12 @@
 
 
 static OrtpLogFunc _ortp_log_func = NULL;
+static unsigned char _log_detail = 0;
 static unsigned int _ortp_log_level = ORTP_LOGLEV_END+1;
 
-void ortp_set_log_handler(OrtpLogFunc func){
+void ortp_set_log_handler(OrtpLogFunc func, int detail){
     _ortp_log_func = func;
+    _log_detail = detail;
 }
 
 OrtpLogFunc ortp_get_log_handler(void){
@@ -69,39 +71,22 @@ void ortp_hdr_log_out(char *buf)
 
 void ortp_log_out(OrtpLogLevel level, const char *func, int line, const char *fmt,...)
 {
+    int n = 0;
     va_list args;
+    char *levelstr[] = {"FATAL", "ERROR", "WARNING", "MESSAGE", "TRACE", "DEBUG", "DEBUG", "DEBUG"};
+    char logtmp[2048];
     if(level > _ortp_log_level)
         return;
     va_start (args, fmt);
-    switch(level)
-    {
-    case ORTP_FATAL:
-        fprintf(stdout, "FATAL:%s[%d]", func, line);
-    break;
-    case ORTP_ERROR:
-        fprintf(stdout, "ERROR:%s[%d]", func, line);
-    break;
-    case ORTP_WARNING:
-        fprintf(stdout, "WARNING:%s[%d]", func, line);
-    break;
-    case ORTP_MESSAGE:
-        fprintf(stdout, "MESSAGE:%s[%d]", func, line);
-    break;
-    case ORTP_TRACE:
-        fprintf(stdout, "TRACE:%s[%d]", func, line);
-    break;
-    case ORTP_DEBUG:
-        fprintf(stdout, "DEBUG:%s[%d]", func, line);
-    break;
-    case ORTP_END:
-        fprintf(stdout, "DEBUG:%s[%d]", func, line);
-    break;
-    case ORTP_LOGLEV_END:
-        fprintf(stdout, "DEBUG:%s[%d]", func, line);
-    break;
-    }
-    vfprintf(stdout, fmt, args);
+    if(_log_detail)
+        n = snprintf(logtmp, sizeof(logtmp), "%s[%d]", func, line);
+    n += snprintf(logtmp + n, sizeof(logtmp)-n, fmt, args);
     va_end (args);
+    if(_ortp_log_func)
+    {
+        (_ortp_log_func)(level, logtmp);
+    }
+    fprintf(stdout, "%s:%s", levelstr[level], logtmp);
     fprintf(stdout, "\r\n");
     fflush(stdout);
 }
@@ -109,33 +94,20 @@ void ortp_log_out(OrtpLogLevel level, const char *func, int line, const char *fm
 
 void ortp_log(OrtpLogLevel level,const char *fmt,...)
 {
+    int n = 0;
     va_list args;
+    char *levelstr[] = {"FATAL", "ERROR", "WARNING", "MESSAGE", "TRACE", "DEBUG", "DEBUG", "DEBUG"};
+    char logtmp[2048];
     if(level > _ortp_log_level)
         return;
     va_start (args, fmt);
-    switch(level)
-    {
-    case 0:
-        fprintf(stdout, "FATAL:");
-    break;
-    case 1:
-        fprintf(stdout, "ERROR:");
-    break;
-    case 2:
-        fprintf(stdout, "WARNING:");
-    break;
-    case 3:
-        fprintf(stdout, "MESSAGE:");
-    break;
-    case 4:
-        fprintf(stdout, "TRACE:");
-    break;
-    case 5:
-        fprintf(stdout, "DEBUG:");
-    break;
-    }
-    vfprintf(stdout, fmt, args);
+    n += snprintf(logtmp + n, sizeof(logtmp)-n, fmt, args);
     va_end (args);
+    if(_ortp_log_func)
+    {
+        (_ortp_log_func)(level, logtmp);
+    }
+    fprintf(stdout, "%s:%s", levelstr[level], logtmp);
     fprintf(stdout, "\r\n");
     fflush(stdout);
 }

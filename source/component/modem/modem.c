@@ -422,7 +422,7 @@ int modem_interface_update_kernel(modem_t *modem, char *name)
 		if(!(ifp->flags & IPSTACK_IFF_NOARP))
 		{
 			ifp->flags |= IPSTACK_IFF_NOARP;
-			nsm_halpal_interface_update_flag(ifp, ifp->flags);
+			nsm_halpal_interface_update(ifp);
 		}
 	}
 	return OK;

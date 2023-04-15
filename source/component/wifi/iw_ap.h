@@ -93,14 +93,14 @@ typedef struct iw_ap_s
 	iw_ap_pass_t		password[1];
 
 	zpl_uint8 				BSSID[IW_SSID_NAME_MAX];
-	zpl_uint8				channel;
-	zpl_uint8				beacon;
-	zpl_uint8				power;
+	zpl_int				channel;
+	zpl_int				beacon;
+	zpl_int				power;
 
-	zpl_uint8				driver;
-	zpl_uint8				country_code;
+	zpl_int				driver;
+	zpl_int				country_code;
 	zpl_int					signal;
-	zpl_int					bitrate;
+	zpl_long				bitrate;
 	zpl_bool				wmm_enabled;
 	zpl_bool				ap_isolate;
 	zpl_double				freq;
@@ -171,7 +171,7 @@ extern int iw_dev_channel_set(struct interface *ifp, struct vty *vty, char *  va
 */
 
 extern int iw_ap_beacon_set_api(iw_ap_t *iw_ap, zpl_uint8 beacon);
-extern int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, zpl_int bitrate);
+extern int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, zpl_long bitrate);
 extern int iw_ap_isolate_set_api(iw_ap_t *iw_ap, zpl_bool enable);
 extern int iw_ap_bridge_set_api(iw_ap_t *iw_ap, ifindex_t bridge);
 extern int iw_ap_country_set_api(iw_ap_t *iw_ap, zpl_uint8 country);

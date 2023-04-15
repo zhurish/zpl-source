@@ -5,8 +5,8 @@ include config.mk
 
 TARGET = ProcessMU
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(PROCESS_DIR)
+SRC_DIR = $(BASE_ROOT)/$(PROCESS_DIR)
 
 LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -los -luci
 CFLAGS += -g
@@ -31,7 +31,7 @@ $(TARGET): $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 lib: $(MODULE_OBJS)

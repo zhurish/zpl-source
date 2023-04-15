@@ -26,6 +26,9 @@
 #include "zmemory.h"
 #include "log.h"
 #include "command.h"
+#ifdef ZPL_OS_JSON
+#include "cJSON.h"
+#endif
 
 /* malloc.h is generally obsolete, however GNU Libc mallinfo wants it. */
 #if !defined(HAVE_STDLIB_H) || (defined(GNU_LINUX) && defined(HAVE_MALLINFO))
@@ -334,6 +337,12 @@ void log_memstats_stderr(const char *prefix)
 
 void memory_init(void)
 {
+  #ifdef ZPL_OS_JSON
+  cJSON_Hooks cJSONhooks;
+  cJSONhooks.malloc_fn = cjson_malloc;
+  cJSONhooks.free_fn = cjson_free;
+  cJSON_InitHooks(&cJSONhooks);
+  #endif
   memset(mstat, 0, sizeof(mstat));
 }
 

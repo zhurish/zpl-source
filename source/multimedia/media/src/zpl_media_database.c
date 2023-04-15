@@ -74,7 +74,7 @@ int zpl_media_deletebydatetime(zpl_media_db_t *zdb, const char *sdatetime, const
         sprintf(sqlcmd, MEDIA_DATABASE_DELETE_BY_DATATIME "<= '%s' && datetime >= '%s';", edatetime, sdatetime);
     else if(!sdatetime && edatetime)
         sprintf(sqlcmd, MEDIA_DATABASE_DELETE_BY_DATATIME "<= '%s';", edatetime);
-    else if(sdatetime && edatetime)
+    else if(sdatetime && !edatetime)
         sprintf(sqlcmd, MEDIA_DATABASE_DELETE_BY_DATATIME " >= '%s';", sdatetime);
 
     result = sqlite3_exec( zdb->db, sqlcmd, NULL, NULL, &errmsg);

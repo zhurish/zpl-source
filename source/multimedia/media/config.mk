@@ -1,7 +1,7 @@
 #############################################################################
 # DEFINE
 ###########################################################################
-MODULEDIR = multimedia/media
+
 #OS
 
 ZPLEX_INCLUDE += -I$(LIBMEDIA_ROOT)/src/framediscrete -I$(LIBMEDIA_ROOT)/bsp

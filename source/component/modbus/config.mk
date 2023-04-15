@@ -2,7 +2,7 @@
 # DEFINE
 ###########################################################################
 #
-MODULEDIR = component/modbus
+
 #
 ZPLINCLUDE += -I$(MODBUS_ROOT)/include
 #

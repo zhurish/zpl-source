@@ -137,7 +137,7 @@ int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
 			{
 				iw_ap_init(&iw->private.ap, ifp->ifindex);
 				iw->private.ap.ifindex = ifp->ifindex;
-/*				if(ifp->k_ifindex)
+/*				if(ifp->ker_ifindex)
 				{
 					pal_interface_down(ifp);
 					iw_dev_mode_set(ifp, "master");
@@ -148,7 +148,7 @@ int nsm_iw_mode_set_api(struct interface *ifp, iw_mode_t mode)
 			{
 				iw_client_init(&iw->private.client, ifp->ifindex);
 				iw->private.client.ifindex = ifp->ifindex;
-				if(ifp->k_ifindex)
+				if(ifp->ker_ifindex)
 				{
 					pal_interface_down(ifp);
 					iw_dev_mode_set(ifp, "managed");
@@ -190,7 +190,7 @@ int nsm_iw_capabilities_show(struct interface *ifp, struct vty *vty)
 {
 	if(!ifp || !vty)
 		return ERROR;
-	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp && ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		return iw_phy_capabilities_show(ifp, vty);
 	}
@@ -201,7 +201,7 @@ int nsm_iw_ap_info_show(struct interface *ifp, struct vty *vty)
 {
 	if(!ifp || !vty)
 		return ERROR;
-	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp && ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		return iw_ap_dev_information_show(ifp, vty);
 	}
@@ -212,7 +212,7 @@ int nsm_iw_channel_freq_show(struct interface *ifp, struct vty *vty)
 {
 	if(!ifp || !vty)
 		return ERROR;
-	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp && ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		return iw_dev_channel_support_show(ifp, vty);
 	}

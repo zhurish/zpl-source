@@ -5,8 +5,8 @@ include config.mk
 
 VTYSH_TARGET = vtysh
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(VTYSH_DIR)
+SRC_DIR = $(BASE_ROOT)/$(VTYSH_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 
@@ -44,7 +44,7 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 files = $(patsubst %.o,%.c,$(MODULE_OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 $(VTYSH_TARGET): $(MODULE_OBJS)

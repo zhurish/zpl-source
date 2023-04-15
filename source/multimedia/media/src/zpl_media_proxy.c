@@ -14,7 +14,7 @@
 
 struct module_list module_list_medie_proxy = {
 		.module = MODULE_MEDIA_PROXY,
-		.name = "ZPLRTSP\0",
+		.name = "MEDIA_PROXY\0",
 		.module_init = zpl_media_proxy_init,
 		.module_exit = zpl_media_proxy_exit,
 		.module_task_init = zpl_media_proxy_task_init,

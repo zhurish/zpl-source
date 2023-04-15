@@ -98,6 +98,9 @@ typedef struct
     void	*mutex;
     LIST	list;
     zpl_taskid_t taskid;
+#ifdef ZPL_LIBORTP_MODULE                                   
+    zpl_taskid_t ortp_taskid;
+#endif  
 }zpl_mediartp_scheduler_t;
 
 typedef struct rtp_session_adap_s

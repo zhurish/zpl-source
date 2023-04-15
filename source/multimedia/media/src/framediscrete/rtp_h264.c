@@ -143,9 +143,9 @@ static int rtp_payload_send_h264_oneframe(void *session, const uint8_t *buffer, 
 
                 memset(hexformat, 0, sizeof(hexformat));
                 os_loghex(hexformat, sizeof(hexformat), buffer, len);
-                zlog_debug(MODULE_ZPLMEDIA, "-------- rtp send Table ------+---------+");
-                zlog_debug(MODULE_ZPLMEDIA, " hex :\n%s", hexformat);
-                zlog_debug(MODULE_ZPLMEDIA, "---------+--------+-------+---------+");
+                zlog_debug(MODULE_MEDIA, "-------- rtp send Table ------+---------+");
+                zlog_debug(MODULE_MEDIA, " hex :\n%s", hexformat);
+                zlog_debug(MODULE_MEDIA, "---------+--------+-------+---------+");
 */
         ret = rtp_session_send_with_ts(session, p, plen, user_ts);
         #endif

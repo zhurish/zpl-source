@@ -94,7 +94,7 @@ static int process_manage_unit(int fd, process_head *head, int *errnum)
 {
 
 	int /*num = 0, */len = 0;
-	zpl_uint32 offset = 0;
+	zpl_int32 offset = 0;
 	char buf[1024];
 	os_memset(buf, 0, sizeof(buf));
 	while(1)

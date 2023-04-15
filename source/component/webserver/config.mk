@@ -2,8 +2,9 @@
 # DEFINE
 ###########################################################################
 #
-MODULEDIR = component/webserver
+
 #
+#vpath %.c src
 #ZPLINCLUDE += -I$(WEBGUI_ROOT)/include
 #
 #

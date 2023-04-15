@@ -11,12 +11,13 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "host.h"
+#undef ZPL_LIVE555_MODULE
 #ifdef ZPL_LIVE555_MODULE
 #include "livertsp_server.h"
-#else
-
+#endif
+#ifdef ZPL_LIBORTP_MODULE
 #include <ortp/ortp.h>
-
+#endif
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
 #include "zpl_rtsp_transport.h"
@@ -27,9 +28,10 @@
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_server.h"
-#endif
-
 #include "zpl_rtsp_api.h"
+
+
+
 
 static rtsp_server_t rtsp_server;
 
@@ -49,7 +51,8 @@ static int rtsp_main_task(void* argv)
 #ifdef ZPL_LIVE555_MODULE
     host_waitting_loadconfig();
     livertsp_server_loop(argv);
-#else
+#endif    
+#ifdef ZPL_LIBORTP_MODULE
     if(rtsp_server.rtsp_srv)
     {
 		rtsp_server.rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
@@ -80,7 +83,8 @@ int rtsp_module_init(void)
 #ifdef ZPL_LIVE555_MODULE
     rtsp_srv = malloc(sizeof(rtsp_srv_t));
     livertsp_server_init(8554, BASEUSAGEENV_BASE_DIR, rtsp_logcb);
-#else
+#endif    
+#ifdef ZPL_LIBORTP_MODULE
     rtsp_server.t_master = eloop_master_module_create(MODULE_RTSP);
     rtsp_server.rtsp_srv = rtsp_srv_create(rtsp_server.t_master, NULL, 554, MODULE_RTSP);
 #endif    
@@ -91,7 +95,8 @@ int rtsp_module_exit(void)
 {
 #ifdef ZPL_LIVE555_MODULE
     livertsp_server_exit();
-#else
+#endif    
+#ifdef ZPL_LIBORTP_MODULE
     if(rtsp_server.rtsp_srv)
     {
         rtsp_srv_destroy(rtsp_server.rtsp_srv);

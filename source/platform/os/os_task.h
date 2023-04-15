@@ -33,7 +33,7 @@ extern "C" {
 #define OS_TASK_DELETED        	(0x00000004)
 
 /* default value */
-#define OS_TASK_DEFAULT_STACK		(1024 * 32)
+#define OS_TASK_DEFAULT_STACK		(1024 * 64)
 #define OS_TASK_DEFAULT_SLICE		(1)
 #define OS_TASK_DEFAULT_PRIORITY	OS_TASK_MAX_PRIORITY-1
 
@@ -72,6 +72,12 @@ struct os_task_history
 	zpl_llong total_realy;
 	zpl_llong total;
 	zpl_int32 cpu;
+	zpl_uint32 mtotal;
+	zpl_uint32 mlimit;
+	zpl_uint32 mrss;
+//vsize：进程的虚拟内存大小，单位为bytes
+//rss: 进程独占内存+共享库，单位pages，此处等于93087
+//rsslim: rss大小上限
 };
 
 typedef int(*os_task_hook)(void *);

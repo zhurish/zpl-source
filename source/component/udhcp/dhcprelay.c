@@ -150,16 +150,16 @@ static dhcp_relay_t * dhcp_relay_create_interface(zpl_uint32 ifindex) {
 		ifter->ifindex = ifindex;
 		//ifter->port = SERVER_PORT;
 		/*
-		 if(ifp && strlen(ifp->k_name))
-		 ifter->k_name = strdup(ifp->k_name);
-		 if(ifter->k_name)
+		 if(ifp && strlen(ifp->ker_name))
+		 ifter->ker_name = strdup(ifp->ker_name);
+		 if(ifter->ker_name)
 		 {
-		 udhcp_read_interface(ifter->k_name, NULL, &ifter->ipaddr, ifter->server_mac);
-		 zlog_debug(MODULE_DHCP, "===========%s", ifter->k_name);
+		 udhcp_read_interface(ifter->ker_name, NULL, &ifter->ipaddr, ifter->server_mac);
+		 zlog_debug(MODULE_DHCP, "===========%s", ifter->ker_name);
 		 }
 		 */
 		udhcp_interface_mac(ifindex, &ifter->ipaddr, ifter->mac);
-		zlog_debug(MODULE_DHCP, "===========%s", ifp->k_name);
+		zlog_debug(MODULE_DHCP, "===========%s", ifp->ker_name);
 		return ifter;
 		//ifter->port;
 		//ifter->server_mac[6];          /* our MAC address (used only for ARP probing) */
@@ -168,7 +168,7 @@ static dhcp_relay_t * dhcp_relay_create_interface(zpl_uint32 ifindex) {
 }
 
 
-dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
+dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, ifindex_t ifindex) {
 	dhcp_relay_t *pstNode = NULL;
 	NODE index;
 	if (!lstCount(&config->relay_list))
@@ -184,7 +184,7 @@ dhcp_relay_t * dhcp_relay_lookup_interface(dhcp_global_t*config, zpl_uint32 ifin
 	return NULL;
 }
 
-int dhcp_relay_add_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
+int dhcp_relay_add_interface(dhcp_global_t*config, ifindex_t ifindex) {
 	dhcp_relay_t * ifter = dhcp_relay_create_interface(ifindex);
 	if (ifter) {
 		lstAdd(&config->relay_list, ifter);
@@ -215,7 +215,7 @@ int dhcp_relay_add_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
 	return ERROR;
 }
 
-int dhcp_relay_del_interface(dhcp_global_t*config, zpl_uint32 ifindex) {
+int dhcp_relay_del_interface(dhcp_global_t*config, ifindex_t ifindex) {
 	dhcp_relay_t * ifter = dhcp_relay_lookup_interface(config, ifindex);
 	if (ifter) {
 		if(ifter->cr_thread)

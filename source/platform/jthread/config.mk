@@ -1,7 +1,9 @@
 #############################################################################
 # DEFINE
 ###########################################################################
-MODULEDIR = platform/jthread/pthread
+
+vpath %.cpp pthread
+#vpath %.c win32
 #shell
 OBJS	+= jmutex.o
 OBJS	+= jthread.o

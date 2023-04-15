@@ -4,8 +4,8 @@ include config.mk
 
 MODBUSBIN = modbus-test
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODBUS_ROOT)
+SRC_DIR = $(BASE_ROOT)/$(MODBUS_ROOT)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
@@ -47,13 +47,13 @@ taget: $(MODBUSBIN)
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
 lib: $(LIBS)
 
 
-obj: $(BUILT_SOURCES) $(MODULE_OBJS)
+obj: $(MODULE_OBJS)
 
 install: $(LIBS)
 	@install -d $(LIB_DIR)

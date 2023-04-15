@@ -793,9 +793,9 @@ static int iw_client_is_connect(struct interface *ifp, iw_client_ap_t *ap, zpl_u
 {
 	if(!ifp || !bssid)
 		return ERROR;
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		if(iw_client_dev_is_connect(ifp->k_name, bssid) == 0)
+		if(iw_client_dev_is_connect(ifp->ker_name, bssid) == 0)
 		{
 			if(IW_DEBUG(EVENT))
 			{
@@ -889,7 +889,7 @@ static int iw_client_connect_process(iw_client_t *iw_client)
 	if(!iw_client->ap_list)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
-	if(!(ifp && ifp->k_ifindex && if_is_wireless(ifp)))
+	if(!(ifp && ifp->ker_ifindex && if_is_wireless(ifp)))
 		return OK;
 	if(iw_client->ap)
 	{
@@ -965,7 +965,7 @@ static int iw_client_disconnect_process(iw_client_t *iw_client)
 	if(!iw_client->ap_list)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
-	if(!(ifp && ifp->k_ifindex && if_is_wireless(ifp)))
+	if(!(ifp && ifp->ker_ifindex && if_is_wireless(ifp)))
 		return OK;
 	if(iw_client->ap)
 	{
@@ -1013,7 +1013,7 @@ static int iw_client_task(iw_client_t *iw_client)
 		SET_FLAG(ifp->status, IF_INTERFACE_ATTACH);
 
 		nsm_halpal_interface_update_flag(ifp);
-		ifp->k_ifindex = nsm_halpal_interface_ifindex(ifp->k_name);
+		ifp->ker_ifindex = nsm_halpal_interface_ifindex(ifp->ker_name);
 		pal_interface_get_lladdr(ifp);
 	}*/
 	os_sleep(5);
@@ -1309,7 +1309,7 @@ int iw_client_connect_ap_show(iw_client_t *iw_client, struct vty *vty)
 	if(!iw_client || !vty)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
-	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp && ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		if(!nsm_iw_enable_get_api(ifp))
 		{
@@ -1326,7 +1326,7 @@ int iw_client_station_dump_show(iw_client_t *iw_client, struct vty *vty)
 	if(!iw_client || !vty)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
-	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp && ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		if(!nsm_iw_enable_get_api(ifp))
 		{
@@ -1343,7 +1343,7 @@ int iw_client_scan_ap_show(iw_client_t *iw_client, struct vty *vty)
 	if(!iw_client || !vty)
 		return ERROR;
 	struct interface *ifp = if_lookup_by_index(iw_client->ifindex);
-	if(ifp && ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp && ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		if(!nsm_iw_enable_get_api(ifp))
 		{

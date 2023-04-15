@@ -199,7 +199,7 @@ static int find_offset(const zpl_uint8 *cstr, zpl_uint32 clen, const zpl_uint8 *
 zpl_uint8*  dname_enc(const zpl_uint8 *cstr, zpl_uint32 clen, const char *src, zpl_uint32 *retlen)
 {
 	zpl_uint8 *d, *dname;
-	zpl_uint32 off;
+	zpl_int32 off;
 
 	dname = convert_dname(src);
 	if (dname == NULL) {

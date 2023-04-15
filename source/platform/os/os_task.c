@@ -785,7 +785,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 	fp = fopen(path, "r");
 	if (fp)
 	{
-		int user, nice, system, idle, iowait, irq, softirq, stealstolen, guest;
+		int user = 0, nice = 0, system = 0, idle = 0, iowait = 0, irq = 0, softirq = 0, stealstolen = 0, guest = 0;
 		if (fgets(buf, sizeof(buf), fp))
 		{
 			sscanf(buf, "%*s %d %d %d %d %d %d %d %d %d", &user, &nice, &system,
@@ -807,7 +807,7 @@ static int os_task_refresh_total_cpu(struct os_task_history *hist)
 static int os_task_refresh_cpu(os_task_t *task)
 {
 	char path[128];
-	char buf[4094];
+	char buf[2048];
 	FILE *fp = NULL;
 	int ret = 0;
 	os_memset(path, 0, sizeof(path));
@@ -824,20 +824,25 @@ static int os_task_refresh_cpu(os_task_t *task)
 	if (fp)
 	{
 		char sta[16];
-		int utime, stime, cutime, cstime, start_time, priority, nice;
-
+		int utime = 0, stime = 0, cutime = 0, cstime = 0, start_time = 0, priority = 0, nice = 0;
+		unsigned int vsize = 0; /* Virtual memory size */
+		unsigned int rss = 0; /* Resident Set Size */
+		unsigned int rlim = 0; /* Current limit in bytes on the rss */
 		ret = fread(buf, 1, sizeof(buf), fp);
 		if (ret)
 		{
 			sscanf(buf, "%*d %*s %s %*d %*d %*d %*d %*d %*d %*d %*d %*d "
-					"%d %d %d %d %d %d %*d %*d %d", sta, &utime, &stime,
-					&cutime, &cstime, &priority, &nice, &start_time);
+					"%d %d %d %d %d %d %*d %*d %d %d %d %d", sta, &utime, &stime,
+					&cutime, &cstime, &priority, &nice, &start_time, &vsize, &rss, &rlim);
 			os_task_string_to_state(sta, &task->state);
 			task->hist.total_realy = (utime + stime + cutime + cstime)
 					- task->hist.total_realy;
 			task->hist.total = (utime + stime + cutime + cstime)
 					- task->hist.total;
-
+					
+			task->hist.mtotal = (vsize>>10);
+			task->hist.mrss = (rss<<2)>>10;
+			task->hist.mlimit = (rlim);
 		}
 		fclose(fp);
 	}
@@ -1459,16 +1464,18 @@ static int os_task_show_head(struct vty *vty, int detail)
 	//extern int vty_out(struct vty *, const char *, ...);
 	if(_os_task_cli_show)
 		(_os_task_cli_show)(vty,
-			"%s                   	   CPU (user+system): Real (wall-clock):%s",
+			"%s                  CPU (user+system): Real (wall-clock): Mem (K):%s",
 			VTY_NEWLINE, VTY_NEWLINE);
 
-	if (detail) {
+	if (detail) 
+	{
 		if(_os_task_cli_show)
-			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-12s %-4s %-8s %-6s %-8s %-8s%s",
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-12s %-4s %-8s %-6s %-8s %-8s %-8s %-8s %-8s%s",
 				"taskNmae", "taskId", "entry", "LVPID","PTHREAD ID", "pri", "tacksize", "state",
-				"Real", "Total", VTY_NEWLINE);
+				"Real", "Total", "MemRSS", "MemLimit", "MemTotal", VTY_NEWLINE);
 	}
-	else {
+	else 
+	{
 		if(_os_task_cli_show)
 			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-4s %-8s %-6s %-8s %-8s%s",
 				"taskNmae", "taskId", "entry", "pri", "tacksize", "state",
@@ -1488,6 +1495,9 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	char lvpid[16];
 	char pidstr[16];
 	char total[16];
+	char mtotal[16];
+	char mrss[16];
+	char mlimit[16];
 	os_memset(taskId, 0, sizeof(taskId));
 	os_memset(pri, 0, sizeof(pri));
 	os_memset(tacksize, 0, sizeof(tacksize));
@@ -1496,6 +1506,10 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	os_memset(total, 0, sizeof(total));
 	os_memset(lvpid, 0, sizeof(lvpid));
 	os_memset(pidstr, 0, sizeof(pidstr));
+
+	os_memset(mtotal, 0, sizeof(mtotal));
+	os_memset(mrss, 0, sizeof(mrss));
+	os_memset(mlimit, 0, sizeof(mlimit));
 
 	os_task_refresh_total_cpu(&total_cpu);
 
@@ -1532,13 +1546,16 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 
 	if(detail)
 	{
+		sprintf(mtotal, "%uK", task->hist.mtotal);
+		sprintf(mrss, "%uK", task->hist.mrss);
+		sprintf(mlimit, "%uK", task->hist.mlimit);
 
 		sprintf(lvpid, "%d", task->td_tid);
 		sprintf(pidstr, "%u", task->td_thread);
 		if(_os_task_cli_show)
-			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-12s %-4s %-8s %-6s %-8s %-8s%s",
+			(_os_task_cli_show)(vty, "  %-16s %-12s %-20s %-8s %-12s %-4s %-8s %-6s %-8s %-8s %-8s %-8s %-8s%s",
 			task->td_name, taskId, task->td_entry_name, lvpid, pidstr, pri, tacksize, state,
-			real, total, VTY_NEWLINE);
+			real, total, mrss, mlimit, mtotal, VTY_NEWLINE);
 	}
 	else
 	{

@@ -218,19 +218,19 @@ static int rtnl_addr_opt(int op, int family, char *name, char *addr, char *baddr
     nl_perror(err, "Unable to allocate cache");
     return err;
   }
-  rtnladdr = nl_cli_addr_alloc();
+  rtnladdr = nl_addr_alloc(0);
 
   if (!(ival = rtnl_link_name2i(link_cache, name)))
     nl_perror(err, "Link does not exist");
 
-  rtnl_addr_set_ifindex(rtnladdr, ival);
+  rtnl_link_set_ifindex(rtnladdr, ival);
 
-  nl_addr_parse(addr, rtnl_addr_get_family(addr), &a);
+  nl_addr_parse(addr, nl_addr_get_family(addr), &a);
   if ((err = rtnl_addr_set_local(rtnladdr, a)) < 0)
     nl_perror(err, "Unable to set local address");
   nl_addr_put(a);
 
-  nl_addr_parse(baddr, rtnl_addr_get_family(addr), &ba);
+  nl_addr_parse(baddr, nl_addr_get_family(addr), &ba);
   if ((err = rtnl_addr_set_broadcast(rtnladdr, ba)) < 0)
     nl_perror(err, "Unable to set broadcast address");
   nl_addr_put(ba);

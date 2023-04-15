@@ -45,7 +45,7 @@ static int _dhcpc_stop(zpl_uint32 process)
 #else
 static int _dhcpc_start(modem_t *modem, struct interface *ifp)
 {
-	if(/*if_is_wireless(ifp) && */ifp->k_ifindex)
+	if(/*if_is_wireless(ifp) && */ifp->ker_ifindex)
 	{
 #ifdef ZPL_DHCPC_MODULE
 		nsm_dhcp_type type = nsm_interface_dhcp_mode_get_api(ifp);
@@ -71,7 +71,7 @@ static int _dhcpc_start(modem_t *modem, struct interface *ifp)
 		return ERROR;
 #endif
 	}
-/*	else if(ifp->k_ifindex)
+/*	else if(ifp->ker_ifindex)
 		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT);*/
 	return ERROR;
 }
@@ -85,11 +85,11 @@ static int _dhcpc_stop(modem_t *modem, struct interface *ifp)
 		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE, NULL);
 #endif
 		//return nsm_interface_dhcpc_start(ifp, zpl_false);
-	//if(/*if_is_wireless(ifp) && */ifp->k_ifindex)
+	//if(/*if_is_wireless(ifp) && */ifp->ker_ifindex)
 	//{
 	//	return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);
 	//}
-/*	else if(ifp->k_ifindex)
+/*	else if(ifp->ker_ifindex)
 		return nsm_interface_dhcp_mode_set_api(ifp, DHCP_NONE);*/
 	return ERROR;
 }
@@ -137,7 +137,7 @@ static int _modem_dhcpc_start(modem_client_t *client)
 	assert(modem->eth0);
 	ifp = modem->eth0;
 	modem->pid[modem->dialtype] = _dhcpc_start(0, "udhcpc",
-			ifkernelindex2kernelifname(ifp->k_ifindex));
+			ifkernelindex2kernelifname(ifp->ker_ifindex));
 	if(modem->pid[modem->dialtype])
 	{
 		//modem->state = MODEM_STATE_NETWORK_ACTIVE;
@@ -188,11 +188,11 @@ zpl_bool modem_dhcpc_islinkup(modem_t *modem)
 	{
 		if(modem->pid[modem->dialtype])
 		{
-			if(nsm_halpal_interface_ifindex(ifp->k_name))
+			if(nsm_halpal_interface_ifindex(ifp->ker_name))
 			{
 				if(if_is_running(ifp))
 				{
-					//modem_serial_interface_update_kernel(modem, ifp->k_name);
+					//modem_serial_interface_update_kernel(modem, ifp->ker_name);
 				}
 				return zpl_true;
 			}

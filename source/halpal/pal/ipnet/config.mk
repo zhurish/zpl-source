@@ -1,7 +1,7 @@
 #############################################################################
 # DEFINE
 ###########################################################################
-MODULEDIR = halpal/pal/ipnet
+
 ifeq ($(strip $(ZPL_IPCOM_MODULE)),true)
 OBJS	+= ip_ipstack_route.o
 OBJS	+= ip_ipstack.o

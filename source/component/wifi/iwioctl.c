@@ -207,9 +207,9 @@ static int ifname_to_phyid(char *name)
 int iw_dev_mode_set(struct interface *ifp, char * value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "mode", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "mode", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
@@ -218,9 +218,9 @@ int iw_dev_mode_set(struct interface *ifp, char * value)
 int iw_dev_txpower_set(struct interface *ifp, char * value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "txpower", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "txpower", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
@@ -229,9 +229,9 @@ int iw_dev_txpower_set(struct interface *ifp, char * value)
 int iw_dev_rts_threshold_set(struct interface *ifp, char * value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "rts", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "rts", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
@@ -240,9 +240,9 @@ int iw_dev_rts_threshold_set(struct interface *ifp, char * value)
 int iw_dev_frag_set(struct interface *ifp, char * value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "frag", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "frag", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
@@ -251,9 +251,9 @@ int iw_dev_frag_set(struct interface *ifp, char * value)
 int iw_dev_rate_set(struct interface *ifp, char * value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "rate", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "rate", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
@@ -262,9 +262,9 @@ int iw_dev_rate_set(struct interface *ifp, char * value)
 int iw_dev_bit_set(struct interface *ifp, char * value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "bit", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "bit", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
@@ -273,24 +273,24 @@ int iw_dev_bit_set(struct interface *ifp, char * value)
 int iw_dev_channel_set(struct interface *ifp, char *  value)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[5] = {"iwconfig", ifp->k_name, "channel", value, NULL};
+		const char *tmpcmd[5] = {"iwconfig", ifp->ker_name, "channel", value, NULL};
 		return iw_main(NULL, 4, tmpcmd);
 	}
 	return ERROR;
 }
 /*int iw_dev_txpower_set(struct interface *ifp, struct vty *vty, char *type, int value)
 {
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		char tmpcmd[256];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
 		if(value >= 0)
-			os_sprintf(tmpcmd, "iw dev %s set txpower %s %d", ifp->k_name, type, value);
+			os_sprintf(tmpcmd, "iw dev %s set txpower %s %d", ifp->ker_name, type, value);
 		else
-			os_sprintf(tmpcmd, "iw dev %s set txpower %s ", ifp->k_name, type);
+			os_sprintf(tmpcmd, "iw dev %s set txpower %s ", ifp->ker_name, type);
 		super_system(tmpcmd);
 		//wifi_show_from_file(vty);
 	}
@@ -300,15 +300,15 @@ int iw_dev_channel_set(struct interface *ifp, char *  value)
 
 int iw_dev_channel_set(struct interface *ifp, struct vty *vty, int value)
 {
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		char tmpcmd[256];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
 		if(value >= 0)
-			os_sprintf(tmpcmd, "iw dev %s set channel %d", ifp->k_name, value);
+			os_sprintf(tmpcmd, "iw dev %s set channel %d", ifp->ker_name, value);
 		else
-			os_sprintf(tmpcmd, "iw dev %s set channel auto", ifp->k_name);
+			os_sprintf(tmpcmd, "iw dev %s set channel auto", ifp->ker_name);
 		super_system(tmpcmd);
 		//wifi_show_from_file(vty);
 	}
@@ -318,13 +318,13 @@ int iw_dev_channel_set(struct interface *ifp, struct vty *vty, int value)
 /*
 int iw_ap_dev_channel_set(struct interface *ifp, int chan)
 {
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		struct iwreq iwr;
 
 		 set channel
 		memset(&iwr, 0, sizeof(iwr));
-		strncpy(iwr.ifr_name, ifp->k_name, sizeof(iwr.ifr_name)-1);
+		strncpy(iwr.ifr_name, ifp->ker_name, sizeof(iwr.ifr_name)-1);
 		iwr.u.freq.flags = IW_FREQ_FIXED;
 		iwr.u.freq.m = chan;
 		if (if_ioctl(SIOCSIWFREQ, &iwr) < 0)
@@ -376,10 +376,10 @@ int iw_phy_capabilities_show(struct interface *ifp, struct vty *vty)
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		char tmpcmd[128];
-		int phy = ifname_to_phyid(ifp->k_name);
+		int phy = ifname_to_phyid(ifp->ker_name);
 		if(phy >= 0)
 		{
 			remove(wifi_file_path());
@@ -467,14 +467,14 @@ int iw_ap_dev_information_show(struct interface *ifp, struct vty *vty)
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		char tmpcmd[128];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
-		os_sprintf(tmpcmd, "iw dev %s info >> %s 2>&1", ifp->k_name, wifi_file_path());
+		os_sprintf(tmpcmd, "iw dev %s info >> %s 2>&1", ifp->ker_name, wifi_file_path());
 		super_system(tmpcmd);
-		iw_dev_information_split(vty, ifp->k_name, ifp->name);
+		iw_dev_information_split(vty, ifp->ker_name, ifp->name);
 	}
 	return OK;
 }
@@ -483,7 +483,7 @@ iw_mode_t iw_ap_dev_mode_get(struct interface *ifp)
 {
 	assert(ifp != NULL);
 //	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		FILE *fp = NULL;
 		char buf[512];
@@ -493,9 +493,9 @@ iw_mode_t iw_ap_dev_mode_get(struct interface *ifp)
 		char tmpcmd[128];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
-		os_sprintf(tmpcmd, "iw dev %s info >> %s 2>&1", ifp->k_name, wifi_file_path());
+		os_sprintf(tmpcmd, "iw dev %s info >> %s 2>&1", ifp->ker_name, wifi_file_path());
 		super_system(tmpcmd);
-		//iw_dev_information_split(vty, ifp->k_name, ifp->name);
+		//iw_dev_information_split(vty, ifp->ker_name, ifp->name);
 		fp = fopen(filepath, "r");
 		if(fp)
 		{
@@ -505,7 +505,7 @@ iw_mode_t iw_ap_dev_mode_get(struct interface *ifp)
 						(s > buf) && isspace((int) *(s - 1)); s--)
 					;
 				*s = '\0';
-				if(strstr(buf, ifp->k_name))
+				if(strstr(buf, ifp->ker_name))
 				{
 					find = 1;
 					//vty_out(vty, " Interface         : %s %s", name, VTY_NEWLINE);
@@ -594,14 +594,14 @@ int iw_client_dev_station_dump_show(struct interface *ifp, struct vty *vty)
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		char tmpcmd[128];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
-		os_sprintf(tmpcmd, "iw dev %s station dump >> %s 2>&1", ifp->k_name, wifi_file_path());
+		os_sprintf(tmpcmd, "iw dev %s station dump >> %s 2>&1", ifp->ker_name, wifi_file_path());
 		super_system(tmpcmd);
-		iw_dev_station_dump_split(vty, ifp->name, ifp->k_name);
+		iw_dev_station_dump_split(vty, ifp->name, ifp->ker_name);
 	}
 	return OK;
 }
@@ -613,9 +613,9 @@ int iw_dev_channel_support_show(struct interface *ifp, struct vty *vty)
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
-		const char *tmpcmd[4] = {"iwlist", ifp->k_name, "channel", NULL};
+		const char *tmpcmd[4] = {"iwlist", ifp->ker_name, "channel", NULL};
 		iw_tmp.vty = vty;
 		iwlist_main(NULL, 3, tmpcmd);
 		iw_tmp.vty = NULL;
@@ -630,10 +630,10 @@ int iw_client_dev_connect_show(struct interface *ifp, struct vty *vty)
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		iwlist_detail_set(1);
-		const char *tmpcmd[3] = {"iwconfig", ifp->k_name, NULL};
+		const char *tmpcmd[3] = {"iwconfig", ifp->ker_name, NULL};
 		iw_tmp.vty = vty;
 		iw_main(NULL, 2, tmpcmd);
 		iw_tmp.vty = NULL;
@@ -653,11 +653,11 @@ static int iw_access_point_essid_get(void *p, void *input)
 int iw_client_dev_connect_get(struct interface *ifp, zpl_uint8 essid[])
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		iw_user_cb_t cb;
 		iwlist_detail_set(0);
-		const char *tmpcmd[3] = {"iwconfig", ifp->k_name, NULL};
+		const char *tmpcmd[3] = {"iwconfig", ifp->ker_name, NULL};
 		cb.iw_show = NULL;
 		cb.vty = NULL;
 		cb.p = essid;
@@ -676,19 +676,19 @@ int iw_client_dev_scan_ap_show(struct interface *ifp, struct vty *vty, zpl_bool 
 {
 	assert(ifp != NULL);
 	assert(vty != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		if(IW_DEBUG(EVENT))
 		{
 			zlog_debug(MODULE_WIFI, "scanning network on interface %s ",ifp->name);
 		}
 		iwlist_detail_set(detail);
-		const char *tmpcmd[4] = {"iwlist", ifp->k_name, "scanning", NULL};
+		const char *tmpcmd[4] = {"iwlist", ifp->ker_name, "scanning", NULL};
 		iw_tmp.vty = vty;
 		iwlist_main(NULL, 3, tmpcmd);
-/*		const char *tmpcmd1[4] = {"iwlist", ifp->k_name, "auth", NULL};
+/*		const char *tmpcmd1[4] = {"iwlist", ifp->ker_name, "auth", NULL};
 		iwlist_main(3, tmpcmd1);
-		const char *tmpcmd2[4] = {"iwlist", ifp->k_name, "wpakeys", NULL};
+		const char *tmpcmd2[4] = {"iwlist", ifp->ker_name, "wpakeys", NULL};
 		iwlist_main(3, tmpcmd2);*/
 		iw_tmp.vty = NULL;
 		iwlist_detail_set(0);
@@ -701,7 +701,7 @@ static int iw_client_dev_connect_script(struct interface *ifp, iw_client_ap_t *a
 	FILE *fp = NULL;
 	char path[256];
 	memset(path, 0, sizeof(path));
-	snprintf(path, sizeof(path), "%s/wpa_supplicant.%s", IW_SYSCONFDIR, ifp->k_name);
+	snprintf(path, sizeof(path), "%s/wpa_supplicant.%s", IW_SYSCONFDIR, ifp->ker_name);
 	fp = fopen(path,"w+");
 	if(fp)
 	{
@@ -775,14 +775,14 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 	char confpath[128];
 	assert(ifp != NULL);
 	assert(ssid != NULL);
-	char *argv[] = {"-B", "-P", NULL, "-D", "nl80211", "-i", ifp->k_name, "-c", NULL, NULL};
+	char *argv[] = {"-B", "-P", NULL, "-D", "nl80211", "-i", ifp->ker_name, "-c", NULL, NULL};
 	memset(path, 0, sizeof(path));
-	snprintf(path, sizeof(path), "wpa_supp.%s",ifp->k_name);
+	snprintf(path, sizeof(path), "wpa_supp.%s",ifp->ker_name);
 
 	memset(pidpath, 0, sizeof(pidpath));
-	snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR, ifp->k_name);
+	snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR, ifp->ker_name);
 	memset(confpath, 0, sizeof(confpath));
-	snprintf(confpath, sizeof(confpath), "%s/wpa_supplicant.%s", IW_SYSCONFDIR,ifp->k_name);
+	snprintf(confpath, sizeof(confpath), "%s/wpa_supplicant.%s", IW_SYSCONFDIR,ifp->ker_name);
 	pid = os_pid_get(pidpath);
 	if(pid > 0)
 	{
@@ -816,12 +816,12 @@ int iw_client_dev_start_dhcpc(struct interface *ifp)
 	char path[128];
 	char pidpath[128];
 	assert(ifp != NULL);
-	char *argv1[] = {"-p", NULL, "-i",ifp->k_name, "-s", "/lib/netifd/dhcp.script", NULL, NULL};
+	char *argv1[] = {"-p", NULL, "-i",ifp->ker_name, "-s", "/lib/netifd/dhcp.script", NULL, NULL};
 	memset(path, 0, sizeof(path));
-	snprintf(path, sizeof(path), "udhcpc.%s",ifp->k_name);
+	snprintf(path, sizeof(path), "udhcpc.%s",ifp->ker_name);
 
 	memset(pidpath, 0, sizeof(pidpath));
-	snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid",DAEMON_VTY_DIR, ifp->k_name);
+	snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid",DAEMON_VTY_DIR, ifp->ker_name);
 
 	pid = os_pid_get(pidpath);
 	if(pid > 0)
@@ -851,7 +851,7 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 	int pid = 0;
 	char pidpath[128];
 	memset(pidpath, 0, sizeof(pidpath));
-	snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR,ifp->k_name);
+	snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR,ifp->ker_name);
 	pid = os_pid_get(pidpath);
 	if(pid > 0)
 	{
@@ -866,11 +866,11 @@ int iw_client_dev_connect(struct interface *ifp, iw_client_ap_t *ap, char *ssid,
 	{
 		char path[128];
 		char confpath[128];
-		char *argv[] = {"-B", "-P", NULL, "-D", "nl80211", "-i", ifp->k_name, "-c", NULL, NULL};
+		char *argv[] = {"-B", "-P", NULL, "-D", "nl80211", "-i", ifp->ker_name, "-c", NULL, NULL};
 		memset(path, 0, sizeof(path));
-		snprintf(path, sizeof(path), "wpa_supp.%s",ifp->k_name);
+		snprintf(path, sizeof(path), "wpa_supp.%s",ifp->ker_name);
 		memset(confpath, 0, sizeof(confpath));
-		snprintf(confpath, sizeof(confpath), "%s/wpa_supplicant.%s", SYSCONFDIR,ifp->k_name);
+		snprintf(confpath, sizeof(confpath), "%s/wpa_supplicant.%s", SYSCONFDIR,ifp->ker_name);
 		argv[2] = pidpath;
 		argv[8] = confpath;
 		if(iw_client_dev_connect_script(ifp, ap, ssid, password) == 0)
@@ -892,7 +892,7 @@ int iw_client_dev_start_dhcpc(struct interface *ifp)
 	int pid = 0;
 	char pidpath[128];
 	memset(pidpath, 0, sizeof(pidpath));
-	snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid", DAEMON_VTY_DIR,ifp->k_name);
+	snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid", DAEMON_VTY_DIR,ifp->ker_name);
 	pid = os_pid_get(pidpath);
 	if(pid > 0)
 	{
@@ -905,7 +905,7 @@ int iw_client_dev_start_dhcpc(struct interface *ifp)
 	pid = child_process_create();
 	if (pid == 0)
 	{
-		char *argv1[] = { "-p", NULL, "-i", ifp->k_name, "-s", "/lib/netifd/dhcp.script", NULL, NULL };
+		char *argv1[] = { "-p", NULL, "-i", ifp->ker_name, "-s", "/lib/netifd/dhcp.script", NULL, NULL };
 		argv1[1] = pidpath;
 		super_system_execvp("udhcpc", argv1);
 	}
@@ -923,13 +923,13 @@ int iw_client_dev_start_dhcpc(struct interface *ifp)
 int iw_client_dev_disconnect(struct interface *ifp)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		pid_t	pid = 0;
 		char pidpath[128];
 #ifndef ZPL_DHCPC_MODULE
 		memset(pidpath, 0, sizeof(pidpath));
-		snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid", DAEMON_VTY_DIR, ifp->k_name);
+		snprintf(pidpath, sizeof(pidpath), "%s/udhcpc-%s.pid", DAEMON_VTY_DIR, ifp->ker_name);
 		pid = os_pid_get(pidpath);
 		if(pid > 0)
 		{
@@ -943,7 +943,7 @@ int iw_client_dev_disconnect(struct interface *ifp)
 		remove(pidpath);
 #endif
 		memset(pidpath, 0, sizeof(pidpath));
-		snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR,ifp->k_name);
+		snprintf(pidpath, sizeof(pidpath), "%s/wpa_supplicant-%s.pid",DAEMON_VTY_DIR,ifp->ker_name);
 		pid = os_pid_get(pidpath);
 		if(pid > 0)
 		{
@@ -958,7 +958,7 @@ int iw_client_dev_disconnect(struct interface *ifp)
 /*		char tmpcmd[128];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
-		os_sprintf(tmpcmd, "iw dev %s disconnect >> %s 2>&1", ifp->k_name, wifi_file_path());
+		os_sprintf(tmpcmd, "iw dev %s disconnect >> %s 2>&1", ifp->ker_name, wifi_file_path());
 		super_system(tmpcmd);*/
 		//wifi_show_from_file(vty);
 	}
@@ -1074,15 +1074,15 @@ int iw_client_scan_process(iw_client_t *iw_client)
 	struct wireless_scan * wscan = NULL;
 	iw_client_ap_t ap;
 	//zlog_debug(MODULE_PAL, "%s into(%s)", __func__, ifp->name);
-	if(!(ifp && ifp->k_ifindex && if_is_wireless(ifp)))
+	if(!(ifp && ifp->ker_ifindex && if_is_wireless(ifp)))
 		return OK;
 
 	if(IW_DEBUG(EVENT))
 	{
 		zlog_debug(MODULE_WIFI, "scanning network on interface %s ",ifp->name);
 	}
-	//zlog_debug(MODULE_PAL, "%s start(%s)", __func__, ifp->k_name);
-	ret = iw_start_scan(ifp->k_name, &context);
+	//zlog_debug(MODULE_PAL, "%s start(%s)", __func__, ifp->ker_name);
+	ret = iw_start_scan(ifp->ker_name, &context);
 	if(ret == 0 && context.result)
 	{
 		for(wscan = context.result; wscan; wscan = wscan->next)
@@ -1222,7 +1222,7 @@ static int iw_dev_station_dump_add(iw_ap_t *iw_ap, struct interface *ifp)
 			{
 				//Station 2c:57:31:7b:e3:88 (on wlan0)
 				//	/
-				s = strstr(buf, ifp->k_name);
+				s = strstr(buf, ifp->ker_name);
 				if(s)
 				{
 					if(flag)
@@ -1421,12 +1421,12 @@ static int iw_ap_connect_dump(iw_ap_t *iw_ap, struct interface *ifp)
 {
 	assert(ifp != NULL);
 	assert(iw_ap != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		char tmpcmd[128];
 		remove(wifi_file_path());
 		os_memset(tmpcmd, 0, sizeof(tmpcmd));
-		os_sprintf(tmpcmd, "iw dev %s station dump >> %s 2>&1", ifp->k_name, wifi_file_path());
+		os_sprintf(tmpcmd, "iw dev %s station dump >> %s 2>&1", ifp->ker_name, wifi_file_path());
 		super_system(tmpcmd);
 		iw_dev_station_dump_add(iw_ap, ifp);
 	}
@@ -1449,10 +1449,10 @@ int iw_ap_connect_scanning(iw_ap_t *iw_ap)
 int iw_dev_mode(struct interface *ifp)
 {
 	assert(ifp != NULL);
-	if(ifp->k_ifindex && if_is_wireless(ifp))
+	if(ifp->ker_ifindex && if_is_wireless(ifp))
 	{
 		int mode = -1;
-		if(iw_kernel_mode(ifp->k_name, &mode) == 0)
+		if(iw_kernel_mode(ifp->ker_name, &mode) == 0)
 			return mode;
 	}
 	return ERROR;

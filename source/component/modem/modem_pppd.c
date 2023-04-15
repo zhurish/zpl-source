@@ -868,10 +868,10 @@ static int modem_pppd_create_dial_name(modem_pppd_t *pppd)
 		os_fprintf(fp, "%d\n", client->pppd->speed);
 
 		os_fprintf(fp, "# if name \n");
-		if(ifp && os_strlen(ifp->k_name))
+		if(ifp && os_strlen(ifp->ker_name))
 		{
-			os_fprintf(fp, "\nifname %s\n\n", ifp->k_name);
-			MODEM_PPPD_DEBUG("PPPD interface name '%s'", ifp->k_name);
+			os_fprintf(fp, "\nifname %s\n\n", ifp->ker_name);
+			MODEM_PPPD_DEBUG("PPPD interface name '%s'", ifp->ker_name);
 		}
 		else
 			MODEM_PPPD_DEBUG("PPPD interface name NULL");
@@ -1065,13 +1065,13 @@ zpl_bool modem_pppd_islinkup(modem_t *modem)
 	{
 		if(pppd->taskid)
 		{
-			if(nsm_halpal_interface_ifindex(ifp->k_name))
+			if(nsm_halpal_interface_ifindex(ifp->ker_name))
 			{
 				//MODEM_DEBUG("modem_pppd_islinkup zpl_true");
 				if(pppd->linkup == zpl_false)
 				{
 					//MODEM_DEBUG("modem_pppd_islinkup UPDATE KERNEL");
-					modem_serial_interface_update_kernel(modem, ifp->k_name);
+					modem_serial_interface_update_kernel(modem, ifp->ker_name);
 					pppd->linkup = zpl_true;
 				}
 				return zpl_true;

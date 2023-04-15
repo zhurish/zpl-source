@@ -359,7 +359,7 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
-		zpl_media_task_ready(MODULE_ZPLMEDIA);	
+		zpl_media_task_ready(MODULE_MEDIA);	
 		return OK;
 	}
 	return ERROR;

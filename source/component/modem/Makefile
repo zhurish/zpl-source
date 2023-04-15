@@ -3,8 +3,8 @@ include $(ZPL_MAKE_DIR)/makelinux.mk
 include config.mk
 
 
-OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODULEDIR)
-SRC_DIR = $(BASE_ROOT)/$(MODULEDIR)
+OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(MODEM_DIR)
+SRC_DIR = $(BASE_ROOT)/$(MODEM_DIR)
 LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
@@ -21,8 +21,6 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	fi
 	@$(ZPL_ECHO_CC) $(ZPL_LIB_COMPILE)
 #
-#	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
-#	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
@@ -30,7 +28,7 @@ $(LIBS) : $(MODULE_OBJS)
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
 	@for i in $(files); do	\
-		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_ROOT); \
+		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 #
 lib: $(LIBS)

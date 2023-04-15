@@ -44,12 +44,14 @@ source/multimedia/media/hisidir/
 source/multimedia/media/ikayaki/
 source/multimedia/media/rtsp源码/
 source/multimedia/media/bsp/
+source/multimedia/libmedia
 source/multimedia/mu/
 source/product/sdk-robo-5.9.2
 source/product/bsp/pal/linux/iproute2-5.9.0
 source/product/bsp/pal/linux/libiproute
 source/quagga/*
 quagga/*
+source/externsions/zlib/*
 source/rootfs_install
 *.libs/*
 *.deps/*
