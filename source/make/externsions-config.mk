@@ -7,10 +7,9 @@ ifeq ($(strip $(ZPL_EXTERNSIONS_MODULE)),true)
 #
 ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
 OPENSSL_ROOT=$(EXTERNSION_DIR)/openssl
-ifneq ($(ZPL_BUILD_ARCH),X86_64DD)
+ifneq ($(ZPL_BUILD_ARCH),X86_64)
 ZPLEX_DIR += $(ZPLBASE)/$(OPENSSL_ROOT)
-export PLATFORM=linux-x86_64
-#export PLATFORM=linux-armv4
+export OPENSSL_OS=linux-armv4
 ZPLEX_INCLUDE += -I$(ZPLBASE)/$(OPENSSL_ROOT)/_install/include
 ZPLEX_LDLIBS += -lutil -lssl -lcrypto
 else 
@@ -21,27 +20,22 @@ endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
 
 
 ifeq ($(strip $(ZPL_ZLIB_MODULE)),true)
-ifeq ($(ZPL_BUILD_ARCH),X86_64)
-ZPLOS_LDLIBS += -lz
 ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
-ZLIB_ROOT=$(EXTERNSION_DIR)/zlib
-ZPLEX_DIR += $(ZPLBASE)/$(ZLIB_ROOT)
-ZLIB_SRC = $(ZPLBASE)/$(ZLIB_ROOT)/zlib-1.2.11
-ZPLEX_INCLUDE += -I$(ZLIB_SRC)
-else
+
+ifneq ($(ZPL_BUILD_ARCH),X86_64)
 ifeq ($(strip $(ZPL_EXZLIB_MODULE)),true)
 ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
 ZPLEX_INCLUDE += -I$(EXTERNSION_BASE_ROOT)/zlib/_install/include
 ZPLEX_LDFLAGS += -L$(EXTERNSION_BASE_ROOT)/zlib/_install/lib
 ZPLOS_LDLIBS += -lz
 else
-ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
-ZPLEX_DIR += $(EXTERNSION_BASE_ROOT)/zlib
-ZLIB_ROOT = $(EXTERNSION_DIR)/zlib/zlib-1.2.11
-ZPLEX_INCLUDE += -I$(EXTERNSION_BASE_ROOT)/$(ZLIB_ROOT)
-ZPLEX_LDFLAGS += -L$(EXTERNSION_BASE_ROOT)/$(ZLIB_ROOT)
-ZPLOS_LDLIBS += -lz
+ZLIB_ROOT=$(EXTERNSION_DIR)/zlib
+ZPLEX_DIR += $(ZPLBASE)/$(ZLIB_ROOT)
+ZLIB_SRC = $(ZPLBASE)/$(ZLIB_ROOT)/zlib-1.2.11
+ZPLEX_INCLUDE += -I$(ZLIB_SRC)
 endif #($(strip $(ZPL_EXZLIB_MODULE)),true)
+else
+ZPLOS_LDLIBS += -lz
 endif #($(ZPL_BUILD_ARCH),X86_64)
 endif
 

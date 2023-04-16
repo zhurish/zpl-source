@@ -528,7 +528,7 @@ int iw_ap_beacon_set_api(iw_ap_t *iw_ap, zpl_uint8 beacon)
 	return OK;
 }
 
-int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, zpl_long bitrate)
+int iw_ap_bitrate_set_api(iw_ap_t *iw_ap, zpl_int64 bitrate)
 {
 	//k|M|G
 	char value_str[64];

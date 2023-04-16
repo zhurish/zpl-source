@@ -1,9 +1,9 @@
 
 include $(ZPL_MAKE_DIR)/module-dir.mk
-
+include $(ZPL_MAKE_DIR)/externsions-config.mk
 include $(ZPL_MAKE_DIR)/multimedia-config.mk
 include $(ZPL_MAKE_DIR)/pjsip-config.mk
-include $(ZPL_MAKE_DIR)/externsions-config.mk
+
 #
 # platform
 #
@@ -406,11 +406,10 @@ ZPL_DEFINE += -DZPL_SDK_NONE
 endif
 ifeq ($(strip $(ZPL_SDK_USER)),true) 
 ZPL_DEFINE += -DZPL_SDK_USER
-ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
-
 SDK_USER_DIR = $(PRODUCT_DIR)/sdk/user
-ZPLPRODS += $(ZPLBASE)/$(SDK_USER_DIR)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(SDK_USER_DIR)
+ifeq ($(strip $(ZPL_SDK_BCM53125)),true)
+ZPLPRODS += $(ZPLBASE)/$(SDK_USER_DIR)
 ZPL_DEFINE += -DZPL_SDK_BCM53125
 endif #($(strip $(ZPL_SDK_BCM53125)),true)
 endif #($(strip $(ZPL_SDK_USER)),true)

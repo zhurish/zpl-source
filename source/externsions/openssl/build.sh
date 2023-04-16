@@ -3,7 +3,7 @@
 
 INSTALL_DIR=$4
 COMPILER=$3
-RUNHOST=$2
+OS_PLAT=$2
 
 FILEDIR=openssl-3.1.0-alpha1
 
@@ -12,10 +12,9 @@ FILEDIR=openssl-3.1.0-alpha1
 cd $FILEDIR
 
 if test "xlib" == "x$1" ;then
-    echo "./config shared --prefix=${INSTALL_DIR}/_install no-threads CC=\"${COMPILER}"\"
-    ./config shared --prefix=${INSTALL_DIR}/_install \
-        no-threads \
-        CC="${COMPILER} "
+    echo "./config shared --prefix=${INSTALL_DIR}/_install no-threads CC=\"${COMPILER}\" ${OS_PLAT}"
+    chmod +x ./config ./Configure
+    ./config shared --prefix=${INSTALL_DIR}/_install no-threads CC="gcc" CXX="g++" AR="ar" RANLIB="ranlib" ${OS_PLAT} 
     make all
 fi
 
