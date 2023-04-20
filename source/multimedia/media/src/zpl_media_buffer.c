@@ -172,6 +172,110 @@ int zpl_media_buffer_header_frame_type(zpl_skbuffer_t * bufdata, ZPL_VIDEO_FRAME
 	return OK;
 }
 
+//#define SKBUFF_SPLIT_DEBUG
+#ifdef SKBUFF_SPLIT_DEBUG
+static int zpl_media_channel_skbuffer_putone(void *mchannel, zpl_skbuffer_t * bufdata, 
+	ZPL_VIDEO_FRAME_TYPE_E key, char *framedata, int datalen)
+{
+	zpl_media_hdr_t *media_header = bufdata->skb_hdr.other_hdr;
+    zpl_skbuffer_t * skbtmp = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, zpl_media_getptr(mchannel)->frame_queue, datalen);
+    if(bufdata && skbtmp && skbtmp->skb_data && skbtmp->skb_maxsize >= datalen)
+    {
+        zpl_media_buffer_header(mchannel, skbtmp, media_header->type, media_header->timetick, datalen);
+        zpl_media_buffer_header_framedatatype(skbtmp, media_header->buffertype);
+        memcpy(ZPL_SKB_DATA(skbtmp), framedata, datalen);
+		zpl_media_buffer_header_frame_type(skbtmp, key);
+
+		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
+		return zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, skbtmp);
+		#else
+		return zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, skbtmp);
+		#endif
+	}
+	return ERROR;
+}
+
+static int zpl_media_channel_skbuff_splitbuf(void *p, zpl_skbuffer_t * bufdata, zpl_uint8 *Buf, int len)
+{
+    H264_NALU_T nalu;
+    zpl_media_channel_t *chn = (zpl_media_channel_t *)p;
+    zpl_uint8 *tmpbuf = Buf;
+    int data_offset=0, pos = 0;
+	ZPL_VIDEO_FRAME_TYPE_E key;
+    memset(&nalu, 0, sizeof(H264_NALU_T));
+    while(data_offset <(len-4))
+    {
+        if(zpl_media_channel_isnaluhdr(tmpbuf, &nalu))
+        {
+            tmpbuf += nalu.hdr_len;
+            data_offset += nalu.hdr_len;
+        }
+        if(nalu.hdr_len)
+        {
+            pos = zpl_media_channel_get_nextnalu(tmpbuf, (len-4)-data_offset);
+            if(pos)
+            {
+                nalu.len += pos;
+				switch (nalu.nal_unit_type)
+				{
+					case NALU_TYPE_SEI:
+					key = ZPL_VIDEO_FRAME_TYPE_SEI;//ZPL_VIDEO_FRAME_TYPE_VPS
+					break;
+					case NALU_TYPE_SPS:
+					key = ZPL_VIDEO_FRAME_TYPE_SPS;
+					break;
+					case NALU_TYPE_PPS:
+					key = ZPL_VIDEO_FRAME_TYPE_PPS;
+					break;
+					case NALU_TYPE_IDR:
+					key = ZPL_VIDEO_FRAME_TYPE_IDRSLICE;
+					break;
+					default:
+					key = 0;
+					break;
+				}
+				zpl_media_channel_skbuffer_putone(chn, bufdata, key, nalu.buf, nalu.len);
+
+                memset(&nalu, 0, sizeof(H264_NALU_T));
+                tmpbuf += pos;
+                data_offset += pos;
+                continue;
+            }
+            else
+            {
+                nalu.len += ((len)-data_offset);
+
+				switch (nalu.nal_unit_type)
+				{
+					case NALU_TYPE_SEI:
+					key = ZPL_VIDEO_FRAME_TYPE_SEI;//ZPL_VIDEO_FRAME_TYPE_VPS
+					break;
+					case NALU_TYPE_SPS:
+					key = ZPL_VIDEO_FRAME_TYPE_SPS;
+					break;
+					case NALU_TYPE_PPS:
+					key = ZPL_VIDEO_FRAME_TYPE_PPS;
+					break;
+					case NALU_TYPE_IDR:
+					key = ZPL_VIDEO_FRAME_TYPE_IDRSLICE;
+					break;
+					default:
+					key = 0;
+					break;
+				}
+				zpl_media_channel_skbuffer_putone(chn, bufdata, key, nalu.buf, nalu.len);
+
+                memset(&nalu, 0, sizeof(H264_NALU_T));
+                return 0;
+            }
+        }
+        tmpbuf++;
+        data_offset++;
+    }
+    return 0;
+}
+#endif
+
 int zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_E type, ZPL_MEDIA_FRAME_DATA_E buffertype, 
 	ZPL_VIDEO_FRAME_TYPE_E key, int hwtimetick, char *framedata, int datalen)
 {
@@ -180,12 +284,51 @@ int zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_E type, ZPL_M
     {
         zpl_media_buffer_header(mchannel, bufdata, type, hwtimetick, datalen);
         zpl_media_buffer_header_framedatatype(bufdata, buffertype);
-        memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);
 		zpl_media_buffer_header_frame_type(bufdata, key);
+		#ifdef SKBUFF_SPLIT_DEBUG
+		switch(key)
+		{
+			case ZPL_VIDEO_FRAME_TYPE_SEI:                         /* H264/H265 SEI types */
+			case ZPL_VIDEO_FRAME_TYPE_SPS:                         /* H264/H265 SPS types */
+			case ZPL_VIDEO_FRAME_TYPE_PPS:                         /* H264/H265 PPS types */
+			case ZPL_VIDEO_FRAME_TYPE_VPS:                        /* H265 VPS types */
+			//case ZPL_VIDEO_FRAME_TYPE_ISLICE:
+			case ZPL_VIDEO_FRAME_TYPE_IDRSLICE:
+			zpl_media_channel_skbuff_splitbuf(mchannel, bufdata, framedata, datalen);
+			return 0;
+			break;
+			default:
+			memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);
+			break;
+		}
+		#else
+		memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);
+		#endif
 		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 		return zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, bufdata);
 		#else
 		return zpl_skbqueue_async_enqueue(zpl_media_getptr(mchannel)->frame_queue, bufdata);
+		#endif
+	}
+	return ERROR;
+}
+
+int zpl_media_channel_extradata_skbuffer_repush(void *mchannel, ZPL_VIDEO_FRAME_TYPE_E key, char *framedata, int datalen)
+{
+	zpl_media_channel_t *media_channel = mchannel;
+    zpl_skbuffer_t * bufdata = NULL;
+	if(framedata && datalen)
+		bufdata = zpl_skbuffer_create(ZPL_SKBUF_TYPE_MEDIA, zpl_media_getptr(media_channel)->frame_queue, datalen);
+    if(bufdata && bufdata->skb_data && bufdata->skb_maxsize >= datalen)
+    {
+        zpl_media_buffer_header(media_channel, bufdata, ZPL_MEDIA_VIDEO, 0, datalen);
+        zpl_media_buffer_header_framedatatype(bufdata, ZPL_MEDIA_FRAME_DATA_ENCODE);
+        memcpy(ZPL_SKB_DATA(bufdata), framedata, datalen);
+		zpl_media_buffer_header_frame_type(bufdata, key);
+		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
+		return zpl_skbqueue_async_enqueue(zpl_media_getptr(media_channel)->frame_queue, bufdata);
+		#else
+		return zpl_skbqueue_async_enqueue(zpl_media_getptr(media_channel)->frame_queue, bufdata);
 		#endif
 	}
 	return ERROR;
@@ -204,6 +347,7 @@ int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel)
     		case ZPL_VIDEO_FRAME_TYPE_PPS:                         /* H264/H265 PPS types */
     		case ZPL_VIDEO_FRAME_TYPE_VPS:                        /* H265 VPS types */
 			case ZPL_VIDEO_FRAME_TYPE_ISLICE:
+			case ZPL_VIDEO_FRAME_TYPE_IDRSLICE:
 			zpl_media_channel_extradata_import(media_channel, ZPL_SKB_DATA(bufdata), ZPL_SKB_DATA_LEN(bufdata));
 			break;
 			default:

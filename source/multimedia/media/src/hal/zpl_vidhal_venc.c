@@ -876,14 +876,23 @@ int zpl_vidhal_venc_create(zpl_media_video_encode_t *venc)
 int zpl_vidhal_venc_reset(zpl_media_video_encode_t *venc)
 {
 #ifdef ZPL_HISIMPP_MODULE
-    int s32Ret = HI_MPI_VENC_ResetChn(venc->venc_channel);
+    int s32Ret = 0;
+    s32Ret = HI_MPI_VENC_StopRecvFrame(venc->venc_channel);
+    if (HI_SUCCESS != s32Ret)
+    {
+        if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
+            zm_msg_err(" VENC Channel (%d) Stop failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
+        return HI_FAILURE;
+    }
+    HI_MPI_VENC_CloseFd(venc->venc_channel);
+    s32Ret = HI_MPI_VENC_ResetChn(venc->venc_channel);
     if (s32Ret != HI_SUCCESS)
     {
         if(ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, HARDWARE))
             zm_msg_err(" VENC Channel (%d) Reset failed(%s)", venc->venc_channel, zpl_syshal_strerror(s32Ret));
         return HI_FAILURE;
     }
-    return s32Ret;
+    return zpl_vidhal_venc_start(venc);
 #else
     return OK;
 #endif
@@ -1355,7 +1364,7 @@ int zpl_vidhal_venc_frame_recvfrom(zpl_media_video_encode_t *venc)
 
         ret = zpl_media_channel_skbuffer_frame_put(venc->media_channel, ZPL_MEDIA_VIDEO, ZPL_MEDIA_FRAME_DATA_ENCODE, 
 	            zpl_vidhal_venc_frame_code(venc, stStream.pstPack[i].DataType), 
-                stStream.pstPack->u64PTS / 1000U, pbuf, packsize);
+                stStream.pstPack->u64PTS , pbuf, packsize);/// 1000U
         if(ret == 0)
             count++;
 	#ifdef ZPL_VIDEO_VIDHAL_DEBUG_RECV_DETAIL

@@ -99,7 +99,7 @@ static int zpl_mediartp_session_rtp_clone(zpl_media_channel_t *mediachn,
         {
             ret = zpl_skbqueue_add(session->rtp_media_queue, skb);
             session->spspps_interval++;
-            if(session->spspps_interval == 30)
+            /*if(session->spspps_interval == 30)
             {
                 zpl_video_extradata_t lextradata;
                 zpl_skbuffer_t * spsppsskb = NULL;
@@ -154,7 +154,7 @@ static int zpl_mediartp_session_rtp_clone(zpl_media_channel_t *mediachn,
                     }
                 }
             }
-
+*/
             //zm_msg_debug("======== zpl_mediartp_session_rtp_clone");
             /*if(ZPL_SKB_DATA_LEN(skb) < 100)
             {
@@ -183,9 +183,13 @@ static int zpl_mediartp_session_rtp_sendto(zpl_mediartp_session_t *rtp_session)
             if (skb)
             {
                 zpl_media_hdr_t *media_header = skb->skb_hdr.other_hdr;
+                //rtp_session->user_timestamp = (media_header->timetick/1000U)*1000U;
+                rtp_session->user_timestamp += rtp_session->timestamp_interval;
+                //zm_msg_debug("======== zpl_mediartp_session_rtp_sendto:timetick=%d\r\n", media_header->timetick);
                 ret = zpl_mediartp_session_adap_rtp_sendto(media_header->codectype, rtp_session,
                                                            ZPL_SKB_DATA(skb), ZPL_SKB_DATA_LEN(skb));
-                rtp_session->user_timestamp += rtp_session->timestamp_interval;
+                //rtp_session->user_timestamp += rtp_session->timestamp_interval;
+                
                 zpl_skbqueue_finsh(rtp_session->rtp_media_queue, skb);
             }
         }
@@ -438,7 +442,7 @@ static int zpl_mediartp_session_default(zpl_mediartp_session_t *my_session)
         my_session->_call_index = -1; // 媒体回调索引, 音视频通道数据发送
         my_session->media_chn = NULL;
 
-        my_session->packetization_mode = 0;      // 封包解包模式
+        my_session->packetization_mode = 1;      // 封包解包模式
         my_session->user_timestamp = 0;          // 用户时间戳
         my_session->timestamp_interval = 0;      // 用户时间戳
         my_session->recv_user_timestamp = 0;     // 用户时间戳
@@ -1036,7 +1040,7 @@ static int zpl_mediartp_session_rtpmap_sdptext_h264(zpl_mediartp_session_t* rtps
                                      rtpsession->video_width,
                                      rtpsession->video_height);
         sdplength += sprintf((char*)(src + sdplength), "a=framerate:%u\r\n", rtpsession->framerate);
-        sdplength += sprintf((char*)(src + sdplength), "a=range:npt=now-\r\n"); 
+        //sdplength += sprintf((char*)(src + sdplength), "a=range:npt=now-\r\n"); 
     }
     else
     {
@@ -1047,6 +1051,7 @@ static int zpl_mediartp_session_rtpmap_sdptext_h264(zpl_mediartp_session_t* rtps
 
 int zpl_mediartp_session_rtpmap_h264(int channel, int level, const char *path, char *src, uint32_t len)
 {
+    //a=fmtp:96 profile-level-id=000000; sprop-parameter-sets=Z0IAKpY1QPAET8s3AQEBAg==,aM4xsg==; packetization-mode=0
     int ret = 0;
     zpl_mediartp_session_t *my_session = zpl_mediartp_session_lookup(channel, level, path);
     if (my_session)
@@ -1357,33 +1362,33 @@ static int zpl_mediartp_session_sched_delete(zpl_mediartp_session_t *myrtp_sessi
     return OK;
 }
 #ifdef ZPL_LIBORTP_MODULE
-static void zortp_log(OrtpLogLevel level,const char *fmt)
-{
+static void zortp_log(OrtpLogLevel level, char *file, char *func, int line, const char *fmt)
+{   
     switch (level)
     {
     case ORTP_FATAL:
-        zlog_critical(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_critical(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_ERROR:
-        zlog_err(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_err(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_WARNING:
-        zlog_warn(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_warn(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_MESSAGE:
-        zlog_info(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_info(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_TRACE:
-        zlog_info(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_notice(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_DEBUG:
-        zlog_debug(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_debug(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_END:
-        zlog_debug(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_debug(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     case ORTP_LOGLEV_END:
-        zlog_debug(MODULE_MEDIA, "%s", fmt);
+        pl_zlog_debug(file, func, line, MODULE_MEDIA, "%s", fmt);
         break;
     default:
         break;
@@ -1398,7 +1403,7 @@ int zpl_mediartp_session_scheduler_init(void)
     lstInitFree(&_mediaRtpSched.list, zpl_mediartp_session_cbfree);
 #ifdef ZPL_LIBORTP_MODULE
     ortp_init();
-    ortp_set_log_handler(zortp_log, 0);
+    ortp_set_log_handler(zortp_log, 1);
     ortp_set_log_level(6);
     ortp_scheduler_init(0);
 #endif
@@ -1477,7 +1482,11 @@ int zpl_media_channel_rtp_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_
     // 通道使能录像
     if (enable == zpl_true)
     {
-        myrtp_session = zpl_mediartp_session_create(channel, channel_index, NULL);
+        if(mediachn->p_mucast.param == NULL)
+            myrtp_session = zpl_mediartp_session_create(channel, channel_index, NULL);
+        else
+            myrtp_session = mediachn->p_mucast.param;
+
         if (myrtp_session == NULL)
         {
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
@@ -1524,7 +1533,7 @@ int zpl_media_channel_rtp_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_
         myrtp_session->mchannel = channel;
         myrtp_session->mlevel = channel_index;
 
-        myrtp_session->packetization_mode = 0; // 封包解包模式
+        myrtp_session->packetization_mode = 1; // 封包解包模式
         myrtp_session->user_timestamp = 0;     // 用户时间戳
         if (mediachn->media_param.video_media.codec.framerate == 0)
             myrtp_session->framerate = 30;
@@ -1596,7 +1605,11 @@ int zpl_media_channel_multicast_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
     // 通道使能录像
     if (enable == zpl_true)
     {
-        myrtp_session = zpl_mediartp_session_create(channel, channel_index, NULL);
+        if(mediachn->p_mucast.param == NULL)
+            myrtp_session = zpl_mediartp_session_create(channel, channel_index, NULL);
+        else
+            myrtp_session = mediachn->p_mucast.param;
+               
         if (myrtp_session == NULL)
         {
             ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
@@ -1646,7 +1659,7 @@ int zpl_media_channel_multicast_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CH
         myrtp_session->mlevel = channel_index;
         // myrtp_session->_call_index;       //媒体回调索引, 音视频通道数据发送
 
-        myrtp_session->packetization_mode = 0; // 封包解包模式
+        myrtp_session->packetization_mode = 1; // 封包解包模式
         myrtp_session->user_timestamp = 0;     // 用户时间戳
         // myrtp_session->timestamp_interval; //用户时间戳间隔
         if (mediachn->media_param.video_media.codec.framerate == 0)

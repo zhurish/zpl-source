@@ -6,7 +6,8 @@
 VERSION=v2.3
 ZPL_DEFINE += -DRTMPDUMP_VERSION=\"$(VERSION)\"
 
-OBJS += rtmp.o rtmplog.o rtmpamf.o rtmphashswf.o rtmpparseurl.o
+OBJS += rtmp.o rtmplog.o rtmpamf.o rtmphashswf.o rtmpparseurl.o 
+#rtmpsrv.o
 
 #OBJS += rtmp_thread.o rtmpgw.o rtmpsuck.o rtmpsrv.o rtmpdump.o 
 

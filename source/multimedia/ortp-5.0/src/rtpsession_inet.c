@@ -919,9 +919,9 @@ _rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, 
 			session->flags&=~RTCP_SOCKET_CONNECTED;
 		}
 
-		ortp_debug("RtpSession [%p] sending to rtp %s rtcp %s %s", session, rtp_printable_addr, rtcp_printable_addr, is_aux ? "as auxiliary destination" : "");
+		ortp_debug("RtpSession [%p] sending to rtp %s rtcp %s %s", session, rtp_printable_addr, rtcp_printable_addr, is_aux ? "as auxiliary destination" : " ");
 	} else {
-		ortp_debug("RtpSession [%p] sending to rtp %s %s", session, rtp_printable_addr, is_aux ? "as auxiliary destination" : "");
+		ortp_debug("RtpSession [%p] sending to rtp %s %s", session, rtp_printable_addr, is_aux ? "as auxiliary destination" : " ");
 	}
 	/*Apply DSCP setting. On windows the destination address is required for doing this.*/
 	rtp_session_set_dscp(session, -1);

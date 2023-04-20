@@ -50,7 +50,7 @@ extern "C"
 #define ORTP_LOGLEV_END 7
 
 typedef unsigned int OrtpLogLevel;
-typedef int (*OrtpLogFunc)(OrtpLogLevel, char*);
+typedef int (*OrtpLogFunc)(OrtpLogLevel, char *, char *, int, char*);
 
 	
 /*#define ortp_set_log_handler ortp_set_log_handler*/
@@ -72,7 +72,7 @@ typedef int (*OrtpLogFunc)(OrtpLogLevel, char*);
 #else
 
  void ortp_log(OrtpLogLevel lev,const char *fmt,...);
- void ortp_log_out(OrtpLogLevel lev, const char *func, int line, const char *fmt,...);
+ void ortp_log_out(OrtpLogLevel lev, const char *file, const char *func, int line, const char *fmt,...);
 
 #ifdef ORTP_WINDOWS_DESKTOP
  void ortp_message(const char *fmt,...);
@@ -83,12 +83,14 @@ typedef int (*OrtpLogFunc)(OrtpLogLevel, char*);
  void ortp_trace(format, ...);
 #else
 
-#define ortp_trace(format, ...)   ortp_log_out(ORTP_TRACE, __func__, __LINE__, format, ##__VA_ARGS__)
-#define ortp_message(format, ...)   ortp_log_out(ORTP_MESSAGE, __func__, __LINE__, format, ##__VA_ARGS__)
-#define ortp_warning(format, ...)   ortp_log_out(ORTP_WARNING, __func__, __LINE__, format, ##__VA_ARGS__)
-#define ortp_error(format, ...)     ortp_log_out(ORTP_ERROR, __func__, __LINE__, format, ##__VA_ARGS__)
-#define ortp_fatal(format, ...)     ortp_log_out(ORTP_FATAL, __func__, __LINE__, format, ##__VA_ARGS__)
-#define ortp_debug(format, ...)     ortp_log_out(ORTP_DEBUG, __func__, __LINE__, format, ##__VA_ARGS__)
+
+
+#define ortp_trace(format, ...)   ortp_log_out(ORTP_TRACE, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define ortp_message(format, ...)   ortp_log_out(ORTP_MESSAGE, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define ortp_warning(format, ...)   ortp_log_out(ORTP_WARNING, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define ortp_error(format, ...)     ortp_log_out(ORTP_ERROR, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define ortp_fatal(format, ...)     ortp_log_out(ORTP_FATAL, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define ortp_debug(format, ...)     ortp_log_out(ORTP_DEBUG, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 #endif
 #endif /*ORTP_NOMESSAGE_MODE*/
 	

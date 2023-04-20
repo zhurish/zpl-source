@@ -147,7 +147,12 @@ static int rtp_payload_send_h264_oneframe(void *session, const uint8_t *buffer, 
                 zlog_debug(MODULE_MEDIA, " hex :\n%s", hexformat);
                 zlog_debug(MODULE_MEDIA, "---------+--------+-------+---------+");
 */
-        ret = rtp_session_send_with_ts(session, p, plen, user_ts);
+        if(rtp_payload_h264_is_nalu3_start(p))
+            ret = rtp_session_send_with_ts(session, p+3, plen-3, user_ts);
+        else if(rtp_payload_h264_is_nalu4_start(p))
+            ret = rtp_session_send_with_ts(session, p+4, plen-4, user_ts);
+        else    
+            ret = rtp_session_send_with_ts(session, p, plen, user_ts);
         #endif
     }
     return ret;

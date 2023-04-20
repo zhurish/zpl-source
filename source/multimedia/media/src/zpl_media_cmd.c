@@ -64,7 +64,7 @@ DEFUN (media_channel_enable,
 
 DEFUN_HIDDEN (media_channel_enable_alsa,
 		media_channel_enable_alsa_cmd,
-		"media channel <0-1> (main|sub) (destroy|start|stop|requst-idr)" ,
+		"media channel <0-1> (main|sub) (destroy|start|stop|requst-idr|reset)" ,
 		MEDIA_CHANNEL_STR
 		"Channel Number Select\n"
 		"Main Channel Configure\n"
@@ -72,7 +72,8 @@ DEFUN_HIDDEN (media_channel_enable_alsa,
 		"Destroy\n"
 		"Start\n"
 		"Stop\n"
-		"Requst IDR\n")
+		"Requst IDR\n"
+		"Reset Channel\n")
 {
 	int ret = ERROR;
 	ZPL_MEDIA_CHANNEL_E channel = -1;
@@ -163,7 +164,17 @@ DEFUN_HIDDEN (media_channel_enable_alsa,
 			}		
 		}
 	}
-
+	else if(strstr(argv[2],"reset"))
+	{
+		if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
+		{
+			vty_out(vty, " media channel %d %s is not exist.%s", channel, argv[1], VTY_NEWLINE);
+		}
+		else
+		{
+			ret = zpl_media_channel_reset(channel,  channel_index, 0);	
+		}
+	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 

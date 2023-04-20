@@ -72,6 +72,7 @@ zpl_bool rtsp_session_media_lookup(rtsp_session_t * session, int channel, int le
     mchn = zpl_mediartp_session_lookup( channel,  level, path);
     if(mchn)
     {
+        session->mrtp_session[0].b_enable = zpl_true;
         return zpl_true;
     }
     if(mchn == NULL)

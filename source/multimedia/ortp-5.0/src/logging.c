@@ -69,26 +69,26 @@ void ortp_hdr_log_out(char *buf)
 
 
 
-void ortp_log_out(OrtpLogLevel level, const char *func, int line, const char *fmt,...)
+void ortp_log_out(OrtpLogLevel level, const char *file, const char *func, int line, const char *fmt,...)
 {
     int n = 0;
     va_list args;
-    char *levelstr[] = {"FATAL", "ERROR", "WARNING", "MESSAGE", "TRACE", "DEBUG", "DEBUG", "DEBUG"};
-    char logtmp[2048];
+    //char *levelstr[] = {"FATAL", "ERROR", "WARNING", "MESSAGE", "TRACE", "DEBUG", "DEBUG", "DEBUG"};
+    char logtmp[4094];
     if(level > _ortp_log_level)
         return;
+    memset(logtmp, 0, sizeof(logtmp));    
     va_start (args, fmt);
-    if(_log_detail)
-        n = snprintf(logtmp, sizeof(logtmp), "%s[%d]", func, line);
-    n += snprintf(logtmp + n, sizeof(logtmp)-n, fmt, args);
+    n = vsnprintf(logtmp, sizeof(logtmp), fmt, args);
     va_end (args);
     if(_ortp_log_func)
     {
-        (_ortp_log_func)(level, logtmp);
+        (_ortp_log_func)(level, file, func, line, logtmp);
+        return;
     }
-    fprintf(stdout, "%s:%s", levelstr[level], logtmp);
+    /*fprintf(stdout, "%s:%s", levelstr[level], logtmp);
     fprintf(stdout, "\r\n");
-    fflush(stdout);
+    fflush(stdout);*/
 }
 
 
@@ -96,20 +96,22 @@ void ortp_log(OrtpLogLevel level,const char *fmt,...)
 {
     int n = 0;
     va_list args;
-    char *levelstr[] = {"FATAL", "ERROR", "WARNING", "MESSAGE", "TRACE", "DEBUG", "DEBUG", "DEBUG"};
-    char logtmp[2048];
+    //char *levelstr[] = {"FATAL", "ERROR", "WARNING", "MESSAGE", "TRACE", "DEBUG", "DEBUG", "DEBUG"};
+    char logtmp[4094];
     if(level > _ortp_log_level)
         return;
+    memset(logtmp, 0, sizeof(logtmp));     
     va_start (args, fmt);
-    n += snprintf(logtmp + n, sizeof(logtmp)-n, fmt, args);
+    n = vsnprintf(logtmp, sizeof(logtmp), fmt, args);
     va_end (args);
     if(_ortp_log_func)
     {
-        (_ortp_log_func)(level, logtmp);
+        (_ortp_log_func)(level, NULL, NULL, 0, logtmp);
+        return;
     }
-    fprintf(stdout, "%s:%s", levelstr[level], logtmp);
+    /*fprintf(stdout, "%s:%s", levelstr[level], logtmp);
     fprintf(stdout, "\r\n");
-    fflush(stdout);
+    fflush(stdout);*/
 }
 
 #ifdef ORTP_WINDOWS_DESKTOP

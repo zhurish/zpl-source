@@ -632,6 +632,61 @@ int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 	return ERROR;
 }
 
+int zpl_media_channel_reset(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int type)
+{
+    int ret = ERROR;
+    zpl_media_channel_t *chn = zpl_media_channel_lookup(channel, channel_index);
+    if (chn)
+	{
+		if (media_channel_mutex)
+			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
+		ZPL_MEDIA_CHANNEL_LOCK(chn);	
+		if(ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
+		{
+			if(chn->media_type == ZPL_MEDIA_VIDEO)
+			{
+				zpl_media_video_encode_t *video_encode = NULL;
+				zpl_media_video_vpsschn_t *video_vpsschn = NULL;
+				zpl_media_video_inputchn_t *video_inputchn = NULL;			
+				video_encode = chn->media_param.video_media.halparam;
+				if(video_encode)
+				{
+					video_vpsschn = video_encode->source_input;
+				}
+				if(video_vpsschn)
+				{
+					video_inputchn = video_vpsschn->source_input;
+				}
+				zpl_video_assert(video_encode);
+				zpl_video_assert(video_vpsschn);
+				zpl_video_assert(video_inputchn);
+				if (video_inputchn != NULL && video_vpsschn != NULL && video_encode != NULL)
+				{
+					if(zpl_media_video_encode_state_check(video_encode, ZPL_MEDIA_STATE_ACTIVE))
+					{
+						ret = zpl_media_video_encode_encode_reset(video_encode);
+					}
+					if(ret == OK && zpl_media_video_vpsschn_state_check(video_vpsschn, ZPL_MEDIA_STATE_ACTIVE))
+					{
+						ret = OK;	
+					}
+					if(ret == OK && zpl_media_video_inputchn_state_check(video_inputchn, ZPL_MEDIA_STATE_ACTIVE))
+					{
+						ret = OK;	
+					}
+				}
+			}
+			else
+				ret = OK;
+		}
+		ZPL_MEDIA_CHANNEL_UNLOCK(chn);
+		if (media_channel_mutex)
+			os_mutex_unlock(media_channel_mutex);
+		return ret;
+	}
+	return ERROR;
+}
+
 zpl_media_area_t * zpl_media_channel_area_lookup(zpl_media_channel_t *chn, ZPL_MEDIA_AREA_E type, ZPL_MEDIA_OSD_TYPE_E osd_type)
 {
 	if (media_channel_mutex)

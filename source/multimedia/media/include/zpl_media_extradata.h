@@ -64,7 +64,7 @@ typedef struct {
     zpl_uint8           fps;
 } __attribute__ ((packed)) h264_sps_extradata_t;
 
-#define ZPL_VIDEO_EXTRADATA_MAXSIZE 3600
+#define ZPL_VIDEO_EXTRADATA_MAXSIZE 1024
 
 typedef struct 
 {
@@ -102,9 +102,7 @@ extern bool zpl_media_channel_isnaluhdr(zpl_uint8 *bufdata, H264_NALU_T *nalu);
 extern int zpl_media_channel_nalu_show(H264_NALU_T *nalu);
 extern int zpl_media_channel_get_nextnalu(zpl_uint8 *bufdata, zpl_uint32 len);
 
-
-extern zpl_uint32 zpl_media_channel_get_profileLevelId(zpl_uint8 const* from, zpl_uint32 fromSize, zpl_uint8* to, zpl_uint32 toMaxSize);
-
+extern zpl_int32 zpl_media_channel_get_profileLevelId(zpl_uint8 const* from, zpl_uint32 fromSize);
 extern int zpl_media_channel_nalu2extradata(H264_NALU_T *nalu, zpl_video_extradata_t *extradata);
 
 extern int zpl_media_channel_extradata_import(void *chn, zpl_uint8 *Buf, int len);
@@ -114,6 +112,7 @@ extern int zpl_media_channel_extradata_delete(zpl_video_extradata_t *extradata);
 
 extern int zpl_media_channel_decode_sps(const zpl_uint8 *buf, int len,  h264_sps_extradata_t *);
 
+int zpl_media_sps_test(void);
 
 
 #ifdef __cplusplus

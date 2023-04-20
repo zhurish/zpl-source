@@ -487,7 +487,10 @@ static void rtp_session_create_and_send_rtcp_packet(RtpSession *session, bool_t 
 		}
 		/* Send the compound packet */
 		notify_sent_rtcp(session, m);
-		ortp_message("Sending RTCP %s compound message on session [%p].",(is_sr ? "SR" : "RR"), session);
+		if(is_sr)
+			ortp_message("Sending RTCP SR compound message on session [%p].", session);
+		else
+			ortp_message("Sending RTCP RR compound message on session [%p].", session);
 		rtp_session_rtcp_send(session, m);
 	}
 }

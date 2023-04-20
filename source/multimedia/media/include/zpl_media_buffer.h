@@ -65,6 +65,9 @@ int zpl_media_channel_extradata_update(zpl_skbuffer_t * bufdata, void *channel);
 int zpl_media_channel_skbuffer_frame_put(void *mchannel, ZPL_MEDIA_E type, ZPL_MEDIA_FRAME_DATA_E buffertype, 
 	ZPL_VIDEO_FRAME_TYPE_E key, int hwtimetick, char *framedata, int datalen);
     
+int zpl_media_channel_extradata_skbuffer_repush(void *mchannel, ZPL_VIDEO_FRAME_TYPE_E key, char *framedata, int datalen);
+
+
 extern char *zpl_media_timerstring(void);
 extern zpl_uint32 zpl_media_timerstamp(void);
 extern void zpl_media_msleep(zpl_uint32 msec);

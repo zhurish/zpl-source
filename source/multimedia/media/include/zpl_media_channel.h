@@ -115,6 +115,7 @@ extern int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNE
 /* 暂停通道 -> 底层结束 */
 extern int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 
+extern int zpl_media_channel_reset(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, int type);
 
 extern int zpl_media_channel_halparam_set(ZPL_MEDIA_CHANNEL_E channel, 
     ZPL_MEDIA_CHANNEL_TYPE_E channel_index, void *halparam);
