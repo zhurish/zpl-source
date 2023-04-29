@@ -116,6 +116,12 @@ void DynamicRTSPServer::DynamicRTSPServerParaURL(const char *url)
 {
     char *p, *brk;
     char filename[512];
+    channel = -1;
+    level = -1;
+    multcast = 0;
+    tls = 0;
+    overtcp = 0;
+    media_filename = NULL;
     p = strstr((char*)url, "media");
     if(p)
         p+=6;
@@ -177,6 +183,11 @@ void DynamicRTSPServer
   //channel=1&level=1&rtsp
   printf("=======================lookupServerMediaSession====================%s\r\n", streamName);
   char *filename = (char*)streamName;
+  DynamicRTSPServerParaURL(streamName);
+  if(channel >= 0 && level >= 0)
+  {
+
+  }
   if (strstr(streamName, "media"))
   {
     if(streamName[0] == '/')
@@ -184,6 +195,7 @@ void DynamicRTSPServer
     else
         filename = (char*)(streamName + 6);    
   }
+  printf("====================fopen===UsageEnvironmentFileDir====================%s\r\n", UsageEnvironmentFileDir(filename));
       // First, check whether the specified "streamName" exists as a local file:
   fid = fopen(UsageEnvironmentFileDir(filename), "rb");
   Boolean const fileExists = fid != NULL;
@@ -275,12 +287,12 @@ static ServerMediaSession* createNewSMS(UsageEnvironment& env,
     // Assumed to be a MPEG-4 Video Elementary Stream file:
     NEW_SMS("MPEG-4 Video");
     sms->addSubsession(MPEG4VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  } else if (strcmp(extension, ".264") == 0) {
+  } else if (strcmp(extension, ".264") == 0 || strcmp(extension, ".H264") == 0 || strcmp(extension, ".h264") == 0) {
     // Assumed to be a H.264 Video Elementary Stream file:
     NEW_SMS("H.264 Video");
     OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.264 frames
     sms->addSubsession(H264VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  } else if (strcmp(extension, ".265") == 0) {
+  } else if (strcmp(extension, ".265") == 0 || strcmp(extension, ".H265") == 0 || strcmp(extension, ".h265") == 0) {
     // Assumed to be a H.265 Video Elementary Stream file:
     NEW_SMS("H.265 Video");
     OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.265 frames

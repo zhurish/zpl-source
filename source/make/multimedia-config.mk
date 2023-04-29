@@ -4,7 +4,7 @@ ifeq ($(strip $(ZPL_MULTIMEDIA_MODULE)),true)
 
 ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 LIVE555_ROOT=$(MULTIMEDIA_DIR)/live555
-ZPLEX_DIR += $(ZPLBASE)/$(LIVE555_ROOT)
+#ZPLEX_DIR += $(ZPLBASE)/$(LIVE555_ROOT)
 ZPL_DEFINE += -DZPL_LIVE555_MODULE -DUSE_RTSP_OPT
 ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)
 ZPLEX_INCLUDE += -I$(ZPL_INSTALL_INC_DIR)/liveMedia
@@ -33,6 +33,66 @@ ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBORTP_ROOT)/playload
 ZPL_DEFINE += -DZPL_LIBORTP_MODULE
 #ZPL_LDLIBS += -L/home/zhurish/workspace/working/zpl-source/source/multimedia/ortp-5.0/include/lib -lbcunit  -lbctoolbox
 endif
+ifeq ($(strip $(ZPL_MEDIASTREAM_MODULE)),true)
+MEDIASTREAM_ROOT=$(MULTIMEDIA_DIR)/mediastreamer2
+ZPLPRODS_LAST += $(ZPLBASE)/$(MEDIASTREAM_ROOT)
+ZPL_INCLUDE += -I$(ZPLBASE)/$(MEDIASTREAM_ROOT)
+ZPL_INCLUDE += -I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/include
+ZPL_INCLUDE += -I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src
+ZPL_DEFINE += -DZPL_MEDIASTREAM_MODULE -D__ALSA_ENABLED__
+ZPL_LDLIBS += -lasound -lavcodec  -lavutil -lswscale
+
+ZPLEX_CFLAGS += -Wno-error=missing-prototypes -Wno-error=redundant-decls -DHAVE_CONFIG_H -DMS2_INTERNAL \
+	 -DVIDEO_ENABLED -DMS2_FILTERS -DORTP_TIMESTAMP -DNO_FFMPEG
+
+ZPLEX_INCLUDE	+=   \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/include/ \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/base \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/utils \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/utils/filter-interface \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/utils/filter-wrapper \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/voip \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/voip/h26x \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/audiofilters \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/otherfilters \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/videofilters \
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/tools -I/usr/include/ffmpeg
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_V4L2)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_V4L2
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_ALSA)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_ALSA
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_SRTP)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_SRTP
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_DTLS_SRTP)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_DTLS_SRTP
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_ZRTP)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_ZRTP
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_FFMPEG)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_FFMPEG
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_OPENH264)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_OPENH264
+endif
+
+ifeq ($(strip $(ZPL_MEDIASTREAM_UPNP)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_UPNP
+endif
+
+
+endif
+
 ifeq ($(strip $(ZPL_JRTPLIB_MODULE)),true)
 JRTPLIB_ROOT=$(MULTIMEDIA_DIR)/JRTPLIB
 ZPLPRODS_LAST += $(ZPLBASE)/$(JRTPLIB_ROOT)

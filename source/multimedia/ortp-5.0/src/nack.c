@@ -167,7 +167,9 @@ static void ortp_nack_transport_modifier_destroy(RtpTransportModifier *tp)  {
 static void ortp_nack_transport_modifier_new(OrtpNackContext* ctx, RtpTransportModifier **rtpt, RtpTransportModifier **rtcpt ) {
 	if (rtpt) {
 		*rtpt = ortp_new0(RtpTransportModifier, 1);
-		(*rtpt)->data = ctx; /* back link to get access to the other fields of the OrtpNackContext from the RtpTransportModifier structure */
+		(*rtpt)->level = ORTP_RTP_TRANSPORT_MODIFIER_DEFAULT_LEVEL;
+		(*rtpt)->data = ctx; /* back link to get access to the other fields of the OrtpNackContext from the
+		                        RtpTransportModifier structure */
 		(*rtpt)->t_process_on_send = ortp_nack_rtp_process_on_send;
 		(*rtpt)->t_process_on_receive = ortp_nack_rtp_process_on_receive;
 		(*rtpt)->t_destroy = ortp_nack_transport_modifier_destroy;
@@ -175,7 +177,9 @@ static void ortp_nack_transport_modifier_new(OrtpNackContext* ctx, RtpTransportM
 
 	if (rtcpt) {
 		*rtcpt = ortp_new0(RtpTransportModifier, 1);
-		(*rtcpt)->data = ctx; /* back link to get access to the other fields of the OrtpNackContext from the RtpTransportModifier structure */
+		(*rtpt)->level = ORTP_RTP_TRANSPORT_MODIFIER_DEFAULT_LEVEL;
+		(*rtcpt)->data = ctx; /* back link to get access to the other fields of the OrtpNackContext from the
+		                         RtpTransportModifier structure */
 		(*rtcpt)->t_process_on_send = ortp_nack_rtcp_process_on_send;
 		(*rtcpt)->t_process_on_receive = ortp_nack_rtcp_process_on_receive;
 		(*rtcpt)->t_destroy = ortp_nack_transport_modifier_destroy;

@@ -90,6 +90,11 @@ extern int testmain(int argc, char **argv);
 extern int testmain111(int argc, char **argv);
 extern int get_frame_h264_test(void);
 int zpl_media_sps_test(void);
+extern int ms_factory_default_init(void);
+extern int main_test(int argc, char * argv[]);
+extern int main_stest(int argc, char *argv[]);
+extern int main_test1(int argc, char *argv[]);
+
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -116,6 +121,9 @@ int main(int argc, char **argv)
 	zpl_stack_init();
 	zpl_stack_start(startup_option.progname, 8890);
 	
+	main_test1(0, NULL);
+	main_stest(0, NULL);
+
 #if 0
 	rtsp_client_t * saa = rtsp_client_create("test", "rtsp://34.227.104.115/vod/mp4");
 	if(saa)

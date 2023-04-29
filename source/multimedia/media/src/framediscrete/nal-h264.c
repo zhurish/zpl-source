@@ -85,12 +85,12 @@ static void nal_h264_read_start_code_prefix(struct rbsp *rbsp)
 
 	if (DIV_ROUND_UP(rbsp->pos, 8) + i > rbsp->size) {
 		rbsp->error = -EINVAL;
-		fprintf(stdout, "if (DIV_ROUND_UP(rbsp->pos=%d, 8) + i > rbsp->size=%d)", rbsp->pos, rbsp->size);
+		zlog_debug(MODULE_MEDIA, "if (DIV_ROUND_UP(rbsp->pos=%d, 8) + i > rbsp->size=%d)", rbsp->pos, rbsp->size);
 		return;
 	}
 
 	if (p[0] != 0x00 || p[1] != 0x00 || p[2] != 0x00 || p[3] != 0x01) {
-		fprintf(stdout, "start code error:0x%02x 0x%02x 0x%02x 0x%02x", p[0], p[1], p[2],p[3]);
+		zlog_debug(MODULE_MEDIA, "start code error:0x%02x 0x%02x 0x%02x 0x%02x", p[0], p[1], p[2],p[3]);
 		rbsp->error = -EINVAL;
 		return;
 	}
@@ -138,11 +138,11 @@ static void nal_h264_rbsp_vui_parameters(struct rbsp *rbsp,
 	rbsp_bit(rbsp, &vui->aspect_ratio_info_present_flag);
 	if (vui->aspect_ratio_info_present_flag) {
 		rbsp_bits(rbsp, 8, &vui->aspect_ratio_idc);
-		fprintf(stdout,"======H.264 SPS: aspect_ratio_idc %d\r\n", vui->aspect_ratio_idc);
+		//zlog_debug(MODULE_MEDIA,"======H.264 SPS: aspect_ratio_idc %d\r\n", vui->aspect_ratio_idc);
 		if (vui->aspect_ratio_idc == 255) {
 			rbsp_bits(rbsp, 16, &vui->sar_width);
 			rbsp_bits(rbsp, 16, &vui->sar_height);
-			fprintf(stdout,"======H.264 SPS: -> sar %dx%d\r\n", vui->sar_width, vui->sar_height);
+			//zlog_debug(MODULE_MEDIA,"======H.264 SPS: -> sar %dx%d\r\n", vui->sar_width, vui->sar_height);
 		}
 	}
 
@@ -175,8 +175,8 @@ static void nal_h264_rbsp_vui_parameters(struct rbsp *rbsp,
 		rbsp_bits(rbsp, 32, &vui->time_scale);
 		rbsp_bit(rbsp, &vui->fixed_frame_rate_flag);
 
-		fprintf(stdout,"=========H.264 SPS: num_units_in_tick %d time_scale %d fixed_frame_rate_flag %d\r\n", 
-			vui->num_units_in_tick, vui->time_scale, vui->fixed_frame_rate_flag);	
+		//zlog_debug(MODULE_MEDIA,"=========H.264 SPS: num_units_in_tick %d time_scale %d fixed_frame_rate_flag %d\r\n", 
+		//	vui->num_units_in_tick, vui->time_scale, vui->fixed_frame_rate_flag);	
 	}
 
 	rbsp_bit(rbsp, &vui->nal_hrd_parameters_present_flag);
@@ -223,7 +223,7 @@ static void nal_h264_rbsp_sps(struct rbsp *rbsp, struct nal_h264_sps *sps)
 	rbsp_bit(rbsp, &sps->constraint_set5_flag);
 	rbsp_bits(rbsp, 2, &sps->reserved_zero_2bits);
 	rbsp_bits(rbsp, 8, &sps->level_idc);
-	fprintf(stdout,"=========H.264 SPS: profile_idc %d level %d\r\n", sps->profile_idc, sps->level_idc);
+	//zlog_debug(MODULE_MEDIA,"=========H.264 SPS: profile_idc %d level %d\r\n", sps->profile_idc, sps->level_idc);
 	rbsp_uev(rbsp, &sps->seq_parameter_set_id);
 
 	if (sps->profile_idc == 100 || sps->profile_idc == 110 ||
@@ -274,11 +274,11 @@ static void nal_h264_rbsp_sps(struct rbsp *rbsp, struct nal_h264_sps *sps)
 	rbsp_bit(rbsp, &sps->frame_mbs_only_flag);
 	if (!sps->frame_mbs_only_flag)
 		rbsp_bit(rbsp, &sps->mb_adaptive_frame_field_flag);
-
-    fprintf(stdout,"=======H.264 SPS: pic_width:  %u mbs\r\n", (zpl_uint32)sps->pic_width_in_mbs_minus1);
-    fprintf(stdout,"=======H.264 SPS: pic_height: %u mbs\r\n", (zpl_uint32)sps->pic_height_in_map_units_minus1);
-    fprintf(stdout,"=======H.264 SPS: frame only flag: %d\r\n", sps->frame_mbs_only_flag);
-
+/*
+    zlog_debug(MODULE_MEDIA,"=======H.264 SPS: pic_width:  %u mbs\r\n", (zpl_uint32)sps->pic_width_in_mbs_minus1);
+    zlog_debug(MODULE_MEDIA,"=======H.264 SPS: pic_height: %u mbs\r\n", (zpl_uint32)sps->pic_height_in_map_units_minus1);
+    zlog_debug(MODULE_MEDIA,"=======H.264 SPS: frame only flag: %d\r\n", sps->frame_mbs_only_flag);
+*/
 	rbsp_bit(rbsp, &sps->direct_8x8_inference_flag);
 
 	rbsp_bit(rbsp, &sps->frame_cropping_flag);
@@ -287,8 +287,8 @@ static void nal_h264_rbsp_sps(struct rbsp *rbsp, struct nal_h264_sps *sps)
 		rbsp_uev(rbsp, &sps->crop_right);
 		rbsp_uev(rbsp, &sps->crop_top);
 		rbsp_uev(rbsp, &sps->crop_bottom);
-        fprintf(stdout,"=======H.264 SPS: cropping %d %d %d %d\r\n",
-               sps->crop_left, sps->crop_top, sps->crop_right, sps->crop_bottom);
+        //zlog_debug(MODULE_MEDIA,"=======H.264 SPS: cropping %d %d %d %d\r\n",
+        //       sps->crop_left, sps->crop_top, sps->crop_right, sps->crop_bottom);
 	}
 	rbsp_bit(rbsp, &sps->vui_parameters_present_flag);
 	if (sps->vui_parameters_present_flag)
@@ -428,7 +428,7 @@ ssize_t nal_h264_read_sps(struct nal_h264_sps *sps, void *src, size_t n)
 	    /*nal_ref_idc != 0 ||*/
 	    nal_unit_type != SEQUENCE_PARAMETER_SET)
 	{
-		fprintf(stdout, "nal_unit_type=%d, forbidden_zero_bit=%d",nal_unit_type,forbidden_zero_bit);
+		zlog_debug(MODULE_MEDIA, "nal_unit_type=%d, forbidden_zero_bit=%d",nal_unit_type,forbidden_zero_bit);
 		return -EINVAL;
 	}
 
@@ -703,7 +703,7 @@ static int zpl_media_file_get_frame_h264_test(FILE *fp)
                         offset_len = nalulen - ret;
                     if(offset_len)
                         fseek(fp, offset_len, SEEK_CUR);
-                    fprintf(stdout,"===========get media frame size=%d offset_len=%d\r\n", naluhdr.len, offset_len);
+                    //zlog_debug(MODULE_MEDIA,"===========get media frame size=%d offset_len=%d\r\n", naluhdr.len, offset_len);
                     packet_offset = flags = 0;
                     
                     return naluhdr.len;
@@ -729,8 +729,8 @@ static int zpl_media_file_get_frame_h264_test(FILE *fp)
                         flags = 0;
                         frist = 0;
                         tatol_len += ret;
-                        fprintf(stdout,"===========get media last frame size=%d\r\n", naluhdr.len);
-                        fprintf(stdout,"===========get media total frame size=%d\r\n", tatol_len);
+                        //zlog_debug(MODULE_MEDIA,"===========get media last frame size=%d\r\n", naluhdr.len);
+                        //zlog_debug(MODULE_MEDIA,"===========get media total frame size=%d\r\n", tatol_len);
                         return naluhdr.len;
                     }
                 }
@@ -740,14 +740,14 @@ static int zpl_media_file_get_frame_h264_test(FILE *fp)
         {
             if(feof(fp))
             {
-                fprintf(stdout,"===========can not get media frame data eof tatol_len=%d packetsize=%d, ret=%d error(%s)\r\n", tatol_len, packetsize, ret, strerror(errno));
+                zlog_debug(MODULE_MEDIA,"===========can not get media frame data eof tatol_len=%d packetsize=%d, ret=%d error(%s)\r\n", tatol_len, packetsize, ret, strerror(errno));
                 break;
             }
             else
             {
                 if(ferror(fp))
                 {
-                    fprintf(stdout,"===========can not get media frame data tatol_len=%d packetsize=%d, ret=%d error(%s)\r\n", tatol_len, packetsize, ret, strerror(errno));
+                    zlog_debug(MODULE_MEDIA,"===========can not get media frame data tatol_len=%d packetsize=%d, ret=%d error(%s)\r\n", tatol_len, packetsize, ret, strerror(errno));
                     break;
                 }
             }

@@ -90,7 +90,11 @@ unsigned int ortp_video_bandwidth_estimator_get_history_max_size(OrtpVideoBandwi
  */
 unsigned int ortp_video_bandwidth_estimator_get_trust(OrtpVideoBandwidthEstimator *vbe);
 
-void ortp_video_bandwidth_estimator_process_packet(OrtpVideoBandwidthEstimator *vbe, uint32_t sent_timestamp, const struct timeval *recv_timestamp, int msgsize, bool_t is_last);
+void ortp_video_bandwidth_estimator_process_packet(OrtpVideoBandwidthEstimator *vbe,
+                                                   uint32_t sent_timestamp,
+                                                   const struct timeval *recv_timestamp,
+                                                   int msgsize,
+                                                   bool_t is_last);
 
 float ortp_video_bandwidth_estimator_get_estimated_available_bandwidth(OrtpVideoBandwidthEstimator *vbe);
 

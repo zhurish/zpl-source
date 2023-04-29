@@ -122,7 +122,11 @@ static void compute_bitrate_add_to_list_and_remove_oldest_value(OrtpVideoBandwid
 	}
 }
 
-void ortp_video_bandwidth_estimator_process_packet(OrtpVideoBandwidthEstimator *vbe, uint32_t sent_timestamp, const struct timeval *recv_timestamp, int msgsize, bool_t is_last) {
+void ortp_video_bandwidth_estimator_process_packet(OrtpVideoBandwidthEstimator *vbe,
+                                                   uint32_t sent_timestamp,
+                                                   const struct timeval *recv_timestamp,
+                                                   int msgsize,
+                                                   bool_t is_last) {
 	OrtpVideoBandwidthEstimatorPacket *last_packet = vbe->last_packet;
 	OrtpVideoBandwidthEstimatorPacket *current_packet = NULL;
 

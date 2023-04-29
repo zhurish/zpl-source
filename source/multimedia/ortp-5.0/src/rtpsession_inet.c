@@ -48,11 +48,13 @@
 #if (defined(_WIN32) || defined(_WIN32_WCE)) && defined(ORTP_WINDOWS_DESKTOP)
 #include <mstcpip.h>
 #include <mswsock.h>
-// On Windows, SO_TIMESTAMP is only defined if NTDDI_VERSION >= NTDDI_WIN10_FE. ie: it is only available for Windows10 20h2 (10/08/2020).
-// => CMakeLists.txt may add add_definitions(-DNTDDI_VERSION=NTDDI_WIN10_FE -D_WIN32_WINNT=0x0A00) to limit minimum version.
-// From this version, we can read the timestamp through the SIO_TIMESTAMPING IOCTL. https://docs.microsoft.com/en-us/windows/win32/winsock/winsock-timestamping
-// This is not currently implemented because of unworking WSAIoctl and undocumented failures (usually WSAEOPNOTSUPP=10045).
-// Check of "WSAIoctl configured successfully timestamping" in logs to look forward on success cases.
+// On Windows, SO_TIMESTAMP is only defined if NTDDI_VERSION >= NTDDI_WIN10_FE. ie: it is only available for Windows10
+// 20h2 (10/08/2020).
+// => CMakeLists.txt may add add_definitions(-DNTDDI_VERSION=NTDDI_WIN10_FE -D_WIN32_WINNT=0x0A00) to limit minimum
+// version. From this version, we can read the timestamp through the SIO_TIMESTAMPING IOCTL.
+// https://docs.microsoft.com/en-us/windows/win32/winsock/winsock-timestamping This is not currently implemented because
+// of unworking WSAIoctl and undocumented failures (usually WSAEOPNOTSUPP=10045). Check of "WSAIoctl configured
+// successfully timestamping" in logs to look forward on success cases.
 #include <iphlpapi.h>
 #endif
 
@@ -80,12 +82,23 @@
 #if defined(_WIN32) || defined(_WIN32_WCE)
 #ifndef WSAID_WSARECVMSG
 /* http://source.winehq.org/git/wine.git/blob/HEAD:/include/mswsock.h */
-#define WSAID_WSARECVMSG {0xf689d7c8,0x6f1f,0x436b,{0x8a,0x53,0xe5,0x4f,0xe3,0x51,0xc3,0x22}}
+#define WSAID_WSARECVMSG                                                                                               \
+	{                                                                                                                  \
+		0xf689d7c8, 0x6f1f, 0x436b, {                                                                                  \
+			0x8a, 0x53, 0xe5, 0x4f, 0xe3, 0x51, 0xc3, 0x22                                                             \
+		}                                                                                                              \
+	}
 #ifndef MAX_NATURAL_ALIGNMENT
 #define MAX_NATURAL_ALIGNMENT sizeof(DWORD)
 #endif
 #ifndef TYPE_ALIGNMENT
-#define TYPE_ALIGNMENT(t) FIELD_OFFSET(struct { char x; t test; },test)
+#define TYPE_ALIGNMENT(t)                                                                                              \
+	FIELD_OFFSET(                                                                                                      \
+	    struct {                                                                                                       \
+		    char x;                                                                                                    \
+		    t test;                                                                                                    \
+	    },                                                                                                             \
+	    test)
 #endif
 typedef WSACMSGHDR *LPWSACMSGHDR;
 #ifndef WSA_CMSGHDR_ALIGN
@@ -95,10 +108,16 @@ typedef WSACMSGHDR *LPWSACMSGHDR;
 #define WSA_CMSGDATA_ALIGN(length) (((length) + MAX_NATURAL_ALIGNMENT-1) & (~(MAX_NATURAL_ALIGNMENT-1)))
 #endif
 #ifndef WSA_CMSG_FIRSTHDR
-#define WSA_CMSG_FIRSTHDR(msg) (((msg)->Control.len >= sizeof(WSACMSGHDR)) ? (LPWSACMSGHDR)(msg)->Control.buf : (LPWSACMSGHDR)NULL)
+#define WSA_CMSG_FIRSTHDR(msg)                                                                                         \
+	(((msg)->Control.len >= sizeof(WSACMSGHDR)) ? (LPWSACMSGHDR)(msg)->Control.buf : (LPWSACMSGHDR)NULL)
 #endif
 #ifndef WSA_CMSG_NXTHDR
-#define WSA_CMSG_NXTHDR(msg,cmsg) ((!(cmsg)) ? WSA_CMSG_FIRSTHDR(msg) : ((((u_char *)(cmsg) + WSA_CMSGHDR_ALIGN((cmsg)->cmsg_len) + sizeof(WSACMSGHDR)) > (u_char *)((msg)->Control.buf) + (msg)->Control.len) ? (LPWSACMSGHDR)NULL : (LPWSACMSGHDR)((u_char *)(cmsg) + WSA_CMSGHDR_ALIGN((cmsg)->cmsg_len))))
+#define WSA_CMSG_NXTHDR(msg, cmsg)                                                                                     \
+	((!(cmsg)) ? WSA_CMSG_FIRSTHDR(msg)                                                                                \
+	           : ((((u_char *)(cmsg) + WSA_CMSGHDR_ALIGN((cmsg)->cmsg_len) + sizeof(WSACMSGHDR)) >                     \
+	               (u_char *)((msg)->Control.buf) + (msg)->Control.len)                                                \
+	                  ? (LPWSACMSGHDR)NULL                                                                             \
+	                  : (LPWSACMSGHDR)((u_char *)(cmsg) + WSA_CMSGHDR_ALIGN((cmsg)->cmsg_len))))
 #endif
 #ifndef WSA_CMSG_DATA
 #define WSA_CMSG_DATA(cmsg) ((u_char *)(cmsg) + WSA_CMSGDATA_ALIGN(sizeof(WSACMSGHDR)))
@@ -194,8 +213,12 @@ static int set_multicast_group(ortp_socket_t sock, const char *addr){
 #endif
 }
 
-static ortp_socket_t create_and_bind(const char *addr, int *port, int *sock_family, bool_t reuse_addr, struct sockaddr_storage *bound_addr, socklen_t *bound_addr_len)
-{
+static ortp_socket_t create_and_bind(const char *addr,
+                                     int *port,
+                                     int *sock_family,
+                                     bool_t reuse_addr,
+                                     struct sockaddr_storage *bound_addr,
+                                     socklen_t *bound_addr_len) {
     int err;
     int optval = 1;
     ortp_socket_t sock = -1;
@@ -979,25 +1002,6 @@ void rtp_session_set_sockets(RtpSession *session, int rtpfd, int rtcpfd){
 		session->flags|=(RTP_SESSION_USING_EXT_SOCKETS|RTP_SOCKET_CONNECTED|RTCP_SOCKET_CONNECTED);
 	else session->flags&=~(RTP_SESSION_USING_EXT_SOCKETS|RTP_SOCKET_CONNECTED|RTCP_SOCKET_CONNECTED);
 }
-void rtp_session_set_overtcp(RtpSession *session, bool_t rtsp, int rtp_channel, int rtcp_channel)
-{
-    session->rtp_channel=rtp_channel;
-    session->rtcp_channel=rtcp_channel;
-    if(rtsp)
-    {
-        if (rtcp_channel!=-1 || rtp_channel!=-1 )
-            session->flags|=(RTP_SESSION_USING_OVER_RTSPTCP_SOCKETS);
-        else
-            session->flags&=~(RTP_SESSION_USING_OVER_RTSPTCP_SOCKETS);
-    }
-    else
-    {
-        if (rtcp_channel!=-1 || rtp_channel!=-1 )
-            session->flags|=(RTP_SESSION_USING_OVER_TCP_SOCKETS);
-        else
-            session->flags&=~(RTP_SESSION_USING_OVER_TCP_SOCKETS);
-    }
-}
 
 void rtp_session_set_transports(RtpSession *session, struct _RtpTransport *rtptr, struct _RtpTransport *rtcptr)
 {
@@ -1255,56 +1259,19 @@ static int rtp_sendmsg(ortp_socket_t sock,mblk_t *m, const struct sockaddr *rem_
 #endif
 
 
-static int  rtp_session_rtp_tcp_sendto(RtpSession * session, mblk_t *msg , int rtp, const struct sockaddr *to, socklen_t tolen)
-{
-    uint8_t *ptr = (uint8_t*)msg->b_rptr;
-    int ptrsize = (int)(msg->b_wptr - msg->b_rptr);
-    uint8_t tmpbuf[UDP_MAX_SIZE];
-    rtp_tcp_header_t *hdr = (rtp_tcp_header_t *)tmpbuf;
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    memcpy(tmpbuf + sizeof(rtp_tcp_header_t), ptr, ptrsize);
-    hdr->masker = '$';
-    hdr->channel = rtp ? session->rtp_channel:session->rtcp_channel;
-    hdr->length = htons(ptrsize);
-    return send(rtp ? session->rtp.gs.socket : session->rtcp.gs.socket, (char*)tmpbuf, ptrsize + sizeof(rtp_tcp_header_t), 0);
-}
-#if 0
-static int  rtp_session_rtp_tcp_recvfrom(RtpSession * session, mblk_t *msg , int rtp, struct sockaddr *to, socklen_t *tolen)
-{
-    ortp_socket_t sock = rtp ? session->rtp.gs.socket : session->rtcp.gs.socket;
-    int bufsz = (int) (msg->b_datap->db_lim - msg->b_datap->db_base);
-    int ret = recv(sock, (char *)msg->b_wptr, bufsz, 0);
-    /*if(ret > sizeof(rtp_tcp_header_t))
-    {
-        msg->b_wptr += sizeof(rtp_tcp_header_t);
-        return (ret - sizeof(rtp_tcp_header_t));
-    }*/
-    return ret;
-}
-#endif
-int  rtp_session_tcp_forward(int sock, const uint8_t *msg , int tolen)
-{
-    int ret = send(sock, (char*)msg, tolen, 0);
-    return ret;
-}
+
 
 ortp_socket_t rtp_session_get_socket(RtpSession *session, bool_t is_rtp){
 	return is_rtp ? session->rtp.gs.socket : session->rtcp.gs.socket;
 }
 
-int _ortp_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen) {
+int _ortp_sendto(ortp_socket_t sockfd, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen) {
 	int sent_bytes;
-	ortp_socket_t sockfd = rtp_session_get_socket(session, is_rtp || session->rtcp_mux);
 #if defined(_WIN32) || defined(_WIN32_WCE) || defined(USE_SENDMSG)
 	sent_bytes = rtp_sendmsg(sockfd, m, destaddr, destlen);
 #else
-	if (m->b_cont != NULL)
-		msgpullup(m, -1);
-	if(session->flags & RTP_SESSION_USING_OVER_RTSPTCP_SOCKETS ||
-        session->flags & RTP_SESSION_USING_OVER_TCP_SOCKETS)
-		sent_bytes = rtp_session_rtp_tcp_sendto(session, m, is_rtp, destaddr, destlen);
-	else	
-		sent_bytes = sendto(sockfd, (char*)m->b_rptr, (int)(m->b_wptr - m->b_rptr), 0, destaddr, destlen);
+	if (m->b_cont != NULL) msgpullup(m, -1);
+	sent_bytes = sendto(sockfd, (char *)m->b_rptr, (int)(m->b_wptr - m->b_rptr), 0, destaddr, destlen);
 #endif
 	return sent_bytes;
 }
@@ -1334,7 +1301,7 @@ int rtp_session_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags,
 	}else{
 		ortp_socket_t sockfd = rtp_session_get_socket(session, is_rtp || session->rtcp_mux);
 		if (sockfd != (ortp_socket_t)-1){
-			ret=_ortp_sendto(session, is_rtp, m, flags, destaddr, destlen);	
+			ret=_ortp_sendto(sockfd, m, flags, destaddr, destlen);	
 		}else{
 			ret = -1;
 		}
@@ -1513,12 +1480,12 @@ static int rtp_session_rtcp_sendto(RtpSession * session, mblk_t * m, struct sock
 			destlen = send_session->rtp.gs.rem_addrlen;
 		}else send_session = session;
 	}
-	/* Even in RTCP mux, we send through the RTCP RtpTransport, which will itself take in charge to do the sending of the packet
-	 * through the RTP endpoint*/
-	if (rtp_session_using_transport(send_session, rtcp)){
-		error = (send_session->rtcp.gs.tr->t_sendto) (send_session->rtcp.gs.tr, m, 0, destaddr, destlen);
-	}else{
-		error=_ortp_sendto(send_session, send_session->rtcp_mux, m,0,destaddr,destlen);
+	/* Even in RTCP mux, we send through the RTCP RtpTransport, which will itself take in charge to do the sending of
+	 * the packet through the RTP endpoint*/
+	if (rtp_session_using_transport(send_session, rtcp)) {
+		error = (send_session->rtcp.gs.tr->t_sendto)(send_session->rtcp.gs.tr, m, 0, destaddr, destlen);
+	} else {
+		error = _ortp_sendto(rtp_session_get_socket(send_session, send_session->rtcp_mux), m, 0, destaddr, destlen);
 	}
 
 	if (!is_aux){
@@ -1568,7 +1535,13 @@ rtp_session_rtcp_send (RtpSession * session, mblk_t * m){
 }
 
 #ifdef USE_RECVMSG
-static int rtp_recvmsg(ortp_socket_t socket, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen, struct msghdr *msghdr, int bufsz) {
+static int rtp_recvmsg(ortp_socket_t socket,
+                       mblk_t *msg,
+                       int flags,
+                       struct sockaddr *from,
+                       socklen_t *fromlen,
+                       struct msghdr *msghdr,
+                       int bufsz) {
 	struct iovec iov;
 	int error;
 
@@ -1775,11 +1748,14 @@ static void handle_rtcp_rtpfb_packet(RtpSession *session, mblk_t *block) {
 }
 
 /*
- * @brief : for SR packets, retrieves their timestamp, gets the date, and stores these information into the session descriptor. The date values may be used for setting some fields of the report block of the next RTCP packet to be sent.
+ * @brief : for SR packets, retrieves their timestamp, gets the date, and stores these information into the session
+ * descriptor. The date values may be used for setting some fields of the report block of the next RTCP packet to be
+ * sent.
  * @param session : the current session descriptor.
  * @param block : the block descriptor that may contain a SR RTCP message.
  * @return 0 if the packet is a real RTCP packet, -1 otherwise.
- * @note a basic parsing is done on the block structure. However, if it fails, no error is returned, and the session descriptor is left as is, so it does not induce any change in the caller procedure behaviour.
+ * @note a basic parsing is done on the block structure. However, if it fails, no error is returned, and the session
+ * descriptor is left as is, so it does not induce any change in the caller procedure behaviour.
  * @note the packet is freed or is taken ownership if -1 is returned
  */
 static int process_rtcp_packet( RtpSession *session, mblk_t *block, struct sockaddr *addr, socklen_t addrlen ) {
@@ -1938,7 +1914,10 @@ void rtp_session_process_incoming(RtpSession * session, mblk_t *mp, bool_t is_rt
 	if (session->net_sim_ctx && session->net_sim_ctx->params.mode == OrtpNetworkSimulatorInbound) {
 		/*drain possible packets queued in the network simulator*/
 		mp = rtp_session_network_simulate(session, mp, &is_rtp_packet);
-		if (mp) rtp_process_incoming_packet(session, mp, is_rtp_packet, ts, received_via_rtcp_mux); /*BUG here: received_via_rtcp_mux is not preserved by network simulator*/
+		if (mp)
+			rtp_process_incoming_packet(
+			    session, mp, is_rtp_packet, ts,
+			    received_via_rtcp_mux); /*BUG here: received_via_rtcp_mux is not preserved by network simulator*/
 	} else if (mp != NULL) {
 		rtp_process_incoming_packet(session, mp, is_rtp_packet, ts, received_via_rtcp_mux);
 	}

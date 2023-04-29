@@ -39,17 +39,13 @@ int zpl_media_module_init(void)
 	zpl_media_video_vpsschn_init();
 	zpl_media_video_encode_init();
 	zpl_media_proxy_init();
-	#ifdef ZPL_LIBORTP_MODULE
-	zpl_mediartp_session_scheduler_init();
-	#endif
+	zpl_mediartp_scheduler_init();
 	return OK;
 }
 
 int zpl_media_module_exit(void)
 {
-	#ifdef ZPL_LIBORTP_MODULE
-	zpl_mediartp_session_scheduler_exit();
-	#endif
+	zpl_mediartp_scheduler_exit();
 	zpl_media_channel_exit();
 	zpl_media_proxy_exit();
 	#ifdef ZPL_MEDIA_QUEUE_DISTPATH
@@ -65,9 +61,7 @@ int zpl_media_task_init(void)
 	zpl_media_task_create(MODULE_MEDIA, &tvideo_task);
 
 	zpl_media_event_start(zpl_media_event_default());
-	#ifdef ZPL_LIBORTP_MODULE
-	zpl_mediartp_session_scheduler_start();
-	#endif
+	zpl_mediartp_scheduler_start();
 	#ifdef ZPL_MEDIA_QUEUE_DISTPATH
 	zpl_media_bufqueue_start();
 	#endif
@@ -76,9 +70,7 @@ int zpl_media_task_init(void)
 
 int zpl_media_task_exit(void)
 {
-	#ifdef ZPL_LIBORTP_MODULE
-	zpl_mediartp_session_scheduler_stop();
-	#endif	
+	zpl_mediartp_scheduler_stop();
 	zpl_media_task_destroy( &tvideo_task);
 
 	return OK;

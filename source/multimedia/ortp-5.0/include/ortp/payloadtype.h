@@ -79,11 +79,11 @@ struct _OrtpPayloadType
 	char *zero_pattern;
 	int pattern_length;
 	/* other useful information for the application*/
-	int normal_bitrate;	/*in bit/s */
-	char mime_type[32]; /**<actually the submime, ex: pcm, pcma, gsm*/
-	int channels; /**< number of channels of audio */
-	char *recv_fmtp; /* various format parameters for the incoming stream */
-	char *send_fmtp; /* various format parameters for the outgoing stream */
+	int normal_bitrate;                 /*in bit/s */
+	char *mime_type;                    /**<actually the submime, ex: pcm, pcma, gsm*/
+	int channels;                       /**< number of channels of audio */
+	char *recv_fmtp;                    /* various format parameters for the incoming stream */
+	char *send_fmtp;                    /* various format parameters for the outgoing stream */
 	struct _PayloadTypeAvpfParams avpf; /* AVPF parameters */
 	int flags;
 	void *user_data;

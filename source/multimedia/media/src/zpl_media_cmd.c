@@ -341,7 +341,7 @@ DEFUN (media_channel_alarm_capture,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-#ifdef ZPL_LIBORTP_MODULE
+//#ifdef ZPL_LIBORTP_MODULE
 DEFUN (media_channel_multicast_enable,
 		media_channel_multicast_enable_cmd,
 		"media channel <0-1> (main|sub) multicast A.B.C.D <1024-65530> local A.B.C.D enable" ,
@@ -409,7 +409,7 @@ DEFUN (media_channel_multicast_disable,
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
-#endif
+//#endif
 
 static int show_video_channel_callback(zpl_media_channel_t *chn, zpl_void *obj)
 {
@@ -653,7 +653,7 @@ static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
 				chn->p_capture.enable?"enable":"disable", VTY_NEWLINE);
 
-#ifdef ZPL_LIBORTP_MODULE
+#if 0//def ZPL_LIBORTP_MODULE
 		if(chn->p_mucast.enable)
 		{
 			zpl_mediartp_session_t* my_session = chn->p_mucast.param;
@@ -709,7 +709,7 @@ static void cmd_mediaservice_init(void)
 */
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_record_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_alarm_capture_cmd);
-#ifdef ZPL_LIBORTP_MODULE
+#if 1//def ZPL_LIBORTP_MODULE
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_disable_cmd);
 #endif

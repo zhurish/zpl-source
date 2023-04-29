@@ -43,13 +43,15 @@
 #endif
 
 static void ortp_stream_init(OrtpStream *os);
+static void rtp_del_extension_header(mblk_t *packet, int id);
 
 /**
  * #_RtpTransport object which can handle multiples security protocols. You can for instance use this object
  * to use both sRTP and tunnel transporter. mblk_t messages received and sent from the endpoint
  * will pass through the list of modifiers given. First modifier in list will be first to modify the message
  * in send mode and last in receive mode.
- * @param[in] endpoint #_RtpTransport object in charge of sending/receiving packets. If NULL, it will use standards sendto and recvfrom functions.
+ * @param[in] endpoint #_RtpTransport object in charge of sending/receiving packets. If NULL, it will use standards
+ *sendto and recvfrom functions.
  * @param[in] modifiers_count number of #_RtpTransport object given in the variadic list. Must be 0 if none are given.
  * @returns #_RtpTransport object that will be generated or NULL.
 **/
@@ -796,8 +798,9 @@ int rtp_session_get_send_payload_type(const RtpSession *session){
 /**
  * Assign the payload type number for sending telephone-event.
  * It is required that a "telephone-event" PayloadType is assigned in the RtpProfile set for the RtpSession.
- * This function is in most of cases useless, unless there is an ambiguity where several PayloadType for "telephone-event" are present in the RtpProfile.
- * This might happen during SIP offeranswer scenarios. This function allows to remove any ambiguity by letting the application choose the one to be used.
+ * This function is in most of cases useless, unless there is an ambiguity where several PayloadType for
+ *"telephone-event" are present in the RtpProfile. This might happen during SIP offeranswer scenarios. This function
+ *allows to remove any ambiguity by letting the application choose the one to be used.
  * @param session the RtpSession
  * @param paytype the payload type number
  * @returns 0, -1 on error.
@@ -897,6 +900,158 @@ size_t rtp_session_calculate_packet_header_size(RtpSession *session) {
 	return header_size;
 }
 
+mblk_t *rtp_session_create_packet_header(RtpSession *session, size_t extra_header_size) {
+	mblk_t *mp;
+	rtp_header_t *rtp;
+	size_t header_size = rtp_session_calculate_packet_header_size(session);
+
+	mp = allocb(header_size + extra_header_size, BPRI_MED);
+	rtp = (rtp_header_t *)mp->b_rptr;
+	rtp_header_init_from_session(rtp, session);
+
+	if (session->contributing_sources.q_mcount > 0) {
+		mblk_t *sdes = peekq(&session->contributing_sources);
+		rtp_header_add_csrc(rtp, sdes_chunk_get_ssrc(sdes));
+	}
+
+	/*add the mid from the bundle if any*/
+	if (session->bundle) {
+		const char *mid = rtp_bundle_get_session_mid(session->bundle, session);
+
+		if (mid != NULL) {
+			int midId = rtp_bundle_get_mid_extension_id(session->bundle);
+			// storage is already allocated so use rtp_insert instead of rtp_add
+			rtp_write_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
+		}
+	}
+	mp->b_wptr += header_size;
+	return mp;
+}
+
+/** This one is nearly identical to the simple one, just add a CSRC fetched from sourceSession */
+mblk_t *
+rtp_session_create_repair_packet_header(RtpSession *fecSession, RtpSession *sourceSession, size_t extra_header_size) {
+	mblk_t *mp;
+	rtp_header_t *rtp;
+	size_t header_size = rtp_session_calculate_packet_header_size(fecSession) + 4; /* +4 for the extra CSRC*/
+
+	mp = allocb(header_size + extra_header_size, BPRI_MED);
+	rtp = (rtp_header_t *)mp->b_rptr;
+	rtp_header_init_from_session(rtp, fecSession);
+
+	/* add the sourceSession SSRC as CSRC */
+	rtp_header_add_csrc(rtp, rtp_session_get_send_ssrc(sourceSession));
+
+	/*add the mid from the bundle if any*/
+	if (fecSession->bundle) {
+		const char *mid = rtp_bundle_get_session_mid(fecSession->bundle, fecSession);
+
+		if (mid != NULL) {
+			int midId = rtp_bundle_get_mid_extension_id(fecSession->bundle);
+			// storage is already allocated so use rtp_insert instead of rtp_add
+			rtp_write_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
+		}
+	}
+	mp->b_wptr += header_size;
+	return mp;
+}
+
+mblk_t *rtp_session_create_packet_header_with_mixer_to_client_audio_level(RtpSession *session,
+                                                                          size_t extra_header_size,
+                                                                          int mtc_extension_id,
+                                                                          size_t audio_levels_size,
+                                                                          rtp_audio_level_t *audio_levels) {
+	mblk_t *mp;
+	rtp_header_t *rtp;
+	const char *mid = NULL;
+
+	/** Compute the header size **/
+	size_t header_size = RTP_FIXED_HEADER_SIZE;
+	size_t ext_header_size = 0;
+
+	// Calculate size for mixer to client volume (csrc + extension header)
+	if (audio_levels_size > 0) {
+		ext_header_size += audio_levels_size + 1;            // Extension: compute the total extension header size
+		header_size += audio_levels_size * sizeof(uint32_t); // CSRCs, add it directly to the header size
+	}
+
+	// Calculate ext header size for mid
+	if (session->bundle) {
+		mid = rtp_bundle_get_session_mid(session->bundle, session);
+
+		if (mid != NULL) {
+			ext_header_size += strlen(mid) + 1;
+		}
+	}
+
+	if (ext_header_size > 0) {
+		size_t padding =
+		    ext_header_size % 4 == 0 ? 0 : (4 - (ext_header_size % 4)); // is padding needed on the extension header?
+		header_size += 4 + ext_header_size + padding;                   // +4 for the extension header
+	}
+
+	mp = allocb(header_size + extra_header_size, BPRI_MED);
+	rtp = (rtp_header_t *)mp->b_rptr;
+	rtp_header_init_from_session(rtp, session);
+
+	/* wptr is already set at the end of the header we're about to write
+	 * so when writing the bundle ext header it will find correctly the already present mixer to client ext header */
+	mp->b_wptr += header_size;
+
+	/* write the mixer to client audio level first so it takes care of CSRC before writing more ext header
+	 * memory is already allocated so use the write function not add */
+	rtp_write_mixer_to_client_audio_level(mp, mtc_extension_id, audio_levels_size, audio_levels);
+
+	/*add the mid from the bundle if any*/
+	if (session->bundle && mid != NULL) {
+		int midId = rtp_bundle_get_mid_extension_id(session->bundle);
+		rtp_write_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
+	}
+
+	return mp;
+}
+/** create a packet from the given buffer. No header is added, the buffer is copied in a mblk_t allocated for this
+ * purpose use to create non RTP packets (ZRTP, DTLS, STUN) or set a payload in a message (for CNG for example)
+ * @param[in] packet		pointer to the data to be copied in the created packet
+ * @param[in] packet_size	size of data buffer
+ *
+ * @return a packet in a message block structure holding the given buffer
+ */
+mblk_t *rtp_create_packet(const uint8_t *packet, size_t packet_size) {
+	mblk_t *mp;
+
+	mp = allocb(packet_size, BPRI_MED);
+	if (packet_size) {
+		memcpy(mp->b_wptr, packet, packet_size);
+		mp->b_wptr += packet_size;
+	}
+	return mp;
+}
+
+/** create a packet from the given buffer. No header is added, the buffer is not copied but integrated to the packet
+ * @param[in] packet		pointer to the data to be copied in the created packet
+ * @param[in] packet_size	size of data buffer
+ * @param[in] freefn		a function that will be called when the payload buffer is no more needed.
+ *
+ * @return a packet in a message block structure holding the given buffer
+ */
+ORTP_PUBLIC mblk_t *rtp_package_packet(uint8_t *packet, size_t packet_size, void (*freefn)(void *)) {
+	/* create a mblk_t around the user supplied payload buffer */
+	mblk_t *mp = esballoc(packet, packet_size, BPRI_MED, freefn);
+	mp->b_wptr += packet_size;
+	return mp;
+}
+
+/******************* DEPRECATED packet creations functions ************************************
+ * Do not create any more the whole packet including payload. The correct way to do that is:
+ *    - create the packet header with rtp_session_create_packet_header<_XXX> function
+ *    - optionnally add further extension headers
+ *    - if raw payload is not available in a mblk_t but in a buffer, use rtp_create_packet_copy
+ *      or rtp_create_packet_package
+ *    - concatenate the payload to the packet header created using b_cont
+ *
+ **********************************************************************************************/
+
 /**
  *	Allocates a new rtp packet. In the header, ssrc and payload_type according to the session's
  *	context. Timestamp is not set, it will be set when the packet is going to be
@@ -914,9 +1069,10 @@ mblk_t * rtp_session_create_packet(RtpSession *session,size_t header_size, const
 	mblk_t *mp;
 	size_t msglen = payload_size;
 	rtp_header_t *rtp;
+	size_t computed_header_size = rtp_session_calculate_packet_header_size(session);
 
-	if (header_size == 0) {
-		header_size = rtp_session_calculate_packet_header_size(session);
+	if (computed_header_size > header_size) {
+		header_size = computed_header_size;
 	}
 
 	msglen += header_size;
@@ -930,17 +1086,17 @@ mblk_t * rtp_session_create_packet(RtpSession *session,size_t header_size, const
 		rtp_header_add_csrc(rtp, sdes_chunk_get_ssrc(sdes));
 	}
 
-	mp->b_wptr += RTP_FIXED_HEADER_SIZE + rtp_get_cc(mp) * sizeof(uint32_t);
-
 	/*add the mid from the bundle if any*/
 	if (session->bundle) {
 		const char *mid = rtp_bundle_get_session_mid(session->bundle, session);
 
 		if (mid != NULL) {
 			int midId = rtp_bundle_get_mid_extension_id(session->bundle);
-			rtp_add_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
+			// storage is already allocated so use rtp_insert instead of rtp_add
+			rtp_write_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
 		}
 	}
+	mp->b_wptr += header_size;
 
 	/*copy the payload, if any */
 	if (payload_size){
@@ -962,51 +1118,67 @@ mblk_t * rtp_session_create_packet(RtpSession *session,size_t header_size, const
  *@param payload data to be copied into the rtp packet.
  *@param payload_size size of data carried by the rtp packet.
  *@return a rtp packet in a mblk_t (message block) structure.
-**/
-mblk_t * rtp_session_create_packet_with_mixer_to_client_audio_level(RtpSession *session, size_t header_size, int mtc_extension_id, size_t audio_levels_size, rtp_audio_level_t *audio_levels, const uint8_t *payload, size_t payload_size)
-{
+ **/
+mblk_t *rtp_session_create_packet_with_mixer_to_client_audio_level(RtpSession *session,
+                                                                   size_t header_size,
+                                                                   int mtc_extension_id,
+                                                                   size_t audio_levels_size,
+                                                                   rtp_audio_level_t *audio_levels,
+                                                                   const uint8_t *payload,
+                                                                   size_t payload_size) {
 	mblk_t *mp;
 	size_t msglen = payload_size;
 	rtp_header_t *rtp;
 	const char *mid = NULL;
 
-	if (header_size == 0) {
-		header_size = RTP_FIXED_HEADER_SIZE;
+	/** Compute the header size **/
+	size_t computed_header_size = RTP_FIXED_HEADER_SIZE;
+	size_t ext_header_size = 0;
 
-		// Calculate size for mixer to client volume (csrc + extension header)
-		if (audio_levels_size > 0) {
-			size_t padding = (audio_levels_size + 1) % 4 != 0 ? (4 - (audio_levels_size + 1) % 4) : 0;
-			header_size += audio_levels_size + 5 + padding;			// Extension
-			header_size += audio_levels_size * sizeof(uint32_t);	// CSRCs
+	// Calculate size for mixer to client volume (csrc + extension header)
+	if (audio_levels_size > 0) {
+		ext_header_size += audio_levels_size + 1; // Extension: compute the total extension header size
+		computed_header_size += audio_levels_size * sizeof(uint32_t); // CSRCs, add it directly to the header size
+	}
+
+	// Calculate ext header size for mid
+	if (session->bundle) {
+		mid = rtp_bundle_get_session_mid(session->bundle, session);
+
+		if (mid != NULL) {
+			ext_header_size += strlen(mid) + 1;
 		}
+	}
 
-		// Calculate size for mid
-		if (session->bundle) {
-			mid = rtp_bundle_get_session_mid(session->bundle, session);
+	if (ext_header_size > 0) {
+		size_t padding =
+		    ext_header_size % 4 == 0 ? 0 : (4 - (ext_header_size % 4)); // is padding needed on the extension header?
+		computed_header_size += 4 + ext_header_size + padding;
+	}
 
-			if (mid != NULL) {
-				size_t mid_size = strlen(mid);
-				size_t padding = (mid_size + 1) % 4 != 0 ? (4 - (mid_size + 1) % 4) : 0;
-				header_size += audio_levels_size > 0 ? 0 : 4; // Don't add extension header's header if there is already audio levels
-				header_size += strlen(mid) + 1 + padding;
-			}
-		}
+	/** use the biggest of computed and given header size **/
+	if (computed_header_size > header_size) {
+		header_size = computed_header_size;
 	}
 
 	msglen += header_size;
 
 	mp = allocb(msglen, BPRI_MED);
-	rtp = (rtp_header_t *) mp->b_rptr;
+	rtp = (rtp_header_t *)mp->b_rptr;
 	rtp_header_init_from_session(rtp, session);
-	mp->b_wptr += RTP_FIXED_HEADER_SIZE;
 
-	/*this has to be called before adding any other extensions since it changes the header size to add the csrcs*/
-	rtp_add_mixer_to_client_audio_level(mp, mtc_extension_id, audio_levels_size, audio_levels);
+	/* wptr is already set at the end of the header we're about to write
+	 * so when writing the bundle ext header it will find correctly the already present mtc ext header */
+	mp->b_wptr += header_size;
+
+	/* write the mixer to client audio level first so it takes care of CSRC before writing more ext header
+	 * memory is already allocated so use the write function not add */
+	rtp_write_mixer_to_client_audio_level(mp, mtc_extension_id, audio_levels_size, audio_levels);
 
 	/*add the mid from the bundle if any*/
 	if (session->bundle && mid != NULL) {
 		int midId = rtp_bundle_get_mid_extension_id(session->bundle);
-		rtp_add_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
+		rtp_write_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
 	}
 
 	/*copy the payload, if any */
@@ -1052,68 +1224,48 @@ uint16_t rtp_session_mblk_get_seq(mblk_t *mp){
  * @param payload_size size of data
  * @param freefn a function that will be called when the payload buffer is no more needed.
  * @return: a rtp packet in a mblk_t (message block) structure.
-**/
+ **/
 
-mblk_t * rtp_session_create_packet_with_data(RtpSession *session, uint8_t *payload, size_t payload_size, void (*freefn)(void*))
-{
-	mblk_t *mp,*mpayload;
-	int header_size=RTP_FIXED_HEADER_SIZE; /* revisit when support for csrc is done */
+mblk_t *rtp_session_create_packet_with_data(RtpSession *session,
+                                            uint8_t *payload,
+                                            size_t payload_size,
+                                            void (*freefn)(void *)) {
+	mblk_t *mp, *mpayload;
+	size_t header_size = rtp_session_calculate_packet_header_size(session);
 	rtp_header_t *rtp;
 
-	mp=allocb(header_size,BPRI_MED);
-	rtp=(rtp_header_t*)mp->b_rptr;
-	rtp_header_init_from_session(rtp,session);
-	mp->b_wptr+=header_size;
+	mp = allocb(header_size, BPRI_MED);
+	rtp = (rtp_header_t *)mp->b_rptr;
+	rtp_header_init_from_session(rtp, session);
+
+	if (session->contributing_sources.q_mcount > 0) {
+		mblk_t *sdes = peekq(&session->contributing_sources);
+		rtp_header_add_csrc(rtp, sdes_chunk_get_ssrc(sdes));
+	}
 
 	/*add the mid from the bundle if any*/
 	if (session->bundle) {
-		if (session->rtp.snd_seq < 50) {
-			const char *mid = rtp_bundle_get_session_mid(session->bundle, session);
+		const char *mid = rtp_bundle_get_session_mid(session->bundle, session);
 
-			if (mid != NULL) {
-				int midId = rtp_bundle_get_mid_extension_id(session->bundle);
-				rtp_add_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
-			}
+		if (mid != NULL) {
+			int midId = rtp_bundle_get_mid_extension_id(session->bundle);
+			// storage is already allocated so use rtp_insert instead of rtp_add
+			rtp_write_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
 		}
 	}
 
+	mp->b_wptr += header_size;
+
 	/* create a mblk_t around the user supplied payload buffer */
-	mpayload=esballoc(payload,payload_size,BPRI_MED,freefn);
-	mpayload->b_wptr+=payload_size;
+	mpayload = esballoc(payload, payload_size, BPRI_MED, freefn);
+	mpayload->b_wptr += payload_size;
 	/* link it with the header */
-	mp->b_cont=mpayload;
+	mp->b_cont = mpayload;
 	return mp;
 }
+/******************* end of DEPRECATED packet creations functions *****************************/
 
-
-/**
- * Creates a new rtp packet using the buffer given in arguments (no copy).
- * In the header, ssrc and payload_type according to the session's
- *context. Timestamp and seq number are not set, there will be set when the packet is going to be
- *	sent with rtp_session_sendm_with_ts().
- * \a freefn can be NULL, in that case payload will be kept untouched.
- *
- * @param session a rtp session.
- * @param buffer a buffer that contains first just enough place to write a RTP header, then the data to send.
- * @param size the size of the buffer
- * @param freefn a function that will be called once the buffer is no more needed (the data has been sent).
- * @return a rtp packet in a mblk_t (message block) structure.
-**/
-mblk_t * rtp_session_create_packet_in_place(RtpSession *session,uint8_t *buffer, size_t size, void (*freefn)(void*) )
-{
-	mblk_t *mp;
-	rtp_header_t *rtp;
-
-	mp=esballoc(buffer,size,BPRI_MED,freefn);
-
-	rtp=(rtp_header_t*)mp->b_rptr;
-	rtp_header_init_from_session(rtp,session);
-	return mp;
-}
-
-
-ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, uint32_t packet_ts, uint32_t send_ts)
-{
+ORTP_PUBLIC int __rtp_session_sendm_with_ts(RtpSession *session, mblk_t *mp, uint32_t packet_ts, uint32_t send_ts) {
 	rtp_header_t *rtp;
 	uint32_t packet_time;
 	int error = 0;
@@ -1146,7 +1298,7 @@ ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, u
 					 send_ts -
 					 session->rtp.snd_ts_offset) +
 					session->rtp.snd_time_offset;
-		//ortp_debug("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);
+		/*ortp_message("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);*/
 		if (TIME_IS_STRICTLY_NEWER_THAN (packet_time, sched->time_))
 		{
 			wait_point_wakeup_at(&session->snd.wp,packet_time,(session->flags & RTP_SESSION_BLOCKING_MODE)!=0);
@@ -1169,7 +1321,22 @@ ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, u
 	if (rtp->version == 0) {
 		/* We are probably trying to send a STUN packet so don't change its content. */
 	} else {
-		if (!session->transfer_mode) rtp_header_set_timestamp(rtp, packet_ts);
+		if (!session->transfer_mode) {
+			rtp_header_set_timestamp(rtp, packet_ts);
+		} else { /* when in transfer mode, packet was created not for this session so we may have to adjust the bundle
+			        mode mid extension */
+			/*add the mid from the bundle if any*/
+			if (session->bundle) {
+				const char *mid = rtp_bundle_get_session_mid(session->bundle, session);
+
+				if (mid != NULL) {
+					int midId = rtp_bundle_get_mid_extension_id(session->bundle);
+					rtp_add_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID, strlen(mid), (uint8_t *)mid);
+					rtp = (rtp_header_t *)
+					          mp->b_rptr; // rtp_add_extension might pullup the message so reset the pointer to header
+				}
+			}
+		}
 		if (rtp_profile_is_telephone_event(session->snd.profile, rtp->paytype) && !session->transfer_mode) {
 			rtp_header_set_seqnumber(rtp, session->rtp.snd_seq);
 			session->rtp.snd_seq++;
@@ -1195,11 +1362,10 @@ ORTP_PUBLIC int __rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, u
 		session->duplication_left -= 1.f;
 	}
 
-	
-	if((session->fec_stream != NULL) && (mp != NULL)){
-		
-		fec_stream_on_new_packet_sent(session->fec_stream, mp);
-	}
+	// if((session->fec_stream != NULL) && (mp != NULL)){
+
+	// 	fec_stream_on_new_packet_sent(session->fec_stream, mp);
+	// }
 
 	error = rtp_session_rtp_send (session, mp);
 
@@ -1246,9 +1412,15 @@ rtp_session_send_with_ts (RtpSession * session, const uint8_t * buffer, int len,
 	mblk_t *m;
 	int err;
 #ifdef USE_SENDMSG
-	m=rtp_session_create_packet_with_data(session,(uint8_t*)buffer,len,NULL);
+	// message in two chained fragments: header and payload
+	m = rtp_session_create_packet_header(session, 0);
+	m->b_cont = rtp_package_packet((uint8_t *)buffer, len, NULL);
 #else
-	m = rtp_session_create_packet(session,0,(uint8_t*)buffer,len);
+	// message in one block - continuous buffer
+	m = rtp_session_create_packet_header(
+	    session, len); // ask for len size to be allocated after the header so we can copy the payload into it
+	memcpy(m->b_wptr, buffer, len);
+	m->b_wptr += len;
 #endif
 	err=rtp_session_sendm_with_ts(session,m,userts);
 	return err;
@@ -1293,7 +1465,8 @@ static void check_for_seq_number_gap(RtpSession *session, rtp_header_t *rtp) {
 	uint16_t seq_number = rtp_header_get_seqnumber(rtp);
 
 	/*don't check anything before first packet delivered*/
-	if (session->flags & RTP_SESSION_FIRST_PACKET_DELIVERED && RTP_SEQ_IS_STRICTLY_GREATER_THAN(seq_number, session->rtp.rcv_last_seq + 1)) {
+	if (session->flags & RTP_SESSION_FIRST_PACKET_DELIVERED &&
+	    RTP_SEQ_IS_STRICTLY_GREATER_THAN(seq_number, session->rtp.rcv_last_seq + 1)) {
 		uint16_t first_missed_seq = session->rtp.rcv_last_seq + 1;
 		uint16_t diff = seq_number - first_missed_seq;
 		pid = first_missed_seq;
@@ -1495,12 +1668,17 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 		if (!(session->flags & RTP_SESSION_FIRST_PACKET_DELIVERED)){
 			rtp_session_set_flag(session,RTP_SESSION_FIRST_PACKET_DELIVERED);
 		}
+		if (session->transfer_mode &&
+		    session->bundle) { /* in transfer mode, we must delete possible bundle header extension */
+			int midId = rtp_bundle_get_mid_extension_id(session->bundle);
+			rtp_del_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID);
+		}
+	} else {
+		ortp_debug("No mp for timestamp queried");
 	}
-	else
-	{
-		//ortp_debug ("No mp for timestamp queried");
+	if (session->fec_stream != NULL) {
+		fec_stream_recieve_repair_packet(session->fec_stream, user_ts);
 	}
-
 	rtp_session_rtcp_process_recv(session);
 
 	if (session->flags & RTP_SESSION_SCHEDULED)
@@ -1680,25 +1858,16 @@ void rtp_session_set_time_jump_limit(RtpSession *session, int milisecs){
 
 void _rtp_session_release_sockets(RtpSession *session, bool_t release_transports){
 
-    if(session->flags & RTP_SESSION_USING_OVER_RTSPTCP_SOCKETS ||
-            session->flags & RTP_SESSION_USING_OVER_TCP_SOCKETS)
-    {
-
-    }
-    else
-    {
-	if (release_transports){
+	if (release_transports) {
 		if (session->rtp.gs.tr) {
-			if (session->rtp.gs.tr->t_close)
-				session->rtp.gs.tr->t_close(session->rtp.gs.tr);
+			if (session->rtp.gs.tr->t_close) session->rtp.gs.tr->t_close(session->rtp.gs.tr);
 			session->rtp.gs.tr->t_destroy(session->rtp.gs.tr);
 
 		}
 		session->rtp.gs.tr = 0;
 
-		if (session->rtcp.gs.tr)  {
-			if (session->rtcp.gs.tr->t_close)
-				session->rtcp.gs.tr->t_close(session->rtcp.gs.tr);
+		if (session->rtcp.gs.tr) {
+			if (session->rtcp.gs.tr->t_close) session->rtcp.gs.tr->t_close(session->rtcp.gs.tr);
 			session->rtcp.gs.tr->t_destroy(session->rtcp.gs.tr);
 		}
 		session->rtcp.gs.tr = 0;
@@ -1706,7 +1875,7 @@ void _rtp_session_release_sockets(RtpSession *session, bool_t release_transports
 
 	if (session->rtp.gs.socket!=(ortp_socket_t)-1) close_socket (session->rtp.gs.socket);
 	if (session->rtcp.gs.socket!=(ortp_socket_t)-1) close_socket (session->rtcp.gs.socket);
-    }
+    
 	session->rtp.gs.socket=-1;
 	session->rtcp.gs.socket=-1;
 
@@ -1950,7 +2119,9 @@ const jitter_stats_t * rtp_session_get_jitter_stats( const RtpSession *session )
 /**
  * @brief For <b>test purpose only</b>, sets a constant lost packet value within <b>all</b> RTCP output packets.@n
  *
- * The SR or RR RTCP packet contain a lost packet field. After this procedure is called, the lost packet field will be set to a constant value in all output SR or RR packets. This parameter will overridden the actual number of lost packets in the input RTP stream that the RTCP stack had previously processed.
+ * The SR or RR RTCP packet contain a lost packet field. After this procedure is called, the lost packet field will be
+ *set to a constant value in all output SR or RR packets. This parameter will overridden the actual number of lost
+ *packets in the input RTP stream that the RTCP stack had previously processed.
  * @param s : the rtp session.
  * @param value : the lost packets test vector value.
 **/
@@ -1960,9 +2131,12 @@ void rtp_session_rtcp_set_lost_packet_value( struct _RtpSession *s, const int va
 }
 
 /**
- * @brief For <b>test purpose only</b>, sets a constant interarrival_jitter value within <b>all</b> RTCP output packets.@n
+ * @brief For <b>test purpose only</b>, sets a constant interarrival_jitter value within <b>all</b> RTCP output
+ *packets.@n
  *
- * The SR or RR RTCP packet contain an interarrival jitter field. After this procedure is called, the interarrival jitter field will be set to a constant value in all output SR or RR packets. This parameter will overridden the actual interarrival jitter value that was processed by the RTCP stack.
+ * The SR or RR RTCP packet contain an interarrival jitter field. After this procedure is called, the interarrival
+ *jitter field will be set to a constant value in all output SR or RR packets. This parameter will overridden the actual
+ *interarrival jitter value that was processed by the RTCP stack.
  * @param s : the rtp session.
  * @param value : the interarrival jitter test vector value.
 **/
@@ -1972,11 +2146,12 @@ void rtp_session_rtcp_set_jitter_value( struct _RtpSession *s, const unsigned in
 }
 
 /**
- * @brief For <b>test purpose only</b>, simulates a constant RTT (Round Trip Time) value by setting the LSR field within <b>all</b> returned RTCP output packets.@n
+ * @brief For <b>test purpose only</b>, simulates a constant RTT (Round Trip Time) value by setting the LSR field within
+ *<b>all</b> returned RTCP output packets.@n
  *
  * The RTT processing involves two RTCP packets exchanged between two different devices.@n
- * In a <b>normal</b> operation the device 1 issues a SR packets at time T0, hence this packet has a timestamp field set to T0.
- * The LSR and DLSR fiels of that packet are not considered here. This packet is received by the Device 2 at T1.
+ * In a <b>normal</b> operation the device 1 issues a SR packets at time T0, hence this packet has a timestamp field set
+ *to T0. The LSR and DLSR fiels of that packet are not considered here. This packet is received by the Device 2 at T1.
  * In response, the Device 2 issues another SR or RR packets at T2 with the following fields;
  * - a timestamp set to T2.
  * - a LSR (Last SR packet timestamp) field set to T0 ( this value has been extracted from the first packet).
@@ -1986,9 +2161,13 @@ void rtp_session_rtcp_set_jitter_value( struct _RtpSession *s, const unsigned in
  * RTT = T3 - LSR - DLSR = (T1 - T0) - (T3 - T2).@n
  * This way of processing is described in par. 6.4 of the RFC3550 standard.
  *
- * In the <b>test</b> mode that is enabled by this procedure, the RTCP stack is considered as beeing part of the device 2. For setting the RTT to a constant RTT0 value, the Device 2 artificially sets the LSR field of the second packet to (T1 - RTT0), instead of T0 in normal mode. The two other fields (timestamp and DLSR) are set as in the normal mode. So the Device 1 will process :
- * RTT = T3 - LSR - DLSR = RTT0 + (T3 - T2) that is near to RTT0 is T3 - T2 is small enough.
- * @note It is impossible to actually make the mesured RTT strictly equal to RTT0, as the packet trip time (T3 - T2) is unknown when this packet is issued by the Device 2.
+ * In the <b>test</b> mode that is enabled by this procedure, the RTCP stack is considered as beeing part of the
+ *device 2. For setting the RTT to a constant RTT0 value, the Device 2 artificially sets the LSR field of the second
+ *packet to (T1 - RTT0), instead of T0 in normal mode. The two other fields (timestamp and DLSR) are set as in the
+ *normal mode. So the Device 1 will process : RTT = T3 - LSR - DLSR = RTT0 + (T3 - T2) that is near to RTT0 is T3 - T2
+ *is small enough.
+ * @note It is impossible to actually make the mesured RTT strictly equal to RTT0, as the packet trip time (T3 - T2) is
+ *unknown when this packet is issued by the Device 2.
  * @param s : the rtp session.
  * @param value : The desired RTT test vector value (RTT0).
 **/
@@ -2002,7 +2181,8 @@ void rtp_session_reset_stats(RtpSession *session){
 }
 
 /**
- * Stores some application specific data into the session, so that it is easy to retrieve it from the signal callbacks using rtp_session_get_data().
+ * Stores some application specific data into the session, so that it is easy to retrieve it from the signal callbacks
+ *using rtp_session_get_data().
  * @param session a rtp session
  * @param data an opaque pointer to be stored in the session
 **/
@@ -2110,10 +2290,11 @@ float rtp_session_compute_send_bandwidth(RtpSession *session) {
 /**
  * Get last computed recv bandwidth.
  * Computation must have been done with rtp_session_compute_recv_bandwidth()
-**/
-float rtp_session_get_recv_bandwidth(RtpSession *session){
-	//return session->rtp.gs.download_bw + session->rtcp.gs.download_bw;
-	return ortp_bw_estimator_get_value(&session->rtp.gs.recv_bw_estimator) + ortp_bw_estimator_get_value(&session->rtcp.gs.recv_bw_estimator);
+ **/
+float rtp_session_get_recv_bandwidth(RtpSession *session) {
+	// return session->rtp.gs.download_bw + session->rtcp.gs.download_bw;
+	return ortp_bw_estimator_get_value(&session->rtp.gs.recv_bw_estimator) +
+	       ortp_bw_estimator_get_value(&session->rtcp.gs.recv_bw_estimator);
 }
 
 float rtp_session_get_recv_bandwidth_smooth(RtpSession *session){
@@ -2228,25 +2409,28 @@ int rtp_get_payload(mblk_t *packet, unsigned char **start){
 	unsigned char *tmp;
 	int header_len=RTP_FIXED_HEADER_SIZE+(rtp_get_cc(packet)*4);
 	tmp=packet->b_rptr+header_len;
-	if (tmp>packet->b_wptr){
-		if (packet->b_cont!=NULL){
-			tmp=packet->b_cont->b_rptr+(header_len- (packet->b_wptr-packet->b_rptr));
-			if (tmp<=packet->b_cont->b_wptr){
-				*start=tmp;
-				return (int)(packet->b_cont->b_wptr-tmp);
+	if (rtp_get_extbit(packet)) { // Do we have extension header ?
+		int extsize = rtp_get_extheader(packet, NULL, NULL);
+		if (extsize >= 0) {
+			header_len += 4 + extsize;
+			tmp += 4 + extsize; // tmp point after the header + extension
+		}
+	}
+
+	if (tmp >= packet->b_wptr) { // pointing after the header(+ ext) gets us out of the first block. We shall have a
+		                         // fragmented message block
+		if (packet->b_cont != NULL) {
+			tmp = packet->b_cont->b_rptr + (header_len - (packet->b_wptr - packet->b_rptr));
+			if (tmp <= packet->b_cont->b_wptr) {
+				*start = tmp;
+				return (int)(packet->b_cont->b_wptr - tmp);
 			}
 		}
 		ortp_warning("Invalid RTP packet");
 		return -1;
 	}
-	if (rtp_get_extbit(packet)){
-		int extsize=rtp_get_extheader(packet,NULL,NULL);
-		if (extsize>=0){
-			tmp+=4+extsize;
-		}
-	}
-	*start=tmp;
-	return (int)(packet->b_wptr-tmp);
+	*start = tmp;
+	return (int)(packet->b_wptr - tmp);
 }
 
 /**
@@ -2254,10 +2438,11 @@ int rtp_get_payload(mblk_t *packet, unsigned char **start){
  * @param packet the RTP packet.
  * @param profile the profile field of the extension header
  * @param start_ext pointer that will be set to the beginning of the payload of the extension header.
- * @return the size of the extension in bytes (the payload size, it can be 0), -1 if parsing of the extension header failed or if no extension is present.
-**/
-int rtp_get_extheader(mblk_t *packet, uint16_t *profile, uint8_t **start_ext){
-	int size=0;
+ * @return the size of the extension in bytes (the payload size, it can be 0), -1 if parsing of the extension header
+ *failed or if no extension is present.
+ **/
+int rtp_get_extheader(mblk_t *packet, uint16_t *profile, uint8_t **start_ext) {
+	int size = 0;
 	uint8_t *ext_header;
 	if (rtp_get_extbit(packet)){
 		ext_header=packet->b_rptr+RTP_FIXED_HEADER_SIZE+(rtp_get_cc(packet)*4);
@@ -2280,14 +2465,43 @@ int rtp_get_extheader(mblk_t *packet, uint16_t *profile, uint8_t **start_ext){
 	return -1;
 }
 
-/**
- * Add an extension to the extension header
- * @param packet the RTP packet.
- * @param id the identifier of the extension to add.
- * @param size the size in bytes of the extension to add.
- * @param data the buffer to the extension data.
-**/
-void rtp_add_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data) {
+static void rtp_del_extension_header(mblk_t *packet, int id) {
+	uint8_t *ext_header, *tmp;
+	uint16_t profile;
+	size_t ext_header_size, size;
+
+	if (!rtp_get_extbit(packet)) return;
+
+	ext_header_size = rtp_get_extheader(packet, &profile, &ext_header);
+
+	if (ext_header_size == (size_t)-1) {
+		return;
+	}
+
+	// If the profile is set to 0xBEDE then all extensions are represented by a 1-byte header
+	// If not then by a 2-byte header (cf RFC 8285), not supported by this function
+	tmp = ext_header;
+	if (profile != 0xBEDE) {
+		return;
+	}
+	while (tmp < ext_header + ext_header_size) {
+		if ((int)*tmp == RTP_EXTENSION_MAX) break;
+
+		if ((int)*tmp == RTP_EXTENSION_NONE) {
+			tmp += 1; // Padding
+		} else {
+			size = (size_t)(*tmp & 0xF) + 1; // Length is a 4-bit number minus 1
+			if (id == (int)(*tmp >> 4)) {    // The id to delete is present
+				// Just turn it into Padding
+				memset(tmp, 0, size + 1);
+				return;
+			}
+			tmp += size + 1;
+		}
+	}
+}
+
+static void rtp_add_extension_header_base(mblk_t *packet, int id, size_t size, uint8_t *data, bool_t allocate_buffer) {
 	if (size <= 0 || data == NULL) {
 		ortp_warning("Cannot add an extension with empty data");
 		return;
@@ -2303,9 +2517,15 @@ void rtp_add_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data
 		}
 
 		rtp_set_extbit(packet, 0x1);
-		msgpullup(packet, msgdsize(packet) + size + 5 + padding);
+		if (allocate_buffer != FALSE) {
+			/* total size of ext header will be 4 bytes of global ext header + (1 byte header + size bytes) + padding */
+			/* insert a zeroised buffer of this size at the end of the current header and pullup the message */
+			/* p_wptr is set at the end of the buffer */
+			msgpullup_with_insert(packet, RTP_FIXED_HEADER_SIZE + (rtp_get_cc(packet) * sizeof(uint32_t)),
+			                      size + 5 + padding);
+		}
 
-		header_p = (uint16_t *) (packet->b_wptr);
+		header_p = (uint16_t *)(packet->b_rptr + RTP_FIXED_HEADER_SIZE + (rtp_get_cc(packet) * sizeof(uint32_t)));
 		*header_p++ = htons(0xBEDE); // Set the defining profile
 		*header_p++ = htons((uint16_t) ((size + 1 + padding) / 4));
 
@@ -2318,7 +2538,6 @@ void rtp_add_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data
 			memset(ext_p, 0, padding);
 		}
 
-		packet->b_wptr += size + 5 + padding;
 	} else {
 		uint8_t *ext_header, *tmp;
 		uint16_t profile;
@@ -2333,34 +2552,47 @@ void rtp_add_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data
 		}
 
 		// Use existing padding if there is since we place it at the end of the extension header
+		// Padding can occur between extensions, it is ignored in this case
 		tmp = ext_header;
-		while (tmp < ext_header + ext_header_size && *tmp != 0) {
-			tmp += (size_t)(*tmp & 0xF) + 1 + 1; // Length is a 4-bit number minus 1
+		while (tmp < ext_header + ext_header_size) {
+			if (*tmp == RTP_EXTENSION_NONE) {
+				tmp += 1; // Padding
+				used_padding++;
+			} else {
+				tmp += (size_t)(*tmp & 0xF) + 1 + 1; // Length is a 4-bit number minus 1
+				used_padding = 0;
+			}
 		}
 
-		used_size = tmp - ext_header;
-		used_padding = ext_header_size - used_size;
+		used_size = ext_header_size - used_padding;
 
 		if ((used_size + size + 1) % 4 != 0) {
 			padding = 4 - (used_size + size + 1) % 4;
 		}
 
+		// current ext does not fit in padding left, we must allocate more space
 		if (size + 1 + padding > used_padding) {
 			uint16_t *ext_header_size_p;
 
-			msgpullup(packet, msgdsize(packet) + size + 1 + padding - used_padding);
-			packet->b_wptr += size + 1 + padding - used_padding;
+			if (allocate_buffer != FALSE) {
+				// make room to write the new header ext+padding at the end of current ext header(after final padding)
+				// b_wptr is moved by msgpullup_with_insert at the end of current message
+				msgpullup_with_insert(packet, RTP_FIXED_HEADER_SIZE + (rtp_get_cc(packet) * 4) + 4 + ext_header_size,
+				                      size + 1 + padding - used_padding);
+				// msgpullup invalidates packet pointer, so we get them back again
+				ext_header_size = rtp_get_extheader(packet, &profile, &ext_header);
+			}
 
-			// msgpullup invalidates packet pointer, so we get them back again
-			ext_header_size = rtp_get_extheader(packet, &profile, &ext_header);
 			tmp = ext_header + used_size;
 
 			used_size += size + 1;
-			ext_header_size_p = (uint16_t *) (ext_header - 2);
-			*ext_header_size_p = htons((uint16_t) ((used_size + padding) / 4));
+			ext_header_size_p = (uint16_t *)(ext_header - 2);
+			*ext_header_size_p = htons((uint16_t)((used_size + padding) / 4));
+		} else {                          // current ext fits in trailing padding, just use it
+			tmp = ext_header + used_size; // tmp reached the end including padding, reset it to the end of actual data
 		}
 
-		*tmp++ = (uint8_t) ((id << 4) | (size - 1));
+		*tmp++ = (uint8_t)((id << 4) | (size - 1));
 		memcpy(tmp, data, size);
 
 		if (padding) {
@@ -2371,12 +2603,39 @@ void rtp_add_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data
 }
 
 /**
+ * Write an extension to the extension header but do not manage memory.
+ * Buffer to store the extension header is supposed to be already allocated. Its content will be overwritten
+ * b_wptr is not modified
+ * @param packet the RTP packet.
+ * @param id the identifier of the extension to add.
+ * @param size the size in bytes of the extension to add.
+ * @param data the buffer to the extension data.
+ **/
+void rtp_write_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data) {
+	rtp_add_extension_header_base(packet, id, size, data, FALSE);
+}
+/**
+ * Add an extension to the extension header
+ * This function manages the mblk_t memory buffer and extends it if needed
+ * This function may reallocate the buffer and pullup the mblk so any reference to b_rptr
+ * or b_wptr taken before calling this function may be dangling
+ * @param packet the RTP packet.
+ * @param id the identifier of the extension to add.
+ * @param size the size in bytes of the extension to add.
+ * @param data the buffer to the extension data.
+ **/
+void rtp_add_extension_header(mblk_t *packet, int id, size_t size, uint8_t *data) {
+	rtp_add_extension_header_base(packet, id, size, data, TRUE);
+}
+
+/**
  * Obtain the desired extension in the extension header
  * @param packet the RTP packet.
  * @param id the identifier of the wanted extension
  * @param data pointer that will be set to the beginning of the extension data.
- * @return the size of the wanted extension in bytes, -1 if there is no extension header or the wanted extension was not found.
-**/
+ * @return the size of the wanted extension in bytes, -1 if there is no extension header or the wanted extension was not
+ *found.
+ **/
 int rtp_get_extension_header(mblk_t *packet, int id, uint8_t **data) {
 	uint8_t *ext_header, *tmp;
 	uint16_t profile;
@@ -2520,10 +2779,9 @@ void rtp_session_set_reuseaddr(RtpSession *session, bool_t yes) {
 	session->reuseaddr=yes;
 }
 
-
-typedef struct _MetaRtpTransportImpl{
-	RtpTransport *other_meta_rtp; /*pointer to the "other" meta RtpTransport, that is the RTCP transport if we are RTP, and the RTP transport
-		if we are RTCP. This is used only for RTCP-mux*/
+typedef struct _MetaRtpTransportImpl {
+	RtpTransport *other_meta_rtp; /*pointer to the "other" meta RtpTransport, that is the RTCP transport if we are RTP,
+	    and the RTP transport if we are RTCP. This is used only for RTCP-mux*/
 	OList *modifiers;
 	RtpTransport *endpoint;
 	bool_t is_rtp;
@@ -2664,23 +2922,26 @@ int meta_rtp_transport_modifier_inject_packet_to_send_to(RtpTransport *t, RtpTra
 	return ret;
 }
 
-static int _meta_rtp_transport_recv_through_modifiers(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags){
+static int _meta_rtp_transport_recv_through_modifiers(RtpTransport *t,
+                                                      RtpTransportModifier *tpm,
+                                                      mblk_t *msg,
+                                                      ORTP_UNUSED(int flags)) {
 	int ret = 0;
 	size_t prev_ret;
 	bool_t foundMyself = tpm ? FALSE : TRUE; /*if no modifier, start from the beginning*/
-	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)t->data;
+	MetaRtpTransportImpl *m = (MetaRtpTransportImpl *)t->data;
 	OList *elem = m->modifiers;
 	OList *last_elem = NULL;
 
-	for (;elem != NULL; elem = o_list_next(elem)) {
+	for (; elem != NULL; elem = o_list_next(elem)) {
 		last_elem = elem;
 	}
-
 	prev_ret = msgdsize(msg);
 	ret = (int)prev_ret;
-	for (;last_elem != NULL; last_elem = o_list_prev(last_elem)) {
+	for (; last_elem != NULL; last_elem = o_list_prev(last_elem)) {
 		/* run modifiers only after packet injection, the modifier given in parameter is not applied */
-		RtpTransportModifier *rtm = (RtpTransportModifier*)last_elem->data;
+		RtpTransportModifier *rtm = (RtpTransportModifier *)last_elem->data;
+
 		if (foundMyself == TRUE) {
 			ret = rtm->t_process_on_receive(rtm, msg);
 			if (ret < 0) {
@@ -2690,7 +2951,6 @@ static int _meta_rtp_transport_recv_through_modifiers(RtpTransport *t, RtpTransp
 			msg->b_wptr += ((size_t)ret - prev_ret);
 			prev_ret = (size_t)ret;
 		}
-
 		/* check if we must inject the packet */
 		if (rtm == tpm) {
 			foundMyself = TRUE;
@@ -2702,15 +2962,48 @@ static int _meta_rtp_transport_recv_through_modifiers(RtpTransport *t, RtpTransp
 /**
  * allow a modifier to inject a packet which will be treated by successive modifiers
  */
-int meta_rtp_transport_modifier_inject_packet_to_recv(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags) {
-	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)t->data;
+int meta_rtp_transport_modifier_inject_packet_to_recv(RtpTransport *t,
+                                                      RtpTransportModifier *tpm,
+                                                      mblk_t *msg,
+                                                      int flags) {
+	MetaRtpTransportImpl *m = (MetaRtpTransportImpl *)t->data;
 	int ret = _meta_rtp_transport_recv_through_modifiers(t, tpm, msg, flags);
+	// passing last_app_ts causes an approximation error in the jitter buffer.
 	rtp_session_process_incoming(t->session, msg, m->is_rtp, msg->reserved1, FALSE);
 	return ret;
 }
 
+int meta_rtp_transport_apply_all_except_one_on_recieve(RtpTransport *t, RtpTransportModifier *modifier, mblk_t *msg) {
+	int ret = 0;
+	size_t prev_ret;
 
-static int meta_rtp_transport_recvfrom(RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen) {
+	MetaRtpTransportImpl *m = (MetaRtpTransportImpl *)t->data;
+	OList *elem = m->modifiers;
+	OList *last_elem = NULL;
+
+	for (;elem != NULL; elem = o_list_next(elem)) {
+		last_elem = elem;
+	}
+
+	prev_ret = msgdsize(msg);
+	ret = (int)prev_ret;
+	for (; last_elem != NULL; last_elem = o_list_prev(last_elem)) {
+
+		RtpTransportModifier *current_modifier = (RtpTransportModifier *)last_elem->data;
+		if (current_modifier == modifier) continue;
+
+		ret = current_modifier->t_process_on_receive(current_modifier, msg);
+		if (ret < 0) {
+			// something went wrong in the modifier (failed to decrypt for instance)
+			break;
+		}
+		msg->b_wptr += ((size_t)ret - prev_ret);
+		prev_ret = (size_t)ret;
+	}
+	return ret;
+}
+
+int meta_rtp_transport_recvfrom(RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen) {
 	int ret;
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)t->data;
 	OList *elem;
@@ -2858,6 +3151,11 @@ void meta_rtp_transport_destroy(RtpTransport *tp) {
 	ortp_free(tp);
 }
 
+int rtp_transport_modifier_level_compare(const RtpTransportModifier *modifier_a,
+                                         const RtpTransportModifier *modifier_b) {
+	return modifier_a->level - modifier_b->level;
+}
+
 void meta_rtp_transport_remove_modifier(RtpTransport *tp, RtpTransportModifier *tpm) {
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)tp->data;
 	m->modifiers = o_list_remove(m->modifiers, tpm);
@@ -2866,8 +3164,8 @@ void meta_rtp_transport_remove_modifier(RtpTransport *tp, RtpTransportModifier *
 void meta_rtp_transport_append_modifier(RtpTransport *tp,RtpTransportModifier *tpm) {
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)tp->data;
 	tpm->transport = tp;
-	m->modifiers=o_list_append(m->modifiers, tpm);
-	if(m->has_set_session) {
+	m->modifiers = o_list_insert_sorted(m->modifiers, tpm, (ortp_compare_func)rtp_transport_modifier_level_compare);
+	if (m->has_set_session) {
 		tpm->session = tp->session;
 	}
 }
@@ -2875,8 +3173,8 @@ void meta_rtp_transport_append_modifier(RtpTransport *tp,RtpTransportModifier *t
 void meta_rtp_transport_prepend_modifier(RtpTransport *tp,RtpTransportModifier *tpm) {
 	MetaRtpTransportImpl *m = (MetaRtpTransportImpl*)tp->data;
 	tpm->transport = tp;
-	m->modifiers=o_list_prepend(m->modifiers, tpm);
-	if(m->has_set_session) {
+	m->modifiers = o_list_insert_sorted(m->modifiers, tpm, (ortp_compare_func)rtp_transport_modifier_level_compare);
+	if (m->has_set_session) {
 		tpm->session = tp->session;
 	}
 }
@@ -2892,7 +3190,7 @@ int rtp_session_splice(RtpSession *session, RtpSession *to_session){
 	}
 	session->spliced_session = to_session;
 	to_session->is_spliced = TRUE;
-	ortp_debug("rtp_session_splice(): session %p splicing to %p", session, to_session);
+	ortp_message("rtp_session_splice(): session %p splicing to %p", session, to_session);
 	return 0;
 }
 
@@ -2903,7 +3201,7 @@ int rtp_session_unsplice(RtpSession *session, RtpSession *to_session){
 	}
 	session->spliced_session = NULL;
 	to_session->is_spliced = FALSE;
-	ortp_debug("rtp_session_unsplice(): session %p no longer splicing to %p", session, to_session);
+	ortp_message("rtp_session_unsplice(): session %p no longer splicing to %p", session, to_session);
 	return 0;
 }
 
@@ -2914,7 +3212,7 @@ void rtp_session_do_splice(RtpSession *session, mblk_t *packet, bool_t is_rtp){
 	RtpSession *peer = session->spliced_session;
 	if (peer){
 		OrtpStream *os = is_rtp ? &peer->rtp.gs : &peer->rtcp.gs;
-		_ortp_sendto(peer,is_rtp, packet, 0, (struct sockaddr*)&os->rem_addr, os->rem_addrlen);
+		_ortp_sendto(os->socket, packet, 0, (struct sockaddr *)&os->rem_addr, os->rem_addrlen);
 	}
 }
 

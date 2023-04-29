@@ -19,8 +19,73 @@ config ZPL_LIBORTP_MODULE
 	bool "Libortp Module"
 	default n
 	depends on ZPL_MULTIMEDIA_MODULE
+	select ZPL_MEDIASTREAM_MODULE
 	help
 	Build Libortp Module.
+
+config ZPL_MEDIASTREAM_MODULE
+	bool "Mediastream Module"
+	default n
+	depends on ZPL_LIBORTP_MODULE
+	help
+	Build Mediastream Module.
+
+config ZPL_MEDIASTREAM_V4L2
+	bool "Mediastream V4L2 Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream V4L2 Module.
+
+config ZPL_MEDIASTREAM_ALSA
+	bool "Mediastream ALSA Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream ALSA Module.
+
+config ZPL_MEDIASTREAM_SRTP
+	bool "Mediastream SRTP Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream SRTP Module.
+
+config ZPL_MEDIASTREAM_DTLS_SRTP
+	bool "Mediastream DTLS_SRTP Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream DTLS_SRTP Module.
+
+config ZPL_MEDIASTREAM_ZRTP
+	bool "Mediastream ZRTP Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream ZRTP Module.
+
+config ZPL_MEDIASTREAM_FFMPEG
+	bool "Mediastream ffmpeg Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream ffmpeg Module.
+
+config ZPL_MEDIASTREAM_OPENH264
+	bool "Mediastream Openh264 Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream Openh264 Module.
+
+config ZPL_MEDIASTREAM_UPNP
+	bool "Mediastream UPNP Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream UPNP Module.
+
 
 config ZPL_JRTPLIB_MODULE
 	bool "Jrtplib Module"

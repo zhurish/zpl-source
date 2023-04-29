@@ -378,7 +378,9 @@ int zpl_media_channel_extradata_get(void *p, zpl_video_extradata_t *extradata)
     {
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE         
         if(chn->media_param.video_media.extradata.fPPS && extradata->fPPS)
- #endif
+#else
+        if(chn->media_param.video_media.extradata.fPPSSize)
+#endif
         {
 			n++;
             memcpy(extradata->fPPS, chn->media_param.video_media.extradata.fPPS, chn->media_param.video_media.extradata.fPPSSize);
@@ -387,7 +389,9 @@ int zpl_media_channel_extradata_get(void *p, zpl_video_extradata_t *extradata)
         }
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
         if(chn->media_param.video_media.extradata.fVPS && extradata->fVPS)
- #endif
+#else
+        if(chn->media_param.video_media.extradata.fVPSSize)
+#endif
         {
 			n++;
             memcpy(extradata->fVPS, chn->media_param.video_media.extradata.fVPS, chn->media_param.video_media.extradata.fVPSSize);
@@ -396,7 +400,9 @@ int zpl_media_channel_extradata_get(void *p, zpl_video_extradata_t *extradata)
         }
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
         if(chn->media_param.video_media.extradata.fSPS && extradata->fSPS)
- #endif
+#else
+        if(chn->media_param.video_media.extradata.fSPSSize)
+#endif
         {
 			n++;
             memcpy(extradata->fSPS, chn->media_param.video_media.extradata.fSPS, chn->media_param.video_media.extradata.fSPSSize);
@@ -405,14 +411,16 @@ int zpl_media_channel_extradata_get(void *p, zpl_video_extradata_t *extradata)
         }
 #ifndef ZPL_VIDEO_EXTRADATA_MAXSIZE 
         if(chn->media_param.video_media.extradata.fSEI && extradata->fSEI)
- #endif
+#else
+        if(chn->media_param.video_media.extradata.fSEISize)
+#endif
         {
 			n++;
             memcpy(extradata->fSEI, chn->media_param.video_media.extradata.fSEI, chn->media_param.video_media.extradata.fSEISize);
             extradata->fSEISize = chn->media_param.video_media.extradata.fSEISize;
             extradata->fSEIHdrLen = chn->media_param.video_media.extradata.fSEIHdrLen;
         }
-        //if(chn->media_param.video_media.extradata.h264spspps.profileLevelId && extradata->h264spspps.profileLevelId)
+        if(chn->media_param.video_media.extradata.h264spspps.profileLevelId)
         {
 			n++;
             extradata->h264spspps.profileLevelId = chn->media_param.video_media.extradata.h264spspps.profileLevelId;
@@ -525,12 +533,12 @@ int zpl_media_channel_decode_sps(const zpl_uint8 *buf, int len, h264_sps_extrada
         if(h264_sps->fps < 1)
             h264_sps->fps = 16;
         sps_get_profile(h264_sps->profile, profilestr);
-        zlog_debug(MODULE_MEDIA, "H.264 SPS: -> video size %dx%d, fps %d profile %s(%d) level=%d\r\n",
-           h264_sps->vidsize.width, h264_sps->vidsize.height, h264_sps->fps, profilestr, h264_sps->profile, h264_sps->level);    
+        //zlog_debug(MODULE_MEDIA, "H.264 SPS: -> video size %dx%d, fps %d profile %s(%d) level=%d\r\n",
+        //   h264_sps->vidsize.width, h264_sps->vidsize.height, h264_sps->fps, profilestr, h264_sps->profile, h264_sps->level);    
         
-        fprintf(stdout, "===========H.264 SPS: -> video size %dx%d, fps %d profile %s(%d) level=%d profileLevelId=%x\r\n",
+        /*fprintf(stdout, "===========H.264 SPS: -> video size %dx%d, fps %d profile %s(%d) level=%d profileLevelId=%x\r\n",
            h264_sps->vidsize.width, h264_sps->vidsize.height, h264_sps->fps, profilestr, h264_sps->profile, 
-           h264_sps->level, zpl_media_channel_get_profileLevelId(buf+4, len-4)); 
+           h264_sps->level, zpl_media_channel_get_profileLevelId(buf+4, len-4));*/ 
         
         return OK;
     }

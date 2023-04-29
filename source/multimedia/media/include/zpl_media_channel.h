@@ -71,7 +71,7 @@ typedef struct zpl_media_channel_s
     zpl_media_unit_t            p_capture;      //通道使能抓拍
     zpl_media_unit_t            p_record;       //通道使能录像
     zpl_media_unit_t            p_mucast;       //通道多播发送
-    zpl_media_unit_t            p_rtp;       //通道多播发送
+    zpl_media_unit_t            p_rtp_param;    //通道多播发送
 
     zpl_void                    *t_master;
     os_mutex_t                  *_mutex;

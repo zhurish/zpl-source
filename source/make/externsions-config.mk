@@ -16,8 +16,18 @@ else
 ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
 endif #($(ZPL_BUILD_ARCH),X86_64)
 ZPL_DEFINE += -DZPL_OPENSSL_MODULE
+else
+ZPL_DEFINE += -DNO_OPENSSL=1
 endif #($(strip $(ZPL_OPENSSL_MODULE)),true)
 
+
+ifeq ($(strip $(ZPL_MBEDTLS_MODULE)),true)
+MBEDTLS_ROOT=$(EXTERNSION_DIR)/mbedtls-3.4.0
+ZPLEX_DIR += $(ZPLBASE)/$(MBEDTLS_ROOT)
+ZPLEX_INCLUDE += -I$(ZPLBASE)/$(MBEDTLS_ROOT)/include
+#ZPLEX_LDLIBS += -lmbedcrypto -lmbedx509 -lmbedtls
+ZPL_DEFINE += -DZPL_MBEDTLS_MODULE
+endif #($(strip $(ZPL_MBEDTLS_MODULE)),true)
 
 ifeq ($(strip $(ZPL_ZLIB_MODULE)),true)
 ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE

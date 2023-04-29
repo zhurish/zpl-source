@@ -29,11 +29,9 @@ struct jrtp_session_s
 {
     int state;
     char local_address[64];
-    uint16_t local_rtpport;
-    uint16_t local_rtcpport;
-    uint16_t rtpport;
-    uint16_t rtcpport;
-    char address[64];  
+    u_int16_t local_rtpport;
+    u_int16_t local_rtcpport;
+
     int istcp;  
     int isipv6; 
     int payload;
@@ -43,7 +41,7 @@ struct jrtp_session_s
     jrtplib::RTPSession jrtp_session;
 };
 
-jrtp_session_t * jrtp_session_create(void)
+jrtp_session_t * jrtp_session_alloc(void)
 {
     jrtp_session_t *jrtpsess = (jrtp_session_t *)malloc(sizeof(jrtp_session_t));
     return jrtpsess;
@@ -60,7 +58,7 @@ int jrtp_session_destroy(jrtp_session_t *jrtpsess)
     return 0;
 }
 
-int jrtp_session_start(jrtp_session_t *jrtpsess)
+int jrtp_session_create(jrtp_session_t *jrtpsess)
 {
     if(jrtpsess)
     {
@@ -85,30 +83,40 @@ int jrtp_session_start(jrtp_session_t *jrtpsess)
         if(jrtpsess->isipv6)
         {
             struct in6_addr addrv6;
-            inet_pton (AF_INET6, jrtpsess->address, &addrv6);
+            inet_pton (AF_INET6, jrtpsess->local_address, &addrv6);
             transparamsv6.SetPortbase(jrtpsess->local_rtpport);
             if(strlen((jrtpsess->local_address)))
-                transparamsv6.SetBindIP(addrv6);
-
-            if(jrtpsess->jrtp_session.Create(sessparams, &transparamsv6, proto) == 0)
             {
-                inet_pton (AF_INET6, jrtpsess->address, &addrv6);
+                //jrtpsess->jrtp_session.rtptrans->SetMulticastInterfaceIP(ntohl(inet_addr(local)));
+                transparamsv6.SetBindIP(addrv6);
+            }
+
+            if(jrtpsess->jrtp_session.Create(sessparams, &transparamsv6, proto) != 0)
+            {
+                /*inet_pton (AF_INET6, jrtpsess->address, &addrv6);
                 jrtplib::RTPIPv6Address destaddr(addrv6.s6_addr, jrtpsess->rtpport);
                 if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
                     return -1;
+                */   
+               return -1; 
             }  
         }
         else
         {
             transparams.SetPortbase(jrtpsess->local_rtpport);
             if(strlen((jrtpsess->local_address)))
-                transparams.SetBindIP(ntohl(inet_addr(jrtpsess->local_address)));
-
-            if(jrtpsess->jrtp_session.Create(sessparams, &transparams, proto) == 0)
             {
-                jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(jrtpsess->address)), jrtpsess->rtpport, jrtpsess->rtcpport);
+                transparams.SetBindIP(ntohl(inet_addr(jrtpsess->local_address)));
+                transparams.SetMulticastInterfaceIP(ntohl(inet_addr(jrtpsess->local_address)));
+            }
+
+            if(jrtpsess->jrtp_session.Create(sessparams, &transparams, proto) != 0)
+            {
+                /*jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(jrtpsess->address)), jrtpsess->rtpport, jrtpsess->rtcpport);
                 if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
                     return -1;
+                */   
+               return -1; 
             }    
         }
         jrtpsess->jrtp_session.SetDefaultPayloadType(jrtpsess->payload);
@@ -124,38 +132,149 @@ int jrtp_session_start(jrtp_session_t *jrtpsess)
     return -1;
 }
 
-int jrtp_session_stop(jrtp_session_t *jrtpsess)
+int jrtp_session_destination_add(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, u_int16_t rtcpport)
 {
     if(jrtpsess)
     {
-        jrtpsess->state = 0;
-        return 0;
-    }
-    return -1;
-}
-
-int jrtp_session_destination(jrtp_session_t *jrtpsess, char *address, uint16_t rtpport, uint16_t rtcpport)
-{
-    if(jrtpsess)
-    {
-        memset(jrtpsess->address, 0, sizeof(jrtpsess->address));
         if(address)
         {
             if(strstr(address, "."))
+            {
                 jrtpsess->isipv6 = 0;
+                jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(address)), rtpport, rtcpport);
+                if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
+                    return -1;
+            }
             else if(strstr(address, ":"))
+            {
                 jrtpsess->isipv6 = 1;
-            strcpy(jrtpsess->address, address);
+                struct in6_addr addrv6;
+                inet_pton (AF_INET6, address, &addrv6);
+                jrtplib::RTPIPv6Address destaddr(addrv6, rtpport);
+                if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
+                    return -1;    
+            }
         }
-        jrtpsess->rtpport = rtpport;
-        jrtpsess->rtcpport = rtcpport;
         return 0;
 
     }
     return -1;
 }
 
-int jrtp_session_local_set(jrtp_session_t *jrtpsess, char *address, uint16_t rtpport, uint16_t rtcpport)
+int jrtp_session_destination_del(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, u_int16_t rtcpport)
+{
+    if(jrtpsess)
+    {
+        if(address)
+        {
+            if(strstr(address, "."))
+            {
+                jrtpsess->isipv6 = 0;
+                jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(address)), rtpport, rtcpport);
+                if(jrtpsess->jrtp_session.DeleteDestination(destaddr) != 0)
+                    return -1;
+            }
+            else if(strstr(address, ":"))
+            {
+                jrtpsess->isipv6 = 1;
+                struct in6_addr addrv6;
+                inet_pton (AF_INET6, address, &addrv6);
+                jrtplib::RTPIPv6Address destaddr(addrv6, rtpport);
+                if(jrtpsess->jrtp_session.DeleteDestination(destaddr) != 0)
+                    return -1;
+            }
+        }
+        return 0;
+
+    }
+    return -1;
+}
+
+int jrtp_session_multicast_add(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, char *local)
+{
+    if(jrtpsess)
+    {
+        if(address)
+        {
+            if(strstr(address, "."))
+            {
+                jrtpsess->isipv6 = 0;
+                jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(address)), rtpport);
+                uint32_t mcastIP = destaddr.GetIP();
+                if (!RTPUDPV4TRANS_IS_MCASTADDR(mcastIP) && local)
+                {
+                    //jrtpsess->jrtp_session.rtptrans->SetMulticastInterfaceIP(ntohl(inet_addr(local)));
+                    jrtpsess->jrtp_session.JoinMulticastGroup(destaddr); 
+                }
+                if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
+                    return -1;
+            }
+            else if(strstr(address, ":"))
+            {
+                jrtpsess->isipv6 = 1;
+                struct in6_addr addrv6;
+                inet_pton (AF_INET6, address, &addrv6);
+                jrtplib::RTPIPv6Address destaddr(addrv6, rtpport);
+       	        in6_addr mcastIP = destaddr.GetIP();
+	            if (!RTPUDPV6TRANS_IS_MCASTADDR(mcastIP))
+                {
+                    //jrtpsess->jrtp_session.SetMulticastInterfaceIndex(0);
+                    jrtpsess->jrtp_session.JoinMulticastGroup(destaddr); 
+                }
+                if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
+                    return -1;    
+            }
+        }
+        return 0;
+
+    }
+    return -1;
+}
+
+int jrtp_session_multicast_del(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, char *local)
+{
+    if(jrtpsess)
+    {
+        if(address)
+        {
+            if(strstr(address, "."))
+            {
+                jrtpsess->isipv6 = 0;
+                jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(address)), rtpport);
+                uint32_t mcastIP = destaddr.GetIP();
+                if (!RTPUDPV4TRANS_IS_MCASTADDR(mcastIP))
+                {
+                    if(local)
+                        ;//jrtpsess->jrtp_session.SetMulticastInterfaceIP(ntohl(inet_addr(local)));
+                    jrtpsess->jrtp_session.JoinMulticastGroup(destaddr); 
+                } 
+                if(jrtpsess->jrtp_session.DeleteDestination(destaddr) != 0)
+                    return -1;
+            }
+            else if(strstr(address, ":"))
+            {
+                jrtpsess->isipv6 = 1;
+                struct in6_addr addrv6;
+                inet_pton (AF_INET6, address, &addrv6);
+                jrtplib::RTPIPv6Address destaddr(addrv6, rtpport);
+        	    in6_addr mcastIP = destaddr.GetIP();
+	            if (!RTPUDPV6TRANS_IS_MCASTADDR(mcastIP))
+                {
+                    //jrtpsess->jrtp_session.SetMulticastInterfaceIndex(0);
+                    jrtpsess->jrtp_session.LeaveMulticastGroup(destaddr); 
+                }
+                if(jrtpsess->jrtp_session.DeleteDestination(destaddr) != 0)
+                    return -1;
+            }
+        }
+        return 0;
+
+    }
+    return -1;
+}
+
+
+int jrtp_session_local_set(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, u_int16_t rtcpport)
 {
     if(jrtpsess)
     {
@@ -280,11 +399,15 @@ int jrtp_session_rtprtcp_sched(jrtp_session_t *jrtpsess)
 }
 
 int jrtp_session_sendto(jrtp_session_t *jrtpsess, const void *data, size_t len,
-	                uint8_t pt, bool mark, uint32_t timestampinc)
+	                u_int8_t pt, bool mark, u_int32_t timestampinc)
 {
     if(jrtpsess)
     {
-        int status = jrtpsess->jrtp_session.SendPacket(data, len, pt, mark, timestampinc);
+        int status = 0;
+        if(pt == 255)
+            status = jrtpsess->jrtp_session.SendPacket(data, len, jrtpsess->payload, mark, timestampinc);
+        else
+            status = jrtpsess->jrtp_session.SendPacket(data, len, pt, mark, timestampinc);
         return status;
     }
     return -1;
@@ -310,7 +433,7 @@ int jrtp_session_recvfrom(jrtp_session_t *jrtpsess)
 				{
 					// You can examine the data here
 					printf("Got packet !\n");
-					//uint8_t *loaddata = pack->GetPayloadData();
+					//u_int8_t *loaddata = pack->GetPayloadData();
 					/*size_t len		 = pack->GetPayloadLength();
 					if(pack->GetPayloadType() == 96) //H264
 					{

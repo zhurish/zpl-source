@@ -36,7 +36,6 @@ make_prepare:
 ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 	cd $(ZPLBASE)/$(LIVE555_ROOT);./genMakefiles pl
 endif
-
 	@for i in $(patsubst %.o,%.c,$(OBJS)); do	\
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done

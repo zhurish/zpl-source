@@ -56,32 +56,58 @@ int rtp_get_client_to_mixer_audio_level(mblk_t *packet, int id, bool_t *voice_ac
 	return -1;
 }
 
-/**
- * Add the mixer to client audio level header extension.
- * See https://tools.ietf.org/html/rfc6465
- * @param packet the RTP packet.
- * @param id the identifier of the client to mixer audio level extension.
- * @param size the size of the audio_levels list.
- * @param audio_levels the list if audio levels to set.
-**/
-void rtp_add_mixer_to_client_audio_level(mblk_t *packet, int id, size_t size, rtp_audio_level_t *audio_levels) {
+static void rtp_add_mixer_to_client_audio_level_base(
+    mblk_t *packet, int id, size_t size, rtp_audio_level_t *audio_levels, bool_t allocate_buffer) {
 	uint8_t *data;
 	int i;
 
 	if (audio_levels == NULL || size <= 0) return;
 
-	// Increase packet size to have enough space to add csrc
-	msgpullup(packet, msgdsize(packet) + size * sizeof(uint32_t));
-	packet->b_wptr += size * sizeof(uint32_t);
+	if (allocate_buffer != FALSE) {
+		// Increase packet size to have enough space to add csrc. Make room just after the header and possible CSRC
+		// already there but before possible extension header
+		msgpullup_with_insert(packet, RTP_FIXED_HEADER_SIZE + (rtp_get_cc(packet) * sizeof(uint32_t)),
+		                      size * sizeof(uint32_t));
+	}
 
 	data = ortp_new0(uint8_t, size);
 	for (i = 0; i < (int)size; i++) {
 		rtp_add_csrc(packet, audio_levels[i].csrc);
 		data[i] = 0x0 << 7 | (audio_levels[i].dbov * -1);
 	}
-	rtp_add_extension_header(packet, id, size, data);
+	if (allocate_buffer != FALSE) {
+		rtp_add_extension_header(packet, id, size, data);
+	} else {
+		rtp_write_extension_header(packet, id, size, data);
+	}
 
 	ortp_free(data);
+}
+
+/**
+ * Write the mixer to client audio level header extension, do not manage memory
+ * just write the header, space for it must already be allocated, any data present there is overwritten
+ * csrc are written directly after the header
+ * See https://tools.ietf.org/html/rfc6465
+ * @param packet the RTP packet.
+ * @param id the identifier of the client to mixer audio level extension.
+ * @param size the size of the audio_levels list.
+ * @param audio_levels the list if audio levels to set.
+ **/
+void rtp_write_mixer_to_client_audio_level(mblk_t *packet, int id, size_t size, rtp_audio_level_t *audio_levels) {
+	rtp_add_mixer_to_client_audio_level_base(packet, id, size, audio_levels, FALSE);
+}
+/**
+ * Add the mixer to client audio level header extension.
+ * packet size is increased to fit the new data, rptr/wptr might be reallocated
+ * See https://tools.ietf.org/html/rfc6465
+ * @param packet the RTP packet.
+ * @param id the identifier of the client to mixer audio level extension.
+ * @param size the size of the audio_levels list.
+ * @param audio_levels the list if audio levels to set.
+ **/
+void rtp_add_mixer_to_client_audio_level(mblk_t *packet, int id, size_t size, rtp_audio_level_t *audio_levels) {
+	rtp_add_mixer_to_client_audio_level_base(packet, id, size, audio_levels, TRUE);
 }
 
 /**
@@ -89,7 +115,8 @@ void rtp_add_mixer_to_client_audio_level(mblk_t *packet, int id, size_t size, rt
  * See https://tools.ietf.org/html/rfc6465
  * @param packet the RTP packet.
  * @param id the identifier of the mixer to client audio level extension.
- * @param audio_levels the list of mixer to client audio levels, this array must be allocated before calling this function.
+ * @param audio_levels the list of mixer to client audio levels, this array must be allocated before calling this
+ *function.
  * @return the size of the mixer to client audio levels list, -1 in case of error.
 **/
 int rtp_get_mixer_to_client_audio_level(mblk_t *packet, int id, rtp_audio_level_t* audio_levels) {

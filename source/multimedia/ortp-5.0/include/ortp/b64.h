@@ -115,9 +115,8 @@
  * Namespace
  */
 
-#if !defined(B64_NO_NAMESPACE) && \
-    !defined(__cplusplus)
-# define B64_NO_NAMESPACE
+#if !defined(B64_NO_NAMESPACE) && !defined(__cplusplus)
+#define B64_NO_NAMESPACE
 #endif /* !B64_NO_NAMESPACE && !__cplusplus */
 
 #ifdef B64_NAMESPACE
@@ -137,8 +136,7 @@
 #  define B64_NAMESPACE     b64
 # endif /* B64_CUSTOM_NAMESPACE */
 
-# if defined(B64_CUSTOM_NAMESPACE) && \
-     defined(B64_CUSTOM_NAMESPACE_QUALIFIER)
+#if defined(B64_CUSTOM_NAMESPACE) && defined(B64_CUSTOM_NAMESPACE_QUALIFIER)
 #  define B64_NAMESPACE_QUALIFIER       B64_CUSTOM_NAMESPACE_QUALIFIER
 # else /* B64_CUSTOM_NAMESPACE && B64_CUSTOM_NAMESPACE_QUALIFIER */
 #  define B64_NAMESPACE_QUALIFIER       ::B64_NAMESPACE
@@ -258,13 +256,14 @@ ORTP_PUBLIC size_t b64_encode(void const *src, size_t srcSize, char *dest, size_
  *
  * \see b64::encode()
  */
-size_t b64_encode2( void const  *src
-                ,   size_t      srcSize
-                ,   char        *dest
-                ,   size_t      destLen
-                ,   unsigned    flags
-                ,   int         lineLen /* = 0 */
-                ,   B64_RC      *rc     /* = NULL */);
+size_t b64_encode2(void const *src,
+                   size_t srcSize,
+                   char *dest,
+                   size_t destLen,
+                   unsigned flags,
+                   int lineLen /* = 0 */
+                   ,
+                   B64_RC *rc /* = NULL */);
 
 /** \brief Decodes a sequence of Base-64 into a block of binary data
  *
@@ -341,13 +340,14 @@ ORTP_PUBLIC size_t b64_decode(char const *src, size_t srcLen, void *dest, size_t
  *
  * \see b64::decode()
  */
-size_t b64_decode2( char const  *src
-                ,   size_t      srcLen
-                ,   void        *dest
-                ,   size_t      destSize
-                ,   unsigned    flags
-                ,   char const  **badChar   /* = NULL */
-                ,   B64_RC      *rc         /* = NULL */);
+size_t b64_decode2(char const *src,
+                   size_t srcLen,
+                   void *dest,
+                   size_t destSize,
+                   unsigned flags,
+                   char const **badChar /* = NULL */
+                   ,
+                   B64_RC *rc /* = NULL */);
 
 
 /** \brief Returns the textual description of the error

@@ -39,7 +39,7 @@ void ortp_uninit_logger(void);
 #define o_list_free ortp_list_free
 #define o_list_remove_link ortp_list_erase_link
 #define o_list_free_with_data ortp_list_free_with_data
-
+#define o_list_insert_sorted ortp_list_insert_sorted
 
 #define ORTP_POINTER_TO_INT(p) ((int)(intptr_t)(p))
 #define ORTP_INT_TO_POINTER(i) ((void *)(intptr_t)(i))
@@ -77,6 +77,6 @@ void ortp_ev_queue_put(OrtpEvQueue *q, OrtpEvent *ev);
 
 uint64_t ortp_timeval_to_ntp(const struct timeval *tv);
 
-int _ortp_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen);
+int _ortp_sendto(ortp_socket_t sockfd, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen);
 void _rtp_session_release_sockets(RtpSession *session, bool_t release_transports);
 #endif

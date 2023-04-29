@@ -440,7 +440,25 @@ static int rtsp_session_handle_option(rtsp_session_t *session)
     }
     return OK;
 }
-
+/*
+v=0 
+o=- 7227499417 1 IN IP4 192.168.10.1 
+s=H.264 Video, streamed by the LIVE555 Media Server 
+i=0-0-1970-01-01-00-48-39-video.H264 
+t=0 0 
+a=tool:LIVE555 Streaming Media v2022.12.01 
+a=type:broadcast 
+a=control:* 
+a=range:npt=now- 
+a=x-qt-text-nam:H.264 Video, streamed by the LIVE555 Media Server 
+a=x-qt-text-inf:0-0-1970-01-01-00-48-39-video.H264 
+m=video 0 RTP/AVP 96 
+c=IN IP4 0.0.0.0 
+b=AS:500 
+a=rtpmap:96 H264/90000 
+a=fmtp:96 packetization-mode=1;profile-level-id=42002A;sprop-parameter-sets=Z0IAKpY1QPAET8s3AQEBAg==,aM4xsg== 
+a=control:track1 
+*/
 static int rtsp_session_handle_describe(rtsp_session_t *session)
 {
     int length = 0;
@@ -460,9 +478,10 @@ static int rtsp_session_handle_describe(rtsp_session_t *session)
 
         sdplength += sprintf((char*)(buftmp + sdplength), "o=%s %lu %u IN IPV4 0.0.0.0\r\n", session->srvname, time(NULL), rand());
         sdplength += sprintf((char*)(buftmp + sdplength), "c=IN IPV4 %s\r\n", session->listen_address ? session->listen_address : "0.0.0.0");
+        sdplength += sprintf((char*)(buftmp + sdplength), "t=0 0\r\n");
         sdplength += sprintf((char*)(buftmp + sdplength), "a=control:*\r\n");
-        //sdplength += sprintf((char*)(buftmp + sdplength), "t=0 0\r\n");
- 
+        sdplength += sprintf((char*)(buftmp + sdplength), "a=range:npt=now-\r\n");
+         
         //code = rtsp_session_media_describe(session, NULL);
         //sdplength += rtsp_session_media_build_sdptext(session, buftmp + sdplength);
         code = rtsp_session_media_describe(session, NULL, (char*)(buftmp + sdplength), &desclen);
@@ -588,6 +607,7 @@ static int rtsp_session_handle_setup(rtsp_session_t *session)
 
 static int rtsp_session_handle_teardown(rtsp_session_t *session)
 {
+    int ret = 0;
     int length = 0;
     int code = RTSP_STATE_CODE_200;
 
@@ -604,11 +624,10 @@ static int rtsp_session_handle_teardown(rtsp_session_t *session)
     }
     if (length)
     {
-        int ret = 0;
         length += sprintf((char*)(session->_send_build + length), "\r\n");
-        rtsp_session_sendto(session, session->_send_build, length);
+        ret = rtsp_session_sendto(session, session->_send_build, length);
         session->state = RTSP_SESSION_STATE_CLOSE;
-        return ret;
+        return (ret>0)?OK:ERROR;
     }
     
     session->state = RTSP_SESSION_STATE_CLOSE;
@@ -617,17 +636,15 @@ static int rtsp_session_handle_teardown(rtsp_session_t *session)
 
 static int rtsp_session_handle_play(rtsp_session_t *session)
 {
-    int length = 0;
+    int length = 0, ret = 0;
+    int i_trackid = -1;
     int code = RTSP_STATE_CODE_200;
+    zpl_mediartp_session_get_trackid(session->mchannel, session->mlevel, session->mfilepath, &i_trackid);
 
-    code = rtsp_session_media_play(session, NULL);
-
-    if (code != RTSP_STATE_CODE_200)
+    if (i_trackid >= 0)
     {
         length = sdp_build_respone_header(session->_send_build, session->srvname, NULL, code, session->cseq, session->sesid);
 
-        int i_trackid = -1;
-        zpl_mediartp_session_get_trackid(session->mchannel, session->mlevel, session->mfilepath, &i_trackid);
         session->mrtp_session[0].i_trackid = i_trackid;
 
         if (session->mrtp_session[0].i_trackid >= 0 && session->mrtp_session[1].i_trackid >= 0)
@@ -653,8 +670,9 @@ static int rtsp_session_handle_play(rtsp_session_t *session)
     if (length)
     {
         length += sprintf((char*)(session->_send_build + length), "\r\n");
-        return rtsp_session_sendto(session, session->_send_build, length);
+        ret = rtsp_session_sendto(session, session->_send_build, length);
     }
+    rtsp_session_media_play(session, NULL);
     return OK;
 }
 

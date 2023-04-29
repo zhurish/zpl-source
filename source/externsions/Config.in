@@ -29,6 +29,13 @@ config ZPL_OPENSSL_MODULE
 	help
 	Build OpenSSL Module.
 
+config ZPL_MBEDTLS_MODULE
+	bool "Mbedtls Module"
+	default n
+	depends on ZPL_EXTERNSIONS_MODULE
+	help
+	Build Mbedtls Module.
+
 config ZPL_FREETYPE_MODULE
 	bool "Freetype Module"
 	default n

@@ -35,9 +35,16 @@
 #define MAX(a,b) (((a)>(b)) ? (a) : (b))
 #endif
 
-#define return_if_fail(expr) if (!(expr)) {printf("%s:%i- assertion"#expr "failed\n",__FILE__,__LINE__); return;}
-#define return_val_if_fail(expr,ret) if (!(expr)) {printf("%s:%i- assertion" #expr "failed\n",__FILE__,__LINE__); return (ret);}
-
+#define return_if_fail(expr)                                                                                           \
+	if (!(expr)) {                                                                                                     \
+		printf("%s:%i- assertion" #expr "failed\n", __FILE__, __LINE__);                                               \
+		return;                                                                                                        \
+	}
+#define return_val_if_fail(expr, ret)                                                                                  \
+	if (!(expr)) {                                                                                                     \
+		printf("%s:%i- assertion" #expr "failed\n", __FILE__, __LINE__);                                               \
+		return (ret);                                                                                                  \
+	}
 
 typedef struct ortp_recv_addr {
 	int family;
@@ -64,6 +71,7 @@ typedef struct msgb
 	unsigned char *b_wptr;
 	uint32_t reserved1;
 	uint32_t reserved2;
+	uint32_t reserved3;
 	struct timeval timestamp;
 	ortp_recv_addr_t recv_addr; /*contains the destination address of incoming packets, used for ICE processing*/
 	struct sockaddr_storage net_addr; /*source address of incoming packet, or dest address of outgoing packet, used only by simulator and modifiers*/
@@ -142,8 +150,11 @@ ORTP_PUBLIC mblk_t	*dupmsg(mblk_t* m);
 /* returns the size of data of a message */
 ORTP_PUBLIC size_t msgdsize(const mblk_t *mp);
 
-/* concatenates all fragment of a complex message*/
-ORTP_PUBLIC void msgpullup(mblk_t *mp,size_t len);
+/* concatenates all fragment of a complex message and crop or extend the buffer to the given length */
+ORTP_PUBLIC void msgpullup(mblk_t *mp, size_t len);
+
+/* concatenates all fragment of a complex message and insert an empty buffer of the given length at the given offset */
+ORTP_PUBLIC void msgpullup_with_insert(mblk_t *mp, size_t offset, size_t len);
 
 /* duplicates a single message, but with buffer included */
 ORTP_PUBLIC mblk_t *copyb(const mblk_t *mp);
@@ -156,17 +167,17 @@ ORTP_PUBLIC void msgappend(mblk_t *mp, const char *data, size_t size, bool_t pad
 
 ORTP_PUBLIC mblk_t *concatb(mblk_t *mp, mblk_t *newm);
 
-/*Make sure the message has a unique owner, if not duplicate the underlying data buffer so that it can be changed without impacting others.
- Note that in case of copy, the message will be un-fragmented, exactly the way msgpullup() does. Always returns mp.*/
-ORTP_PUBLIC mblk_t * msgown(mblk_t *mp);
+/*Make sure the message has a unique owner, if not duplicate the underlying data buffer so that it can be changed
+ without impacting others. Note that in case of copy, the message will be un-fragmented, exactly the way msgpullup()
+ does. Always returns mp.*/
+ORTP_PUBLIC mblk_t *msgown(mblk_t *mp);
 
-#define qempty(q) (&(q)->_q_stopper==(q)->_q_stopper.b_next)
-#define qfirst(q) ((q)->_q_stopper.b_next!=&(q)->_q_stopper ? (q)->_q_stopper.b_next : NULL)
+#define qempty(q) (&(q)->_q_stopper == (q)->_q_stopper.b_next)
+#define qfirst(q) ((q)->_q_stopper.b_next != &(q)->_q_stopper ? (q)->_q_stopper.b_next : NULL)
 #define qbegin(q) ((q)->_q_stopper.b_next)
-#define qlast(q) ((q)->_q_stopper.b_prev!=&(q)->_q_stopper ? (q)->_q_stopper.b_prev : NULL)
-#define qend(q,mp)	((mp)==&(q)->_q_stopper)
-#define qnext(q,mp) ((mp)->b_next)
-
+#define qlast(q) ((q)->_q_stopper.b_prev != &(q)->_q_stopper ? (q)->_q_stopper.b_prev : NULL)
+#define qend(q, mp) ((mp) == &(q)->_q_stopper)
+#define qnext(q, mp) ((mp)->b_next)
 
 typedef struct _msgb_allocator{
 	queue_t q;

@@ -33,23 +33,23 @@ enum
 typedef struct
 {
 #ifdef ORTP_BIGENDIAN
-    uint8_t FU_F:1;
-    uint8_t FU_NRI:2;
-    uint8_t FU_Type:5;
+    u_int8_t FU_F:1;
+    u_int8_t FU_NRI:2;
+    u_int8_t FU_Type:5;
 
-    uint8_t FU_HDR_S:1;
-    uint8_t FU_HDR_E:1;
-    uint8_t FU_HDR_R:1;
-    uint8_t FU_HDR_Type:5;
+    u_int8_t FU_HDR_S:1;
+    u_int8_t FU_HDR_E:1;
+    u_int8_t FU_HDR_R:1;
+    u_int8_t FU_HDR_Type:5;
 #else
-    uint8_t FU_Type:5;
-    uint8_t FU_NRI:2;
-    uint8_t FU_F:1;
+    u_int8_t FU_Type:5;
+    u_int8_t FU_NRI:2;
+    u_int8_t FU_F:1;
 
-    uint8_t FU_HDR_Type:5;
-    uint8_t FU_HDR_R:1;
-    uint8_t FU_HDR_E:1;
-    uint8_t FU_HDR_S:1;
+    u_int8_t FU_HDR_Type:5;
+    u_int8_t FU_HDR_R:1;
+    u_int8_t FU_HDR_E:1;
+    u_int8_t FU_HDR_S:1;
 #endif
 } H264_NALU_FUHDR;
 #pragma pack(0)
@@ -60,22 +60,22 @@ typedef struct
 
 typedef struct
 {
-    uint8_t hdr_len;      //! 4 for parameter sets and first slice in picture, 3 for everything else (suggested)
-    uint8_t forbidden_bit;            //! should be always FALSE
-    uint8_t nal_idc;        //! NALU_PRIORITY_xxxx
-    uint8_t nal_unit_type;            //! NALU_TYPE_xxxx                  //! contains the first byte followed by the EBSP
-    uint32_t len;                 //! Length of the NAL unit (Excluding the start code, which does not belong to the NALU)
-    uint8_t *buf;
+    u_int8_t hdr_len;      //! 4 for parameter sets and first slice in picture, 3 for everything else (suggested)
+    u_int8_t forbidden_bit;            //! should be always FALSE
+    u_int8_t nal_idc;        //! NALU_PRIORITY_xxxx
+    u_int8_t nal_unit_type;            //! NALU_TYPE_xxxx                  //! contains the first byte followed by the EBSP
+    u_int32_t len;                 //! Length of the NAL unit (Excluding the start code, which does not belong to the NALU)
+    u_int8_t *buf;
 }__attribute__ ((packed)) RTP_H264_NALU_T ;
 
-bool rtp_payload_h264_is_nalu3_start(uint8_t *buffer);
-bool rtp_payload_h264_is_nalu4_start(uint8_t *buffer);
-int rtp_payload_h264_get_nextnalu(uint8_t *bufdata, uint32_t len);
-bool rtp_payload_h264_isnaluhdr(uint8_t *bufdata, RTP_H264_NALU_T *nalu);
+bool rtp_payload_h264_is_nalu3_start(u_int8_t *buffer);
+bool rtp_payload_h264_is_nalu4_start(u_int8_t *buffer);
+int rtp_payload_h264_get_nextnalu(u_int8_t *bufdata, u_int32_t len);
+bool rtp_payload_h264_isnaluhdr(u_int8_t *bufdata, RTP_H264_NALU_T *nalu);
 /*
  * 发送一帧数据
  */
-int rtp_payload_send_h264(void *session, const uint8_t *buffer, uint32_t len, int user_ts);
+int rtp_payload_send_h264(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts);
 
 
 #ifdef __cplusplus

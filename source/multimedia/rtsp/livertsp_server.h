@@ -5,7 +5,15 @@
 extern "C" {
 #endif
 
-#define BASEUSAGEENV_BASE_DIR  "/home/zhurish/workspace/working/zpl-source/source"
+#ifdef ZPL_LIBMEDIA_MODULE
+#include "zpl_media.h"
+#endif
+
+#ifdef ZPL_MEDIA_BASE_PATH
+#define BASEUSAGEENV_BASE_DIR   ZPL_MEDIA_BASE_PATH
+#else
+#define BASEUSAGEENV_BASE_DIR  "/nfsroot"
+#endif
 
 int livertsp_server_loop(void *p);
 

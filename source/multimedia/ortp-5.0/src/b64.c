@@ -59,7 +59,7 @@
 #include "ortp/port.h"
 #include "ortp/b64.h"
 
-//#include <bctoolbox/defs.h>
+//////#include <bctoolbox/defs.h>
 
 #include <assert.h>
 #include <string.h>
@@ -155,14 +155,9 @@ static const signed char    b64_indexes[]   =
 /** This function reads in 3 bytes at a time, and translates them into 4
  * characters.
  */
-static size_t b64_encode_(  unsigned char const *src
-                        ,   size_t              srcSize
-                        ,   char *const         dest
-                        ,   size_t              destLen
-                        ,   unsigned            lineLen
-                        ,   B64_RC              *rc)
-{
-    size_t total = ((srcSize + (NUM_PLAIN_DATA_BYTES - 1)) / NUM_PLAIN_DATA_BYTES) * NUM_ENCODED_DATA_BYTES;
+static size_t
+b64_encode_(unsigned char const *src, size_t srcSize, char *const dest, size_t destLen, unsigned lineLen, B64_RC *rc) {
+	size_t total = ((srcSize + (NUM_PLAIN_DATA_BYTES - 1)) / NUM_PLAIN_DATA_BYTES) * NUM_ENCODED_DATA_BYTES;
 
     assert(NULL != rc);
     *rc = B64_RC_OK;
@@ -242,14 +237,12 @@ static size_t b64_encode_(  unsigned char const *src
             *p++ = b64_chars[characters[3]];
             assert(NULL != strchr(b64_chars, *(p-1)));
 
-            if( ++len == lineLen &&
-                p != end)
-            {
-                *p++ = '\r';
-                *p++ = '\n';
-                len = 0;
-            }
-        }
+			if (++len == lineLen && p != end) {
+				*p++ = '\r';
+				*p++ = '\n';
+				len = 0;
+			}
+		}
 
         if(0 != srcSize)
         {
@@ -288,18 +281,17 @@ static size_t b64_encode_(  unsigned char const *src
 /** This function reads in a character string in 4-character chunks, and writes
  * out the converted form in 3-byte chunks to the destination.
  */
-static size_t b64_decode_(  char const      *src
-                        ,   size_t          srcLen
-                        ,   unsigned char   *dest
-                        ,   size_t          destSize
-                        ,   unsigned        flags
-                        ,   char const      **badChar
-                        ,   B64_RC          *rc)
-{
-    const size_t    wholeChunks     =   (srcLen / NUM_ENCODED_DATA_BYTES);
-    const size_t    remainderBytes  =   (srcLen % NUM_ENCODED_DATA_BYTES);
-    size_t          maxTotal        =   (wholeChunks + (0 != remainderBytes)) * NUM_PLAIN_DATA_BYTES;
-    unsigned char   *dest_          =   dest;
+static size_t b64_decode_(char const *src,
+                          size_t srcLen,
+                          unsigned char *dest,
+                          size_t destSize,
+                          unsigned flags,
+                          char const **badChar,
+                          B64_RC *rc) {
+	const size_t wholeChunks = (srcLen / NUM_ENCODED_DATA_BYTES);
+	const size_t remainderBytes = (srcLen % NUM_ENCODED_DATA_BYTES);
+	size_t maxTotal = (wholeChunks + (0 != remainderBytes)) * NUM_PLAIN_DATA_BYTES;
+	unsigned char *dest_ = dest;
 
     ((void)remainderBytes);
 
@@ -441,22 +433,21 @@ size_t b64_encode(void const *src, size_t srcSize, char *dest, size_t destLen)
     return b64_encode_((unsigned char const*)src, srcSize, dest, destLen, 0, &rc_);
 }
 
-size_t b64_encode2( void const  *src
-                ,   size_t      srcSize
-                ,   char        *dest
-                ,   size_t      destLen
-                ,   unsigned    flags
-                ,   int         lineLen /* = -1 */
-                ,   B64_RC      *rc     /* = NULL */)
-{
-    /* Use Null Object (Variable) here for rc, so do not need to check
-     * elsewhere
-     */
-    B64_RC  rc_;
-    if(NULL == rc)
-    {
-        rc = &rc_;
-    }
+size_t b64_encode2(void const *src,
+                   size_t srcSize,
+                   char *dest,
+                   size_t destLen,
+                   unsigned flags,
+                   int lineLen /* = -1 */
+                   ,
+                   B64_RC *rc /* = NULL */) {
+	/* Use Null Object (Variable) here for rc, so do not need to check
+	 * elsewhere
+	 */
+	B64_RC rc_;
+	if (NULL == rc) {
+		rc = &rc_;
+	}
 
     switch(B64_F_LINE_LEN_MASK & flags)
     {
@@ -496,16 +487,16 @@ size_t b64_decode(char const *src, size_t srcLen, void *dest, size_t destSize)
     return b64_decode_(src, srcLen, (unsigned char*)dest, destSize, B64_F_STOP_ON_NOTHING, &badChar_, &rc_);
 }
 
-size_t b64_decode2( char const  *src
-                ,   size_t      srcLen
-                ,   void        *dest
-                ,   size_t      destSize
-                ,   unsigned    flags
-                ,   char const  **badChar   /* = NULL */
-                ,   B64_RC      *rc         /* = NULL */)
-{
-    char const      *badChar_;
-    B64_RC          rc_;
+size_t b64_decode2(char const *src,
+                   size_t srcLen,
+                   void *dest,
+                   size_t destSize,
+                   unsigned flags,
+                   char const **badChar /* = NULL */
+                   ,
+                   B64_RC *rc /* = NULL */) {
+	char const *badChar_;
+	B64_RC rc_;
 
     /* Use Null Object (Variable) here for rc and badChar, so do not need to
      * check elsewhere.
@@ -543,10 +534,7 @@ struct b64ErrorString_t_
     static const char               s_str##rc[] =   desc;                                   \
     static const b64ErrorString_t_  s_rct##rc = { rc, s_str##rc, NUM_ELEMENTS(s_str##rc) - 1 }
 
-
-#define SEVERITY_STR_ENTRY(rc)                                                          \
-                                                                                        \
-    &s_rct##rc
+#define SEVERITY_STR_ENTRY(rc) &s_rct##rc
 
 
 static char const *b64_LookupCodeA_(int code, b64ErrorString_t_ const **mappings, size_t cMappings, size_t *len)

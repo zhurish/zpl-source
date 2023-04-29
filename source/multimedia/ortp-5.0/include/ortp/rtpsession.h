@@ -118,14 +118,22 @@ typedef struct _WaitPoint
 	bool_t wakeup;
 } WaitPoint;
 
-typedef struct _RtpTransportModifier
-{
+typedef enum {
+	RtpTransportModifierLevelEncryption,
+	RtpTransportModifierLevelForwardErrorCorrection
+} RtpTransportModifierLevel;
+
+#define ORTP_RTP_TRANSPORT_MODIFIER_DEFAULT_LEVEL RtpTransportModifierLevelEncryption
+
+typedef struct _RtpTransportModifier {
 	void *data;
-	struct _RtpSession *session;//<back pointer to the owning session, set by oRTP
-	struct _RtpTransport *transport;//<back point to the owning transport, set by oRTP
-	int  (*t_process_on_send)(struct _RtpTransportModifier *t, mblk_t *msg);
-	int  (*t_process_on_receive)(struct _RtpTransportModifier *t, mblk_t *msg);
-	void  (*t_process_on_schedule)(struct _RtpTransportModifier *t); /*invoked each time rtp_session_recvm is called even is no message are available*/
+	RtpTransportModifierLevel level;
+	struct _RtpSession *session;     //<back pointer to the owning session, set by oRTP
+	struct _RtpTransport *transport; //<back point to the owning transport, set by oRTP
+	int (*t_process_on_send)(struct _RtpTransportModifier *t, mblk_t *msg);
+	int (*t_process_on_receive)(struct _RtpTransportModifier *t, mblk_t *msg);
+	void (*t_process_on_schedule)(struct _RtpTransportModifier *t); /*invoked each time rtp_session_recvm is called even
+	                                                                   is no message are available*/
 	/**
 	 * Mandatory callback responsible of freeing the #_RtpTransportModifier AND the pointer.
 	 * @param[in] transport #_RtpTransportModifier object to free.
@@ -548,18 +556,18 @@ ORTP_PUBLIC int rtp_session_set_local_addr(RtpSession *session,const char *addr,
 ORTP_PUBLIC int rtp_session_get_local_port(const RtpSession *session);
 ORTP_PUBLIC int rtp_session_get_local_rtcp_port(const RtpSession *session);
 
-ORTP_PUBLIC int
-rtp_session_set_remote_addr_full (RtpSession * session, const char * rtp_addr, int rtp_port, const char * rtcp_addr, int rtcp_port);
+ORTP_PUBLIC int rtp_session_set_remote_addr_full(
+    RtpSession *session, const char *rtp_addr, int rtp_port, const char *rtcp_addr, int rtcp_port);
 /*same as previous function, old name:*/
-ORTP_PUBLIC int rtp_session_set_remote_addr_and_port (RtpSession * session, const char * addr, int rtp_port, int rtcp_port);
-ORTP_PUBLIC int rtp_session_set_remote_addr(RtpSession *session,const char *addr, int port);
-ORTP_PUBLIC int rtp_session_add_aux_remote_addr_full(RtpSession * session, const char * rtp_addr, int rtp_port, const char * rtcp_addr, int rtcp_port);
-ORTP_PUBLIC int rtp_session_del_aux_remote_addr_full(RtpSession * session, const char * rtp_addr, int rtp_port, const char * rtcp_addr, int rtcp_port);
-ORTP_PUBLIC void rtp_session_clear_aux_remote_addr(RtpSession * session);
+ORTP_PUBLIC int
+rtp_session_set_remote_addr_and_port(RtpSession *session, const char *addr, int rtp_port, int rtcp_port);
+ORTP_PUBLIC int rtp_session_set_remote_addr(RtpSession *session, const char *addr, int port);
+ORTP_PUBLIC int rtp_session_add_aux_remote_addr_full(
+    RtpSession *session, const char *rtp_addr, int rtp_port, const char *rtcp_addr, int rtcp_port);
+ORTP_PUBLIC void rtp_session_clear_aux_remote_addr(RtpSession *session);
 /* alternatively to the set_remote_addr() and set_local_addr(), an application can give
 a valid socket (potentially connect()ed )to be used by the RtpSession */
 ORTP_PUBLIC void rtp_session_set_sockets(RtpSession *session, int rtpfd, int rtcpfd);
-ORTP_PUBLIC void rtp_session_set_overtcp(RtpSession *session, bool_t rtsp, int rtp_channel, int rtcp_channel);
 
 ORTP_PUBLIC void rtp_session_get_transports(const RtpSession *session, RtpTransport **rtptr, RtpTransport **rtcptr);
 /*those methods are provided for people who wants to send non-RTP messages using the RTP/RTCP sockets */
@@ -630,22 +638,102 @@ ORTP_PUBLIC void rtp_session_set_rtcp_xr_media_callbacks(RtpSession *session, co
 
 ORTP_PUBLIC void rtp_session_set_ssrc_changed_threshold(RtpSession *session, int numpackets);
 
+/* low level packet creation function */
+/* deprecated set : use create_packet_header and then chain a payload mblk_t to it */
+ORTP_PUBLIC ORTP_DEPRECATED mblk_t *
+rtp_session_create_packet(RtpSession *session, size_t header_size, const uint8_t *payload, size_t payload_size);
+ORTP_PUBLIC ORTP_DEPRECATED mblk_t *
+rtp_session_create_packet_with_data(RtpSession *session, uint8_t *payload, size_t payload_size, void (*freefn)(void *));
+ORTP_PUBLIC ORTP_DEPRECATED mblk_t *
+rtp_session_create_packet_with_mixer_to_client_audio_level(RtpSession *session,
+                                                           size_t header_size,
+                                                           int mtc_extension_id,
+                                                           size_t audio_levels_size,
+                                                           rtp_audio_level_t *audio_levels,
+                                                           const uint8_t *payload,
+                                                           size_t payload_size);
+ORTP_PUBLIC ORTP_DEPRECATED mblk_t *rtp_session_create_packet_raw(const uint8_t *packet, size_t packet_size);
+/* end of deprecated functions set */
+
+/**
+ * Allocates a new rtp packet. In the header, ssrc and payload_type according to the session's
+ * context. Timestamp is not set, it will be set when the packet is going to be
+ * sent with rtp_session_sendm_with_ts(). Sequence number is initalized to previous sequence number sent + 1
+ *
+ * @param[in] 	session 		a rtp session.
+ * @param[in] 	extra_header_size 	header size is computed according to needs(CSRC, extension header).
+ *					Allocate extra size (when caller knows it will add other extensions or payload) to avoid
+ *reallocating buffers
+ *
+ * @return a rtp packet in a mblk_t (message block) structure holding a packet header.
+ **/
+ORTP_PUBLIC mblk_t *rtp_session_create_packet_header(RtpSession *session, size_t extra_header_size);
+
+/**
+ * Allocates a new rtp packet. In the header, ssrc and payload_type according to the session's
+ * context. Add a CSRC fetched from source session SSRC.
+ * Timestamp is not set, it will be set when the packet is going to be
+ * sent with rtp_session_sendm_with_ts(). Sequence number is initalized to previous sequence number sent + 1
+ *
+ * @param[in] 	fecSession 		The RTP session used to build the header (bundle and SSRC fetched from this one)
+ * @param[in] 	sourceSession 		The SSRC from this RTP session is set as CSRC in the header
+ * @param[in] 	extra_header_size 	header size is computed according to needs(CSRC, extension header).
+ *					Allocate extra size (when caller knows it will add other extensions or payload) to avoid
+ *reallocating buffers
+ *
+ * @return a rtp packet in a mblk_t (message block) structure holding a packet header.
+ **/
+ORTP_PUBLIC mblk_t *
+rtp_session_create_repair_packet_header(RtpSession *fecSession, RtpSession *sourceSession, size_t extra_header_size);
+
+/**
+ *	This will do the same as rtp_session_create_packet_header() but it will also add
+ *	mixer to client audio level indication through header extensions.
+ *
+ * @param[in]	session			a rtp session.
+ * @param[in]	extra_header_size 	extra size allocated to the underlying mblk_t, use it to avoid reallocation cause by
+ *future extension or payload added
+ * @param[in]	mtc_extension_id 	id of the mixer to client extension id.
+ * @param[in]	audio_levels_size	size of audio levels contained in audio_levels parameter.
+ * @param[in]	audio_levels		list of rtp_audio_level_t to add in this packet.
+ *
+ * @return a rtp packet in a mblk_t (message block) structure.
+ **/
+ORTP_PUBLIC mblk_t *rtp_session_create_packet_header_with_mixer_to_client_audio_level(RtpSession *session,
+                                                                                      size_t extra_header_size,
+                                                                                      int mtc_extension_id,
+                                                                                      size_t audio_levels_size,
+                                                                                      rtp_audio_level_t *audio_levels);
+
+/** create a packet from the given buffer. No header is added, the buffer is copied in a mblk_t allocated for this
+ * purpose use to create non RTP packets (ZRTP, DTLS, STUN) or set a payload in a message (for CNG for example)
+ * @param[in] packet		pointer to the data to be copied in the created packet
+ * @param[in] packet_size	size of data buffer
+ *
+ * @return a packet in a message block structure holding the given buffer
+ */
+ORTP_PUBLIC mblk_t *rtp_create_packet(const uint8_t *packet, size_t packet_size);
+
+/** create a packet from the given buffer. No header is added, the buffer is not copied but integrated to the packet
+ * @param[in] packet		pointer to the data to be copied in the created packet
+ * @param[in] packet_size	size of data buffer
+ * @param[in] freefn		a function that will be called when the payload buffer is no more needed.
+ *
+ * @return a packet in a message block structure holding the given buffer
+ */
+ORTP_PUBLIC mblk_t *rtp_package_packet(uint8_t *packet, size_t packet_size, void (*freefn)(void *));
+
 /*low level recv and send functions */
-ORTP_PUBLIC mblk_t * rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts);
-ORTP_PUBLIC mblk_t * rtp_session_create_packet(RtpSession *session, size_t header_size, const uint8_t *payload, size_t payload_size);
-ORTP_PUBLIC mblk_t * rtp_session_create_packet_raw(const uint8_t *packet, size_t packet_size);
-ORTP_PUBLIC mblk_t * rtp_session_create_packet_with_data(RtpSession *session, uint8_t *payload, size_t payload_size, void (*freefn)(void*));
-ORTP_PUBLIC mblk_t * rtp_session_create_packet_in_place(RtpSession *session,uint8_t *buffer, size_t size, void (*freefn)(void*) );
-ORTP_PUBLIC mblk_t * rtp_session_create_packet_with_mixer_to_client_audio_level(RtpSession *session, size_t header_size, int mtc_extension_id, size_t audio_levels_size, rtp_audio_level_t *audio_levels, const uint8_t *payload, size_t payload_size);
-ORTP_PUBLIC int rtp_session_sendm_with_ts (RtpSession * session, mblk_t *mp, uint32_t userts);
-ORTP_PUBLIC int __rtp_session_sendm_with_ts(RtpSession *session, mblk_t *mp, uint32_t packet_ts, uint32_t send_ts);
-ORTP_PUBLIC int rtp_session_sendto(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags,
-								   const struct sockaddr *destaddr, socklen_t destlen);
-ORTP_PUBLIC int rtp_session_recvfrom(RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, struct sockaddr *from, socklen_t *fromlen);
+
+ORTP_PUBLIC mblk_t *rtp_session_recvm_with_ts(RtpSession *session, uint32_t user_ts);
+ORTP_PUBLIC int rtp_session_sendm_with_ts(RtpSession *session, mblk_t *mp, uint32_t userts);
+ORTP_PUBLIC int rtp_session_sendto(
+    RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, const struct sockaddr *destaddr, socklen_t destlen);
+ORTP_PUBLIC int rtp_session_recvfrom(
+    RtpSession *session, bool_t is_rtp, mblk_t *m, int flags, struct sockaddr *from, socklen_t *fromlen);
 /* high level recv and send functions */
 ORTP_PUBLIC int rtp_session_recv_with_ts(RtpSession *session, uint8_t *buffer, int len, uint32_t ts, int *have_more);
 ORTP_PUBLIC int rtp_session_send_with_ts(RtpSession *session, const uint8_t *buffer, int len, uint32_t userts);
-ORTP_PUBLIC int rtp_session_tcp_forward(int sock, const uint8_t *msg , int tolen);
 
 /* Specific function called to reset the winrq queue and if called on windows to stop the async reception thread */
 ORTP_PUBLIC void rtp_session_reset_recvfrom(RtpSession *session);
@@ -697,26 +785,35 @@ ORTP_PUBLIC void rtp_session_set_data(RtpSession *session, void *data);
 ORTP_PUBLIC void *rtp_session_get_data(const RtpSession *session);
 
 ORTP_PUBLIC void rtp_session_set_recv_buf_size(RtpSession *session, int bufsize);
-ORTP_PUBLIC void rtp_session_set_send_buf_size(RtpSession *session, int bufsize);
-ORTP_PUBLIC void rtp_session_set_rtp_socket_send_buffer_size(RtpSession * session, unsigned int size);
-ORTP_PUBLIC void rtp_session_set_rtp_socket_recv_buffer_size(RtpSession * session, unsigned int size);
+ORTP_PUBLIC void rtp_session_set_rtp_socket_send_buffer_size(RtpSession *session, unsigned int size);
+ORTP_PUBLIC void rtp_session_set_rtp_socket_recv_buffer_size(RtpSession *session, unsigned int size);
 
 /* in use with the scheduler to convert a timestamp in scheduler time unit (ms) */
 ORTP_PUBLIC uint32_t rtp_session_ts_to_time(RtpSession *session,uint32_t timestamp);
 ORTP_PUBLIC uint32_t rtp_session_time_to_ts(RtpSession *session, int millisecs);
-ORTP_PUBLIC uint32_t rtp_session_payload_clock_rate(RtpSession *session);
 /* this function aims at simulating senders with "imprecise" clocks, resulting in
 rtp packets sent with timestamp uncorrelated with the system clock .
 This is only availlable to sessions working with the oRTP scheduler */
 ORTP_PUBLIC void rtp_session_make_time_distorsion(RtpSession *session, int milisec);
 
 /*RTCP functions */
-ORTP_PUBLIC void rtp_session_set_source_description(RtpSession *session, const char *cname,
-	const char *name, const char *email, const char *phone,
-    const char *loc, const char *tool, const char *note);
-ORTP_PUBLIC void rtp_session_add_contributing_source(RtpSession *session, uint32_t csrc,
-    const char *cname, const char *name, const char *email, const char *phone,
-    const char *loc, const char *tool, const char *note);
+ORTP_PUBLIC void rtp_session_set_source_description(RtpSession *session,
+                                                    const char *cname,
+                                                    const char *name,
+                                                    const char *email,
+                                                    const char *phone,
+                                                    const char *loc,
+                                                    const char *tool,
+                                                    const char *note);
+ORTP_PUBLIC void rtp_session_add_contributing_source(RtpSession *session,
+                                                     uint32_t csrc,
+                                                     const char *cname,
+                                                     const char *name,
+                                                     const char *email,
+                                                     const char *phone,
+                                                     const char *loc,
+                                                     const char *tool,
+                                                     const char *note);
 /* DEPRECATED: Use rtp_session_remove_contributing_source instead of rtp_session_remove_contributing_sources */
 #define rtp_session_remove_contributing_sources rtp_session_remove_contributing_source
 ORTP_PUBLIC void rtp_session_remove_contributing_source(RtpSession *session, uint32_t csrc);
@@ -769,7 +866,6 @@ ORTP_PUBLIC void rtp_session_send_rtcp_fb_tmmbn(RtpSession *session, uint32_t ss
 ORTP_PUBLIC void rtp_session_enable_transfer_mode(RtpSession *session, bool_t enable);
 
 /*private */
-ORTP_PUBLIC uint16_t rtp_session_mblk_get_seq(mblk_t *mp);
 ORTP_PUBLIC void rtp_session_init(RtpSession *session, int mode);
 #define rtp_session_set_flag(session,flag) (session)->flags|=(flag)
 #define rtp_session_unset_flag(session,flag) (session)->flags&=~(flag)
@@ -779,12 +875,18 @@ ORTP_PUBLIC void rtp_session_dispatch_event(RtpSession *session, OrtpEvent *ev);
 
 ORTP_PUBLIC void rtp_session_set_reuseaddr(RtpSession *session, bool_t yes);
 
-ORTP_PUBLIC int meta_rtp_transport_sendto(RtpTransport *t, mblk_t *msg , int flags, const struct sockaddr *to, socklen_t tolen);
+ORTP_PUBLIC int
+meta_rtp_transport_sendto(RtpTransport *t, mblk_t *msg, int flags, const struct sockaddr *to, socklen_t tolen);
 
-ORTP_PUBLIC int meta_rtp_transport_modifier_inject_packet_to_send(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags);
-ORTP_PUBLIC int meta_rtp_transport_modifier_inject_packet_to_send_to(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags, const struct sockaddr *to, socklen_t tolen);
-ORTP_PUBLIC int meta_rtp_transport_modifier_inject_packet_to_recv(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags);
+ORTP_PUBLIC int
+meta_rtp_transport_modifier_inject_packet_to_send(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags);
+ORTP_PUBLIC int meta_rtp_transport_modifier_inject_packet_to_send_to(
+    RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags, const struct sockaddr *to, socklen_t tolen);
+ORTP_PUBLIC int
+meta_rtp_transport_modifier_inject_packet_to_recv(RtpTransport *t, RtpTransportModifier *tpm, mblk_t *msg, int flags);
 
+ORTP_PUBLIC int
+meta_rtp_transport_apply_all_except_one_on_recieve(RtpTransport *t, RtpTransportModifier *modifier, mblk_t *msg);
 /**
  * get endpoint if any
  * @param[in] transport RtpTransport object.
@@ -860,12 +962,27 @@ ORTP_PUBLIC FecStream * fec_stream_new(struct _RtpSession * source, struct _RtpS
 ORTP_PUBLIC void fec_stream_destroy(FecStream * fec_stream);
 ORTP_PUBLIC void fec_stream_on_new_packet_sent(FecStream * fec_stream, mblk_t * packet);
 ORTP_PUBLIC void fec_stream_on_new_packet_recieved(FecStream * fec_stream, mblk_t * packet);
+ORTP_PUBLIC void fec_stream_recieve_repair_packet(FecStream *fec_stream, uint32_t timestamp);
 ORTP_PUBLIC mblk_t * fec_stream_find_missing_packet(FecStream * fec_stream, uint16_t seqnum);
 ORTP_PUBLIC RtpSession * fec_stream_get_fec_session(FecStream * fec_stream);
 ORTP_PUBLIC FecParameters *fec_params_new(uint8_t L, uint8_t D, uint32_t repairWindow);
 ORTP_PUBLIC void fec_stream_print_stats(FecStream *fec_stream);
 ORTP_PUBLIC void fec_stream_init(FecStream *fec_stream);
 ORTP_PUBLIC fec_stats * fec_stream_get_stats(FecStream *fec_stream);
+
+
+
+void compute_rtcp_interval(struct _RtpSession *session);
+void rtp_session_set_send_buf_size(RtpSession *session, int bufsize);
+uint16_t rtp_session_mblk_get_seq(mblk_t *mp);
+ORTP_PUBLIC int __rtp_session_sendm_with_ts(RtpSession *session, mblk_t *mp, uint32_t packet_ts, uint32_t send_ts);
+
+uint32_t rtp_session_payload_clock_rate(RtpSession *session);
+int meta_rtp_transport_recvfrom(RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen) ;
+int rtp_transport_modifier_level_compare(const RtpTransportModifier *modifier_a,
+                                         const RtpTransportModifier *modifier_b);
+
+										 
 #ifdef __cplusplus
 }
 #endif

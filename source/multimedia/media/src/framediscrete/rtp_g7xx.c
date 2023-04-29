@@ -13,7 +13,7 @@
 /*
  * 发送一帧数据
  */
-int rtp_payload_send_g7xx(void *session, const uint8_t *buffer, uint32_t len, int user_ts)
+int rtp_payload_send_g7xx(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts)
 {
 #ifdef ZPL_LIBORTP_MODULE    
     int ret = rtp_session_send_with_ts(session, buffer, len, user_ts);

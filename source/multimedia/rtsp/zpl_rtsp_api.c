@@ -11,7 +11,7 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "host.h"
-#undef ZPL_LIVE555_MODULE
+
 #ifdef ZPL_LIVE555_MODULE
 #include "livertsp_server.h"
 #endif
@@ -45,13 +45,18 @@ struct module_list module_list_rtsp = {
 		.module_cmd_init = NULL,
 		.taskid = 0,
 };
-
-static int rtsp_main_task(void* argv)
-{   
 #ifdef ZPL_LIVE555_MODULE
+static int rtsp_mainlv5_task(void* argv)
+{   
+
     host_waitting_loadconfig();
-    livertsp_server_loop(argv);
-#endif    
+    livertsp_server_loop(NULL);
+  
+    return OK;
+}
+#endif  
+static int rtsp_main_task(void* argv)
+{    
 #ifdef ZPL_LIBORTP_MODULE
     if(rtsp_server.rtsp_srv)
     {
@@ -81,8 +86,7 @@ static int rtsp_logcb(const char *fmt,...)
 int rtsp_module_init(void)
 {
 #ifdef ZPL_LIVE555_MODULE
-    rtsp_srv = malloc(sizeof(rtsp_srv_t));
-    livertsp_server_init(8554, BASEUSAGEENV_BASE_DIR, rtsp_logcb);
+    livertsp_server_init(8554, "/nfsroot"/*BASEUSAGEENV_BASE_DIR*/, rtsp_logcb);
 #endif    
 #ifdef ZPL_LIBORTP_MODULE
     rtsp_server.t_master = eloop_master_module_create(MODULE_RTSP);
@@ -107,6 +111,10 @@ int rtsp_module_exit(void)
 
 int rtsp_module_task_init(void)
 {
+ #ifdef ZPL_LIVE555_MODULE
+	rtsp_server.t_lv5taskid = os_task_create("lv5Task", OS_TASK_DEFAULT_PRIORITY,
+								 0, rtsp_mainlv5_task, NULL, OS_TASK_DEFAULT_STACK*8);
+#endif  
     if(rtsp_server.rtsp_srv)
     {
 		rtsp_server.t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
@@ -118,6 +126,10 @@ int rtsp_module_task_init(void)
 
 int rtsp_module_task_exit(void)
 {
+#ifdef ZPL_LIVE555_MODULE
+    if(rtsp_server.t_lv5taskid)
+		os_task_destroy(rtsp_server.t_lv5taskid);
+#endif     
     if(rtsp_server.rtsp_srv)
     {
         if(rtsp_server.t_taskid)

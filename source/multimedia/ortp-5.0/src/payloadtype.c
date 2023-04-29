@@ -25,8 +25,15 @@
 #include "ortp/logging.h"
 #include "ortp/payloadtype.h"
 #include "ortp/str_utils.h"
-
-
+/*
+char *payload_type_get_rtpmap(PayloadType *pt) {
+	int len = (int)strlen(pt->mime_type) + 15;
+	char *rtpmap = (char *)ortp_malloc(len);
+	if (pt->channels > 0) snprintf(rtpmap, len, "%s/%i/%i", pt->mime_type, pt->clock_rate, pt->channels);
+	else snprintf(rtpmap, len, "%s/%i", pt->mime_type, pt->clock_rate);
+	return rtpmap;
+}
+*/
 PayloadType *payload_type_new()
 {
 	PayloadType *newpayload=(PayloadType *)ortp_new0(PayloadType,1);
@@ -34,15 +41,12 @@ PayloadType *payload_type_new()
 	return newpayload;
 }
 
-
-PayloadType *payload_type_clone(const PayloadType *payload)
-{
-	PayloadType *newpayload=(PayloadType *)ortp_new0(PayloadType,1);
-	memcpy(newpayload,payload,sizeof(PayloadType));
-	//newpayload->mime_type=ortp_strdup(payload->mime_type);
-    strcpy(newpayload->mime_type, payload->mime_type);
-	if (payload->recv_fmtp!=NULL) {
-		newpayload->recv_fmtp=ortp_strdup(payload->recv_fmtp);
+PayloadType *payload_type_clone(const PayloadType *payload) {
+	PayloadType *newpayload = (PayloadType *)ortp_new0(PayloadType, 1);
+	memcpy(newpayload, payload, sizeof(PayloadType));
+	newpayload->mime_type = ortp_strdup(payload->mime_type);
+	if (payload->recv_fmtp != NULL) {
+		newpayload->recv_fmtp = ortp_strdup(payload->recv_fmtp);
 	}
 	if (payload->send_fmtp!=NULL){
 		newpayload->send_fmtp=ortp_strdup(payload->send_fmtp);
@@ -90,8 +94,7 @@ void payload_type_set_send_fmtp(PayloadType *pt, const char *fmtp){
 
 void payload_type_append_recv_fmtp(PayloadType *pt, const char *fmtp){
 	if (canWrite(pt)){
-		if (pt->recv_fmtp==NULL)
-			pt->recv_fmtp=ortp_strdup(fmtp);
+		if (pt->recv_fmtp == NULL) pt->recv_fmtp = ortp_strdup(fmtp);
 		else{
 			char *tmp=ortp_strdup_printf("%s;%s",pt->recv_fmtp,fmtp);
 			ortp_free(pt->recv_fmtp);
@@ -100,12 +103,11 @@ void payload_type_append_recv_fmtp(PayloadType *pt, const char *fmtp){
 	}
 }
 
-void payload_type_append_send_fmtp(PayloadType *pt, const char *fmtp){
-	if (canWrite(pt)){
-		if (pt->send_fmtp==NULL)
-			pt->send_fmtp=ortp_strdup(fmtp);
-		else{
-			char *tmp=ortp_strdup_printf("%s;%s",pt->send_fmtp,fmtp);
+void payload_type_append_send_fmtp(PayloadType *pt, const char *fmtp) {
+	if (canWrite(pt)) {
+		if (pt->send_fmtp == NULL) pt->send_fmtp = ortp_strdup(fmtp);
+		else {
+			char *tmp = ortp_strdup_printf("%s;%s", pt->send_fmtp, fmtp);
 			ortp_free(pt->send_fmtp);
 			pt->send_fmtp=tmp;
 		}

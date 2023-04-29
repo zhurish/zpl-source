@@ -53,7 +53,7 @@
 #define RTPUDPV6TRANS_MAXPACKSIZE							65535
 #define RTPUDPV6TRANS_IFREQBUFSIZE							8192
 
-#define RTPUDPV6TRANS_IS_MCASTADDR(x)							(x.s6_addr[0] == 0xFF)
+
 
 #define RTPUDPV6TRANS_MCASTMEMBERSHIP(socket,type,mcastip,status)	{\
 										struct ipv6_mreq mreq;\

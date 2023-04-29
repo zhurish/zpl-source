@@ -56,17 +56,18 @@ struct _OrtpEventData{
 			int authTagAlgo;
 			int sasAlgo;
 		} zrtp_info;
-		struct _SrtpInfo{
-			bool_t is_send; /**< stream direction this is applied too */
-			int source; /**< the source of the key material as defined in MSSrtpKeySource enum in ms_strp.h */
-			int suite; /**< the srtp crypto suite used as defined in MSCryptoSuite enum in ms_srtp.h */
+		struct _SrtpInfo {
+			bool_t is_send;  /**< stream direction this is applied too */
+			bool_t is_inner; /**< this info applies to inner encryption (in case of SRTP double encryption) */
+			int source;      /**< the source of the key material as defined in MSSrtpKeySource enum in ms_strp.h */
+			int suite;       /**< the srtp crypto suite used as defined in MSCryptoSuite enum in ms_srtp.h */
 		} srtp_info;
 		OrtpSocketType socket_type;
 		uint32_t received_rtt_character;
 		bool_t congestion_detected;
 		float video_bandwidth_available;
 		int jitter_min_size_for_nack;
-        uint16_t reconstructed_packet_seq_number;
+		uint16_t reconstructed_packet_seq_number;
 	} info;
 };
 
@@ -180,23 +181,19 @@ ORTP_PUBLIC void ortp_ev_dispatcher_iterate(OrtpEvDispatcher *d);
  *
  * @param d OrtpEvDispatcher object
  * @param type type of event to be notified of.
- * @param subtype when type is set to ORTP_EVENT_RTCP_PACKET_RECEIVED or ORTP_EVENT_RTCP_PACKET_EMITTED, subtype of RTCP packet to be notified of. Otherwise this parameter is not used.
+ * @param subtype when type is set to ORTP_EVENT_RTCP_PACKET_RECEIVED or ORTP_EVENT_RTCP_PACKET_EMITTED, subtype of RTCP
+ * packet to be notified of. Otherwise this parameter is not used.
  * @param on_receive function to call when a RTCP packet of the given type is found.
  * @param user_data user data given as last argument of the callback. Can be NULL. MUST be freed by user.
  */
-ORTP_PUBLIC void ortp_ev_dispatcher_connect(OrtpEvDispatcher *d
-											, OrtpEventType type
-											, rtcp_type_t subtype
-											, OrtpEvDispatcherCb on_receive
-											, void *user_data);
+ORTP_PUBLIC void ortp_ev_dispatcher_connect(
+    OrtpEvDispatcher *d, OrtpEventType type, rtcp_type_t subtype, OrtpEvDispatcherCb on_receive, void *user_data);
 
 /**
  * Disconnects the given callback for the given type and subtype on the given dispatcher.
-*/
-ORTP_PUBLIC void ortp_ev_dispatcher_disconnect(OrtpEvDispatcher *d
-								, OrtpEventType type
-								, rtcp_type_t subtype
-								, OrtpEvDispatcherCb cb);
+ */
+ORTP_PUBLIC void
+ortp_ev_dispatcher_disconnect(OrtpEvDispatcher *d, OrtpEventType type, rtcp_type_t subtype, OrtpEvDispatcherCb cb);
 
 #ifdef __cplusplus
 }

@@ -76,7 +76,13 @@ typedef pthread_cond_t ortp_cond_t;
 
 #define ORTP_PUBLIC 
 #define ORTP_INLINE			inline
-
+#ifndef ORTP_DEPRECATED
+#if defined(_MSC_VER)
+#define ORTP_DEPRECATED __declspec(deprecated)
+#else
+#define ORTP_DEPRECATED __attribute__((deprecated))
+#endif
+#endif
 #ifdef __cplusplus
 extern "C"
 {
@@ -112,7 +118,7 @@ unsigned long __ortp_thread_self(void);
 #define ortp_gettimeofday(tv,tz) gettimeofday(tv,tz)
 #define ortp_log10f(x)	log10f(x)
 
-
+#define ORTP_UNUSED(x)		x
 #else
 /*********************************/
 /* definitions for WIN32 flavour */
@@ -340,11 +346,18 @@ ORTP_PUBLIC unsigned int ortp_random(void);
 int ortp_sockaddr_to_address(const struct ipstack_sockaddr *sa, socklen_t salen, char *ip, size_t ip_size, int *port);
 int ortp_sockaddr_to_print_address(struct ipstack_sockaddr *sa, socklen_t salen, char *printable_ip,
 								   size_t printable_ip_size);
-int ortp_address_to_sockaddr(int sin_family, char *ip, int port, const struct ipstack_sockaddr *sa, socklen_t *salen);
+int ortp_address_to_sockaddr(int sin_family, char *ip, int port, struct ipstack_sockaddr *sa, socklen_t *salen);
 bool_t ortp_sockaddr_equals(const struct ipstack_sockaddr *sa, const struct ipstack_sockaddr *sb);
 
 ORTP_PUBLIC int ortp_get_local_ip_for(int type, const char *dest, int port, char *result, size_t result_len);
+struct addrinfo * ortp_name_to_addrinfo(int family, int socktype, const char *name, int port);
 
+void ortp_sockaddr_remove_v4_mapping(const struct sockaddr *v6, struct sockaddr *result, socklen_t *result_len);
+void ortp_sockaddr_remove_nat64_mapping(const struct sockaddr *v6, struct sockaddr *result, socklen_t *result_len) ;
+void ortp_sockaddr_ipv6_to_ipv4(const struct sockaddr *v6, struct sockaddr *result, socklen_t *result_len);
+void ortp_sockaddr_ipv4_to_ipv6(const struct sockaddr *v4, struct sockaddr *result, socklen_t *result_len);
+
+void ortp_timespec_add(ortpTimeSpec *ts, const int64_t lap);
 
 /* portable named pipes  and shared memory*/
 #if !defined(_WIN32_WCE)
@@ -387,5 +400,219 @@ ORTP_PUBLIC bool_t ortp_is_multicast_addr(const struct sockaddr *addr);
 #if TARGET_OS_IPHONE
 #define __ios 1
 #endif
+
+#ifndef ORTP_NO_BREAK
+#if defined(__GNUC__) && __GNUC__ >= 7
+#define ORTP_NO_BREAK __attribute__((fallthrough))
+#else
+#define ORTP_NO_BREAK
+#endif // __GNUC__
+#endif // ORTP_NO_BREAK
+
+#define ORTP_VFS_OK           0   /* Successful result */
+
+#define ORTP_VFS_ERROR       -255   /* Some kind of disk I/O error occurred */
+
+#define ORTP_VFS_PRINTF_PAGE_SIZE 4096 /* Size of the page hold in memory by fprintf */
+#define ORTP_VFS_GETLINE_PAGE_SIZE 17385 /* Size of the page hold in memory by getnextline */
+/**
+ * Methods associated with the ortp_vfs_t.
+ */
+typedef struct ortp_io_methods_t ortp_io_methods_t;
+
+/**
+ * VFS file handle.
+ */
+typedef struct ortp_vfs_file_t ortp_vfs_file_t;
+
+struct ortp_io_methods_t {
+	int (*pFuncClose)(ortp_vfs_file_t *pFile);
+	ssize_t (*pFuncRead)(ortp_vfs_file_t *pFile, void* buf, size_t count, off_t offset);
+	ssize_t (*pFuncWrite)(ortp_vfs_file_t *pFile, const void* buf, size_t count, off_t offset);
+	int (*pFuncTruncate)(ortp_vfs_file_t *pFile, int64_t size);
+	int64_t (*pFuncFileSize)(ortp_vfs_file_t *pFile);
+	int (*pFuncSync)(ortp_vfs_file_t *pFile);
+	int (*pFuncGetLineFromFd)(ortp_vfs_file_t *pFile, char* s, int count);
+	bool_t (*pFuncIsEncrypted)(ortp_vfs_file_t *pFile);
+};
+
+struct ortp_vfs_file_t {
+	const struct ortp_io_methods_t *pMethods;  /* Methods for an open file: all Developpers must supply this field at open step*/
+	/*the fields below are used by the default implementation. Developpers are not required to supply them, but may use them if they find
+	 * them useful*/
+	void* pUserData; 				/* Developpers can store private data under this pointer */
+	off_t offset;					/* File offset used by ortp_file_fprintf and ortp_file_get_nxtline */
+	/* fprintf cache */
+	char fPage[ORTP_VFS_PRINTF_PAGE_SIZE];		/* Buffer storing the current page cached by fprintf */
+	off_t fPageOffset;				/* The original offset of the cached page */
+	size_t fSize;					/* number of bytes in cache */
+	/* get_nxtline cache */
+	char gPage[ORTP_VFS_GETLINE_PAGE_SIZE+1];	/* Buffer storing the current page cachec by get_nxtline +1 to hold the \0 */
+	off_t gPageOffset;				/* The offset of the cached page */
+	size_t gSize;					/* actual size of the data in cache */
+};
+
+/**
+ * VFS definition
+ */
+typedef struct ortp_vfs_t ortp_vfs_t;
+struct ortp_vfs_t {
+	const char *vfsName;       /* Virtual file system name */
+	int (*pFuncOpen)(ortp_vfs_t *pVfs, ortp_vfs_file_t *pFile, const char *fName, int openFlags);
+};
+
+/**
+ * Attempts to read count bytes from the open file given by pFile, at the position starting at offset
+ * in the file and and puts them in the buffer pointed by buf.
+ * @param  pFile  ortp_vfs_file_t File handle pointer.
+ * @param  buf    Buffer holding the read bytes.
+ * @param  count  Number of bytes to read.
+ * @param  offset Where to start reading in the file (in bytes).
+ * @return        Number of bytes read on success, ORTP_VFS_ERROR otherwise.
+ */
+ORTP_PUBLIC ssize_t ortp_file_read(ortp_vfs_file_t *pFile, void *buf, size_t count, off_t offset);
+
+/**
+ * Attempts to read count bytes from the open file given by pFile, at the position starting at its offset
+ * in the file and and puts them in the buffer pointed by buf.
+ * The file offset shall be incremented by the number of bytes actually read.
+ * @param  pFile  ortp_vfs_file_t File handle pointer.
+ * @param  buf    Buffer holding the read bytes.
+ * @param  count  Number of bytes to read.
+ * @return        Number of bytes read on success, ORTP_VFS_ERROR otherwise.
+ */
+ORTP_PUBLIC ssize_t ortp_file_read2(ortp_vfs_file_t *pFile, void *buf, size_t count);
+
+/**
+ * Close the file from its descriptor pointed by thw ortp_vfs_file_t handle.
+ * @param  pFile File handle pointer.
+ * @return      	return value from the pFuncClose VFS Close function on success,
+ *                  ORTP_VFS_ERROR otherwise.
+ */
+ORTP_PUBLIC int ortp_file_close(ortp_vfs_file_t *pFile);
+
+/**
+ * Allocates a ortp_vfs_file_t file handle pointer. Opens the file fName
+ * with the mode specified by the mode argument. Calls ortp_file_open.
+ * @param  pVfs  Pointer to the vfs instance in use.
+ * @param  fName Absolute file path.
+ * @param  mode  File access mode (char*).
+ * @return  pointer to  ortp_vfs_file_t on success, NULL otherwise.
+ */
+ORTP_PUBLIC ortp_vfs_file_t* ortp_file_open(ortp_vfs_t *pVfs, const char *fName, const char *mode);
+
+
+/**
+ * Allocates a ortp_vfs_file_t file handle pointer. Opens the file fName
+ * with the mode specified by the mode argument. Calls ortp_file_open.
+ * @param  pVfs  		Pointer to the vfs instance in use.
+ * @param  fName 		Absolute file path.
+ * @param  openFlags  	File access flags(integer).
+ * @return  pointer to  ortp_vfs_file_t on success, NULL otherwise.
+ */
+ORTP_PUBLIC ortp_vfs_file_t* ortp_file_open2(ortp_vfs_t *pVfs, const char *fName, const int openFlags);
+
+
+/**
+ * Returns the file size.
+ * @param  pFile  ortp_vfs_file_t File handle pointer.
+ * @return       ORTP_VFS_ERROR if an error occured, file size otherwise.
+ */
+ORTP_PUBLIC int64_t ortp_file_size(ortp_vfs_file_t *pFile);
+
+/**
+ * Truncates/ Extends a file.
+ * @param  pFile ortp_vfs_file_t File handle pointer.
+ * @param  size  New size of the file.
+ * @return       ORTP_VFS_ERROR if an error occured, 0 otherwise.
+ */
+ORTP_PUBLIC int ortp_file_truncate(ortp_vfs_file_t *pFile, int64_t size);
+
+/**
+ * Write count bytes contained in buf to a file associated with pFile at the position
+ * offset. Calls pFuncWrite (set to bc_Write by default).
+ * @param  pFile 	File handle pointer.
+ * @param  buf    	Buffer hodling the values to write.
+ * @param  count  	Number of bytes to write to the file.
+ * @param  offset 	Position in the file where to start writing.
+ * @return        	Number of bytes written on success, ORTP_VFS_ERROR if an error occurred.
+ */
+ORTP_PUBLIC ssize_t ortp_file_write(ortp_vfs_file_t *pFile, const void *buf, size_t count, off_t offset);
+
+/**
+ * Write count bytes contained in buf to a file associated with pFile at the position starting at its
+ * offset. Calls pFuncWrite (set to bc_Write by default).
+ * The file offset shall be incremented by the number of bytes actually written.
+ * @param  pFile 	File handle pointer.
+ * @param  buf    	Buffer hodling the values to write.
+ * @param  count  	Number of bytes to write to the file.
+ * @return        	Number of bytes written on success, ORTP_VFS_ERROR if an error occurred.
+ */
+ORTP_PUBLIC ssize_t ortp_file_write2(ortp_vfs_file_t *pFile, const void *buf, size_t count);
+
+/**
+ * Writes to file.
+ * @param  pFile  File handle pointer.
+ * @param  offset where to write in the file
+ * @param  fmt    format argument, similar to that of printf
+ * @return        Number of bytes written if success, ORTP_VFS_ERROR otherwise.
+ */
+ORTP_PUBLIC ssize_t ortp_file_fprintf(ortp_vfs_file_t *pFile, off_t offset, const char *fmt, ...);
+
+/**
+ * Wrapper to pFuncGetNxtLine. Returns a line with at most maxlen characters
+ * from the file associated to pFile and  writes it into s.
+ * @param  pFile  File handle pointer.
+ * @param  s      Buffer where to store the read line.
+ * @param  maxlen Number of characters to read to find a line in the file.
+ * @return        ORTP_VFS_ERROR if an error occurred, size of line read otherwise.
+ */
+ORTP_PUBLIC int ortp_file_get_nxtline(ortp_vfs_file_t *pFile, char *s, int maxlen);
+
+/**
+ * Simply sync the file contents given through the file handle
+ * to the persistent media.
+ * @param  pFile  File handle pointer.
+ * @return   ORTP_VFS_OK on success, ORTP_VFS_ERROR otherwise
+ */
+ORTP_PUBLIC int ortp_file_sync(ortp_vfs_file_t *pFile);
+
+/**
+ * Set the position to offset in the file, this position is used only by the function
+ * ortp_file_get_nxtline. Read and write give their own offset as param and won't modify this one
+ * @param  pFile  File handle pointer.
+ * @param  offset File offset where to set the position to.
+ * @param  whence Either SEEK_SET, SEEK_CUR,SEEK_END
+ * @return        ORTP_VFS_ERROR on error, offset otherwise.
+ */
+ORTP_PUBLIC off_t ortp_file_seek(ortp_vfs_file_t *pFile, off_t offset, int whence);
+
+/**
+ * Get the file encryption status
+ * @param  pFile  File handle pointer.
+ * @return true if the file is encrypted
+ */
+ORTP_PUBLIC bool_t ortp_file_is_encrypted(ortp_vfs_file_t *pFile);
+
+/**
+ * Set default VFS pointer pDefault to my_vfs.
+ * By default, the global pointer is set to use VFS implemnted in vfs.c
+ * @param my_vfs Pointer to a ortp_vfs_t structure.
+ */
+ORTP_PUBLIC void ortp_vfs_set_default(ortp_vfs_t *my_vfs);
+
+
+/**
+ * Returns the value of the global variable pDefault,
+ * pointing to the default vfs used.
+ * @return Pointer to ortp_vfs_t set to operate as default VFS.
+ */
+ORTP_PUBLIC ortp_vfs_t* ortp_vfs_get_default(void);
+
+/**
+ * Return pointer to standard VFS impletentation.
+ * @return  pointer to bcVfs
+ */
+ORTP_PUBLIC ortp_vfs_t* ortp_vfs_get_standard(void);
 
 #endif

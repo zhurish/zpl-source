@@ -108,9 +108,15 @@ static mblk_t * sdes_chunk_set_minimal_items(mblk_t *m, const char *cname) {
 	return sdes_chunk_append_item(m, RTCP_SDES_CNAME, cname);
 }
 
-static mblk_t * sdes_chunk_set_full_items(mblk_t *m, const char *cname,
-	const char *name, const char *email, const char *phone, const char *loc,
-	const char *tool, const char *note, const char *mid) {
+static mblk_t *sdes_chunk_set_full_items(mblk_t *m,
+                                         const char *cname,
+                                         const char *name,
+                                         const char *email,
+                                         const char *phone,
+                                         const char *loc,
+                                         const char *tool,
+                                         const char *note,
+                                         const char *mid) {
 	m = sdes_chunk_set_minimal_items(m, cname);
 	m = sdes_chunk_append_item(m, RTCP_SDES_NAME, name);
 	m = sdes_chunk_append_item(m, RTCP_SDES_EMAIL, email);
@@ -126,11 +132,16 @@ static mblk_t * sdes_chunk_set_full_items(mblk_t *m, const char *cname,
 /**
  * Set session's SDES item for automatic sending of RTCP compound packets.
  * If some items are not specified, use NULL.
-**/
-void rtp_session_set_source_description(RtpSession *session, const char *cname,
-	const char *name, const char *email, const char *phone, const char *loc,
-	const char *tool, const char *note) {
-	const char* mid = NULL;
+ **/
+void rtp_session_set_source_description(RtpSession *session,
+                                        const char *cname,
+                                        const char *name,
+                                        const char *email,
+                                        const char *phone,
+                                        const char *loc,
+                                        const char *tool,
+                                        const char *note) {
+	const char *mid = NULL;
 	mblk_t *m;
 	mblk_t *chunk = sdes_chunk_new(session->snd.ssrc);
 	if (strlen(cname)>255) {
@@ -162,10 +173,16 @@ void rtp_session_set_source_description(RtpSession *session, const char *cname,
 	session->minimal_sdes = chunk;
 }
 
-void rtp_session_add_contributing_source(RtpSession *session, uint32_t csrc,
-	const char *cname, const char *name, const char *email, const char *phone,
-	const char *loc, const char *tool, const char *note) {
-	const char* mid = NULL;
+void rtp_session_add_contributing_source(RtpSession *session,
+                                         uint32_t csrc,
+                                         const char *cname,
+                                         const char *name,
+                                         const char *email,
+                                         const char *phone,
+                                         const char *loc,
+                                         const char *tool,
+                                         const char *note) {
+	const char *mid = NULL;
 	mblk_t *chunk = sdes_chunk_new(csrc);
 
 	/* Add mid to chunck if there is a bundle */
@@ -697,22 +714,28 @@ OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interv
 	return obj;
 }
 
-void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, RtpSession *session){
-	memset(obj,0,sizeof(*obj));
-	obj->min_packet_count_interval=min_packet_count_interval;
-	obj->last_ext_seq=rtp_session_get_seq_number(session);
-	obj->last_cum_loss=rtp_session_get_cum_loss(session);
-	obj->last_packet_sent_count=session->stats.packet_sent;
-	obj->last_dup_packet_sent_count=session->stats.packet_dup_sent;
-	obj->min_time_ms_interval=min_time_ms_interval;
-	obj->last_estimate_time_ms=(uint64_t)-1;
+void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj,
+                                   int min_packet_count_interval,
+                                   uint64_t min_time_ms_interval,
+                                   RtpSession *session) {
+	memset(obj, 0, sizeof(*obj));
+	obj->min_packet_count_interval = min_packet_count_interval;
+	obj->last_ext_seq = rtp_session_get_seq_number(session);
+	obj->last_cum_loss = rtp_session_get_cum_loss(session);
+	obj->last_packet_sent_count = session->stats.packet_sent;
+	obj->last_dup_packet_sent_count = session->stats.packet_dup_sent;
+	obj->min_time_ms_interval = min_time_ms_interval;
+	obj->last_estimate_time_ms = (uint64_t)-1;
 }
 
-bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj, const RtpSession *session, const report_block_t *rb){
-	int32_t cum_loss=report_block_get_cum_packet_lost(rb);
-	int32_t extseq=report_block_get_high_ext_seq(rb);
-	//int32_t diff_unique_outgoing=(int32_t)(session->stats.packet_sent-obj->last_packet_sent_count);
-	//int32_t diff_total_outgoing=diff_unique_outgoing+(int32_t)(session->stats.packet_dup_sent-obj->last_dup_packet_sent_count);
+bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEstimator *obj,
+                                                     const RtpSession *session,
+                                                     const report_block_t *rb) {
+	int32_t cum_loss = report_block_get_cum_packet_lost(rb);
+	int32_t extseq = report_block_get_high_ext_seq(rb);
+	// int32_t diff_unique_outgoing=(int32_t)(session->stats.packet_sent-obj->last_packet_sent_count);
+	// int32_t
+	// diff_total_outgoing=diff_unique_outgoing+(int32_t)(session->stats.packet_dup_sent-obj->last_dup_packet_sent_count);
 	int32_t diff;
 	uint64_t curtime;
 	bool_t got_value=FALSE;

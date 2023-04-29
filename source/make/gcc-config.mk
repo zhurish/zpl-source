@@ -1,7 +1,7 @@
 ##ZPLOS_LDLIBS += -std=c99 
 ZPLOS_CFLAGS += -std=gnu99
 #ZPLOS_CFLAGS += -std=gnu99 -fgnu99-inline
-ZPLOS_CPPFLAGS += -std=c++11 -Wno-write-strings
+ZPLOS_CPPFLAGS += -std=c++14 -Wno-write-strings
 ## -D_GLIBCXX_USE_CXX11_ABI=0
 # 
 #

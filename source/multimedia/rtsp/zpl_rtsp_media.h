@@ -5,17 +5,6 @@ extern "C" {
 #endif
 
 
-#ifdef ZPL_BUILD_LINUX
-#ifndef RTP_MEDIA_BASE_PATH
-#define     RTP_MEDIA_BASE_PATH     "/home/zhurish/workspace/qt-project/live555-test/"
-#define     RTP_MEDIA_BASE_PATH     "/mnt/hgfs/ubuntu-share/qt-project/live555-test/"
-#endif
-#else
-#ifndef RTP_MEDIA_BASE_PATH
-#define     RTP_MEDIA_BASE_PATH     "D:/qt-project/live555-test/"
-#endif
-#endif
-
 
 #define  RTP_MEDIA_FRAME_DELAY(n)   ((n)/3)
 

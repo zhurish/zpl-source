@@ -90,14 +90,11 @@ typedef struct sender_info
 } sender_info_t;
 
 static ORTP_INLINE uint64_t sender_info_get_ntp_timestamp(const sender_info_t *si) {
-  return ((((uint64_t)ntohl(si->ntp_timestamp_msw)) << 32) +
-          ((uint64_t) ntohl(si->ntp_timestamp_lsw)));
+	return ((((uint64_t)ntohl(si->ntp_timestamp_msw)) << 32) + ((uint64_t)ntohl(si->ntp_timestamp_lsw)));
 }
-#define sender_info_get_rtp_timestamp(si)	ntohl((si)->rtp_timestamp)
-#define sender_info_get_packet_count(si) \
-	ntohl((si)->senders_packet_count)
-#define sender_info_get_octet_count(si) \
-	ntohl((si)->senders_octet_count)
+#define sender_info_get_rtp_timestamp(si) ntohl((si)->rtp_timestamp)
+#define sender_info_get_packet_count(si) ntohl((si)->senders_packet_count)
+#define sender_info_get_octet_count(si) ntohl((si)->senders_octet_count)
 
 
 typedef struct report_block
@@ -129,25 +126,21 @@ static ORTP_INLINE uint32_t report_block_get_last_SR_delay(const report_block_t 
 static ORTP_INLINE uint32_t report_block_get_fraction_lost(const report_block_t * rb) {
 	return (ntohl(rb->fl_cnpl)>>24);
 }
-static ORTP_INLINE int32_t report_block_get_cum_packet_lost(const report_block_t * rb){
+static ORTP_INLINE int32_t report_block_get_cum_packet_lost(const report_block_t *rb) {
 	uint32_t cum_loss = (uint32_t)ntohl(rb->fl_cnpl);
-	if (((cum_loss>>23)&1)==0)
-		return (int32_t) (0x00FFFFFF & cum_loss);
-	else
-		return (int32_t)(0xFF000000 | (cum_loss-0xFFFFFF-1));
+	if (((cum_loss >> 23) & 1) == 0) return (int32_t)(0x00FFFFFF & cum_loss);
+	else return (int32_t)(0xFF000000 | (cum_loss - 0xFFFFFF - 1));
 }
 
 static ORTP_INLINE void report_block_set_fraction_lost(report_block_t * rb, int fl){
 	rb->fl_cnpl = (uint32_t)htonl( ((uint32_t)ntohl(rb->fl_cnpl) & 0xFFFFFF) | ((uint32_t)fl&0xFF)<<24);
 }
 
-static ORTP_INLINE void report_block_set_cum_packet_lost(report_block_t * rb, int64_t cpl) {
-	uint32_t clamp = (uint32_t)((1<<24) + ((cpl>=0) ? (cpl>0x7FFFFF?0x7FFFFF:cpl) : (-cpl>0x800000?-0x800000:cpl)));
+static ORTP_INLINE void report_block_set_cum_packet_lost(report_block_t *rb, int64_t cpl) {
+	uint32_t clamp =
+	    (uint32_t)((1 << 24) + ((cpl >= 0) ? (cpl > 0x7FFFFF ? 0x7FFFFF : cpl) : (-cpl > 0x800000 ? -0x800000 : cpl)));
 
-	rb->fl_cnpl=htonl(
-			(ntohl(rb->fl_cnpl) & 0xFF000000) |
-			(cpl >= 0 ? clamp&0x7FFFFF : clamp|0x800000)
-		);
+	rb->fl_cnpl = htonl((ntohl(rb->fl_cnpl) & 0xFF000000) | (cpl >= 0 ? clamp & 0x7FFFFF : clamp | 0x800000));
 }
 
 /* SDES packets */
@@ -333,18 +326,15 @@ typedef struct rtcp_fb_tmmbr_fci {
 } rtcp_fb_tmmbr_fci_t;
 
 #define rtcp_fb_tmmbr_fci_get_ssrc(tmmbr) ntohl((tmmbr)->ssrc)
-#define rtcp_fb_tmmbr_fci_get_mxtbr_exp(tmmbr) \
-	((uint8_t)((ntohl((tmmbr)->value) >> 26) & 0x0000003F))
-#define rtcp_fb_tmmbr_fci_set_mxtbr_exp(tmmbr, mxtbr_exp) \
-	((tmmbr)->value) = htonl((ntohl((tmmbr)->value) & 0x03FFFFFF) | (((mxtbr_exp) & 0x0000003F) << 26))
-#define rtcp_fb_tmmbr_fci_get_mxtbr_mantissa(tmmbr) \
-	((uint32_t)((ntohl((tmmbr)->value) >> 9) & 0x0001FFFF))
-#define rtcp_fb_tmmbr_fci_set_mxtbr_mantissa(tmmbr, mxtbr_mantissa) \
-	((tmmbr)->value) = htonl((ntohl((tmmbr)->value) & 0xFC0001FF) | (((mxtbr_mantissa) & 0x0001FFFF) << 9))
-#define rtcp_fb_tmmbr_fci_get_measured_overhead(tmmbr) \
-	((uint16_t)(ntohl((tmmbr)->value) & 0x000001FF))
-#define rtcp_fb_tmmbr_fci_set_measured_overhead(tmmbr, measured_overhead) \
-	((tmmbr)->value) = htonl((ntohl((tmmbr)->value) & 0xFFFFFE00) | ((measured_overhead) & 0x000001FF))
+#define rtcp_fb_tmmbr_fci_get_mxtbr_exp(tmmbr) ((uint8_t)((ntohl((tmmbr)->value) >> 26) & 0x0000003F))
+#define rtcp_fb_tmmbr_fci_set_mxtbr_exp(tmmbr, mxtbr_exp)                                                              \
+	((tmmbr)->value) = htonl((ntohl((tmmbr)->value) & 0x03FFFFFF) | (((mxtbr_exp)&0x0000003F) << 26))
+#define rtcp_fb_tmmbr_fci_get_mxtbr_mantissa(tmmbr) ((uint32_t)((ntohl((tmmbr)->value) >> 9) & 0x0001FFFF))
+#define rtcp_fb_tmmbr_fci_set_mxtbr_mantissa(tmmbr, mxtbr_mantissa)                                                    \
+	((tmmbr)->value) = htonl((ntohl((tmmbr)->value) & 0xFC0001FF) | (((mxtbr_mantissa)&0x0001FFFF) << 9))
+#define rtcp_fb_tmmbr_fci_get_measured_overhead(tmmbr) ((uint16_t)(ntohl((tmmbr)->value) & 0x000001FF))
+#define rtcp_fb_tmmbr_fci_set_measured_overhead(tmmbr, measured_overhead)                                              \
+	((tmmbr)->value) = htonl((ntohl((tmmbr)->value) & 0xFFFFFE00) | ((measured_overhead)&0x000001FF))
 
 typedef struct rtcp_fb_fir_fci {
 	uint32_t ssrc;
@@ -360,18 +350,15 @@ typedef struct rtcp_fb_sli_fci {
 	uint32_t value;
 } rtcp_fb_sli_fci_t;
 
-#define rtcp_fb_sli_fci_get_first(fci) \
-	((uint16_t)((ntohl((fci)->value) >> 19) & 0x00001FFF))
-#define rtcp_fb_sli_fci_set_first(fci, first) \
-	((fci)->value) = htonl((ntohl((fci)->value) & 0x0007FFFF) | (((first) & 0x00001FFF) << 19))
-#define rtcp_fb_sli_fci_get_number(fci) \
-	((uint16_t)((ntohl((fci)->value) >> 6) & 0x00001FFF))
-#define rtcp_fb_sli_fci_set_number(fci, number) \
-	((fci)->value) = htonl((ntohl((fci)->value) & 0xFFF8003F) | (((number) & 0x00001FFF) << 6))
-#define rtcp_fb_sli_fci_get_picture_id(fci) \
-	((uint8_t)(ntohl((fci)->value) & 0x0000003F))
-#define rtcp_fb_sli_fci_set_picture_id(fci, picture_id) \
-	((fci)->value) = htonl((ntohl((fci)->value) & 0xFFFFFFC0) | ((picture_id) & 0x0000003F))
+#define rtcp_fb_sli_fci_get_first(fci) ((uint16_t)((ntohl((fci)->value) >> 19) & 0x00001FFF))
+#define rtcp_fb_sli_fci_set_first(fci, first)                                                                          \
+	((fci)->value) = htonl((ntohl((fci)->value) & 0x0007FFFF) | (((first)&0x00001FFF) << 19))
+#define rtcp_fb_sli_fci_get_number(fci) ((uint16_t)((ntohl((fci)->value) >> 6) & 0x00001FFF))
+#define rtcp_fb_sli_fci_set_number(fci, number)                                                                        \
+	((fci)->value) = htonl((ntohl((fci)->value) & 0xFFF8003F) | (((number)&0x00001FFF) << 6))
+#define rtcp_fb_sli_fci_get_picture_id(fci) ((uint8_t)(ntohl((fci)->value) & 0x0000003F))
+#define rtcp_fb_sli_fci_set_picture_id(fci, picture_id)                                                                \
+	((fci)->value) = htonl((ntohl((fci)->value) & 0xFFFFFFC0) | ((picture_id)&0x0000003F))
 
 typedef struct rtcp_fb_rpsi_fci {
 	uint8_t pb;
@@ -441,7 +428,8 @@ ORTP_PUBLIC const report_block_t * rtcp_RR_get_report_block(const mblk_t *m,int 
 
 /*SDES accessors */
 ORTP_PUBLIC bool_t rtcp_is_SDES(const mblk_t *m);
-typedef void (*SdesItemFoundCallback)(void *user_data, uint32_t csrc, rtcp_sdes_type_t t, const char *content, uint8_t content_len);
+typedef void (*SdesItemFoundCallback)(
+    void *user_data, uint32_t csrc, rtcp_sdes_type_t t, const char *content, uint8_t content_len);
 ORTP_PUBLIC void rtcp_sdes_parse(const mblk_t *m, SdesItemFoundCallback cb, void *user_data);
 
 /*BYE accessors */
@@ -547,11 +535,13 @@ typedef struct OrtpLossRateEstimator{
 	int64_t last_packet_sent_count;
 }OrtpLossRateEstimator;
 
+ORTP_PUBLIC OrtpLossRateEstimator *
+ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
 
-ORTP_PUBLIC OrtpLossRateEstimator * ortp_loss_rate_estimator_new(int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
-
-ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj, int min_packet_count_interval, uint64_t min_time_ms_interval, struct _RtpSession *session);
-
+ORTP_PUBLIC void ortp_loss_rate_estimator_init(OrtpLossRateEstimator *obj,
+                                               int min_packet_count_interval,
+                                               uint64_t min_time_ms_interval,
+                                               struct _RtpSession *session);
 
 /**
  * Process an incoming report block to compute loss rate percentage. It tries to compute
@@ -580,7 +570,7 @@ ORTP_PUBLIC bool_t ortp_loss_rate_estimator_process_report_block(OrtpLossRateEst
 ORTP_PUBLIC float ortp_loss_rate_estimator_get_value(OrtpLossRateEstimator *obj);
 
 ORTP_PUBLIC void ortp_loss_rate_estimator_destroy(OrtpLossRateEstimator *obj);
-void compute_rtcp_interval(struct _RtpSession *session);
+
 #ifdef __cplusplus
 }
 #endif

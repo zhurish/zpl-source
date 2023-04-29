@@ -40,7 +40,7 @@ char *zpl_media_file_basename(const char *name)
 {
     static char basename[128];
     memset(basename, 0, sizeof(basename));
-    snprintf(basename, sizeof(basename), "%s%s", ZPL_MEDIA_BASE_PATH, name);
+    snprintf(basename, sizeof(basename), "%s/%s", ZPL_MEDIA_BASE_PATH, name);
     //zm_msg_debug(" basename=%s", basename);
     return basename;
 }
