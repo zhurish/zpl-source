@@ -179,6 +179,9 @@ public:
 	int SendPacketEx(const void *data,size_t len,
 	                  uint8_t pt,bool mark,uint32_t timestampinc,
 	                  uint16_t hdrextID,const void *hdrextdata,size_t numhdrextwords);
+
+	int SendFrame(const void *data,size_t len,
+                uint8_t pt,bool mark, uint32_t timestampinc);				  
 #ifdef RTP_SUPPORT_SENDAPP
 	/** If sending of RTCP APP packets was enabled at compile time, this function creates a compound packet 
 	 *  containing an RTCP APP packet and sends it immediately. 

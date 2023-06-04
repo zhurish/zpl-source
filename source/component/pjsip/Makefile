@@ -54,6 +54,14 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
 	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_PJINC)
 
+$(OBJS_DIR)/%.o: $(SRC_DIR)/apps/%.c 
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_PJINC)
+
 #
 #
 #
@@ -76,38 +84,6 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/pjsua2/%.c
 	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) -c  $< -o $@ $(ZPLINCLUDE) $(ZPL_PJINC)
 endif
 #	
-#
-ifeq ($(PJMEDIA_SDL2_ENABLE),true)
-SDL2LIBS:
-	$(MAKE) -C $(SDL2PROJDIR) -f Makefile-pl all
-
-SDL2CLEAN:
-	$(MAKE) -C $(SDL2PROJDIR) -f Makefile-pl clean	
-else
-SDL2LIBS:
-	$(ECHO) NO SDL2
-
-SDL2CLEAN:
-	$(ECHO) NO SDL2
-endif
-
-
-ifeq ($(strip $(ZPL_PJPROJECT_MODULE)),true)
-ZPL_PJPROJECT_LIBS:
-	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl lib
-	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl install
-
-ZPL_PJPROJECT_UNLIBS:
-	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl uninstall
-	$(MAKE) -C $(BASE_ROOT)/$(PJPROJECT_ROOT) -f Makefile-pl clean
-
-else
-ZPL_PJPROJECT_LIBS:
-	@$(ECHO) " "
-
-ZPL_PJPROJECT_UNLIBS:
-	@$(ECHO) " "
-endif
 
 files = $(patsubst %.o,%.c,$(OBJS))
 make_prepare:
@@ -115,7 +91,7 @@ make_prepare:
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 
-$(LIBS) : ZPL_PJPROJECT_LIBS SDL2LIBS $(MODULE_OBJS) 
+$(LIBS) : $(MODULE_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) 
 
 ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
@@ -153,7 +129,7 @@ install-lib:
 install: install-lib 
 #	@install -m 755 ${PJSUA2TEST_BIN} ${ZPL_INSTALL_SBIN_DIR}
 
-clean: SDL2CLEAN objclean
+clean: objclean
 	@if test -f $(LIB_DIR)/$(LIBS) ; \
 		then \
 		$(RM) $(LIB_DIR)/$(LIBS) ; \
@@ -195,7 +171,7 @@ clean: objclean
 
 endif
 
-objclean: ZPL_PJPROJECT_UNLIBS
+objclean:
 	@$(RM) -rf $(OBJS_DIR)/*
 
 all: lib install

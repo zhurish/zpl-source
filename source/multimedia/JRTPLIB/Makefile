@@ -32,6 +32,12 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/c-layer/%.cpp
 	fi
 	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)	
 
+$(OBJS_DIR)/%.o: $(SRC_DIR)/c-layer/h26x/%.cpp
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ZPL_ECHO_CXX) $(ZPL_CXX_LIB_COMPILE)	
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)

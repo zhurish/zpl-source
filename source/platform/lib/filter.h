@@ -20,8 +20,8 @@
  * Boston, MA 02111-1307, USA. 
  */
 
-#ifndef __LIB_FILTER_H
-#define __LIB_FILTER_H
+#ifndef __LIB_FILTER_H__
+#define __LIB_FILTER_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +58,7 @@ extern "C" {
 #define FILTER_IN                 0
 #define FILTER_OUT                1
 #define FILTER_MAX                2
+
 
 /* Filter type is made by `permit', `deny' and `dynamic'. */
 enum filter_type 
@@ -287,4 +288,4 @@ extern int access_list_reference (afi_t, const char *, zpl_bool enable);
 }
 #endif
 
-#endif /* __LIB_FILTER_H */
+#endif /* __LIB_FILTER_H__ */

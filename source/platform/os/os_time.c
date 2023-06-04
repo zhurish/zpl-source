@@ -14,30 +14,30 @@
 
 
 
+typedef struct os_gtimer_s
+{
+	LIST *time_list ;
+	LIST *time_unuse_list;
+	os_sem_t *time_sem;
+	os_mutex_t *time_mutex;
+	os_time_t *current_time;
+	zpl_taskid_t time_task_id;
+	#ifdef OS_TIMER_POSIX
+	timer_t os_timerid;
+	#endif
+}os_global_timer_t;
 
-static LIST *time_list = NULL;
-static LIST *time_unuse_list = NULL;
-
-static os_sem_t *time_sem = NULL;
-static os_mutex_t *time_mutex = NULL;
+static os_global_timer_t _global_timer;
 
 #ifdef OS_TIMER_POSIX
-static os_time_t *current_time = NULL;
-#else
-static zpl_uint32	inter_value = 10;
-#endif
-static zpl_taskid_t time_task_id = 0;
-
-#ifdef OS_TIMER_POSIX
-static timer_t os_timerid = 0;
-#ifndef OS_SIGNAL_SIGWAIT
 static void os_time_interrupt(zpl_uint32 signo
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context
 #endif
 );
 #endif
-#endif
+
+
 static int os_time_task(void *p);
 
 
@@ -596,36 +596,38 @@ static int os_time_compar(os_time_t *new, os_time_t *old)
 int os_time_init(void)
 {
 	os_system_time_base("2019-01-01 00:00:00");
-	if(time_list == NULL)
+	if(_global_timer.time_list == NULL)
 	{
-		time_list = os_malloc(sizeof(LIST));
-		if(time_list)
+		_global_timer.time_list = os_malloc(sizeof(LIST));
+		if(_global_timer.time_list)
 		{
-			lstInit(time_list);
-			lstSortInit(time_list, os_time_compar);
-			time_sem = os_sem_name_create("os_timer_sem");
+			lstInit(_global_timer.time_list);
+			lstSortInit(_global_timer.time_list, os_time_compar);
+			_global_timer.time_list->free = free;
+			_global_timer.time_sem = os_sem_name_create("os_timer_sem");
 		}
 		else
 			return ERROR;
-		time_unuse_list = os_malloc(sizeof(LIST));
-		if(time_unuse_list)
+		_global_timer.time_unuse_list = os_malloc(sizeof(LIST));
+		if(_global_timer.time_unuse_list)
 		{
-			lstInit(time_unuse_list);
+			lstInit(_global_timer.time_unuse_list);
+			_global_timer.time_unuse_list->free = free;
 		}
 		else
 		{
-			os_free(time_unuse_list);
+			os_free(_global_timer.time_unuse_list);
 			return ERROR;
 		}
 
 	}
-	if(time_mutex == NULL)
+	if(_global_timer.time_mutex == NULL)
 	{
-		time_mutex = os_mutex_name_create("timemutex");
+		_global_timer.time_mutex = os_mutex_name_create("timemutex");
 	}
-	time_task_id = os_task_create("timeTask", OS_TASK_DEFAULT_PRIORITY,
+	_global_timer.time_task_id = os_task_create("timeTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, os_time_task, NULL, OS_TASK_DEFAULT_STACK);
-	if(time_task_id)
+	if(_global_timer.time_task_id)
 		return OK;
 	os_time_exit();
 	return ERROR;
@@ -635,43 +637,43 @@ int os_time_init(void)
 int os_time_exit(void)
 {
 #ifdef OS_TIMER_POSIX
-	if(os_timerid)
-		timer_delete(os_timerid);
+	if(_global_timer.os_timerid)
+		timer_delete(_global_timer.os_timerid);
 #endif
 
-	if(time_task_id)
+	if(_global_timer.time_task_id)
 	{
-		if(os_task_destroy(time_task_id)==OK)
-			time_task_id = 0;
+		if(os_task_destroy(_global_timer.time_task_id)==OK)
+			_global_timer.time_task_id = 0;
 	}
-	if(time_mutex)
+	if(_global_timer.time_mutex)
 	{
-		if(os_mutex_destroy(time_mutex)==OK)
-			time_mutex = NULL;
+		if(os_mutex_destroy(_global_timer.time_mutex)==OK)
+			_global_timer.time_mutex = NULL;
 	}
-	if(time_sem)
+	if(_global_timer.time_sem)
 	{
-		if(os_sem_destroy(time_sem)==OK)
-			time_sem = NULL;
+		if(os_sem_destroy(_global_timer.time_sem)==OK)
+			_global_timer.time_sem = NULL;
 	}
-	if(time_list)
+	if(_global_timer.time_list)
 	{
-		lstFree(time_list);
-		os_free(time_list);
-		time_list = NULL;
+		lstFree(_global_timer.time_list);
+		os_free(_global_timer.time_list);
+		_global_timer.time_list = NULL;
 	}
-	if(time_unuse_list)
+	if(_global_timer.time_unuse_list)
 	{
-		lstFree(time_unuse_list);
-		os_free(time_unuse_list);
-		time_unuse_list = NULL;
+		lstFree(_global_timer.time_unuse_list);
+		os_free(_global_timer.time_unuse_list);
+		_global_timer.time_unuse_list = NULL;
 	}
 	return OK;
 }
 
 int os_time_load(void)
 {
-	if(time_task_id)
+	if(_global_timer.time_task_id)
 		return OK;
 	return ERROR;
 }
@@ -680,19 +682,19 @@ int os_time_clean(zpl_bool all)
 {
 	NODE node;
 	os_time_t *t = NULL;
-	if(time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-	for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+	if(_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
+	for(t = (os_time_t *)lstFirst(_global_timer.time_list); t != NULL; t = (os_time_t *)lstNext(&node))
 	{
 		node = t->node;
 		if(t)
 		{
-			lstDelete (time_list, (NODE *)t);
+			lstDelete (_global_timer.time_list, (NODE *)t);
 			t->lstid = OS_TIMER_NONE;
 			if(!all)
 			{
 				t->lstid = OS_TIMER_UNUSE;
-				lstAdd (time_unuse_list, (NODE *)t);
+				lstAdd (_global_timer.time_unuse_list, (NODE *)t);
 			}
 			else
 				os_free(t);
@@ -700,19 +702,19 @@ int os_time_clean(zpl_bool all)
 	}
 	if(all)
 	{
-		for(t = (os_time_t *)lstFirst(time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		for(t = (os_time_t *)lstFirst(_global_timer.time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
 		{
 			node = t->node;
 			if(t)
 			{
-				lstDelete (time_unuse_list, (NODE *)t);
+				lstDelete (_global_timer.time_unuse_list, (NODE *)t);
 				t->lstid = OS_TIMER_NONE;
 				os_free(t);
 			}
 		}
 	}
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
+	if(_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return OK;
 }
 
@@ -720,9 +722,9 @@ static os_time_t * os_time_get_node(void)
 {
 	NODE *node;
 	os_time_t *t = NULL;
-	if(time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-	for(node = lstFirst(time_unuse_list); node != NULL; node = lstNext(node))
+	if(_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
+	for(node = lstFirst(_global_timer.time_unuse_list); node != NULL; node = lstNext(node))
 	{
 		t = (os_time_t *)node;
 		if(node && t->state == OS_TIMER_FALSE)
@@ -733,10 +735,16 @@ static os_time_t * os_time_get_node(void)
 	if(t)
 	{
 		t->lstid = OS_TIMER_NONE;
-		lstDelete (time_unuse_list, (NODE *)t);
+		lstDelete (_global_timer.time_unuse_list, (NODE *)t);
 	}
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
+	else
+	{
+		t = os_malloc(sizeof(os_time_t));
+		if(t)
+			os_memset(t, 0, sizeof(os_time_t));
+	}
+	if(_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return t;
 }
 
@@ -750,9 +758,7 @@ static os_time_t * os_time_entry_create(os_time_type type, int (*time_entry)(voi
 	os_time_t *t = os_time_get_node();
 	if(t == NULL)
 	{
-		t = os_malloc(sizeof(os_time_t));
-		if(t)
-			os_memset(t, 0, sizeof(os_time_t));
+		return NULL;
 	}
 	if(t)
 	{
@@ -776,7 +782,6 @@ static os_time_t * os_time_entry_create(os_time_type type, int (*time_entry)(voi
  *设置定时中断点
  */
 #ifdef OS_TIMER_POSIX
-#ifndef OS_SIGNAL_SIGWAIT
 static void os_time_interrupt(zpl_uint32 signo
 #ifdef SA_SIGINFO
 	     , siginfo_t *siginfo, void *context
@@ -787,14 +792,10 @@ static void os_time_interrupt(zpl_uint32 signo
 	//fprintf(stdout,"____%s_____:PID=%d UID=%d si_addr=%p\r\n",__func__,
 	//		siginfo->si_pid, siginfo->si_uid, siginfo->si_addr);
 #endif
-	if(time_sem && signo == SIGUSR2)
-		os_sem_give(time_sem);
-	//fprintf(stdout,"%s:\r\n",__func__);
-	current_time = NULL;
-	//OS_DEBUG("%s:\r\n",__func__);
+	if(_global_timer.time_sem && signo == SIGUSR2)
+		os_sem_give(_global_timer.time_sem);
 	return;
 }
-#endif
 
 static int timer_connect(timer_t timerid, int (*routine)(void *p))
 {
@@ -802,45 +803,15 @@ static int timer_connect(timer_t timerid, int (*routine)(void *p))
 	memset(&evp, 0, sizeof(struct sigevent));
 
 	evp.sigev_signo = SIGUSR2;
-#ifndef OS_SIGNAL_SIGWAIT
 	evp.sigev_notify = SIGEV_SIGNAL;
-#else
-	evp.sigev_notify = SIGEV_THREAD_ID;
-	evp._sigev_un._tid = os_task_gettid();
-#endif
-	if (timer_create(CLOCK_MONOTONIC, &evp, &os_timerid) == -1)
+	if (timer_create(CLOCK_MONOTONIC, &evp, &_global_timer.os_timerid) == -1)
 	{
 		return ERROR;
 	}
-#ifndef OS_SIGNAL_SIGWAIT
 	os_register_signal(SIGUSR2, os_time_interrupt);
-#endif
 //	os_register_signal(SIGALRM, os_time_interrupt);
-
 	//signal(SIGUSR2, os_time_interrupt);
 	return OK;
-}
-#endif /* OS_TIMER_POSIX */
-
-static int os_time_interval_update(os_time_t *t)
-{
-//#ifdef OS_TIMER_POSIX
-	t->interrupt_timestamp = os_get_monotonic_msec () + t->msec;
-/*	t->interval.tv_sec += t->msec/TIMER_MSEC_MICRO;
-	t->interval.tv_usec += (t->msec%TIMER_MSEC_MICRO)*TIMER_MSEC_MICRO;
-	os_timeval_adjust(t->interval);*/
-//#endif
-	return OK;
-}
-
-static zpl_ulong os_time_interrupt_interval_get(os_time_t *t)
-{
-	return (t->interrupt_timestamp - os_get_monotonic_msec ());
-/*	struct timeval current_tv;
-	os_timer_timeval (&current_tv);
-	current_tv = os_timeval_subtract (t->interval, current_tv);
-	return (((current_tv.tv_sec) * TIMER_SECOND_MICRO)
-		  + (current_tv.tv_usec))/TIMER_MSEC_MICRO;*/
 }
 
 static int os_time_interrupt_setting(zpl_uint32 msec)
@@ -854,7 +825,6 @@ static int os_time_interrupt_setting(zpl_uint32 msec)
 	tick.it_interval.tv_sec = 0;
 	tick.it_interval.tv_nsec = 0;
 
-
 	if(tick.it_value.tv_sec == 0 && tick.it_value.tv_nsec <= TIMER_MSEC(1))
 	{
 		tick.it_value.tv_nsec = TIMER_MSEC(1) * 1000000;
@@ -864,40 +834,55 @@ static int os_time_interrupt_setting(zpl_uint32 msec)
 	//		(tick.it_value.tv_nsec)/1000000);
 	//zlog_debug(MODULE_NSM, "%s time=%u.%u", __func__,tick.it_value.tv_sec, tick.it_value.tv_usec/1000);
 #endif
-#ifndef OS_SIGNAL_SIGWAIT
-	timer_connect(0, NULL);
-#endif
-//	OS_DEBUG("%s:%d.%d sec\r\n",__func__, tick.it_value.tv_sec, tick.it_value.tv_usec/TIMER_MSEC_MICRO);
-	//After first, the Interval time for clock
 
-	if(os_timerid)
-		timer_settime(os_timerid, 0, &tick, NULL);
+	timer_connect(0, NULL);
+
+	if(_global_timer.os_timerid)
+		timer_settime(_global_timer.os_timerid, 0, &tick, NULL);
+	return OK;
+}
+#endif /* OS_TIMER_POSIX */
+
+static int os_time_interval_update(os_time_t *t)
+{
+	t->interrupt_timestamp = os_get_monotonic_msec () + t->msec;
 	return OK;
 }
 
-
-static int os_time_interval_refresh(void)
+static zpl_ulong os_time_interrupt_interval_get(os_time_t *t)
 {
-#ifdef OS_TIMER_POSIX
-	os_time_t *to = NULL;
-	to = (os_time_t *)lstFirst(time_list);
-	//if(to == current_time)
+	return (t->interrupt_timestamp - os_get_monotonic_msec ());
+/*	struct timeval current_tv;
+	os_timer_timeval (&current_tv);
+	current_tv = os_timeval_subtract (t->interval, current_tv);
+	return (((current_tv.tv_sec) * TIMER_SECOND_MICRO)
+		  + (current_tv.tv_usec))/TIMER_MSEC_MICRO;*/
+}
+
+
+static zpl_ulong os_time_interval_refresh(void)
+{
+
+	os_time_t *frist_time = NULL;
+	frist_time = (os_time_t *)lstFirst(_global_timer.time_list);
+	//if(to == _global_timer.current_time)
 	//	return OK;
 	//else
 	{
-		current_time = to;
 		//struct timeval now;
 		//os_timer_timeval(&now);
-		if(current_time)
+		if(frist_time)
 		{
-			u_long inter_time = os_time_interrupt_interval_get(current_time);
+			zpl_ulong inter_time = os_time_interrupt_interval_get(frist_time);
+			#ifdef OS_TIMER_POSIX
 			if(inter_time > 0)
-				os_time_interrupt_setting(inter_time/*current_time->msec*/);
+				os_time_interrupt_setting(inter_time/*_global_timer.current_time->msec*/);
 			else
-				os_time_interrupt_setting(current_time->msec);
+				os_time_interrupt_setting(frist_time->msec);
+			#endif
+			return inter_time;
 		}
 	}
-#endif
 	return OK;
 }
 
@@ -908,14 +893,13 @@ zpl_uint32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 	os_time_t * t = os_time_entry_create(type, time_entry, pVoid,  msec, func_name);
 	if(t)
 	{
-		if(time_mutex)
-			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+		if(_global_timer.time_mutex)
+			os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
 
-		//os_timer_timeval(&t->interval);
 		os_time_interval_update(t);
 		t->state = OS_TIMER_TRUE;
 		t->lstid = OS_TIMER_READY;
-		lstAddSort(time_list, (NODE *)t);
+		lstAddSort(_global_timer.time_list, (NODE *)t);
 
 		os_time_interval_refresh();
 
@@ -923,8 +907,8 @@ zpl_uint32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 	zlog_debug(MODULE_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, func_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
 			(t->interrupt_timestamp)%TIMER_MSEC_MICRO);
 #endif
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
+		if(_global_timer.time_mutex)
+			os_mutex_unlock(_global_timer.time_mutex);
 		return t->t_id;
 	}
 	return (zpl_uint32)0;
@@ -934,7 +918,7 @@ static os_time_t *os_time_lookup_raw(zpl_uint32 id)
 {
 	NODE node;
 	os_time_t *t = NULL;
-	for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+	for(t = (os_time_t *)lstFirst(_global_timer.time_list); t != NULL; t = (os_time_t *)lstNext(&node))
 	{
 		node = t->node;
 		if(t && t->t_id > 0 && t->t_id == id && t->state != OS_TIMER_FALSE)
@@ -944,7 +928,7 @@ static os_time_t *os_time_lookup_raw(zpl_uint32 id)
 	}
 	if(!t)
 	{
-		for(t = (os_time_t *)lstFirst(time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		for(t = (os_time_t *)lstFirst(_global_timer.time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
 		{
 			node = t->node;
 			if(t && t->t_id > 0 && t->t_id == id && t->state != OS_TIMER_FALSE)
@@ -959,11 +943,11 @@ static os_time_t *os_time_lookup_raw(zpl_uint32 id)
 os_time_t *os_time_lookup(zpl_uint32 id)
 {
 	os_time_t *t = NULL;
-	if(time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	if(_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
 	t = os_time_lookup_raw(id);
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
+	if(_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return t;
 }
 
@@ -971,67 +955,67 @@ os_time_t *os_time_lookup(zpl_uint32 id)
 int os_time_destroy(zpl_uint32 id)
 {
 	os_time_t *t = NULL;
-	if(time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	if(_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
 	t = os_time_lookup_raw(id);
 	if(t)
 	{
 		if(t->lstid == OS_TIMER_READY)
 		{
-			lstDelete (time_list, (NODE *)t);
-			lstAdd(time_unuse_list, (NODE *)t);
+			lstDelete (_global_timer.time_list, (NODE *)t);
+			lstAdd(_global_timer.time_unuse_list, (NODE *)t);
 			t->lstid = OS_TIMER_UNUSE;
 		}
 		t->state = OS_TIMER_FALSE;
 		//zlog_debug(MODULE_DEFAULT, "=========================%s:%s", __func__, t->entry_name);
 		t->t_id = 0;
 		os_time_interval_refresh();
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
+		if(_global_timer.time_mutex)
+			os_mutex_unlock(_global_timer.time_mutex);
 		return OK;
 	}
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
+	if(_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return ERROR;
 }
 
 int os_time_cancel(zpl_uint32 id)
 {
 	os_time_t *t = NULL;
-	if(time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	if(_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
 	t = os_time_lookup_raw(id);
 	if(t)
 	{
 		if(t->lstid == OS_TIMER_READY)
 		{
-			lstDelete (time_list, (NODE *)t);
-			lstAdd(time_unuse_list, (NODE *)t);
+			lstDelete (_global_timer.time_list, (NODE *)t);
+			lstAdd(_global_timer.time_unuse_list, (NODE *)t);
 			t->lstid = OS_TIMER_UNUSE;
 		}
 		t->state = OS_TIMER_CANCEL;
 		os_time_interval_refresh();
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
+		if(_global_timer.time_mutex)
+			os_mutex_unlock(_global_timer.time_mutex);
 		return OK;
 	}
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
+	if(_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return ERROR;
 }
 
 int os_time_restart(zpl_uint32 id, zpl_uint32 msec)
 {
 	os_time_t *t = NULL;
-	if(time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+	if(_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
 	t = os_time_lookup_raw(id);
 	if(t)
 	{
 		if(t->lstid == OS_TIMER_READY)
 		{
-			lstDelete (time_list, (NODE *)t);
-			lstAdd(time_unuse_list, (NODE *)t);
+			lstDelete (_global_timer.time_list, (NODE *)t);
+			//lstAdd(_global_timer.time_unuse_list, (NODE *)t);
 			t->lstid = OS_TIMER_UNUSE;
 		}
 		t->msec = msec;
@@ -1042,15 +1026,15 @@ int os_time_restart(zpl_uint32 id, zpl_uint32 msec)
 #endif
 		t->state = OS_TIMER_TRUE;
 		t->lstid = OS_TIMER_READY;
-		lstAddSort(time_list, (NODE *)t);
+		lstAddSort(_global_timer.time_list, (NODE *)t);
 
 		os_time_interval_refresh();
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
+		if(_global_timer.time_mutex)
+			os_mutex_unlock(_global_timer.time_mutex);
 		return OK;
 	}
-	if(time_mutex)
-		os_mutex_unlock(time_mutex);
+	if(_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return ERROR;
 }
 
@@ -1061,15 +1045,15 @@ int os_time_show(int (*show)(void *, zpl_char *fmt,...), void *pVoid)
 	NODE *node = NULL;
 	os_time_t *t = NULL;
 	zpl_uint32 timestamp = os_get_monotonic_msec ();
-	if (time_mutex)
-		os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
-	if(lstCount(time_list) && show )
+	if (_global_timer.time_mutex)
+		os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
+	if(lstCount(_global_timer.time_list) && show )
 	{
 		(show)(pVoid, "%-4s %-8s %-8s %-8s %s %s", "----", "--------", "----------", "----------", "----------------", "\r\n");
 		(show)(pVoid, "%-4s %-8s %-8s %-8s %s %s", "ID", "TYPE", "DELAY","INTERVAL", "NAME", "\r\n");
 		(show)(pVoid, "%-4s %-8s %-8s %-8s %s %s", "----", "--------", "----------", "----------", "----------------", "\r\n");
 	}
-	for (node = lstFirst(time_list); node != NULL; node = lstNext(node))
+	for (node = lstFirst(_global_timer.time_list); node != NULL; node = lstNext(node))
 	{
 		t = (os_time_t *) node;
 		if (node && show)
@@ -1078,8 +1062,8 @@ int os_time_show(int (*show)(void *, zpl_char *fmt,...), void *pVoid)
 					t->interrupt_timestamp - timestamp, t->msec, t->entry_name, "\r\n");
 		}
 	}
-	if (time_mutex)
-		os_mutex_unlock(time_mutex);
+	if (_global_timer.time_mutex)
+		os_mutex_unlock(_global_timer.time_mutex);
 	return OK;
 }
 
@@ -1087,105 +1071,88 @@ static int os_time_task(void *p)
 {
 	NODE node;
 	os_time_t *t;
+	LIST tmplist;
 	zpl_uint32 interrupt_timestamp = 0;
-#ifdef OS_SIGNAL_SIGWAIT
-	zpl_uint32 signum = 0, err = 0;
-#else
+
 	zpl_uint32 signo_tbl[] = {SIGUSR2};
 	os_task_sigexecute(1, signo_tbl);
-#endif
+	lstInit(&tmplist);
+	tmplist.free = free;
 	os_sleep(5);
 	///host_waitting_loadconfig();
-#ifdef OS_SIGNAL_SIGWAIT
-	zpl_uint32 signo_tbl[] = {SIGUSR2};
-	os_task_sigexecute(1, signo_tbl);
-	timer_connect(0, NULL);
-#endif
 	while(OS_TASK_TRUE())
 	{
-#ifdef OS_SIGNAL_SIGWAIT
-		err = sigwait(&set, &signum);
-		if(err != 0)
-		{
-			zlog_debug(MODULE_DEFAULT, "=========================%s:%s(SIGUSR2=%d, signum=%d)",
-					__func__, strerror(ipstack_errno),SIGUSR2, signum);
-			continue;
-		}
-		zlog_debug(MODULE_DEFAULT, "=========================%s SIGUSR2=%d, signum=%d",
-				__func__, SIGUSR2, signum);
-		current_time = NULL;
-#else
-		os_sem_take(time_sem, OS_WAIT_FOREVER);
-#endif
-		if(time_mutex)
-			os_mutex_lock(time_mutex, OS_WAIT_FOREVER);
+		os_sem_take(_global_timer.time_sem, OS_WAIT_FOREVER);
+		if(_global_timer.time_mutex)
+			os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
 
 		interrupt_timestamp = os_get_monotonic_msec ();
 
-		for(t = (os_time_t *)lstFirst(time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		for(t = (os_time_t *)lstFirst(_global_timer.time_list); t != NULL; t = (os_time_t *)lstNext(&node))
+		{
+			node = t->node;
+			if(t && t->state == OS_TIMER_TRUE && interrupt_timestamp >= t->interrupt_timestamp)
+			{
+				lstDelete (_global_timer.time_list, (NODE *)t);
+				lstAdd(&tmplist, (NODE *)t);
+			}
+		}
+
+		for(t = (os_time_t *)lstFirst(&tmplist); t != NULL; t = (os_time_t *)lstNext(&node))
 		{
 			node = t->node;
 			if(t && t->state == OS_TIMER_TRUE)
 			{
-				if(interrupt_timestamp >= t->interrupt_timestamp)
+				if(t->type == OS_TIMER_ONCE)
 				{
+					t->msec = OS_TIMER_FOREVER;
+					t->state = OS_TIMER_FALSE;
+					t->t_id = 0;
+
+					lstDelete (&tmplist, (NODE *)t);
+#ifdef OS_TIMER_DEBUG
+					zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
+#endif
+					if(_global_timer.time_mutex)
+						os_mutex_unlock(_global_timer.time_mutex);
 					if(t->time_entry)
 					{
+						_global_timer.current_time = t;
 						(t->time_entry)(t->pVoid);
+						_global_timer.current_time = NULL;
 					}
-					if(t->type == OS_TIMER_ONCE)
-					{
-						t->msec = OS_TIMER_FOREVER;
-						t->state = OS_TIMER_FALSE;
-						t->t_id = 0;
-
-						lstDelete (time_list, (NODE *)t);
-#ifdef OS_TIMER_DEBUG
-						zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
-#endif
-						t->lstid = OS_TIMER_UNUSE;
-						lstAdd(time_unuse_list, (NODE *)t);
-					}
-					else
-					{
-						os_time_interval_update(t);
-						lstDelete (time_list, (NODE *)t);
-#ifdef OS_TIMER_DEBUG
-						zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
-#endif
-						t->lstid = OS_TIMER_UNUSE;
-						lstAdd(time_unuse_list, (NODE *)t);
-						//lstAddSort(time_list, (NODE *)t);
-					}
+					if(_global_timer.time_mutex)
+						os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
+					t->lstid = OS_TIMER_UNUSE;
+					lstAdd(_global_timer.time_unuse_list, (NODE *)t);
 				}
 				else
 				{
-
-				}
-			}
-		}
-		//
-		for(t = (os_time_t *)lstFirst(time_unuse_list); t != NULL; t = (os_time_t *)lstNext(&node))
-		{
-			node = t->node;
-			if(t && t->state == OS_TIMER_TRUE)
-			{
-				if(t->type != OS_TIMER_ONCE)
-				{
-					lstDelete (time_unuse_list, (NODE *)t);
+					lstDelete (&tmplist, (NODE *)t);
 #ifdef OS_TIMER_DEBUG
-					zlog_debug(MODULE_DEFAULT, "%s resetting '%s'\r\n", __func__, t->entry_name);
+					zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
 #endif
-					t->lstid = OS_TIMER_READY;
-					lstAddSort(time_list, (NODE *)t);
+					if(_global_timer.time_mutex)
+						os_mutex_unlock(_global_timer.time_mutex);
+					if(t->time_entry)
+					{
+						_global_timer.current_time = t;
+						(t->time_entry)(t->pVoid);
+						_global_timer.current_time = NULL;
+					}
+					if(_global_timer.time_mutex)
+						os_mutex_lock(_global_timer.time_mutex, OS_WAIT_FOREVER);
+					os_time_interval_update(t);
+					lstAddSort(_global_timer.time_list, (NODE *)t);
 				}
 			}
 		}
 		os_time_interval_refresh();
 
-		if(time_mutex)
-			os_mutex_unlock(time_mutex);
+		if(_global_timer.time_mutex)
+			os_mutex_unlock(_global_timer.time_mutex);
 	}
+	lstFree(&tmplist);
 	return 0;
 }
 

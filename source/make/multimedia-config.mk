@@ -32,18 +32,23 @@ ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBORTP_ROOT)/src
 ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBORTP_ROOT)/playload
 ZPL_DEFINE += -DZPL_LIBORTP_MODULE
 #ZPL_LDLIBS += -L/home/zhurish/workspace/working/zpl-source/source/multimedia/ortp-5.0/include/lib -lbcunit  -lbctoolbox
+
+#ifneq ($(strip $(ZPL_MEDIASTREAM_MODULE)),true)
+#endif
 endif
+
 ifeq ($(strip $(ZPL_MEDIASTREAM_MODULE)),true)
 MEDIASTREAM_ROOT=$(MULTIMEDIA_DIR)/mediastreamer2
 ZPLPRODS_LAST += $(ZPLBASE)/$(MEDIASTREAM_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(MEDIASTREAM_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/include
 ZPL_INCLUDE += -I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src
-ZPL_DEFINE += -DZPL_MEDIASTREAM_MODULE -D__ALSA_ENABLED__
-ZPL_LDLIBS += -lasound -lavcodec  -lavutil -lswscale
+ZPL_DEFINE += -DZPL_MEDIASTREAM_MODULE
+ZPL_LDLIBS += -lasound 
+
 
 ZPLEX_CFLAGS += -Wno-error=missing-prototypes -Wno-error=redundant-decls -DHAVE_CONFIG_H -DMS2_INTERNAL \
-	 -DVIDEO_ENABLED -DMS2_FILTERS -DORTP_TIMESTAMP -DNO_FFMPEG
+	 -DVIDEO_ENABLED -DMS2_FILTERS -DORTP_TIMESTAMP
 
 ZPLEX_INCLUDE	+=   \
 	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/include/ \
@@ -56,14 +61,19 @@ ZPLEX_INCLUDE	+=   \
 	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/audiofilters \
 	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/otherfilters \
 	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/videofilters \
-	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/tools -I/usr/include/ffmpeg
+	-I$(ZPLBASE)/$(MEDIASTREAM_ROOT)/src/tools 
 
 ifeq ($(strip $(ZPL_MEDIASTREAM_V4L2)),true)
-ZPL_DEFINE += -DZPL_MEDIASTREAM_V4L2
+ZPL_DEFINE += -DZPL_MEDIASTREAM_V4L2 
 endif
 
 ifeq ($(strip $(ZPL_MEDIASTREAM_ALSA)),true)
-ZPL_DEFINE += -DZPL_MEDIASTREAM_ALSA
+ZPL_DEFINE += -DZPL_MEDIASTREAM_ALSA  -D__ALSA_ENABLED__
+#__PORTAUDIO_ENABLED__
+#__PULSEAUDIO_ENABLED__
+endif
+ifeq ($(strip $(ZPL_MEDIASTREAM_SPEEX)),true)
+ZPL_DEFINE += -DZPL_MEDIASTREAM_SPEEX
 endif
 
 ifeq ($(strip $(ZPL_MEDIASTREAM_SRTP)),true)
@@ -76,10 +86,6 @@ endif
 
 ifeq ($(strip $(ZPL_MEDIASTREAM_ZRTP)),true)
 ZPL_DEFINE += -DZPL_MEDIASTREAM_ZRTP
-endif
-
-ifeq ($(strip $(ZPL_MEDIASTREAM_FFMPEG)),true)
-ZPL_DEFINE += -DZPL_MEDIASTREAM_FFMPEG
 endif
 
 ifeq ($(strip $(ZPL_MEDIASTREAM_OPENH264)),true)
@@ -99,6 +105,7 @@ ZPLPRODS_LAST += $(ZPLBASE)/$(JRTPLIB_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(JRTPLIB_ROOT)/include
 ZPL_INCLUDE += -I$(ZPLBASE)/$(JRTPLIB_ROOT)/src
 ZPL_INCLUDE += -I$(ZPLBASE)/$(JRTPLIB_ROOT)/c-layer
+ZPL_INCLUDE += -I$(ZPLBASE)/$(JRTPLIB_ROOT)/c-layer/h26x
 ZPL_DEFINE += -DZPL_JRTPLIB_MODULE
 endif
 #endif
@@ -202,6 +209,14 @@ ZPLM_CFLAGS += -DSENSOR1_TYPE=$(SENSOR1_TYPE)
 endif #ZPL_BUILD_ARCH
 endif #ZPL_HISIMPP_MODULE
 
+ZPL_DEFINE += -DZPL_PIPELINE_MODULE
+PIPELINE_ROOT=$(MULTIMEDIA_DIR)/pipeline
+ZPLPRODS_LAST += $(ZPLBASE)/$(PIPELINE_ROOT)
+ZPL_INCLUDE += -I$(ZPLBASE)/$(PIPELINE_ROOT)/include
+ZPL_INCLUDE += -I$(ZPLBASE)/$(PIPELINE_ROOT)/src
+
+ZPLEX_CFLAGS += -DVIDEO_ENABLED -DORTP_TIMESTAMP -Wno-error=missing-prototypes -Wno-error=redundant-decls
+
 endif #ZPL_LIBMEDIA_MODULE
 
 
@@ -230,7 +245,63 @@ ZPLEX_DIR += $(ZPLBASE)/$(FFMPEG_ROOT)
 ZPL_DEFINE += -DZPL_FFMPEG_MODULE
 endif
 
+#ifeq ($(strip $(ZPL_FFMPEG_MODULE)),true)
+PJPROJ_ROOT=$(MULTIMEDIA_DIR)/pjproject
+ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjlib
+ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjlib-util
+ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjmedia
+ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjnath
+ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjsip
+ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/third_party
+#ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjsip-apps
+ZPL_INCLUDE	+=   \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjlib/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjlib-util/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjmedia/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjnath/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjsip/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/g7221/common \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/g7221/decode \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/g7221/encode \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/gsm/inc \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/ilbc \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/resample/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/resample/src \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/speex/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/speex/libspeex \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/srtp/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/srtp/crypto/include \
+	-I$(ZPLBASE)/$(PJPROJ_ROOT)/third_party/yuv/include
+#	
+#	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjsip-apps/include
 
+
+ZPL_DEFINE += -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC -Wno-error=redundant-decls
+ZPL_DEFINE += -DPJSIP_ALLOW_PORT_IN_FROMTO_HDR=1 -fPIC -DPJ_OS_NAME=\"linux\" \
+	-Wno-error=int-conversion -Wno-error=type-limits -Wno-error=unused-label \
+	-DPJ_LINUX_ZPLMEDIA -DPJ_CONFIG_ANDROID=0 -DPJMEDIA_HAS_VIDEO=1 -DHAVE_CONFIG_H -DOPENSSL \
+	-DSASR -DWAV49 -DNeedFunctionPrototypes=1 -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1 \
+	-DPJMEDIA_VIDEO_DEV_HAS_V4L2=1 -Wno-error=unused-variable -Wno-error=unused-const-variable \
+	-Wno-error=unused-function -Wno-error=overlength-strings -Wno-error=unused-value -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1
+
+ZPL_LDLIBS += -lasound -lv4l2 -lssl -lcrypto
+
+
+
+ifeq ($(strip $(ZPL_PJSIP_MODULE)),true)
+PJSIP_ROOT=$(COMPONENT_DIR)/pjsip
+ZPLPRODS += $(ZPLBASE)/$(PJSIP_ROOT)
+ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)
+ZPL_DEFINE += -DZPL_PJSIP_MODULE
+ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)/apps
+#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
+#ZPL_LDLIBS += -lpjbase -lpjlib-util -lpjsip 
+ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
+ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)/pjsua2
+#ZPL_LDLIBS += -lpjsua2
+endif
+endif
 
 endif # ZPL_MULTIMEDIA_MODULE
 

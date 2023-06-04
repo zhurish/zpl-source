@@ -11,7 +11,6 @@
 #include "vty_include.h"
 
 #include "pjsua_app_common.h"
-#include "pjsua_app_config.h"
 #include "pjsua_app.h"
 #include "pjsip_app_api.h"
 #include "pjsip_main.h"
@@ -33,14 +32,14 @@ int pl_pjsip_source_change(struct interface *ifp, zpl_bool change)
 				memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
 				strcpy(pl_pjsip->sip_local.sip_address, inet_address(address));
 				pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
-				//pl_pjsip_bound_address(&app_config, pl_pjsip->sip_local.sip_address);
+				//pl_pjsip_bound_address(&_global_config, pl_pjsip->sip_local.sip_address);
 			}
-			pjsua_app_restart();
+			//pjsua_app_restart(&app_config);
 		}
 		else
 		{
 			memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
-			//pl_pjsip_bound_address(&app_config, pl_pjsip->sip_local.sip_address);
+			//pl_pjsip_bound_address(&_global_config, pl_pjsip->sip_local.sip_address);
 		}
 	}
 	return OK;
@@ -66,7 +65,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 
 	sip->dtmf = PJSIP_DTMF_DEFAULT;
 	sip->proto = PJSIP_PROTO_DEFAULT;
-	sip->pjsip = &app_config;
+	sip->pjsip = &_global_config;
 /*
 	int (*app_dtmf_cb)(int , int);
 	void				*mutex;
@@ -217,34 +216,34 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	pl_pjsip_codec_default_set_api("pcmu");
 	pl_pjsip_codec_add_api("pcmu");
 	pl_pjsip_codec_add_api("pcma");
-	pl_pjsip_codec_add_api("gsm");
-	pl_pjsip_codec_add_api("g722");
-	pl_pjsip_discodec_add_api("speex-nb");
-	pl_pjsip_discodec_add_api("speex-wb");
+	//pl_pjsip_codec_add_api("gsm");
+	//pl_pjsip_codec_add_api("g722");
+	//pl_pjsip_discodec_add_api("speex-nb");
+	//pl_pjsip_discodec_add_api("speex-wb");
 	pl_pjsip_discodec_add_api("ilbc");
 
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	strcpy(sip->sip_user.sip_user, "100");
 	strcpy(sip->sip_user.sip_password, "100");
-	strcpy(sip->sip_server.sip_address, "192.168.0.103");
+	strcpy(sip->sip_server.sip_address, "192.168.0.1");
 
-	strcpy(sip->sip_local.sip_address, "192.168.0.102");
+	strcpy(sip->sip_local.sip_address, "192.168.0.103");
 	sip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
 #endif
 
 	sip->debug_level = ZLOG_LEVEL_ERR;
 	sip->debug_detail = zpl_false;
 /*
-	pl_pjsip_username(&app_config, "100");//Set authentication username
-	pl_pjsip_password(&app_config, "100");//Set authentication password
-	pl_pjsip_registrar(&app_config, "sip:192.168.224.1");//Set the URL of registrar server
-	pl_pjsip_url_id(&app_config, "sip:100@192.168.224.1");//Set the URL of local ID (used in From header)
+	pl_pjsip_username(&_global_config, "100");//Set authentication username
+	pl_pjsip_password(&_global_config, "100");//Set authentication password
+	pl_pjsip_registrar(&_global_config, "sip:192.168.224.1");//Set the URL of registrar server
+	pl_pjsip_url_id(&_global_config, "sip:100@192.168.224.1");//Set the URL of local ID (used in From header)
 */
 	return OK;
 }
-
+#if 0
 #include "pjsip_jsoncfg.h"
-#include "pjsip_cfg.h"
+
 //handle SIGUSR2 nostop noprint
 int pl_pjsip_json_test(void)
 {
@@ -265,6 +264,7 @@ int pl_pjsip_json_test(void)
 	printf("lllllllllllllllllllllllllllllllllllllllllllllll :%d \r\n", pj_config_tmp.table_cnt);
 	return 0;
 }
+#endif
 int pl_pjsip_module_init(void)
 {
 	if(pl_pjsip == NULL)
@@ -3108,7 +3108,7 @@ int pl_pjsip_debug_level_set_api(zpl_uint32 level)
 		break;
 	}
 	pl_pjsip->debug_level = level;
-	pl_pjsip_log_level(&app_config, inlevel);
+	pl_pjsip_log_level(&_global_config.app_config, inlevel);
 	return OK;
 }
 
@@ -3466,18 +3466,6 @@ int pl_pjsip_dis_payload_name_del_api(char * value)
 int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass, pjsua_acc_id *accid)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	//acc add sip:102@192.168.0.103 sip:192.168.0.103 * 102 102
-	snprintf(cmd, sizeof(cmd), "acc add sip:%s@%s sip:%s %s %s %s",
-			user, sip_url, sip_srv,
-			realm, user, pass);
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
     pjsua_acc_config acc_cfg;
     pj_status_t status;
 	char cmd[128], tmp[128];
@@ -3495,7 +3483,7 @@ int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
     acc_cfg.cred_info[0].data_type = 0;
     acc_cfg.cred_info[0].data = pj_str(pass);
 
-    acc_cfg.rtp_cfg = app_config.rtp_cfg;
+    acc_cfg.rtp_cfg = _global_config.app_config.rtp_cfg;
     app_config_init_video(&acc_cfg);
 
     status = pjsua_acc_add(&acc_cfg, PJ_TRUE, NULL);
@@ -3503,22 +3491,10 @@ int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
     	return ERROR;
     }
     return OK;
-#endif
-	return ERROR;
 }
 
 int pl_pjsip_app_del_acc(pjsua_acc_id accid)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	//acc del 1
-	snprintf(cmd, sizeof(cmd), "acc del %d",accid);
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
     pj_status_t status;
     if (!pjsua_acc_is_valid(accid))
     {
@@ -3528,43 +3504,17 @@ int pl_pjsip_app_del_acc(pjsua_acc_id accid)
     if (status != PJ_SUCCESS) {
     	return ERROR;
     }
-#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	//acc mod 0 sip:100@192.168.0.103 sip:192.168.0.103 * 100 100
-	snprintf(cmd, sizeof(cmd), "acc mod %d sip:%s@%s sip:%s %s %s %s",
-			accid, user, sip_url, sip_srv,
-			realm, user, pass);
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
-#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_select_acc(pjsua_acc_id accid, zpl_uint32 type)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	if(type == 1)
-		snprintf(cmd, sizeof(cmd), "acc next %d", accid);
-	else
-		snprintf(cmd, sizeof(cmd), "acc prev %d", accid);
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
     pj_status_t status;
     if (pjsua_acc_is_valid(accid))
     {
@@ -3575,41 +3525,17 @@ int pl_pjsip_app_select_acc(pjsua_acc_id accid, zpl_uint32 type)
         return OK;
     }
     return ERROR;
-#endif
-	return ERROR;
 }
 
 int pl_pjsip_app_reg_acc(zpl_bool reg)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	if(reg)
-		snprintf(cmd, sizeof(cmd), "acc reg");
-	else
-		snprintf(cmd, sizeof(cmd), "acc unreg");
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
 	if(pjsua_acc_is_valid(current_acc))
 		return pjsua_acc_set_registration(current_acc, reg);
-#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_list_acc(pjsua_acc_id accid)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	snprintf(cmd, sizeof(cmd), "acc show");
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
 	pjsua_acc_id acc_ids[16];
 	zpl_uint32 count = PJ_ARRAY_SIZE(acc_ids);
 	zpl_uint32 i;
@@ -3624,8 +3550,8 @@ int pl_pjsip_app_list_acc(pjsua_acc_id accid)
 
 		pjsua_acc_get_info (acc_ids[i], &info);
 
-		if (app_config.cbtbl.cli_account_state_get)
-			(app_config.cbtbl.cli_account_state_get) (acc_ids[i], &info);
+		if (_global_config.app_config.cbtbl.cli_account_state_get)
+			(_global_config.app_config.cbtbl.cli_account_state_get) (acc_ids[i], &info);
 
 		if (!info.has_registration)
 		{
@@ -3657,16 +3583,13 @@ int pl_pjsip_app_list_acc(pjsua_acc_id accid)
 		//pj_cli_sess_write_msg (cval->sess, out_str, pj_ansi_strlen (out_str));
 	}
 	return PJ_SUCCESS;
-#endif
-	return ERROR;
 }
 
 
 int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid)
 {
-#ifndef ZPL_PJSIP_CALL_SHELL
+
 	pj_str_t call_uri_arg;
-#endif
 	char cmd[512];
 	memset(cmd, '\0', sizeof(cmd));
 	if(!pl_pjsip)
@@ -3679,16 +3602,6 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 			pl_pjsip->sip_user.register_svr &&
 			strlen(pl_pjsip->sip_user.register_svr->sip_address))
 	{
-#ifdef ZPL_PJSIP_CALL_SHELL
-		if(pl_pjsip->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
-			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s",
-					num, pl_pjsip->sip_user.register_svr->sip_address);
-		else
-			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s:%d",
-					num,
-					pl_pjsip->sip_user.register_svr->sip_address,
-					pl_pjsip->sip_user.register_svr->sip_port);
-#else
 		if(pl_pjsip->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
 			snprintf(cmd, sizeof(cmd), "sip:%s@%s",
 					num, pl_pjsip->sip_user.register_svr->sip_address);
@@ -3697,22 +3610,11 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 					num,
 					pl_pjsip->sip_user.register_svr->sip_address,
 					pl_pjsip->sip_user.register_svr->sip_port);
-#endif
 	}
 	else if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
 			pl_pjsip->sip_user_sec.register_svr &&
 			strlen(pl_pjsip->sip_user_sec.register_svr->sip_address))
 	{
-#ifdef ZPL_PJSIP_CALL_SHELL
-		if(pl_pjsip->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
-			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s",
-					num, pl_pjsip->sip_user_sec.register_svr->sip_address);
-		else
-			snprintf(cmd, sizeof(cmd), "call new sip:%s@%s:%d",
-					num,
-					pl_pjsip->sip_user_sec.register_svr->sip_address,
-					pl_pjsip->sip_user_sec.register_svr->sip_port);
-#else
 		if(pl_pjsip->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
 			snprintf(cmd, sizeof(cmd), "sip:%s@%s",
 					num, pl_pjsip->sip_user_sec.register_svr->sip_address);
@@ -3721,7 +3623,6 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 					num,
 					pl_pjsip->sip_user_sec.register_svr->sip_address,
 					pl_pjsip->sip_user_sec.register_svr->sip_port);
-#endif
 	}
 	else
 	{
@@ -3731,35 +3632,26 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 	}
 	if(pl_pjsip->mutex)
 		os_mutex_unlock(pl_pjsip->mutex);
-	if(app_config.current_call != PJSUA_INVALID_ID)
+	if(_global_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
 	//zlog_debug(MODULE_VOIP, "========%s->voip_volume_control_api", __func__);
 	//voip_volume_control_api(zpl_true);
 	//zlog_debug(MODULE_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
 
-#ifndef ZPL_PJSIP_CALL_SHELL
 	//char *pj_call_str = (char *)(cmd + 9);
 	call_uri_arg = pj_str(cmd);
 	//call_uri_arg = pj_str("sip:1003@192.168.3.254");
-/*	pjsua_call_setting_default(&app_config.call_opt);
-	app_config.call_opt.aud_cnt = app_config.aud_cnt;
-	app_config.call_opt.vid_cnt = app_config.vid.vid_cnt;*/
+/*	pjsua_call_setting_default(&_global_config._global_config.call_opt);
+	_global_config.app_config.app_cfg.call_opt.aud_cnt = _global_config.app_config.app_cfg.aud_cnt;
+	_global_config.app_config.app_cfg.call_opt.vid_cnt = _global_config.app_config.app_cfg.vid.vid_cnt;*/
 	if(pjsua_call_make_call(current_acc/*current_acc*/, &call_uri_arg,
-				NULL/*&app_config.call_opt*/, NULL, NULL, &app_config.current_call) == PJ_SUCCESS)
+				NULL/*&_global_config.app_config.app_cfg.call_opt*/, NULL, NULL, &_global_config.current_call) == PJ_SUCCESS)
 	{
 		if(callid)
-			*callid = app_config.current_call;
+			*callid = _global_config.current_call;
 		//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
 		return OK;
 	}
-#else
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		if(callid)
-			*callid = app_config.current_call;
-		return OK;
-	}
-#endif
 /*
  * handle SIGUSR2 nostop noprint
 */
@@ -3770,20 +3662,7 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 
 int pl_pjsip_app_stop_call(pjsua_call_id callid, zpl_bool all)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	snprintf(cmd, sizeof(cmd), "call hangup");
-	if(app_config.current_call == PJSUA_INVALID_ID)
-		return ERROR;
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		fprintf(stdout, "===========%s=======%s(current_call=%d)\r\n",__FILE__, __func__, app_config.current_call);
-		voip_volume_control_api(zpl_false);
-		return OK;
-	}
-#else
-    if (app_config.current_call == PJSUA_INVALID_ID)
+    if (_global_config.current_call == PJSUA_INVALID_ID)
     {
     	return ERROR;
     }
@@ -3801,7 +3680,7 @@ int pl_pjsip_app_stop_call(pjsua_call_id callid, zpl_bool all)
 			if(callid == PJSUA_INVALID_ID)
 				ret = pjsua_call_hangup(callid, 0, NULL, NULL);
 			else
-				ret = pjsua_call_hangup(app_config.current_call, 0, NULL, NULL);
+				ret = pjsua_call_hangup(_global_config.current_call, 0, NULL, NULL);
 			if(ret == PJ_SUCCESS)
 			{
 				//voip_volume_control_api(zpl_false);
@@ -3809,7 +3688,6 @@ int pl_pjsip_app_stop_call(pjsua_call_id callid, zpl_bool all)
 			}
 		}
     }
-#endif
 	//voip_volume_control_api(zpl_false);
 	return ERROR;
 }
@@ -3856,7 +3734,7 @@ int pl_pjsip_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
 	for (i = 0; i < count; ++i)
 	{
 		pj_status_t status;
-		status = pjsua_call_make_call(current_acc, &tmp, &app_config.call_opt,
+		status = pjsua_call_make_call(current_acc, &tmp, &_global_config.app_config.app_cfg.call_opt,
 				NULL, NULL, NULL);
 		if (status != PJ_SUCCESS)
 			break;
@@ -3867,23 +3745,12 @@ int pl_pjsip_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
 /***************************************************************************/
 int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	snprintf(cmd, sizeof(cmd), "call answer 200 sip:%s@192.168.0.102", num);
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		if(callid)
-		*callid = app_config.current_call;
-		return OK;
-	}
-#else
 	pjsua_call_info call_info;
 	if ((st_code < 100) || (st_code > 699))
 		return ERROR;
-	if (app_config.current_call != PJSUA_INVALID_ID)
+	if (_global_config.current_call != PJSUA_INVALID_ID)
 	{
-		pjsua_call_get_info(app_config.current_call, &call_info);
+		pjsua_call_get_info(_global_config.current_call, &call_info);
 	}
 	else
 	{
@@ -3892,7 +3759,7 @@ int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 		call_info.state = PJSIP_INV_STATE_DISCONNECTED;
 	}
 
-	if (app_config.current_call == PJSUA_INVALID_ID
+	if (_global_config.current_call == PJSUA_INVALID_ID
 			|| call_info.role != PJSIP_ROLE_UAS
 			|| call_info.state >= PJSIP_INV_STATE_CONNECTING)
 	{
@@ -3906,7 +3773,7 @@ int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 		pj_str_t hvalue;
 		pjsip_generic_string_hdr hcontact;
 
-		pjsua_msg_data_init(&app_config.msg_data);
+		pjsua_msg_data_init(&_global_config.msg_data);
 
 		if (st_code / 100 == 3)
 		{
@@ -3919,7 +3786,7 @@ int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 			hvalue = pj_str(contact);
 			pjsip_generic_string_hdr_init2(&hcontact, &hname, &hvalue);
 
-			pj_list_push_back(&app_config.msg_data.hdr_list, &hcontact);
+			pj_list_push_back(&_global_config.msg_data.hdr_list, &hcontact);
 		}
 
 		/*
@@ -3927,7 +3794,7 @@ int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 		 * Call may have been disconnected while we're waiting for
 		 * keyboard input.
 		 */
-		if (app_config.current_call == PJSUA_INVALID_ID)
+		if (_global_config.current_call == PJSUA_INVALID_ID)
 		{
 			//static const pj_str_t err_msg =
 			//		{ "Call has been disconnected\n", 28 };
@@ -3935,26 +3802,15 @@ int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 			return ERROR;
 		}
 
-		if (pjsua_call_answer2(app_config.current_call, &app_config.call_opt,
-				st_code, NULL, &app_config.msg_data) == PJ_SUCCESS)
+		if (pjsua_call_answer2(_global_config.current_call, &_global_config.call_opt,
+				st_code, NULL, &_global_config.msg_data) == PJ_SUCCESS)
 			return OK;
 	}
-	return ERROR;
-#endif
 	return ERROR;
 }
 
 int pl_pjsip_app_hold_call(pjsua_call_id callid)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	snprintf(cmd, sizeof(cmd), "call hold");
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
     if (callid != PJSUA_INVALID_ID)
     {
     	if(pjsua_call_set_hold(callid, NULL) == PJ_SUCCESS)
@@ -3966,28 +3822,17 @@ int pl_pjsip_app_hold_call(pjsua_call_id callid)
     	return ERROR;
     }
     return PJ_SUCCESS;
-#endif
-	return ERROR;
 }
 
 int pl_pjsip_app_reinvite_call(pjsua_call_id callid)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	snprintf(cmd, sizeof(cmd), "call reinvite");
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
 	if (callid != PJSUA_INVALID_ID)
 	{
 		/*
 		 * re-INVITE
 		 */
-		app_config.call_opt.flag |= PJSUA_CALL_UNHOLD;
-		if(pjsua_call_reinvite2 (callid, &app_config.call_opt, NULL) == PJ_SUCCESS)
+		_global_config.call_opt.flag |= PJSUA_CALL_UNHOLD;
+		if(pjsua_call_reinvite2 (callid, &_global_config.call_opt, NULL) == PJ_SUCCESS)
 			return OK;
 	}
 	else
@@ -3996,32 +3841,18 @@ int pl_pjsip_app_reinvite_call(pjsua_call_id callid)
 		return ERROR;
 	}
 	return PJ_SUCCESS;
-#endif
-	return ERROR;
 }
 
 int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 code)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	if(type == 1)
-	snprintf(cmd, sizeof(cmd), "call d_2833 %c", code);
-	else
-	snprintf(cmd, sizeof(cmd), "call d_info %c", code);
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
-	if (app_config.current_call == PJSUA_INVALID_ID)
+	if (_global_config.current_call == PJSUA_INVALID_ID)
 	{
 		return ERROR;
 	}
 	if (type == 1)
 	{
 		char body[64];
-		zpl_uint32 call = app_config.current_call;
+		zpl_uint32 call = _global_config.current_call;
 		pj_status_t status;
 		pj_str_t dtmf_digi = pj_str("INFO");
 		memset(body, 0, sizeof(body));
@@ -4030,12 +3861,12 @@ int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 cod
 
 		dtmf_digi = pj_str(body);
 
-		if (!pjsua_call_has_media(app_config.current_call))
+		if (!pjsua_call_has_media(_global_config.current_call))
 		{
 			//PJ_LOG(3, (THIS_FILE, "Media is not established yet!"));
 			return ERROR;
 		}
-		if (call != app_config.current_call)
+		if (call != _global_config.current_call)
 		{
 			//static const pj_str_t err_msg =
 			//		{ "Call has been disconnected\n", 28 };
@@ -4043,7 +3874,7 @@ int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 cod
 			return ERROR;
 		}
 
-		status = pjsua_call_dial_dtmf(app_config.current_call, &dtmf_digi);
+		status = pjsua_call_dial_dtmf(_global_config.current_call, &dtmf_digi);
 		if (status != PJ_SUCCESS)
 		{
 			// pjsua_perror(THIS_FILE, "Unable to send DTMF", status);
@@ -4055,24 +3886,24 @@ int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 cod
 	{
 		char body[64];
 		const pj_str_t SIP_INFO = pj_str("INFO");
-		zpl_uint32 call = app_config.current_call;
+		zpl_uint32 call = _global_config.current_call;
 		pj_status_t status;
 
-		if (call != app_config.current_call)
+		if (call != _global_config.current_call)
 		{
 			return ERROR;
 		}
 
-		pjsua_msg_data_init(&app_config.msg_data);
-		app_config.msg_data.content_type = pj_str("application/dtmf-relay");
+		pjsua_msg_data_init(&_global_config.msg_data);
+		_global_config.msg_data.content_type = pj_str("application/dtmf-relay");
 
 		pj_ansi_snprintf(body, sizeof(body), "Signal=%c\n"
 				"Duration=160", code);
 
-		app_config.msg_data.msg_body = pj_str(body);
+		_global_config.msg_data.msg_body = pj_str(body);
 
-		status = pjsua_call_send_request(app_config.current_call, &SIP_INFO,
-				&app_config.msg_data);
+		status = pjsua_call_send_request(_global_config.current_call, &SIP_INFO,
+				&_global_config.msg_data);
 		if (status != PJ_SUCCESS)
 		{
 			return ERROR;
@@ -4080,24 +3911,10 @@ int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 cod
 		return PJ_SUCCESS;
 	}
 	return PJ_SUCCESS;
-#endif
-	return ERROR;
 }
 
 int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type)
 {
-#ifdef ZPL_PJSIP_CALL_SHELL
-	char cmd[512];
-	memset(cmd, 0, sizeof(cmd));
-	if(type == 1)
-	snprintf(cmd, sizeof(cmd), "call next");
-	else
-	snprintf(cmd, sizeof(cmd), "call previous");
-	if(pj_cli_execute_cmd(cmd) == PJ_SUCCESS)
-	{
-		return OK;
-	}
-#else
 	/*
 	 * Cycle next/prev dialog.
 	 */
@@ -4110,11 +3927,11 @@ int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type)
 		find_prev_call ();
 	}
 
-	if (app_config.current_call != PJSUA_INVALID_ID)
+	if (_global_config.current_call != PJSUA_INVALID_ID)
 	{
 		pjsua_call_info call_info;
 
-		if(pjsua_call_get_info (app_config.current_call, &call_info) == PJ_SUCCESS)
+		if(pjsua_call_get_info (_global_config.current_call, &call_info) == PJ_SUCCESS)
 			return OK;
 	}
 	else
@@ -4122,8 +3939,6 @@ int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type)
 		return ERROR;
 	}
 	return PJ_SUCCESS;
-#endif
-	return ERROR;
 }
 /***************************************************************************/
 /***************************************************************************/

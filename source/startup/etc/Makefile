@@ -9,7 +9,7 @@ obj:install
 #
 
 make_prepare:
-	echo ""
+
 #
 config_install:
 	@install -d ${ZPL_INSTALL_ETC_DIR} 

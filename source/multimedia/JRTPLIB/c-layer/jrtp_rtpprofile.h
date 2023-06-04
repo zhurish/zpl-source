@@ -49,7 +49,7 @@ struct _jRtpProfile
 
 typedef struct _jRtpProfile jrtp_RtpProfile;
 
-extern jrtp_RtpProfile av_profile;
+extern jrtp_RtpProfile jrtp_av_profile;
 
 #define jrtp_profile_get_name(profile) 	(const char*)((profile)->name)
 void jrtp_av_profile_init(jrtp_RtpProfile *profile);

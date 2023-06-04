@@ -1,4 +1,3 @@
-/* $Id: pjsua_app.h 4489 2013-04-23 07:53:25Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -20,58 +19,13 @@
 #ifndef __PJSUA_APP_H__
 #define __PJSUA_APP_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Interface for user application to use pjsua with CLI/menu based UI. 
  */
 
 #include "pjsua_app_common.h"
-
+#include "pjsua_app_cfgapi.h"
 PJ_BEGIN_DECL
-
-/**
- * This structure contains the configuration of application.
- */
-typedef struct pjsua_app_cfg_t
-{
-    /**
-     * The number of runtime arguments passed to the application.
-     */
-    //int       argc;
-
-    /**
-     * The array of arguments string passed to the application. 
-     */
-    //char    **argv;
-
-    /** 
-     * Tell app that CLI (and pjsua) is (re)started.
-     * msg will contain start error message such as �Telnet to X:Y�,
-     * �failed to start pjsua lib�, �port busy�..
-     */
-    void (*on_started)(pj_status_t status, const char* title);
-
-    /**
-     * Tell app that library request to stopped/restart.
-     * GUI app needs to use a timer mechanism to wait before invoking the 
-     * cleanup procedure.
-     */
-    void (*on_stopped)(pj_bool_t restart, int argc, char** argv);
-
-    /**
-     * This will enable application to supply customize configuration other than
-     * the basic configuration provided by pjsua. 
-     */
-    void (*on_config_init)(pjsua_app_config *cfg);
-
-
-    pj_bool_t	    running;
-    pj_bool_t 		restart;
-    int 			media_quit;
-} pjsua_app_cfg_t;
 
 /**
  * This will initiate the pjsua and the user interface (CLI/menu UI) based on 
@@ -97,9 +51,5 @@ int pjsua_app_exit(void);
 int log_refresh_proc(void *arg);
 
 PJ_END_DECL
- 
-#ifdef __cplusplus
-}
-#endif
-   
-#endif	/* __PJSUA_APP_H__ */
+    
+#endif  /* __PJSUA_APP_H__ */

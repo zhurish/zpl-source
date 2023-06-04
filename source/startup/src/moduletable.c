@@ -2,6 +2,7 @@
 #include "module.h"
 #include "log.h"
  
+extern struct module_list module_list_pjsip;
 extern struct module_list module_list_default;
 extern struct module_list module_list_lib;
 extern struct module_list module_list_osal;
@@ -24,6 +25,7 @@ extern struct module_list module_list_zplmedia;
 extern struct module_list module_list_medie_proxy;
  
 struct module_alllist module_lists_tbl[MODULE_MAX] = {
+  &module_list_pjsip,
   &module_list_default,
   &module_list_lib,
   &module_list_osal,

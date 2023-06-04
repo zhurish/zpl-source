@@ -23,9 +23,9 @@
 #include "jrtp_rtpprofile.h"
 
 
-char offset127=127;
-char offset0xD5=(char)0xD5;
-char offset0[4] = {0x00, 0x00, 0x00, 0x00};
+char jttp_offset127=127;
+char jttp_offset0xD5=(char)0xD5;
+char jttp_offset0[4] = {0x00, 0x00, 0x00, 0x00};
 
 /*
  * IMPORTANT : some compiler don't support the tagged-field syntax. Those
@@ -85,7 +85,7 @@ jrtp_PayloadType jrtp_payload_type_pcmu8000={
 	TYPE(JRTP_PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(8),
-	ZERO_PATTERN( &offset127),
+	ZERO_PATTERN( &jttp_offset127),
 	PATTERN_LENGTH(1),
 	NORMAL_BITRATE(64000),
 	MIME_TYPE("PCMU"),
@@ -100,7 +100,7 @@ jrtp_PayloadType jrtp_payload_type_pcma8000={
 	TYPE(JRTP_PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(8),
-	ZERO_PATTERN(&offset0xD5),
+	ZERO_PATTERN(&jttp_offset0xD5),
 	PATTERN_LENGTH(1),
 	NORMAL_BITRATE(64000),
 	MIME_TYPE("PCMA"),
@@ -115,7 +115,7 @@ jrtp_PayloadType jrtp_payload_type_pcm8000={
 	TYPE(JRTP_PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(8000),
 	BITS_PER_SAMPLE(16),
-	ZERO_PATTERN(offset0),
+	ZERO_PATTERN(jttp_offset0),
 	PATTERN_LENGTH(1),
 	NORMAL_BITRATE(128000),
 	MIME_TYPE("PCM"),
@@ -130,7 +130,7 @@ jrtp_PayloadType jrtp_payload_type_l16_mono={
 	TYPE(JRTP_PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(44100),
 	BITS_PER_SAMPLE(16),
-	ZERO_PATTERN(offset0),
+	ZERO_PATTERN(jttp_offset0),
 	PATTERN_LENGTH(2),
 	NORMAL_BITRATE(705600),				/* (44100 x 16bits per frame x 1 channel) */
 	MIME_TYPE("L16"),
@@ -145,7 +145,7 @@ jrtp_PayloadType jrtp_payload_type_l16_stereo={
 	TYPE(JRTP_PAYLOAD_AUDIO_CONTINUOUS),
 	CLOCK_RATE(44100),
 	BITS_PER_SAMPLE(32),				/* 16bits x 2 channels */
-	ZERO_PATTERN(offset0),
+	ZERO_PATTERN(jttp_offset0),
 	PATTERN_LENGTH(4),
 	NORMAL_BITRATE(1411200),			/* (44100 x 16bits per frame x 2 channels) */
 	MIME_TYPE("L16"),
@@ -462,7 +462,7 @@ jrtp_PayloadType	jrtp_payload_type_telephone_event={
 extern "C"
 {
 #endif
-jrtp_RtpProfile av_profile;
+jrtp_RtpProfile jrtp_av_profile;
 #ifdef __cplusplus
 }
 #endif
@@ -496,10 +496,11 @@ void jrtp_av_profile_init(jrtp_RtpProfile *profile)
 
     jrtp_profile_set_payload(profile,101,&jrtp_payload_type_telephone_event);
 }
+
 void jrtp_profile_payload_update(int pt, const jrtp_PayloadType *type)
 {
-    //extern jrtp_RtpProfile av_profile;
-    jrtp_profile_set_payload(&av_profile, pt, type);
+    //extern jrtp_RtpProfile jrtp_av_profile;
+    jrtp_profile_set_payload(&jrtp_av_profile, pt, type);
 }
 /* these are extra payload types that can be used dynamically */
 jrtp_PayloadType jrtp_payload_type_lpc1015={

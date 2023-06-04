@@ -11,9 +11,9 @@
 #ifdef ZPL_LIBORTP_MODULE
 #include <ortp/ortp.h>
 #include "scheduler.h"
-#include "mediastreamer2/mediastream.h"
-#include "mediastreamer2/msequalizer.h"
-#include "mediastreamer2/msvolume.h"
+//#include "mediastreamer2/mediastream.h"
+//#include "mediastreamer2/msequalizer.h"
+//#include "mediastreamer2/msvolume.h"
 #endif
 #ifdef ZPL_JRTPLIB_MODULE
 #include "jrtplib_api.h"
@@ -458,9 +458,9 @@ int zpl_mediartp_scheduler_init(void)
     memset(&_mediaRtpSched, 0, sizeof(zpl_mediartp_scheduler_t));
     _mediaRtpSched.mutex = os_mutex_name_create("mrtp-mutex");
     lstInitFree(&_mediaRtpSched.list, zpl_mediartp_session_cbfree);
-    #ifdef ZPL_JRTPLIB_MODULE
+#ifdef ZPL_JRTPLIB_MODULE
     _mediaRtpSched.evtqueue = zpl_media_event_create("mediaRtpSched", 32);
-    #endif
+#endif
 #ifdef ZPL_LIBORTP_MODULE
     ortp_init();
     ortp_set_log_handler(zortp_log, 1);

@@ -49,6 +49,11 @@ OBJS += rtcpapppacket.o \
 	rtpudpv6transmitter.o 
 
 OBJS += jrtplib_api.o jrtp_avprofile.o jrtp_payloadtype.o  jrtp_rtpprofile.o
+
+#OBJS += h264-nal-packer.o h264-nal-unpacker.o h264-utils.o \
+	h265-nal-packer.o h265-nal-unpacker.o h26x/h265-utils.o \
+	h26x-utils.o h26x/nal-packer.o nal-unpacker.o rfc3984.o
+
 #############################################################################
 # LIB 		
 ###########################################################################

@@ -27,7 +27,6 @@ struct tree_node {
 	void *data;
 	struct tree_node *left;
 	struct tree_node *right;
-	//int	(*cmp)(void *, void *);
 };
 
 struct list_tree{

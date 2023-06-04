@@ -713,6 +713,36 @@ int RTPSession::SendPacketEx(const void *data,size_t len,
 	return 0;
 }
 
+int RTPSession::SendFrame(const void *data,size_t len,
+                uint8_t pt,bool mark, uint32_t timestampinc)
+{
+	int status;
+
+	if (!created)
+		return ERR_RTP_SESSION_NOTCREATED;
+	
+	BUILDER_LOCK
+	if ((status = packetbuilder.BuildPacket(data,len,pt,mark,timestampinc)) < 0)
+	{
+		BUILDER_UNLOCK
+		return status;
+	}
+	if ((status = SendRTPData(packetbuilder.GetPacket(),packetbuilder.GetPacketLength())) < 0)
+	{
+		BUILDER_UNLOCK
+		return status;
+	}
+	BUILDER_UNLOCK
+	
+	SOURCES_LOCK
+	sources.SentRTPPacket();
+	SOURCES_UNLOCK
+	PACKSENT_LOCK
+	sentpackets = true;
+	PACKSENT_UNLOCK
+	return 0;
+}
+
 #ifdef RTP_SUPPORT_SENDAPP
 
 int RTPSession::SendRTCPAPPPacket(uint8_t subtype, const uint8_t name[4], const void *appdata, size_t appdatalen)

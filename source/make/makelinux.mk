@@ -275,7 +275,12 @@ export ZPLSTRIP_CFLAGS= --strip-unneeded
 #	@$(ECHO) CC '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) $(ZPLINCLUDE)' $@
 #	@$(CC) -fPIC $(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS) -c  $< -o $@ $(ZPLINCLUDE)
 #
-ifeq ($(strip $(V)),2)
+ifeq ($(strip $(V)),3)
+ZPL_ECHO_FLAG=
+ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE) $(ZPLLDFLAGS)';
+ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE) $(ZPLLDFLAGS)';
+ZPL_ECHO_AS = $(ECHO) "building " $@   '$(ZPLASFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLINCLUDE) $(ZPLLDFLAGS)';
+else ifeq ($(strip $(V)),2)
 ZPL_ECHO_FLAG=
 ZPL_ECHO_CC = $(ECHO) "building " $@   '$(ZPLCFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS)';
 ZPL_ECHO_CXX = $(ECHO) "building " $@   '$(ZPLCPPFLAGS) $(ZPLDEFINE) $(ZPLDEBUG) $(ZPLLDFLAGS)';

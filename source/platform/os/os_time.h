@@ -14,7 +14,6 @@ extern "C" {
 #endif
 #include "zpl_type.h"
 #include "os_list.h"
-//#define OS_TIMER_TEST
 
 //#define OS_TIMER_DEBUG
 
@@ -109,7 +108,7 @@ typedef struct os_time_s
 	zpl_uint32 msec;
 
 	//struct timeval interval;
-	zpl_uint32 interrupt_timestamp;
+	zpl_ulong interrupt_timestamp;
 
 	os_time_type type;
 	enum {OS_TIMER_FALSE, OS_TIMER_TRUE, OS_TIMER_CANCEL} state;

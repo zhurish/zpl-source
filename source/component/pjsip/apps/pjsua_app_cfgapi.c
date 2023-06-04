@@ -17,18 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#include <zplos_include.h>
+#include <log.h>
 #include "pjsua_app_common.h"
-#include "pjsua_app_config.h"
 #include "pjsip_app_api.h"
-#include "pjsip_util.h"
 
-#define THIS_FILE	"pjsua_app_config.c"
+#define THIS_FILE	"pjsua_app_cfgapi.c"
 
-#define MAX_APP_OPTIONS 128
-
-
-
-
+//#define MODULE_PJSIP 0
 static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 {
 	zassert(buffer != NULL);
@@ -160,7 +156,7 @@ int pl_pjsip_app_log_level(pjsua_app_config *cfg, int level)
 	return OK;
 }
 
-int pl_pjsip_log_option(pjsua_app_config *cfg, int option, zpl_bool enable)
+int pl_pjsip_log_option(pjsua_app_config *cfg, int option, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	if (enable)
@@ -170,7 +166,7 @@ int pl_pjsip_log_option(pjsua_app_config *cfg, int option, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_log_color(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_log_color(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	if (enable)
@@ -180,7 +176,7 @@ int pl_pjsip_log_color(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_log_light_bg(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_log_light_bg(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	pj_log_set_color(1, PJ_TERM_COLOR_R);
 	pj_log_set_color(2, PJ_TERM_COLOR_R | PJ_TERM_COLOR_G);
@@ -191,7 +187,7 @@ int pl_pjsip_log_light_bg(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_null_audio(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_null_audio(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->null_audio = enable;
@@ -231,7 +227,7 @@ int pl_pjsip_stereo(pjsua_app_config *cfg)
 	return OK;
 }
 
-int pl_pjsip_local_port(pjsua_app_config *cfg, zpl_int32 lval)
+int pl_pjsip_local_port(pjsua_app_config *cfg, pj_int32_t lval)
 {
 	zassert(cfg != NULL);
 	if (lval < 0 || lval > 65535)
@@ -419,7 +415,7 @@ int pl_pjsip_register_timeout(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_publish(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_publish(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -428,7 +424,7 @@ int pl_pjsip_publish(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_mwi(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_mwi(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -437,7 +433,7 @@ int pl_pjsip_mwi(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_100rel(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_100rel(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -521,7 +517,7 @@ int pl_pjsip_outbound_reg_id(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_ims(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_ims(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -622,7 +618,7 @@ int pl_pjsip_contact_uri_params(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_update_nat(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_update_nat(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -631,7 +627,7 @@ int pl_pjsip_update_nat(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_stun(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_stun(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -649,7 +645,7 @@ int pl_pjsip_stun(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_compact_form(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_compact_form(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	extern pj_bool_t pjsip_include_allow_hdr_in_dlg;
@@ -669,7 +665,7 @@ int pl_pjsip_accept_redirect(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_no_force_lr(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_no_force_lr(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->cfg.force_lr = enable;
@@ -890,7 +886,7 @@ int pl_pjsip_buddy_list(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_auto_play(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_auto_play(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	//pjsua_acc_config *cur_acc;
@@ -899,7 +895,7 @@ int pl_pjsip_auto_play(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_auto_play_hangup(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_auto_play_hangup(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	//pjsua_acc_config *cur_acc;
@@ -908,21 +904,21 @@ int pl_pjsip_auto_play_hangup(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_auto_rec(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_auto_rec(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->auto_rec = enable;
 	return OK;
 }
 
-int pl_pjsip_auto_loop(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_auto_loop(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->auto_loop = enable;
 	return OK;
 }
 
-int pl_pjsip_auto_config(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_auto_config(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->auto_conf = enable;
@@ -972,7 +968,7 @@ int pl_pjsip_rec_file(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_ice_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_ice_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -986,7 +982,7 @@ int pl_pjsip_ice_enable(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_regular_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_regular_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -996,7 +992,7 @@ int pl_pjsip_regular_enable(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_turn_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_turn_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1019,7 +1015,7 @@ int pl_pjsip_ice_max_hosts(pjsua_app_config *cfg, int maxnum)
 	return OK;
 }
 
-int pl_pjsip_ice_nortcp_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_ice_nortcp_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1054,7 +1050,7 @@ int pl_pjsip_turn_srv(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_turn_tcp(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_turn_tcp(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1114,7 +1110,7 @@ int pl_pjsip_turn_password(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_rtcp_mux(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_rtcp_mux(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1125,7 +1121,7 @@ int pl_pjsip_rtcp_mux(pjsua_app_config *cfg, zpl_bool enable)
 }
 
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
-int pl_pjsip_srtp_enable(pjsua_app_config *cfg, zpl_uint32 type)
+int pl_pjsip_srtp_enable(pjsua_app_config *cfg, pj_uint32_t type)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1147,7 +1143,7 @@ int pl_pjsip_srtp_enable(pjsua_app_config *cfg, zpl_uint32 type)
 	return OK;
 }
 
-int pl_pjsip_srtp_secure(pjsua_app_config *cfg, zpl_uint32 type)
+int pl_pjsip_srtp_secure(pjsua_app_config *cfg, pj_uint32_t type)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1163,7 +1159,7 @@ int pl_pjsip_srtp_secure(pjsua_app_config *cfg, zpl_uint32 type)
 	return OK;
 }
 
-int pl_pjsip_srtp_keying(pjsua_app_config *cfg, zpl_uint32 type)
+int pl_pjsip_srtp_keying(pjsua_app_config *cfg, pj_uint32_t type)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1276,7 +1272,7 @@ int pl_pjsip_ptime(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_novad(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_novad(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->media_cfg.no_vad = enable;
@@ -1381,7 +1377,7 @@ int pl_pjsip_max_calls(pjsua_app_config *cfg, int value)
 }
 
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
-int pl_pjsip_tls_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_tls_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->use_tls = enable;
@@ -1424,14 +1420,14 @@ int pl_pjsip_tls_password(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_tls_verify_server(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_tls_verify_server(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->udp_cfg.tls_setting.verify_server = enable;
 	return OK;
 }
 
-int pl_pjsip_tls_verify_client(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_tls_verify_client(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->udp_cfg.tls_setting.verify_client = enable;
@@ -1472,7 +1468,7 @@ int pl_pjsip_tls_cipher(pjsua_app_config *cfg, char * lval)
 	else
 	{
 		pj_ssl_cipher ciphers[PJ_SSL_SOCK_MAX_CIPHERS];
-		zpl_uint32 j = 0, ciphers_cnt = 0;
+		pj_uint32_t j = 0, ciphers_cnt = 0;
 
 		ciphers_cnt = PJ_ARRAY_SIZE(ciphers);
 		pj_ssl_cipher_get_availables(ciphers, &ciphers_cnt);
@@ -1524,7 +1520,7 @@ int pl_pjsip_snd_auto_close(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_no_tones(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_no_tones(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->no_tones = enable;
@@ -1539,7 +1535,7 @@ int pl_pjsip_jb_max_size(pjsua_app_config *cfg, int value)
 }
 
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
-int pl_pjsip_ipv6_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_ipv6_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->ipv6 = enable;
@@ -1547,7 +1543,7 @@ int pl_pjsip_ipv6_enable(pjsua_app_config *cfg, zpl_bool enable)
 }
 #endif
 
-int pl_pjsip_qos_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_qos_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->enable_qos = enable;
@@ -1562,7 +1558,7 @@ int pl_pjsip_qos_enable(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_video_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_video_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->vid.vid_cnt = 1;
@@ -1571,7 +1567,7 @@ int pl_pjsip_video_enable(pjsua_app_config *cfg, zpl_bool enable)
 	return OK;
 }
 
-int pl_pjsip_extra_audio(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_extra_audio(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->aud_cnt++;
@@ -1617,14 +1613,14 @@ int pl_pjsip_play_avi(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_auto_play_avi(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_auto_play_avi(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->avi_auto_play = enable;
 	return OK;
 }
 
-int pl_pjsip_cli_enable(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_cli_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->use_cli = enable;
@@ -1639,7 +1635,7 @@ int pl_pjsip_cli_telnet_port(pjsua_app_config *cfg, int port)
 	return OK;
 }
 
-int pl_pjsip_cli_console(pjsua_app_config *cfg, zpl_bool enable)
+int pl_pjsip_cli_console(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	if (enable)
@@ -1666,16 +1662,15 @@ int pl_pjsip_cli_console(pjsua_app_config *cfg, zpl_bool enable)
  */
 
 /* Set default config. */
-void pjsip_default_config(void)
+void pjsip_default_config(pjsua_app_config *cfg)
 {
 	char tmp[80];
 	unsigned i;
-	pjsua_app_config *cfg = &app_config;
 	zassert(cfg != NULL);
 	pjsua_config_default(&cfg->cfg);
 	pj_ansi_sprintf(tmp, "PJSUA v%s %s", pj_get_version(),
 			pj_get_sys_info()->info.ptr);
-	pj_strdup2_with_null(app_config.pool, &cfg->cfg.user_agent, tmp);
+	pj_strdup2_with_null(cfg->pool, &cfg->cfg.user_agent, tmp);
 
 	pjsua_logging_config_default(&cfg->log_cfg);
 	cfg->log_cfg.cb = pj_pjsip_log_cb;
@@ -1718,18 +1713,11 @@ void pjsip_default_config(void)
 
 	cfg->avi_def_idx = PJSUA_INVALID_ID;
 
-#ifdef ZPL_PJSIP_CLI_SHELL
-	cfg->use_cli = zpl_false;
+	cfg->use_cli = zpl_true;
 	//cfg->cli_cfg.cli_fe = CLI_FE_CONSOLE;
 	//cfg->cli_cfg.telnet_cfg.port = 0;
 	cfg->cli_cfg.cli_fe = CLI_FE_TELNET;
 	cfg->cli_cfg.telnet_cfg.port = 2323;
-
-#ifdef ZPL_PJSIP_CALL_SHELL
-	cfg->cli_cfg.cli_fe == CLI_FE_SOCKET;
-	cfg->cli_cfg.socket_cfg.tcp = zpl_false;
-#endif
-#endif
     /* Add UDP transport. */
 	cfg->codec_dis_cnt = 0;
 	cfg->codec_cnt = 0;
@@ -1751,69 +1739,70 @@ void pjsip_default_config(void)
 */
 }
 
-
-int pjsip_load_config(void)
+int pjsip_log_config(pjsua_app_config *cfg)
+{
+	pl_pjsip_log_level(cfg, 6);
+	pl_pjsip_app_log_level(cfg, 6);
+	pj_log_set_log_func(pj_pjsip_log_cb);
+	return OK;
+}
+int pjsip_load_config(pjsua_app_config *cfg)
 {
 	int i = 0;
 	char buf[128];
 	pjsua_acc_config *cur_acc = NULL;
-	cur_acc = app_config.acc_cfg;
+	cur_acc = &cfg->acc_cfg;
 	zassert(pl_pjsip != NULL);
 
 	if(pl_pjsip->mutex)
 		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
 
-	pjsip_default_config();
+	pjsip_default_config(cfg);
 
-	pl_pjsip_log_level(&app_config, 3);
-	pl_pjsip_app_log_level(&app_config, 3);
-	pj_log_set_log_func(pj_pjsip_log_cb);
-
-
-	pl_pjsip_debug_level_set_api(pl_pjsip->debug_level);
-	pl_pjsip_debug_detail_set_api(pl_pjsip->debug_detail);
+	//pl_pjsip_debug_level_set_api(pl_pjsip->debug_level);
+	//pl_pjsip_debug_detail_set_api(pl_pjsip->debug_detail);
 
 
 	cur_acc->cred_count = 0;
 	if(strlen(pl_pjsip->sip_user.sip_user))
 	{
-		pl_pjsip_username(&app_config, pl_pjsip->sip_user.sip_user);//Set authentication username
+		pl_pjsip_username(cfg, pl_pjsip->sip_user.sip_user);//Set authentication username
 		if(strlen(pl_pjsip->sip_user.sip_password))
 		{
-			pl_pjsip_password(&app_config, pl_pjsip->sip_user.sip_password);//Set authentication password
+			pl_pjsip_password(cfg, pl_pjsip->sip_user.sip_password);//Set authentication password
 		}
-		app_config.acc_cnt = 1;
+		cfg->acc_cnt = 1;
 	}
 	if(strlen(pl_pjsip->sip_user_sec.sip_user))
 	{
-		pl_pjsip_username(&app_config, pl_pjsip->sip_user_sec.sip_user);//Set authentication username
+		pl_pjsip_username(cfg, pl_pjsip->sip_user_sec.sip_user);//Set authentication username
 
 		if(strlen(pl_pjsip->sip_user_sec.sip_password))
 		{
-			pl_pjsip_password(&app_config, pl_pjsip->sip_user_sec.sip_password);//Set authentication password
+			pl_pjsip_password(cfg, pl_pjsip->sip_user_sec.sip_password);//Set authentication password
 		}
-		app_config.acc_cnt = 2;
+		cfg->acc_cnt = 2;
 	}
 
-	pl_pjsip_scheme(&app_config, "digest");
+	pl_pjsip_scheme(cfg, "digest");
 
 	if(strlen(pl_pjsip->sip_realm))
 	{
-		pl_pjsip_realm(&app_config, pl_pjsip->sip_realm);//Set authentication password
+		pl_pjsip_realm(cfg, pl_pjsip->sip_realm);//Set authentication password
 	}
 	else
-		pl_pjsip_realm(&app_config, "*");
+		pl_pjsip_realm(cfg, "*");
 
 	if(strlen(pl_pjsip->sip_server.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_server.sip_address, pl_pjsip->sip_server.sip_port);
-		pl_pjsip_registrar(&app_config, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		pl_pjsip_registrar(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s@%s:%d", pl_pjsip->sip_user.sip_user,
 				pl_pjsip->sip_server.sip_address, pl_pjsip->sip_server.sip_port);
-		pl_pjsip_url_id(&app_config, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
+		pl_pjsip_url_id(cfg, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
 
 		cur_acc->cred_count = 1;
 	}
@@ -1822,7 +1811,7 @@ int pjsip_load_config(void)
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_server_sec.sip_address, pl_pjsip->sip_server_sec.sip_port);
-		pl_pjsip_registrar(&app_config, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		pl_pjsip_registrar(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 
 		memset(buf, 0, sizeof(buf));
 		if(pl_pjsip->sip_user_cnt == 1 && strlen(pl_pjsip->sip_user.sip_user))
@@ -1834,109 +1823,109 @@ int pjsip_load_config(void)
 				pl_pjsip->sip_server_sec.sip_address, pl_pjsip->sip_server_sec.sip_port);
 
 
-		pl_pjsip_url_id(&app_config, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
+		pl_pjsip_url_id(cfg, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
 
 		cur_acc->cred_count = 2;
 	}
-	//pl_pjsip_credential(&app_config, 0);
-	//pl_pjsip_next_account(&app_config);
+	//pl_pjsip_credential(cfg, 0);
+	//pl_pjsip_next_account(cfg);
 	if(pl_pjsip->sip_local.sip_port)
-		pl_pjsip_local_port(&app_config, pl_pjsip->sip_local.sip_port);
+		pl_pjsip_local_port(cfg, pl_pjsip->sip_local.sip_port);
 
 	if(strlen(pl_pjsip->sip_proxy.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d",
 				pl_pjsip->sip_proxy.sip_address, pl_pjsip->sip_proxy.sip_port);
-		pl_pjsip_proxy(&app_config, buf);
+		pl_pjsip_proxy(cfg, buf);
 	}
 
-	app_config.no_tcp = PJ_TRUE;
-	app_config.no_udp = PJ_FALSE;
+	cfg->no_tcp = PJ_TRUE;
+	cfg->no_udp = PJ_FALSE;
 	switch(pl_pjsip->proto)
 	{
 	case PJSIP_PROTO_UDP:
-		app_config.no_tcp = PJ_TRUE;
-		//pl_pjsip_ice_nortcp_enable(&app_config, zpl_true);
-		app_config.no_udp = PJ_FALSE;
+		cfg->no_tcp = PJ_TRUE;
+		//pl_pjsip_ice_nortcp_enable(cfg, zpl_true);
+		cfg->no_udp = PJ_FALSE;
 		break;
 	case PJSIP_PROTO_TCP:
 	case PJSIP_PROTO_TLS:
 	case PJSIP_PROTO_DTLS:
-		app_config.no_udp = PJ_TRUE;
-		app_config.no_tcp = PJ_FALSE;
+		cfg->no_udp = PJ_TRUE;
+		cfg->no_tcp = PJ_FALSE;
 		break;
 	default:
 		break;
 	}
-	pl_pjsip_100rel(&app_config, pl_pjsip->sip_100_rel);
+	pl_pjsip_100rel(cfg, pl_pjsip->sip_100_rel);
 	//"SIP Account options:"
 	//
 	if(pl_pjsip->sip_reg_proxy != PJSIP_REGISTER_NONE)
-		pl_pjsip_reg_use_proxy(&app_config, pl_pjsip->sip_reg_proxy);
+		pl_pjsip_reg_use_proxy(cfg, pl_pjsip->sip_reg_proxy);
 	if(pl_pjsip->sip_rereg_delay)
-		pl_pjsip_reg_retry_interval(&app_config, pl_pjsip->sip_rereg_delay);
-	pl_pjsip_register_timeout(&app_config, pl_pjsip->sip_expires/*pl_pjsip->sip_reg_timeout*/);
+		pl_pjsip_reg_retry_interval(cfg, pl_pjsip->sip_rereg_delay);
+	pl_pjsip_register_timeout(cfg, pl_pjsip->sip_expires/*pl_pjsip->sip_reg_timeout*/);
 
-	pl_pjsip_publish(&app_config, pl_pjsip->sip_publish);			//Send presence PUBLISH for this account
-	pl_pjsip_mwi(&app_config, pl_pjsip->sip_mwi);
-	pl_pjsip_ims(&app_config, pl_pjsip->sip_ims_enable);
+	pl_pjsip_publish(cfg, pl_pjsip->sip_publish);			//Send presence PUBLISH for this account
+	pl_pjsip_mwi(cfg, pl_pjsip->sip_mwi);
+	pl_pjsip_ims(cfg, pl_pjsip->sip_ims_enable);
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
 	if(pl_pjsip->sip_srtp_mode != PJSIP_SRTP_DISABLE)
-		pl_pjsip_srtp_enable(&app_config, pl_pjsip->sip_srtp_mode);
+		pl_pjsip_srtp_enable(cfg, pl_pjsip->sip_srtp_mode);
 	if(pl_pjsip->sip_srtp_secure != PJSIP_SRTP_SEC_NO)
 	{
-		pl_pjsip_srtp_secure(&app_config, pl_pjsip->sip_srtp_secure);
-		pl_pjsip_srtp_keying(&app_config, pl_pjsip->sip_srtp_keying);
+		pl_pjsip_srtp_secure(cfg, pl_pjsip->sip_srtp_secure);
+		pl_pjsip_srtp_keying(cfg, pl_pjsip->sip_srtp_keying);
 	}
 	//pjsip_srtp_t		sip_srtp_mode;			//Use SRTP?  0:disabled, 1:optional, 2:mandatory,3:optional by duplicating media offer (def:0)
 	//pjsip_srtp_sec_t	sip_srtp_secure;		//SRTP require secure SIP? 0:no, 1:tls, 2:sips (def:1)
 #endif
 	if(pl_pjsip->sip_timer != PJSIP_TIMER_INACTIVE)
-		pl_pjsip_session_timer(&app_config, pl_pjsip->sip_timer);
+		pl_pjsip_session_timer(cfg, pl_pjsip->sip_timer);
 	if(pl_pjsip->sip_timer_sec)
-		pl_pjsip_session_timer_expiration(&app_config, pl_pjsip->sip_timer_sec);
+		pl_pjsip_session_timer_expiration(cfg, pl_pjsip->sip_timer_sec);
 
-	//pl_pjsip_outbound_reg_id(&app_config, pl_pjsip->sip_outb_rid);
+	//pl_pjsip_outbound_reg_id(cfg, pl_pjsip->sip_outb_rid);
 
-	pl_pjsip_update_nat(&app_config, pl_pjsip->sip_auto_update_nat);
+	pl_pjsip_update_nat(cfg, pl_pjsip->sip_auto_update_nat);
 	//zpl_uint16				sip_auto_update_nat;	//Where N is 0 or 1 to enable/disable SIP traversal behind symmetric NAT (default 1)
-	pl_pjsip_stun(&app_config, pl_pjsip->sip_stun_disable);
-	//zpl_bool				sip_stun_disable;		//Disable STUN for this account
+	pl_pjsip_stun(cfg, pl_pjsip->sip_stun_disable);
+	//pj_bool_t				sip_stun_disable;		//Disable STUN for this account
 
 	//Transport Options:
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
-	pl_pjsip_ipv6_enable(&app_config, pl_pjsip->sip_ipv6_enable);
+	pl_pjsip_ipv6_enable(cfg, pl_pjsip->sip_ipv6_enable);
 #endif
-	pl_pjsip_qos_enable(&app_config, pl_pjsip->sip_set_qos);
+	pl_pjsip_qos_enable(cfg, pl_pjsip->sip_set_qos);
 	if(pl_pjsip->sip_noudp)
-		pl_pjsip_no_udp(&app_config);
+		pl_pjsip_no_udp(cfg);
 	if(pl_pjsip->sip_notcp)
-		pl_pjsip_no_tcp(&app_config);
+		pl_pjsip_no_tcp(cfg);
 
 	if(strlen(pl_pjsip->sip_nameserver.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_nameserver.sip_address, pl_pjsip->sip_nameserver.sip_port);
-		pl_pjsip_nameserver(&app_config, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		pl_pjsip_nameserver(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
 	if(strlen(pl_pjsip->sip_outbound.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_outbound.sip_address, pl_pjsip->sip_outbound.sip_port);
-		pl_pjsip_outbound_proxy(&app_config, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		pl_pjsip_outbound_proxy(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
 	if(strlen(pl_pjsip->sip_stun_server.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_stun_server.sip_address, pl_pjsip->sip_stun_server.sip_port);
-		pl_pjsip_stunserver(&app_config, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		pl_pjsip_stunserver(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
 	if(strlen(pl_pjsip->sip_local.sip_address))
-		pl_pjsip_bound_address(&app_config, pl_pjsip->sip_local.sip_address);
+		pl_pjsip_bound_address(cfg, pl_pjsip->sip_local.sip_address);
 	//TLS Options:
 /*
-	zpl_bool				sip_tls_enable;
+	pj_bool_t				sip_tls_enable;
 	char				sip_tls_ca_file[PJSIP_FILE_MAX];		//Specify TLS CA file (default=none)
 	char				sip_tls_cert_file[PJSIP_FILE_MAX];		//Specify TLS certificate file (default=none)
 	char				sip_tls_privkey_file[PJSIP_FILE_MAX];	//Specify TLS private key file (default=none)
@@ -1948,127 +1937,127 @@ int pjsip_load_config(void)
 */
 
 	//Audio Options:
-	pl_pjsip_clock_rate(&app_config, pl_pjsip->sip_clock_rate);
-	pl_pjsip_snd_clock_rate(&app_config, pl_pjsip->sip_snd_clock_rate);
+	pl_pjsip_clock_rate(cfg, pl_pjsip->sip_clock_rate);
+	pl_pjsip_snd_clock_rate(cfg, pl_pjsip->sip_snd_clock_rate);
 
 	//char				sip_codec[PJSIP_DATA_MAX];
 	//char				sip_discodec[PJSIP_DATA_MAX];
 
 	if(pl_pjsip->sip_stereo)
-		pl_pjsip_stereo(&app_config);
+		pl_pjsip_stereo(cfg);
 
 	if(strlen(pl_pjsip->sip_play_file))
-		pl_pjsip_play_file(&app_config, pl_pjsip->sip_play_file);
+		pl_pjsip_play_file(cfg, pl_pjsip->sip_play_file);
 	//if(strlen(pl_pjsip->sip_play_tone))
-	//	pl_pjsip_play_file(&app_config, pl_pjsip->sip_play_tone);
+	//	pl_pjsip_play_file(cfg, pl_pjsip->sip_play_tone);
 	if(pl_pjsip->sip_auto_play)
-		pl_pjsip_auto_play(&app_config, pl_pjsip->sip_auto_play);
+		pl_pjsip_auto_play(cfg, pl_pjsip->sip_auto_play);
 	if(pl_pjsip->sip_auto_loop)
-		pl_pjsip_auto_loop(&app_config, pl_pjsip->sip_auto_loop);
+		pl_pjsip_auto_loop(cfg, pl_pjsip->sip_auto_loop);
 	if(pl_pjsip->sip_auto_conf)
-		pl_pjsip_auto_config(&app_config, pl_pjsip->sip_auto_conf);
+		pl_pjsip_auto_config(cfg, pl_pjsip->sip_auto_conf);
 
 	if(strlen(pl_pjsip->sip_rec_file))
 	{
-		pl_pjsip_rec_file(&app_config, pl_pjsip->sip_rec_file);
-		pl_pjsip_auto_rec(&app_config, PJ_TRUE);
+		pl_pjsip_rec_file(cfg, pl_pjsip->sip_rec_file);
+		pl_pjsip_auto_rec(cfg, PJ_TRUE);
 	}
-	pl_pjsip_quality(&app_config, pl_pjsip->sip_quality);
-	pl_pjsip_ptime(&app_config, pl_pjsip->sip_ptime);
+	pl_pjsip_quality(cfg, pl_pjsip->sip_quality);
+	pl_pjsip_ptime(cfg, pl_pjsip->sip_ptime);
 
 	if(pl_pjsip->sip_no_vad)
-		pl_pjsip_novad(&app_config, pl_pjsip->sip_no_vad);
+		pl_pjsip_novad(cfg, pl_pjsip->sip_no_vad);
 
 	if(pl_pjsip->sip_echo_mode != PJSIP_ECHO_DISABLE)
 	{
 		if(pl_pjsip->sip_echo_tail)
-			pl_pjsip_ec_tial(&app_config, pl_pjsip->sip_echo_tail);
-		pl_pjsip_ec_options(&app_config, pl_pjsip->sip_echo_mode - PJSIP_ECHO_DISABLE);
+			pl_pjsip_ec_tial(cfg, pl_pjsip->sip_echo_tail);
+		pl_pjsip_ec_options(cfg, pl_pjsip->sip_echo_mode - PJSIP_ECHO_DISABLE);
 	}
 	if(pl_pjsip->sip_ilbc_mode)
-		pl_pjsip_ilbc_mode(&app_config, pl_pjsip->sip_ilbc_mode);
+		pl_pjsip_ilbc_mode(cfg, pl_pjsip->sip_ilbc_mode);
 
 	if(pl_pjsip->sip_capture_lat)
-		pl_pjsip_capture_lat(&app_config, pl_pjsip->sip_capture_lat);
+		pl_pjsip_capture_lat(cfg, pl_pjsip->sip_capture_lat);
 
 	if(pl_pjsip->sip_playback_lat)
-		pl_pjsip_playback_lat(&app_config, pl_pjsip->sip_playback_lat);
+		pl_pjsip_playback_lat(cfg, pl_pjsip->sip_playback_lat);
 
-	pl_pjsip_snd_auto_close(&app_config, pl_pjsip->sip_snd_auto_close);
-	pl_pjsip_no_tones(&app_config, pl_pjsip->sip_notones);
+	pl_pjsip_snd_auto_close(cfg, pl_pjsip->sip_snd_auto_close);
+	pl_pjsip_no_tones(cfg, pl_pjsip->sip_notones);
 	if(pl_pjsip->sip_jb_max_size)
-		pl_pjsip_jb_max_size(&app_config, pl_pjsip->sip_jb_max_size);
+		pl_pjsip_jb_max_size(cfg, pl_pjsip->sip_jb_max_size);
 
 #if PJSUA_HAS_VIDEO
 	//Video Options:
 	if(pl_pjsip->sip_video)
 	{
-		pl_pjsip_video_enable(&app_config, pl_pjsip->sip_video);
+		pl_pjsip_video_enable(cfg, pl_pjsip->sip_video);
 		if(strlen(pl_pjsip->sip_play_avi))
-			pl_pjsip_play_avi(&app_config, pl_pjsip->sip_play_avi);
-		pl_pjsip_auto_play_avi(&app_config, pl_pjsip->sip_auto_play_avi);
+			pl_pjsip_play_avi(cfg, pl_pjsip->sip_play_avi);
+		pl_pjsip_auto_play_avi(cfg, pl_pjsip->sip_auto_play_avi);
 	}
 #endif
 	//Media Transport Options:
-	pl_pjsip_ice_enable(&app_config, pl_pjsip->sip_ice);
-	pl_pjsip_regular_enable(&app_config, pl_pjsip->sip_ice_regular);
-	pl_pjsip_ice_max_hosts(&app_config, pl_pjsip->sip_ice_regular);
-	pl_pjsip_ice_nortcp_enable(&app_config, pl_pjsip->sip_ice_nortcp);
+	pl_pjsip_ice_enable(cfg, pl_pjsip->sip_ice);
+	pl_pjsip_regular_enable(cfg, pl_pjsip->sip_ice_regular);
+	pl_pjsip_ice_max_hosts(cfg, pl_pjsip->sip_ice_regular);
+	pl_pjsip_ice_nortcp_enable(cfg, pl_pjsip->sip_ice_nortcp);
 
 	if(pl_pjsip->sip_rtp_port)
-		pl_pjsip_rtp_port(&app_config, pl_pjsip->sip_rtp_port);
+		pl_pjsip_rtp_port(cfg, pl_pjsip->sip_rtp_port);
 
 	if(pl_pjsip->sip_rx_drop_pct)
-		pl_pjsip_rx_drop_pct(&app_config, pl_pjsip->sip_rx_drop_pct);
+		pl_pjsip_rx_drop_pct(cfg, pl_pjsip->sip_rx_drop_pct);
 	if(pl_pjsip->sip_tx_drop_pct)
-		pl_pjsip_tx_drop_pct(&app_config, pl_pjsip->sip_tx_drop_pct);
+		pl_pjsip_tx_drop_pct(cfg, pl_pjsip->sip_tx_drop_pct);
 
-	pl_pjsip_turn_enable(&app_config, pl_pjsip->sip_turn);
+	pl_pjsip_turn_enable(cfg, pl_pjsip->sip_turn);
 	if(strlen(pl_pjsip->sip_turn_srv.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_turn_srv.sip_address, pl_pjsip->sip_turn_srv.sip_port);
-		pl_pjsip_turn_srv(&app_config, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		pl_pjsip_turn_srv(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
-	pl_pjsip_turn_tcp(&app_config, pl_pjsip->sip_turn_tcp);
+	pl_pjsip_turn_tcp(cfg, pl_pjsip->sip_turn_tcp);
 
 	if(strlen(pl_pjsip->sip_turn_user))
-		pl_pjsip_play_avi(&app_config, pl_pjsip->sip_turn_user);
+		pl_pjsip_play_avi(cfg, pl_pjsip->sip_turn_user);
 	if(strlen(pl_pjsip->sip_turn_password))
-		pl_pjsip_play_avi(&app_config, pl_pjsip->sip_turn_password);
+		pl_pjsip_play_avi(cfg, pl_pjsip->sip_turn_password);
 
-	pl_pjsip_rtcp_mux(&app_config, pl_pjsip->sip_rtcp_mux);
+	pl_pjsip_rtcp_mux(cfg, pl_pjsip->sip_rtcp_mux);
 	//Buddy List (can be more than one):
 	//void				*buddy_list;
 	//User Agent options:
 	if(pl_pjsip->sip_auto_answer_code)
-		pl_pjsip_auto_answer(&app_config, pl_pjsip->sip_auto_answer_code);
-	pl_pjsip_max_calls(&app_config, pl_pjsip->sip_max_calls);
-	pl_pjsip_thread_cnt(&app_config, pl_pjsip->sip_thread_max);
-	pl_pjsip_duration(&app_config, pl_pjsip->sip_duration);
+		pl_pjsip_auto_answer(cfg, pl_pjsip->sip_auto_answer_code);
+	pl_pjsip_max_calls(cfg, pl_pjsip->sip_max_calls);
+	pl_pjsip_thread_cnt(cfg, pl_pjsip->sip_thread_max);
+	pl_pjsip_duration(cfg, pl_pjsip->sip_duration);
 	if(pl_pjsip->sip_norefersub)
-		pl_pjsip_norefersub(&app_config);
-	pl_pjsip_compact_form(&app_config, pl_pjsip->sip_use_compact_form);
-	pl_pjsip_no_force_lr(&app_config, pl_pjsip->sip_no_force_lr);
-	pl_pjsip_accept_redirect(&app_config, pl_pjsip->sip_accept_redirect);
+		pl_pjsip_norefersub(cfg);
+	pl_pjsip_compact_form(cfg, pl_pjsip->sip_use_compact_form);
+	pl_pjsip_no_force_lr(cfg, pl_pjsip->sip_no_force_lr);
+	pl_pjsip_accept_redirect(cfg, pl_pjsip->sip_accept_redirect);
 
 	if(pl_pjsip->sip_codec.is_active)
 	{
-		pl_pjsip_add_codec(&app_config, pl_pjsip->sip_codec.payload_name);
+		pl_pjsip_add_codec(cfg, pl_pjsip->sip_codec.payload_name);
 	}
 
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
 		if(pl_pjsip->codec[i].is_active)
 		{
-			pl_pjsip_add_codec(&app_config, pl_pjsip->codec[i].payload_name);
+			pl_pjsip_add_codec(cfg, pl_pjsip->codec[i].payload_name);
 		}
 	}
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
 		if(pl_pjsip->dicodec[i].is_active)
 		{
-			pl_pjsip_dis_codec(&app_config, pl_pjsip->dicodec[i].payload_name);
+			pl_pjsip_dis_codec(cfg, pl_pjsip->dicodec[i].payload_name);
 		}
 	}
 

@@ -32,7 +32,7 @@ struct zpl_mediartp_session_s
 {
     NODE            node;
     #ifdef ZPL_LIBORTP_MODULE
-    RtpSession     *_session;
+    RtpSession     *_rsession;
     #endif
 #ifdef ZPL_JRTPLIB_MODULE
     jrtp_session_t     *_session;

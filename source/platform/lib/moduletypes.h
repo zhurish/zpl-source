@@ -4,6 +4,7 @@
  
 typedef enum {
 	MODULE_NONE = 0,
+  MODULE_PJSIP, 
   MODULE_DEFAULT, 
   MODULE_LIB, 
   MODULE_OSAL, 

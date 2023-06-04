@@ -234,20 +234,20 @@ int os_netservice_config_load(char *filename)
     os_netservice_default(&_os_netservice);
     if (os_file_access(filename) != OK)
     {
-        printf("pjsip_config_load :%s is not exist.\r\n", filename);
+        printf("os_netservice_config_load :%s is not exist.\r\n", filename);
         return ERROR;
     }
     int file_size = (int)os_file_size(filename);
     char *buffer = (char *)malloc(file_size + 1);
     if (!buffer)
     {
-        // printf("pjsip_config_load : can not malloc buffer(%d byte)\r\n", file_size);
+        // printf("os_netservice_config_load : can not malloc buffer(%d byte)\r\n", file_size);
         return ERROR;
     }
     memset(buffer, 0, file_size + 1);
     if (os_read_file(filename, buffer, file_size) != OK)
     {
-        // printf("pjsip_config_load : can not read buffer(%d byte)\r\n", file_size);
+        // printf("os_netservice_config_load : can not read buffer(%d byte)\r\n", file_size);
         goto on_error;
     }
     cJSON *tmpobj = cJSON_Parse(buffer);

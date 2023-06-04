@@ -20,10 +20,17 @@
 #define OS_TASK_ENTRY_UNLOCK(n) if(n) pthread_mutex_unlock(&n->td_mutex)
 
 
-static LIST *os_task_list = NULL;
-static os_mutex_t *task_mutex = NULL;
-static zpl_uint32 os_moniter_id = 0;
-struct os_task_history total_cpu;
+typedef struct os_gtask_s
+{
+	LIST *os_task_list;
+	os_mutex_t *task_mutex;
+	zpl_uint32 os_moniter_id;
+	struct os_task_history total_cpu;
+}os_global_task_t;
+
+
+static os_global_task_t _global_task;
+
 
 typedef struct os_task_hook_tbl
 {
@@ -89,24 +96,24 @@ int os_task_init(void)
 	remove(OS_TACK_TMP_LOG);
 	sync();
 #endif
-	if (task_mutex == NULL)
+	if (_global_task.task_mutex == NULL)
 	{
-		task_mutex = os_mutex_name_create("taskmutex");
+		_global_task.task_mutex = os_mutex_name_create("taskmutex");
 	}
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 	{
-		os_task_list = os_malloc(sizeof(LIST));
-		if (os_task_list)
+		_global_task.os_task_list = os_malloc(sizeof(LIST));
+		if (_global_task.os_task_list)
 		{
 			os_memset(hook_tbl, 0, sizeof(hook_tbl));
-			os_memset(&total_cpu, 0, sizeof(total_cpu));
+			os_memset(&_global_task.total_cpu, 0, sizeof(_global_task.total_cpu));
 #ifndef HAVE_GET_NPROCS
-			total_cpu.cpu = get_nprocs();
+			_global_task.total_cpu.cpu = get_nprocs();
 #endif
-			lstInit(os_task_list);
+			lstInit(_global_task.os_task_list);
 			return OK;
 		}
-		os_mutex_destroy(task_mutex);
+		os_mutex_destroy(_global_task.task_mutex);
 		return ERROR;
 	}
 	return OK;
@@ -115,12 +122,12 @@ int os_task_init(void)
 
 int os_task_exit(void)
 {
-	if (task_mutex)
+	if (_global_task.task_mutex)
 	{
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		os_mutex_destroy(task_mutex);
-		if (os_task_list)
-			lstFree(os_task_list);
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+		os_mutex_destroy(_global_task.task_mutex);
+		if (_global_task.os_task_list)
+			lstFree(_global_task.os_task_list);
 		return OK;
 	}
 	return OK;
@@ -170,11 +177,11 @@ int os_task_killsignal(zpl_taskid_t task_id, int signno)
 		return ERROR;	
 	if (task)
 	{
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 		pthread_kill(task->td_thread, signno);
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 	}
 	return OK;
 }
@@ -212,14 +219,14 @@ static int _os_task_destroy_callback(os_task_t *task)
 	return OK;
 }
 
-int os_task_add_start_hook(os_task_hook *cb)
+int os_task_add_start_hook(os_task_hook cb)
 {
 	int i = 0;
 	for(i = 0; i < TASK_CBTBL_MAX; i++)
 	{
 		if(hook_tbl[i].cb_start == NULL)
 		{
-			hook_tbl[i].cb_start = *cb;
+			hook_tbl[i].cb_start = cb;
 			//cb_tbl[i].cb_create = cb->cb_create;
 			//cb_tbl[i].cb_destroy = cb->cb_destroy;
 			//cb_tbl[i].pVoid = cb->pVoid;
@@ -228,7 +235,7 @@ int os_task_add_start_hook(os_task_hook *cb)
 	}
 	return ERROR;
 }
-int os_task_add_create_hook(os_task_hook *cb)
+int os_task_add_create_hook(os_task_hook cb)
 {
 	int i = 0;
 	for(i = 0; i < TASK_CBTBL_MAX; i++)
@@ -236,7 +243,7 @@ int os_task_add_create_hook(os_task_hook *cb)
 		if(hook_tbl[i].cb_create == NULL)
 		{
 			//cb_tbl[i].cb_start = cb->cb_start;
-			hook_tbl[i].cb_create = *cb;
+			hook_tbl[i].cb_create = cb;
 			//cb_tbl[i].cb_destroy = cb->cb_destroy;
 			//cb_tbl[i].pVoid = cb->pVoid;
 			return OK;
@@ -244,7 +251,7 @@ int os_task_add_create_hook(os_task_hook *cb)
 	}
 	return ERROR;
 }
-int os_task_add_destroy_hook(os_task_hook *cb)
+int os_task_add_destroy_hook(os_task_hook cb)
 {
 		int i = 0;
 	for(i = 0; i < TASK_CBTBL_MAX; i++)
@@ -253,7 +260,7 @@ int os_task_add_destroy_hook(os_task_hook *cb)
 		{
 			//cb_tbl[i].cb_start = cb->cb_start;
 			//cb_tbl[i].cb_create = cb->cb_create;
-			hook_tbl[i].cb_destroy = *cb;
+			hook_tbl[i].cb_destroy = cb;
 			//cb_tbl[i].pVoid = cb->pVoid;
 			return OK;
 		}
@@ -261,12 +268,12 @@ int os_task_add_destroy_hook(os_task_hook *cb)
 	return ERROR;
 }
 
-int os_task_del_start_hook(os_task_hook *cb)
+int os_task_del_start_hook(os_task_hook cb)
 {
 	int i = 0;
 	for(i = 0; i < TASK_CBTBL_MAX; i++)
 	{
-		if(hook_tbl[i].cb_start == cb && cb)
+		if(hook_tbl[i].cb_start == cb)
 		{
 			hook_tbl[i].cb_start = NULL;
 			//cb_tbl[i].cb_create = cb->cb_create;
@@ -277,12 +284,12 @@ int os_task_del_start_hook(os_task_hook *cb)
 	}
 	return ERROR;
 }
-int os_task_del_create_hook(os_task_hook *cb)
+int os_task_del_create_hook(os_task_hook cb)
 {
 	int i = 0;
 	for(i = 0; i < TASK_CBTBL_MAX; i++)
 	{
-		if(hook_tbl[i].cb_create == cb && cb)
+		if(hook_tbl[i].cb_create == cb)
 		{
 			//cb_tbl[i].cb_start = cb->cb_start;
 			hook_tbl[i].cb_create = NULL;
@@ -293,12 +300,12 @@ int os_task_del_create_hook(os_task_hook *cb)
 	}
 	return ERROR;
 }
-int os_task_del_destroy_hook(os_task_hook *cb)
+int os_task_del_destroy_hook(os_task_hook cb)
 {
 	int i = 0;
 	for(i = 0; i < TASK_CBTBL_MAX; i++)
 	{
-		if(hook_tbl[i].cb_destroy == cb && cb/* && cb_tbl[i].cb_stop == NULL*/)
+		if(hook_tbl[i].cb_destroy == cb/* && cb_tbl[i].cb_stop == NULL*/)
 		{
 			//cb_tbl[i].cb_start = cb->cb_start;
 			//cb_tbl[i].cb_create = cb->cb_create;
@@ -314,16 +321,16 @@ static os_task_t * os_task_tcb_lookup(zpl_taskid_t id, zpl_pthread_t pid, zpl_bo
 {
 	NODE *node = NULL;
 	os_task_t *task = NULL;
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 		return NULL;
 	if(id == (zpl_taskid_t)ERROR)
 		return NULL;		
 	if(mutex)
 	{
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 	}
-	node = lstFirst(os_task_list);
+	node = lstFirst(_global_task.os_task_list);
 	while (node)
 	{
 		if (node)
@@ -333,8 +340,8 @@ static os_task_t * os_task_tcb_lookup(zpl_taskid_t id, zpl_pthread_t pid, zpl_bo
 			{
 				if(mutex)
 				{
-					if (task_mutex)
-						os_mutex_unlock(task_mutex);
+					if (_global_task.task_mutex)
+						os_mutex_unlock(_global_task.task_mutex);
 				}
 				return task;
 			}
@@ -343,8 +350,8 @@ static os_task_t * os_task_tcb_lookup(zpl_taskid_t id, zpl_pthread_t pid, zpl_bo
 			{
 				if(mutex)
 				{
-					if (task_mutex)
-						os_mutex_unlock(task_mutex);
+					if (_global_task.task_mutex)
+						os_mutex_unlock(_global_task.task_mutex);
 				}
 				return task;
 			}
@@ -353,8 +360,8 @@ static os_task_t * os_task_tcb_lookup(zpl_taskid_t id, zpl_pthread_t pid, zpl_bo
 	}
 	if(mutex)
 	{
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 	}
 	return NULL;
 }
@@ -373,24 +380,24 @@ static os_task_t * os_task_node_lookup_by_name(char *task_name)
 {
 	NODE *node;
 	os_task_t *task;
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 		return NULL;
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-	node = lstFirst(os_task_list);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+	node = lstFirst(_global_task.os_task_list);
 	while (node)
 	{
 		task = (os_task_t *) node;
 		if (task->td_name_key == os_task_name_hash_key(task_name))
 		{
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
+			if (_global_task.task_mutex)
+				os_mutex_unlock(_global_task.task_mutex);
 			return task;
 		}
 		node = lstNext(node);
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	return NULL;
 }
 
@@ -458,14 +465,14 @@ const zpl_char * os_task_self_name_alisa(void)
 	os_task_t *task = NULL;
 	static char name[TASK_NAME_MAX * 2];
 	os_memset(name, 0, sizeof(name));
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 	{
 		snprintf(name, sizeof(name), "[LWP:%ld]", syscall(SYS_gettid));
 		return name;
 	}
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-	node = lstFirst(os_task_list);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+	node = lstFirst(_global_task.os_task_list);
 	while (node)
 	{
 		if (node)
@@ -474,15 +481,15 @@ const zpl_char * os_task_self_name_alisa(void)
 			if (task->td_tid == syscall(SYS_gettid))
 			{
 				snprintf(name, sizeof(name), "%s[LWP:%d]", task->td_name, task->td_tid);
-				if (task_mutex)
-					os_mutex_unlock(task_mutex);
+				if (_global_task.task_mutex)
+					os_mutex_unlock(_global_task.task_mutex);
 				return name;
 			}
 		}
 		node = lstNext(node);
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	snprintf(name, sizeof(name), "[LWP:%ld]", syscall(SYS_gettid));
 	return name;
 }
@@ -494,17 +501,17 @@ int os_task_name_get(zpl_taskid_t task_id, char *task_name)
 		return ERROR;	
 	if (task)
 	{
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 		if (task_name)
 		{
 			os_strcpy(task_name, task->td_name);
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
+			if (_global_task.task_mutex)
+				os_mutex_unlock(_global_task.task_mutex);
 			return OK;
 		}
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 	}
 	return ERROR;
 }
@@ -533,9 +540,9 @@ zpl_char * os_task_name_LWPID( zpl_pid_t tid)
 	//os_task_gettid();
 	NODE *node = NULL;
 	os_task_t *task = NULL;
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-	node = lstFirst(os_task_list);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+	node = lstFirst(_global_task.os_task_list);
 	while (node)
 	{
 		if (node)
@@ -543,15 +550,15 @@ zpl_char * os_task_name_LWPID( zpl_pid_t tid)
 			task = (os_task_t *) node;
 			if (task->td_tid == tid)
 			{
-				if (task_mutex)
-					os_mutex_unlock(task_mutex);
+				if (_global_task.task_mutex)
+					os_mutex_unlock(_global_task.task_mutex);
 				return task->td_name;
 			}
 		}
 		node = lstNext(node);
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	return "Unknow";
 }
 int os_task_priority_set(zpl_taskid_t taskId, zpl_int32 Priority)
@@ -567,8 +574,8 @@ int os_task_priority_set(zpl_taskid_t taskId, zpl_int32 Priority)
 		return OK;
 	if (osapiTask)
 	{
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 		OS_TASK_ENTRY_LOCK(osapiTask);
 //		pri = osapiTask->td_priority;
 		osapiTask->td_old_priority = osapiTask->td_priority;
@@ -590,8 +597,8 @@ int os_task_priority_set(zpl_taskid_t taskId, zpl_int32 Priority)
 		//osapiTask->td_old_priority = policy;
 		sp.sched_priority = osapiTask->td_priority;
 		OS_TASK_ENTRY_UNLOCK(osapiTask);
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 		pthread_setschedparam(osapiTask->td_thread, policy, &sp);
 		return (OK);
 	}
@@ -860,14 +867,14 @@ static int os_task_refresh_time(void *argv)
 	{
 		NODE node;
 		os_task_t *task = NULL;
-		if (os_task_list == NULL)
+		if (_global_task.os_task_list == NULL)
 			return ERROR;
-		os_task_refresh_total_cpu(&total_cpu);
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		task = (os_task_t *)lstFirst(os_task_list);
+		os_task_refresh_total_cpu(&_global_task.total_cpu);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+		task = (os_task_t *)lstFirst(_global_task.os_task_list);
 
-		for(task = (os_task_t *)lstFirst(os_task_list);
+		for(task = (os_task_t *)lstFirst(_global_task.os_task_list);
 				task != NULL;
 				task = (os_task_t *)lstNext(&node))
 		{
@@ -876,11 +883,11 @@ static int os_task_refresh_time(void *argv)
 			if( task->state == OS_TASK_STATE_ZOMBIE ||
 				task->state == OS_TASK_STATE_DEAD )
 			{
-				if (task_mutex)
-					os_mutex_unlock(task_mutex);
+				if (_global_task.task_mutex)
+					os_mutex_unlock(_global_task.task_mutex);
 				os_task_entry_destroy(task);
-				if (task_mutex)
-					os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+				if (_global_task.task_mutex)
+					os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 			}
 
 			if (task && task->td_tid != 0)
@@ -893,8 +900,8 @@ static int os_task_refresh_time(void *argv)
 					task->state = OS_TASK_STATE_ZOMBIE;
 			}
 		}
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 	}
 	return OK;
 }
@@ -934,15 +941,15 @@ static int os_task_refresh_tid_one(char *dirpath)
 						fclose(fp);
 						continue;
 					}
-					if(task_mutex)
-					os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+					if(_global_task.task_mutex)
+					os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 					if(task)
 					{
 						tid = atol(ptr->d_name);
 						task->td_tid = (pid_t)tid;
 					}
-					if(task_mutex)
-					os_mutex_unlock(task_mutex);
+					if(_global_task.task_mutex)
+					os_mutex_unlock(_global_task.task_mutex);
 				}
 				fclose(fp);
 			}
@@ -968,11 +975,11 @@ static int os_task_finsh_job(void)
 		int addjob = 0;
 		NODE *node;
 		os_task_t *task;
-		if(os_task_list == NULL)
+		if(_global_task.os_task_list == NULL)
 		return ERROR;
-		if(task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		node = lstFirst(os_task_list);
+		if(_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+		node = lstFirst(_global_task.os_task_list);
 		while(node)
 		{
 			if(node)
@@ -986,8 +993,8 @@ static int os_task_finsh_job(void)
 			}
 			node = lstNext(node);
 		}
-		if(task_mutex)
-		os_mutex_unlock(task_mutex);
+		if(_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 		if(addjob)
 			return os_job_add(OS_JOB_NONE, os_task_refresh_tid_task, NULL);
 	}
@@ -1008,30 +1015,30 @@ static int os_task_attribute_destroy(os_task_t *task)
 
 static int os_task_entry_destroy(os_task_t *task)
 {
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 	{
 		return ERROR;
 	}
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-	lstDelete(os_task_list, (NODE *)task);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+	lstDelete(_global_task.os_task_list, (NODE *)task);
 	_os_task_destroy_callback(task);
 	if (task->priv)
 	{
 		task->priv = NULL;
 	}
-	if (lstCount(os_task_list) == 0)
+	if (lstCount(_global_task.os_task_list) == 0)
 	{
-		if (os_moniter_id)
+		if (_global_task.os_moniter_id)
 		{
-			os_time_destroy(os_moniter_id);
+			os_time_destroy(_global_task.os_moniter_id);
 		}
 	}
 	os_task_attribute_destroy(task);
 	os_free(task);
 	task = NULL;
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	return OK;
 }
 
@@ -1210,11 +1217,11 @@ static os_task_t * os_task_entry_malloc(zpl_char *name, zpl_int32 pri, zpl_uint3
 		os_strcpy(task->td_entry_name, func_name);
 		task->state = OS_TASK_STATE_CREATE;
 
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
-		lstAdd(os_task_list, (NODE *) task);
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
+		lstAdd(_global_task.os_task_list, (NODE *) task);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 
 		if (os_task_attribute_create(task, bcreate) == OK)
 		{
@@ -1232,9 +1239,9 @@ static os_task_t * os_task_entry_malloc(zpl_char *name, zpl_int32 pri, zpl_uint3
 
 static int os_task_moniter_init(void)
 {
-	if (os_moniter_id == 0)
+	if (_global_task.os_moniter_id == 0)
 	{
-		os_moniter_id = os_time_create(os_task_refresh_time, NULL, 10000);
+		_global_task.os_moniter_id = os_time_create(os_task_refresh_time, NULL, 10000);
 		return OK;
 	}
 	return ERROR;
@@ -1272,7 +1279,7 @@ zpl_taskid_t os_task_entry_create(const zpl_char *name, zpl_uint32 pri, zpl_uint
 #endif
 		if (os_time_load() == OK)
 		{
-			if (os_moniter_id == 0)
+			if (_global_task.os_moniter_id == 0)
 			{
 				os_task_moniter_init();
 			}
@@ -1306,7 +1313,7 @@ zpl_taskid_t os_task_entry_add(const zpl_char *name, zpl_uint32 pri, zpl_uint32 
 #endif
 	if (os_time_load() == OK)
 	{
-		if (os_moniter_id == 0)
+		if (_global_task.os_moniter_id == 0)
 		{
 			os_task_moniter_init();
 		}
@@ -1325,11 +1332,11 @@ int os_task_priv_set(zpl_taskid_t taskId, zpl_pthread_t td_thread, void *priv)
 			return ERROR;
 		if (osapiTask)
 		{
-			if (task_mutex)
-				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			if (_global_task.task_mutex)
+				os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 			osapiTask->priv = priv;
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
+			if (_global_task.task_mutex)
+				os_mutex_unlock(_global_task.task_mutex);
 			return (OK);
 		}
 	}
@@ -1340,11 +1347,11 @@ int os_task_priv_set(zpl_taskid_t taskId, zpl_pthread_t td_thread, void *priv)
 			return ERROR;
 		if (task)
 		{
-			if (task_mutex)
-				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			if (_global_task.task_mutex)
+				os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 			task->priv = priv;
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
+			if (_global_task.task_mutex)
+				os_mutex_unlock(_global_task.task_mutex);
 			return (OK);
 		}
 	}
@@ -1362,11 +1369,11 @@ void * os_task_priv_get(zpl_taskid_t taskId, zpl_pthread_t td_thread)
 			return NULL;
 		if (task)
 		{
-			if (task_mutex)
-				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			if (_global_task.task_mutex)
+				os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 			priv = task->priv;
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
+			if (_global_task.task_mutex)
+				os_mutex_unlock(_global_task.task_mutex);
 			return (priv);
 		}
 	}
@@ -1377,11 +1384,11 @@ void * os_task_priv_get(zpl_taskid_t taskId, zpl_pthread_t td_thread)
 			return NULL;
 		if (task)
 		{
-			if (task_mutex)
-				os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+			if (_global_task.task_mutex)
+				os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 			priv = task->priv;
-			if (task_mutex)
-				os_mutex_unlock(task_mutex);
+			if (_global_task.task_mutex)
+				os_mutex_unlock(_global_task.task_mutex);
 			return (priv);
 		}
 	}
@@ -1402,8 +1409,8 @@ int os_task_thread_refresh_id(zpl_pthread_t td_thread)
 {
 	if(td_thread == (zpl_pthread_t)ERROR)
 		return ERROR;		
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 	os_task_t *task = os_task_tcb_lookup(0, td_thread, zpl_false);
 	if(task)
 	{
@@ -1412,8 +1419,8 @@ int os_task_thread_refresh_id(zpl_pthread_t td_thread)
 		os_task_refresh_cpu(task);
 		//if(task->state > OS_TASK_STATE_CREATE)
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	return OK;
 }
 
@@ -1421,12 +1428,12 @@ int os_task_foreach(os_task_hook cb, void *p)
 {
 	NODE node;
 	os_task_t *task = NULL;
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 		return ERROR;
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 
-	for(task = (os_task_t *)lstFirst(os_task_list);
+	for(task = (os_task_t *)lstFirst(_global_task.os_task_list);
 			task != NULL;
 			task = (os_task_t *)lstNext(&node))
 	{
@@ -1442,8 +1449,8 @@ int os_task_foreach(os_task_hook cb, void *p)
 			}
 		}
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	return OK;
 }
 
@@ -1511,7 +1518,7 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	os_memset(mrss, 0, sizeof(mrss));
 	os_memset(mlimit, 0, sizeof(mlimit));
 
-	os_task_refresh_total_cpu(&total_cpu);
+	os_task_refresh_total_cpu(&_global_task.total_cpu);
 
 	if (task->td_tid != 0)
 	{
@@ -1528,19 +1535,19 @@ static int os_task_show_detail(void *p, os_task_t *task, int detail)
 	sprintf(pri, "%d", task->td_priority);
 	sprintf(tacksize, "0x%x", task->td_stack_size);
 
-	if (total_cpu.total_realy)
+	if (_global_task.total_cpu.total_realy)
 		sprintf(real, "%.2lf%%",
-				total_cpu.cpu * 100
+				_global_task.total_cpu.cpu * 100
 						* (zpl_double) ((zpl_double) task->hist.total_realy
-								/ (zpl_double) total_cpu.total_realy));
+								/ (zpl_double) _global_task.total_cpu.total_realy));
 	else
 		sprintf(real, "%s", "0.00%");
 
-	if (total_cpu.total)
+	if (_global_task.total_cpu.total)
 		sprintf(total, "%.2lf%%",
-				total_cpu.cpu * 100
+				_global_task.total_cpu.cpu * 100
 						* (zpl_double) ((zpl_double) task->hist.total
-								/ (zpl_double) total_cpu.total));
+								/ (zpl_double) _global_task.total_cpu.total));
 	else
 		sprintf(total, "%s", "0.00%");
 
@@ -1571,7 +1578,7 @@ int os_task_show(void *vty, const zpl_char *task_name, zpl_uint32 detail)
 {
 	NODE *node = NULL;
 	os_task_t *task = NULL;
-	if (os_task_list == NULL)
+	if (_global_task.os_task_list == NULL)
 		return ERROR;
 
 	if (task_name)
@@ -1579,21 +1586,21 @@ int os_task_show(void *vty, const zpl_char *task_name, zpl_uint32 detail)
 
 	if (task_name && task)
 	{
-		if (task_mutex)
-			os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+		if (_global_task.task_mutex)
+			os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 		if (task)
 		{
 			os_task_show_head(vty, detail);
 			os_task_show_detail(vty, task, detail);
 		}
-		if (task_mutex)
-			os_mutex_unlock(task_mutex);
+		if (_global_task.task_mutex)
+			os_mutex_unlock(_global_task.task_mutex);
 		return 0;
 	}
-	if (task_mutex)
-		os_mutex_lock(task_mutex, OS_WAIT_FOREVER);
+	if (_global_task.task_mutex)
+		os_mutex_lock(_global_task.task_mutex, OS_WAIT_FOREVER);
 
-	node = lstFirst(os_task_list);
+	node = lstFirst(_global_task.os_task_list);
 	if(node)
 		os_task_show_head(vty, detail);
 	while (node)
@@ -1605,8 +1612,8 @@ int os_task_show(void *vty, const zpl_char *task_name, zpl_uint32 detail)
 		}
 		node = lstNext(node);
 	}
-	if (task_mutex)
-		os_mutex_unlock(task_mutex);
+	if (_global_task.task_mutex)
+		os_mutex_unlock(_global_task.task_mutex);
 	return 0;
 }
 #endif

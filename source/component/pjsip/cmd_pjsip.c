@@ -14,9 +14,8 @@
 #include "vty_include.h"
 
 #ifdef ZPL_PJSIP_MODULE
-#include "voip_app.h"
-#include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
+#include "pjsua_app_common.h"
 #include "pjsip_app_api.h"
 #include "pjsua_app.h"
 
@@ -3006,199 +3005,6 @@ DEFUN (no_ip_sip_redirect_method,
 	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-/*
- * Sound Module
- */
-
-/*
- * Playback
- */
-DEFUN (voip_playback_volume,
-		voip_playback_volume_cmd,
-		"voip playback volume <0-100>",
-		"VOIP Configure\n"
-		"Playback configure\n"
-		"Volume Configure\n"
-		"volume value in percent\n")
-{
-	int ret = ERROR;
-	if(argc == 1)
-	{
-		ret = voip_playback_volume_out_set_api(atoi(argv[0]));
-	}
-	else
-	{
-		if(strstr(argv[0], "stereo"))
-			ret = voip_playback_volume_dac_set_api(atoi(argv[1]));
-		else
-			ret = voip_playback_volume_mono_set_api(atoi(argv[1]));
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-ALIAS(voip_playback_volume,
-		voip_playback_mono_volume_cmd,
-		"voip playback volume (stereo|mono) <0-100>",
-		"VOIP Configure\n"
-		"Playback configure\n"
-		"Volume Configure\n"
-		"Stereo Configure\n"
-		"Mono Configure\n"
-		"volume value in percent\n");
-
-DEFUN (no_voip_playback_volume,
-		no_voip_playback_volume_cmd,
-		"no voip playback volume",
-		NO_STR
-		"VOIP Configure\n"
-		"Playback configure\n"
-		"Volume Configure\n")
-{
-	int ret = ERROR;
-	if(argc == 1)
-	{
-		ret = voip_playback_volume_out_set_api(0);
-	}
-	else
-	{
-		if(strstr(argv[0], "stereo"))
-			ret = voip_playback_volume_dac_set_api(0);
-		else
-			ret = voip_playback_volume_mono_set_api(0);
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-ALIAS(no_voip_playback_volume,
-		no_voip_playback_mono_volume_cmd,
-		"no voip playback volume (stereo|mono)",
-		NO_STR
-		"VOIP Configure\n"
-		"Playback configure\n"
-		"Volume Configure\n"
-		"Stereo Configure\n"
-		"Mono Configure\n");
-
-/*
- * Capture
- */
-DEFUN (voip_capture_volume,
-		voip_capture_volume_cmd,
-		"voip capture volume <0-100>",
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"Volume Configure\n"
-		"volume value in percent\n")
-{
-	int ret = ERROR;
-	if(argc == 1)
-	{
-		ret = voip_capture_volume_in_set_api(atoi(argv[0]));
-	}
-	else
-	{
-		if(strstr(argv[0], "stereo"))
-			ret = voip_capture_volume_adc_set_api(atoi(argv[1]));
-		else
-			ret = voip_capture_volume_mono_set_api(atoi(argv[1]));
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-ALIAS(voip_capture_volume,
-		voip_capture_mono_volume_cmd,
-		"voip capture volume (stereo|mono) <0-100>",
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"Volume Configure\n"
-		"Stereo Configure\n"
-		"Mono Configure\n"
-		"volume value in percent\n");
-
-DEFUN (no_voip_capture_volume,
-		no_voip_capture_volume_cmd,
-		"no voip capture volume",
-		NO_STR
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"Volume Configure\n")
-{
-	int ret = ERROR;
-	if(argc == 1)
-	{
-		ret = voip_capture_volume_in_set_api(0);
-	}
-	else
-	{
-		if(strstr(argv[0], "stereo"))
-			ret = voip_capture_volume_adc_set_api(0);
-		else
-			ret = voip_capture_volume_mono_set_api(0);
-	}
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-ALIAS(no_voip_capture_volume,
-		no_voip_capture_mono_volume_cmd,
-		"no voip capture volume (stereo|mono)",
-		NO_STR
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"Volume Configure\n"
-		"Stereo Configure\n"
-		"Mono Configure\n");
-
-
-DEFUN (voip_capture_boost,
-		voip_capture_boost_cmd,
-		"voip capture boost <0-8>",
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"boost configure\n"
-		"boost value\n")
-{
-	int ret = ERROR;
-	ret = voip_volume_boost_set_api(atoi(argv[0]));
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-DEFUN (no_voip_capture_boost,
-		no_voip_capture_boost_cmd,
-		"no voip capture boost",
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"boost configure\n")
-{
-	int ret = ERROR;
-	ret = voip_volume_boost_set_api(0);
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-DEFUN (voip_capture_boost_gain,
-		voip_capture_boost_gain_cmd,
-		"voip capture boost-gain <0-3>",
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"boost gain configure\n"
-		"boost value\n")
-{
-	int ret = ERROR;
-	ret = voip_volume_boost_gain_set_api(atoi(argv[0]));
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-DEFUN (no_voip_capture_boost_gain,
-		no_voip_capture_boost_gain_cmd,
-		"no voip capture boost-cain",
-		"VOIP Configure\n"
-		"Capture configure\n"
-		"boost gain configure\n")
-{
-	int ret = ERROR;
-	ret = voip_volume_boost_gain_set_api(0);
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
 
 /*
  * call
@@ -3328,31 +3134,7 @@ ALIAS (show_voip_facecard,
 		"Face Card Data Base information\n");
 #endif
 /************************************ debug ************************************/
-DEFUN (debug_voip_app,
-		debug_voip_app_cmd,
-		"debug voip app",
-		DEBUG_STR
-		"VOIP Configure\n"
-		"APP configure\n")
-{
-	int ret = ERROR;
-	int level = VOIP_APP_DEBUG_EVENT;
-	ret = voip_app_debug_set_api(level);
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
 
-DEFUN (no_debug_voip_app,
-		no_debug_voip_app_cmd,
-		"no debug voip app",
-		NO_STR
-		DEBUG_STR
-		"VOIP Configure\n"
-		"APP configure\n")
-{
-	int ret = ERROR;
-	ret = voip_app_debug_set_api(0);
-	return  (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
 
 DEFUN (debug_ip_sip,
 		debug_ip_sip_cmd,
@@ -3419,8 +3201,8 @@ DEFUN (show_debugging_voip,
 	int debug_level = 0;
 	zpl_bool debug_enable = zpl_false;
 	vty_out (vty, "Voip debugging status:%s", VTY_NEWLINE);
-	if (VOIP_APP_DEBUG(EVENT))
-		vty_out (vty, "  Voip event debugging is on%s", VTY_NEWLINE);
+	//if (VOIP_APP_DEBUG(EVENT))
+	//	vty_out (vty, "  Voip event debugging is on%s", VTY_NEWLINE);
 
 	pl_pjsip_debug_level_get_api(&debug_level);
 	if(debug_level)
@@ -3736,6 +3518,7 @@ static void cmd_base_sip_init(int node)
 	/*
 	 * sound
 	 */
+	/*
 	install_element(node, CMD_CONFIG_LEVEL, &voip_playback_volume_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &voip_playback_mono_volume_cmd);
 
@@ -3753,12 +3536,13 @@ static void cmd_base_sip_init(int node)
 
 	install_element(node, CMD_CONFIG_LEVEL, &voip_capture_boost_gain_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_voip_capture_boost_gain_cmd);
+	*/
 }
 
 static void cmd_voip_other_init(int node)
 {
-	install_element(node, CMD_ENABLE_LEVEL, &debug_voip_app_cmd);
-	install_element(node, CMD_ENABLE_LEVEL, &no_debug_voip_app_cmd);
+	//install_element(node, CMD_ENABLE_LEVEL, &debug_voip_app_cmd);
+	//install_element(node, CMD_ENABLE_LEVEL, &no_debug_voip_app_cmd);
 
 	install_element(node, CMD_ENABLE_LEVEL, &debug_ip_sip_cmd);
 	install_element(node, CMD_ENABLE_LEVEL, &no_debug_ip_sip_cmd);

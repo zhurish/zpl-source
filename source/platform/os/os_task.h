@@ -139,13 +139,13 @@ extern int os_task_sigmaskall(void);
 /* 向线程发信号 */
 extern int os_task_killsignal(zpl_taskid_t task_id, int signno);
 
-extern int os_task_add_start_hook(os_task_hook *cb);
-extern int os_task_add_create_hook(os_task_hook *cb);
-extern int os_task_add_destroy_hook(os_task_hook *cb);
+extern int os_task_add_start_hook(os_task_hook cb);
+extern int os_task_add_create_hook(os_task_hook cb);
+extern int os_task_add_destroy_hook(os_task_hook cb);
 
-extern int os_task_del_start_hook(os_task_hook *cb);
-extern int os_task_del_create_hook(os_task_hook *cb);
-extern int os_task_del_destroy_hook(os_task_hook *cb);
+extern int os_task_del_start_hook(os_task_hook cb);
+extern int os_task_del_create_hook(os_task_hook cb);
+extern int os_task_del_destroy_hook(os_task_hook cb);
 
 extern os_task_t * os_task_lookup(zpl_taskid_t id, zpl_pthread_t pid);
 extern os_task_t * os_task_self(void);

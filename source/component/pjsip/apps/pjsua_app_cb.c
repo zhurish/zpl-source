@@ -6,7 +6,7 @@
  */
 
 #include "pjsua_app_common.h"
-#include "pjsua_app_cb.h"
+
 
 
 int pjsip_app_callback_init(void *p, pjsip_callback_tbl *cb)
@@ -17,7 +17,7 @@ int pjsip_app_callback_init(void *p, pjsip_callback_tbl *cb)
 }
 
 
-int pjsip_app_register_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_register_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_reg_state)
 	{
@@ -26,7 +26,7 @@ int pjsip_app_register_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, 
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_call_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_state)
 	{
@@ -35,7 +35,7 @@ int pjsip_app_call_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_media_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_media_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_media_state)
 	{
@@ -44,7 +44,7 @@ int pjsip_app_media_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, voi
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_dtmf_recv)
 	{
@@ -53,7 +53,7 @@ int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void 
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_takeup)
 	{
@@ -62,7 +62,7 @@ int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, voi
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_timeout)
 	{
@@ -71,7 +71,7 @@ int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, vo
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_hangup)
 	{
@@ -80,7 +80,7 @@ int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, voi
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state)
+int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_incoming)
 	{

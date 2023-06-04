@@ -39,7 +39,7 @@ config ZPL_MQTT_SRV
 
 config ZPL_PJSIP_MODULE
 	bool "Pjsip Module"
-	depends on ZPL_PJPROJECT_MODULE && ZPL_COMPONENT_MODULE
+	depends on ZPL_COMPONENT_MODULE
 	default n
 	help
 	Build Pjsip Module.

@@ -19,7 +19,6 @@ config ZPL_LIBORTP_MODULE
 	bool "Libortp Module"
 	default n
 	depends on ZPL_MULTIMEDIA_MODULE
-	select ZPL_MEDIASTREAM_MODULE
 	help
 	Build Libortp Module.
 
@@ -43,6 +42,13 @@ config ZPL_MEDIASTREAM_ALSA
 	depends on ZPL_MEDIASTREAM_MODULE
 	help
 	Build Mediastream ALSA Module.
+	
+config ZPL_MEDIASTREAM_SPEEX
+	bool "Mediastream Speex Module"
+	default n
+	depends on ZPL_MEDIASTREAM_MODULE
+	help
+	Build Mediastream Speex Module.
 
 config ZPL_MEDIASTREAM_SRTP
 	bool "Mediastream SRTP Module"
@@ -64,13 +70,6 @@ config ZPL_MEDIASTREAM_ZRTP
 	depends on ZPL_MEDIASTREAM_MODULE
 	help
 	Build Mediastream ZRTP Module.
-
-config ZPL_MEDIASTREAM_FFMPEG
-	bool "Mediastream ffmpeg Module"
-	default n
-	depends on ZPL_MEDIASTREAM_MODULE
-	help
-	Build Mediastream ffmpeg Module.
 
 config ZPL_MEDIASTREAM_OPENH264
 	bool "Mediastream Openh264 Module"

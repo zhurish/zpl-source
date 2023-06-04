@@ -493,7 +493,8 @@ int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
 
 	if (skbuf->skb_data != NULL && (skbuf->skb_len + len) < skbuf->skb_maxsize)
 	{
-		memcpy(skbuf->skb_data + skbuf->skb_start + skbuf->skb_len, data, len);
+		if(data)
+			memcpy(skbuf->skb_data + skbuf->skb_start + skbuf->skb_len, data, len);
 		skbuf->skb_len += len;
 		if(skbuf->skbtype == ZPL_SKBUF_TYPE_NETPKT)
 		{

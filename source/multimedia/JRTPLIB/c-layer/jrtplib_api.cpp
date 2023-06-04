@@ -93,11 +93,6 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
 
             if(jrtpsess->jrtp_session.Create(sessparams, &transparamsv6, proto) != 0)
             {
-                /*inet_pton (AF_INET6, jrtpsess->address, &addrv6);
-                jrtplib::RTPIPv6Address destaddr(addrv6.s6_addr, jrtpsess->rtpport);
-                if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
-                    return -1;
-                */   
                return -1; 
             }  
         }
@@ -112,10 +107,6 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
 
             if(jrtpsess->jrtp_session.Create(sessparams, &transparams, proto) != 0)
             {
-                /*jrtplib::RTPIPv4Address destaddr(ntohl(inet_addr(jrtpsess->address)), jrtpsess->rtpport, jrtpsess->rtcpport);
-                if(jrtpsess->jrtp_session.AddDestination(destaddr) != 0)
-                    return -1;
-                */   
                return -1; 
             }    
         }

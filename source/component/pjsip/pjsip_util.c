@@ -9,7 +9,6 @@
 #include "lib_include.h"
 #include "nsm_include.h"
 #include "vty_include.h"
-#include "pjsua_app_common.h"
 #include "pjsip_app_api.h"
 #include "pjsip_util.h"
 

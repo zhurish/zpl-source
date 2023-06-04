@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+#if 0
 #define PJSIP_NAMESERVER_MAX		4
 #define PJSIP_OUTBOUND_PROXY_MAX	4
 #define PJSIP_STUNSERVER_MAX		8
@@ -1631,6 +1632,7 @@ typedef struct pjsip_config
 extern int pjsip_config_load(char *filename, pjsip_config_t *ua);
 extern int pjsip_config_write(char *filename, pjsip_config_t *ua);
 
+#endif
 
 #ifdef __cplusplus
 }

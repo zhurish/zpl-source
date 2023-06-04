@@ -1674,7 +1674,7 @@ rtp_session_recvm_with_ts (RtpSession * session, uint32_t user_ts)
 			rtp_del_extension_header(mp, midId != -1 ? midId : RTP_EXTENSION_MID);
 		}
 	} else {
-		ortp_debug("No mp for timestamp queried");
+		//ortp_debug("No mp for timestamp queried");
 	}
 	if (session->fec_stream != NULL) {
 		fec_stream_recieve_repair_packet(session->fec_stream, user_ts);

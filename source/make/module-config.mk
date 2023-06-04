@@ -2,7 +2,7 @@
 include $(ZPL_MAKE_DIR)/module-dir.mk
 include $(ZPL_MAKE_DIR)/externsions-config.mk
 include $(ZPL_MAKE_DIR)/multimedia-config.mk
-include $(ZPL_MAKE_DIR)/pjsip-config.mk
+#include $(ZPL_MAKE_DIR)/pjsip-config.mk
 
 #
 # platform

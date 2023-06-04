@@ -30,6 +30,8 @@
 #include "pjsip_jsoncfg.h"
 
 #include "cJSON.h"
+
+#if 0
 extern void *cjson_malloc (zpl_size_t size);
 extern void cjson_free (void *ptr);
 
@@ -1777,3 +1779,5 @@ int pjsip_config_write(char *filename, pjsip_config_t *ua)
 	}
 	return ERROR;
 }
+
+#endif

@@ -38,7 +38,7 @@ char *jrtp_payload_type_get_rtpmap(jrtp_PayloadType *pt)
 
 char * jrtp_profile_get_rtpmap(int payload)
 {
-    jrtp_PayloadType *pt = jrtp_profile_get_payload(&av_profile, payload);
+    jrtp_PayloadType *pt = jrtp_profile_get_payload(&jrtp_av_profile, payload);
     if(pt)
         return jrtp_payload_type_get_rtpmap(pt);
     return NULL;
@@ -46,7 +46,7 @@ char * jrtp_profile_get_rtpmap(int payload)
 
 uint32_t jrtp_profile_get_clock_rate(int payload)
 {
-    jrtp_PayloadType *pt = jrtp_profile_get_payload(&av_profile, payload);
+    jrtp_PayloadType *pt = jrtp_profile_get_payload(&jrtp_av_profile, payload);
     if(pt)
         return (uint32_t)pt->clock_rate;
     return 0;
