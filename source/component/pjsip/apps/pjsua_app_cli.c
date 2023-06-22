@@ -1413,6 +1413,7 @@ pj_status_t cmd_media_handler(pj_cli_cmd_val *cval)
     switch(pj_cli_get_cmd_id(cval->cmd)) {
     case CMD_MEDIA_LIST:
         status = cmd_media_list(cval);
+        aud_list_devs(cval);
         break;
     case CMD_MEDIA_CONF_CONNECT:
     case CMD_MEDIA_CONF_DISCONNECT:

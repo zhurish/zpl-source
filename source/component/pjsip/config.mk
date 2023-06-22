@@ -13,8 +13,8 @@ OBJS += pjsua_app_common.o
 OBJS += pjsua_app_legacy.o
 OBJS += pjsua_app.o
 OBJS += pjsua_app_cli.o
-OBJS += pjmedia_stream.o
-OBJS += pjmedia_file.o
+OBJS += pjapp_stream.o
+OBJS += pjapp_media_file.o
 
 OBJS += pjsua_app_cb.o
 OBJS += pjsua_app_cfgapi.o

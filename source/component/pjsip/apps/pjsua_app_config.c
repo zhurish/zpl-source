@@ -25,7 +25,6 @@
 #define str(s) #s
 #define xstr(s) str(s)
 
-char   *stdout_refresh_text = "STDOUT_REFRESH";
 
 /* Show usage */
 static void usage(void)
@@ -1420,7 +1419,7 @@ static pj_status_t parse_args(int argc, char *argv[],
             break;
 
         case OPT_STDOUT_REFRESH_TEXT:
-            stdout_refresh_text = pj_optarg;
+            //stdout_refresh_text = pj_optarg;
             break;
 
 #ifdef _IONBF

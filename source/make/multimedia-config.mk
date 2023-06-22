@@ -280,12 +280,12 @@ ZPL_INCLUDE	+=   \
 ZPL_DEFINE += -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC -Wno-error=redundant-decls
 ZPL_DEFINE += -DPJSIP_ALLOW_PORT_IN_FROMTO_HDR=1 -fPIC -DPJ_OS_NAME=\"linux\" \
 	-Wno-error=int-conversion -Wno-error=type-limits -Wno-error=unused-label \
-	-DPJ_LINUX_ZPLMEDIA -DPJ_CONFIG_ANDROID=0 -DPJMEDIA_HAS_VIDEO=1 -DHAVE_CONFIG_H -DOPENSSL \
+	-DPJ_LINUX_ZPLMEDIA -DPJMEDIA_HAS_VIDEO=1 -DHAVE_CONFIG_H -DOPENSSL \
 	-DSASR -DWAV49 -DNeedFunctionPrototypes=1 -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1 \
 	-DPJMEDIA_VIDEO_DEV_HAS_V4L2=1 -Wno-error=unused-variable -Wno-error=unused-const-variable \
 	-Wno-error=unused-function -Wno-error=overlength-strings -Wno-error=unused-value -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1
 
-ZPL_LDLIBS += -lasound -lv4l2 -lssl -lcrypto
+ZPL_LDLIBS += -lasound -lv4l2 -lssl -lcrypto -lportaudio
 
 
 

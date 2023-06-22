@@ -275,7 +275,64 @@ void arrange_window(pjsua_vid_win_id wid)
 #endif
 }
 
+static void aud_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_aud_dev_info *vdi, const char *title)
+{
+    char capnames[120];
+    unsigned i;
+    int st_len;
 
+    capnames[0] = '\0';
+    st_len = 0;
+    for (i=0; i<sizeof(int)*8 && (1 << i) < PJMEDIA_AUD_DEV_CAP_MAX; ++i) {
+        if (vdi->caps & (1 << i)) {
+            const char *capname = pjmedia_aud_dev_cap_name(1 << i, NULL);
+            if (capname) {
+                int tmp_len = (int)strlen(capname);
+                if ((int)sizeof(capnames) - st_len <= tmp_len)
+                    break;
+
+                st_len += (tmp_len + 2);
+                if (*capnames)
+                    strcat(capnames, ", ");
+                strcat(capnames, capname);
+            }
+        }
+    }
+    pj_cli_out(cval, "%3d %s [%s] %s", id, vdi->name, vdi->driver,
+              title);
+    pj_cli_out(cval, "    Supported capabilities: %s", capnames);
+}
+void aud_list_devs(pj_cli_cmd_val *cval)
+{
+    unsigned i, count;
+    pjmedia_aud_dev_info vdi;
+    pj_status_t status;
+
+    pj_cli_out(cval, "Audio device list:");
+    count = pjmedia_aud_dev_count();
+    if (count == 0) {
+        pj_cli_out(cval, " - no device detected -");
+        return;
+    } else {
+        pj_cli_out(cval, "%d device(s) detected:", count);
+    }
+
+    status = pjmedia_aud_dev_get_info(PJMEDIA_AUD_DEFAULT_CAPTURE_DEV, &vdi);
+    if (status == PJ_SUCCESS)
+        aud_print_dev(cval,PJMEDIA_AUD_DEFAULT_CAPTURE_DEV, &vdi,
+                      "(default capture device)");
+
+    status = pjmedia_aud_dev_get_info(PJMEDIA_AUD_DEFAULT_PLAYBACK_DEV, &vdi);
+    if (status == PJ_SUCCESS)
+        aud_print_dev(cval,PJMEDIA_AUD_DEFAULT_PLAYBACK_DEV, &vdi,
+                      "(default playback device)");
+
+    for (i=0; i<count; ++i) {
+        status = pjmedia_aud_dev_get_info(i, &vdi);
+        if (status == PJ_SUCCESS)
+            aud_print_dev(cval,i, &vdi, "");
+    }
+}
 #if PJSUA_HAS_VIDEO
 void vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi, const char *title)
 {
@@ -337,7 +394,6 @@ void vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi
     pj_cli_out(cval, "    Supported formats: %s%s", formats,
                               (st_len<0? " ..." : ""));
 }
-
 void vid_list_devs(pj_cli_cmd_val *cval)
 {
     unsigned i, count;

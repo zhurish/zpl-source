@@ -1988,7 +1988,25 @@ int pjsip_load_config(pjsua_app_config *cfg)
 	if(pl_pjsip->sip_jb_max_size)
 		pl_pjsip_jb_max_size(cfg, pl_pjsip->sip_jb_max_size);
 
+	if(strlen(pl_pjsip->capture_dev_name))
+	{
+		strcpy(cfg->capture_dev_name, pl_pjsip->capture_dev_name);
+	}
+	if(strlen(pl_pjsip->playback_dev_name))
+	{
+		strcpy(cfg->playback_dev_name, pl_pjsip->playback_dev_name);
+	}
+
 #if PJSUA_HAS_VIDEO
+	if(strlen(pl_pjsip->vcapture_dev_name))
+	{
+		strcpy(cfg->vid.vcapture_dev_name, pl_pjsip->vcapture_dev_name);
+	}
+
+	if(strlen(pl_pjsip->vrender_dev_name))
+	{
+		strcpy(cfg->vid.vrender_dev_name, pl_pjsip->vrender_dev_name);
+	}
 	//Video Options:
 	if(pl_pjsip->sip_video)
 	{

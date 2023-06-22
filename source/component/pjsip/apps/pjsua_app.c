@@ -1401,26 +1401,21 @@ void legacy_on_stopped(pj_bool_t restart)
         (*_global_config.app_cfg.on_stopped)(restart, 1, NULL);
 }
 
+
 /*****************************************************************************
  * Public API
  */
-
+extern int pjapp_ms_test(void);
 int stdout_refresh_proc(void *arg)
 {
-    extern char *stdout_refresh_text;
-
     PJ_UNUSED_ARG(arg);
-
+    sleep(10);
+    pjapp_ms_test();
     /* Set thread to lowest priority so that it doesn't clobber
      * stdout output
      */
-    pj_thread_set_prio(pj_thread_this(), 
-                       pj_thread_get_prio_min(pj_thread_this()));
-
     while (!_global_config.stdout_refresh_quit) {
         pj_thread_sleep(_global_config.stdout_refresh * 1000);
-        puts(stdout_refresh_text);
-        fflush(stdout);
     }
 
     return 0;
@@ -2006,6 +2001,14 @@ static pj_status_t app_init(void)
             goto on_error;
     }
 #endif
+    if (_global_config.app_config.capture_dev  == PJSUA_INVALID_ID && strlen(_global_config.app_config.capture_dev_name))
+    {
+
+    }
+    if (_global_config.app_config.playback_dev  == PJSUA_INVALID_ID && strlen(_global_config.app_config.playback_dev_name))
+    {
+
+    }
 
     if (_global_config.app_config.capture_dev  != PJSUA_INVALID_ID ||
         _global_config.app_config.playback_dev != PJSUA_INVALID_ID) 
@@ -2087,10 +2090,10 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
     pj_status_t status;
 
     /* Start console refresh thread */
-    if (_global_config.stdout_refresh > 0) {
+    //if (_global_config.stdout_refresh > 0) {
         pj_thread_create(_global_config.app_config.pool, "stdout", &stdout_refresh_proc,
                          NULL, 0, 0, &stdout_refresh_thread);
-    }
+    //}
     _global_config.current_call = PJSUA_INVALID_ID;
     status = pjsua_start();
     if (status != PJ_SUCCESS)

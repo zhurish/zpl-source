@@ -338,6 +338,8 @@ typedef struct pl_pjsip_s
 	zpl_uint16				sip_echo_tail;							//Set echo canceller tail length
 	pjsip_echo_mode_t	sip_echo_mode;							//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
 	zpl_uint16				sip_ilbc_mode;							//Set iLBC codec mode (20 or 30, default is 20)
+    char                    capture_dev_name[PJSUA_APP_DEV_NAME_MAX];
+    char                    playback_dev_name[PJSUA_APP_DEV_NAME_MAX];
 
 	zpl_int32				sip_capture_dev;
 	zpl_int32				sip_playback_dev;
@@ -355,7 +357,11 @@ typedef struct pl_pjsip_s
 	zpl_int32				sip_vrender_dev;
 	char				sip_play_avi[PJSIP_FILE_MAX];
 	zpl_bool				sip_auto_play_avi;
+    char                    vcapture_dev_name[PJSUA_APP_DEV_NAME_MAX];
+    char                    vrender_dev_name[PJSUA_APP_DEV_NAME_MAX];	
 #endif
+
+
 	//Media Transport Options:
 	zpl_bool				sip_ice;				//Enable ICE (default:no)
 	zpl_uint32				sip_ice_regular;		//Use ICE regular nomination (default: aggressive)

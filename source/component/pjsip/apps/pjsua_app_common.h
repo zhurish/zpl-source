@@ -30,7 +30,7 @@ PJ_BEGIN_DECL
 #define PJSUA_APP_NO_NB                 -2
 #define PJSUA_APP_CODEC_MAX		PJMEDIA_CODEC_MGR_MAX_CODECS
 #define PJSUA_APP_TONES_MAX		32
-
+#define PJSUA_APP_DEV_NAME_MAX		32
 /* data pjsua_app_cli.c */
 typedef struct input_result
 {
@@ -52,6 +52,8 @@ typedef struct app_vid
     unsigned                vid_cnt;
     int                     vcapture_dev;
     int                     vrender_dev;
+    char                    vcapture_dev_name[PJSUA_APP_DEV_NAME_MAX];
+    char                    vrender_dev_name[PJSUA_APP_DEV_NAME_MAX];
     pj_bool_t               in_auto_show;
     pj_bool_t               out_auto_transmit;
 } app_vid;
@@ -137,7 +139,8 @@ typedef struct pjsua_app_config
 
     int                     capture_dev, playback_dev;
     unsigned                capture_lat, playback_lat;
-
+    char                    capture_dev_name[PJSUA_APP_DEV_NAME_MAX];
+    char                    playback_dev_name[PJSUA_APP_DEV_NAME_MAX];
     pj_bool_t               no_tones;
     int                     ringback_slot;
     int                     ringback_cnt;
@@ -264,7 +267,7 @@ void cli_get_info(char *info, pj_size_t size);
 
 /** Legacy method **/
 void legacy_main(void);
-
+void aud_list_devs(pj_cli_cmd_val *cval);
 #if PJSUA_HAS_VIDEO
 void vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi, const char *title);
 void vid_list_devs(pj_cli_cmd_val *cval);

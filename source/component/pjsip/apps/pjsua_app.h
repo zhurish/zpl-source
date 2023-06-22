@@ -50,6 +50,8 @@ int pjsua_app_exit(void);
 
 int log_refresh_proc(void *arg);
 
+int pjapp_app_perror(const char *sender, const char *title,
+                      pj_status_t status);
 PJ_END_DECL
     
 #endif  /* __PJSUA_APP_H__ */

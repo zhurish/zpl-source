@@ -143,7 +143,7 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->sip_echo_tail = PJSUA_DEFAULT_EC_TAIL_LEN;							//Set echo canceller tail length
 	//sip->sip_echo_mode = PJSIP_ECHO_SPEEX;//PJSIP_ECHO_DEFAULT;//PJSIP_ECHO_DISABLE;	//Select echo canceller algorithm (0=default, 1=speex, 2=suppressor, 3=WebRtc)
 	//sip->sip_echo_mode = PJSIP_ECHO_SUPPRESSER;
-	sip->sip_echo_mode = PJSIP_ECHO_WEBRTXC;
+	sip->sip_echo_mode = PJSIP_ECHO_DEFAULT;
 	sip->sip_ilbc_mode = PJSUA_DEFAULT_ILBC_MODE;							//Set iLBC codec mode (20 or 30, default is 20)
 	sip->sip_capture_lat = PJMEDIA_SND_DEFAULT_REC_LATENCY;						//Audio capture latency, in ms
 	sip->sip_playback_lat = PJMEDIA_SND_DEFAULT_PLAY_LATENCY;						//Audio capture latency, in ms
@@ -151,14 +151,18 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 																//		Specify N=-1 to disable this feature. Specify N=0 for instant close when unused.
 	sip->sip_notones = zpl_false;//回铃音							//Disable audible tones
 	sip->sip_jb_max_size = -1;						//指定最大值抖动缓冲(帧，默认= 1)Specify jitter buffer maximum size, in frames (default=-1)");
-
+    strcpy(sip->capture_dev_name, "null device");
+    strcpy(sip->playback_dev_name, "null device");
 #if PJSUA_HAS_VIDEO
 	//Video Options:
-	sip->sip_video = zpl_false;
+	sip->sip_video = zpl_true;
 	//zpl_uint32				sip_vcapture_dev;
 	//zpl_uint32				sip_vrender_dev;
 	//char				sip_play_avi[PJSIP_FILE_MAX];
 	sip->sip_auto_play_avi = zpl_false;
+
+    strcpy(sip->vcapture_dev_name, "null device");
+    strcpy(sip->vrender_dev_name, "null device");		
 #endif
 	//Media Transport Options:
 	sip->sip_ice = zpl_false;				//Enable ICE (default:no)
