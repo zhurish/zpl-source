@@ -233,7 +233,7 @@ extern pjsua_global_config _global_config;
 void pj_cli_out(pj_cli_cmd_val *cval, const char *fmt,...);
 void pj_cli_error_out(pj_cli_cmd_val *cval, int status, const char *fmt,...);
 
-
+pj_bool_t app_incoming_call(void);
 int my_atoi(const char *cs);
 int my_atoi2(const pj_str_t *s);
 pj_bool_t find_next_call(void);

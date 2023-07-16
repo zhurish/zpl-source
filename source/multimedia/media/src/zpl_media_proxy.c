@@ -8,9 +8,6 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
-#ifdef ZPL_LIBORTP_MODULE
-#include "ortp/ortp.h"
-#endif
 
 struct module_list module_list_medie_proxy = {
 		.module = MODULE_MEDIA_PROXY,

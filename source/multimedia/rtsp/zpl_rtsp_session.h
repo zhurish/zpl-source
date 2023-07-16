@@ -50,7 +50,6 @@ typedef struct rtsp_session_s {
     int32_t         mlevel;
 
     rtsp_rtp_session_t  mrtp_session[2];
-    //zpl_mediartp_session_t   *mediartp_session;
 
     void            *t_master;
     void            *t_read;
@@ -71,16 +70,8 @@ typedef struct rtsp_session_s {
     uint32_t        _send_offset;
     int32_t         _recv_length;
     int32_t         _send_length;
-
-    //void     *mutex;
 }rtsp_session_t;
 
-typedef struct
-{
-    LIST     _list_head;
-    void     *mutex;
-    
-} rtsp_session_list;
 
 extern int _rtsp_session_debug;
 
@@ -89,22 +80,20 @@ extern int _rtsp_session_debug;
 //#define RTSP_SESSION_LOCK(x)    
 //#define RTSP_SESSION_UNLOCK(x)  
 
-RTSP_API int rtsp_session_init(void);
-RTSP_API int rtsp_session_exit(void);
-
 RTSP_API int rtsp_session_connect(rtsp_session_t * session, const char *ip, uint16_t port, int tomeout_ms);
-RTSP_API int rtsp_session_close(rtsp_session_t * session);
+RTSP_API int rtsp_session_close(zpl_rtsp_srv_t *srv, rtsp_session_t * session);
 RTSP_API int rtsp_session_sendto(rtsp_session_t * session, uint8_t *data, uint32_t length);
 
 
-RTSP_API int rtsp_session_default(rtsp_session_t * newNode, bool srv);
+RTSP_API int rtsp_session_default(zpl_rtsp_srv_t *ctx, rtsp_session_t * newNode, bool srv);
 
-RTSP_API rtsp_session_t * rtsp_session_create(zpl_socket_t sock, const char *address, uint16_t port, void *ctx, void *master, char *localip);
+RTSP_API int rtsp_session_create(zpl_rtsp_srv_t *ctx, zpl_socket_t sock, const char *address, uint16_t port, void *master, char *localip);
+RTSP_API int rtsp_session_destroy(zpl_rtsp_srv_t *ctx, rtsp_session_t *session);
 
-RTSP_API rtsp_session_t *rtsp_session_lookup(zpl_socket_t sock);
-RTSP_API int rtsp_session_count(void);
-RTSP_API int rtsp_session_update_maxfd(void);
-RTSP_API int rtsp_session_foreach(int (*calback)(rtsp_session_t *, void *), void * pVoid);
+RTSP_API rtsp_session_t *rtsp_session_lookup(zpl_rtsp_srv_t *ctx, zpl_socket_t sock);
+RTSP_API int rtsp_session_count(zpl_rtsp_srv_t *ctx);
+RTSP_API int rtsp_session_update_maxfd(zpl_rtsp_srv_t *ctx);
+RTSP_API int rtsp_session_foreach(zpl_rtsp_srv_t *ctx, int (*calback)(rtsp_session_t *, void *), void * pVoid);
 
 
 #ifdef __cplusplus

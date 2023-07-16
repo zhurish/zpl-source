@@ -3,9 +3,6 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef ZPL_LIBORTP_MODULE
-#include <ortp/ortp.h>
-#endif
 #include "rtp_g7xx.h"
 
 
@@ -15,10 +12,6 @@
  */
 int rtp_payload_send_g7xx(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts)
 {
-#ifdef ZPL_LIBORTP_MODULE    
-    int ret = rtp_session_send_with_ts(session, buffer, len, user_ts);
-#else
-    int ret = 0;
-#endif    
+    int ret = 0;  
     return ret;
 }

@@ -21,6 +21,7 @@ extern struct module_list module_list_sntpc;
 extern struct module_list module_list_sntps;
 extern struct module_list module_list_utils;
 extern struct module_list module_list_sdk;
+extern struct module_list module_list_rtsp;
 extern struct module_list module_list_zplmedia;
 extern struct module_list module_list_medie_proxy;
  
@@ -44,6 +45,7 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_sntps,
   &module_list_utils,
   &module_list_sdk,
+  &module_list_rtsp,
   &module_list_zplmedia,
   &module_list_medie_proxy,
  NULL,

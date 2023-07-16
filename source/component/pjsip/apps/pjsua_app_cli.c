@@ -972,7 +972,7 @@ static pj_status_t cmd_show_account(pj_cli_cmd_val *cval)
 }
 
 /* Account command handler */
-pj_status_t cmd_account_handler(pj_cli_cmd_val *cval)
+static pj_status_t cmd_account_handler(pj_cli_cmd_val *cval)
 {
     pj_status_t status = PJ_SUCCESS;
 
@@ -1243,7 +1243,7 @@ static pj_status_t cmd_show_buddy(pj_cli_cmd_val *cval)
 }
 
 /* Presence/buddy command handler */
-pj_status_t cmd_presence_handler(pj_cli_cmd_val *cval)
+static pj_status_t cmd_presence_handler(pj_cli_cmd_val *cval)
 {
     pj_status_t status = PJ_SUCCESS;
 
@@ -1404,7 +1404,7 @@ static pj_status_t cmd_set_codec_prio(pj_cli_cmd_val *cval)
 }
 
 /* Conference/media command handler */
-pj_status_t cmd_media_handler(pj_cli_cmd_val *cval)
+static pj_status_t cmd_media_handler(pj_cli_cmd_val *cval)
 {
     pj_status_t status = PJ_SUCCESS;
 
@@ -1515,7 +1515,7 @@ static pj_status_t cmd_write_config(pj_cli_cmd_val *cval)
 }
 
 /* Status and config command handler */
-pj_status_t cmd_config_handler(pj_cli_cmd_val *cval)
+static pj_status_t cmd_config_handler(pj_cli_cmd_val *cval)
 {
     pj_status_t status = PJ_SUCCESS;
 
@@ -2128,7 +2128,7 @@ static pj_status_t cmd_show_current_call(pj_cli_cmd_val *cval)
 }
 
 /* Call handler */
-pj_status_t cmd_call_handler(pj_cli_cmd_val *cval)
+static pj_status_t cmd_call_handler(pj_cli_cmd_val *cval)
 {
     pj_status_t status = PJ_SUCCESS;
     pj_cli_cmd_id cmd_id = pj_cli_get_cmd_id(cval->cmd);

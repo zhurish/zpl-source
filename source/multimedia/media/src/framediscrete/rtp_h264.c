@@ -9,9 +9,6 @@
 #include <string.h>
 
 #include <stdbool.h>
-#ifdef ZPL_LIBORTP_MODULE 
-#include <ortp/ortp.h>
-#endif
 #ifdef ZPL_JRTPLIB_MODULE 
 #include <jrtplib_api.h>
 #endif
@@ -127,9 +124,6 @@ static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer,
             if(plen > MAX_RTP_PAYLOAD_LENGTH)
             {
                 rtp_payload_h264_hdr_set(p-2, NALU, (i==0)?1:0, 0);
-                #ifdef ZPL_LIBORTP_MODULE 
-                ret = rtp_session_send_with_ts(session, p-2, MAX_RTP_PAYLOAD_LENGTH + HEADER_SIZE_FU_A, user_ts);
-                #endif
 #ifdef ZPL_JRTPLIB_MODULE 
                 ret = jrtp_session_sendto(session, p-2, MAX_RTP_PAYLOAD_LENGTH + HEADER_SIZE_FU_A, 255, 0, user_ts);
 #endif
@@ -139,9 +133,6 @@ static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer,
             else
             {
                 rtp_payload_h264_hdr_set(p-2, NALU, 0, 1);
-                #ifdef ZPL_LIBORTP_MODULE 
-                ret = rtp_session_send_with_ts(session, p-2, plen + HEADER_SIZE_FU_A, user_ts);
-                #endif
 #ifdef ZPL_JRTPLIB_MODULE 
                 ret = jrtp_session_sendto(session, p-2, plen + HEADER_SIZE_FU_A, 255, 1, user_ts);
 #endif
@@ -152,14 +143,6 @@ static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer,
     }
     else
     {
-        #ifdef ZPL_LIBORTP_MODULE 
-        if(rtp_payload_h264_is_nalu3_start(p))
-            ret = rtp_session_send_with_ts(session, p+3, plen-3, user_ts);
-        else if(rtp_payload_h264_is_nalu4_start(p))
-            ret = rtp_session_send_with_ts(session, p+4, plen-4, user_ts);
-        else    
-            ret = rtp_session_send_with_ts(session, p, plen, user_ts);
-        #endif
 #ifdef ZPL_JRTPLIB_MODULE
         if(rtp_payload_h264_is_nalu3_start(p))
             ret = jrtp_session_sendto(session, p+3, plen-3, 255, 0, user_ts);

@@ -9,7 +9,7 @@ extern "C" {
 typedef struct rtsp_server_s 
 {
     zpl_taskid_t    t_taskid;    
-    rtsp_srv_t      *rtsp_srv;
+    zpl_rtsp_srv_t      *rtsp_srv;
     void            *t_master;
     #ifdef ZPL_LIVE555_MODULE
     zpl_taskid_t    t_lv5taskid; 

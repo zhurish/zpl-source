@@ -1107,7 +1107,7 @@ static pjmedia_transport* on_create_media_transport(pjsua_call_id call_id,
 #endif
 
 /* Playfile done notification, set timer to hangup calls */
-void on_playfile_done(pjmedia_port *port, void *usr_data)
+static void on_playfile_done(pjmedia_port *port, void *usr_data)
 {
     pj_time_val delay;
 
@@ -1132,7 +1132,7 @@ void on_playfile_done(pjmedia_port *port, void *usr_data)
 }
 
 /* IP change progress callback. */
-void on_ip_change_progress(pjsua_ip_change_op op,
+static void on_ip_change_progress(pjsua_ip_change_op op,
                            pj_status_t status,
                            const pjsua_ip_change_op_info *info)
 {
@@ -1406,7 +1406,7 @@ void legacy_on_stopped(pj_bool_t restart)
  * Public API
  */
 extern int pjapp_ms_test(void);
-int stdout_refresh_proc(void *arg)
+static int stdout_refresh_proc(void *arg)
 {
     PJ_UNUSED_ARG(arg);
     sleep(10);

@@ -110,6 +110,10 @@ pj_status_t pjapp_media_stream_transport(pjapp_ms_t *ms);
 pj_status_t pjapp_media_stream_create(pjapp_ms_t *ms);
 pj_status_t pjapp_media_stream_stop(pjapp_ms_t *ms);
 
+pj_status_t pjapp_media_stream_startfile(pjapp_ms_t **getms, int type, char *play_file, char *pt, 
+    char *localaddr, int localport, char *addr, int port);
+
+    
 int pjapp_app_perror(const char *sender, const char *title,
                       pj_status_t status);
 int pjapp_ms_test(void);

@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#include <ortp/ortp.h>
+//#include <ortp/ortp.h>
 
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
@@ -17,87 +17,11 @@
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_sdpfmtp.h"
 #include "zpl_rtsp_auth.h"
+#include "zpl_rtsp_server.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
-#include "zpl_rtsp_server.h"
 
-#define ZPL_RTP_SESSION(n)  ((RtpSession*)(n))
-
-
-
-
-
-int rtsp_session_media_start(rtsp_session_t* session, zpl_bool start)
-{
-    if(session)
-    {
-        if(RTSP_DEBUG_FLAG(_rtsp_session_debug , EVENT))
-        {
-            rtsp_log_debug("RTSP Media Start Audio for %d/%d or %s", session->mchannel, session->mlevel, session->mfilepath?session->mfilepath:"nil");
-        } 
-        return zpl_mediartp_session_start(session->mchannel, session->mlevel, session->mfilepath, start); 
-    }
-    return ERROR;
-}
-
-
-int rtsp_session_media_destroy(rtsp_session_t *session)
-{
-    if(!session->bsrv)
-        return OK;
-    
-    rtsp_session_media_start(session, zpl_false);
-
-    zpl_mediartp_session_destroy(session->mchannel, session->mlevel, session->mfilepath);
-
-    return OK;
-}
-
-char *rtsp_session_media_name(int channel, int level)
-{
-    static char tmpbuf[32];
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    sprintf(tmpbuf, "/media/channel=%d?level=%d", channel, level);
-    return tmpbuf;
-}
-
-
-
-zpl_bool rtsp_session_media_lookup(rtsp_session_t * session, int channel, int level, const char *path)
-{
-    zpl_mediartp_session_t * mchn = NULL;
-    if(!session->bsrv)
-        return zpl_false;
-    mchn = zpl_mediartp_session_lookup( channel,  level, path);
-    if(mchn)
-    {
-        session->mrtp_session[0].b_enable = zpl_true;
-        return zpl_true;
-    }
-    if(mchn == NULL)
-    {
-        mchn = zpl_mediartp_session_create( channel, level, path);
-        if(mchn)
-        {
-            session->mrtp_session[0].b_enable = zpl_true;
-            session->mrtp_session[1].b_enable = zpl_mediartp_session_getbind(channel, level, path);
-            return zpl_true; 
-        }
-    }
-    return zpl_false;
-}
-
-
-int rtsp_session_media_build_sdptext(rtsp_session_t* session, char *sdp)
-{
-    int sdplength = 0;
-    if(session->mrtp_session[0].b_enable)
-    {
-        sdplength = zpl_mediartp_session_rtpmap_h264(session->mchannel, session->mlevel, session->mfilepath, sdp, 0);
-    }
-    return sdplength;
-}
 
 #if 0
 static int rtsp_session_media_sprop_parameterset_parse_h264(uint8_t *buffer, uint32_t len, zpl_video_extradata_t *extradata)
@@ -346,66 +270,6 @@ static int rtsp_session_media_parse_sdptext(rtsp_session_t* session, void *pUser
     return ret;
 }
 #endif
-
-
-
-rtsp_code rtsp_session_media_describe(rtsp_session_t * session, void *pUser, char *src, int *len)
-{
-    if(session->bsrv)
-    {
-        int sdplength = 0;
-        sdplength = rtsp_session_media_build_sdptext(session, src);
-        //if(session->bind_other_session.media_chn)
-        //    sdplength += rtsp_session_media_build_sdptext(&session->bind_other_session, (char*)(src + sdplength));
-        if(len)
-            *len = sdplength;
-        return RTSP_STATE_CODE_200;
-    }
-    else
-    {
-        //rtsp_session_media_parse_sdptext(session, pUser);
-        return RTSP_STATE_CODE_200;
-    }
-}
-
-rtsp_code rtsp_session_media_setup(rtsp_session_t * session, void *pUser)
-{    
-    zpl_mediartp_session_setup(session->mchannel, session->mlevel, session->mfilepath);
-    if(session->bsrv)
-        return RTSP_STATE_CODE_200;
-    else
-        return RTSP_STATE_CODE_200;
-}
-
-rtsp_code rtsp_session_media_teardown(rtsp_session_t * session, void *pUser)
-{
-    rtsp_session_media_start(session, zpl_false);
-    zpl_mediartp_session_destroy(session->mchannel, session->mlevel, session->mfilepath);
-    if(session->bsrv)
-        return RTSP_STATE_CODE_200;
-    else
-        return RTSP_STATE_CODE_200;
-}
-
-rtsp_code rtsp_session_media_play(rtsp_session_t * session, void *pUser)
-{
-    rtsp_session_media_start(session, zpl_true);
-    if(session->bsrv)
-        return RTSP_STATE_CODE_200;
-    else
-        return RTSP_STATE_CODE_200;
-}
-
-rtsp_code rtsp_session_media_pause(rtsp_session_t * session, void *pUser)
-{
-    if(session->bsrv)
-    {
-        zpl_mediartp_session_suspend(session->mchannel, session->mlevel, session->mfilepath);
-        return RTSP_STATE_CODE_200;
-    }
-    else
-        return RTSP_STATE_CODE_200;
-}
 
 
 

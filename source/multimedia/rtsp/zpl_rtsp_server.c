@@ -3,23 +3,25 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
-#include <ortp/ortp.h>
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
 #include "zpl_rtsp_transport.h"
 #include "zpl_rtsp_sdp.h"
 #include "zpl_rtsp_sdpfmtp.h"
 #include "zpl_rtsp_auth.h"
+#include "zpl_rtsp_server.h"
 #include "zpl_rtsp_session.h"
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
-#include "zpl_rtsp_server.h"
+
 
 
 static int rtsp_srv_accept_eloop(struct eloop *ctx);
 
-void rtsp_srv_destroy(rtsp_srv_t *ctx)
+void rtsp_srv_destroy(zpl_rtsp_srv_t *ctx)
 {
+    rtsp_session_t *p = NULL;
+	NODE node;    
     if (ctx->t_accept)
         eloop_cancel(ctx->t_accept);
     if (ctx->t_read)
@@ -27,6 +29,20 @@ void rtsp_srv_destroy(rtsp_srv_t *ctx)
     if (ctx->t_master)
         eloop_master_free(ctx->t_master);
 
+    for (p = (rtsp_session_t*)lstFirst( &ctx->_list_head); p != NULL; p = (rtsp_session_t*)lstNext(&node))
+    {
+        node = p->node;
+        if (p)
+        {
+            rtsp_session_destroy(ctx, p);
+        }
+    }
+    lstFree(&ctx->_list_head);
+    if (ctx->mutex)
+    {
+        os_mutex_destroy(ctx->mutex);
+        ctx->mutex = NULL;
+    }
     if (!ipstack_invalid(ctx->listen_sock))
     {
         ipstack_close(ctx->listen_sock);
@@ -56,9 +72,9 @@ void rtsp_srv_destroy(rtsp_srv_t *ctx)
     free(ctx);
 }
 
-rtsp_srv_t *rtsp_srv_create(void *m, const char *ip, uint16_t port, int pro)
+zpl_rtsp_srv_t *rtsp_srv_create(void *m, const char *ip, uint16_t port, int pro)
 {
-    rtsp_srv_t *ctx = NULL;
+    zpl_rtsp_srv_t *ctx = NULL;
     zpl_socket_t listen_sock = ipstack_sock_create(IPSTACK_IPCOM, zpl_true);
     if (!ipstack_invalid(listen_sock))
     {
@@ -80,13 +96,13 @@ rtsp_srv_t *rtsp_srv_create(void *m, const char *ip, uint16_t port, int pro)
         ipstack_setsockopt(listen_sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_REUSEADDR,
                            (void *)&enable, sizeof(enable));
 
-        ctx = (rtsp_srv_t *)malloc(sizeof(rtsp_srv_t));
+        ctx = (zpl_rtsp_srv_t *)malloc(sizeof(zpl_rtsp_srv_t));
         if (ctx == NULL)
         {
             ipstack_close(listen_sock);
             return NULL;
         }
-        memset(ctx, 0, sizeof(rtsp_srv_t));
+        memset(ctx, 0, sizeof(zpl_rtsp_srv_t));
         ctx->listen_sock = listen_sock;
         if (ip)
             ctx->listen_address = strdup(ip);
@@ -94,7 +110,8 @@ rtsp_srv_t *rtsp_srv_create(void *m, const char *ip, uint16_t port, int pro)
             ctx->listen_address = NULL;
         
         ctx->listen_port = port;
-
+        ctx->mutex = os_mutex_name_create("rtspsession");
+        lstInit(&ctx->_list_head);
         ctx->t_master = m;
         if (ctx->t_master)
             ctx->t_accept = eloop_add_read(ctx->t_master, rtsp_srv_accept_eloop, ctx, ctx->listen_sock);                      
@@ -109,7 +126,7 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
     zpl_socket_t sock = 0;
     struct ipstack_sockaddr_in client;
 
-    rtsp_srv_t *pctx = ELOOP_ARG(ctx);
+    zpl_rtsp_srv_t *pctx = ELOOP_ARG(ctx);
     pctx->t_accept = NULL;
     if (!ipstack_invalid(pctx->listen_sock))
     {
@@ -131,7 +148,7 @@ static int rtsp_srv_accept_eloop(struct eloop *ctx)
         ipstack_tcp_nodelay(sock, 1);
 
         pctx->t_accept = eloop_add_read(pctx->t_master, rtsp_srv_accept_eloop, pctx, pctx->listen_sock);
-        if(rtsp_session_create(sock, address, ntohs(client.sin_port), pctx, pctx->t_master, pctx->listen_address))
+        if(rtsp_session_create(pctx, sock, address, ntohs(client.sin_port), pctx->t_master, pctx->listen_address) == OK)
             return OK;
     }
     return ERROR;

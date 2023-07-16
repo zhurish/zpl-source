@@ -21,10 +21,10 @@
 #include <log.h>
 #include "pjsua_app_common.h"
 #include "pjsip_app_api.h"
+#include "pjsua_app_cfgapi.h"
 
 #define THIS_FILE	"pjsua_app_cfgapi.c"
 
-//#define MODULE_PJSIP 0
 static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 {
 	zassert(buffer != NULL);

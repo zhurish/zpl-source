@@ -13,9 +13,6 @@ extern "C" {
 #endif
 
 
-#ifdef ZPL_LIBORTP_MODULE
-#include <ortp/ortp.h>
-#endif
 #ifdef ZPL_JRTPLIB_MODULE
 #include "jrtplib_api.h"
 #endif
@@ -31,9 +28,6 @@ typedef struct zpl_mediartp_session_s zpl_mediartp_session_t;
 struct zpl_mediartp_session_s
 {
     NODE            node;
-    #ifdef ZPL_LIBORTP_MODULE
-    RtpSession     *_rsession;
-    #endif
 #ifdef ZPL_JRTPLIB_MODULE
     jrtp_session_t     *_session;
 #endif
@@ -44,6 +38,10 @@ struct zpl_mediartp_session_s
     uint16_t local_rtpport;
     uint16_t local_rtcpport;
 
+    uint8_t    i_trackid;
+    uint8_t     rtp_interleaved;
+    uint8_t     rtcp_interleaved;   // rtsp setup response only
+    
     int32_t         _call_index;       //媒体回调索引, 音视频通道数据发送
     void            *media_chn;         //媒体数据结构
     uint16_t        packetization_mode; //封包解包模式
@@ -56,11 +54,6 @@ struct zpl_mediartp_session_s
 
 typedef struct 
 {
-    #ifdef ZPL_LIBORTP_MODULE
-    SessionSet r_set;
-    SessionSet w_set;
-    SessionSet e_set;
-    #endif
     int     count;
     void	*mutex;
     LIST	list;
@@ -95,6 +88,20 @@ int zpl_mediartp_session_suspend(int channel, int level);
 int zpl_mediartp_session_resume(int channel, int level);
 int zpl_mediartp_session_start(int channel, int level, zpl_bool start);
 
+zpl_mediartp_session_t *zpl_mediartp_session_lookup(int channel, int level);
+zpl_bool zpl_mediartp_session_getbind(int channel, int level);
+int zpl_mediartp_session_remoteport(int channel, int level, char *address, u_int16_t rtpport, u_int16_t rtcpport);
+int zpl_mediartp_session_get_localport(int channel, int level, char *address, u_int16_t *rtpport, u_int16_t *rtcpport);
+int zpl_mediartp_session_localport(int channel, int level, char *address, u_int16_t rtpport, u_int16_t rtcpport);
+int zpl_mediartp_session_tcp_interleaved(int channel, int level, int rtp, int rtcp);
+int zpl_mediartp_session_get_tcp_interleaved(int channel, int level, int *rtp, int *rtcp);
+int zpl_mediartp_session_get_trackid(int channel, int level, int *trackid);
+
+int zpl_mediartp_session_describe(int channel, int level, void *pUser, char *src, int *len);
+int zpl_mediartp_session_setup(int channel, int level, void *pUser);
+
+int zpl_mediartp_session_add_dest(zpl_mediartp_session_t *my_session, char *address, u_int16_t rtpport, u_int16_t rtcpport);
+int zpl_mediartp_session_del_dest(zpl_mediartp_session_t *my_session, char *address, u_int16_t rtpport, u_int16_t rtcpport);
 
 int zpl_mediartp_session_rtpmap_h264(int channel, int level, char *src, uint32_t len);
 

@@ -430,6 +430,7 @@ pjapp_ms_t * pjapp_media_stream_new(int type, char *local_addr, pj_uint16_t loca
         ms = PJ_POOL_ALLOC_T(pool, pjapp_ms_t);
         if(ms)
         {
+            pj_memset(ms, 0, sizeof(pjapp_ms_t));
             ms->cfg.type = type;
             ms->cfg.dir = PJMEDIA_DIR_ENCODING;
             if(pjsua_get_pjmedia_endpt())
@@ -456,7 +457,8 @@ pjapp_ms_t * pjapp_media_stream_new(int type, char *local_addr, pj_uint16_t loca
             status = pjapp_media_stream_set_address(ms->cfg.pool, local_addr, local_port, remote_addr, remote_port, ms);
             if(status != PJ_SUCCESS)
             {
-                pjmedia_endpt_destroy(ms->cfg.med_endpt);
+                if(!pjsua_get_pjmedia_endpt())
+                    pjmedia_endpt_destroy(ms->cfg.med_endpt);
                 pj_pool_safe_release(&pool);
                 return NULL;
             }
@@ -489,7 +491,6 @@ H263-1998/96    0   15.00   256/ 256  352x288
 */
 pj_status_t pjapp_media_stream_codecparam(pjapp_ms_t *ms, char *codec, int w, int h, pjmedia_codec_fmtp *fmtp)
 {
-           
     pjmedia_rect_size vidsize;
     vidsize.h = h;
     vidsize.w = w;
@@ -537,172 +538,6 @@ static pj_status_t pjapp_media_file_done(pjmedia_port *port, void *usr_data)
     return PJ_SUCCESS;
 }
 
-static pjapp_ms_t * ms;
-
-int pjapp_ms_test(void)
-{
-    pj_status_t status;
-    pjmedia_port *play_file_port = NULL;
-    pjmedia_port *stream_port;
-    char *play_file = "/home/zhurish/Downloads/tftpboot/0-0-1970-01-01-00-48-39-video.H264";
-    //char *play_file = "/home/zhurish/workspace/working/zpl-source/source/component/pjsip/hello8000-1s.wav";
-    
-    char tmp[10];
-    //pjapp_ms_t * ms = pjapp_media_stream_create("192.168.0.103", 5555, "192.168.0.1", 6666, "H264/97", 1920, 1080);
-    //pjapp_ms_t *ms = pjapp_media_stream_create("192.168.0.103", 5555, "192.168.0.1", 6666, "PCMA/8000/1", 0, 0);
-    //pjapp_ms_t * ms = pjapp_media_stream_create(PJMEDIA_TYPE_AUDIO, "192.168.0.103", 5555, "192.168.0.1", 6666);
-    ms = pjapp_media_stream_new(PJMEDIA_TYPE_VIDEO, "192.168.0.103", 5555, "192.168.0.1", 6666);
-    if (ms == NULL)
-    {
-        return -1;
-    }
-    if (play_file && ms && ms->cfg.type == PJMEDIA_TYPE_AUDIO)
-    {
-        unsigned wav_ptime;
-        status = pjapp_media_stream_codecparam(ms, "PCMA/8000/1", 0, 0, NULL);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        status = pjapp_media_stream_transport(ms);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        status = pjapp_media_stream_create(ms);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        /* Get the port interface of the stream */
-        status = pjmedia_stream_get_port(ms->cfg.audio_stream, &stream_port);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-
-        wav_ptime = PJMEDIA_PIA_PTIME(&stream_port->info);
-        status = pjmedia_wav_player_port_create(ms->cfg.pool, play_file, wav_ptime,
-                                                0, -1, &play_file_port);
-        if (status != PJ_SUCCESS)
-        {
-            pjapp_app_perror(THIS_FILE, "Unable to use file", status);
-            return -1;
-        }
-        status = pjmedia_master_port_create(ms->cfg.pool, play_file_port, stream_port,
-                                            0, &ms->cfg.master_port);
-        if (status != PJ_SUCCESS)
-        {
-            pjapp_app_perror(THIS_FILE, "Unable to create master port", status);
-            return -1;
-        }
-
-        status = pjmedia_master_port_start(ms->cfg.master_port);
-        if (status != PJ_SUCCESS)
-        {
-            pjapp_app_perror(THIS_FILE, "Error starting master port", status);
-            return -1;
-        }
-        printf("Playing from WAV file %s..\n", play_file);
-    }
-    else if (ms && ms->cfg.type == PJMEDIA_TYPE_AUDIO)
-    {
-        status = pjmedia_stream_get_port(ms->cfg.audio_stream, &stream_port);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        /* Create sound device port. */
-
-        if (ms->cfg.dir == PJMEDIA_DIR_ENCODING_DECODING)
-            status = pjmedia_snd_port_create(ms->cfg.pool, 0, 1,
-                                             PJMEDIA_PIA_SRATE(&stream_port->info),
-                                             PJMEDIA_PIA_CCNT(&stream_port->info),
-                                             PJMEDIA_PIA_SPF(&stream_port->info),
-                                             PJMEDIA_PIA_BITS(&stream_port->info),
-                                             0, &ms->cfg.snd_port);
-        else if (ms->cfg.dir == PJMEDIA_DIR_ENCODING)
-            status = pjmedia_snd_port_create_rec(ms->cfg.pool, 25,
-                                                 PJMEDIA_PIA_SRATE(&stream_port->info),
-                                                 PJMEDIA_PIA_CCNT(&stream_port->info),
-                                                 PJMEDIA_PIA_SPF(&stream_port->info),
-                                                 PJMEDIA_PIA_BITS(&stream_port->info),
-                                                 0, &ms->cfg.snd_port);
-        else
-            status = pjmedia_snd_port_create_player(ms->cfg.pool, 0,
-                                                    PJMEDIA_PIA_SRATE(&stream_port->info),
-                                                    PJMEDIA_PIA_CCNT(&stream_port->info),
-                                                    PJMEDIA_PIA_SPF(&stream_port->info),
-                                                    PJMEDIA_PIA_BITS(&stream_port->info),
-                                                    0, &ms->cfg.snd_port);
-
-        if (status != PJ_SUCCESS)
-        {
-            pjapp_app_perror(THIS_FILE, "Unable to create sound port", status);
-            return -1;
-        }
-        status = pjmedia_snd_port_connect(ms->cfg.snd_port, stream_port);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-    }
-    #if defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
-    if (play_file && ms && ms->cfg.type == PJMEDIA_TYPE_VIDEO)
-    {
-        //pjmedia_codec_fmtp *fmtp;
-        pjmedia_vid_codec_param codecparam;
-        pjmedia_clock_param clock_param;
-        /* Get the port interface of the stream */
-		/* Allocate file read buffer */
-		ms->cfg.play_filedata.read_buf_size = PJMEDIA_MAX_VIDEO_ENC_FRAME_SIZE;
-		ms->cfg.play_filedata.read_buf = pj_pool_zalloc(ms->cfg.pool, ms->cfg.play_filedata.read_buf_size);
-
-        status = pjmedia_file_create_stream(ms->cfg.pool, play_file,
-                                  0, &play_file_port);
-        if (status != PJ_SUCCESS)
-        {
-            pjapp_app_perror(THIS_FILE, "Unable to use file", status);
-            return -1;
-        }
-        status = pjmedia_file_codeparam_get(play_file_port, &codecparam);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        status = pjapp_media_stream_codecparam(ms, "H264/97", codecparam.enc_fmt.det.vid.size.w, codecparam.enc_fmt.det.vid.size.h, &codecparam.enc_fmtp);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        status = pjapp_media_stream_transport(ms);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        status = pjapp_media_stream_create(ms);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-                     
-        /* Create player clock */
-        clock_param.usec_interval = PJMEDIA_PTIME(&ms->cfg.video_codec_param->enc_fmt.det.vid.fps);
-        clock_param.clock_rate = ms->cfg.video_codec_info->clock_rate;
-        status = pjmedia_clock_create2(ms->cfg.pool, &clock_param,
-                                       PJMEDIA_CLOCK_NO_HIGHEST_PRIO,
-                                       &pjapp_media_file_clock_cb, &ms->cfg.play_filedata, &ms->cfg.play_filedata.play_clock);
-        if (status != PJ_SUCCESS)
-            return -1;
-
-        status = pjmedia_vid_stream_get_port(ms->cfg.video_stream, PJMEDIA_DIR_ENCODING, &stream_port);
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
-        /* Init play file data */
-        ms->cfg.play_filedata.play_port = play_file_port;
-        ms->cfg.play_filedata.stream_port = stream_port;
-        //play_filedata.vid_stream_port = ms->cfg.video_stream;
-        //play_filedata.decoder = play_decoder;
-        //if (renderer) {
-        //    play_file.renderer = pjmedia_vid_port_get_passive_port(renderer);
-        //}
-        status = pjmedia_file_set_eof_cb(play_file_port,
-                               &ms->cfg.play_filedata,
-                               pjapp_media_file_done);
-
-        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);    
-        status = pjmedia_clock_start(ms->cfg.play_filedata.play_clock);
-
-        printf("Playing from WAV file %s..\n", play_file);
-        ms->cfg.priv = &ms->cfg.play_filedata;
-    }
-    #endif
-    /* Start streaming */
-    if (ms->cfg.type == PJMEDIA_TYPE_AUDIO)
-    {
-        status = pjmedia_stream_start(ms->cfg.audio_stream);
-        if (status != PJ_SUCCESS)
-            return status;
-    }
-    #if defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
-    else
-    {
-        status = pjmedia_vid_stream_start(ms->cfg.video_stream);
-        if (status != PJ_SUCCESS)
-            return status;
-    }
-    #endif
-    return status;
-}
 
 pj_status_t pjapp_media_stream_stop(pjapp_ms_t *ms)
 {
@@ -776,6 +611,364 @@ pj_status_t pjapp_media_stream_stop(pjapp_ms_t *ms)
 
     return PJ_SUCCESS;    
 }
+
+
+pj_status_t pjapp_media_stream_startfile(pjapp_ms_t **getms, int type, char *play_file, char *pt, 
+    char *localaddr, int localport, char *addr, int port)
+{
+    pj_status_t status = -1;
+    pjapp_ms_t * ms = NULL;
+    pjmedia_port *play_file_port = NULL;
+    pjmedia_port *stream_port = NULL;
+    //char *play_file = "/home/zhurish/Downloads/tftpboot/0-0-1970-01-01-00-48-39-video.H264";
+    //char *play_file = "/home/zhurish/workspace/working/zpl-source/source/component/pjsip/hello8000-1s.wav";
+
+    ms = pjapp_media_stream_new(type, localaddr, localport, addr, port);
+    if (ms == NULL)
+    {
+        return -1;
+    }
+    if (play_file && ms && ms->cfg.type == PJMEDIA_TYPE_AUDIO)
+    {
+        unsigned wav_ptime;
+        status = pjapp_media_stream_codecparam(ms, pt/*"PCMA/8000/1"*/, 0, 0, NULL);
+        PJ_ASSERT_GOTO(status == PJ_SUCCESS, fail_end);
+        status = pjapp_media_stream_transport(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_create(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        /* Get the port interface of the stream */
+        status = pjmedia_stream_get_port(ms->cfg.audio_stream, &stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+
+        wav_ptime = PJMEDIA_PIA_PTIME(&stream_port->info);
+        status = pjmedia_wav_player_port_create(ms->cfg.pool, play_file, wav_ptime,
+                                                0, -1, &play_file_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to use file", status);
+            return -1;
+        }
+        status = pjmedia_master_port_create(ms->cfg.pool, play_file_port, stream_port,
+                                            0, &ms->cfg.master_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to create master port", status);
+            return -1;
+        }
+
+        status = pjmedia_master_port_start(ms->cfg.master_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Error starting master port", status);
+            return -1;
+        }
+        printf("Playing from WAV file %s..\n", play_file);
+    }
+    else if (ms && ms->cfg.type == PJMEDIA_TYPE_AUDIO)
+    {
+        status = pjmedia_stream_get_port(ms->cfg.audio_stream, &stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        /* Create sound device port. */
+        //PJ_DECL(pj_status_t) pjmedia_aud_dev_lookup(const char *drv_name,
+        //                                    const char *dev_name,
+        //                                    pjmedia_aud_dev_index *id);
+
+        if (ms->cfg.dir == PJMEDIA_DIR_ENCODING_DECODING)
+            status = pjmedia_snd_port_create(ms->cfg.pool, 0, 1,
+                                             PJMEDIA_PIA_SRATE(&stream_port->info),
+                                             PJMEDIA_PIA_CCNT(&stream_port->info),
+                                             PJMEDIA_PIA_SPF(&stream_port->info),
+                                             PJMEDIA_PIA_BITS(&stream_port->info),
+                                             0, &ms->cfg.snd_port);
+        else if (ms->cfg.dir == PJMEDIA_DIR_ENCODING)
+            status = pjmedia_snd_port_create_rec(ms->cfg.pool, 25,
+                                                 PJMEDIA_PIA_SRATE(&stream_port->info),
+                                                 PJMEDIA_PIA_CCNT(&stream_port->info),
+                                                 PJMEDIA_PIA_SPF(&stream_port->info),
+                                                 PJMEDIA_PIA_BITS(&stream_port->info),
+                                                 0, &ms->cfg.snd_port);
+        else
+            status = pjmedia_snd_port_create_player(ms->cfg.pool, 0,
+                                                    PJMEDIA_PIA_SRATE(&stream_port->info),
+                                                    PJMEDIA_PIA_CCNT(&stream_port->info),
+                                                    PJMEDIA_PIA_SPF(&stream_port->info),
+                                                    PJMEDIA_PIA_BITS(&stream_port->info),
+                                                    0, &ms->cfg.snd_port);
+
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to create sound port", status);
+            return -1;
+        }
+        status = pjmedia_snd_port_connect(ms->cfg.snd_port, stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    }
+    #if defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
+    if (play_file && ms && ms->cfg.type == PJMEDIA_TYPE_VIDEO)
+    {
+        //PJ_DECL(pj_status_t) pjmedia_vid_dev_lookup(const char *drv_name,
+        //                                    const char *dev_name,
+        //                                    pjmedia_vid_dev_index *id);
+
+        pjmedia_vid_codec_param codecparam;
+        pjmedia_clock_param clock_param;
+        /* Get the port interface of the stream */
+		/* Allocate file read buffer */
+		ms->cfg.play_filedata.read_buf_size = PJMEDIA_MAX_VIDEO_ENC_FRAME_SIZE;
+		ms->cfg.play_filedata.read_buf = pj_pool_zalloc(ms->cfg.pool, ms->cfg.play_filedata.read_buf_size);
+
+        status = pjmedia_file_create_stream(ms->cfg.pool, play_file,
+                                  0, &play_file_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to use file", status);
+            return -1;
+        }
+        status = pjmedia_file_codeparam_get(play_file_port, &codecparam);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_codecparam(ms, pt/*"H264/97"*/, codecparam.enc_fmt.det.vid.size.w, codecparam.enc_fmt.det.vid.size.h, &codecparam.enc_fmtp);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_transport(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_create(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+                     
+        /* Create player clock */
+        clock_param.usec_interval = PJMEDIA_PTIME(&ms->cfg.video_codec_param->enc_fmt.det.vid.fps);
+        clock_param.clock_rate = ms->cfg.video_codec_info->clock_rate;
+        status = pjmedia_clock_create2(ms->cfg.pool, &clock_param,
+                                       PJMEDIA_CLOCK_NO_HIGHEST_PRIO,
+                                       &pjapp_media_file_clock_cb, &ms->cfg.play_filedata, &ms->cfg.play_filedata.play_clock);
+        if (status != PJ_SUCCESS)
+            return -1;
+
+        status = pjmedia_vid_stream_get_port(ms->cfg.video_stream, PJMEDIA_DIR_ENCODING, &stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        /* Init play file data */
+        ms->cfg.play_filedata.play_port = play_file_port;
+        ms->cfg.play_filedata.stream_port = stream_port;
+        //play_filedata.vid_stream_port = ms->cfg.video_stream;
+        //play_filedata.decoder = play_decoder;
+        //if (renderer) {
+        //    play_file.renderer = pjmedia_vid_port_get_passive_port(renderer);
+        //}
+        status = pjmedia_file_set_eof_cb(play_file_port,
+                               &ms->cfg.play_filedata,
+                               pjapp_media_file_done);
+
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);    
+        status = pjmedia_clock_start(ms->cfg.play_filedata.play_clock);
+
+        printf("Playing from WAV file %s..\n", play_file);
+        ms->cfg.priv = &ms->cfg.play_filedata;
+    }
+    #endif
+    /* Start streaming */
+    if (ms->cfg.type == PJMEDIA_TYPE_AUDIO)
+    {
+        status = pjmedia_stream_start(ms->cfg.audio_stream);
+        if (status != PJ_SUCCESS)
+            return status;
+    }
+    #if defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
+    else
+    {
+        status = pjmedia_vid_stream_start(ms->cfg.video_stream);
+        if (status != PJ_SUCCESS)
+            return status;
+    }
+    #endif
+    if(getms)
+        *getms = ms;
+fail_end:   
+    return status;
+}
+
+static pjapp_ms_t * ms = NULL;
+
+int pjapp_ms_test(void)
+{
+    char *play_file = "/home/zhurish/Downloads/tftpboot/0-0-1970-01-01-00-48-39-video.H264";
+    return pjapp_media_stream_startfile(&ms, PJMEDIA_TYPE_VIDEO, play_file, "H264/97", 
+        "192.168.0.103", 5555, "192.168.0.1", 6666);
+}
+#if 0
+static pjapp_ms_t * ms;
+
+int pjapp_ms_test(void)
+{
+
+    pj_status_t status;
+    pjapp_ms_t * ms = NULL;
+    pjmedia_port *play_file_port = NULL;
+    pjmedia_port *stream_port = NULL;
+    char *play_file = "/home/zhurish/Downloads/tftpboot/0-0-1970-01-01-00-48-39-video.H264";
+    //char *play_file = "/home/zhurish/workspace/working/zpl-source/source/component/pjsip/hello8000-1s.wav";
+    
+    char tmp[10];
+    //pjapp_ms_t * ms = pjapp_media_stream_create("192.168.0.103", 5555, "192.168.0.1", 6666, "H264/97", 1920, 1080);
+    //pjapp_ms_t *ms = pjapp_media_stream_create("192.168.0.103", 5555, "192.168.0.1", 6666, "PCMA/8000/1", 0, 0);
+    //pjapp_ms_t * ms = pjapp_media_stream_create(PJMEDIA_TYPE_AUDIO, "192.168.0.103", 5555, "192.168.0.1", 6666);
+    ms = pjapp_media_stream_new(PJMEDIA_TYPE_VIDEO, "192.168.0.103", 5555, "192.168.0.1", 6666);
+    if (ms == NULL)
+    {
+        return -1;
+    }
+    if (play_file && ms && ms->cfg.type == PJMEDIA_TYPE_AUDIO)
+    {
+        unsigned wav_ptime;
+        status = pjapp_media_stream_codecparam(ms, "PCMA/8000/1", 0, 0, NULL);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_transport(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_create(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        /* Get the port interface of the stream */
+        status = pjmedia_stream_get_port(ms->cfg.audio_stream, &stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+
+        wav_ptime = PJMEDIA_PIA_PTIME(&stream_port->info);
+        status = pjmedia_wav_player_port_create(ms->cfg.pool, play_file, wav_ptime,
+                                                0, -1, &play_file_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to use file", status);
+            return -1;
+        }
+        status = pjmedia_master_port_create(ms->cfg.pool, play_file_port, stream_port,
+                                            0, &ms->cfg.master_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to create master port", status);
+            return -1;
+        }
+
+        status = pjmedia_master_port_start(ms->cfg.master_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Error starting master port", status);
+            return -1;
+        }
+        printf("Playing from WAV file %s..\n", play_file);
+    }
+    else if (ms && ms->cfg.type == PJMEDIA_TYPE_AUDIO)
+    {
+        status = pjmedia_stream_get_port(ms->cfg.audio_stream, &stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        /* Create sound device port. */
+        //PJ_DECL(pj_status_t) pjmedia_aud_dev_lookup(const char *drv_name,
+        //                                    const char *dev_name,
+        //                                    pjmedia_aud_dev_index *id);
+
+        if (ms->cfg.dir == PJMEDIA_DIR_ENCODING_DECODING)
+            status = pjmedia_snd_port_create(ms->cfg.pool, 0, 1,
+                                             PJMEDIA_PIA_SRATE(&stream_port->info),
+                                             PJMEDIA_PIA_CCNT(&stream_port->info),
+                                             PJMEDIA_PIA_SPF(&stream_port->info),
+                                             PJMEDIA_PIA_BITS(&stream_port->info),
+                                             0, &ms->cfg.snd_port);
+        else if (ms->cfg.dir == PJMEDIA_DIR_ENCODING)
+            status = pjmedia_snd_port_create_rec(ms->cfg.pool, 25,
+                                                 PJMEDIA_PIA_SRATE(&stream_port->info),
+                                                 PJMEDIA_PIA_CCNT(&stream_port->info),
+                                                 PJMEDIA_PIA_SPF(&stream_port->info),
+                                                 PJMEDIA_PIA_BITS(&stream_port->info),
+                                                 0, &ms->cfg.snd_port);
+        else
+            status = pjmedia_snd_port_create_player(ms->cfg.pool, 0,
+                                                    PJMEDIA_PIA_SRATE(&stream_port->info),
+                                                    PJMEDIA_PIA_CCNT(&stream_port->info),
+                                                    PJMEDIA_PIA_SPF(&stream_port->info),
+                                                    PJMEDIA_PIA_BITS(&stream_port->info),
+                                                    0, &ms->cfg.snd_port);
+
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to create sound port", status);
+            return -1;
+        }
+        status = pjmedia_snd_port_connect(ms->cfg.snd_port, stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    }
+    #if defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
+    if (play_file && ms && ms->cfg.type == PJMEDIA_TYPE_VIDEO)
+    {
+        //PJ_DECL(pj_status_t) pjmedia_vid_dev_lookup(const char *drv_name,
+        //                                    const char *dev_name,
+        //                                    pjmedia_vid_dev_index *id);
+
+        pjmedia_vid_codec_param codecparam;
+        pjmedia_clock_param clock_param;
+        /* Get the port interface of the stream */
+		/* Allocate file read buffer */
+		ms->cfg.play_filedata.read_buf_size = PJMEDIA_MAX_VIDEO_ENC_FRAME_SIZE;
+		ms->cfg.play_filedata.read_buf = pj_pool_zalloc(ms->cfg.pool, ms->cfg.play_filedata.read_buf_size);
+
+        status = pjmedia_file_create_stream(ms->cfg.pool, play_file,
+                                  0, &play_file_port);
+        if (status != PJ_SUCCESS)
+        {
+            pjapp_app_perror(THIS_FILE, "Unable to use file", status);
+            return -1;
+        }
+        status = pjmedia_file_codeparam_get(play_file_port, &codecparam);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_codecparam(ms, "H264/97", codecparam.enc_fmt.det.vid.size.w, codecparam.enc_fmt.det.vid.size.h, &codecparam.enc_fmtp);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_transport(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        status = pjapp_media_stream_create(ms);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+                     
+        /* Create player clock */
+        clock_param.usec_interval = PJMEDIA_PTIME(&ms->cfg.video_codec_param->enc_fmt.det.vid.fps);
+        clock_param.clock_rate = ms->cfg.video_codec_info->clock_rate;
+        status = pjmedia_clock_create2(ms->cfg.pool, &clock_param,
+                                       PJMEDIA_CLOCK_NO_HIGHEST_PRIO,
+                                       &pjapp_media_file_clock_cb, &ms->cfg.play_filedata, &ms->cfg.play_filedata.play_clock);
+        if (status != PJ_SUCCESS)
+            return -1;
+
+        status = pjmedia_vid_stream_get_port(ms->cfg.video_stream, PJMEDIA_DIR_ENCODING, &stream_port);
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+        /* Init play file data */
+        ms->cfg.play_filedata.play_port = play_file_port;
+        ms->cfg.play_filedata.stream_port = stream_port;
+        //play_filedata.vid_stream_port = ms->cfg.video_stream;
+        //play_filedata.decoder = play_decoder;
+        //if (renderer) {
+        //    play_file.renderer = pjmedia_vid_port_get_passive_port(renderer);
+        //}
+        status = pjmedia_file_set_eof_cb(play_file_port,
+                               &ms->cfg.play_filedata,
+                               pjapp_media_file_done);
+
+        PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);    
+        status = pjmedia_clock_start(ms->cfg.play_filedata.play_clock);
+
+        printf("Playing from WAV file %s..\n", play_file);
+        ms->cfg.priv = &ms->cfg.play_filedata;
+    }
+    #endif
+    /* Start streaming */
+    if (ms->cfg.type == PJMEDIA_TYPE_AUDIO)
+    {
+        status = pjmedia_stream_start(ms->cfg.audio_stream);
+        if (status != PJ_SUCCESS)
+            return status;
+    }
+    #if defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
+    else
+    {
+        status = pjmedia_vid_stream_start(ms->cfg.video_stream);
+        if (status != PJ_SUCCESS)
+            return status;
+    }
+    #endif
+    return status;
+}
+#endif
 
 #if 0
 

@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "jrtp_payloadtype.h"
+#include "jrtp_rtpprofile.h"
 
 typedef struct jrtp_session_s jrtp_session_t;
 
@@ -23,6 +25,9 @@ extern int jrtp_session_payload_set(jrtp_session_t *jrtpsess, int pt, int clock)
 extern int jrtp_session_overtcp_set(jrtp_session_t *jrtpsess, int istcp);
 extern int jrtp_session_framerate_set(jrtp_session_t *jrtpsess, int framerate);
 
+extern int jrtp_session_stop(jrtp_session_t *jrtpsess);
+extern int jrtp_session_start(jrtp_session_t *jrtpsess);
+
 extern int jrtp_session_rtpsock(jrtp_session_t *jrtpsess);
 extern int jrtp_session_rtcpsock(jrtp_session_t *jrtpsess);
 extern int jrtp_session_rtpdelay(jrtp_session_t *jrtpsess);
@@ -34,7 +39,8 @@ extern int jrtp_session_sendto(jrtp_session_t *jrtpsess, const void *data, size_
 
 extern int jrtp_session_recvfrom(jrtp_session_t *);
 
-
+extern int jrtp_session_event_loop(void *);
+  
 
 #ifdef __cplusplus
 }

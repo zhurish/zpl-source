@@ -8,13 +8,6 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
-#ifdef ZPL_LIBORTP_MODULE
-#include <ortp/ortp.h>
-#include "scheduler.h"
-//#include "mediastreamer2/mediastream.h"
-//#include "mediastreamer2/msequalizer.h"
-//#include "mediastreamer2/msvolume.h"
-#endif
 #ifdef ZPL_JRTPLIB_MODULE
 #include "jrtplib_api.h"
 #endif
@@ -183,6 +176,24 @@ static int zpl_mediartp_session_default(zpl_media_channel_t *mchn, zpl_mediartp_
     return ERROR;
 }
 
+int zpl_mediartp_session_add_dest(zpl_mediartp_session_t *my_session, char *address, u_int16_t rtpport, u_int16_t rtcpport)
+{
+#ifdef ZPL_JRTPLIB_MODULE
+    if(my_session && my_session->_session)
+        return jrtp_session_destination_add(my_session->_session, address,  rtpport,  rtcpport);
+#endif
+    return -1;
+}
+
+int zpl_mediartp_session_del_dest(zpl_mediartp_session_t *my_session, char *address, u_int16_t rtpport, u_int16_t rtcpport)
+{
+#ifdef ZPL_JRTPLIB_MODULE
+    if(my_session && my_session->_session)
+        return jrtp_session_destination_del(my_session->_session, address,  rtpport,  rtcpport);
+#endif
+    return -1;
+}
+
 zpl_mediartp_session_t * zpl_mediartp_session_create(int channel, int level)
 {
     zpl_mediartp_session_t *my_session = NULL;
@@ -216,6 +227,7 @@ zpl_mediartp_session_t * zpl_mediartp_session_create(int channel, int level)
             if (my_session->rtp_media_queue == NULL)
             {
                 #ifdef ZPL_JRTPLIB_MODULE
+                jrtp_session_stop(my_session->_session);
                 jrtp_session_destroy(my_session->_session);
                 #endif
                 free(my_session);
@@ -233,6 +245,7 @@ zpl_mediartp_session_t * zpl_mediartp_session_create(int channel, int level)
                     my_session->rtp_media_queue = NULL;
                 }
                 #ifdef ZPL_JRTPLIB_MODULE
+                jrtp_session_stop(my_session->_session);
                 jrtp_session_destroy(my_session->_session);
                 #endif
                 free(my_session);
@@ -250,6 +263,10 @@ zpl_mediartp_session_t * zpl_mediartp_session_create(int channel, int level)
             if (_mediaRtpSched.mutex)
                 os_mutex_unlock(_mediaRtpSched.mutex);
             return my_session;
+        }
+        else
+        {
+
         }
     }
     return NULL;
@@ -274,6 +291,7 @@ int zpl_mediartp_session_destroy(int channel, int level)
         zpl_media_channel_client_del(channel, level, mysession->_call_index);
     }
     #ifdef ZPL_JRTPLIB_MODULE
+    jrtp_session_stop(mysession->_session);
     if (jrtp_session_destroy(mysession->_session) != OK)
     {
         if (_mediaRtpSched.mutex)
@@ -354,6 +372,12 @@ int zpl_mediartp_session_start(int channel, int level, zpl_bool start)
                 ret = zpl_media_channel_client_start(channel, level, my_session->_call_index, zpl_true);
                 if (_mediaRtpSched.mutex)
                     os_mutex_unlock(_mediaRtpSched.mutex);
+#ifdef ZPL_JRTPLIB_MODULE
+                if (jrtp_session_start(my_session->_session) != OK)
+                {
+                    return ERROR;
+                }
+#endif
                 return ret;
             }
             else
@@ -372,6 +396,12 @@ int zpl_mediartp_session_start(int channel, int level, zpl_bool start)
             }
             if (_mediaRtpSched.mutex)
                 os_mutex_unlock(_mediaRtpSched.mutex);
+#ifdef ZPL_JRTPLIB_MODULE
+            if (jrtp_session_start(my_session->_session) != OK)
+            {
+                return ERROR;
+            }
+#endif 
             return ret;
         }
 
@@ -412,47 +442,7 @@ static int zpl_mediartp_event_dispatch_signal(zpl_mediartp_session_t *myrtp_sess
     return OK;
 }
 #endif
-#ifdef ZPL_LIBORTP_MODULE
-static int mediaRtpSchedTask(void *p)
-{
-    return 0;
-}
-#endif
-#ifdef ZPL_LIBORTP_MODULE
-static void zortp_log(OrtpLogLevel level, char *file, char *func, int line, const char *fmt)
-{   
-    switch (level)
-    {
-    case ORTP_FATAL:
-        pl_zlog_critical(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_ERROR:
-        pl_zlog_err(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_WARNING:
-        pl_zlog_warn(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_MESSAGE:
-        pl_zlog_info(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_TRACE:
-        pl_zlog_notice(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_DEBUG:
-        pl_zlog_debug(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_END:
-        pl_zlog_debug(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    case ORTP_LOGLEV_END:
-        pl_zlog_debug(file, func, line, MODULE_MEDIA, "%s", fmt);
-        break;
-    default:
-        break;
-    }
-    return;
-}
-#endif
+
 int zpl_mediartp_scheduler_init(void)
 {
     memset(&_mediaRtpSched, 0, sizeof(zpl_mediartp_scheduler_t));
@@ -460,11 +450,6 @@ int zpl_mediartp_scheduler_init(void)
     lstInitFree(&_mediaRtpSched.list, zpl_mediartp_session_cbfree);
 #ifdef ZPL_JRTPLIB_MODULE
     _mediaRtpSched.evtqueue = zpl_media_event_create("mediaRtpSched", 32);
-#endif
-#ifdef ZPL_LIBORTP_MODULE
-    ortp_init();
-    ortp_set_log_handler(zortp_log, 1);
-    ortp_set_log_level(6);
 #endif
     return OK;
 }
@@ -489,12 +474,7 @@ int zpl_mediartp_scheduler_start(void)
 {
     #ifdef ZPL_JRTPLIB_MODULE
     zpl_media_event_start(_mediaRtpSched.evtqueue);
-    #endif
-    #ifdef ZPL_LIBORTP_MODULE
-     if (_mediaRtpSched.taskid == 0)
-         _mediaRtpSched.taskid = os_task_create("mediaRtpSched", OS_TASK_DEFAULT_PRIORITY,
-                                                0, mediaRtpSchedTask, &_mediaRtpSched, OS_TASK_DEFAULT_STACK);
-    #endif                                            
+    #endif                                          
     return OK;
 }
 
@@ -574,7 +554,7 @@ zpl_bool zpl_media_channel_multicast_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDI
 
 
 
-#if 0
+#if 1
 
 static int zpl_mediartp_session_rtpmap_sdptext_h264(zpl_mediartp_session_t* rtpsession, char *src, uint32_t len)
 {
@@ -591,16 +571,17 @@ static int zpl_mediartp_session_rtpmap_sdptext_h264(zpl_mediartp_session_t* rtps
     profile = extradata.h264spspps.profileLevelId;
 
     sdplength = sprintf((char*)(src + sdplength), "m=video 0 RTP/AVP %d\r\n", rtpsession->payload);
-
-    if (rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264))
-        sdplength += sprintf((char*)(src + sdplength), "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_H264, rtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264));
+#ifdef ZPL_JRTPLIB_MODULE
+    if (jrtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264))
+        sdplength += sprintf((char*)(src + sdplength), "a=rtpmap:%d %s\r\n", RTP_MEDIA_PAYLOAD_H264, jrtp_profile_get_rtpmap(RTP_MEDIA_PAYLOAD_H264));
     else
+#endif
         sdplength += sprintf((char*)(src + sdplength), "a=rtpmap:%d H264/90000\r\n", RTP_MEDIA_PAYLOAD_H264);
 
     if(extradata.fPPSSize)
         os_base64_encode(base64pps, sizeof(base64pps), extradata.fPPS + extradata.fPPSHdrLen, extradata.fPPSSize - extradata.fPPSHdrLen);
     if(extradata.fSPSSize)
-        os_ba    zpl_mediartp_session_t *my_session = zpl_mediartp_session_lookup(channel, level, path);se64_encode(base64sps, sizeof(base64sps), extradata.fSPS + extradata.fSPSHdrLen, extradata.fSPSSize - extradata.fSPSHdrLen);
+        os_base64_encode(base64sps, sizeof(base64sps), extradata.fSPS + extradata.fSPSHdrLen, extradata.fSPSSize - extradata.fSPSHdrLen);
 
     if (strlen(base64sps))
     {
@@ -656,7 +637,11 @@ int zpl_mediartp_session_rtpmap_h264(int channel, int level, char *src, uint32_t
 {
     //a=fmtp:96 profile-level-id=000000; sprop-parameter-sets=Z0IAKpY1QPAET8s3AQEBAg==,aM4xsg==; packetization-mode=0
     int ret = 0;
-    zpl_mediartp_session_t *my_session = zpl_mediartp_session_lookup(channel, level, path);
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
     if (my_session)
     {
         if (_mediaRtpSched.mutex)
@@ -667,6 +652,152 @@ int zpl_mediartp_session_rtpmap_h264(int channel, int level, char *src, uint32_t
         return ret;
     }
     return ERROR;
+}
+
+zpl_mediartp_session_t *zpl_mediartp_session_lookup(int channel, int level)
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    return my_session;    
+}
+
+zpl_bool zpl_mediartp_session_getbind(int channel, int level)
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn && mchn->bind_other)
+        return 1; 
+    return 0;    
+}
+
+int zpl_mediartp_session_remoteport(int channel, int level, char *address, u_int16_t rtpport, u_int16_t rtcpport)
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    if(my_session) 
+    {
+#ifdef ZPL_JRTPLIB_MODULE
+        return jrtp_session_destination_add(my_session->_session, address,  rtpport,  rtcpport);
+#endif
+        return 0;
+    }   
+    return -1;    
+}
+
+int zpl_mediartp_session_get_localport(int channel, int level, char *address, u_int16_t *rtpport, u_int16_t *rtcpport)
+
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    if(my_session) 
+    {
+        if(address)
+            strcpy(address, my_session->local_address);
+        if(rtpport)
+            *rtpport = my_session->local_rtpport;
+        if(rtcpport)
+            *rtcpport = my_session->local_rtcpport;
+        return 0;
+    }   
+    return -1;    
+}
+
+int zpl_mediartp_session_localport(int channel, int level, char *address, u_int16_t rtpport, u_int16_t rtcpport)
+
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    if(my_session) 
+    {
+        if(address)
+            strcpy(my_session->local_address, address);
+        if(rtpport)
+            my_session->local_rtpport = rtpport;
+        if(rtcpport)
+            my_session->local_rtcpport = rtcpport;
+        return 0;
+    }   
+    return -1;    
+}
+int zpl_mediartp_session_tcp_interleaved(int channel, int level, int rtp_interleaved, int rtcp_interleaved)
+
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    if(my_session) 
+    {
+        my_session->rtp_interleaved = rtp_interleaved;
+        my_session->rtcp_interleaved = rtcp_interleaved;
+        return 0;
+    }   
+    return -1;    
+}
+int zpl_mediartp_session_get_tcp_interleaved(int channel, int level, int *rtp_interleaved, int *rtcp_interleaved)
+
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    if(my_session) 
+    {
+        if(rtp_interleaved)
+            *rtp_interleaved = my_session->rtp_interleaved;
+        if(rtcp_interleaved)
+            *rtcp_interleaved = my_session->rtcp_interleaved;
+        return 0;
+    }   
+    return -1;    
+}
+int zpl_mediartp_session_get_trackid(int channel, int level, int *trackid)
+
+{
+    zpl_mediartp_session_t *my_session = NULL;
+    zpl_media_channel_t *mchn = NULL;
+    mchn = zpl_media_channel_lookup(channel, level);
+    if (mchn)
+        my_session = zpl_mediartp_rtpparam(mchn);
+    if(my_session) 
+    {
+        if(trackid)
+            *trackid = my_session->i_trackid;
+        return 0;
+    }   
+    return -1;    
+}
+
+int zpl_mediartp_session_describe(int channel, int level, void *pUser, char *src, int *len)
+{
+    int sdplength = 0;
+    //sdplength = rtsp_session_media_build_sdptext(session, src);
+    //if(session->bind_other_session.media_chn)
+    //    sdplength += rtsp_session_media_build_sdptext(&session->bind_other_session, (char*)(src + sdplength));
+    if(len)
+        *len = sdplength;
+    return OK;
+}
+
+int zpl_mediartp_session_setup(int channel, int level, void *pUser)
+{    
+    //zpl_mediartp_session_setup(session->mchannel, session->mlevel, session->mfilepath);
+    return OK;
 }
 
 #endif
