@@ -44,7 +44,8 @@ OSOBJ	+= nal-hevc.o
 OSOBJ	+= nal-rbsp.o
 OSOBJ	+= rtp_h264.o
 OSOBJ	+= rtp_g7xx.o
-
+#OSOBJ	+= h263_packetizer.o
+#OSOBJ	+= h264_packetizer.o
 #ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 OSOBJ	+= zpl_vidhal_mipi.o
 OSOBJ	+= zpl_vidhal_sensor.o

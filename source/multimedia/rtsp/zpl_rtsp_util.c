@@ -162,6 +162,7 @@ static void rtsp_url_stream_path_split(const char *url, os_url_t *urlpath)
 {
     char *p, *brk;
     char filename[512];
+    urlpath->channel = urlpath->level = -1;
     p = strstr(url, "media");
     if(p)
         p+=6;
@@ -183,7 +184,6 @@ static void rtsp_url_stream_path_split(const char *url, os_url_t *urlpath)
         }
         else if(!strstr(p, "channel") && !strstr(p, "level"))
         {
-            urlpath->channel = urlpath->level = -1;
             memset(filename, 0, sizeof(filename));
             if(strstr(p, "&"))
             {

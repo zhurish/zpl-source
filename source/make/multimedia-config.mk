@@ -168,16 +168,43 @@ ZPL_INCLUDE	+=   \
 #	
 #	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjsip-apps/include
 
-
+#
 ZPL_DEFINE += -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC -Wno-error=redundant-decls
 ZPL_DEFINE += -DPJSIP_ALLOW_PORT_IN_FROMTO_HDR=1 -fPIC -DPJ_OS_NAME=\"linux\" \
 	-Wno-error=int-conversion -Wno-error=type-limits -Wno-error=unused-label \
-	-DPJ_LINUX_ZPLMEDIA -DPJMEDIA_HAS_VIDEO=1 -DHAVE_CONFIG_H -DOPENSSL \
-	-DSASR -DWAV49 -DNeedFunctionPrototypes=1 -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1 \
-	-DPJMEDIA_VIDEO_DEV_HAS_V4L2=1 -Wno-error=unused-variable -Wno-error=unused-const-variable \
-	-Wno-error=unused-function -Wno-error=overlength-strings -Wno-error=unused-value -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1
+	-DPJ_LINUX_ZPLMEDIA -DHAVE_CONFIG_H  \
+	-DSASR -DWAV49 -DNeedFunctionPrototypes=1 \
+	-Wno-error=unused-variable -Wno-error=unused-const-variable \
+	-Wno-error=unused-function -Wno-error=overlength-strings -Wno-error=unused-value 
 
-ZPL_LDLIBS += -lasound -lv4l2 -lssl -lcrypto -lportaudio
+
+ifeq ($(strip $(ZPL_PJSIP_SRTP)),true)
+ZPL_DEFINE += -DOPENSSL
+ZPL_DEFINE += -DPJMEDIA_HAS_SRTP=1
+ZPL_LDLIBS += -lv4l2 -lssl -lcrypto
+else
+ZPL_DEFINE += -DPJMEDIA_HAS_SRTP=0
+endif
+
+ifeq ($(strip $(ZPL_PJSIP_VIDEO)),true)
+ZPL_DEFINE += -DPJMEDIA_HAS_VIDEO=1
+ifeq ($(strip $(ZPL_PJSIP_VIDEO_V4L2)),true)
+ZPL_DEFINE += -DPJMEDIA_VIDEO_DEV_HAS_V4L2=1
+ZPL_LDLIBS += -lv4l2
+else
+ZPL_DEFINE += -DPJMEDIA_VIDEO_DEV_HAS_V4L2=0 
+endif
+else
+ZPL_DEFINE += -DPJMEDIA_HAS_VIDEO=0 -DPJMEDIA_VIDEO_DEV_HAS_V4L2=0 
+endif
+
+ifeq ($(strip $(ZPL_PJSIP_ALSA)),true)
+ZPL_DEFINE += -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1
+ZPL_LDLIBS += -lasound
+else
+ZPL_DEFINE += -DPJMEDIA_AUDIO_DEV_HAS_ALSA=0
+endif
+
 
 
 PJSIP_ROOT=$(COMPONENT_DIR)/pjsip

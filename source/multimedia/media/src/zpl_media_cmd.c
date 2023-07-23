@@ -629,7 +629,34 @@ DEFUN (no_mediaservice_template,
 	return CMD_WARNING;
 }
 
+DEFUN (media_channel_request_hdr,
+		media_channel_request_hdr_cmd,
+		"media channel <0-1> (main|sub) request-hdr" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"Request HDR Configure\n")
+{
+	int ret = ERROR;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	zpl_media_channel_t	*chn = NULL;
+	VTY_GET_INTEGER("channel",channel, argv[0]);
+	
+	if(strstr(argv[1],"main"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+	else if(strstr(argv[1],"sub"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 
+	chn = zpl_media_channel_lookup(channel,  channel_index);
+	if(chn )
+	{
+		zpl_media_channel_hal_request_IDR(chn);
+		ret = OK;
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
 static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 {
@@ -713,6 +740,8 @@ static void cmd_mediaservice_init(void)
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_disable_cmd);
 
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_request_hdr_cmd);
+		
 	}
 	return;
 }

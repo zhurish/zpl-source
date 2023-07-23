@@ -44,6 +44,34 @@ config ZPL_PJSIP_MODULE
 	help
 	Build Pjsip Module.
 
+config ZPL_PJSIP_SRTP
+	bool "Pjsip Srtp Module"
+	default n
+	depends on ZPL_PJSIP_MODULE
+	help
+	Build Pjsip Srtp Module.
+
+config ZPL_PJSIP_VIDEO
+	bool "Pjsip Video Module"
+	default y
+	depends on ZPL_PJSIP_MODULE
+	help
+	Build Pjsip Video Module.
+
+config ZPL_PJSIP_VIDEO_V4L2
+	bool "Pjsip Video V4L2 Module"
+	default n
+	depends on ZPL_PJSIP_VIDEO
+	help
+	Build Pjsip Video V4L2 Module.
+
+config ZPL_PJSIP_ALSA
+	bool "Pjsip ALSA Module"
+	default n
+	depends on ZPL_PJSIP_MODULE
+	help
+	Build Pjsip ALSA Module.
+
 config ZPL_PJSIP_PJSUA2
 	bool "Pjsip pjsua2 Module"
 	default y

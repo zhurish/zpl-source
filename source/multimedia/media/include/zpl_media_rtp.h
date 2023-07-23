@@ -38,9 +38,9 @@ struct zpl_mediartp_session_s
     uint16_t local_rtpport;
     uint16_t local_rtcpport;
 
-    uint8_t    i_trackid;
-    uint8_t     rtp_interleaved;
-    uint8_t     rtcp_interleaved;   // rtsp setup response only
+    int32_t    i_trackid;
+    int32_t     rtp_interleaved;
+    int32_t     rtcp_interleaved;   // rtsp setup response only
     
     int32_t         _call_index;       //媒体回调索引, 音视频通道数据发送
     void            *media_chn;         //媒体数据结构
@@ -107,8 +107,6 @@ int zpl_mediartp_session_rtpmap_h264(int channel, int level, char *src, uint32_t
 
 int zpl_media_channel_multicast_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable, char *address, int rtp_port, char *localaddr);
 zpl_bool zpl_media_channel_multicast_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
-
-void rtp_sched_test(void);
 
 
 #ifdef __cplusplus

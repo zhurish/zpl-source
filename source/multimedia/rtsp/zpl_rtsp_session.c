@@ -450,7 +450,6 @@ static int rtsp_session_handle_describe(rtsp_session_t *session)
         int sdplength = 0, desclen = 0;
         memset(buftmp, 0, sizeof(buftmp));
         sdplength += sprintf((char*)(buftmp + sdplength), "v=0\r\n");
-
         sdplength += sprintf((char*)(buftmp + sdplength), "o=%s %lu %u IN IPV4 0.0.0.0\r\n", session->srvname, time(NULL), rand());
         sdplength += sprintf((char*)(buftmp + sdplength), "c=IN IPV4 %s\r\n", session->listen_address ? session->listen_address : "0.0.0.0");
         sdplength += sprintf((char*)(buftmp + sdplength), "t=0 0\r\n");
@@ -460,6 +459,7 @@ static int rtsp_session_handle_describe(rtsp_session_t *session)
         //code = rtsp_session_media_describe(session, NULL);
         //sdplength += rtsp_session_media_build_sdptext(session, buftmp + sdplength);
         //code = rtsp_session_media_describe(session, NULL, (char*)(buftmp + sdplength), &desclen);
+        desclen = sizeof(buftmp) - sdplength;
         zpl_mediartp_session_describe(session->mchannel, session->mlevel, NULL, (char*)(buftmp + sdplength), &desclen);
 
         sdplength += desclen;
@@ -504,18 +504,21 @@ static int rtsp_session_handle_setup(rtsp_session_t *session)
             if (session->transport.proto == RTSP_TRANSPORT_RTP_UDP)
             {
                 u_int16_t rtp_port = 0, rtcp_port = 0;
-                
-                zpl_mediartp_session_remoteport(session->mchannel, session->mlevel,  
-                    session->transport.destination?session->transport.destination:session->address, 
-                    session->transport.rtp.unicast.rtp_port, session->transport.rtp.unicast.rtcp_port);
-
                 zpl_mediartp_session_get_localport(session->mchannel, session->mlevel, NULL, &rtp_port, &rtcp_port);
-                
-                //zm_msg_debug("======== zpl_mediartp_session_localport %s", my_session->local_address);  
+                rtsp_log_debug("===========================================local %s rtpport=%d rtcpport=%d\r\n", 
+                    session->listen_address?session->listen_address:"null", rtp_port, rtcp_port);
+                rtsp_log_debug("===========================================client rtpport=%d rtcpport=%d\r\n", session->transport.rtp.unicast.rtp_port, session->transport.rtp.unicast.rtcp_port);
                 zpl_mediartp_session_localport(session->mchannel, session->mlevel, session->listen_address, rtp_port, rtcp_port);
                 length += sprintf((char*)(session->_send_build + length), "Transport: %s;server_port=%d-%d\r\n",
                                   session->sdptext.header.Transport,
                                   rtp_port, rtcp_port);
+                if(zpl_mediartp_session_setup(session->mchannel, session->mlevel, NULL) == OK)
+                {
+                    rtsp_log_debug("=================zpl_mediartp_session_setup OKr\n");
+                    zpl_mediartp_session_remoteport(session->mchannel, session->mlevel,  
+                        session->transport.destination?session->transport.destination:session->address, 
+                        session->transport.rtp.unicast.rtp_port, session->transport.rtp.unicast.rtcp_port);
+                }
             }
             else if (session->transport.proto == RTSP_TRANSPORT_RTP_TCP)
             {
@@ -559,7 +562,7 @@ static int rtsp_session_handle_setup(rtsp_session_t *session)
         else
             length = sdp_build_respone_header(session->_send_build, session->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->sesid);
 
-        zpl_mediartp_session_setup(session->mchannel, session->mlevel, NULL);
+      
 
         if (code != RTSP_STATE_CODE_200)
         {
@@ -612,6 +615,13 @@ static int rtsp_session_handle_teardown(rtsp_session_t *session)
     return OK;
 }
 
+static int rtsp_session_start_delay(rtsp_session_t *session)
+{
+    if(session)
+        zpl_mediartp_session_start(session->mchannel, session->mlevel, zpl_true);
+    return 0;    
+}
+
 static int rtsp_session_handle_play(rtsp_session_t *session)
 {
     int length = 0, ret = 0;
@@ -650,7 +660,8 @@ static int rtsp_session_handle_play(rtsp_session_t *session)
         length += sprintf((char*)(session->_send_build + length), "\r\n");
         ret = rtsp_session_sendto(session, session->_send_build, length);
     }
-    zpl_mediartp_session_start(session->mchannel, session->mlevel, zpl_true);
+    os_time_create_once(rtsp_session_start_delay, session, 500);
+    //zpl_mediartp_session_start(session->mchannel, session->mlevel, zpl_true);
     return OK;
 }
 
@@ -745,6 +756,8 @@ static int rtsp_session_event_handle(rtsp_session_t *session)
     {
         return ERROR;
     }
+    if (!zpl_mediartp_session_lookup(session->mchannel, session->mlevel))
+        zpl_mediartp_session_create(session->mchannel, session->mlevel);
     if (!zpl_mediartp_session_lookup(session->mchannel, session->mlevel))
     {
         int length = sdp_build_respone_header(session->_send_build, session->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->sesid);

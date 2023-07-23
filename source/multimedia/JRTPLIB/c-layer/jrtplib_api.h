@@ -4,16 +4,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "rtpdefines.h"
 #include "jrtp_payloadtype.h"
 #include "jrtp_rtpprofile.h"
+
+#define JRTP_PACKET_SIZE_MAX	1480
 
 typedef struct jrtp_session_s jrtp_session_t;
 
 extern jrtp_session_t * jrtp_session_alloc(void);
 extern int jrtp_session_destroy(jrtp_session_t *);
 extern int jrtp_session_create(jrtp_session_t *);
-
+extern int jrtp_session_isactive(jrtp_session_t *jrtpsess);
 extern int jrtp_session_destination_add(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, u_int16_t rtcpport);
 extern int jrtp_session_destination_del(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, u_int16_t rtcpport);
 extern int jrtp_session_multicast_add(jrtp_session_t *jrtpsess, char *address, u_int16_t rtpport, char *local);
@@ -41,6 +43,7 @@ extern int jrtp_session_recvfrom(jrtp_session_t *);
 
 extern int jrtp_session_event_loop(void *);
   
+extern int jrtplib_api_test(void);
 
 #ifdef __cplusplus
 }
