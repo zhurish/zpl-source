@@ -181,18 +181,17 @@ DEFUN_HIDDEN (media_channel_enable_alsa,
 
 DEFUN (media_channel_osd,
 		media_channel_osd_cmd,
-		"media channel <0-1> (main|sub) (channel|datetime|bitrate|label|rect|other) osd (enable|disable)" ,
+		"media channel <0-1> (main|sub) osd (channel|datetime|bitrate|label|other) (enable|disable)" ,
 		MEDIA_CHANNEL_STR
 		"Channel Number Select\n"
 		"Main Configure\n"
 		"Submain Configure\n"
+		"OSD Configure\n"
 		"Channel Information\n"
 		"Datetime Information\n"
 		"Bitrate Information\n"
 		"Label Information\n"
-		"Rect Information\n"
 		"Other Information\n"
-		"OSD Of media\n"
 		"Enable\n"
 		"Disable\n")
 {
@@ -217,8 +216,6 @@ DEFUN (media_channel_osd,
 		osd_type = ZPL_MEDIA_OSD_BITRATE;
 	else if(strncmp(argv[2],"label", 4) == 0)
 		osd_type = ZPL_MEDIA_OSD_LABEL;
-	else if(strncmp(argv[2],"rect", 4) == 0)
-		osd_type = ZPL_MEDIA_OSD_RECT;
 	else if(strncmp(argv[2],"other", 4) == 0)
 		osd_type = ZPL_MEDIA_OSD_OTHER;
 
@@ -230,35 +227,267 @@ DEFUN (media_channel_osd,
 	}
 	if(strncmp(argv[3],"enable", 4) == 0)
 	{
-		if(zpl_media_channel_area_lookup(mchannel, area_type, osd_type))
+		if(zpl_media_channel_area_lookup(mchannel, area_type))
 		{
-			vty_out(vty, " media channel %d %s is already have osd of %s.%s", channel, argv[1], argv[2], VTY_NEWLINE);
-			return CMD_WARNING;
+			ret = zpl_media_channel_area_osd_active(mchannel, osd_type, 1);
+			return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 		}
-		marea = zpl_media_area_create(ZPL_MEDIA_AREA_OSD);
+		marea = zpl_media_channel_area_create(mchannel, ZPL_MEDIA_AREA_OSD);
 		if(marea == NULL)
 		{
 			vty_out(vty, " media channel %d %s create area of %s failed.%s", channel, argv[1], argv[2], VTY_NEWLINE);
 			return CMD_WARNING;
 		}
-		zpl_media_area_osd_default(marea, osd_type);
 		ret = zpl_media_channel_area_add(mchannel, marea);
+		if(ret == OK)
+			ret = zpl_media_channel_area_osd_active(mchannel, osd_type, 1);
 	}
 	if(strncmp(argv[3],"disable", 4) == 0)
 	{
-		marea = zpl_media_channel_area_lookup(mchannel, area_type, osd_type);
-		if(!marea)
+		marea = zpl_media_channel_area_lookup(mchannel, area_type);
+		if(marea)
 		{
-			vty_out(vty, " media channel %d %s is not exits osd of %s.%s", channel, argv[1], argv[2], VTY_NEWLINE);
-			return CMD_WARNING;
+			ret = zpl_media_channel_area_osd_active(mchannel, osd_type, 0);
+			if(ret == OK)
+				ret = zpl_media_channel_area_del(mchannel, area_type);
+			if(ret == OK)	
+				ret = zpl_media_channel_area_destroy(marea);
 		}
-		ret = zpl_media_channel_area_del(mchannel, area_type, osd_type);
-		zpl_media_area_destroy(marea);
+		else
+			ret = OK;
 	}
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+DEFUN (media_channel_alpha_osd,
+		media_channel_osd_alpha_cmd,
+		"media channel <0-1> (main|sub) osd (channel|datetime|bitrate|label|other) bgalpha <0-128> fgalpha <5-110>" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"OSD Configure\n"
+		"Channel Information\n"
+		"Datetime Information\n"
+		"Bitrate Information\n"
+		"Label Information\n"
+		"Other Information\n"
+		"Backgroud Alpha Config\n"
+		"Backgroud Alpha Value\n"
+		"Alpha Config\n"
+		"Alpha Value\n")
+{
+	int ret = ERROR, balpha = 0, falpha = 0;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	zpl_media_channel_t *mchannel = NULL;
+	zpl_media_area_t *marea = NULL;
+	ZPL_MEDIA_AREA_E area_type = ZPL_MEDIA_AREA_OSD;
+	ZPL_MEDIA_OSD_TYPE_E osd_type = ZPL_MEDIA_OSD_NONE;
+	channel = atoi(argv[0]);
+	if(strstr(argv[1],"main"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+	else if(strstr(argv[1],"sub"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
 
+	if(strncmp(argv[2],"channel", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_CHANNAL;
+	else if(strncmp(argv[2],"datetime", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_DATETIME;
+	else if(strncmp(argv[2],"bitrate", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_BITRATE;
+	else if(strncmp(argv[2],"label", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_LABEL;
+	else if(strncmp(argv[2],"other", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_OTHER;
+	balpha = atoi(argv[3]);
+	falpha = atoi(argv[4]);
+	mchannel = zpl_media_channel_lookup(channel,  channel_index);
+	if(mchannel == NULL)
+	{
+		vty_out(vty, " media channel %d %s is not exist.%s", channel, argv[1], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(zpl_media_channel_area_lookup(mchannel, area_type))
+	{
+		ret = zpl_media_channel_area_osd_alpha(mchannel, osd_type,  balpha, falpha);
+	}
+	else
+	{
+		marea = zpl_media_channel_area_create(mchannel, ZPL_MEDIA_AREA_OSD);
+		if(marea == NULL)
+		{
+			vty_out(vty, " media channel %d %s create area of %s failed.%s", channel, argv[1], argv[2], VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		ret = zpl_media_channel_area_add(mchannel, marea);
+		if(ret == OK)
+			ret = zpl_media_channel_area_osd_alpha(mchannel, osd_type,  balpha, falpha);
+		if(ret != OK)
+		{	
+			vty_out(vty, " media channel %d %s of area %s is not exist.%s", channel, argv[1], argv[2], VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (media_channel_keystr_osd,
+		media_channel_osd_keystr_cmd,
+		"media channel <0-1> (main|sub) osd (label|other) keystr .LINE" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"OSD Configure\n"
+		"Channel Information\n"
+		"Datetime Information\n"
+		"Bitrate Information\n"
+		"Label Information\n"
+		"Other Information\n"
+		"Point X\n"
+		"X Value\n"
+		"Point Y\n"
+		"Y Value\n")
+{
+	int ret = ERROR;
+	char *message;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	zpl_media_channel_t *mchannel = NULL;
+	zpl_media_area_t *marea = NULL;
+	ZPL_MEDIA_AREA_E area_type = ZPL_MEDIA_AREA_OSD;
+	ZPL_MEDIA_OSD_TYPE_E osd_type = ZPL_MEDIA_OSD_NONE;
+	channel = atoi(argv[0]);
+	if(strstr(argv[1],"main"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+	else if(strstr(argv[1],"sub"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+
+	if(strncmp(argv[2],"channel", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_CHANNAL;
+	else if(strncmp(argv[2],"datetime", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_DATETIME;
+	else if(strncmp(argv[2],"bitrate", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_BITRATE;
+	else if(strncmp(argv[2],"label", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_LABEL;
+	else if(strncmp(argv[2],"other", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_OTHER;
+
+	message = argv_concat(argv, argc, 3);
+
+	mchannel = zpl_media_channel_lookup(channel,  channel_index);
+	if(mchannel == NULL)
+	{
+		vty_out(vty, " media channel %d %s is not exist.%s", channel, argv[1], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(zpl_media_channel_area_lookup(mchannel, area_type))
+	{
+		ret = zpl_media_channel_areaosd_keystr(mchannel, osd_type, message);
+	}
+	else
+	{
+		marea = zpl_media_channel_area_create(mchannel, ZPL_MEDIA_AREA_OSD);
+		if(marea == NULL)
+		{
+			vty_out(vty, " media channel %d %s create area of %s failed.%s", channel, argv[1], argv[2], VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		ret = zpl_media_channel_area_add(mchannel, marea);
+		if(ret == OK)
+			ret = zpl_media_channel_areaosd_keystr(mchannel, osd_type, message);
+		if(ret != OK)
+		{	
+			vty_out(vty, " media channel %d %s of area %s is not exist.%s", channel, argv[1], argv[2], VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
+DEFUN (media_channel_point_osd,
+		media_channel_osd_point_cmd,
+		"media channel <0-1> (main|sub) osd (channel|datetime|bitrate|label|other) x <1-4096> y <1-4096>" ,
+		MEDIA_CHANNEL_STR
+		"Channel Number Select\n"
+		"Main Configure\n"
+		"Submain Configure\n"
+		"OSD Configure\n"
+		"Channel Information\n"
+		"Datetime Information\n"
+		"Bitrate Information\n"
+		"Label Information\n"
+		"Other Information\n"
+		"Point X\n"
+		"X Value\n"
+		"Point Y\n"
+		"Y Value\n")
+{
+	int ret = ERROR, x = 10, y = 10;
+	ZPL_MEDIA_CHANNEL_E channel = -1;
+	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+	zpl_media_channel_t *mchannel = NULL;
+	zpl_media_area_t *marea = NULL;
+	ZPL_MEDIA_AREA_E area_type = ZPL_MEDIA_AREA_OSD;
+	ZPL_MEDIA_OSD_TYPE_E osd_type = ZPL_MEDIA_OSD_NONE;
+	channel = atoi(argv[0]);
+	if(strstr(argv[1],"main"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_MAIN;
+	else if(strstr(argv[1],"sub"))
+		channel_index = ZPL_MEDIA_CHANNEL_TYPE_SUB;
+
+	if(strncmp(argv[2],"channel", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_CHANNAL;
+	else if(strncmp(argv[2],"datetime", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_DATETIME;
+	else if(strncmp(argv[2],"bitrate", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_BITRATE;
+	else if(strncmp(argv[2],"label", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_LABEL;
+	else if(strncmp(argv[2],"other", 4) == 0)
+		osd_type = ZPL_MEDIA_OSD_OTHER;
+	x = atoi(argv[3]);
+	y = atoi(argv[4]);
+
+	mchannel = zpl_media_channel_lookup(channel,  channel_index);
+	if(mchannel == NULL)
+	{
+		vty_out(vty, " media channel %d %s is not exist.%s", channel, argv[1], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if(zpl_media_channel_area_lookup(mchannel, area_type))
+	{
+		zpl_point_t m_point;
+		m_point.x = x;
+		m_point.y = y;
+		ret = zpl_media_channel_area_osd_point(mchannel, osd_type, m_point);
+	}
+	else
+	{
+		marea = zpl_media_channel_area_create(mchannel, ZPL_MEDIA_AREA_OSD);
+		if(marea == NULL)
+		{
+			vty_out(vty, " media channel %d %s create area of %s failed.%s", channel, argv[1], argv[2], VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		ret = zpl_media_channel_area_add(mchannel, marea);
+		if(ret == OK)
+		{
+			zpl_point_t m_point;
+			m_point.x = x;
+			m_point.y = y;
+			ret = zpl_media_channel_area_osd_point(mchannel, osd_type, m_point);
+		}
+		if(ret != OK)
+		{	
+			vty_out(vty, " media channel %d %s of area %s is not exist.%s", channel, argv[1], argv[2], VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
 
 DEFUN (media_channel_record,
@@ -689,6 +918,7 @@ static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 					my_session->address, my_session->rtp_port, my_session->local_address, VTY_NEWLINE);
 		}
 		#endif
+		zpl_media_channel_area_config(chn, vty);
 		return OK;
 	}
 	else
@@ -740,6 +970,9 @@ static void cmd_mediaservice_init(void)
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_multicast_disable_cmd);
 
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_keystr_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_alpha_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_osd_point_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_request_hdr_cmd);
 		
 	}

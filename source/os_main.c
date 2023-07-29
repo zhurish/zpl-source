@@ -97,6 +97,7 @@ extern int main_test1(int argc, char *argv[]);
 extern void pl_voip_init();
 extern int pjmain(int argc, char *argv[]);
 extern int jrtplib_api_test(void);
+extern int zpl_media_text_bitmap_text(void);
 /* Main startup routine. */
 int main(int argc, char **argv)
 {
@@ -141,6 +142,8 @@ int main(int argc, char **argv)
 
 	//zpl_media_channel_t * chan = zpl_media_channel_filecreate("/home/zhurish/workspace/working/zpl-source/source/multimedia/media/out.h264", 1);
 #endif
+	//zpl_media_text_bitmap_text();
+	//exit(0);
 	//zpl_media_sps_test();
 	//jrtplib_api_test();
 	//get_frame_h264_test();

@@ -10,11 +10,6 @@ extern "C" {
 
 typedef struct zpl_media_record_s
 {
-    #ifdef ZPL_MEDIA_QUEUE_DISTPATH
-    zpl_uint32          evid;
-    void                *event_queue;
-    zpl_skbqueue_t      *buffer_queue;
-    #endif
     zpl_media_file_t    *record_file;
     zpl_uint32          record_frame;
 }zpl_media_record_t;

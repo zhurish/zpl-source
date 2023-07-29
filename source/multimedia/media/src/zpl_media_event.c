@@ -212,7 +212,7 @@ static int media_event_task(void *p)
 	return OK;
 }
 
-#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+
 static int zpl_media_event_dispatch_handle(zpl_media_event_t *event)
 {
     zpl_media_channel_t *mchannel = event->event_data;
@@ -230,4 +230,3 @@ int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel)
                 zpl_media_event_dispatch_handle, mchannel);
     return OK;            
 }
-#endif

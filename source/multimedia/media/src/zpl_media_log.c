@@ -8,7 +8,6 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
-//zpl_uint32   _video_debug = 0xffffffff;
 
 zpl_uint32 __video_debug[ ZPL_MEDIA_HARDADAP_MAX];
 

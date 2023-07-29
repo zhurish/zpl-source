@@ -28,7 +28,6 @@ typedef enum  {
 
 typedef struct 
 {
-    zpl_int32               rng_id;        //ID
     zpl_void			   *area;		    //
     ZPL_HWRGN_TYPE_E        rgn_type;       //
     zpl_int32               rgn_handle;     //描述符
@@ -42,14 +41,12 @@ typedef struct
 
 
 extern int zpl_media_video_hwregion_destroy(zpl_media_video_hwregion_t *);
-extern zpl_media_video_hwregion_t * zpl_media_video_hwregion_create(zpl_int32 rng_id);
+extern zpl_media_video_hwregion_t * zpl_media_video_hwregion_create(zpl_media_area_t *area, zpl_rect_t m_rect);
 
-#ifdef ZPL_SHELL_MODULE
-extern int zpl_media_video_hwregion_show(void *pvoid);
-#endif
-
-extern int zpl_media_video_hwregion_active(zpl_media_video_hwregion_t *hwregion);
-extern int zpl_media_video_hwregion_inactive(zpl_media_video_hwregion_t *hwregion);
+extern int zpl_media_video_hwregion_attachtochannel(zpl_media_video_hwregion_t *, zpl_media_channel_t *chn, zpl_rect_t m_rect, zpl_bool attach);
+int zpl_media_video_hwregion_show(zpl_media_video_hwregion_t *, zpl_rect_t m_rect, zpl_bool show);
+int zpl_media_video_hwregion_set_bitmap(zpl_media_video_hwregion_t *, zpl_rect_t m_rect, zpl_media_bitmap_t *pstBitmap);
+int zpl_media_video_hwregion_update_canvas(zpl_media_video_hwregion_t *, zpl_rect_t m_rect);
 
 
 #ifdef __cplusplus

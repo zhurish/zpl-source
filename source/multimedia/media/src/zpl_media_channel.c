@@ -317,33 +317,27 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 		}
 		chn->t_master = tvideo_task.t_master;
 		zpl_media_channel_encode_default(chn);
-		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
-		chn->frame_queue = zpl_media_bufqueue_get(channel, channel_index);	
-		#else
+
 		chn->frame_queue = zpl_skbqueue_create(os_name_format("mediaBufQueue-%d/%d", channel, channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);	
-		#endif
+
 		if (chn->frame_queue == NULL)
 		{
 			zm_msg_error("can not create buffer for media channel(%d/%d)", channel, channel_index);
 			os_free(chn);
 			return ERROR;
 		}
-		#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+
 		zpl_skbqueue_attribute_set(chn->frame_queue, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
-		#endif
+
 		if(zpl_media_channel_lstnode_create(chn) != OK)
 		{
-			#ifndef ZPL_MEDIA_QUEUE_DISTPATH
 			zpl_skbqueue_destroy(chn->frame_queue);
-			#endif
 			os_free(chn);
 			return ERROR;
 		}
 		if(zpl_media_channel_hal_create(chn) != OK)
 		{
-			#ifndef ZPL_MEDIA_QUEUE_DISTPATH
 			zpl_skbqueue_destroy(chn->frame_queue);
-			#endif
 			os_free(chn);
 			return ERROR;
 		}
@@ -468,16 +462,11 @@ int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 		}
 		
         lstDelete(media_channel_list, (NODE *)chn);
-		#ifdef ZPL_MEDIA_QUEUE_DISTPATH
-        if (chn->frame_queue)
-            chn->frame_queue = NULL;
-		#else	
 		if(chn->frame_queue)	
 		{
 			zpl_skbqueue_destroy(chn->frame_queue);	
 			chn->frame_queue = NULL;
 		}
-		#endif
 		ZPL_MEDIA_CHANNEL_UNLOCK(chn);
         if (os_mutex_destroy(chn->_mutex) == OK)
 			chn->_mutex = NULL;
@@ -546,7 +535,10 @@ int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
 				}
 			}
 			if(ret == OK)
+			{
 				ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+				//zpl_media_channel_area_default(chn);
+			}
 			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
 			{
 				zm_msg_debug("start media channel(%d/%d)", channel, channel_index);
@@ -618,7 +610,10 @@ int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 			else
 				ret = OK;
 			if(ret == OK)
+			{
 				ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
+				//zpl_media_channel_area_destroy_all(chn);
+			}
 			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
 			{
 				zm_msg_debug("start media channel(%d/%d)", channel, channel_index);
@@ -685,76 +680,6 @@ int zpl_media_channel_reset(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
 		return ret;
 	}
 	return ERROR;
-}
-
-zpl_media_area_t * zpl_media_channel_area_lookup(zpl_media_channel_t *chn, ZPL_MEDIA_AREA_E type, ZPL_MEDIA_OSD_TYPE_E osd_type)
-{
-	if (media_channel_mutex)
-		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-	if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
-	{
-		int i = 0;
-		for(i = 0; i< ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
-		{
-			if(chn->media_param.video_media.m_areas[i] && chn->media_param.video_media.m_areas[i]->areatype == type &&
-				chn->media_param.video_media.m_areas[i]->osd_type == osd_type)
-			{
-				if (media_channel_mutex)
-					os_mutex_unlock(media_channel_mutex);
-				return chn->media_param.video_media.m_areas[i];
-			}
-		}
-	}	
-    if (media_channel_mutex)
-        os_mutex_unlock(media_channel_mutex);
-	return NULL;	
-}
-
-int zpl_media_channel_area_add(zpl_media_channel_t *chn, zpl_media_area_t *area)
-{
-	int ret = ERROR;
-	if (media_channel_mutex)
-		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-	if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
-	{
-		int i = 0;
-		for(i = 0; i< ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
-		{
-			if(chn->media_param.video_media.m_areas[i]  == NULL)
-			{
-				chn->media_param.video_media.m_areas[i] = area;
-				ret = zpl_media_area_active(chn->media_param.video_media.m_areas[i], zpl_true);
-				break;
-			}
-		}
-	}	
-    if (media_channel_mutex)
-        os_mutex_unlock(media_channel_mutex);
-	return ret;	
-}
-
-int zpl_media_channel_area_del(zpl_media_channel_t *chn, ZPL_MEDIA_AREA_E type, ZPL_MEDIA_OSD_TYPE_E osd_type)
-{
-	int ret = ERROR;
-	if (media_channel_mutex)
-		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-	if(chn && chn->media_type == ZPL_MEDIA_VIDEO)
-	{
-		int i = 0;
-		for(i = 0; i< ZPL_MEDIA_AREA_CHANNEL_MAX; i++)
-		{
-			if(chn->media_param.video_media.m_areas[i] && chn->media_param.video_media.m_areas[i]->areatype == type &&
-				chn->media_param.video_media.m_areas[i]->osd_type == osd_type)
-			{
-				ret = zpl_media_area_active(chn->media_param.video_media.m_areas[i], zpl_false);
-				chn->media_param.video_media.m_areas[i] = NULL;
-				break;
-			}
-		}
-	}	
-    if (media_channel_mutex)
-        os_mutex_unlock(media_channel_mutex);
-	return ret;	
 }
 
 static zpl_media_channel_t *zpl_media_channel_lookup_entry(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, 
@@ -1530,6 +1455,8 @@ int zpl_media_channel_extradata_show(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHAN
 		os_mutex_unlock(media_channel_mutex);
 	return OK;
 }
+
+
 
 int zpl_media_channel_show(void *pvoid)
 {

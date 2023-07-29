@@ -37,6 +37,7 @@ OSOBJ	+= zpl_media_rtp.o
 OSOBJ	+= zpl_media_video_encode.o
 OSOBJ	+= zpl_media_video_vpss.o
 OSOBJ	+= zpl_media_video_input.o
+OSOBJ	+= zpl_media_video_region.o
 #OSOBJ	+= zpl_media_video_dev.o
 #
 OSOBJ	+= nal-h264.o
@@ -44,8 +45,7 @@ OSOBJ	+= nal-hevc.o
 OSOBJ	+= nal-rbsp.o
 OSOBJ	+= rtp_h264.o
 OSOBJ	+= rtp_g7xx.o
-#OSOBJ	+= h263_packetizer.o
-#OSOBJ	+= h264_packetizer.o
+
 #ifeq ($(strip $(ZPL_HISIMPP_MODULE)),true)
 OSOBJ	+= zpl_vidhal_mipi.o
 OSOBJ	+= zpl_vidhal_sensor.o

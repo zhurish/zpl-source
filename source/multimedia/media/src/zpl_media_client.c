@@ -97,18 +97,14 @@ int zpl_media_client_foreach(zpl_skbuffer_t *bufdata, void *p)
 
 	if(client)
 	{
-        //zm_msg_debug("======== zpl_media_client_foreach");
 		for(i = 0; i < ZPL_MEDIA_CLIENT_MAX; i++)
 		{
 			if(client[i].enable == zpl_true && client[i].is_use == zpl_true && client[i]._pmedia_buffer_handler != NULL)
 			{
-                //zm_msg_debug("======== zpl_media_client_foreach _pmedia_buffer_handler");
                 client[i]._pmedia_buffer_handler(media_channel,  bufdata, client[i].pVoidUser);
 			}
 		}
 	}
-    //else
-        //zm_msg_debug("========zpl_media_client_foreach NULL");
 	return OK;
 }
 

@@ -36,8 +36,6 @@ extern "C" {
 
 #define ZPL_VIDEO_VPSSGRP_ENABLE
 
-//#define ZPL_MEDIA_QUEUE_DISTPATH /* 使用独立的线程进行媒体数据分发调度 */
-
 #define ZPL_MEDIA_BUF_ALIGN(n)	(((n)+3)/4)*4
 
 #define ZPL_MEDIA_CHANNEL_SET(c,i,t)	    ((c) << 8)|((i)<<4)|(t)

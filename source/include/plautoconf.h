@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * ZPLSource version: 
  */
-#define MAKECONF_TIMESTAMP "2023-07-22 22:23:43 CST"
+#define MAKECONF_TIMESTAMP "2023-07-29 15:19:16 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 

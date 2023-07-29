@@ -34,7 +34,7 @@ static rtsp_server_t rtsp_server;
 
 struct module_list module_list_rtsp = {
 		.module = MODULE_RTSP,
-		.name = "ZPLRTSP\0",
+		.name = "RTSP\0",
 		.module_init = rtsp_module_init,
 		.module_exit = rtsp_module_exit,
 		.module_task_init = rtsp_module_task_init,

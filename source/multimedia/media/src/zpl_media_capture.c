@@ -236,7 +236,8 @@ int zpl_media_channel_capture_imagedata_add(ZPL_MEDIA_CHANNEL_E channel, ZPL_MED
 {
     zpl_media_channel_t *mediachn = zpl_media_channel_lookup(channel, channel_index);
     if(mediachn == NULL)
-        return ERROR;    
+        return ERROR;   
+    ZPL_MEDIA_CHANNEL_LOCK(mediachn);     
     if(mediachn && mediachn->p_capture.param && mediachn->p_capture.enable)
     {
         zpl_media_capture_t *capture = mediachn->p_capture.param;

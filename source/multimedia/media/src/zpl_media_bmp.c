@@ -451,7 +451,7 @@ UGL_BMP_ID   *uglBitMapCreate(const char *filename, unsigned int bmpWidth, unsig
         return NULL;
     APP_BITMAPINFO bmpHeader;
     bitMapH->bmpWidth   = bmpWidth;
-    bitMapH->bmpHeight  = bmpHeight;
+    bitMapH->bmpHeight  = -bmpHeight;//（绝对值是位图高度），负值表示正向图，正值表示上下镜像后的图
     bitMapH->bmpOffBits = 0;         //
     bitMapH->bmpSize    = 0;
     bitMapH->bmpBitCount= bmpBitCount;        //

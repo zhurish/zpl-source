@@ -26,7 +26,7 @@ int zpl_media_task_create( ZPL_MEDIA_GLOBAL_E module, zpl_media_task_t *t_task)
 	if(t_task->t_taskid == 0)
     {
 		t_task->t_master = thread_master_module_create(MODULE_MEDIA);
-		t_task->t_taskid = os_task_create("mediaProcessTask", OS_TASK_DEFAULT_PRIORITY,
+		t_task->t_taskid = os_task_create("mediaProcess", OS_TASK_DEFAULT_PRIORITY,
 								 0, media_main_task, t_task, OS_TASK_DEFAULT_STACK);
     }
 	

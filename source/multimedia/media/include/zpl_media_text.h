@@ -14,13 +14,10 @@ extern "C" {
 
 
 //#define ZPL_FREETYPE_MODULE
-#ifdef ZPL_FREETYPE_MODULE
-#include <ft2build.h>
-#include <freetype/freetype.h>
-#endif
 
 
-#define ZPL_FREETYPE_PATH       "/usr/share/fonts/gnu-free/FreeSans.ttf"
+
+#define ZPL_FREETYPE_PATH       "/nfsroot/DejaVuSans.ttf"
 
 #define BITMAP_ARGB(a,r,g,b)     (((a)<<24)|((r)<<16)|((g)<<8)|(b))
 
@@ -68,7 +65,7 @@ typedef struct
     zpl_uint8      m_fontheight;    //字体大小
     zpl_uint8      m_fontsplit;     //字体间隔
     zpl_uint8      m_fontline;      //字体行间距
-    zpl_uint32     m_fontcolor;     //字体颜色
+    zpl_uint32     m_fontcolor;     //字体颜色 0x0000 白， 0xffffff 黑
     zpl_uint32     m_bgcolor;       //字体颜色
     zpl_uint8      m_bold:1;
     zpl_uint8      m_res:7;
@@ -78,26 +75,20 @@ typedef struct
 
 typedef struct 
 {
-    zpl_bool        bshow;
     ZPL_FONT_SIZE_E f_fmt;
     zpl_media_fontmap_t   m_font;
-    zpl_media_bitmap_t    m_bitmap;       //位图信息
+    zpl_media_bitmap_t    *m_bitmap;       //位图信息
 }zpl_media_text_t;
 /***************************************************************/
 /***************************************************************/
-extern zpl_media_text_t * zpl_media_text_bitmap_create(zpl_char *filename);
-extern int zpl_media_text_bitmap_destroy(zpl_media_text_t *text);
+extern zpl_media_text_t * zpl_media_text_create(zpl_media_bitmap_t *bitmap, zpl_char *filename);
+extern int zpl_media_text_destroy(zpl_media_text_t *text);
 
-extern int zpl_media_text_bitmap_attr(zpl_media_text_t *text, zpl_uint32 bgcolor);
+extern int zpl_media_text_attr(zpl_media_text_t *text, zpl_uint32 pixel, zpl_uint32 color, zpl_uint32 bgcolor, zpl_uint8 fontsplit, zpl_uint8 fontline);
 
-extern int zpl_media_text_font_attr(zpl_media_text_t *text, zpl_uint8 fontsplit, zpl_uint8 fontline);
+extern int zpl_media_text_show(zpl_media_text_t *text, zpl_bool bold, zpl_uint32 color, const char *format,...);
 
-extern int zpl_media_text_bitmap_show(zpl_media_text_t *text, zpl_bool bshow, zpl_char *osdstring, zpl_uint32 pixel,
-                               zpl_uint32 color, zpl_bool bold);
 
-extern int zpl_media_text_bitmap_auto_size(zpl_media_text_t *text, zpl_char *osdstring, zpl_uint32 pixel, zpl_rect_t *m_rect);
-
-extern int zpl_media_text_bitmap_text(void);
 
 #ifdef __cplusplus
 }

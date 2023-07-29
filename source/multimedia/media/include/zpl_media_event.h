@@ -79,9 +79,9 @@ extern int zpl_media_event_dispatch(zpl_media_event_queue_t *queue);
 extern int zpl_media_event_scheduler(zpl_media_event_queue_t *queue);
 extern int zpl_media_event_distribute(zpl_media_event_queue_t *queue);
 
-#ifndef ZPL_MEDIA_QUEUE_DISTPATH
+
 extern int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel);
-#endif
+
 #define zpl_media_event_register(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
 #define zpl_media_event_register_once(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
 #define zpl_media_event_add(q,m,t,e,p) zpl_media_event_register_entry(q,m,t,e,p,ZPL_MEDIA_EVENT_FLAG_ONCE)
