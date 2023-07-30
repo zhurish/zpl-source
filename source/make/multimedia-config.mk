@@ -42,7 +42,6 @@ endif
 ifeq ($(strip $(ZPL_LIBRTMP_MODULE)),true)
 LIBRTMP_ROOT=$(MULTIMEDIA_DIR)/librtmp
 ZPLPRODS_LAST += $(ZPLBASE)/$(LIBRTMP_ROOT)
-#ZPLEX_DIR += $(ZPLBASE)/$(LIBRTMP_ROOT)
 ZPL_DEFINE += -DZPL_LIBRTMP_MODULE
 endif
 
@@ -137,7 +136,6 @@ endif #ZPL_LIBMEDIA_MODULE
 
 ifeq ($(strip $(ZPL_PJSIP_MODULE)),true)
 
-#ifeq ($(strip $(ZPL_FFMPEG_MODULE)),true)
 PJPROJ_ROOT=$(MULTIMEDIA_DIR)/pjproject
 ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjlib
 ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjlib-util
@@ -145,7 +143,6 @@ ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjmedia
 ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjnath
 ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjsip
 ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/third_party
-#ZPLPRODS += $(ZPLBASE)/$(PJPROJ_ROOT)/pjsip-apps
 ZPL_INCLUDE	+=   \
 	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjlib/include \
 	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjlib-util/include \
@@ -212,11 +209,8 @@ ZPLPRODS += $(ZPLBASE)/$(PJSIP_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)
 ZPL_DEFINE += -DZPL_PJSIP_MODULE
 ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)/apps
-#ZPLEX_INCLUDE += -I$(ZPL_INSTALL_ROOTFS_DIR)/include
-#ZPL_LDLIBS += -lpjbase -lpjlib-util -lpjsip 
 ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(PJSIP_ROOT)/pjsua2
-#ZPL_LDLIBS += -lpjsua2
 endif
 endif
 

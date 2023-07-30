@@ -804,6 +804,18 @@ DEFUN (show_video_inputchn_info,
 }
 
 
+DEFUN (show_media_rtpsess_info,
+		show_media_rtpsess_info_cmd,
+		"show media channel rtp-session info" ,
+		SHOW_STR
+		MEDIA_CHANNEL_STR
+		"Rtp Session Configure\n"
+		"Information\n")
+{
+	int ret = ERROR;
+	ret = zpl_mediartp_session_show(vty);
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
 
 
 DEFUN (mediaservice_template,
@@ -991,6 +1003,9 @@ void cmd_video_init(void)
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_brief_cmd);
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_brief_cmd);
+
+	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_media_rtpsess_info_cmd);
+	
 }
 
 #endif

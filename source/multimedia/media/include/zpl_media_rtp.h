@@ -33,6 +33,7 @@ struct zpl_mediartp_session_s
     uint32_t        keyval;
     int             channel;
     int             level;
+    char            *filename;
 #ifdef ZPL_JRTPLIB_MODULE
     jrtp_session_t     *_session;
 #endif
@@ -47,15 +48,15 @@ struct zpl_mediartp_session_s
     int32_t     rtp_interleaved;
     int32_t     rtcp_interleaved;   // rtsp setup response only
     
-    int32_t         _call_index;       //媒体回调索引, 音视频通道数据发送
     void            *media_chn;         //媒体数据结构
     uint16_t        packetization_mode; //封包解包模式
     uint32_t        user_timestamp;     //用户时间戳
     uint32_t        timestamp_interval; //用户时间戳间隔
-
-    void            *rtp_media_queue;      //媒体接收队列
+    os_mutex_t      *_mutex;
 };
 
+#define ZPL_MEDIARTP_CHANNEL_LOCK(m)  if(((zpl_mediartp_session_t*)m) && ((zpl_mediartp_session_t*)m)->_mutex) os_mutex_lock(((zpl_mediartp_session_t*)m)->_mutex, OS_WAIT_FOREVER)
+#define ZPL_MEDIARTP_CHANNEL_UNLOCK(m)  if(((zpl_mediartp_session_t*)m) && ((zpl_mediartp_session_t*)m)->_mutex) os_mutex_unlock(((zpl_mediartp_session_t*)m)->_mutex)
 
 typedef struct 
 {
@@ -66,15 +67,9 @@ typedef struct
     zpl_media_event_queue_t *evtqueue;
     #endif
     zpl_taskid_t taskid;
+    int     _debug;
 }zpl_mediartp_scheduler_t;
 
-typedef struct rtp_session_adap_s
-{
-    char                *name;
-    uint32_t            codec;
-    int (*_rtp_sendto)(void *, const uint8_t *, uint32_t, int user_ts);
-    int (*_rtp_recv)(void *, uint8_t *, int, uint32_t, int * );
-}zpl_mediartp_session_adap_t;
 
 
 
@@ -84,16 +79,17 @@ int zpl_mediartp_scheduler_start(void);
 int zpl_mediartp_scheduler_stop(void);
 
 
-zpl_mediartp_session_t * zpl_mediartp_session_create(int keyval, int channel, int level);
+zpl_mediartp_session_t * zpl_mediartp_session_create(int keyval, int channel, int level, char *filename);
 int zpl_mediartp_session_destroy(int keyval);
 
-int zpl_mediartp_session_rtp_sendto(zpl_mediartp_session_t *rtp_session);
+int zpl_mediartp_session_rtp_sendto(zpl_media_channel_t *chm, const void *data, size_t len,
+	                u_int8_t pt, bool mark, u_int32_t next_ts);
 
 int zpl_mediartp_session_suspend(int keyval);
 int zpl_mediartp_session_resume(int keyval);
 int zpl_mediartp_session_start(int keyval, zpl_bool start);
 
-zpl_mediartp_session_t *zpl_mediartp_session_lookup(int keyval, int channel, int level);
+zpl_mediartp_session_t *zpl_mediartp_session_lookup(int keyval, int channel, int level, char *filename);
 int zpl_mediartp_session_remoteport(int keyval, char *address, u_int16_t rtpport, u_int16_t rtcpport);
 int zpl_mediartp_session_get_localport(int keyval, char *address, u_int16_t *rtpport, u_int16_t *rtcpport);
 int zpl_mediartp_session_localport(int keyval, char *address, u_int16_t rtpport, u_int16_t rtcpport);
@@ -102,7 +98,7 @@ int zpl_mediartp_session_get_tcp_interleaved(int keyval, int *rtp, int *rtcp);
 int zpl_mediartp_session_get_trackid(int keyval, int *trackid);
 
 int zpl_mediartp_session_describe(int keyval, void *pUser, char *src, int *len);
-int zpl_mediartp_session_setup(int keyval, int channel, int level, void *pUser);
+int zpl_mediartp_session_setup(int keyval, int channel, int level, char *filename, void *pUser);
 
 int zpl_mediartp_session_add_dest(zpl_mediartp_session_t *my_session, char *address, u_int16_t rtpport, u_int16_t rtcpport);
 int zpl_mediartp_session_del_dest(zpl_mediartp_session_t *my_session, char *address, u_int16_t rtpport, u_int16_t rtcpport);
@@ -112,6 +108,7 @@ int zpl_mediartp_session_rtpmap_h264(int keyval, char *src, uint32_t len);
 int zpl_media_channel_multicast_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index, zpl_bool enable, char *address, int rtp_port, char *localaddr);
 zpl_bool zpl_media_channel_multicast_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 
+int zpl_mediartp_session_show(struct vty *vty);
 
 #ifdef __cplusplus
 }

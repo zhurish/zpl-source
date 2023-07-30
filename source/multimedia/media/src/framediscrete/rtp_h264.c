@@ -86,10 +86,11 @@ static u_int8_t* find_sync_point_rev(u_int8_t *data,
 /*
  * Create H264 packetizer.
  */
-int rtp_h264_packetizer_create(h264_packetizer_cfg *cfg,
-                                h264_packetizer **p)
+#if 1
+static int rtp_h264_packetizer_create(h26x_packetizer_cfg *cfg,
+                                h26x_packetizer **p)
 {
-    h264_packetizer *p_;
+    h26x_packetizer *p_;
 
     //PJ_ASSERT_RETURN(pool && p, -1);
 
@@ -102,7 +103,7 @@ int rtp_h264_packetizer_create(h264_packetizer_cfg *cfg,
         return -1;
     }
 
-    p_ = malloc(sizeof(h264_packetizer));
+    p_ = malloc(sizeof(h26x_packetizer));
     if (cfg) {
         memcpy(&p_->cfg, cfg, sizeof(*cfg));
         if (p_->cfg.unpack_nal_start == 0)
@@ -117,14 +118,14 @@ int rtp_h264_packetizer_create(h264_packetizer_cfg *cfg,
 
     return 0;
 }
-
+#endif
 /*
  * Generate an RTP payload from H.264 frame bitstream, in-place processing.
  */
-int rtp_h264_packetize(h264_packetizer *pktz,
+static int rtp_h264_packetize(h26x_packetizer *pktz,
                        u_int8_t *buf,
                        int buf_len,
-                       unsigned *pos,
+                       unsigned int *pos,
                        const u_int8_t **payload,
                        int *payload_len)
 {
@@ -229,7 +230,7 @@ int rtp_h264_packetize(h264_packetizer *pktz,
             *payload_len = pktz->cfg.mtu;
         else
             *payload_len = nal_end - nal_start + HEADER_SIZE_FU_A;
-        *pos = (unsigned)(*payload + *payload_len - buf);
+        *pos = (unsigned int)(*payload + *payload_len - buf);
 
 #if DBG_PACKETIZE
         zlog_debug(MODULE_MEDIA, "h264pack", "Packetized fragmented H264 NAL unit "
@@ -247,7 +248,7 @@ int rtp_h264_packetize(h264_packetizer *pktz,
         (nal_end - nal_start + HEADER_SIZE_STAP_A) < pktz->cfg.mtu)
     {
         int total_size;
-        unsigned nal_cnt = 1;
+        unsigned int nal_cnt = 1;
         u_int8_t *nal[MAX_NALS_IN_AGGR];
         int nal_size[MAX_NALS_IN_AGGR];
         u_int8_t NRI;
@@ -307,7 +308,7 @@ int rtp_h264_packetize(h264_packetizer *pktz,
         /* Only use STAP-A when we found more than one NAL units */
         if (nal_cnt > 1)
         {
-            unsigned i;
+            unsigned int i;
 
             /* Init STAP-A NAL header (F+NRI+TYPE) */
             p = nal[0] - HEADER_SIZE_STAP_A;
@@ -331,7 +332,7 @@ int rtp_h264_packetize(h264_packetizer *pktz,
             *payload = nal[0] - HEADER_SIZE_STAP_A;
             assert(*payload >= buf + *pos);
             *payload_len = p - *payload;
-            *pos = (unsigned)(nal[nal_cnt - 1] + nal_size[nal_cnt - 1] - buf);
+            *pos = (unsigned int)(nal[nal_cnt - 1] + nal_size[nal_cnt - 1] - buf);
 
 #if DBG_PACKETIZE
             PJ_LOG(3, ("h264pack", "Packetized aggregation of "
@@ -346,7 +347,7 @@ int rtp_h264_packetize(h264_packetizer *pktz,
     /* Single NAL unit packet */
     *payload = nal_start;
     *payload_len = nal_end - nal_start;
-    *pos = (unsigned)(nal_end - buf);
+    *pos = (unsigned int)(nal_end - buf);
 
 #if DBG_PACKETIZE
     PJ_LOG(3, ("h264pack", "Packetized single H264 NAL unit "
@@ -364,12 +365,12 @@ int rtp_h264_packetize(h264_packetizer *pktz,
  * fragmentation format (FU-A/B), so we will only manage the "prev_lost"
  * state for the FU-A/B packets.
  */
-int rtp_h264_unpacketize(h264_packetizer *pktz,
+static int rtp_h264_unpacketize(h26x_packetizer *pktz,
                                              const u_int8_t *payload,
                                              int   payload_len,
                                              u_int8_t *bits,
                                              int   bits_len,
-                                             unsigned   *bits_pos)
+                                             unsigned int   *bits_pos)
 {
     const u_int8_t nal_start[4] = {0, 0, 0, 1};
     const u_int8_t *nal_start_code; 
@@ -425,7 +426,7 @@ int rtp_h264_unpacketize(h264_packetizer *pktz,
         p += payload_len;
 
         /* Update the bitstream writing offset */
-        *bits_pos = (unsigned)(p - bits);
+        *bits_pos = (unsigned int)(p - bits);
         pktz->unpack_last_sync_pos = *bits_pos;
 
 #if DBG_UNPACKETIZE
@@ -440,7 +441,7 @@ int rtp_h264_unpacketize(h264_packetizer *pktz,
         /* Aggregation packet */
         u_int8_t *p, *p_end;
         const u_int8_t *q, *q_end;
-        unsigned cnt = 0;
+        unsigned int cnt = 0;
 
         /* Validate bitstream length */
         if (bits_len - *bits_pos < payload_len + 32) {
@@ -476,7 +477,7 @@ int rtp_h264_unpacketize(h264_packetizer *pktz,
             ++cnt;
 
             /* Update the bitstream writing offset */
-            *bits_pos = (unsigned)(p - bits);
+            *bits_pos = (unsigned int)(p - bits);
             pktz->unpack_last_sync_pos = *bits_pos;
         }
 
@@ -535,7 +536,7 @@ int rtp_h264_unpacketize(h264_packetizer *pktz,
         p += (payload_len - 2);
 
         /* Update the bitstream writing offset */
-        *bits_pos = (unsigned)(p - bits);
+        *bits_pos = (unsigned int)(p - bits);
         if (E) {
             /* Update the sync pos only if the end bit flag is set */
             pktz->unpack_last_sync_pos = *bits_pos;
@@ -562,17 +563,18 @@ int rtp_h264_unpacketize(h264_packetizer *pktz,
 /*
  * Create H263 packetizer.
  */
-int rtp_h263_packetizer_create(const h264_packetizer_cfg *cfg,
-                                h264_packetizer **p)
+#if 0
+static int rtp_h263_packetizer_create(const h26x_packetizer_cfg *cfg,
+                                h26x_packetizer **p)
 {
-    h264_packetizer *p_;
+    h26x_packetizer *p_;
 
     //PJ_ASSERT_RETURN(pool && p, -1);
 
     if (cfg && cfg->mode != H263_PACKETIZER_MODE_RFC4629)
         return -1;
 
-    p_ = malloc(sizeof(h264_packetizer));
+    p_ = malloc(sizeof(h26x_packetizer));
     if (cfg) {
         memcpy(&p_->cfg, cfg, sizeof(*cfg));
     } else {
@@ -584,15 +586,15 @@ int rtp_h263_packetizer_create(const h264_packetizer_cfg *cfg,
 
     return 0;
 }
-
+#endif
 
 /*
  * Generate an RTP payload from H.263 frame bitstream, in-place processing.
  */
-int rtp_h263_packetize(h264_packetizer *pktz,
+static int rtp_h263_packetize(h26x_packetizer *pktz,
                                            u_int8_t *bits,
                                            int bits_len,
-                                           unsigned *pos,
+                                           unsigned int *pos,
                                            const u_int8_t **payload,
                                            int *payload_len)
 {
@@ -634,7 +636,7 @@ int rtp_h263_packetize(h264_packetizer *pktz,
 
     *payload = p;
     *payload_len = end-p;
-    *pos = (unsigned)(end - bits);
+    *pos = (unsigned int)(end - bits);
 
     return 0;
 }
@@ -643,12 +645,12 @@ int rtp_h263_packetize(h264_packetizer *pktz,
 /*
  * Append an RTP payload to a H.263 picture bitstream.
  */
-int rtp_h263_unpacketize (h264_packetizer *pktz,
+static int rtp_h263_unpacketize (h26x_packetizer *pktz,
                                               const u_int8_t *payload,
                                               int payload_len,
                                               u_int8_t *bits,
                                               int bits_size,
-                                              unsigned *pos)
+                                              unsigned int *pos)
 {
     u_int8_t P, V, PLEN;
     const u_int8_t *p = payload;
@@ -752,7 +754,7 @@ int rtp_h263_unpacketize (h264_packetizer *pktz,
 
     /* Write two zero octets when payload flagged with sync point */
     if (P) {
-        pktz->unpack_last_sync_pos = (unsigned)(q - bits);
+        pktz->unpack_last_sync_pos = (unsigned int)(q - bits);
         *q++ = 0;
         *q++ = 0;
     }
@@ -762,7 +764,7 @@ int rtp_h263_unpacketize (h264_packetizer *pktz,
     q += payload_len;
 
     /* Update the bitstream writing offset */
-    *pos = (unsigned)(q - bits);
+    *pos = (unsigned int)(q - bits);
 
     pktz->unpack_prev_lost = 0;
 
@@ -770,13 +772,57 @@ int rtp_h263_unpacketize (h264_packetizer *pktz,
 }
 
 
+int rtp_h26x_packetizer_init(int codec, int mtu, int mode, int startbit,
+                                    h26x_packetizer *p_pktz)
+{
+    memset(p_pktz, 0, sizeof(h26x_packetizer));
+    p_pktz->cfg.codec = codec;
+    p_pktz->cfg.mtu = mtu;
+    p_pktz->cfg.mode = mode;
+    p_pktz->cfg.unpack_nal_start = startbit;
+    return OK;
+}   
+
+int rtp_h26x_packetize(h26x_packetizer *pktz,
+                                            u_int8_t *bits,
+                                            int bits_len,
+                                            unsigned int *bits_pos,
+                                            const u_int8_t **payload,
+                                            int *payload_len)
+{
+    if(pktz->cfg.codec == RTP_MEDIA_PAYLOAD_H263)
+    {
+        return rtp_h263_packetize(pktz, bits, bits_len, bits_pos, payload, payload_len);
+    }
+    else if(pktz->cfg.codec == RTP_MEDIA_PAYLOAD_H264)
+    {
+        return rtp_h264_packetize(pktz, bits, bits_len, bits_pos, payload, payload_len);
+    }
+    return ERROR;
+}                                            
+int rtp_h26x_unpacketize (h26x_packetizer *pktz,
+                                              const u_int8_t *payload,
+                                              int payload_len,
+                                              u_int8_t *bits,
+                                              int bits_size,
+                                              unsigned int *pos)
+{
+    if(pktz->cfg.codec == RTP_MEDIA_PAYLOAD_H263)
+    {
+        return rtp_h263_unpacketize(pktz, payload, payload_len, bits, bits_size, pos);
+    }
+    else if(pktz->cfg.codec == RTP_MEDIA_PAYLOAD_H264)
+    {
+        return rtp_h263_unpacketize(pktz, payload, payload_len, bits, bits_size, pos);
+    }
+    return ERROR;
+}
 
 
 
+static h26x_packetizer *my_h264_pktz = NULL;
 
-static h264_packetizer *my_h264_pktz = NULL;
-
-static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts)
+static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer, u_int32_t len)
 {
     u_int8_t *payload = NULL;
     u_int32_t payload_len = 0;
@@ -784,34 +830,36 @@ static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer,
     int ret = 0;
     if(my_h264_pktz == NULL)
     {
-        h264_packetizer_cfg cfg;
-        memset(&cfg, 0, sizeof(h264_packetizer_cfg));
+        h26x_packetizer_cfg cfg;
+        memset(&cfg, 0, sizeof(h26x_packetizer_cfg));
         cfg.mode = H264_PACKETIZER_MODE_NON_INTERLEAVED;
         cfg.unpack_nal_start = 4;
         cfg.mtu = MAX_RTP_PAYLOAD_LENGTH;
         rtp_h264_packetizer_create(&cfg, &my_h264_pktz);
+        rtp_h26x_packetizer_init(RTP_MEDIA_PAYLOAD_H264, MAX_RTP_PAYLOAD_LENGTH,
+                                                 H264_PACKETIZER_MODE_NON_INTERLEAVED, 4, my_h264_pktz);
     }
-    my_h264_pktz->enc_frame_whole = buffer;
-    my_h264_pktz->enc_frame_size = len;
-    my_h264_pktz->enc_processed = 0;
+    my_h264_pktz->frame_data = buffer;
+    my_h264_pktz->frame_size = len;
+    my_h264_pktz->frame_pos = 0;
     if(my_h264_pktz)
     {
         while(has_more)
         {
-            ret = rtp_h264_packetize(my_h264_pktz,my_h264_pktz->enc_frame_whole,
-                                        my_h264_pktz->enc_frame_size,
-                                        &my_h264_pktz->enc_processed,
+            ret = rtp_h26x_packetize(my_h264_pktz,my_h264_pktz->frame_data,
+                                        my_h264_pktz->frame_size,
+                                        &my_h264_pktz->frame_pos,
                                         &payload, &payload_len);
             if(ret != 0)
                 return -1;                      
-            has_more = (my_h264_pktz->enc_processed < my_h264_pktz->enc_frame_size);
+            has_more = (my_h264_pktz->frame_pos < my_h264_pktz->frame_size);
 #ifdef ZPL_JRTPLIB_MODULE 
             if(payload)
             {
                 if(len < MAX_RTP_PAYLOAD_LENGTH)
-                    ret = jrtp_session_sendto(session, payload, payload_len, 255, 1, user_ts);
+                    ret = zpl_mediartp_session_rtp_sendto(session, payload, payload_len, 255, 1, 1);
                 else
-                    ret = jrtp_session_sendto(session, payload, payload_len, 255, has_more?0:1, has_more?0:user_ts);
+                    ret = zpl_mediartp_session_rtp_sendto(session, payload, payload_len, 255, has_more?0:1, has_more?0:1);
             }
 #endif                                     
         }
@@ -819,8 +867,53 @@ static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer,
     return ret;
 }
 
-int rtp_payload_send_h264(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts)
+int rtp_payload_send_h264(void *session, const u_int8_t *buffer, u_int32_t len)
 {
-    return rtp_payload_send_h264_oneframe(session, buffer, len,  user_ts);
+    return rtp_payload_send_h264_oneframe(session, buffer, len);
 }
 
+#if 0
+int zpl_mediartp_session_adap_rtp_packet(zpl_media_channel_t *chm, uint32_t codec, const uint8_t *buffer, uint32_t len, int user_ts)
+//static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts)
+{
+    u_int8_t *payload = NULL;
+    u_int32_t payload_len = 0;
+    int has_more = 1;
+    int ret = 0;
+    if(my_h264_pktz == NULL)
+    {
+        h26x_packetizer_cfg cfg;
+        memset(&cfg, 0, sizeof(h26x_packetizer_cfg));
+        cfg.mode = H264_PACKETIZER_MODE_NON_INTERLEAVED;
+        cfg.unpack_nal_start = 4;
+        cfg.mtu = MAX_RTP_PAYLOAD_LENGTH;
+        rtp_h264_packetizer_create(&cfg, &my_h264_pktz);
+    }
+    my_h264_pktz->frame_data = buffer;
+    my_h264_pktz->frame_size = len;
+    my_h264_pktz->frame_pos = 0;
+    if(my_h264_pktz)
+    {
+        while(has_more)
+        {
+            ret = rtp_h264_packetize(my_h264_pktz,my_h264_pktz->frame_data,
+                                        my_h264_pktz->frame_size,
+                                        &my_h264_pktz->frame_pos,
+                                        &payload, &payload_len);
+            if(ret != 0)
+                return -1;                      
+            has_more = (my_h264_pktz->frame_pos < my_h264_pktz->frame_size);
+#ifdef ZPL_JRTPLIB_MODULE 
+            if(payload)
+            {
+                if(len < MAX_RTP_PAYLOAD_LENGTH)
+                    ret = zpl_mediartp_session_rtp_sendto(chm, payload, payload_len, 255, 1, user_ts);
+                else
+                    ret = zpl_mediartp_session_rtp_sendto(chm, payload, payload_len, 255, has_more?0:1, has_more?0:user_ts);
+            }
+#endif                                     
+        }
+    }
+    return ret;
+}
+#endif

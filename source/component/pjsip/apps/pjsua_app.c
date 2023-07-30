@@ -1410,7 +1410,7 @@ static int stdout_refresh_proc(void *arg)
 {
     PJ_UNUSED_ARG(arg);
     sleep(10);
-    pjapp_ms_test();
+    //pjapp_ms_test();
     /* Set thread to lowest priority so that it doesn't clobber
      * stdout output
      */

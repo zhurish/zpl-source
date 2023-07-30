@@ -72,11 +72,11 @@ int zpl_media_event_destroy(zpl_media_event_queue_t *queue)
 	return OK;
 }
 
-int zpl_media_event_start(zpl_media_event_queue_t *queue)
+int zpl_media_event_start(zpl_media_event_queue_t *queue, int pri, int stacksize)
 {
     if(queue && queue->taskid == 0)
-        queue->taskid = os_task_create(queue->name, OS_TASK_DEFAULT_PRIORITY,
-	               0, media_event_task, queue, OS_TASK_DEFAULT_STACK);
+        queue->taskid = os_task_create(queue->name, pri?pri:OS_TASK_DEFAULT_PRIORITY,
+	               0, media_event_task, queue, stacksize?stacksize:OS_TASK_DEFAULT_STACK);
     return OK;               
 }
 

@@ -311,6 +311,7 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
         }
         else
         {
+            //transparams.SetRTPSendBuffer();
             transparams.SetPortbase(jrtpsess->local_rtpport);
             printf("====================jrtp_session_create=======================local ip=%s rtpport=%d \r\n", 
                 strlen(jrtpsess->local_address)?jrtpsess->local_address:"null",jrtpsess->local_rtpport);
@@ -333,6 +334,7 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
         jrtpsess->jrtp_sess->SetDefaultPayloadType(jrtpsess->payload);
         jrtpsess->jrtp_sess->SetDefaultMark(false);
         jrtpsess->jrtp_sess->SetMaximumPacketSize(JRTP_PACKET_SIZE_MAX);
+        
         if(jrtpsess->clock && jrtpsess->framerate)
         {    
             jrtpsess->jrtp_sess->SetDefaultTimestampIncrement(jrtpsess->clock/jrtpsess->framerate); 

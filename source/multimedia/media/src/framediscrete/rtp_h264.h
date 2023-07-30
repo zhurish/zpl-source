@@ -67,14 +67,15 @@ typedef enum
      */
     H263_PACKETIZER_MODE_RFC2190,
 
-} h264_packetizer_mode;
+} h26x_packetizer_mode;
 
 
 /**
  * H.264 packetizer setting.
  */
-typedef struct h264_packetizer_cfg
+typedef struct h26x_packetizer_cfg
 {
+    int codec;
     /**
      * Maximum payload length.
      * Default: PJMEDIA_MAX_MTU
@@ -85,29 +86,29 @@ typedef struct h264_packetizer_cfg
      * Packetization mode.
      * Default: PJMEDIA_H264_PACKETIZER_MODE_NON_INTERLEAVED
      */
-    h264_packetizer_mode mode;
+    h26x_packetizer_mode mode;
 
     /**
      * NAL start code size used for unpacketizing.
      * Valid options are 3 (0, 0, 1) or 4 (0, 0, 0, 1).
      * Default: 3 (0, 0, 1)
      */
-    unsigned unpack_nal_start;
-}h264_packetizer_cfg;
+    unsigned int unpack_nal_start;
+}h26x_packetizer_cfg;
 
 /* H.264 packetizer definition */
-typedef struct h264_packetizer
+typedef struct h26x_packetizer
 {
     /* Current settings */
-    h264_packetizer_cfg cfg;
+    h26x_packetizer_cfg cfg;
     
     /* Unpacketizer state */
-    unsigned        unpack_last_sync_pos;
+    unsigned int    unpack_last_sync_pos;
     int             unpack_prev_lost;
-    u_int8_t        *enc_frame_whole;
-    unsigned        enc_frame_size;
-    unsigned        enc_processed;    
-}h264_packetizer;
+    u_int8_t        *frame_data;
+    unsigned int    frame_size;
+    unsigned int    frame_pos;    
+}h26x_packetizer;
 
 
 /**
@@ -119,11 +120,11 @@ typedef struct h264_packetizer
  * @param p_pktz        Pointer to receive the packetizer.
  *
  * @return              PJ_SUCCESS on success.
+
+int rtp_h264_packetizer_create(h26x_packetizer_cfg *cfg,
+                                    h26x_packetizer **p_pktz);
+
  */
-int rtp_h264_packetizer_create(h264_packetizer_cfg *cfg,
-                                    h264_packetizer **p_pktz);
-
-
 /**
  * Generate an RTP payload from a H.264 picture bitstream. Note that this
  * function will apply in-place processing, so the bitstream may be modified
@@ -137,15 +138,15 @@ int rtp_h264_packetizer_create(h264_packetizer_cfg *cfg,
  * @param payload_len   The output payload length.
  *
  * @return              PJ_SUCCESS on success.
- */
-int rtp_h264_packetize(h264_packetizer *pktz,
+
+int rtp_h264_packetize(h26x_packetizer *pktz,
                                             u_int8_t *bits,
                                             int bits_len,
-                                            unsigned *bits_pos,
+                                            unsigned int *bits_pos,
                                             const u_int8_t **payload,
                                             int *payload_len);
 
-
+ */
 /**
  * Append an RTP payload to an H.264 picture bitstream. Note that in case of
  * noticing packet lost, application should keep calling this function with
@@ -163,16 +164,16 @@ int rtp_h264_packetize(h264_packetizer *pktz,
  *                      payload.
  *
  * @return              PJ_SUCCESS on success.
- */
-int rtp_h264_unpacketize(h264_packetizer *pktz,
+
+int rtp_h264_unpacketize(h26x_packetizer *pktz,
                                               const u_int8_t *payload,
                                               int   payload_len,
                                               u_int8_t *bits,
                                               int   bits_len,
-                                              unsigned   *bits_pos);
+                                              unsigned int   *bits_pos);
 
 
-
+ */
 /**
  * Create H.263 packetizer.
  *
@@ -182,11 +183,11 @@ int rtp_h264_unpacketize(h264_packetizer *pktz,
  * @param p_pktz        Pointer to receive the packetizer.
  *
  * @return              PJ_SUCCESS on success.
+
+int rtp_h263_packetizer_create(const h26x_packetizer_cfg *cfg,
+                                    h26x_packetizer **p_pktz);
+
  */
-int rtp_h263_packetizer_create(const h264_packetizer_cfg *cfg,
-                                    h264_packetizer **p_pktz);
-
-
 /**
  * Generate an RTP payload from a H.263 picture bitstream. Note that this
  * function will apply in-place processing, so the bitstream may be modified
@@ -200,15 +201,15 @@ int rtp_h263_packetizer_create(const h264_packetizer_cfg *cfg,
  * @param payload_len   The output payload length.
  *
  * @return              PJ_SUCCESS on success.
- */
-int rtp_h263_packetize(h264_packetizer *pktz,
+
+int rtp_h263_packetize(h26x_packetizer *pktz,
                                             u_int8_t *bits,
                                             int bits_len,
-                                            unsigned *bits_pos,
+                                            unsigned int *bits_pos,
                                             const u_int8_t **payload,
                                             int *payload_len);
 
-
+ */
 /**
  * Append an RTP payload to an H.263 picture bitstream. Note that in case of
  * noticing packet lost, application should keep calling this function with
@@ -226,17 +227,33 @@ int rtp_h263_packetize(h264_packetizer *pktz,
  *                      payload.
  *
  * @return              PJ_SUCCESS on success.
- */
-int rtp_h263_unpacketize(h264_packetizer *pktz,
+
+int rtp_h263_unpacketize(h26x_packetizer *pktz,
                                               const u_int8_t *payload,
                                               int payload_len,
                                               u_int8_t *bits,
                                               int bits_size,
-                                              unsigned *bits_pos);
+                                              unsigned int *bits_pos);
+ */
+
+int rtp_h26x_packetizer_init(int codec, int mtu, int mode, int startbit,
+                                    h26x_packetizer *p_pktz);
+int rtp_h26x_packetize(h26x_packetizer *pktz,
+                                            u_int8_t *bits,
+                                            int bits_len,
+                                            unsigned int *bits_pos,
+                                            const u_int8_t **payload,
+                                            int *payload_len);                                          
+int rtp_h26x_unpacketize (h26x_packetizer *pktz,
+                                              const u_int8_t *payload,
+                                              int payload_len,
+                                              u_int8_t *bits,
+                                              int bits_size,
+                                              unsigned int *pos);
 /*
  * 发送一帧数据
  */
-int rtp_payload_send_h264(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts);
+int rtp_payload_send_h264(void *session, const u_int8_t *buffer, u_int32_t len);
 
 
 #ifdef __cplusplus

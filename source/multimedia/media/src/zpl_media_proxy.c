@@ -620,8 +620,8 @@ int zpl_media_proxy_task_init(void)
 {
     if(proxy_server.initalition && proxy_server.t_master)
     {
-		proxy_server.t_taskid = os_task_create("mediaProxyTask", OS_TASK_DEFAULT_PRIORITY,
-								 0, mediaProxyTask, NULL, OS_TASK_DEFAULT_STACK*8);
+		proxy_server.t_taskid = os_task_create("mediaProxyTask", 40,
+								 0, mediaProxyTask, NULL, OS_TASK_DEFAULT_STACK*2);
         return OK;
     }
     return OK;

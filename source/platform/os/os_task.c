@@ -591,7 +591,7 @@ int os_task_priority_set(zpl_taskid_t taskId, zpl_int32 Priority)
 			else
 				policy = SCHED_FIFO;
 
-			osapiTask->td_priority = policy;
+			osapiTask->td_priority = Priority;
 		}
 		//osapiTask->td_priority = Priority;
 		//osapiTask->td_old_priority = policy;
@@ -1130,13 +1130,18 @@ static int os_task_attribute_create(os_task_t *task, zpl_bool bcreate)
 static void *os_task_entry_running(void *pVoid)
 {
 	os_task_t *task = (os_task_t *)pVoid;
+    struct sched_param param;
+    int policy;	
 	usleep(100000);
 #ifdef OS_TASK_DEBUG_LOG
 	os_log(OS_TACK_TMP_LOG, "os task create task:%s(%u->LWP=%u)\r\n", task->td_name, task->td_thread,
 			(pid_t) syscall(SYS_gettid));
 #endif
-	printf("\r\ncreate task:%s(%lu->LWP=%u)\r\n", task->td_name, task->td_thread,
-			(pid_t) syscall(SYS_gettid));
+    pthread_getschedparam(task->td_thread, &policy, &param);
+
+	printf("\r\ncreate task:%s(%lu->LWP=%u %d-%d[%d,%d])\r\n", task->td_name, task->td_thread,
+			(pid_t) syscall(SYS_gettid), policy, param.sched_priority, 
+			sched_get_priority_min(policy), sched_get_priority_max(policy));
 	os_task_sigmaskall();
 	OS_TASK_ENTRY_LOCK(task);
 	task->td_tid = os_task_gettid();
@@ -1204,7 +1209,7 @@ static os_task_t * os_task_entry_malloc(zpl_char *name, zpl_int32 pri, zpl_uint3
 		task->td_priority = pri; /* task priority */
 		task->td_old_priority = pri;
 		task->td_status = 0; /* task status */
-		task->td_options = op | OS_TASK_DELETED | OS_TASK_DELETE_SAFE; /* task option bits (see below) */
+		task->td_options = op | OS_TASK_DELETED | OS_TASK_DELETE_SAFE|OS_TASK_TIME_SLICED; /* task option bits (see below) */
 		if (stacksize < OS_TASK_STACK_MIN)
 			task->td_stack_size = OS_TASK_STACK_MIN; /* size of stack in bytes */
 		else

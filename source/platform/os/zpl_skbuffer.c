@@ -359,8 +359,15 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbuf_type_t skbtype, zpl_skb
 		{	
 			if (lstCount(&queue->list) >= queue->max_num)
 			{
+				/*zpl_skbuffer_t *get_skbuf = NULL;
+				get_skbuf = lstFirst(&queue->list);
+				if(get_skbuf)
+				{
+					lstDelete(&queue->list, (NODE *)get_skbuf);
+				}*/
 				if (queue->mutex)
 					os_mutex_unlock(queue->mutex);
+				printf("skbuffer create fail, queue is full, max queue num %d\r\n", queue->max_num);	
 				return NULL;
 			}
 		}
@@ -386,6 +393,7 @@ static zpl_skbuffer_t *zpl_skbuffer_create_raw(zpl_skbuf_type_t skbtype, zpl_skb
 			skbuf->skb_data = os_malloc(skbuf->skb_maxsize);				//buffer
 			if (skbuf->skb_data == NULL)
 			{
+				printf("skbuffer create fail, can not malloc queue data\r\n");	
 				skbuf->skb_maxsize = 0;
 				free(skbuf);
 				skbuf = NULL;

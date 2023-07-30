@@ -512,7 +512,7 @@ static int rtsp_session_handle_setup(rtsp_session_t *session)
                 length += sprintf((char*)(session->_send_build + length), "Transport: %s;server_port=%d-%d\r\n",
                                   session->sdptext.header.Transport,
                                   rtp_port, rtcp_port);
-                if(zpl_mediartp_session_setup(session->sesid, session->mchannel, session->mlevel, NULL) == OK)
+                if(zpl_mediartp_session_setup(session->sesid, session->mchannel, session->mlevel, session->mfilepath, NULL) == OK)
                 {
                     rtsp_log_debug("=================zpl_mediartp_session_setup OKr\n");
                     zpl_mediartp_session_remoteport(session->sesid,  
@@ -756,9 +756,9 @@ static int rtsp_session_event_handle(rtsp_session_t *session)
     {
         return ERROR;
     }
-    if (!zpl_mediartp_session_lookup(session->sesid, session->mchannel, session->mlevel))
-        zpl_mediartp_session_create(session->sesid, session->mchannel, session->mlevel);
-    if (!zpl_mediartp_session_lookup(session->sesid, session->mchannel, session->mlevel))
+    if (!zpl_mediartp_session_lookup(session->sesid, session->mchannel, session->mlevel, session->mfilepath))
+        zpl_mediartp_session_create(session->sesid, session->mchannel, session->mlevel, session->mfilepath);
+    if (!zpl_mediartp_session_lookup(session->sesid, session->mchannel, session->mlevel, session->mfilepath))
     {
         int length = sdp_build_respone_header(session->_send_build, session->srvname, NULL, RTSP_STATE_CODE_404, session->cseq, session->sesid);
         if (length)

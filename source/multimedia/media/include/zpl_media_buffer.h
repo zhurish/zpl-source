@@ -19,8 +19,8 @@ extern "C" {
 //dispatch
 //Scheduler
 #define ZPL_MEDIA_BUFFER_FRAME_MAXSIZE		(1920*1080*3)//(BMP位图)
-#define ZPL_MEDIA_BUFFER_FRAME_CACHESIZE	(16)//(临时缓存2帧)
-#define ZPL_MEDIA_BUFQUEUE_SIZE	(16)//(临时缓存16帧)
+#define ZPL_MEDIA_BUFFER_FRAME_CACHESIZE	(60)//(临时缓存16帧)
+#define ZPL_MEDIA_BUFQUEUE_SIZE	            (60)//(临时缓存16帧)
 
 
 typedef struct zpl_media_bufcache_s

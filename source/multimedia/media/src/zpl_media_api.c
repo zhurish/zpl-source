@@ -56,7 +56,7 @@ int zpl_media_task_init(void)
 {
 	zpl_media_task_create(MODULE_MEDIA, &tvideo_task);
 
-	zpl_media_event_start(zpl_media_event_default());
+	zpl_media_event_start(zpl_media_event_default(), 60, OS_TASK_DEFAULT_STACK*2);
 	zpl_mediartp_scheduler_start();
 
 	return OK;

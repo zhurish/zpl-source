@@ -3600,7 +3600,7 @@ void cmd_voip_init(void)
 		cmd_show_sip_init(CONFIG_NODE);
 		cmd_show_sip_init(ALL_SERVICE_NODE);
 
-		cmd_voip_test_init(ENABLE_NODE);
+		//cmd_voip_test_init(ENABLE_NODE);
 
 		cmd_voip_other_init(ENABLE_NODE);
 	}

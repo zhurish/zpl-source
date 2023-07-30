@@ -229,10 +229,17 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	strcpy(sip->sip_user.sip_user, "100");
 	strcpy(sip->sip_user.sip_password, "100");
-	strcpy(sip->sip_server.sip_address, "192.168.0.1");
+	strcpy(sip->sip_server.sip_address, "192.168.10.102");
 
-	strcpy(sip->sip_local.sip_address, "192.168.0.103");
+	strcpy(sip->sip_local.sip_address, "192.168.10.100");
 	sip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+#else
+	strcpy(sip->sip_user.sip_user, "100");
+	strcpy(sip->sip_user.sip_password, "100");
+	strcpy(sip->sip_server.sip_address, "192.168.10.102");
+
+	strcpy(sip->sip_local.sip_address, "192.168.10.1");
+	sip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;		
 #endif
 
 	sip->debug_level = ZLOG_LEVEL_ERR;
