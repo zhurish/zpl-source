@@ -13,43 +13,42 @@
 #include "pjsua_app_common.h"
 #include "pjsua_app.h"
 #include "pjsip_app_api.h"
-#include "pjsip_main.h"
 #include "pjsip_util.h"
 
 
-pl_pjsip_t *pl_pjsip = NULL;
+pjapp_cfg_t *_pjapp_cfg = NULL;
 
 
-int pl_pjsip_source_change(struct interface *ifp, zpl_bool change)
+int pjapp_cfg_source_change(struct interface *ifp, zpl_bool change)
 {
-	if(pl_pjsip && ifp && ifp->ifindex > 0 && ifp->ifindex == pl_pjsip->sip_source_interface)
+	if(_pjapp_cfg && ifp && ifp->ifindex > 0 && ifp->ifindex == _pjapp_cfg->sip_source_interface)
 	{
 		if(change)
 		{
-			zpl_uint32 address = voip_get_address(pl_pjsip->sip_source_interface);
+			zpl_uint32 address = voip_get_address(_pjapp_cfg->sip_source_interface);
 			if(address)
 			{
-				memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
-				strcpy(pl_pjsip->sip_local.sip_address, inet_address(address));
-				pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
-				//pl_pjsip_bound_address(&_global_config, pl_pjsip->sip_local.sip_address);
+				memset(_pjapp_cfg->sip_local.sip_address, 0, sizeof(_pjapp_cfg->sip_local.sip_address));
+				strcpy(_pjapp_cfg->sip_local.sip_address, inet_address(address));
+				_pjapp_cfg->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+				//pjapp_cfg_bound_address(&_global_config, _pjapp_cfg->sip_local.sip_address);
 			}
 			//pjsua_app_restart(&app_config);
 		}
 		else
 		{
-			memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
-			//pl_pjsip_bound_address(&_global_config, pl_pjsip->sip_local.sip_address);
+			memset(_pjapp_cfg->sip_local.sip_address, 0, sizeof(_pjapp_cfg->sip_local.sip_address));
+			//pjapp_cfg_bound_address(&_global_config, _pjapp_cfg->sip_local.sip_address);
 		}
 	}
 	return OK;
 }
 
-static int pl_pjsip_config_default(pl_pjsip_t *sip)
+int pjapp_cfg_config_default(pjapp_cfg_t *sip)
 {
 	zassert(sip != NULL);
-
-	//nsm_hook_install (NSM_HOOK_IFP_CHANGE, pl_pjsip_source_change);
+	memset(&_global_config, 0, sizeof(_global_config));
+	//nsm_hook_install (NSM_HOOK_IFP_CHANGE, pjapp_cfg_source_change);
 
 	sip->sip_enable		= PJSIP_ENABLE_DEFAULT;
 	sip->sip_server.sip_port = PJSIP_PORT_DEFAULT;
@@ -196,35 +195,35 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 												//	0: reject, 1: follow automatically,
 												//	2: follow + replace To header (default), 3: ask
 
-/*	strcpy(pl_pjsip->sip_codec.payload_name, "PCMU");
-	pl_pjsip->sip_codec.is_active = zpl_true;
+/*	strcpy(_pjapp_cfg->sip_codec.payload_name, "PCMU");
+	_pjapp_cfg->sip_codec.is_active = zpl_true;
 
-	strcpy(pl_pjsip->codec[0].payload_name, "PCMU");
-	pl_pjsip->codec[0].is_active = zpl_true;
-	strcpy(pl_pjsip->codec[1].payload_name, "PCMA");
-	pl_pjsip->codec[1].is_active = zpl_true;
-	strcpy(pl_pjsip->codec[2].payload_name, "GSM");
-	pl_pjsip->codec[2].is_active = zpl_true;
-	strcpy(pl_pjsip->codec[3].payload_name, "G722");
-	pl_pjsip->codec[3].is_active = zpl_true;
+	strcpy(_pjapp_cfg->codec[0].payload_name, "PCMU");
+	_pjapp_cfg->codec[0].is_active = zpl_true;
+	strcpy(_pjapp_cfg->codec[1].payload_name, "PCMA");
+	_pjapp_cfg->codec[1].is_active = zpl_true;
+	strcpy(_pjapp_cfg->codec[2].payload_name, "GSM");
+	_pjapp_cfg->codec[2].is_active = zpl_true;
+	strcpy(_pjapp_cfg->codec[3].payload_name, "G722");
+	_pjapp_cfg->codec[3].is_active = zpl_true;
 
-	strcpy(pl_pjsip->dicodec[0].payload_name, "speex/8000");
-	pl_pjsip->dicodec[0].is_active = zpl_true;
-	strcpy(pl_pjsip->dicodec[1].payload_name, "speex/16000");
-	pl_pjsip->dicodec[1].is_active = zpl_true;
-	strcpy(pl_pjsip->dicodec[2].payload_name, "speex/32000");
-	pl_pjsip->dicodec[2].is_active = zpl_true;
-	strcpy(pl_pjsip->dicodec[3].payload_name, "iLBC/8000");
-	pl_pjsip->dicodec[3].is_active = zpl_true;*/
+	strcpy(_pjapp_cfg->dicodec[0].payload_name, "speex/8000");
+	_pjapp_cfg->dicodec[0].is_active = zpl_true;
+	strcpy(_pjapp_cfg->dicodec[1].payload_name, "speex/16000");
+	_pjapp_cfg->dicodec[1].is_active = zpl_true;
+	strcpy(_pjapp_cfg->dicodec[2].payload_name, "speex/32000");
+	_pjapp_cfg->dicodec[2].is_active = zpl_true;
+	strcpy(_pjapp_cfg->dicodec[3].payload_name, "iLBC/8000");
+	_pjapp_cfg->dicodec[3].is_active = zpl_true;*/
 
-	pl_pjsip_codec_default_set_api("pcmu");
-	pl_pjsip_codec_add_api("pcmu");
-	pl_pjsip_codec_add_api("pcma");
-	//pl_pjsip_codec_add_api("gsm");
-	//pl_pjsip_codec_add_api("g722");
-	//pl_pjsip_discodec_add_api("speex-nb");
-	//pl_pjsip_discodec_add_api("speex-wb");
-	pl_pjsip_discodec_add_api("ilbc");
+	pjapp_cfg_codec_default_set_api("pcmu");
+	pjapp_cfg_codec_add_api("pcmu");
+	pjapp_cfg_codec_add_api("pcma");
+	//pjapp_cfg_codec_add_api("gsm");
+	//pjapp_cfg_codec_add_api("g722");
+	//pjapp_cfg_discodec_add_api("speex-nb");
+	//pjapp_cfg_discodec_add_api("speex-wb");
+	pjapp_cfg_discodec_add_api("ilbc");
 
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 	strcpy(sip->sip_user.sip_user, "100");
@@ -245,100 +244,17 @@ static int pl_pjsip_config_default(pl_pjsip_t *sip)
 	sip->debug_level = ZLOG_LEVEL_ERR;
 	sip->debug_detail = zpl_false;
 /*
-	pl_pjsip_username(&_global_config, "100");//Set authentication username
-	pl_pjsip_password(&_global_config, "100");//Set authentication password
-	pl_pjsip_registrar(&_global_config, "sip:192.168.224.1");//Set the URL of registrar server
-	pl_pjsip_url_id(&_global_config, "sip:100@192.168.224.1");//Set the URL of local ID (used in From header)
+	pjapp_cfg_username(&_global_config, "100");//Set authentication username
+	pjapp_cfg_password(&_global_config, "100");//Set authentication password
+	pjapp_cfg_registrar(&_global_config, "sip:192.168.224.1");//Set the URL of registrar server
+	pjapp_cfg_url_id(&_global_config, "sip:100@192.168.224.1");//Set the URL of local ID (used in From header)
 */
 	return OK;
 }
-#if 0
-#include "pjsip_jsoncfg.h"
 
-//handle SIGUSR2 nostop noprint
-int pl_pjsip_json_test(void)
-{
-	pjsip_config_t pj_config_tmp;
-/*
-	memset(&pj_config_tmp, 0, sizeof(pjsip_config_t));
-	pj_config_tmp.table_cnt = 2;
-	pjsip_endpoint_config_init(&pj_config_tmp.endpoint);
-	pjsip_account_config_init(&pj_config_tmp.pjsip_account_table[0]);
-	pjsip_account_config_init(&pj_config_tmp.pjsip_account_table[1]);
-	printf("ddddddddddddddddddddddddddddddddddddddddddddddd\r\n");
-	pjsip_config_write("./pjsip-json.txt", &pj_config_tmp);
-	printf("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\r\n");
-*/
-	printf("lllllllllllllllllllllllllllllllllllllllllllllll\r\n");
-	memset(&pj_config_tmp, 0, sizeof(pjsip_config_t));
-	pjsip_config_load("./pjsip-json.txt", &pj_config_tmp);
-	printf("lllllllllllllllllllllllllllllllllllllllllllllll :%d \r\n", pj_config_tmp.table_cnt);
-	return 0;
-}
-#endif
-int pl_pjsip_module_init(void)
-{
-	if(pl_pjsip == NULL)
-		pl_pjsip = XMALLOC(MTYPE_VOIP, sizeof(pl_pjsip_t));
-	if(!pl_pjsip)
-		return ERROR;
-	os_memset(pl_pjsip, 0, sizeof(pl_pjsip_t));
-	pl_pjsip->mutex = os_mutex_name_create("pl_pjsip->mutex");
-	pl_pjsip_config_default(pl_pjsip);
-	pjsip_module_init();
-#ifdef APP_X5BA_MODULE
-	void_module_init(pl_pjsip);
-#endif
-	return OK;
-}
-
-
-int pl_pjsip_module_exit(void)
-{
-#ifdef APP_X5BA_MODULE
-	void_module_exit(pl_pjsip);
-#endif
-
-	pjsip_module_exit();
-	if(pl_pjsip == NULL)
-		XFREE(MTYPE_VOIP, pl_pjsip);
-	pl_pjsip = NULL;
-	return OK;
-}
-
-int pl_pjsip_module_task_init(void)
-{
-	pjsip_module_task_init();
-#ifdef APP_X5BA_MODULE
-	void_module_task_init();
-#endif
-	return OK;
-}
-
-int pl_pjsip_module_task_exit(void)
-{
-#ifdef APP_X5BA_MODULE
-	void_module_task_exit();
-#endif
-	pjsip_module_task_exit();
-	return OK;
-}
-
-
-struct module_list module_list_pjsip = 
-{ 
-	.module=MODULE_PJSIP, 
-	.name="PJSIP\0", 
-	.module_init=pl_pjsip_module_init, 
-	.module_exit=pl_pjsip_module_exit, 
-	.module_task_init=pl_pjsip_module_task_init, 
-	.module_task_exit=pl_pjsip_module_task_exit, 
-	.module_cmd_init=NULL, 
-	.taskid=0,
-};
 /***************************************************************************************/
 /***************************************************************************************/
-char *pl_pjsip_dtmf_name(pjsip_dtmf_t dtmf)
+char *pjapp_cfg_dtmf_name(pjsip_dtmf_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -357,7 +273,7 @@ char *pl_pjsip_dtmf_name(pjsip_dtmf_t dtmf)
 	}
 }
 
-char *pl_pjsip_transport_name(pjsip_transport_t dtmf)
+char *pjapp_cfg_transport_name(pjsip_transport_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -379,7 +295,7 @@ char *pl_pjsip_transport_name(pjsip_transport_t dtmf)
 	}
 }
 
-char *pl_pjsip_reg_proxy_name(pjsip_reg_proxy_t dtmf)
+char *pjapp_cfg_reg_proxy_name(pjsip_reg_proxy_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -404,7 +320,7 @@ char *pl_pjsip_reg_proxy_name(pjsip_reg_proxy_t dtmf)
 	}
 }
 
-char *pl_pjsip_srtp_name(pjsip_srtp_t dtmf)
+char *pjapp_cfg_srtp_name(pjsip_srtp_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -426,7 +342,7 @@ char *pl_pjsip_srtp_name(pjsip_srtp_t dtmf)
 	}
 }
 
-char *pl_pjsip_srtp_sec_name(pjsip_srtp_sec_t dtmf)
+char *pjapp_cfg_srtp_sec_name(pjsip_srtp_sec_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -445,7 +361,7 @@ char *pl_pjsip_srtp_sec_name(pjsip_srtp_sec_t dtmf)
 	}
 }
 
-char *pl_pjsip_timer_name(pjsip_timer_t dtmf)
+char *pjapp_cfg_timer_name(pjsip_timer_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -467,7 +383,7 @@ char *pl_pjsip_timer_name(pjsip_timer_t dtmf)
 	}
 }
 
-char *pl_pjsip_echo_mode_name(pjsip_echo_mode_t dtmf)
+char *pjapp_cfg_echo_mode_name(pjsip_echo_mode_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -489,7 +405,7 @@ char *pl_pjsip_echo_mode_name(pjsip_echo_mode_t dtmf)
 	}
 }
 
-char *pl_pjsip_accept_redirect_name(pjsip_accept_redirect_t dtmf)
+char *pjapp_cfg_accept_redirect_name(pjsip_accept_redirect_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -511,7 +427,7 @@ char *pl_pjsip_accept_redirect_name(pjsip_accept_redirect_t dtmf)
 	}
 }
 
-char *pl_pjsip_register_state_name(pjsip_register_state_t dtmf)
+char *pjapp_cfg_register_state_name(pjsip_register_state_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -530,7 +446,7 @@ char *pl_pjsip_register_state_name(pjsip_register_state_t dtmf)
 	}
 }
 
-char *pl_pjsip_connect_state_name(pjsip_connect_state_t dtmf)
+char *pjapp_cfg_connect_state_name(pjsip_connect_state_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -549,7 +465,7 @@ char *pl_pjsip_connect_state_name(pjsip_connect_state_t dtmf)
 	}
 }
 
-char *pl_pjsip_call_state_name(pjsip_call_state_t dtmf)
+char *pjapp_cfg_call_state_name(pjsip_call_state_t dtmf)
 {
 	switch(dtmf)
 	{
@@ -587,2459 +503,2437 @@ char *pl_pjsip_call_state_name(pjsip_call_state_t dtmf)
 }
 
 /***************************************************************************************/
-int pl_pjsip_global_set_api(zpl_bool enable)
+int pjapp_cfg_global_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_enable = enable;
-	//voip_pl_pjsip_update_api(pl_pjsip);
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_enable = enable;
+	//voip_pjapp_cfg_update_api(_pjapp_cfg);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_global_get_api(zpl_bool *enable)
+int pjapp_cfg_global_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-zpl_bool pl_pjsip_global_isenable(void)
+zpl_bool pjapp_cfg_global_isenable(void)
 {
 	zpl_bool enable = zpl_false;
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	enable = pl_pjsip->sip_enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	enable = _pjapp_cfg->sip_enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return enable;
 }
 
-int pl_pjsip_server_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec)
+int pjapp_cfg_server_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if (pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if (_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if (!sec)
 	{
-		memset(pl_pjsip->sip_server.sip_address, 0,
-				sizeof(pl_pjsip->sip_server.sip_address));
+		memset(_pjapp_cfg->sip_server.sip_address, 0,
+				sizeof(_pjapp_cfg->sip_server.sip_address));
 		if (ip)
 		{
-			strcpy(pl_pjsip->sip_server.sip_address, ip);
-			if (strlen(pl_pjsip->sip_server_sec.sip_address))
-				pl_pjsip->sip_server_cnt = 2;
+			strcpy(_pjapp_cfg->sip_server.sip_address, ip);
+			if (strlen(_pjapp_cfg->sip_server_sec.sip_address))
+				_pjapp_cfg->sip_server_cnt = 2;
 			else
-				pl_pjsip->sip_server_cnt = 1;
+				_pjapp_cfg->sip_server_cnt = 1;
 		}
 	}
 	else
 	{
-		memset(pl_pjsip->sip_server_sec.sip_address, 0,
-				sizeof(pl_pjsip->sip_server_sec.sip_address));
+		memset(_pjapp_cfg->sip_server_sec.sip_address, 0,
+				sizeof(_pjapp_cfg->sip_server_sec.sip_address));
 		if (ip)
 		{
-			strcpy(pl_pjsip->sip_server_sec.sip_address, ip);
-			if (strlen(pl_pjsip->sip_server.sip_address))
-				pl_pjsip->sip_server_cnt = 2;
+			strcpy(_pjapp_cfg->sip_server_sec.sip_address, ip);
+			if (strlen(_pjapp_cfg->sip_server.sip_address))
+				_pjapp_cfg->sip_server_cnt = 2;
 			else
-				pl_pjsip->sip_server_cnt = 1;
+				_pjapp_cfg->sip_server_cnt = 1;
 		}
 	}
 	if (sec)
-		pl_pjsip->sip_server_sec.sip_port = port ? port : PJSIP_PORT_DEFAULT;
+		_pjapp_cfg->sip_server_sec.sip_port = port ? port : PJSIP_PORT_DEFAULT;
 	else
-		pl_pjsip->sip_server.sip_port = port ? port : PJSIP_PORT_DEFAULT;
-	if (pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		_pjapp_cfg->sip_server.sip_port = port ? port : PJSIP_PORT_DEFAULT;
+	if (_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_server_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec)
+int pjapp_cfg_server_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
 		if(ip)
-			strcpy(ip, pl_pjsip->sip_server_sec.sip_address);
+			strcpy(ip, _pjapp_cfg->sip_server_sec.sip_address);
 		if(port)
-			*port = pl_pjsip->sip_server_sec.sip_port;
+			*port = _pjapp_cfg->sip_server_sec.sip_port;
 	}
 	else
 	{
 		if(ip)
-			strcpy(ip, pl_pjsip->sip_server.sip_address);
+			strcpy(ip, _pjapp_cfg->sip_server.sip_address);
 		if(port)
-			*port = pl_pjsip->sip_server.sip_port;
+			*port = _pjapp_cfg->sip_server.sip_port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_proxy_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec)
+int pjapp_cfg_proxy_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
-		pl_pjsip->sip_proxy_enable = zpl_true;
-		pl_pjsip->sip_proxy_sec.sip_port = port ? port:PJSIP_PORT_DEFAULT;
-		memset(pl_pjsip->sip_proxy_sec.sip_address, 0, sizeof(pl_pjsip->sip_proxy_sec.sip_address));
+		_pjapp_cfg->sip_proxy_enable = zpl_true;
+		_pjapp_cfg->sip_proxy_sec.sip_port = port ? port:PJSIP_PORT_DEFAULT;
+		memset(_pjapp_cfg->sip_proxy_sec.sip_address, 0, sizeof(_pjapp_cfg->sip_proxy_sec.sip_address));
 		if(ip)
 		{
-			strcpy(pl_pjsip->sip_proxy_sec.sip_address, ip);
-			if(strlen(pl_pjsip->sip_proxy.sip_address))
-				pl_pjsip->sip_proxy_cnt = 2;
+			strcpy(_pjapp_cfg->sip_proxy_sec.sip_address, ip);
+			if(strlen(_pjapp_cfg->sip_proxy.sip_address))
+				_pjapp_cfg->sip_proxy_cnt = 2;
 			else
-				pl_pjsip->sip_proxy_cnt = 1;
+				_pjapp_cfg->sip_proxy_cnt = 1;
 		}
 	}
 	else
 	{
-		pl_pjsip->sip_proxy_enable = zpl_true;
-		pl_pjsip->sip_proxy_cnt = 1;
-		pl_pjsip->sip_proxy.sip_port = port ? port:PJSIP_PORT_DEFAULT;
-		memset(pl_pjsip->sip_proxy.sip_address, 0, sizeof(pl_pjsip->sip_proxy.sip_address));
+		_pjapp_cfg->sip_proxy_enable = zpl_true;
+		_pjapp_cfg->sip_proxy_cnt = 1;
+		_pjapp_cfg->sip_proxy.sip_port = port ? port:PJSIP_PORT_DEFAULT;
+		memset(_pjapp_cfg->sip_proxy.sip_address, 0, sizeof(_pjapp_cfg->sip_proxy.sip_address));
 		if(ip)
 		{
-			strcpy(pl_pjsip->sip_proxy.sip_address, ip);
-			if(strlen(pl_pjsip->sip_proxy_sec.sip_address))
-				pl_pjsip->sip_proxy_cnt = 2;
+			strcpy(_pjapp_cfg->sip_proxy.sip_address, ip);
+			if(strlen(_pjapp_cfg->sip_proxy_sec.sip_address))
+				_pjapp_cfg->sip_proxy_cnt = 2;
 			else
-				pl_pjsip->sip_proxy_cnt = 1;
+				_pjapp_cfg->sip_proxy_cnt = 1;
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_proxy_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec)
+int pjapp_cfg_proxy_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
 		if(ip)
-			strcpy(ip, pl_pjsip->sip_proxy_sec.sip_address);
+			strcpy(ip, _pjapp_cfg->sip_proxy_sec.sip_address);
 		if(port)
-			*port = pl_pjsip->sip_proxy_sec.sip_port;
+			*port = _pjapp_cfg->sip_proxy_sec.sip_port;
 	}
 	else
 	{
 		if(ip)
-			strcpy(ip, pl_pjsip->sip_proxy.sip_address);
+			strcpy(ip, _pjapp_cfg->sip_proxy.sip_address);
 		if(port)
-			*port = pl_pjsip->sip_proxy.sip_port;
+			*port = _pjapp_cfg->sip_proxy.sip_port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_local_address_set_api(zpl_int8 *address)
+int pjapp_cfg_local_address_set_api(zpl_int8 *address)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	//pl_pjsip->sip_local.sip_port = port ? port:PJSIP_PORT_DEFAULT;
-	memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	//_pjapp_cfg->sip_local.sip_port = port ? port:PJSIP_PORT_DEFAULT;
+	memset(_pjapp_cfg->sip_local.sip_address, 0, sizeof(_pjapp_cfg->sip_local.sip_address));
 	if(address)
 	{
-		strcpy(pl_pjsip->sip_local.sip_address, address);
-		pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+		strcpy(_pjapp_cfg->sip_local.sip_address, address);
+		_pjapp_cfg->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_local_address_get_api(zpl_int8 *address)
+int pjapp_cfg_local_address_get_api(zpl_int8 *address)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(address)
 	{
-		//memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
-		strcpy(address, pl_pjsip->sip_local.sip_address);
-		//pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+		//memset(_pjapp_cfg->sip_local.sip_address, 0, sizeof(_pjapp_cfg->sip_local.sip_address));
+		strcpy(address, _pjapp_cfg->sip_local.sip_address);
+		//_pjapp_cfg->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_source_interface_set_api(ifindex_t ifindex)
+int pjapp_cfg_source_interface_set_api(ifindex_t ifindex)
 {
 	zpl_uint32 address = 0;
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_source_interface = ifindex;
-	if(pl_pjsip->sip_source_interface)
-		address = voip_get_address(pl_pjsip->sip_source_interface);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_source_interface = ifindex;
+	if(_pjapp_cfg->sip_source_interface)
+		address = voip_get_address(_pjapp_cfg->sip_source_interface);
 	if(address)
 	{
-		memset(pl_pjsip->sip_local.sip_address, 0, sizeof(pl_pjsip->sip_local.sip_address));
-		strcpy(pl_pjsip->sip_local.sip_address, inet_address(address));
-		pl_pjsip->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
+		memset(_pjapp_cfg->sip_local.sip_address, 0, sizeof(_pjapp_cfg->sip_local.sip_address));
+		strcpy(_pjapp_cfg->sip_local.sip_address, inet_address(address));
+		_pjapp_cfg->sip_local.state = PJSIP_STATE_CONNECT_LOCAL;
 	}
-	//voip_pl_pjsip_update_api(pl_pjsip);
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	//voip_pjapp_cfg_update_api(_pjapp_cfg);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_source_interface_get_api(ifindex_t *ifindex)
+int pjapp_cfg_source_interface_get_api(ifindex_t *ifindex)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(ifindex)
-		*ifindex = pl_pjsip->sip_source_interface;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*ifindex = _pjapp_cfg->sip_source_interface;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_local_port_set_api(zpl_uint16 port)
+int pjapp_cfg_local_port_set_api(zpl_uint16 port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_local.sip_port = port ? port:PJSIP_PORT_DEFAULT;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_local.sip_port = port ? port:PJSIP_PORT_DEFAULT;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
-int pl_pjsip_local_port_get_api(zpl_uint16 *port)
+int pjapp_cfg_local_port_get_api(zpl_uint16 *port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(port)
-		*port = pl_pjsip->sip_local.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*port = _pjapp_cfg->sip_local.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_transport_proto_set_api(pjsip_transport_t proto)
+int pjapp_cfg_transport_proto_set_api(pjsip_transport_t proto)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->proto = proto;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->proto = proto;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_transport_proto_get_api(pjsip_transport_t *proto)
+int pjapp_cfg_transport_proto_get_api(pjsip_transport_t *proto)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(proto)
-		*proto = pl_pjsip->proto;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*proto = _pjapp_cfg->proto;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_dtmf_set_api(pjsip_dtmf_t dtmf)
+int pjapp_cfg_dtmf_set_api(pjsip_dtmf_t dtmf)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->dtmf = dtmf;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->dtmf = dtmf;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_dtmf_get_api(pjsip_dtmf_t *dtmf)
+int pjapp_cfg_dtmf_get_api(pjsip_dtmf_t *dtmf)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(dtmf)
-		*dtmf = pl_pjsip->dtmf;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*dtmf = _pjapp_cfg->dtmf;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_username_set_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec)
+int pjapp_cfg_username_set_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
-		memset(pl_pjsip->sip_user_sec.sip_user, 0, sizeof(pl_pjsip->sip_user_sec.sip_user));
-		memset(pl_pjsip->sip_user_sec.sip_password, 0, sizeof(pl_pjsip->sip_user_sec.sip_password));
+		memset(_pjapp_cfg->sip_user_sec.sip_user, 0, sizeof(_pjapp_cfg->sip_user_sec.sip_user));
+		memset(_pjapp_cfg->sip_user_sec.sip_password, 0, sizeof(_pjapp_cfg->sip_user_sec.sip_password));
 		if(user)
 		{
-			strcpy(pl_pjsip->sip_user_sec.sip_user, user);
-			if(strlen(pl_pjsip->sip_user.sip_user))
-				pl_pjsip->sip_user_cnt = 2;
+			strcpy(_pjapp_cfg->sip_user_sec.sip_user, user);
+			if(strlen(_pjapp_cfg->sip_user.sip_user))
+				_pjapp_cfg->sip_user_cnt = 2;
 			else
-				pl_pjsip->sip_user_cnt = 1;
+				_pjapp_cfg->sip_user_cnt = 1;
 		}
 		if(pass)
 		{
-			strcpy(pl_pjsip->sip_user_sec.sip_password, pass);
+			strcpy(_pjapp_cfg->sip_user_sec.sip_password, pass);
 		}
 	}
 	else
 	{
-		memset(pl_pjsip->sip_user.sip_user, 0, sizeof(pl_pjsip->sip_user.sip_user));
-		memset(pl_pjsip->sip_user.sip_password, 0, sizeof(pl_pjsip->sip_user.sip_password));
+		memset(_pjapp_cfg->sip_user.sip_user, 0, sizeof(_pjapp_cfg->sip_user.sip_user));
+		memset(_pjapp_cfg->sip_user.sip_password, 0, sizeof(_pjapp_cfg->sip_user.sip_password));
 		if(user)
 		{
-			strcpy(pl_pjsip->sip_user.sip_user, user);
-			if(strlen(pl_pjsip->sip_user_sec.sip_user))
-				pl_pjsip->sip_user_cnt = 2;
+			strcpy(_pjapp_cfg->sip_user.sip_user, user);
+			if(strlen(_pjapp_cfg->sip_user_sec.sip_user))
+				_pjapp_cfg->sip_user_cnt = 2;
 			else
-				pl_pjsip->sip_user_cnt = 1;
+				_pjapp_cfg->sip_user_cnt = 1;
 		}
 		if(pass)
 		{
-			strcpy(pl_pjsip->sip_user.sip_password, pass);
+			strcpy(_pjapp_cfg->sip_user.sip_password, pass);
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_username_get_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec)
+int pjapp_cfg_username_get_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
 		if(user)
-			strcpy(user, pl_pjsip->sip_user_sec.sip_user);
+			strcpy(user, _pjapp_cfg->sip_user_sec.sip_user);
 		if(pass)
-			strcpy(pass, pl_pjsip->sip_user_sec.sip_password);
+			strcpy(pass, _pjapp_cfg->sip_user_sec.sip_password);
 	}
 	else
 	{
 		if(user)
-			strcpy(user, pl_pjsip->sip_user.sip_user);
+			strcpy(user, _pjapp_cfg->sip_user.sip_user);
 		if(pass)
-			strcpy(pass, pl_pjsip->sip_user.sip_password);
+			strcpy(pass, _pjapp_cfg->sip_user.sip_password);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_phonenumber_set_api(zpl_int8 *sip_phone, zpl_bool sec)
+int pjapp_cfg_phonenumber_set_api(zpl_int8 *sip_phone, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
-		memset(pl_pjsip->sip_user_sec.sip_phone, 0, sizeof(pl_pjsip->sip_user_sec.sip_phone));
+		memset(_pjapp_cfg->sip_user_sec.sip_phone, 0, sizeof(_pjapp_cfg->sip_user_sec.sip_phone));
 		if(sip_phone)
 		{
-			strcpy(pl_pjsip->sip_user_sec.sip_phone, sip_phone);
-			if(strlen(pl_pjsip->sip_user.sip_phone))
-				pl_pjsip->sip_user_cnt = 2;
+			strcpy(_pjapp_cfg->sip_user_sec.sip_phone, sip_phone);
+			if(strlen(_pjapp_cfg->sip_user.sip_phone))
+				_pjapp_cfg->sip_user_cnt = 2;
 			else
-				pl_pjsip->sip_user_cnt = 1;
+				_pjapp_cfg->sip_user_cnt = 1;
 		}
 	}
 	else
 	{
-		memset(pl_pjsip->sip_user.sip_phone, 0, sizeof(pl_pjsip->sip_user.sip_phone));
+		memset(_pjapp_cfg->sip_user.sip_phone, 0, sizeof(_pjapp_cfg->sip_user.sip_phone));
 		if(sip_phone)
 		{
-			strcpy(pl_pjsip->sip_user.sip_phone, sip_phone);
-			if(strlen(pl_pjsip->sip_user_sec.sip_phone))
-				pl_pjsip->sip_user_cnt = 2;
+			strcpy(_pjapp_cfg->sip_user.sip_phone, sip_phone);
+			if(strlen(_pjapp_cfg->sip_user_sec.sip_phone))
+				_pjapp_cfg->sip_user_cnt = 2;
 			else
-				pl_pjsip->sip_user_cnt = 1;
+				_pjapp_cfg->sip_user_cnt = 1;
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_phonenumber_get_api(zpl_int8 *sip_phone, zpl_bool sec)
+int pjapp_cfg_phonenumber_get_api(zpl_int8 *sip_phone, zpl_bool sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sec)
 	{
 		if(sip_phone)
-			strcpy(sip_phone, pl_pjsip->sip_user_sec.sip_phone);
+			strcpy(sip_phone, _pjapp_cfg->sip_user_sec.sip_phone);
 	}
 	else
 	{
 		if(sip_phone)
-			strcpy(sip_phone, pl_pjsip->sip_user.sip_phone);
+			strcpy(sip_phone, _pjapp_cfg->sip_user.sip_phone);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_expires_set_api(zpl_uint16 sip_expires)
+int pjapp_cfg_expires_set_api(zpl_uint16 sip_expires)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_expires = sip_expires;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_expires = sip_expires;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_expires_get_api(zpl_uint16 *sip_expires)
+int pjapp_cfg_expires_get_api(zpl_uint16 *sip_expires)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_expires)
-		*sip_expires = pl_pjsip->sip_expires;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_expires = _pjapp_cfg->sip_expires;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_100rel_set_api(zpl_bool sip_100_rel)
+int pjapp_cfg_100rel_set_api(zpl_bool sip_100_rel)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_100_rel = sip_100_rel;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_100_rel = sip_100_rel;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_100rel_get_api(zpl_bool *sip_100_rel)
+int pjapp_cfg_100rel_get_api(zpl_bool *sip_100_rel)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_100_rel)
-		*sip_100_rel = pl_pjsip->sip_100_rel;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_100_rel = _pjapp_cfg->sip_100_rel;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_realm_set_api(char *realm)
+int pjapp_cfg_realm_set_api(char *realm)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	//pl_pjsip->sip_realm = realm;
-	memset(pl_pjsip->sip_realm, 0, sizeof(pl_pjsip->sip_realm));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	//_pjapp_cfg->sip_realm = realm;
+	memset(_pjapp_cfg->sip_realm, 0, sizeof(_pjapp_cfg->sip_realm));
 	if(realm)
 	{
-		strcpy(pl_pjsip->sip_realm, realm);
+		strcpy(_pjapp_cfg->sip_realm, realm);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_realm_get_api(char *realm)
+int pjapp_cfg_realm_get_api(char *realm)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(realm)
 	{
-		strcpy(realm, pl_pjsip->sip_realm);
+		strcpy(realm, _pjapp_cfg->sip_realm);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-/*int pl_pjsip_registration_interval_set_api(zpl_uint16 sip_reg_timeout)
+
+int pjapp_cfg_reregist_delay_set_api(zpl_uint16 sip_rereg_delay)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_reg_timeout = sip_reg_timeout;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_rereg_delay = sip_rereg_delay;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_registration_interval_get_api(zpl_uint16 *sip_reg_timeout)
+int pjapp_cfg_reregist_delay_get_api(zpl_uint16 *sip_rereg_delay)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	if(sip_reg_timeout)
-		*sip_reg_timeout = pl_pjsip->sip_reg_timeout;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
-	return OK;
-}*/
-
-int pl_pjsip_reregist_delay_set_api(zpl_uint16 sip_rereg_delay)
-{
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_rereg_delay = sip_rereg_delay;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
-	return OK;
-}
-
-int pl_pjsip_reregist_delay_get_api(zpl_uint16 *sip_rereg_delay)
-{
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_rereg_delay)
-		*sip_rereg_delay = pl_pjsip->sip_rereg_delay;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_rereg_delay = _pjapp_cfg->sip_rereg_delay;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_reregister_proxy_set_api(pjsip_reg_proxy_t sip_reg_proxy)
+int pjapp_cfg_reregister_proxy_set_api(pjsip_reg_proxy_t sip_reg_proxy)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_reg_proxy = sip_reg_proxy;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_reg_proxy = sip_reg_proxy;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_reregister_proxy_get_api(pjsip_reg_proxy_t *sip_reg_proxy)
+int pjapp_cfg_reregister_proxy_get_api(pjsip_reg_proxy_t *sip_reg_proxy)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_reg_proxy)
-		*sip_reg_proxy = pl_pjsip->sip_reg_proxy;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_reg_proxy = _pjapp_cfg->sip_reg_proxy;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_publish_set_api(zpl_bool sip_publish)
+int pjapp_cfg_publish_set_api(zpl_bool sip_publish)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_publish = sip_publish;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_publish = sip_publish;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_publish_get_api(zpl_bool *sip_publish)
+int pjapp_cfg_publish_get_api(zpl_bool *sip_publish)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_publish)
-		*sip_publish = pl_pjsip->sip_publish;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_publish = _pjapp_cfg->sip_publish;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_mwi_set_api(zpl_bool sip_mwi)
+int pjapp_cfg_mwi_set_api(zpl_bool sip_mwi)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_mwi = sip_mwi;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_mwi = sip_mwi;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_mwi_get_api(zpl_bool *sip_mwi)
+int pjapp_cfg_mwi_get_api(zpl_bool *sip_mwi)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_mwi)
-		*sip_mwi = pl_pjsip->sip_mwi;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_mwi = _pjapp_cfg->sip_mwi;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ims_set_api(zpl_bool sip_ims_enable)
+int pjapp_cfg_ims_set_api(zpl_bool sip_ims_enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ims_enable = sip_ims_enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ims_enable = sip_ims_enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ims_get_api(zpl_bool *sip_ims_enable)
+int pjapp_cfg_ims_get_api(zpl_bool *sip_ims_enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_ims_enable)
-		*sip_ims_enable = pl_pjsip->sip_ims_enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_ims_enable = _pjapp_cfg->sip_ims_enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_srtp_mode_set_api(pjsip_srtp_t sip_srtp_mode)
+int pjapp_cfg_srtp_mode_set_api(pjsip_srtp_t sip_srtp_mode)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_srtp_mode = sip_srtp_mode;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_srtp_mode = sip_srtp_mode;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_srtp_mode_get_api(pjsip_srtp_t *sip_srtp_mode)
+int pjapp_cfg_srtp_mode_get_api(pjsip_srtp_t *sip_srtp_mode)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_srtp_mode)
-		*sip_srtp_mode = pl_pjsip->sip_srtp_mode;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_srtp_mode = _pjapp_cfg->sip_srtp_mode;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_srtp_secure_set_api(pjsip_srtp_sec_t sip_srtp_secure)
+int pjapp_cfg_srtp_secure_set_api(pjsip_srtp_sec_t sip_srtp_secure)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_srtp_secure = sip_srtp_secure;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_srtp_secure = sip_srtp_secure;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_srtp_secure_get_api(pjsip_srtp_sec_t *sip_srtp_secure)
+int pjapp_cfg_srtp_secure_get_api(pjsip_srtp_sec_t *sip_srtp_secure)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_srtp_secure)
-		*sip_srtp_secure = pl_pjsip->sip_srtp_secure;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_srtp_secure = _pjapp_cfg->sip_srtp_secure;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_timer_set_api(pjsip_timer_t sip_timer)
+int pjapp_cfg_timer_set_api(pjsip_timer_t sip_timer)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_timer = sip_timer;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_timer = sip_timer;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_timer_get_api(pjsip_timer_t *sip_timer)
+int pjapp_cfg_timer_get_api(pjsip_timer_t *sip_timer)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_timer)
-		*sip_timer = pl_pjsip->sip_timer;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_timer = _pjapp_cfg->sip_timer;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_timer_sec_set_api(zpl_uint16 sip_timer_sec)
+int pjapp_cfg_timer_sec_set_api(zpl_uint16 sip_timer_sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_timer_sec = sip_timer_sec;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_timer_sec = sip_timer_sec;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_timer_sec_get_api(zpl_uint16 *sip_timer_sec)
+int pjapp_cfg_timer_sec_get_api(zpl_uint16 *sip_timer_sec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_timer_sec)
-		*sip_timer_sec = pl_pjsip->sip_timer_sec;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_timer_sec = _pjapp_cfg->sip_timer_sec;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_outb_rid_set_api(zpl_uint16 sip_outb_rid)
+int pjapp_cfg_outb_rid_set_api(zpl_uint16 sip_outb_rid)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_outb_rid = sip_outb_rid;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_outb_rid = sip_outb_rid;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_outb_rid_get_api(zpl_uint16 *sip_outb_rid)
+int pjapp_cfg_outb_rid_get_api(zpl_uint16 *sip_outb_rid)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_outb_rid)
-		*sip_outb_rid = pl_pjsip->sip_outb_rid;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_outb_rid = _pjapp_cfg->sip_outb_rid;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_update_nat_set_api(zpl_bool sip_auto_update_nat)
+int pjapp_cfg_auto_update_nat_set_api(zpl_bool sip_auto_update_nat)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_auto_update_nat = sip_auto_update_nat;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_auto_update_nat = sip_auto_update_nat;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_update_nat_get_api(zpl_bool *sip_auto_update_nat)
+int pjapp_cfg_auto_update_nat_get_api(zpl_bool *sip_auto_update_nat)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_auto_update_nat)
-		*sip_auto_update_nat = pl_pjsip->sip_auto_update_nat;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_auto_update_nat = _pjapp_cfg->sip_auto_update_nat;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_stun_set_api(zpl_bool enable)
+int pjapp_cfg_stun_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_stun_disable = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_stun_disable = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_stun_get_api(zpl_bool *enable)
+int pjapp_cfg_stun_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_stun_disable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_stun_disable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 /***************************************************************************/
 //Transport Options:
-int pl_pjsip_ipv6_set_api(zpl_bool enable)
+int pjapp_cfg_ipv6_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ipv6_enable = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ipv6_enable = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ipv6_get_api(zpl_bool *enable)
+int pjapp_cfg_ipv6_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_ipv6_enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_ipv6_enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_qos_set_api(zpl_bool enable)
+int pjapp_cfg_qos_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_set_qos = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_set_qos = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_qos_get_api(zpl_bool *enable)
+int pjapp_cfg_qos_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_set_qos;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_set_qos;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_noudp_set_api(zpl_bool enable)
+int pjapp_cfg_noudp_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_noudp = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_noudp = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_noudp_get_api(zpl_bool *enable)
+int pjapp_cfg_noudp_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_noudp;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_noudp;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_notcp_set_api(zpl_bool enable)
+int pjapp_cfg_notcp_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_notcp = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_notcp = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_notcp_get_api(zpl_bool *enable)
+int pjapp_cfg_notcp_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_notcp;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_notcp;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_nameserver_set_api(char * address, zpl_uint16 port)
+int pjapp_cfg_nameserver_set_api(char * address, zpl_uint16 port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_nameserver.sip_address, 0, sizeof(pl_pjsip->sip_nameserver.sip_address));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_nameserver.sip_address, 0, sizeof(_pjapp_cfg->sip_nameserver.sip_address));
 	if(address)
 	{
-		strcpy(pl_pjsip->sip_nameserver.sip_address, address);
-		pl_pjsip->sip_nameserver.sip_port = port;
+		strcpy(_pjapp_cfg->sip_nameserver.sip_address, address);
+		_pjapp_cfg->sip_nameserver.sip_port = port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_nameserver_get_api(char * address, zpl_uint16 *port)
+int pjapp_cfg_nameserver_get_api(char * address, zpl_uint16 *port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(address)
 	{
-		strcpy(address, pl_pjsip->sip_nameserver.sip_address);
+		strcpy(address, _pjapp_cfg->sip_nameserver.sip_address);
 	}
 	if(port)
-		*port = pl_pjsip->sip_nameserver.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*port = _pjapp_cfg->sip_nameserver.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_outbound_set_api(char * address, zpl_uint16 port)
+int pjapp_cfg_outbound_set_api(char * address, zpl_uint16 port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_outbound.sip_address, 0, sizeof(pl_pjsip->sip_outbound.sip_address));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_outbound.sip_address, 0, sizeof(_pjapp_cfg->sip_outbound.sip_address));
 	if(address)
 	{
-		strcpy(pl_pjsip->sip_outbound.sip_address, address);
-		pl_pjsip->sip_outbound.sip_port = port;
+		strcpy(_pjapp_cfg->sip_outbound.sip_address, address);
+		_pjapp_cfg->sip_outbound.sip_port = port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_outbound_get_api(char * address, zpl_uint16 *port)
+int pjapp_cfg_outbound_get_api(char * address, zpl_uint16 *port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(address)
 	{
-		strcpy(address, pl_pjsip->sip_outbound.sip_address);
-	}
-	if(port)
-		*port = pl_pjsip->sip_outbound.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
-	return OK;
-}
-
-int pl_pjsip_stun_server_set_api(char * address, zpl_uint16 port)
-{
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_stun_server.sip_address, 0, sizeof(pl_pjsip->sip_stun_server.sip_address));
-	if(address)
-	{
-		strcpy(pl_pjsip->sip_stun_server.sip_address, address);
-		pl_pjsip->sip_stun_server.sip_port = port;
-	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
-	return OK;
-}
-
-int pl_pjsip_stun_server_get_api(char * address, zpl_uint16 *port)
-{
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	if(address)
-	{
-		strcpy(address, pl_pjsip->sip_stun_server.sip_address);
+		strcpy(address, _pjapp_cfg->sip_outbound.sip_address);
 	}
 	if(port)
-		*port = pl_pjsip->sip_stun_server.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*port = _pjapp_cfg->sip_outbound.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
+	return OK;
+}
+
+int pjapp_cfg_stun_server_set_api(char * address, zpl_uint16 port)
+{
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_stun_server.sip_address, 0, sizeof(_pjapp_cfg->sip_stun_server.sip_address));
+	if(address)
+	{
+		strcpy(_pjapp_cfg->sip_stun_server.sip_address, address);
+		_pjapp_cfg->sip_stun_server.sip_port = port;
+	}
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
+	return OK;
+}
+
+int pjapp_cfg_stun_server_get_api(char * address, zpl_uint16 *port)
+{
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	if(address)
+	{
+		strcpy(address, _pjapp_cfg->sip_stun_server.sip_address);
+	}
+	if(port)
+		*port = _pjapp_cfg->sip_stun_server.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 /***************************************************************************/
 //TLS Options:
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
-int pl_pjsip_tls_set_api(zpl_bool enable)
+int pjapp_cfg_tls_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_tls_enable = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_tls_enable = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_get_api(zpl_bool *enable)
+int pjapp_cfg_tls_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_tls_enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_tls_enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_ca_set_api(char * filename)
+int pjapp_cfg_tls_ca_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_ca_file, 0, sizeof(pl_pjsip->sip_tls_ca_file));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_ca_file, 0, sizeof(_pjapp_cfg->sip_tls_ca_file));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_tls_ca_file, filename);
+		strcpy(_pjapp_cfg->sip_tls_ca_file, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_ca_get_api(char * filename)
+int pjapp_cfg_tls_ca_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(filename)
 	{
-		strcpy(filename, pl_pjsip->sip_tls_ca_file);
+		strcpy(filename, _pjapp_cfg->sip_tls_ca_file);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_cert_set_api(char * filename)
+int pjapp_cfg_tls_cert_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_cert_file, 0, sizeof(pl_pjsip->sip_tls_cert_file));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_cert_file, 0, sizeof(_pjapp_cfg->sip_tls_cert_file));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_tls_cert_file, filename);
+		strcpy(_pjapp_cfg->sip_tls_cert_file, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_cert_get_api(char * filename)
+int pjapp_cfg_tls_cert_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(filename)
 	{
-		strcpy(filename, pl_pjsip->sip_tls_cert_file);
+		strcpy(filename, _pjapp_cfg->sip_tls_cert_file);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
-int pl_pjsip_tls_privkey_set_api(char * filename)
+int pjapp_cfg_tls_privkey_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_privkey_file, 0, sizeof(pl_pjsip->sip_tls_privkey_file));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_privkey_file, 0, sizeof(_pjapp_cfg->sip_tls_privkey_file));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_tls_privkey_file, filename);
+		strcpy(_pjapp_cfg->sip_tls_privkey_file, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
-	return OK;
-}
-
-int pl_pjsip_tls_privkey_get_api(char * filename)
-{
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	if(filename)
-	{
-		strcpy(filename, pl_pjsip->sip_tls_privkey_file);
-	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_password_set_api(char * password)
+int pjapp_cfg_tls_privkey_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_password, 0, sizeof(pl_pjsip->sip_tls_password));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	if(filename)
+	{
+		strcpy(filename, _pjapp_cfg->sip_tls_privkey_file);
+	}
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
+	return OK;
+}
+
+int pjapp_cfg_tls_password_set_api(char * password)
+{
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_password, 0, sizeof(_pjapp_cfg->sip_tls_password));
 	if(password)
 	{
-		strcpy(pl_pjsip->sip_tls_password, password);
+		strcpy(_pjapp_cfg->sip_tls_password, password);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_password_get_api(char * password)
+int pjapp_cfg_tls_password_get_api(char * password)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(password)
 	{
-		strcpy(password, pl_pjsip->sip_tls_password);
+		strcpy(password, _pjapp_cfg->sip_tls_password);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_verify_server_set_api(char * address, zpl_uint16 port)
+int pjapp_cfg_tls_verify_server_set_api(char * address, zpl_uint16 port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_verify_server.sip_address, 0, sizeof(pl_pjsip->sip_tls_verify_server.sip_address));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_verify_server.sip_address, 0, sizeof(_pjapp_cfg->sip_tls_verify_server.sip_address));
 	if(address)
 	{
-		strcpy(pl_pjsip->sip_tls_verify_server.sip_address, address);
-		pl_pjsip->sip_tls_verify_server.sip_port = port;
+		strcpy(_pjapp_cfg->sip_tls_verify_server.sip_address, address);
+		_pjapp_cfg->sip_tls_verify_server.sip_port = port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_verify_server_get_api(char * address, zpl_uint16 *port)
+int pjapp_cfg_tls_verify_server_get_api(char * address, zpl_uint16 *port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(address)
 	{
-		strcpy(address, pl_pjsip->sip_tls_verify_server.sip_address);
+		strcpy(address, _pjapp_cfg->sip_tls_verify_server.sip_address);
 	}
 	if(port)
-		*port = pl_pjsip->sip_tls_verify_server.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*port = _pjapp_cfg->sip_tls_verify_server.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_verify_client_set_api(char * address, zpl_uint16 port)
+int pjapp_cfg_tls_verify_client_set_api(char * address, zpl_uint16 port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_verify_client.sip_address, 0, sizeof(pl_pjsip->sip_tls_verify_client.sip_address));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_verify_client.sip_address, 0, sizeof(_pjapp_cfg->sip_tls_verify_client.sip_address));
 	if(address)
 	{
-		strcpy(pl_pjsip->sip_tls_verify_client.sip_address, address);
-		pl_pjsip->sip_tls_verify_client.sip_port = port;
+		strcpy(_pjapp_cfg->sip_tls_verify_client.sip_address, address);
+		_pjapp_cfg->sip_tls_verify_client.sip_port = port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_verify_client_get_api(char * address, zpl_uint16 *port)
+int pjapp_cfg_tls_verify_client_get_api(char * address, zpl_uint16 *port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(address)
 	{
-		strcpy(address, pl_pjsip->sip_tls_verify_client.sip_address);
+		strcpy(address, _pjapp_cfg->sip_tls_verify_client.sip_address);
 	}
 	if(port)
-		*port = pl_pjsip->sip_tls_verify_client.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*port = _pjapp_cfg->sip_tls_verify_client.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_cipher_set_api(char * cipher)
+int pjapp_cfg_tls_cipher_set_api(char * cipher)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_tls_cipher, 0, sizeof(pl_pjsip->sip_tls_cipher));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_tls_cipher, 0, sizeof(_pjapp_cfg->sip_tls_cipher));
 	if(cipher)
 	{
-		strcpy(pl_pjsip->sip_tls_cipher, cipher);
+		strcpy(_pjapp_cfg->sip_tls_cipher, cipher);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tls_cipher_get_api(char * cipher)
+int pjapp_cfg_tls_cipher_get_api(char * cipher)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(cipher)
 	{
-		strcpy(cipher, pl_pjsip->sip_tls_cipher);
+		strcpy(cipher, _pjapp_cfg->sip_tls_cipher);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 #endif
 
-int pl_pjsip_neg_timeout_set_api(zpl_uint16 sip_neg_timeout)
+int pjapp_cfg_neg_timeout_set_api(zpl_uint16 sip_neg_timeout)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_neg_timeout = sip_neg_timeout;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_neg_timeout = sip_neg_timeout;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_neg_timeout_get_api(zpl_uint16 *sip_neg_timeout)
+int pjapp_cfg_neg_timeout_get_api(zpl_uint16 *sip_neg_timeout)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_neg_timeout)
-		*sip_neg_timeout = pl_pjsip->sip_neg_timeout;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_neg_timeout = _pjapp_cfg->sip_neg_timeout;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 /***************************************************************************/
 //Audio Options:
 
-int pl_pjsip_codec_default_set_api(char * sip_codec)
+int pjapp_cfg_codec_default_set_api(char * sip_codec)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_codec)
 	{
 		zpl_uint32 val = codec_payload_index(sip_codec);
 		if(codec_payload_name(val))
 		{
-			memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
-			strcpy(pl_pjsip->sip_codec.payload_name, codec_payload_name(val));
-			pl_pjsip->sip_codec.is_active = zpl_true;
-			pl_pjsip->sip_codec.payload = val;
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			memset(_pjapp_cfg->sip_codec.payload_name, 0, sizeof(_pjapp_cfg->sip_codec.payload_name));
+			strcpy(_pjapp_cfg->sip_codec.payload_name, codec_payload_name(val));
+			_pjapp_cfg->sip_codec.is_active = zpl_true;
+			_pjapp_cfg->sip_codec.payload = val;
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
 	else
 	{
-		memset(pl_pjsip->sip_codec.payload_name, 0, sizeof(pl_pjsip->sip_codec.payload_name));
-		pl_pjsip->sip_codec.is_active = zpl_false;
-		pl_pjsip->sip_codec.payload = 0;
+		memset(_pjapp_cfg->sip_codec.payload_name, 0, sizeof(_pjapp_cfg->sip_codec.payload_name));
+		_pjapp_cfg->sip_codec.is_active = zpl_false;
+		_pjapp_cfg->sip_codec.payload = 0;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_codec_add_api(char * sip_codec)
+int pjapp_cfg_codec_add_api(char * sip_codec)
 {
-	return pl_pjsip_payload_name_add_api(sip_codec);
-/*	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_codec, 0, sizeof(pl_pjsip->sip_codec));
+	return pjapp_cfg_payload_name_add_api(sip_codec);
+/*	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_codec, 0, sizeof(_pjapp_cfg->sip_codec));
 	if(sip_codec)
 	{
-		strcpy(pl_pjsip->sip_codec, sip_codec);
+		strcpy(_pjapp_cfg->sip_codec, sip_codec);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;*/
 }
 
-int pl_pjsip_codec_del_api(char * sip_codec)
+int pjapp_cfg_codec_del_api(char * sip_codec)
 {
-	return pl_pjsip_payload_name_del_api(sip_codec);
-/*	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	return pjapp_cfg_payload_name_del_api(sip_codec);
+/*	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_codec)
 	{
-		strcpy(sip_codec, pl_pjsip->sip_codec);
+		strcpy(sip_codec, _pjapp_cfg->sip_codec);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;*/
 }
 
-int pl_pjsip_discodec_add_api(char * sip_discodec)
+int pjapp_cfg_discodec_add_api(char * sip_discodec)
 {
-	return pl_pjsip_dis_payload_name_add_api(sip_discodec);
-/*	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_discodec, 0, sizeof(pl_pjsip->sip_discodec));
+	return pjapp_cfg_dis_payload_name_add_api(sip_discodec);
+/*	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_discodec, 0, sizeof(_pjapp_cfg->sip_discodec));
 	if(sip_discodec)
 	{
-		strcpy(pl_pjsip->sip_discodec, sip_discodec);
+		strcpy(_pjapp_cfg->sip_discodec, sip_discodec);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;*/
 }
 
-int pl_pjsip_discodec_del_api(char * sip_discodec)
+int pjapp_cfg_discodec_del_api(char * sip_discodec)
 {
-	return pl_pjsip_dis_payload_name_del_api(sip_discodec);
-/*	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	return pjapp_cfg_dis_payload_name_del_api(sip_discodec);
+/*	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_discodec)
 	{
-		strcpy(sip_discodec, pl_pjsip->sip_discodec);
+		strcpy(sip_discodec, _pjapp_cfg->sip_discodec);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;*/
 }
 
-int pl_pjsip_clock_rate_set_api(zpl_uint16 sip_clock_rate)
+int pjapp_cfg_clock_rate_set_api(zpl_uint16 sip_clock_rate)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_clock_rate = sip_clock_rate;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_clock_rate = sip_clock_rate;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_clock_rate_get_api(zpl_uint16 *sip_clock_rate)
+int pjapp_cfg_clock_rate_get_api(zpl_uint16 *sip_clock_rate)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_clock_rate)
-		*sip_clock_rate = pl_pjsip->sip_clock_rate;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_clock_rate = _pjapp_cfg->sip_clock_rate;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_snd_clock_rate_set_api(zpl_uint16 sip_snd_clock_rate)
+int pjapp_cfg_snd_clock_rate_set_api(zpl_uint16 sip_snd_clock_rate)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_snd_clock_rate = sip_snd_clock_rate;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_snd_clock_rate = sip_snd_clock_rate;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_snd_clock_rate_get_api(zpl_uint16 *sip_snd_clock_rate)
+int pjapp_cfg_snd_clock_rate_get_api(zpl_uint16 *sip_snd_clock_rate)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_snd_clock_rate)
-		*sip_snd_clock_rate = pl_pjsip->sip_snd_clock_rate;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_snd_clock_rate = _pjapp_cfg->sip_snd_clock_rate;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_stereo_set_api(zpl_bool enable)
+int pjapp_cfg_stereo_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_stereo = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_stereo = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_stereo_get_api(zpl_bool *enable)
+int pjapp_cfg_stereo_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_stereo;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_stereo;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_audio_null_set_api(zpl_bool enable)
+int pjapp_cfg_audio_null_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_audio_null = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_audio_null = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_audio_null_get_api(zpl_bool *enable)
+int pjapp_cfg_audio_null_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_audio_null;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_audio_null;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_play_file_set_api(char * filename)
+int pjapp_cfg_play_file_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_play_file, 0, sizeof(pl_pjsip->sip_play_file));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_play_file, 0, sizeof(_pjapp_cfg->sip_play_file));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_play_file, filename);
+		strcpy(_pjapp_cfg->sip_play_file, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_play_file_get_api(char * filename)
+int pjapp_cfg_play_file_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(filename)
 	{
-		strcpy(filename, pl_pjsip->sip_play_file);
+		strcpy(filename, _pjapp_cfg->sip_play_file);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_play_tone_set_api(char * filename)
+int pjapp_cfg_play_tone_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_play_tone, 0, sizeof(pl_pjsip->sip_play_tone));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_play_tone, 0, sizeof(_pjapp_cfg->sip_play_tone));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_play_tone, filename);
+		strcpy(_pjapp_cfg->sip_play_tone, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_play_tone_get_api(char * filename)
+int pjapp_cfg_play_tone_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(filename)
 	{
-		strcpy(filename, pl_pjsip->sip_play_tone);
+		strcpy(filename, _pjapp_cfg->sip_play_tone);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_play_set_api(zpl_bool enable)
+int pjapp_cfg_auto_play_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_auto_play = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_auto_play = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_play_get_api(zpl_bool *enable)
+int pjapp_cfg_auto_play_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_auto_play;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_auto_play;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_loop_set_api(zpl_bool enable)
+int pjapp_cfg_auto_loop_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_auto_loop = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_auto_loop = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_loop_get_api(zpl_bool *enable)
+int pjapp_cfg_auto_loop_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_auto_loop;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_auto_loop;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_conf_set_api(zpl_bool enable)
+int pjapp_cfg_auto_conf_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_auto_conf = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_auto_conf = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_conf_get_api(zpl_bool *enable)
+int pjapp_cfg_auto_conf_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_auto_conf;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_auto_conf;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rec_file_set_api(char * filename)
+int pjapp_cfg_rec_file_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_rec_file, 0, sizeof(pl_pjsip->sip_rec_file));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_rec_file, 0, sizeof(_pjapp_cfg->sip_rec_file));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_rec_file, filename);
+		strcpy(_pjapp_cfg->sip_rec_file, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rec_file_get_api(char * filename)
+int pjapp_cfg_rec_file_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(filename)
 	{
-		strcpy(filename, pl_pjsip->sip_rec_file);
+		strcpy(filename, _pjapp_cfg->sip_rec_file);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_quality_set_api(zpl_uint16 sip_quality)
+int pjapp_cfg_quality_set_api(zpl_uint16 sip_quality)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_quality = sip_quality;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_quality = sip_quality;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_quality_get_api(zpl_uint16 *sip_quality)
+int pjapp_cfg_quality_get_api(zpl_uint16 *sip_quality)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_quality)
-		*sip_quality = pl_pjsip->sip_quality;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_quality = _pjapp_cfg->sip_quality;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ptime_set_api(zpl_uint16 sip_ptime)
+int pjapp_cfg_ptime_set_api(zpl_uint16 sip_ptime)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ptime = sip_ptime;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ptime = sip_ptime;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ptime_get_api(zpl_uint16 *sip_ptime)
+int pjapp_cfg_ptime_get_api(zpl_uint16 *sip_ptime)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_ptime)
-		*sip_ptime = pl_pjsip->sip_ptime;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_ptime = _pjapp_cfg->sip_ptime;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_no_vad_set_api(zpl_bool enable)
+int pjapp_cfg_no_vad_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_no_vad = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_no_vad = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_no_vad_get_api(zpl_bool *enable)
+int pjapp_cfg_no_vad_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_no_vad;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_no_vad;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_echo_tail_set_api(zpl_uint16 sip_echo_tail)
+int pjapp_cfg_echo_tail_set_api(zpl_uint16 sip_echo_tail)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_echo_tail = sip_echo_tail;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_echo_tail = sip_echo_tail;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_echo_tail_get_api(zpl_uint16 *sip_echo_tail)
+int pjapp_cfg_echo_tail_get_api(zpl_uint16 *sip_echo_tail)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_echo_tail)
-		*sip_echo_tail = pl_pjsip->sip_echo_tail;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_echo_tail = _pjapp_cfg->sip_echo_tail;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_echo_mode_set_api(pjsip_echo_mode_t sip_echo_mode)
+int pjapp_cfg_echo_mode_set_api(pjsip_echo_mode_t sip_echo_mode)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_echo_mode = sip_echo_mode;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_echo_mode = sip_echo_mode;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_echo_mode_get_api(pjsip_echo_mode_t *sip_echo_mode)
+int pjapp_cfg_echo_mode_get_api(pjsip_echo_mode_t *sip_echo_mode)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_echo_mode)
-		*sip_echo_mode = pl_pjsip->sip_echo_mode;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_echo_mode = _pjapp_cfg->sip_echo_mode;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ilbc_mode_set_api(zpl_uint16 sip_ilbc_mode)
+int pjapp_cfg_ilbc_mode_set_api(zpl_uint16 sip_ilbc_mode)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ilbc_mode = sip_ilbc_mode;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ilbc_mode = sip_ilbc_mode;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ilbc_mode_get_api(zpl_uint16 *sip_ilbc_mode)
+int pjapp_cfg_ilbc_mode_get_api(zpl_uint16 *sip_ilbc_mode)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_ilbc_mode)
-		*sip_ilbc_mode = pl_pjsip->sip_ilbc_mode;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_ilbc_mode = _pjapp_cfg->sip_ilbc_mode;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_capture_lat_set_api(zpl_uint16 sip_capture_lat)
+int pjapp_cfg_capture_lat_set_api(zpl_uint16 sip_capture_lat)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_capture_lat = sip_capture_lat;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_capture_lat = sip_capture_lat;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_capture_lat_get_api(zpl_uint16 *sip_capture_lat)
+int pjapp_cfg_capture_lat_get_api(zpl_uint16 *sip_capture_lat)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_capture_lat)
-		*sip_capture_lat = pl_pjsip->sip_capture_lat;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_capture_lat = _pjapp_cfg->sip_capture_lat;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_playback_lat_set_api(zpl_uint16 sip_playback_lat)
+int pjapp_cfg_playback_lat_set_api(zpl_uint16 sip_playback_lat)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_playback_lat = sip_playback_lat;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_playback_lat = sip_playback_lat;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_playback_lat_get_api(zpl_uint16 *sip_playback_lat)
+int pjapp_cfg_playback_lat_get_api(zpl_uint16 *sip_playback_lat)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_playback_lat)
-		*sip_playback_lat = pl_pjsip->sip_playback_lat;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_playback_lat = _pjapp_cfg->sip_playback_lat;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_close_delay_set_api(zpl_int32 sip_snd_auto_close)
+int pjapp_cfg_auto_close_delay_set_api(zpl_int32 sip_snd_auto_close)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_snd_auto_close = sip_snd_auto_close;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_snd_auto_close = sip_snd_auto_close;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_close_delay_get_api(zpl_int32 *sip_snd_auto_close)
+int pjapp_cfg_auto_close_delay_get_api(zpl_int32 *sip_snd_auto_close)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_snd_auto_close)
-		*sip_snd_auto_close = pl_pjsip->sip_snd_auto_close;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_snd_auto_close = _pjapp_cfg->sip_snd_auto_close;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_no_tones_set_api(zpl_bool enable)
+int pjapp_cfg_no_tones_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_notones = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_notones = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_no_tones_get_api(zpl_bool *enable)
+int pjapp_cfg_no_tones_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_notones;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_notones;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_jb_max_size_set_api(zpl_int32 sip_jb_max_size)
+int pjapp_cfg_jb_max_size_set_api(zpl_int32 sip_jb_max_size)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_jb_max_size = sip_jb_max_size;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_jb_max_size = sip_jb_max_size;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_jb_max_size_get_api(zpl_int32 *sip_jb_max_size)
+int pjapp_cfg_jb_max_size_get_api(zpl_int32 *sip_jb_max_size)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip_jb_max_size)
-		*sip_jb_max_size = pl_pjsip->sip_jb_max_size;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*sip_jb_max_size = _pjapp_cfg->sip_jb_max_size;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 /***************************************************************************/
 //Video Options:
 #if PJSUA_HAS_VIDEO
-int pl_pjsip_video_enable_set_api(zpl_bool enable)
+int pjapp_cfg_video_enable_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_video = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_video = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_video_enable_get_api(zpl_bool *enable)
+int pjapp_cfg_video_enable_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_video;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_video;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_video_play_file_set_api(char * filename)
+int pjapp_cfg_video_play_file_set_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_play_avi, 0, sizeof(pl_pjsip->sip_play_avi));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_play_avi, 0, sizeof(_pjapp_cfg->sip_play_avi));
 	if(filename)
 	{
-		strcpy(pl_pjsip->sip_play_avi, filename);
+		strcpy(_pjapp_cfg->sip_play_avi, filename);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_video_play_file_get_api(char * filename)
+int pjapp_cfg_video_play_file_get_api(char * filename)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(filename)
 	{
-		strcpy(filename, pl_pjsip->sip_play_avi);
+		strcpy(filename, _pjapp_cfg->sip_play_avi);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_video_auto_play_set_api(zpl_bool enable)
+int pjapp_cfg_video_auto_play_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_auto_play_avi = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_auto_play_avi = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_video_auto_play_get_api(zpl_bool *enable)
+int pjapp_cfg_video_auto_play_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_auto_play_avi;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_auto_play_avi;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 #endif
 /***************************************************************************/
 //Media Transport Options:
-int pl_pjsip_ice_enable_set_api(zpl_bool enable)
+int pjapp_cfg_ice_enable_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ice = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ice = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_enable_get_api(zpl_bool *enable)
+int pjapp_cfg_ice_enable_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_ice;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_ice;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_nortcp_set_api(zpl_bool enable)
+int pjapp_cfg_ice_nortcp_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ice_nortcp = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ice_nortcp = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_nortcp_get_api(zpl_bool *enable)
+int pjapp_cfg_ice_nortcp_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_ice_nortcp;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_ice_nortcp;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_regular_set_api(zpl_uint32 value)
+int pjapp_cfg_ice_regular_set_api(zpl_uint32 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ice_regular = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ice_regular = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_regular_get_api(zpl_uint32 *value)
+int pjapp_cfg_ice_regular_get_api(zpl_uint32 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_ice_regular;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_ice_regular;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_max_host_set_api(zpl_uint32 value)
+int pjapp_cfg_ice_max_host_set_api(zpl_uint32 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_ice_max_host = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_ice_max_host = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_ice_max_host_get_api(zpl_uint32 *value)
+int pjapp_cfg_ice_max_host_get_api(zpl_uint32 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_ice_max_host;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_ice_max_host;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rtp_port_set_api(zpl_uint16 value)
+int pjapp_cfg_rtp_port_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_rtp_port = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_rtp_port = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rtp_port_get_api(zpl_uint16 *value)
+int pjapp_cfg_rtp_port_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_rtp_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_rtp_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rx_drop_pct_set_api(zpl_uint16 value)
+int pjapp_cfg_rx_drop_pct_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_rx_drop_pct = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_rx_drop_pct = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rx_drop_pct_get_api(zpl_uint16 *value)
+int pjapp_cfg_rx_drop_pct_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_rx_drop_pct;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_rx_drop_pct;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tx_drop_pct_set_api(zpl_uint16 value)
+int pjapp_cfg_tx_drop_pct_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_tx_drop_pct = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_tx_drop_pct = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_tx_drop_pct_get_api(zpl_uint16 *value)
+int pjapp_cfg_tx_drop_pct_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_tx_drop_pct;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_tx_drop_pct;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_enable_set_api(zpl_bool enable)
+int pjapp_cfg_turn_enable_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_turn = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_turn = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_enable_get_api(zpl_bool *enable)
+int pjapp_cfg_turn_enable_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_turn;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_turn;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_turn_server_set_api(char * address, zpl_uint16 port)
+int pjapp_cfg_turn_server_set_api(char * address, zpl_uint16 port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_turn_srv.sip_address, 0, sizeof(pl_pjsip->sip_turn_srv.sip_address));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_turn_srv.sip_address, 0, sizeof(_pjapp_cfg->sip_turn_srv.sip_address));
 	if(address)
 	{
-		strcpy(pl_pjsip->sip_turn_srv.sip_address, address);
-		pl_pjsip->sip_turn_srv.sip_port = port;
+		strcpy(_pjapp_cfg->sip_turn_srv.sip_address, address);
+		_pjapp_cfg->sip_turn_srv.sip_port = port;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_server_get_api(char * address, zpl_uint16 *port)
+int pjapp_cfg_turn_server_get_api(char * address, zpl_uint16 *port)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(address)
 	{
-		strcpy(address, pl_pjsip->sip_turn_srv.sip_address);
+		strcpy(address, _pjapp_cfg->sip_turn_srv.sip_address);
 	}
 	if(port)
-		*port = pl_pjsip->sip_turn_srv.sip_port;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*port = _pjapp_cfg->sip_turn_srv.sip_port;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_tcp_set_api(zpl_bool enable)
+int pjapp_cfg_turn_tcp_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_turn_tcp = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_turn_tcp = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_tcp_get_api(zpl_bool *enable)
+int pjapp_cfg_turn_tcp_get_api(zpl_bool *enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(enable)
-		*enable = pl_pjsip->sip_turn_tcp;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*enable = _pjapp_cfg->sip_turn_tcp;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_username_set_api(char * username)
+int pjapp_cfg_turn_username_set_api(char * username)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_turn_user, 0, sizeof(pl_pjsip->sip_turn_user));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_turn_user, 0, sizeof(_pjapp_cfg->sip_turn_user));
 	if(username)
 	{
-		strcpy(pl_pjsip->sip_turn_user, username);
+		strcpy(_pjapp_cfg->sip_turn_user, username);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_username_get_api(char * username)
+int pjapp_cfg_turn_username_get_api(char * username)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(username)
 	{
-		strcpy(username, pl_pjsip->sip_turn_user);
+		strcpy(username, _pjapp_cfg->sip_turn_user);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_password_set_api(char * password)
+int pjapp_cfg_turn_password_set_api(char * password)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	memset(pl_pjsip->sip_turn_password, 0, sizeof(pl_pjsip->sip_turn_password));
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	memset(_pjapp_cfg->sip_turn_password, 0, sizeof(_pjapp_cfg->sip_turn_password));
 	if(password)
 	{
-		strcpy(pl_pjsip->sip_turn_password, password);
+		strcpy(_pjapp_cfg->sip_turn_password, password);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_turn_password_get_api(char * password)
+int pjapp_cfg_turn_password_get_api(char * password)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(password)
 	{
-		strcpy(password, pl_pjsip->sip_turn_password);
+		strcpy(password, _pjapp_cfg->sip_turn_password);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rtcp_mux_set_api(zpl_bool value)
+int pjapp_cfg_rtcp_mux_set_api(zpl_bool value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_rtcp_mux = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_rtcp_mux = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_rtcp_mux_get_api(zpl_bool *value)
+int pjapp_cfg_rtcp_mux_get_api(zpl_bool *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_rtcp_mux;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_rtcp_mux;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_srtp_keying_set_api(pjsip_srtp_keying_t value)
+int pjapp_cfg_srtp_keying_set_api(pjsip_srtp_keying_t value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_srtp_keying = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_srtp_keying = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_srtp_keying_get_api(pjsip_srtp_keying_t *value)
+int pjapp_cfg_srtp_keying_get_api(pjsip_srtp_keying_t *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_srtp_keying;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_srtp_keying;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 //User Agent options:
 
-int pl_pjsip_auto_answer_code_set_api(zpl_uint16 value)
+int pjapp_cfg_auto_answer_code_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_auto_answer_code = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_auto_answer_code = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_auto_answer_code_get_api(zpl_uint16 *value)
+int pjapp_cfg_auto_answer_code_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_auto_answer_code;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_auto_answer_code;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_max_calls_set_api(zpl_uint16 value)
+int pjapp_cfg_max_calls_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_max_calls = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_max_calls = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_max_calls_get_api(zpl_uint16 *value)
+int pjapp_cfg_max_calls_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_max_calls;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_max_calls;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_max_thread_set_api(zpl_uint16 value)
+int pjapp_cfg_max_thread_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_thread_max = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_thread_max = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_max_thread_get_api(zpl_uint16 *value)
+int pjapp_cfg_max_thread_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_thread_max;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_thread_max;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_duration_set_api(zpl_uint32 value)
+int pjapp_cfg_duration_set_api(zpl_uint32 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_duration = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_duration = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_duration_get_api(zpl_uint32 *value)
+int pjapp_cfg_duration_get_api(zpl_uint32 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_duration;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_duration;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_norefersub_set_api(zpl_uint16 value)
+int pjapp_cfg_norefersub_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_norefersub = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_norefersub = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_norefersub_get_api(zpl_uint16 *value)
+int pjapp_cfg_norefersub_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_norefersub;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_norefersub;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
 
-int pl_pjsip_use_compact_form_set_api(zpl_uint16 value)
+int pjapp_cfg_use_compact_form_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_use_compact_form = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_use_compact_form = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_use_compact_form_get_api(zpl_uint16 *value)
+int pjapp_cfg_use_compact_form_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_use_compact_form;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_use_compact_form;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_no_force_lr_set_api(zpl_uint16 value)
+int pjapp_cfg_no_force_lr_set_api(zpl_uint16 value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_no_force_lr = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_no_force_lr = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_no_force_lr_get_api(zpl_uint16 *value)
+int pjapp_cfg_no_force_lr_get_api(zpl_uint16 *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_no_force_lr;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_no_force_lr;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_accept_redirect_set_api(pjsip_accept_redirect_t value)
+int pjapp_cfg_accept_redirect_set_api(pjsip_accept_redirect_t value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_accept_redirect = value;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_accept_redirect = value;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_accept_redirect_get_api(pjsip_accept_redirect_t *value)
+int pjapp_cfg_accept_redirect_get_api(pjsip_accept_redirect_t *value)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(value)
-		*value = pl_pjsip->sip_accept_redirect;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+		*value = _pjapp_cfg->sip_accept_redirect;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 /***************************************************************************/
 /***************************************************************************/
 /***************************************************************************/
-static int pl_pjsip_url_get_id(char *url, char *id, char *ip, zpl_uint16 *port)
+static int pjapp_cfg_url_get_id(char *url, char *id, char *ip, zpl_uint16 *port)
 {
 	char tmp[128];
 	char *p = url, *brk = NULL;
@@ -3088,7 +2982,7 @@ static int pl_pjsip_url_get_id(char *url, char *id, char *ip, zpl_uint16 *port)
 	return OK;
 }
 /********************************** debug log ************************************/
-int pl_pjsip_debug_level_set_api(zpl_uint32 level)
+int pjapp_cfg_debug_level_set_api(zpl_uint32 level)
 {
 	/*	static const char *ltexts[] = { "FATAL:", "ERROR:", " WARN:",
 				      " INFO:", "DEBUG:", "TRACE:", "DETRC:"};*/
@@ -3118,12 +3012,12 @@ int pl_pjsip_debug_level_set_api(zpl_uint32 level)
 		inlevel = 0;
 		break;
 	}
-	pl_pjsip->debug_level = level;
-	pl_pjsip_log_level(&_global_config.app_config, inlevel);
+	_pjapp_cfg->debug_level = level;
+	pjsua_app_cfg_log_level(&_global_config.app_config, inlevel);
 	return OK;
 }
 
-int pl_pjsip_debug_level_get_api(zpl_uint32 *level)
+int pjapp_cfg_debug_level_get_api(zpl_uint32 *level)
 {
 /*	int outlevel = pj_log_get_level();
 	switch(outlevel)
@@ -3153,10 +3047,10 @@ int pl_pjsip_debug_level_get_api(zpl_uint32 *level)
 	if(level)
 		*level = outlevel;*/
 	if(level)
-		*level = pl_pjsip->debug_level;
+		*level = _pjapp_cfg->debug_level;
 	return OK;
 }
-int pl_pjsip_debug_detail_set_api(zpl_bool enable)
+int pjapp_cfg_debug_detail_set_api(zpl_bool enable)
 {
 	if(enable)
 	{
@@ -3176,16 +3070,16 @@ int pl_pjsip_debug_detail_set_api(zpl_bool enable)
 				PJ_LOG_HAS_INDENT);
 		pj_log_set_decor(opt);
 	}
-	pl_pjsip->debug_detail = enable;
+	_pjapp_cfg->debug_detail = enable;
 /*	pj_log_set_decor(PJ_LOG_HAS_NEWLINE|PJ_LOG_HAS_INDENT|PJ_LOG_HAS_THREAD_SWC|
 			PJ_LOG_HAS_SENDER|PJ_LOG_HAS_THREAD_ID);*/
 	return OK;
 }
-int pl_pjsip_debug_detail_get_api(zpl_bool *enable)
+int pjapp_cfg_debug_detail_get_api(zpl_bool *enable)
 {
 	if(enable)
 	{
-		*enable = pl_pjsip->debug_detail;
+		*enable = _pjapp_cfg->debug_detail;
 /*		zpl_uint32 opt = pj_log_get_decor();
 		if(opt & PJ_LOG_HAS_SENDER)
 			*enable = zpl_true;
@@ -3196,12 +3090,12 @@ int pl_pjsip_debug_detail_get_api(zpl_bool *enable)
 }
 /***************************************************************************/
 /***************************************************************************/
-int pl_pjsip_account_set_api(pjsua_acc_id id, void *p)
+int pjapp_cfg_account_set_api(pjsua_acc_id id, void *p)
 {
 	pjsua_acc_info *info = p;
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 
 	if(info->has_registration)
 	{
@@ -3213,43 +3107,43 @@ int pl_pjsip_account_set_api(pjsua_acc_id id, void *p)
 		memset(&user_tmp, 0, sizeof(pjsip_username_t));
 		memset(&srv_tmp, 0, sizeof(pjsip_server_t));
 		//sip:100@192.168.0.103:5060
-		pl_pjsip_url_get_id(info->acc_uri.ptr, user_tmp.sip_user, srv_tmp.sip_address, &srv_tmp.sip_port);
+		pjapp_cfg_url_get_id(info->acc_uri.ptr, user_tmp.sip_user, srv_tmp.sip_address, &srv_tmp.sip_port);
 
 		//printf("==============%s============(%s-%s-%d)\r\n", __func__, user_tmp.sip_user, srv_tmp.sip_address, srv_tmp.sip_port);
 		//printf("==============%s============(%d:%d)(%s)\r\n", __func__, id, info->id, info->acc_uri.ptr);
 
 		if(strlen(user_tmp.sip_user) && strlen(srv_tmp.sip_address))
 		{
-			if(strlen(pl_pjsip->sip_user.sip_user) &&
-					strncmp(user_tmp.sip_user, pl_pjsip->sip_user.sip_user, sizeof(user_tmp.sip_user))==0)
+			if(strlen(_pjapp_cfg->sip_user.sip_user) &&
+					strncmp(user_tmp.sip_user, _pjapp_cfg->sip_user.sip_user, sizeof(user_tmp.sip_user))==0)
 			{
-				sip_user = &pl_pjsip->sip_user;
+				sip_user = &_pjapp_cfg->sip_user;
 			}
-			else if(strlen(pl_pjsip->sip_user_sec.sip_user) &&
-					strncmp(user_tmp.sip_user, pl_pjsip->sip_user_sec.sip_user, sizeof(user_tmp.sip_user))==0)
+			else if(strlen(_pjapp_cfg->sip_user_sec.sip_user) &&
+					strncmp(user_tmp.sip_user, _pjapp_cfg->sip_user_sec.sip_user, sizeof(user_tmp.sip_user))==0)
 			{
-				sip_user = &pl_pjsip->sip_user_sec;
+				sip_user = &_pjapp_cfg->sip_user_sec;
 			}
 
-			if(strlen(pl_pjsip->sip_server.sip_address) &&
-					strncmp(srv_tmp.sip_address, pl_pjsip->sip_server.sip_address, sizeof(srv_tmp.sip_address))==0)
+			if(strlen(_pjapp_cfg->sip_server.sip_address) &&
+					strncmp(srv_tmp.sip_address, _pjapp_cfg->sip_server.sip_address, sizeof(srv_tmp.sip_address))==0)
 			{
-				sip_srv = &pl_pjsip->sip_server;
+				sip_srv = &_pjapp_cfg->sip_server;
 			}
-			else if(strlen(pl_pjsip->sip_server_sec.sip_address) &&
-					strncmp(srv_tmp.sip_address, pl_pjsip->sip_server_sec.sip_address, sizeof(srv_tmp.sip_address))==0)
+			else if(strlen(_pjapp_cfg->sip_server_sec.sip_address) &&
+					strncmp(srv_tmp.sip_address, _pjapp_cfg->sip_server_sec.sip_address, sizeof(srv_tmp.sip_address))==0)
 			{
-				sip_srv = &pl_pjsip->sip_server_sec;
+				sip_srv = &_pjapp_cfg->sip_server_sec;
 			}
-			else if(strlen(pl_pjsip->sip_proxy.sip_address) &&
-					strncmp(srv_tmp.sip_address, pl_pjsip->sip_proxy.sip_address, sizeof(srv_tmp.sip_address))==0)
+			else if(strlen(_pjapp_cfg->sip_proxy.sip_address) &&
+					strncmp(srv_tmp.sip_address, _pjapp_cfg->sip_proxy.sip_address, sizeof(srv_tmp.sip_address))==0)
 			{
-				sip_srv = &pl_pjsip->sip_proxy;
+				sip_srv = &_pjapp_cfg->sip_proxy;
 			}
-			else if(strlen(pl_pjsip->sip_proxy_sec.sip_address) &&
-					strncmp(srv_tmp.sip_address, pl_pjsip->sip_proxy_sec.sip_address, sizeof(srv_tmp.sip_address))==0)
+			else if(strlen(_pjapp_cfg->sip_proxy_sec.sip_address) &&
+					strncmp(srv_tmp.sip_address, _pjapp_cfg->sip_proxy_sec.sip_address, sizeof(srv_tmp.sip_address))==0)
 			{
-				sip_srv = &pl_pjsip->sip_proxy_sec;
+				sip_srv = &_pjapp_cfg->sip_proxy_sec;
 			}
 		}
 
@@ -3277,27 +3171,27 @@ int pl_pjsip_account_set_api(pjsua_acc_id id, void *p)
 			}
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_account_get_api(pjsua_acc_id id, pjsip_username_t *p)
+int pjapp_cfg_account_get_api(pjsua_acc_id id, pjsip_username_t *p)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	//pjsua_acc_info info
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
-zpl_bool pl_pjsip_isregister_api(void)
+zpl_bool pjapp_cfg_isregister_api(void)
 {
 	zpl_bool reg = zpl_false;
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 /*
 	pjsip_username_t	sip_user;
 	pjsip_username_t	sip_user_sec;
@@ -3308,173 +3202,173 @@ zpl_bool pl_pjsip_isregister_api(void)
 #if 0//ndef ZPL_BUILD_ARCH_X86
 	if(x5b_app_port_status_get() == zpl_false)
 	{
-		if(pl_pjsip->mutex)
-			os_mutex_unlock(pl_pjsip->mutex);
+		if(_pjapp_cfg->mutex)
+			os_mutex_unlock(_pjapp_cfg->mutex);
 		return reg;
 	}
 #endif
-	if((strlen(pl_pjsip->sip_user.sip_phone)||
-			strlen(pl_pjsip->sip_user.sip_user)) &&
-			pl_pjsip->sip_user.register_svr &&
-			pl_pjsip->sip_user.is_current)
+	if((strlen(_pjapp_cfg->sip_user.sip_phone)||
+			strlen(_pjapp_cfg->sip_user.sip_user)) &&
+			_pjapp_cfg->sip_user.register_svr &&
+			_pjapp_cfg->sip_user.is_current)
 	{
-		if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS/* &&
-				pl_pjsip->sip_user.register_svr->state*/)
+		if(_pjapp_cfg->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS/* &&
+				_pjapp_cfg->sip_user.register_svr->state*/)
 		{
 			reg = zpl_true;
 		}
 	}
-	else if((strlen(pl_pjsip->sip_user_sec.sip_phone)||
-			strlen(pl_pjsip->sip_user_sec.sip_user)) &&
-			pl_pjsip->sip_user_sec.register_svr &&
-			pl_pjsip->sip_user_sec.is_current)
+	else if((strlen(_pjapp_cfg->sip_user_sec.sip_phone)||
+			strlen(_pjapp_cfg->sip_user_sec.sip_user)) &&
+			_pjapp_cfg->sip_user_sec.register_svr &&
+			_pjapp_cfg->sip_user_sec.is_current)
 	{
-		if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
+		if(_pjapp_cfg->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS)
 		{
 			reg = zpl_true;
 		}
 	}
 
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return reg;
 }
 /***************************************************************************/
-int pl_pjsip_payload_name_add_api(char * value)
+int pjapp_cfg_payload_name_add_api(char * value)
 {
 	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	val = codec_payload_index(value);
 	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->codec[i].is_active && pl_pjsip->codec[i].payload == val)
+		if(_pjapp_cfg->codec[i].is_active && _pjapp_cfg->codec[i].payload == val)
 		{
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(!pl_pjsip->codec[i].is_active)
+		if(!_pjapp_cfg->codec[i].is_active)
 		{
-			memset(pl_pjsip->codec[i].payload_name, 0, sizeof(pl_pjsip->codec[i].payload_name));
-			strcpy(pl_pjsip->codec[i].payload_name, codec_payload_name(val));
-			pl_pjsip->codec[i].payload = val;
-			pl_pjsip->codec[i].is_active = zpl_true;
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			memset(_pjapp_cfg->codec[i].payload_name, 0, sizeof(_pjapp_cfg->codec[i].payload_name));
+			strcpy(_pjapp_cfg->codec[i].payload_name, codec_payload_name(val));
+			_pjapp_cfg->codec[i].payload = val;
+			_pjapp_cfg->codec[i].is_active = zpl_true;
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return ERROR;
 }
 
-int pl_pjsip_payload_name_del_api(char * value)
+int pjapp_cfg_payload_name_del_api(char * value)
 {
 	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	val = codec_payload_index(value);
 	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->codec[i].is_active &&
-				pl_pjsip->codec[i].payload == val
-				/*strcasecmp(pl_pjsip->codec[i].payload_name, value) == 0*/	)
+		if(_pjapp_cfg->codec[i].is_active &&
+				_pjapp_cfg->codec[i].payload == val
+				/*strcasecmp(_pjapp_cfg->codec[i].payload_name, value) == 0*/	)
 		{
-			memset(pl_pjsip->codec[i].payload_name, 0, sizeof(pl_pjsip->codec[i].payload_name));
-			pl_pjsip->codec[i].is_active = zpl_false;
-			pl_pjsip->codec[i].payload = 0;
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			memset(_pjapp_cfg->codec[i].payload_name, 0, sizeof(_pjapp_cfg->codec[i].payload_name));
+			_pjapp_cfg->codec[i].is_active = zpl_false;
+			_pjapp_cfg->codec[i].payload = 0;
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return ERROR;
 }
 
-int pl_pjsip_dis_payload_name_add_api(char * value)
+int pjapp_cfg_dis_payload_name_add_api(char * value)
 {
 	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	val = codec_payload_index(value);
 	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->dicodec[i].is_active && pl_pjsip->dicodec[i].payload == val)
+		if(_pjapp_cfg->dicodec[i].is_active && _pjapp_cfg->dicodec[i].payload == val)
 		{
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(!pl_pjsip->dicodec[i].is_active)
+		if(!_pjapp_cfg->dicodec[i].is_active)
 		{
-			memset(pl_pjsip->dicodec[i].payload_name, 0, sizeof(pl_pjsip->dicodec[i].payload_name));
-			//strcpy(pl_pjsip->dicodec[i].payload_name, value);
-			strcpy(pl_pjsip->codec[i].payload_name, codec_payload_name(val));
-			pl_pjsip->dicodec[i].payload = val;
-			pl_pjsip->dicodec[i].is_active = zpl_true;
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			memset(_pjapp_cfg->dicodec[i].payload_name, 0, sizeof(_pjapp_cfg->dicodec[i].payload_name));
+			//strcpy(_pjapp_cfg->dicodec[i].payload_name, value);
+			strcpy(_pjapp_cfg->codec[i].payload_name, codec_payload_name(val));
+			_pjapp_cfg->dicodec[i].payload = val;
+			_pjapp_cfg->dicodec[i].is_active = zpl_true;
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return ERROR;
 }
 
-int pl_pjsip_dis_payload_name_del_api(char * value)
+int pjapp_cfg_dis_payload_name_del_api(char * value)
 {
 	zpl_int32 i = 0, val = 0;
 	zassert(value != NULL);
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	val = codec_payload_index(value);
 	if(val < 0 || !codec_payload_name(val))
 		return ERROR;
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->dicodec[i].is_active &&
-				pl_pjsip->dicodec[i].payload == val
-				/*strcasecmp(pl_pjsip->dicodec[i].payload_name, value) == 0*/ )
+		if(_pjapp_cfg->dicodec[i].is_active &&
+				_pjapp_cfg->dicodec[i].payload == val
+				/*strcasecmp(_pjapp_cfg->dicodec[i].payload_name, value) == 0*/ )
 		{
-			memset(pl_pjsip->dicodec[i].payload_name, 0, sizeof(pl_pjsip->dicodec[i].payload_name));
-			pl_pjsip->dicodec[i].is_active = zpl_false;
-			pl_pjsip->dicodec[i].payload = 0;
-			if(pl_pjsip->mutex)
-				os_mutex_unlock(pl_pjsip->mutex);
+			memset(_pjapp_cfg->dicodec[i].payload_name, 0, sizeof(_pjapp_cfg->dicodec[i].payload_name));
+			_pjapp_cfg->dicodec[i].is_active = zpl_false;
+			_pjapp_cfg->dicodec[i].payload = 0;
+			if(_pjapp_cfg->mutex)
+				os_mutex_unlock(_pjapp_cfg->mutex);
 			return OK;
 		}
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return ERROR;
 }
 /***************************************************************************/
 /***************************************************************************/
-int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
+int pjapp_cfg_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass, pjsua_acc_id *accid)
 {
     pjsua_acc_config acc_cfg;
@@ -3504,7 +3398,7 @@ int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
     return OK;
 }
 
-int pl_pjsip_app_del_acc(pjsua_acc_id accid)
+int pjapp_cfg_app_del_acc(pjsua_acc_id accid)
 {
     pj_status_t status;
     if (!pjsua_acc_is_valid(accid))
@@ -3518,13 +3412,13 @@ int pl_pjsip_app_del_acc(pjsua_acc_id accid)
 	return ERROR;
 }
 
-int pl_pjsip_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
+int pjapp_cfg_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass)
 {
 	return ERROR;
 }
 
-int pl_pjsip_app_select_acc(pjsua_acc_id accid, zpl_uint32 type)
+int pjapp_cfg_app_select_acc(pjsua_acc_id accid, zpl_uint32 type)
 {
     pj_status_t status;
     if (pjsua_acc_is_valid(accid))
@@ -3538,14 +3432,14 @@ int pl_pjsip_app_select_acc(pjsua_acc_id accid, zpl_uint32 type)
     return ERROR;
 }
 
-int pl_pjsip_app_reg_acc(zpl_bool reg)
+int pjapp_cfg_app_reg_acc(zpl_bool reg)
 {
 	if(pjsua_acc_is_valid(current_acc))
 		return pjsua_acc_set_registration(current_acc, reg);
 	return ERROR;
 }
 
-int pl_pjsip_app_list_acc(pjsua_acc_id accid)
+int pjapp_cfg_app_list_acc(pjsua_acc_id accid)
 {
 	pjsua_acc_id acc_ids[16];
 	zpl_uint32 count = PJ_ARRAY_SIZE(acc_ids);
@@ -3597,57 +3491,57 @@ int pl_pjsip_app_list_acc(pjsua_acc_id accid)
 }
 
 
-int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid)
+int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid)
 {
 
 	pj_str_t call_uri_arg;
 	char cmd[512];
 	memset(cmd, '\0', sizeof(cmd));
-	if(!pl_pjsip)
+	if(!_pjapp_cfg)
 		return ERROR;
 	//zlog_debug(MODULE_VOIP, "========%s->os_mutex_lock", __func__);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 
-	if(pl_pjsip->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
-			pl_pjsip->sip_user.register_svr &&
-			strlen(pl_pjsip->sip_user.register_svr->sip_address))
+	if(_pjapp_cfg->sip_user.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
+			_pjapp_cfg->sip_user.register_svr &&
+			strlen(_pjapp_cfg->sip_user.register_svr->sip_address))
 	{
-		if(pl_pjsip->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
+		if(_pjapp_cfg->sip_user.register_svr->sip_port == PJSIP_PORT_DEFAULT)
 			snprintf(cmd, sizeof(cmd), "sip:%s@%s",
-					num, pl_pjsip->sip_user.register_svr->sip_address);
+					num, _pjapp_cfg->sip_user.register_svr->sip_address);
 		else
 			snprintf(cmd, sizeof(cmd), "sip:%s@%s:%d",
 					num,
-					pl_pjsip->sip_user.register_svr->sip_address,
-					pl_pjsip->sip_user.register_svr->sip_port);
+					_pjapp_cfg->sip_user.register_svr->sip_address,
+					_pjapp_cfg->sip_user.register_svr->sip_port);
 	}
-	else if(pl_pjsip->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
-			pl_pjsip->sip_user_sec.register_svr &&
-			strlen(pl_pjsip->sip_user_sec.register_svr->sip_address))
+	else if(_pjapp_cfg->sip_user_sec.sip_state == PJSIP_STATE_REGISTER_SUCCESS &&
+			_pjapp_cfg->sip_user_sec.register_svr &&
+			strlen(_pjapp_cfg->sip_user_sec.register_svr->sip_address))
 	{
-		if(pl_pjsip->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
+		if(_pjapp_cfg->sip_user_sec.register_svr->sip_port == PJSIP_PORT_DEFAULT)
 			snprintf(cmd, sizeof(cmd), "sip:%s@%s",
-					num, pl_pjsip->sip_user_sec.register_svr->sip_address);
+					num, _pjapp_cfg->sip_user_sec.register_svr->sip_address);
 		else
 			snprintf(cmd, sizeof(cmd), "sip:%s@%s:%d",
 					num,
-					pl_pjsip->sip_user_sec.register_svr->sip_address,
-					pl_pjsip->sip_user_sec.register_svr->sip_port);
+					_pjapp_cfg->sip_user_sec.register_svr->sip_address,
+					_pjapp_cfg->sip_user_sec.register_svr->sip_port);
 	}
 	else
 	{
-		if(pl_pjsip->mutex)
-			os_mutex_unlock(pl_pjsip->mutex);
+		if(_pjapp_cfg->mutex)
+			os_mutex_unlock(_pjapp_cfg->mutex);
 		return ERROR;
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	if(_global_config.current_call != PJSUA_INVALID_ID)
 		return ERROR;
 	//zlog_debug(MODULE_VOIP, "========%s->voip_volume_control_api", __func__);
 	//voip_volume_control_api(zpl_true);
-	//zlog_debug(MODULE_VOIP, "========%s-> enter pl_pjsip_app_start_call", __func__);
+	//zlog_debug(MODULE_VOIP, "========%s-> enter pjapp_cfg_app_start_call", __func__);
 
 	//char *pj_call_str = (char *)(cmd + 9);
 	call_uri_arg = pj_str(cmd);
@@ -3660,18 +3554,18 @@ int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid
 	{
 		if(callid)
 			*callid = _global_config.current_call;
-		//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
+		//zlog_debug(MODULE_VOIP, "========%s-> level pjapp_cfg_app_start_call", __func__);
 		return OK;
 	}
 /*
  * handle SIGUSR2 nostop noprint
 */
-	//zlog_debug(MODULE_VOIP, "========%s-> level pl_pjsip_app_start_call", __func__);
+	//zlog_debug(MODULE_VOIP, "========%s-> level pjapp_cfg_app_start_call", __func__);
 	//voip_volume_control_api(zpl_false);
 	return ERROR;
 }
 
-int pl_pjsip_app_stop_call(pjsua_call_id callid, zpl_bool all)
+int pjapp_cfg_app_stop_call(pjsua_call_id callid, zpl_bool all)
 {
     if (_global_config.current_call == PJSUA_INVALID_ID)
     {
@@ -3704,7 +3598,7 @@ int pl_pjsip_app_stop_call(pjsua_call_id callid, zpl_bool all)
 }
 /* Make multi call */
 #if 0
-int pl_pjsip_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
+int pjapp_cfg_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
 //static pj_status_t cmd_make_multi_call(pj_cli_cmd_val *cval)
 {
 	struct input_result result;
@@ -3754,7 +3648,7 @@ int pl_pjsip_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
 }
 #endif
 /***************************************************************************/
-int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
+int pjapp_cfg_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 {
 	pjsua_call_info call_info;
 	if ((st_code < 100) || (st_code > 699))
@@ -3820,7 +3714,7 @@ int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code)
 	return ERROR;
 }
 
-int pl_pjsip_app_hold_call(pjsua_call_id callid)
+int pjapp_cfg_app_hold_call(pjsua_call_id callid)
 {
     if (callid != PJSUA_INVALID_ID)
     {
@@ -3835,7 +3729,7 @@ int pl_pjsip_app_hold_call(pjsua_call_id callid)
     return PJ_SUCCESS;
 }
 
-int pl_pjsip_app_reinvite_call(pjsua_call_id callid)
+int pjapp_cfg_app_reinvite_call(pjsua_call_id callid)
 {
 	if (callid != PJSUA_INVALID_ID)
 	{
@@ -3854,7 +3748,7 @@ int pl_pjsip_app_reinvite_call(pjsua_call_id callid)
 	return PJ_SUCCESS;
 }
 
-int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 code)
+int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 code)
 {
 	if (_global_config.current_call == PJSUA_INVALID_ID)
 	{
@@ -3924,7 +3818,7 @@ int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 cod
 	return PJ_SUCCESS;
 }
 
-int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type)
+int pjapp_cfg_app_select_call(pjsua_call_id callid, zpl_uint32 type)
 {
 	/*
 	 * Cycle next/prev dialog.
@@ -3954,47 +3848,47 @@ int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type)
 /***************************************************************************/
 /***************************************************************************/
 /***************************************************************************/
-int pl_pjsip_multiuser_set_api(zpl_bool enable)
+int pjapp_cfg_multiuser_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->sip_multi_user == enable)
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->sip_multi_user == enable)
 		return OK;
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_multi_user = enable;
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_multi_user = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-zpl_bool pl_pjsip_multiuser_get_api(void)
+zpl_bool pjapp_cfg_multiuser_get_api(void)
 {
-	zassert(pl_pjsip != NULL);
-	return pl_pjsip->sip_multi_user;
+	zassert(_pjapp_cfg != NULL);
+	return _pjapp_cfg->sip_multi_user;
 }
 
-int pl_pjsip_active_standby_set_api(zpl_bool enable)
+int pjapp_cfg_active_standby_set_api(zpl_bool enable)
 {
-	zassert(pl_pjsip != NULL);
-	if(pl_pjsip->sip_active_standby == enable)
+	zassert(_pjapp_cfg != NULL);
+	if(_pjapp_cfg->sip_active_standby == enable)
 		return OK;
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
-	pl_pjsip->sip_active_standby = enable;
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
+	_pjapp_cfg->sip_active_standby = enable;
 
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-zpl_bool pl_pjsip_active_standby_get_api(void)
+zpl_bool pjapp_cfg_active_standby_get_api(void)
 {
-	zassert(pl_pjsip != NULL);
-	return pl_pjsip->sip_active_standby;
+	zassert(_pjapp_cfg != NULL);
+	return _pjapp_cfg->sip_active_standby;
 }
 /***************************************************************************/
 /***************************************************************************/
-static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_account_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zpl_uint32 i = 0;
 	zassert(sip != NULL);
@@ -4108,8 +4002,8 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 	if (strlen(sip->sip_realm))
 		vty_out(vty, " ip sip realm %s%s", sip->sip_realm, VTY_NEWLINE);
 
-	if (strlen(pl_pjsip->sip_codec.payload_name))
-		vty_out(vty, " ip sip default codec %s%s", codec_cmdname(pl_pjsip->sip_codec.payload), VTY_NEWLINE);
+	if (strlen(_pjapp_cfg->sip_codec.payload_name))
+		vty_out(vty, " ip sip default codec %s%s", codec_cmdname(_pjapp_cfg->sip_codec.payload), VTY_NEWLINE);
 
 /*
 	if (sip->sip_reg_timeout)
@@ -4118,20 +4012,20 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 */
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->codec[i].is_active)
+		if(_pjapp_cfg->codec[i].is_active)
 		{
 			//memset(buftmp, 0, sizeof(buftmp));
-			//snprintf(buftmp, sizeof(buftmp), "%s", pl_pjsip->codec[i].payload_name);
-			vty_out(vty, " ip sip codec %s%s", codec_cmdname(pl_pjsip->codec[i].payload), VTY_NEWLINE);
+			//snprintf(buftmp, sizeof(buftmp), "%s", _pjapp_cfg->codec[i].payload_name);
+			vty_out(vty, " ip sip codec %s%s", codec_cmdname(_pjapp_cfg->codec[i].payload), VTY_NEWLINE);
 		}
 	}
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->dicodec[i].is_active)
+		if(_pjapp_cfg->dicodec[i].is_active)
 		{
 			//memset(buftmp, 0, sizeof(buftmp));
-			//snprintf(buftmp, sizeof(buftmp), "%s", pl_pjsip->dicodec[i].payload_name);
-			//vty_out(vty, " ip sip discodec %s%s", codec_cmdname(pl_pjsip->dicodec[i].payload), VTY_NEWLINE);
+			//snprintf(buftmp, sizeof(buftmp), "%s", _pjapp_cfg->dicodec[i].payload_name);
+			//vty_out(vty, " ip sip discodec %s%s", codec_cmdname(_pjapp_cfg->dicodec[i].payload), VTY_NEWLINE);
 		}
 	}
 
@@ -4204,7 +4098,7 @@ static int pl_pjsip_account_options_write_config(pl_pjsip_t *sip, struct vty *vt
 	return OK;
 }
 
-static int pl_pjsip_transport_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_transport_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4241,7 +4135,7 @@ static int pl_pjsip_transport_options_write_config(pl_pjsip_t *sip, struct vty *
 	return OK;
 }
 
-static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_tls_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4277,7 +4171,7 @@ static int pl_pjsip_tls_options_write_config(pl_pjsip_t *sip, struct vty *vty, z
 	return OK;
 }
 
-static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_audio_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4350,7 +4244,7 @@ static int pl_pjsip_audio_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 	return OK;
 }
 
-static int pl_pjsip_video_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_video_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 #if PJSUA_HAS_VIDEO
 	zassert(sip != NULL);
@@ -4367,7 +4261,7 @@ static int pl_pjsip_video_options_write_config(pl_pjsip_t *sip, struct vty *vty,
 }
 
 
-static int pl_pjsip_media_transport_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_media_transport_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4418,7 +4312,7 @@ static int pl_pjsip_media_transport_options_write_config(pl_pjsip_t *sip, struct
 	return OK;
 }
 
-static int pl_pjsip_user_agent_options_write_config(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_user_agent_options_write_config(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4464,7 +4358,7 @@ static int pl_pjsip_user_agent_options_write_config(pl_pjsip_t *sip, struct vty 
 	return OK;
 }
 /***************************************************************************/
-static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_account_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4526,14 +4420,14 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_b
 	else if(sip->dtmf == PJSIP_DTMF_INBAND)
 		vty_out(vty, " sip dtmf-type                : inband%s", VTY_NEWLINE);
 
-	vty_out(vty, " sip default codec            : %s%s", strlwr(pl_pjsip->sip_codec.payload_name), VTY_NEWLINE);
+	vty_out(vty, " sip default codec            : %s%s", strlwr(_pjapp_cfg->sip_codec.payload_name), VTY_NEWLINE);
 
 	memset(buftmp, 0, sizeof(buftmp));
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->codec[i].is_active)
+		if(_pjapp_cfg->codec[i].is_active)
 		{
-			strcat(buftmp, pl_pjsip->codec[i].payload_name);
+			strcat(buftmp, _pjapp_cfg->codec[i].payload_name);
 			strcat(buftmp, " ");
 		}
 	}
@@ -4541,9 +4435,9 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_b
 	memset(buftmp, 0, sizeof(buftmp));
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->dicodec[i].is_active)
+		if(_pjapp_cfg->dicodec[i].is_active)
 		{
-			strcat(buftmp, pl_pjsip->dicodec[i].payload_name);
+			strcat(buftmp, _pjapp_cfg->dicodec[i].payload_name);
 			strcat(buftmp, " ");
 		}
 	}
@@ -4594,7 +4488,7 @@ static int pl_pjsip_account_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_b
 	return OK;
 }
 
-static int pl_pjsip_transport_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_transport_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4613,7 +4507,7 @@ static int pl_pjsip_transport_options_show(pl_pjsip_t *sip, struct vty *vty, zpl
 	return OK;
 }
 
-static int pl_pjsip_tls_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_tls_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4632,7 +4526,7 @@ static int pl_pjsip_tls_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool 
 	return OK;
 }
 
-static int pl_pjsip_audio_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_audio_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4675,7 +4569,7 @@ static int pl_pjsip_audio_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_boo
 	return OK;
 }
 
-static int pl_pjsip_video_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_video_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 #if PJSUA_HAS_VIDEO
 	zassert(sip != NULL);
@@ -4689,7 +4583,7 @@ static int pl_pjsip_video_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_boo
 }
 
 
-static int pl_pjsip_media_transport_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_media_transport_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4719,7 +4613,7 @@ static int pl_pjsip_media_transport_options_show(pl_pjsip_t *sip, struct vty *vt
 	return OK;
 }
 
-static int pl_pjsip_user_agent_options_show(pl_pjsip_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
+static int pjapp_cfg_user_agent_options_show(pjapp_cfg_t *sip, struct vty *vty, zpl_bool detail, zpl_bool bwrt)
 {
 	zassert(sip != NULL);
 	zassert(vty != NULL);
@@ -4747,17 +4641,17 @@ static int pl_pjsip_user_agent_options_show(pl_pjsip_t *sip, struct vty *vty, zp
 	return OK;
 }
 /***************************************************************************/
-int pl_pjsip_show_account_state(void *p)
+int pjapp_cfg_show_account_state(void *p)
 {
 	char idtmp[6], sipurl[20], sipreg[20],sippro[10],tmp[10];
-	pl_pjsip_t *sip = pl_pjsip;
+	pjapp_cfg_t *sip = _pjapp_cfg;
 	struct vty *vty = (struct vty *)p;
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	zassert(vty != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 
-	//pl_pjsip_app_list_acc(0);
+	//pjapp_cfg_app_list_acc(0);
 	/*
 	 *[ 1] sip:100@192.168.224.129: 200/OK (expires=44)
 	       Online status: Online
@@ -4828,64 +4722,64 @@ int pl_pjsip_show_account_state(void *p)
 				idtmp, sip->sip_user_sec.sip_user, sipurl, sippro, sipreg,
 				sip->sip_user_sec.is_default ? "yes":"no", sip->sip_user_sec.is_current?"yes":"no", VTY_NEWLINE);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 /***************************************************************************/
-int pl_pjsip_write_config(void *p)
+int pjapp_cfg_write_config(void *p)
 {
-	pl_pjsip_t *sip = pl_pjsip;
+	pjapp_cfg_t *sip = _pjapp_cfg;
 	struct vty *vty = (struct vty *)p;
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	zassert(vty != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip->sip_enable)
 	{
-		vty_out(vty, "service sip%s", VTY_NEWLINE);
+		//vty_out(vty, "service sip%s", VTY_NEWLINE);
 
-		pl_pjsip_account_options_write_config(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_transport_options_write_config(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_tls_options_write_config(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_audio_options_write_config(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_video_options_write_config(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_media_transport_options_write_config(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_user_agent_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_account_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_transport_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_tls_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_audio_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_video_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_media_transport_options_write_config(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_user_agent_options_write_config(sip, vty, zpl_false, zpl_true);
 		//voip_volume_write_config(vty);
 		vty_out(vty, "!%s",VTY_NEWLINE);
 	}
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 
-int pl_pjsip_show_config(void *p, zpl_bool detail)
+int pjapp_cfg_show_config(void *p, zpl_bool detail)
 {
-	pl_pjsip_t *sip = pl_pjsip;
+	pjapp_cfg_t *sip = _pjapp_cfg;
 	struct vty *vty = (struct vty *)p;
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 	zassert(vty != NULL);
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 	if(sip->sip_enable)
 	{
 		vty_out(vty, "SIP Service :%s", VTY_NEWLINE);
-		pl_pjsip_account_options_show(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_transport_options_show(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_tls_options_show(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_audio_options_show(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_video_options_show(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_media_transport_options_show(sip, vty, zpl_false, zpl_true);
-		pl_pjsip_user_agent_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_account_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_transport_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_tls_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_audio_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_video_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_media_transport_options_show(sip, vty, zpl_false, zpl_true);
+		pjapp_cfg_user_agent_options_show(sip, vty, zpl_false, zpl_true);
 
 		//voip_volume_show_config(vty, zpl_false);
 		vty_out(vty, "%s",VTY_NEWLINE);
 	}
 	else
 		vty_out(vty, "SIP Service is not enable%s", VTY_NEWLINE);
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 	return OK;
 }
 

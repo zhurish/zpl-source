@@ -10,7 +10,7 @@
 
 
 struct module_list module_list_medie_proxy = {
-		.module = MODULE_MEDIA_PROXY,
+		.module = MODULE_MPROXY,
 		.name = "MEDIA_PROXY\0",
 		.module_init = zpl_media_proxy_init,
 		.module_exit = zpl_media_proxy_exit,
@@ -607,7 +607,7 @@ static int zpl_media_proxy_server_read(struct eloop *t)
 static int mediaProxyTask(void* argv)
 {   
     host_waitting_loadconfig();
-	proxy_server.t_master = eloop_master_module_create(MODULE_MEDIA_PROXY);
+	proxy_server.t_master = eloop_master_module_create(MODULE_MPROXY);
     if(proxy_server.initalition && proxy_server.t_master)
     {
         eloop_mainloop(proxy_server.t_master);
@@ -640,7 +640,7 @@ int zpl_media_proxy_task_exit(void)
 
 int zpl_media_proxy_init(void)
 {
-    struct thread_master *master = eloop_master_module_create(MODULE_MEDIA_PROXY);
+    struct thread_master *master = eloop_master_module_create(MODULE_MPROXY);
     if(master)
         zpl_media_proxy_server_init(master, ZPL_MEDIA_PROXY_PORT);
     return OK;

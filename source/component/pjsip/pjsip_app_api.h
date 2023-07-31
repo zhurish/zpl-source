@@ -253,7 +253,7 @@ typedef struct pjsip_codec_s
 	zpl_bool				is_active;
 }pjsip_codec_t;
 
-typedef struct pl_pjsip_s
+typedef struct pjapp_cfg_s
 {
 	zpl_bool				sip_enable;
 	//just for app
@@ -413,361 +413,352 @@ typedef struct pl_pjsip_s
 	void				*mutex;
 
 	void				*userdata;
-} pl_pjsip_t;
+} pjapp_cfg_t;
 /************************************************************************/
 /************************************************************************/
-extern pl_pjsip_t *pl_pjsip;
+extern pjapp_cfg_t *_pjapp_cfg;
+int pjapp_cfg_config_default(pjapp_cfg_t *sip);
 /************************************************************************/
 /************************************************************************/
-int pl_pjsip_source_change(struct interface *ifp, zpl_bool change);
+int pjapp_cfg_source_change(struct interface *ifp, zpl_bool change);
 /************************************************************************/
-char *pl_pjsip_dtmf_name(pjsip_dtmf_t );
-char *pl_pjsip_transport_name(pjsip_transport_t );
-char *pl_pjsip_reg_proxy_name(pjsip_reg_proxy_t );
-char *pl_pjsip_srtp_name(pjsip_srtp_t );
-char *pl_pjsip_srtp_sec_name(pjsip_srtp_sec_t );
-char *pl_pjsip_timer_name(pjsip_timer_t );
-char *pl_pjsip_echo_mode_name(pjsip_echo_mode_t );
-char *pl_pjsip_accept_redirect_name(pjsip_accept_redirect_t );
-char *pl_pjsip_register_state_name(pjsip_register_state_t );
-char *pl_pjsip_connect_state_name(pjsip_connect_state_t );
-char *pl_pjsip_call_state_name(pjsip_call_state_t );
+char *pjapp_cfg_dtmf_name(pjsip_dtmf_t );
+char *pjapp_cfg_transport_name(pjsip_transport_t );
+char *pjapp_cfg_reg_proxy_name(pjsip_reg_proxy_t );
+char *pjapp_cfg_srtp_name(pjsip_srtp_t );
+char *pjapp_cfg_srtp_sec_name(pjsip_srtp_sec_t );
+char *pjapp_cfg_timer_name(pjsip_timer_t );
+char *pjapp_cfg_echo_mode_name(pjsip_echo_mode_t );
+char *pjapp_cfg_accept_redirect_name(pjsip_accept_redirect_t );
+char *pjapp_cfg_register_state_name(pjsip_register_state_t );
+char *pjapp_cfg_connect_state_name(pjsip_connect_state_t );
+char *pjapp_cfg_call_state_name(pjsip_call_state_t );
 /************************************************************************/
-int pl_pjsip_global_set_api(zpl_bool enable);
-int pl_pjsip_global_get_api(zpl_bool *enable);
-zpl_bool pl_pjsip_global_isenable(void);
+int pjapp_cfg_global_set_api(zpl_bool enable);
+int pjapp_cfg_global_get_api(zpl_bool *enable);
+zpl_bool pjapp_cfg_global_isenable(void);
 
-int pl_pjsip_server_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec);
-int pl_pjsip_server_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec);
+int pjapp_cfg_server_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec);
+int pjapp_cfg_server_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec);
 
-int pl_pjsip_proxy_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec);
-int pl_pjsip_proxy_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec);
+int pjapp_cfg_proxy_set_api(zpl_int8 *ip, zpl_uint16 port, zpl_bool sec);
+int pjapp_cfg_proxy_get_api(zpl_int8 *ip, zpl_uint16 *port, zpl_bool sec);
 
-int pl_pjsip_local_address_set_api(zpl_int8 *address);
-int pl_pjsip_local_address_get_api(zpl_int8 *address);
+int pjapp_cfg_local_address_set_api(zpl_int8 *address);
+int pjapp_cfg_local_address_get_api(zpl_int8 *address);
 
-int pl_pjsip_source_interface_set_api(ifindex_t ifindex);
-int pl_pjsip_source_interface_get_api(ifindex_t *ifindex);
+int pjapp_cfg_source_interface_set_api(ifindex_t ifindex);
+int pjapp_cfg_source_interface_get_api(ifindex_t *ifindex);
 
-int pl_pjsip_local_port_set_api(zpl_uint16 port);
-int pl_pjsip_local_port_get_api(zpl_uint16 *port);
+int pjapp_cfg_local_port_set_api(zpl_uint16 port);
+int pjapp_cfg_local_port_get_api(zpl_uint16 *port);
 
-int pl_pjsip_transport_proto_set_api(pjsip_transport_t proto);
-int pl_pjsip_transport_proto_get_api(pjsip_transport_t *proto);
+int pjapp_cfg_transport_proto_set_api(pjsip_transport_t proto);
+int pjapp_cfg_transport_proto_get_api(pjsip_transport_t *proto);
 
-int pl_pjsip_dtmf_set_api(pjsip_dtmf_t dtmf);
-int pl_pjsip_dtmf_get_api(pjsip_dtmf_t *dtmf);
+int pjapp_cfg_dtmf_set_api(pjsip_dtmf_t dtmf);
+int pjapp_cfg_dtmf_get_api(pjsip_dtmf_t *dtmf);
 
-int pl_pjsip_username_set_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec);
-int pl_pjsip_username_get_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec);
+int pjapp_cfg_username_set_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec);
+int pjapp_cfg_username_get_api(zpl_int8 *user, zpl_int8 *pass, zpl_bool sec);
 
-int pl_pjsip_phonenumber_set_api(zpl_int8 *sip_phone, zpl_bool sec);
-int pl_pjsip_phonenumber_get_api(zpl_int8 *sip_phone, zpl_bool sec);
+int pjapp_cfg_phonenumber_set_api(zpl_int8 *sip_phone, zpl_bool sec);
+int pjapp_cfg_phonenumber_get_api(zpl_int8 *sip_phone, zpl_bool sec);
 
-int pl_pjsip_expires_set_api(zpl_uint16 sip_expires);
-int pl_pjsip_expires_get_api(zpl_uint16 *sip_expires);
+int pjapp_cfg_expires_set_api(zpl_uint16 sip_expires);
+int pjapp_cfg_expires_get_api(zpl_uint16 *sip_expires);
 
-int pl_pjsip_100rel_set_api(zpl_bool sip_100_rel);
-int pl_pjsip_100rel_get_api(zpl_bool *sip_100_rel);
+int pjapp_cfg_100rel_set_api(zpl_bool sip_100_rel);
+int pjapp_cfg_100rel_get_api(zpl_bool *sip_100_rel);
 
-int pl_pjsip_realm_set_api(char *realm);
-int pl_pjsip_realm_get_api(char *realm);
+int pjapp_cfg_realm_set_api(char *realm);
+int pjapp_cfg_realm_get_api(char *realm);
 
-/*
-int pl_pjsip_registration_interval_set_api(zpl_uint16 sip_reg_timeout);
-int pl_pjsip_registration_interval_get_api(zpl_uint16 *sip_reg_timeout);
-*/
 
-int pl_pjsip_reregist_delay_set_api(zpl_uint16 sip_rereg_delay);
-int pl_pjsip_reregist_delay_get_api(zpl_uint16 *sip_rereg_delay);
+int pjapp_cfg_reregist_delay_set_api(zpl_uint16 sip_rereg_delay);
+int pjapp_cfg_reregist_delay_get_api(zpl_uint16 *sip_rereg_delay);
 
-int pl_pjsip_reregister_proxy_set_api(pjsip_reg_proxy_t sip_reg_proxy);
-int pl_pjsip_reregister_proxy_get_api(pjsip_reg_proxy_t *sip_reg_proxy);
+int pjapp_cfg_reregister_proxy_set_api(pjsip_reg_proxy_t sip_reg_proxy);
+int pjapp_cfg_reregister_proxy_get_api(pjsip_reg_proxy_t *sip_reg_proxy);
 
-int pl_pjsip_publish_set_api(zpl_bool sip_publish);
-int pl_pjsip_publish_get_api(zpl_bool *sip_publish);
+int pjapp_cfg_publish_set_api(zpl_bool sip_publish);
+int pjapp_cfg_publish_get_api(zpl_bool *sip_publish);
 
-int pl_pjsip_mwi_set_api(zpl_bool sip_mwi);
-int pl_pjsip_mwi_get_api(zpl_bool *sip_mwi);
+int pjapp_cfg_mwi_set_api(zpl_bool sip_mwi);
+int pjapp_cfg_mwi_get_api(zpl_bool *sip_mwi);
 
-int pl_pjsip_ims_set_api(zpl_bool sip_ims_enable);
-int pl_pjsip_ims_get_api(zpl_bool *sip_ims_enable);
+int pjapp_cfg_ims_set_api(zpl_bool sip_ims_enable);
+int pjapp_cfg_ims_get_api(zpl_bool *sip_ims_enable);
 
-int pl_pjsip_srtp_mode_set_api(pjsip_srtp_t sip_srtp_mode);
-int pl_pjsip_srtp_mode_get_api(pjsip_srtp_t *sip_srtp_mode);
+int pjapp_cfg_srtp_mode_set_api(pjsip_srtp_t sip_srtp_mode);
+int pjapp_cfg_srtp_mode_get_api(pjsip_srtp_t *sip_srtp_mode);
 
-int pl_pjsip_srtp_secure_set_api(pjsip_srtp_sec_t sip_srtp_secure);
-int pl_pjsip_srtp_secure_get_api(pjsip_srtp_sec_t *sip_srtp_secure);
+int pjapp_cfg_srtp_secure_set_api(pjsip_srtp_sec_t sip_srtp_secure);
+int pjapp_cfg_srtp_secure_get_api(pjsip_srtp_sec_t *sip_srtp_secure);
 
-int pl_pjsip_timer_set_api(pjsip_timer_t sip_timer);
-int pl_pjsip_timer_get_api(pjsip_timer_t *sip_timer);
+int pjapp_cfg_timer_set_api(pjsip_timer_t sip_timer);
+int pjapp_cfg_timer_get_api(pjsip_timer_t *sip_timer);
 
-int pl_pjsip_timer_sec_set_api(zpl_uint16 sip_timer_sec);
-int pl_pjsip_timer_sec_get_api(zpl_uint16 *sip_timer_sec);
+int pjapp_cfg_timer_sec_set_api(zpl_uint16 sip_timer_sec);
+int pjapp_cfg_timer_sec_get_api(zpl_uint16 *sip_timer_sec);
 
-int pl_pjsip_outb_rid_set_api(zpl_uint16 sip_outb_rid);
-int pl_pjsip_outb_rid_get_api(zpl_uint16 *sip_outb_rid);
+int pjapp_cfg_outb_rid_set_api(zpl_uint16 sip_outb_rid);
+int pjapp_cfg_outb_rid_get_api(zpl_uint16 *sip_outb_rid);
 
-int pl_pjsip_auto_update_nat_set_api(zpl_bool sip_auto_update_nat);
-int pl_pjsip_auto_update_nat_get_api(zpl_bool *sip_auto_update_nat);
+int pjapp_cfg_auto_update_nat_set_api(zpl_bool sip_auto_update_nat);
+int pjapp_cfg_auto_update_nat_get_api(zpl_bool *sip_auto_update_nat);
 
-int pl_pjsip_stun_set_api(zpl_bool enable);
-int pl_pjsip_stun_get_api(zpl_bool *enable);
+int pjapp_cfg_stun_set_api(zpl_bool enable);
+int pjapp_cfg_stun_get_api(zpl_bool *enable);
 /***************************************************************************/
 //Transport Options:
-int pl_pjsip_ipv6_set_api(zpl_bool enable);
-int pl_pjsip_ipv6_get_api(zpl_bool *enable);
+int pjapp_cfg_ipv6_set_api(zpl_bool enable);
+int pjapp_cfg_ipv6_get_api(zpl_bool *enable);
 
-int pl_pjsip_qos_set_api(zpl_bool enable);
-int pl_pjsip_qos_get_api(zpl_bool *enable);
+int pjapp_cfg_qos_set_api(zpl_bool enable);
+int pjapp_cfg_qos_get_api(zpl_bool *enable);
 
-int pl_pjsip_noudp_set_api(zpl_bool enable);
-int pl_pjsip_noudp_get_api(zpl_bool *enable);
+int pjapp_cfg_noudp_set_api(zpl_bool enable);
+int pjapp_cfg_noudp_get_api(zpl_bool *enable);
 
-int pl_pjsip_notcp_set_api(zpl_bool enable);
-int pl_pjsip_notcp_get_api(zpl_bool *enable);
+int pjapp_cfg_notcp_set_api(zpl_bool enable);
+int pjapp_cfg_notcp_get_api(zpl_bool *enable);
 
-int pl_pjsip_nameserver_set_api(char * address, zpl_uint16 port);
-int pl_pjsip_nameserver_get_api(char * address, zpl_uint16 *port);
+int pjapp_cfg_nameserver_set_api(char * address, zpl_uint16 port);
+int pjapp_cfg_nameserver_get_api(char * address, zpl_uint16 *port);
 
-int pl_pjsip_outbound_set_api(char * address, zpl_uint16 port);
-int pl_pjsip_outbound_get_api(char * address, zpl_uint16 *port);
+int pjapp_cfg_outbound_set_api(char * address, zpl_uint16 port);
+int pjapp_cfg_outbound_get_api(char * address, zpl_uint16 *port);
 
-int pl_pjsip_stun_server_set_api(char * address, zpl_uint16 port);
-int pl_pjsip_stun_server_get_api(char * address, zpl_uint16 *port);
+int pjapp_cfg_stun_server_set_api(char * address, zpl_uint16 port);
+int pjapp_cfg_stun_server_get_api(char * address, zpl_uint16 *port);
 /***************************************************************************/
 //TLS Options:
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
-int pl_pjsip_tls_set_api(zpl_bool enable);
-int pl_pjsip_tls_get_api(zpl_bool *enable);
+int pjapp_cfg_tls_set_api(zpl_bool enable);
+int pjapp_cfg_tls_get_api(zpl_bool *enable);
 
-int pl_pjsip_tls_ca_set_api(char * filename);
-int pl_pjsip_tls_ca_get_api(char * filename);
+int pjapp_cfg_tls_ca_set_api(char * filename);
+int pjapp_cfg_tls_ca_get_api(char * filename);
 
-int pl_pjsip_tls_cert_set_api(char * filename);
-int pl_pjsip_tls_cert_get_api(char * filename);
+int pjapp_cfg_tls_cert_set_api(char * filename);
+int pjapp_cfg_tls_cert_get_api(char * filename);
 
-int pl_pjsip_tls_privkey_set_api(char * filename);
-int pl_pjsip_tls_privkey_get_api(char * filename);
+int pjapp_cfg_tls_privkey_set_api(char * filename);
+int pjapp_cfg_tls_privkey_get_api(char * filename);
 
-int pl_pjsip_tls_password_set_api(char * password);
-int pl_pjsip_tls_password_get_api(char * password);
+int pjapp_cfg_tls_password_set_api(char * password);
+int pjapp_cfg_tls_password_get_api(char * password);
 
-int pl_pjsip_tls_verify_server_set_api(char * address, zpl_uint16 port);
-int pl_pjsip_tls_verify_server_get_api(char * address, zpl_uint16 *port);
+int pjapp_cfg_tls_verify_server_set_api(char * address, zpl_uint16 port);
+int pjapp_cfg_tls_verify_server_get_api(char * address, zpl_uint16 *port);
 
-int pl_pjsip_tls_verify_client_set_api(char * address, zpl_uint16 port);
-int pl_pjsip_tls_verify_client_get_api(char * address, zpl_uint16 *port);
+int pjapp_cfg_tls_verify_client_set_api(char * address, zpl_uint16 port);
+int pjapp_cfg_tls_verify_client_get_api(char * address, zpl_uint16 *port);
 
-int pl_pjsip_tls_cipher_set_api(char * cipher);
-int pl_pjsip_tls_cipher_get_api(char * cipher);
+int pjapp_cfg_tls_cipher_set_api(char * cipher);
+int pjapp_cfg_tls_cipher_get_api(char * cipher);
 #endif
-int pl_pjsip_neg_timeout_set_api(zpl_uint16 sip_neg_timeout);
-int pl_pjsip_neg_timeout_get_api(zpl_uint16 *sip_neg_timeout);
+int pjapp_cfg_neg_timeout_set_api(zpl_uint16 sip_neg_timeout);
+int pjapp_cfg_neg_timeout_get_api(zpl_uint16 *sip_neg_timeout);
 /***************************************************************************/
 //Audio Options:
-int pl_pjsip_codec_add_api(char * sip_codec);
-int pl_pjsip_codec_del_api(char * sip_codec);
-int pl_pjsip_codec_default_set_api(char * sip_codec);
+int pjapp_cfg_codec_add_api(char * sip_codec);
+int pjapp_cfg_codec_del_api(char * sip_codec);
+int pjapp_cfg_codec_default_set_api(char * sip_codec);
 
-int pl_pjsip_discodec_add_api(char * sip_discodec);
-int pl_pjsip_discodec_del_api(char * sip_discodec);
+int pjapp_cfg_discodec_add_api(char * sip_discodec);
+int pjapp_cfg_discodec_del_api(char * sip_discodec);
 
-int pl_pjsip_payload_name_add_api(char * value);
-int pl_pjsip_payload_name_del_api(char * value);
-int pl_pjsip_dis_payload_name_add_api(char * value);
-int pl_pjsip_dis_payload_name_del_api(char * value);
+int pjapp_cfg_payload_name_add_api(char * value);
+int pjapp_cfg_payload_name_del_api(char * value);
+int pjapp_cfg_dis_payload_name_add_api(char * value);
+int pjapp_cfg_dis_payload_name_del_api(char * value);
 
 
-int pl_pjsip_clock_rate_set_api(zpl_uint16 sip_clock_rate);
-int pl_pjsip_clock_rate_get_api(zpl_uint16 *sip_clock_rate);
+int pjapp_cfg_clock_rate_set_api(zpl_uint16 sip_clock_rate);
+int pjapp_cfg_clock_rate_get_api(zpl_uint16 *sip_clock_rate);
 
-int pl_pjsip_snd_clock_rate_set_api(zpl_uint16 sip_snd_clock_rate);
-int pl_pjsip_snd_clock_rate_get_api(zpl_uint16 *sip_snd_clock_rate);
+int pjapp_cfg_snd_clock_rate_set_api(zpl_uint16 sip_snd_clock_rate);
+int pjapp_cfg_snd_clock_rate_get_api(zpl_uint16 *sip_snd_clock_rate);
 
-int pl_pjsip_stereo_set_api(zpl_bool enable);
-int pl_pjsip_stereo_get_api(zpl_bool *enable);
+int pjapp_cfg_stereo_set_api(zpl_bool enable);
+int pjapp_cfg_stereo_get_api(zpl_bool *enable);
 
-int pl_pjsip_audio_null_set_api(zpl_bool enable);
-int pl_pjsip_audio_null_get_api(zpl_bool *enable);
+int pjapp_cfg_audio_null_set_api(zpl_bool enable);
+int pjapp_cfg_audio_null_get_api(zpl_bool *enable);
 
-int pl_pjsip_play_file_set_api(char * filename);
-int pl_pjsip_play_file_get_api(char * filename);
+int pjapp_cfg_play_file_set_api(char * filename);
+int pjapp_cfg_play_file_get_api(char * filename);
 
-int pl_pjsip_play_tone_set_api(char * filename);
-int pl_pjsip_play_tone_get_api(char * filename);
+int pjapp_cfg_play_tone_set_api(char * filename);
+int pjapp_cfg_play_tone_get_api(char * filename);
 
-int pl_pjsip_auto_play_set_api(zpl_bool enable);
-int pl_pjsip_auto_play_get_api(zpl_bool *enable);
+int pjapp_cfg_auto_play_set_api(zpl_bool enable);
+int pjapp_cfg_auto_play_get_api(zpl_bool *enable);
 
-int pl_pjsip_auto_loop_set_api(zpl_bool enable);
-int pl_pjsip_auto_loop_get_api(zpl_bool *enable);
+int pjapp_cfg_auto_loop_set_api(zpl_bool enable);
+int pjapp_cfg_auto_loop_get_api(zpl_bool *enable);
 
-int pl_pjsip_auto_conf_set_api(zpl_bool enable);
-int pl_pjsip_auto_conf_get_api(zpl_bool *enable);
+int pjapp_cfg_auto_conf_set_api(zpl_bool enable);
+int pjapp_cfg_auto_conf_get_api(zpl_bool *enable);
 
-int pl_pjsip_rec_file_set_api(char * filename);
-int pl_pjsip_rec_file_get_api(char * filename);
+int pjapp_cfg_rec_file_set_api(char * filename);
+int pjapp_cfg_rec_file_get_api(char * filename);
 
-int pl_pjsip_quality_set_api(zpl_uint16 sip_quality);
-int pl_pjsip_quality_get_api(zpl_uint16 *sip_quality);
+int pjapp_cfg_quality_set_api(zpl_uint16 sip_quality);
+int pjapp_cfg_quality_get_api(zpl_uint16 *sip_quality);
 
-int pl_pjsip_ptime_set_api(zpl_uint16 sip_ptime);
-int pl_pjsip_ptime_get_api(zpl_uint16 *sip_ptime);
+int pjapp_cfg_ptime_set_api(zpl_uint16 sip_ptime);
+int pjapp_cfg_ptime_get_api(zpl_uint16 *sip_ptime);
 
-int pl_pjsip_no_vad_set_api(zpl_bool enable);
-int pl_pjsip_no_vad_get_api(zpl_bool *enable);
+int pjapp_cfg_no_vad_set_api(zpl_bool enable);
+int pjapp_cfg_no_vad_get_api(zpl_bool *enable);
 
-int pl_pjsip_echo_tail_set_api(zpl_uint16 sip_echo_tail);
-int pl_pjsip_echo_tail_get_api(zpl_uint16 *sip_echo_tail);
+int pjapp_cfg_echo_tail_set_api(zpl_uint16 sip_echo_tail);
+int pjapp_cfg_echo_tail_get_api(zpl_uint16 *sip_echo_tail);
 
-int pl_pjsip_echo_mode_set_api(pjsip_echo_mode_t sip_echo_mode);
-int pl_pjsip_echo_mode_get_api(pjsip_echo_mode_t *sip_echo_mode);
+int pjapp_cfg_echo_mode_set_api(pjsip_echo_mode_t sip_echo_mode);
+int pjapp_cfg_echo_mode_get_api(pjsip_echo_mode_t *sip_echo_mode);
 
-int pl_pjsip_ilbc_mode_set_api(zpl_uint16 sip_ilbc_mode);
-int pl_pjsip_ilbc_mode_get_api(zpl_uint16 *sip_ilbc_mode);
+int pjapp_cfg_ilbc_mode_set_api(zpl_uint16 sip_ilbc_mode);
+int pjapp_cfg_ilbc_mode_get_api(zpl_uint16 *sip_ilbc_mode);
 
-int pl_pjsip_capture_lat_set_api(zpl_uint16 sip_capture_lat);
-int pl_pjsip_capture_lat_get_api(zpl_uint16 *sip_capture_lat);
+int pjapp_cfg_capture_lat_set_api(zpl_uint16 sip_capture_lat);
+int pjapp_cfg_capture_lat_get_api(zpl_uint16 *sip_capture_lat);
 
-int pl_pjsip_playback_lat_set_api(zpl_uint16 sip_playback_lat);
-int pl_pjsip_playback_lat_get_api(zpl_uint16 *sip_playback_lat);
+int pjapp_cfg_playback_lat_set_api(zpl_uint16 sip_playback_lat);
+int pjapp_cfg_playback_lat_get_api(zpl_uint16 *sip_playback_lat);
 
-int pl_pjsip_auto_close_delay_set_api(zpl_int32 sip_snd_auto_close);
-int pl_pjsip_auto_close_delay_get_api(zpl_int32 *sip_snd_auto_close);
+int pjapp_cfg_auto_close_delay_set_api(zpl_int32 sip_snd_auto_close);
+int pjapp_cfg_auto_close_delay_get_api(zpl_int32 *sip_snd_auto_close);
 
-int pl_pjsip_no_tones_set_api(zpl_bool enable);
-int pl_pjsip_no_tones_get_api(zpl_bool *enable);
+int pjapp_cfg_no_tones_set_api(zpl_bool enable);
+int pjapp_cfg_no_tones_get_api(zpl_bool *enable);
 
-int pl_pjsip_jb_max_size_set_api(zpl_int32 sip_jb_max_size);
-int pl_pjsip_jb_max_size_get_api(zpl_int32 *sip_jb_max_size);
+int pjapp_cfg_jb_max_size_set_api(zpl_int32 sip_jb_max_size);
+int pjapp_cfg_jb_max_size_get_api(zpl_int32 *sip_jb_max_size);
 /************************************************************************/
 #if PJSUA_HAS_VIDEO
-int pl_pjsip_video_enable_set_api(zpl_bool enable);
-int pl_pjsip_video_enable_get_api(zpl_bool *enable);
+int pjapp_cfg_video_enable_set_api(zpl_bool enable);
+int pjapp_cfg_video_enable_get_api(zpl_bool *enable);
 
-int pl_pjsip_video_play_file_set_api(char * filename);
-int pl_pjsip_video_play_file_get_api(char * filename);
+int pjapp_cfg_video_play_file_set_api(char * filename);
+int pjapp_cfg_video_play_file_get_api(char * filename);
 
-int pl_pjsip_video_auto_play_set_api(zpl_bool enable);
-int pl_pjsip_video_auto_play_get_api(zpl_bool *enable);
+int pjapp_cfg_video_auto_play_set_api(zpl_bool enable);
+int pjapp_cfg_video_auto_play_get_api(zpl_bool *enable);
 #endif
 
 /************************************************************************/
-int pl_pjsip_ice_enable_set_api(zpl_bool enable);
-int pl_pjsip_ice_enable_get_api(zpl_bool *enable);
+int pjapp_cfg_ice_enable_set_api(zpl_bool enable);
+int pjapp_cfg_ice_enable_get_api(zpl_bool *enable);
 
-int pl_pjsip_ice_nortcp_set_api(zpl_bool enable);
-int pl_pjsip_ice_nortcp_get_api(zpl_bool *enable);
+int pjapp_cfg_ice_nortcp_set_api(zpl_bool enable);
+int pjapp_cfg_ice_nortcp_get_api(zpl_bool *enable);
 
-int pl_pjsip_ice_regular_set_api(zpl_uint32 value);
-int pl_pjsip_ice_regular_get_api(zpl_uint32 *value);
+int pjapp_cfg_ice_regular_set_api(zpl_uint32 value);
+int pjapp_cfg_ice_regular_get_api(zpl_uint32 *value);
 
-int pl_pjsip_ice_max_host_set_api(zpl_uint32 value);
-int pl_pjsip_ice_max_host_get_api(zpl_uint32 *value);
+int pjapp_cfg_ice_max_host_set_api(zpl_uint32 value);
+int pjapp_cfg_ice_max_host_get_api(zpl_uint32 *value);
 
-int pl_pjsip_rtp_port_set_api(zpl_uint16 value);
-int pl_pjsip_rtp_port_get_api(zpl_uint16 *value);
+int pjapp_cfg_rtp_port_set_api(zpl_uint16 value);
+int pjapp_cfg_rtp_port_get_api(zpl_uint16 *value);
 
-int pl_pjsip_rx_drop_pct_set_api(zpl_uint16 value);
-int pl_pjsip_rx_drop_pct_get_api(zpl_uint16 *value);
+int pjapp_cfg_rx_drop_pct_set_api(zpl_uint16 value);
+int pjapp_cfg_rx_drop_pct_get_api(zpl_uint16 *value);
 
-int pl_pjsip_tx_drop_pct_set_api(zpl_uint16 value);
-int pl_pjsip_tx_drop_pct_get_api(zpl_uint16 *value);
+int pjapp_cfg_tx_drop_pct_set_api(zpl_uint16 value);
+int pjapp_cfg_tx_drop_pct_get_api(zpl_uint16 *value);
 
-int pl_pjsip_turn_enable_set_api(zpl_bool enable);
-int pl_pjsip_turn_enable_get_api(zpl_bool *enable);
+int pjapp_cfg_turn_enable_set_api(zpl_bool enable);
+int pjapp_cfg_turn_enable_get_api(zpl_bool *enable);
 
-int pl_pjsip_turn_server_set_api(char * address, zpl_uint16 port);
-int pl_pjsip_turn_server_get_api(char * address, zpl_uint16 *port);
+int pjapp_cfg_turn_server_set_api(char * address, zpl_uint16 port);
+int pjapp_cfg_turn_server_get_api(char * address, zpl_uint16 *port);
 
-int pl_pjsip_turn_tcp_set_api(zpl_bool enable);
-int pl_pjsip_turn_tcp_get_api(zpl_bool *enable);
+int pjapp_cfg_turn_tcp_set_api(zpl_bool enable);
+int pjapp_cfg_turn_tcp_get_api(zpl_bool *enable);
 
-int pl_pjsip_turn_username_set_api(char * username);
-int pl_pjsip_turn_username_get_api(char * username);
+int pjapp_cfg_turn_username_set_api(char * username);
+int pjapp_cfg_turn_username_get_api(char * username);
 
-int pl_pjsip_turn_password_set_api(char * password);
-int pl_pjsip_turn_password_get_api(char * password);
+int pjapp_cfg_turn_password_set_api(char * password);
+int pjapp_cfg_turn_password_get_api(char * password);
 
-int pl_pjsip_rtcp_mux_set_api(zpl_bool value);
-int pl_pjsip_rtcp_mux_get_api(zpl_bool *value);
+int pjapp_cfg_rtcp_mux_set_api(zpl_bool value);
+int pjapp_cfg_rtcp_mux_get_api(zpl_bool *value);
 
-int pl_pjsip_srtp_keying_set_api(pjsip_srtp_keying_t value);
-int pl_pjsip_srtp_keying_get_api(pjsip_srtp_keying_t *value);
+int pjapp_cfg_srtp_keying_set_api(pjsip_srtp_keying_t value);
+int pjapp_cfg_srtp_keying_get_api(pjsip_srtp_keying_t *value);
 
 //User Agent options:
-int pl_pjsip_auto_answer_code_set_api(zpl_uint16 value);
-int pl_pjsip_auto_answer_code_get_api(zpl_uint16 *value);
+int pjapp_cfg_auto_answer_code_set_api(zpl_uint16 value);
+int pjapp_cfg_auto_answer_code_get_api(zpl_uint16 *value);
 
-int pl_pjsip_max_calls_set_api(zpl_uint16 value);
-int pl_pjsip_max_calls_get_api(zpl_uint16 *value);
+int pjapp_cfg_max_calls_set_api(zpl_uint16 value);
+int pjapp_cfg_max_calls_get_api(zpl_uint16 *value);
 
-int pl_pjsip_max_thread_set_api(zpl_uint16 value);
-int pl_pjsip_max_thread_get_api(zpl_uint16 *value);
+int pjapp_cfg_max_thread_set_api(zpl_uint16 value);
+int pjapp_cfg_max_thread_get_api(zpl_uint16 *value);
 
-int pl_pjsip_duration_set_api(zpl_uint32 value);
-int pl_pjsip_duration_get_api(zpl_uint32 *value);
+int pjapp_cfg_duration_set_api(zpl_uint32 value);
+int pjapp_cfg_duration_get_api(zpl_uint32 *value);
 
-int pl_pjsip_norefersub_set_api(zpl_uint16 value);
-int pl_pjsip_norefersub_get_api(zpl_uint16 *value);
+int pjapp_cfg_norefersub_set_api(zpl_uint16 value);
+int pjapp_cfg_norefersub_get_api(zpl_uint16 *value);
 
-int pl_pjsip_use_compact_form_set_api(zpl_uint16 value);
-int pl_pjsip_use_compact_form_get_api(zpl_uint16 *value);
+int pjapp_cfg_use_compact_form_set_api(zpl_uint16 value);
+int pjapp_cfg_use_compact_form_get_api(zpl_uint16 *value);
 
-int pl_pjsip_no_force_lr_set_api(zpl_uint16 value);
-int pl_pjsip_no_force_lr_get_api(zpl_uint16 *value);
+int pjapp_cfg_no_force_lr_set_api(zpl_uint16 value);
+int pjapp_cfg_no_force_lr_get_api(zpl_uint16 *value);
 
-int pl_pjsip_accept_redirect_set_api(pjsip_accept_redirect_t value);
-int pl_pjsip_accept_redirect_get_api(pjsip_accept_redirect_t *value);
+int pjapp_cfg_accept_redirect_set_api(pjsip_accept_redirect_t value);
+int pjapp_cfg_accept_redirect_get_api(pjsip_accept_redirect_t *value);
 /************************************************************************/
-int pl_pjsip_debug_level_set_api(zpl_uint32 level);
-int pl_pjsip_debug_level_get_api(zpl_uint32 *level);
-int pl_pjsip_debug_detail_set_api(zpl_bool enable);
-int pl_pjsip_debug_detail_get_api(zpl_bool *enable);
+int pjapp_cfg_debug_level_set_api(zpl_uint32 level);
+int pjapp_cfg_debug_level_get_api(zpl_uint32 *level);
+int pjapp_cfg_debug_detail_set_api(zpl_bool enable);
+int pjapp_cfg_debug_detail_get_api(zpl_bool *enable);
 /************************************************************************/
-int pl_pjsip_account_set_api(pjsua_acc_id id, void *p);
-int pl_pjsip_account_get_api(pjsua_acc_id id, pjsip_username_t *p);
-zpl_bool pl_pjsip_isregister_api(void);
+int pjapp_cfg_account_set_api(pjsua_acc_id id, void *p);
+int pjapp_cfg_account_get_api(pjsua_acc_id id, pjsip_username_t *p);
+zpl_bool pjapp_cfg_isregister_api(void);
 
 /************************************************************************/
 /************************************************************************/
-int pl_pjsip_app_add_acc(char *sip_url, char *sip_srv, char *realm,
+int pjapp_cfg_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass, pjsua_acc_id *accid);
-int pl_pjsip_app_del_acc(pjsua_acc_id accid);
-int pl_pjsip_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
+int pjapp_cfg_app_del_acc(pjsua_acc_id accid);
+int pjapp_cfg_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass);
-int pl_pjsip_app_select_acc(pjsua_acc_id accid, zpl_uint32 type);
-int pl_pjsip_app_reg_acc(zpl_bool reg);
-int pl_pjsip_app_list_acc(pjsua_acc_id accid);
+int pjapp_cfg_app_select_acc(pjsua_acc_id accid, zpl_uint32 type);
+int pjapp_cfg_app_reg_acc(zpl_bool reg);
+int pjapp_cfg_app_list_acc(pjsua_acc_id accid);
 /************************************************************************/
 /************************************************************************/
-int pl_pjsip_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid);
-int pl_pjsip_app_stop_call(pjsua_call_id callid, zpl_bool all);
-int pl_pjsip_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code);
-int pl_pjsip_app_hold_call(pjsua_call_id callid);
-int pl_pjsip_app_reinvite_call(pjsua_call_id callid);
-int pl_pjsip_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 code);
-int pl_pjsip_app_select_call(pjsua_call_id callid, zpl_uint32 type);
+int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid);
+int pjapp_cfg_app_stop_call(pjsua_call_id callid, zpl_bool all);
+int pjapp_cfg_app_answer_call(pjsua_call_id callid, zpl_uint32 st_code);
+int pjapp_cfg_app_hold_call(pjsua_call_id callid);
+int pjapp_cfg_app_reinvite_call(pjsua_call_id callid);
+int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, zpl_uint32 type, zpl_uint32 code);
+int pjapp_cfg_app_select_call(pjsua_call_id callid, zpl_uint32 type);
 /************************************************************************/
 /************************************************************************/
-int pl_pjsip_multiuser_set_api(zpl_bool enable);
-zpl_bool pl_pjsip_multiuser_get_api(void);
-int pl_pjsip_active_standby_set_api(zpl_bool enable);
-zpl_bool pl_pjsip_active_standby_get_api(void);
+int pjapp_cfg_multiuser_set_api(zpl_bool enable);
+zpl_bool pjapp_cfg_multiuser_get_api(void);
+int pjapp_cfg_active_standby_set_api(zpl_bool enable);
+zpl_bool pjapp_cfg_active_standby_get_api(void);
 /************************************************************************/
 /************************************************************************/
-int pl_pjsip_show_account_state(void *p);
-int pl_pjsip_write_config(void *p);
-int pl_pjsip_show_config(void *p, zpl_bool detail);
-void cmd_voip_init(void);
-void cmd_voip_test_init(int node);
-/************************************************************************/
-int pl_pjsip_module_init(void);
-int pl_pjsip_module_exit(void);
-int pl_pjsip_module_task_init(void);
-int pl_pjsip_module_task_exit(void);
-int pl_pjsip_json_test(void);
+int pjapp_cfg_show_account_state(void *p);
+int pjapp_cfg_write_config(void *p);
+int pjapp_cfg_show_config(void *p, zpl_bool detail);
+int pjapp_cmd_init(void);
+
 /************************************************************************/
 
 

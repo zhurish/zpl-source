@@ -1430,7 +1430,7 @@ static pj_status_t app_init(void)
     pj_pool_t *tmp_pool;
     pj_status_t status;
 
-    pjsip_log_config(&_global_config.app_config);
+    pjsua_app_cfg_log_config(&_global_config.app_config);
 
     /** Create pjsua **/
     status = pjsua_create();
@@ -1456,7 +1456,7 @@ static pj_status_t app_init(void)
         return status;
     }
 */
-    status = pjsip_load_config(&_global_config.app_config);
+    status = pjsua_app_cfg_load_config(&_global_config.app_config);
     if (status != PJ_SUCCESS) {
 		pj_pool_release(tmp_pool);
 		return status;

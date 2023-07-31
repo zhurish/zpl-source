@@ -25,7 +25,7 @@
 
 #define THIS_FILE	"pjsua_app_cfgapi.c"
 
-static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
+static PJ_DEF(void) pjsua_app_cfg_log_cb(int level, const char *buffer, int len)
 {
 	zassert(buffer != NULL);
 	if(!len)
@@ -43,31 +43,31 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_TRAP, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_TRAP, "%s", buffer);
 			break;
 		case 4:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_DEBUG, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_DEBUG, "%s", buffer);
 			break;
 		case 3:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_INFO, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_INFO, "%s", buffer);
 			break;
 		case 5:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_NOTICE, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_NOTICE, "%s", buffer);
 			break;
 		case 2:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_WARNING, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_WARNING, "%s", buffer);
 			break;
 		case 1:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_ERR, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ERR, "%s", buffer);
 			break;
 		case 0:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_CRIT, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_CRIT, "%s", buffer);
 			break;
 /*		case ZLOG_LEVEL_ALERT:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_ALERT + 1, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ALERT + 1, "%s", buffer);
 			break;
 		case ZLOG_LEVEL_EMERG:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_EMERG + 1, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_EMERG + 1, "%s", buffer);
 			break;*/
 		default:
 			break;
@@ -83,25 +83,25 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_TRAP, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_TRAP, "%s", buffer);
 			break;
 		case 4:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_DEBUG, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_DEBUG, "%s", buffer);
 			break;
 		case 3:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_INFO, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_INFO, "%s", buffer);
 			break;
 		case 5:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_NOTICE, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_NOTICE, "%s", buffer);
 			break;
 		case 2:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_WARNING, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_WARNING, "%s", buffer);
 			break;
 		case 1:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_ERR, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ERR, "%s", buffer);
 			break;
 		case 0:
-			zlog_other(MODULE_PJSIP, ZLOG_LEVEL_CRIT, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_CRIT, "%s", buffer);
 			break;
 		default:
 			break;
@@ -109,7 +109,7 @@ static PJ_DEF(void) pj_pjsip_log_cb(int level, const char *buffer, int len)
 	}
 }
 
-int pl_pjsip_log_file(pjsua_app_config *cfg, char *logfile)
+int pjsua_app_cfg_log_file(pjsua_app_config *cfg, char *logfile)
 {
 	zassert(cfg != NULL);
 	zassert(logfile != NULL);
@@ -129,7 +129,7 @@ int pl_pjsip_log_file(pjsua_app_config *cfg, char *logfile)
 	return OK;
 }
 
-int pl_pjsip_log_level(pjsua_app_config *cfg, int level)
+int pjsua_app_cfg_log_level(pjsua_app_config *cfg, int level)
 {
 	zassert(cfg != NULL);
 	if (level < 0 || level > 6)
@@ -143,7 +143,7 @@ int pl_pjsip_log_level(pjsua_app_config *cfg, int level)
 	return OK;
 }
 
-int pl_pjsip_app_log_level(pjsua_app_config *cfg, int level)
+int pjsua_app_cfg_app_log_level(pjsua_app_config *cfg, int level)
 {
 	zassert(cfg != NULL);
 	if (level < 0 || level > 6)
@@ -156,7 +156,7 @@ int pl_pjsip_app_log_level(pjsua_app_config *cfg, int level)
 	return OK;
 }
 
-int pl_pjsip_log_option(pjsua_app_config *cfg, int option, pj_bool_t enable)
+int pjsua_app_cfg_log_option(pjsua_app_config *cfg, int option, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	if (enable)
@@ -166,7 +166,7 @@ int pl_pjsip_log_option(pjsua_app_config *cfg, int option, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_log_color(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_log_color(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	if (enable)
@@ -176,7 +176,7 @@ int pl_pjsip_log_color(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_log_light_bg(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_log_light_bg(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	pj_log_set_color(1, PJ_TERM_COLOR_R);
 	pj_log_set_color(2, PJ_TERM_COLOR_R | PJ_TERM_COLOR_G);
@@ -187,14 +187,14 @@ int pl_pjsip_log_light_bg(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_null_audio(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_null_audio(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->null_audio = enable;
 	return OK;
 }
 
-int pl_pjsip_clock_rate(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_clock_rate(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	if (lval < 8000 || lval > 192000)
@@ -207,7 +207,7 @@ int pl_pjsip_clock_rate(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_snd_clock_rate(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_snd_clock_rate(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	if (lval < 8000 || lval > 192000)
@@ -220,14 +220,14 @@ int pl_pjsip_snd_clock_rate(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_stereo(pjsua_app_config *cfg)
+int pjsua_app_cfg_stereo(pjsua_app_config *cfg)
 {
 	zassert(cfg != NULL);
 	cfg->media_cfg.channel_count = 2;
 	return OK;
 }
 
-int pl_pjsip_local_port(pjsua_app_config *cfg, pj_int32_t lval)
+int pjsua_app_cfg_local_port(pjsua_app_config *cfg, pj_int32_t lval)
 {
 	zassert(cfg != NULL);
 	if (lval < 0 || lval > 65535)
@@ -240,7 +240,7 @@ int pl_pjsip_local_port(pjsua_app_config *cfg, pj_int32_t lval)
 	return OK;
 }
 
-int pl_pjsip_public_address(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_public_address(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -265,7 +265,7 @@ int pl_pjsip_public_address(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_bound_address(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_bound_address(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	if (cfg->udp_cfg.bound_addr.slen)
@@ -293,7 +293,7 @@ int pl_pjsip_bound_address(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_no_udp(pjsua_app_config *cfg)
+int pjsua_app_cfg_no_udp(pjsua_app_config *cfg)
 {
 	zassert(cfg != NULL);
 	if (cfg->no_tcp && !cfg->use_tls)
@@ -306,7 +306,7 @@ int pl_pjsip_no_udp(pjsua_app_config *cfg)
 	return OK;
 }
 
-int pl_pjsip_no_tcp(pjsua_app_config *cfg)
+int pjsua_app_cfg_no_tcp(pjsua_app_config *cfg)
 {
 	zassert(cfg != NULL);
 	if (cfg->no_udp && !cfg->use_tls)
@@ -319,14 +319,14 @@ int pl_pjsip_no_tcp(pjsua_app_config *cfg)
 	return OK;
 }
 
-int pl_pjsip_norefersub(pjsua_app_config *cfg)
+int pjsua_app_cfg_norefersub(pjsua_app_config *cfg)
 {
 	zassert(cfg != NULL);
 	cfg->no_refersub = PJ_TRUE;
 	return OK;
 }
 
-int pl_pjsip_proxy(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_proxy(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -351,7 +351,7 @@ int pl_pjsip_proxy(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_outbound_proxy(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_outbound_proxy(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -376,7 +376,7 @@ int pl_pjsip_outbound_proxy(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_registrar(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_registrar(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -400,7 +400,7 @@ int pl_pjsip_registrar(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_register_timeout(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_register_timeout(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -415,7 +415,7 @@ int pl_pjsip_register_timeout(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_publish(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_publish(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -424,7 +424,7 @@ int pl_pjsip_publish(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_mwi(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_mwi(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -433,7 +433,7 @@ int pl_pjsip_mwi(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_100rel(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_100rel(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -451,7 +451,7 @@ int pl_pjsip_100rel(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_session_timer(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_session_timer(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -467,7 +467,7 @@ int pl_pjsip_session_timer(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_session_timer_expiration(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_session_timer_expiration(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -483,7 +483,7 @@ int pl_pjsip_session_timer_expiration(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_session_timer_expiration_min(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_session_timer_expiration_min(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -499,7 +499,7 @@ int pl_pjsip_session_timer_expiration_min(pjsua_app_config *cfg, int lval)
 	return OK;
 }
 
-int pl_pjsip_outbound_reg_id(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_outbound_reg_id(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -517,7 +517,7 @@ int pl_pjsip_outbound_reg_id(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_ims(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_ims(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -526,7 +526,7 @@ int pl_pjsip_ims(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_url_id(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_url_id(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -549,7 +549,7 @@ int pl_pjsip_url_id(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_contact(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_contact(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -572,7 +572,7 @@ int pl_pjsip_contact(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_contact_params(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_contact_params(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -595,7 +595,7 @@ int pl_pjsip_contact_params(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_contact_uri_params(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_contact_uri_params(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -618,7 +618,7 @@ int pl_pjsip_contact_uri_params(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_update_nat(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_update_nat(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -627,7 +627,7 @@ int pl_pjsip_update_nat(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_stun(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_stun(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -645,7 +645,7 @@ int pl_pjsip_stun(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_compact_form(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_compact_form(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	extern pj_bool_t pjsip_include_allow_hdr_in_dlg;
@@ -658,28 +658,28 @@ int pl_pjsip_compact_form(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_accept_redirect(pjsua_app_config *cfg, int lval)
+int pjsua_app_cfg_accept_redirect(pjsua_app_config *cfg, int lval)
 {
 	zassert(cfg != NULL);
 	cfg->redir_op = lval;
 	return OK;
 }
 
-int pl_pjsip_no_force_lr(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_no_force_lr(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->cfg.force_lr = enable;
 	return OK;
 }
 
-int pl_pjsip_next_account(pjsua_app_config *cfg)
+int pjsua_app_cfg_next_account(pjsua_app_config *cfg)
 {
 	zassert(cfg != NULL);
 	cfg->acc_cnt++;
 	return OK;
 }
 
-int pl_pjsip_username(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_username(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -702,7 +702,7 @@ int pl_pjsip_username(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_scheme(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_scheme(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -719,7 +719,7 @@ int pl_pjsip_scheme(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_realm(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_realm(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -736,7 +736,7 @@ int pl_pjsip_realm(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_password(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_password(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -768,7 +768,7 @@ int pl_pjsip_password(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_reg_retry_interval(pjsua_app_config *cfg, int interval)
+int pjsua_app_cfg_reg_retry_interval(pjsua_app_config *cfg, int interval)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -777,7 +777,7 @@ int pl_pjsip_reg_retry_interval(pjsua_app_config *cfg, int interval)
 	return OK;
 }
 
-int pl_pjsip_reg_use_proxy(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_reg_use_proxy(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -792,7 +792,7 @@ int pl_pjsip_reg_use_proxy(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_credential(pjsua_app_config *cfg, int credential)
+int pjsua_app_cfg_credential(pjsua_app_config *cfg, int credential)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -801,7 +801,7 @@ int pl_pjsip_credential(pjsua_app_config *cfg, int credential)
 	return OK;
 }
 
-int pl_pjsip_nameserver(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_nameserver(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -825,7 +825,7 @@ int pl_pjsip_nameserver(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_stunserver(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_stunserver(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -857,7 +857,7 @@ int pl_pjsip_stunserver(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_buddy_list(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_buddy_list(pjsua_app_config *cfg, char * lval)
 {
 	//pjsua_acc_config *cur_acc;
 	zassert(cfg != NULL);
@@ -886,7 +886,7 @@ int pl_pjsip_buddy_list(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_auto_play(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_auto_play(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	//pjsua_acc_config *cur_acc;
@@ -895,7 +895,7 @@ int pl_pjsip_auto_play(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_auto_play_hangup(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_auto_play_hangup(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	//pjsua_acc_config *cur_acc;
@@ -904,28 +904,28 @@ int pl_pjsip_auto_play_hangup(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_auto_rec(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_auto_rec(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->auto_rec = enable;
 	return OK;
 }
 
-int pl_pjsip_auto_loop(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_auto_loop(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->auto_loop = enable;
 	return OK;
 }
 
-int pl_pjsip_auto_config(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_auto_config(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->auto_conf = enable;
 	return OK;
 }
 
-int pl_pjsip_play_file(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_play_file(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -941,7 +941,7 @@ int pl_pjsip_play_file(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_play_tone(pjsua_app_config *cfg, int f1, int f2, int on, int off)
+int pjsua_app_cfg_play_tone(pjsua_app_config *cfg, int f1, int f2, int on, int off)
 {
 	zassert(cfg != NULL);
 	cfg->tones[cfg->tone_count].freq1 = (zpl_int16) f1;
@@ -952,7 +952,7 @@ int pl_pjsip_play_tone(pjsua_app_config *cfg, int f1, int f2, int on, int off)
 	return OK;
 }
 
-int pl_pjsip_rec_file(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_rec_file(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -968,7 +968,7 @@ int pl_pjsip_rec_file(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_ice_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_ice_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -982,7 +982,7 @@ int pl_pjsip_ice_enable(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_regular_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_regular_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -992,7 +992,7 @@ int pl_pjsip_regular_enable(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_turn_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_turn_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1005,7 +1005,7 @@ int pl_pjsip_turn_enable(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_ice_max_hosts(pjsua_app_config *cfg, int maxnum)
+int pjsua_app_cfg_ice_max_hosts(pjsua_app_config *cfg, int maxnum)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1015,7 +1015,7 @@ int pl_pjsip_ice_max_hosts(pjsua_app_config *cfg, int maxnum)
 	return OK;
 }
 
-int pl_pjsip_ice_nortcp_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_ice_nortcp_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1024,7 +1024,7 @@ int pl_pjsip_ice_nortcp_enable(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_turn_srv(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_turn_srv(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1050,7 +1050,7 @@ int pl_pjsip_turn_srv(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_turn_tcp(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_turn_tcp(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1060,7 +1060,7 @@ int pl_pjsip_turn_tcp(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_turn_user(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_turn_user(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1085,7 +1085,7 @@ int pl_pjsip_turn_user(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_turn_password(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_turn_password(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1110,7 +1110,7 @@ int pl_pjsip_turn_password(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_rtcp_mux(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_rtcp_mux(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1121,7 +1121,7 @@ int pl_pjsip_rtcp_mux(pjsua_app_config *cfg, pj_bool_t enable)
 }
 
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
-int pl_pjsip_srtp_enable(pjsua_app_config *cfg, pj_uint32_t type)
+int pjsua_app_cfg_srtp_enable(pjsua_app_config *cfg, pj_uint32_t type)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1143,7 +1143,7 @@ int pl_pjsip_srtp_enable(pjsua_app_config *cfg, pj_uint32_t type)
 	return OK;
 }
 
-int pl_pjsip_srtp_secure(pjsua_app_config *cfg, pj_uint32_t type)
+int pjsua_app_cfg_srtp_secure(pjsua_app_config *cfg, pj_uint32_t type)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1159,7 +1159,7 @@ int pl_pjsip_srtp_secure(pjsua_app_config *cfg, pj_uint32_t type)
 	return OK;
 }
 
-int pl_pjsip_srtp_keying(pjsua_app_config *cfg, pj_uint32_t type)
+int pjsua_app_cfg_srtp_keying(pjsua_app_config *cfg, pj_uint32_t type)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc = NULL;
@@ -1187,7 +1187,7 @@ int pl_pjsip_srtp_keying(pjsua_app_config *cfg, pj_uint32_t type)
 }
 #endif
 
-int pl_pjsip_rtp_port(pjsua_app_config *cfg, int port)
+int pjsua_app_cfg_rtp_port(pjsua_app_config *cfg, int port)
 {
 	zassert(cfg != NULL);
 	if (port == 0)
@@ -1214,7 +1214,7 @@ int pl_pjsip_rtp_port(pjsua_app_config *cfg, int port)
 	return OK;
 }
 
-int pl_pjsip_dis_codec(pjsua_app_config *cfg, char *lval)
+int pjsua_app_cfg_dis_codec(pjsua_app_config *cfg, char *lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1227,7 +1227,7 @@ int pl_pjsip_dis_codec(pjsua_app_config *cfg, char *lval)
 	return OK;
 }
 
-int pl_pjsip_add_codec(pjsua_app_config *cfg, char *lval)
+int pjsua_app_cfg_add_codec(pjsua_app_config *cfg, char *lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1241,14 +1241,14 @@ int pl_pjsip_add_codec(pjsua_app_config *cfg, char *lval)
 	return OK;
 }
 
-int pl_pjsip_duration(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_duration(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->duration = value;
 	return OK;
 }
 
-int pl_pjsip_thread_cnt(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_thread_cnt(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value > 128)
@@ -1260,7 +1260,7 @@ int pl_pjsip_thread_cnt(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_ptime(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_ptime(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value < 10 || value > 1000)
@@ -1272,14 +1272,14 @@ int pl_pjsip_ptime(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_novad(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_novad(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->media_cfg.no_vad = enable;
 	return OK;
 }
 
-int pl_pjsip_ec_tial(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_ec_tial(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value > 1000)
@@ -1292,14 +1292,14 @@ int pl_pjsip_ec_tial(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_ec_options(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_ec_options(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->media_cfg.ec_options = value;
 	return OK;
 }
 
-int pl_pjsip_quality(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_quality(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value > 10)
@@ -1311,7 +1311,7 @@ int pl_pjsip_quality(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_ilbc_mode(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_ilbc_mode(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value != 20 && value != 30)
@@ -1324,7 +1324,7 @@ int pl_pjsip_ilbc_mode(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_rx_drop_pct(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_rx_drop_pct(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (cfg->media_cfg.rx_drop_pct > 100)
@@ -1337,7 +1337,7 @@ int pl_pjsip_rx_drop_pct(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_tx_drop_pct(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_tx_drop_pct(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (cfg->media_cfg.tx_drop_pct > 100)
@@ -1350,7 +1350,7 @@ int pl_pjsip_tx_drop_pct(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_auto_answer(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_auto_answer(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value < 100 || value > 699)
@@ -1363,7 +1363,7 @@ int pl_pjsip_auto_answer(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_max_calls(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_max_calls(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	if (value < 1 || value > PJSUA_MAX_CALLS)
@@ -1377,14 +1377,14 @@ int pl_pjsip_max_calls(pjsua_app_config *cfg, int value)
 }
 
 #if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
-int pl_pjsip_tls_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_tls_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->use_tls = enable;
 	return OK;
 }
 
-int pl_pjsip_tls_ca_file(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_tls_ca_file(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1393,7 +1393,7 @@ int pl_pjsip_tls_ca_file(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_tls_cert_file(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_tls_cert_file(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1402,7 +1402,7 @@ int pl_pjsip_tls_cert_file(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_tls_priv_file(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_tls_priv_file(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1411,7 +1411,7 @@ int pl_pjsip_tls_priv_file(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_tls_password(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_tls_password(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1420,14 +1420,14 @@ int pl_pjsip_tls_password(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_tls_verify_server(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_tls_verify_server(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->udp_cfg.tls_setting.verify_server = enable;
 	return OK;
 }
 
-int pl_pjsip_tls_verify_client(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_tls_verify_client(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->udp_cfg.tls_setting.verify_client = enable;
@@ -1435,14 +1435,14 @@ int pl_pjsip_tls_verify_client(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_tls_neg_timeout(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_tls_neg_timeout(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->udp_cfg.tls_setting.timeout.sec = value;
 	return OK;
 }
 
-int pl_pjsip_tls_cipher(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_tls_cipher(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1485,49 +1485,49 @@ int pl_pjsip_tls_cipher(pjsua_app_config *cfg, char * lval)
 }
 #endif
 
-int pl_pjsip_capture_dev(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_capture_dev(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->capture_dev = value;
 	return OK;
 }
 
-int pl_pjsip_capture_lat(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_capture_lat(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->capture_lat = value;
 	return OK;
 }
 
-int pl_pjsip_playback_dev(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_playback_dev(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->capture_dev = value;
 	return OK;
 }
 
-int pl_pjsip_playback_lat(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_playback_lat(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->playback_lat = value;
 	return OK;
 }
 
-int pl_pjsip_snd_auto_close(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_snd_auto_close(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->media_cfg.snd_auto_close_time = value;
 	return OK;
 }
 
-int pl_pjsip_no_tones(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_no_tones(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->no_tones = enable;
 	return OK;
 }
 
-int pl_pjsip_jb_max_size(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_jb_max_size(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	cfg->media_cfg.jb_max = value;
@@ -1535,7 +1535,7 @@ int pl_pjsip_jb_max_size(pjsua_app_config *cfg, int value)
 }
 
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
-int pl_pjsip_ipv6_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_ipv6_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->ipv6 = enable;
@@ -1543,7 +1543,7 @@ int pl_pjsip_ipv6_enable(pjsua_app_config *cfg, pj_bool_t enable)
 }
 #endif
 
-int pl_pjsip_qos_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_qos_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->enable_qos = enable;
@@ -1558,7 +1558,7 @@ int pl_pjsip_qos_enable(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_video_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_video_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->vid.vid_cnt = 1;
@@ -1567,14 +1567,14 @@ int pl_pjsip_video_enable(pjsua_app_config *cfg, pj_bool_t enable)
 	return OK;
 }
 
-int pl_pjsip_extra_audio(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_extra_audio(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->aud_cnt++;
 	return OK;
 }
 
-int pl_pjsip_vcapture_dev(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_vcapture_dev(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc;
@@ -1583,7 +1583,7 @@ int pl_pjsip_vcapture_dev(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_vrender_dev(pjsua_app_config *cfg, int value)
+int pjsua_app_cfg_vrender_dev(pjsua_app_config *cfg, int value)
 {
 	zassert(cfg != NULL);
 	pjsua_acc_config *cur_acc;
@@ -1592,7 +1592,7 @@ int pl_pjsip_vrender_dev(pjsua_app_config *cfg, int value)
 	return OK;
 }
 
-int pl_pjsip_play_avi(pjsua_app_config *cfg, char * lval)
+int pjsua_app_cfg_play_avi(pjsua_app_config *cfg, char * lval)
 {
 	zassert(cfg != NULL);
 	zassert(lval != NULL);
@@ -1613,21 +1613,21 @@ int pl_pjsip_play_avi(pjsua_app_config *cfg, char * lval)
 	return OK;
 }
 
-int pl_pjsip_auto_play_avi(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_auto_play_avi(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->avi_auto_play = enable;
 	return OK;
 }
 
-int pl_pjsip_cli_enable(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_cli_enable(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	cfg->use_cli = enable;
 	return OK;
 }
 
-int pl_pjsip_cli_telnet_port(pjsua_app_config *cfg, int port)
+int pjsua_app_cfg_cli_telnet_port(pjsua_app_config *cfg, int port)
 {
 	zassert(cfg != NULL);
 	cfg->cli_cfg.telnet_cfg.port = port;
@@ -1635,7 +1635,7 @@ int pl_pjsip_cli_telnet_port(pjsua_app_config *cfg, int port)
 	return OK;
 }
 
-int pl_pjsip_cli_console(pjsua_app_config *cfg, pj_bool_t enable)
+int pjsua_app_cfg_cli_console(pjsua_app_config *cfg, pj_bool_t enable)
 {
 	zassert(cfg != NULL);
 	if (enable)
@@ -1662,7 +1662,7 @@ int pl_pjsip_cli_console(pjsua_app_config *cfg, pj_bool_t enable)
  */
 
 /* Set default config. */
-void pjsip_default_config(pjsua_app_config *cfg)
+void pjsua_app_cfg_default_config(pjsua_app_config *cfg)
 {
 	char tmp[80];
 	unsigned i;
@@ -1673,7 +1673,7 @@ void pjsip_default_config(pjsua_app_config *cfg)
 	pj_strdup2_with_null(cfg->pool, &cfg->cfg.user_agent, tmp);
 
 	pjsua_logging_config_default(&cfg->log_cfg);
-	cfg->log_cfg.cb = pj_pjsip_log_cb;
+	cfg->log_cfg.cb = pjsua_app_cfg_log_cb;
 	pj_log_set_decor(PJ_LOG_HAS_NEWLINE|PJ_LOG_HAS_CR|PJ_LOG_HAS_INDENT|PJ_LOG_HAS_THREAD_SWC|
 			PJ_LOG_HAS_SENDER|PJ_LOG_HAS_THREAD_ID);
 
@@ -1739,114 +1739,114 @@ void pjsip_default_config(pjsua_app_config *cfg)
 */
 }
 
-int pjsip_log_config(pjsua_app_config *cfg)
+int pjsua_app_cfg_log_config(pjsua_app_config *cfg)
 {
-	pl_pjsip_log_level(cfg, 6);
-	pl_pjsip_app_log_level(cfg, 6);
-	pj_log_set_log_func(pj_pjsip_log_cb);
+	pjsua_app_cfg_log_level(cfg, 6);
+	pjsua_app_cfg_app_log_level(cfg, 6);
+	pj_log_set_log_func(pjsua_app_cfg_log_cb);
 	return OK;
 }
-int pjsip_load_config(pjsua_app_config *cfg)
+int pjsua_app_cfg_load_config(pjsua_app_config *cfg)
 {
 	int i = 0;
 	char buf[128];
 	pjsua_acc_config *cur_acc = NULL;
 	cur_acc = &cfg->acc_cfg;
-	zassert(pl_pjsip != NULL);
+	zassert(_pjapp_cfg != NULL);
 
-	if(pl_pjsip->mutex)
-		os_mutex_lock(pl_pjsip->mutex, OS_WAIT_FOREVER);
+	if(_pjapp_cfg->mutex)
+		os_mutex_lock(_pjapp_cfg->mutex, OS_WAIT_FOREVER);
 
-	pjsip_default_config(cfg);
+	pjsua_app_cfg_default_config(cfg);
 
-	//pl_pjsip_debug_level_set_api(pl_pjsip->debug_level);
-	//pl_pjsip_debug_detail_set_api(pl_pjsip->debug_detail);
+	//pjsua_app_cfg_debug_level_set_api(_pjapp_cfg->debug_level);
+	//pjsua_app_cfg_debug_detail_set_api(_pjapp_cfg->debug_detail);
 
 
 	cur_acc->cred_count = 0;
-	if(strlen(pl_pjsip->sip_user.sip_user))
+	if(strlen(_pjapp_cfg->sip_user.sip_user))
 	{
-		pl_pjsip_username(cfg, pl_pjsip->sip_user.sip_user);//Set authentication username
-		if(strlen(pl_pjsip->sip_user.sip_password))
+		pjsua_app_cfg_username(cfg, _pjapp_cfg->sip_user.sip_user);//Set authentication username
+		if(strlen(_pjapp_cfg->sip_user.sip_password))
 		{
-			pl_pjsip_password(cfg, pl_pjsip->sip_user.sip_password);//Set authentication password
+			pjsua_app_cfg_password(cfg, _pjapp_cfg->sip_user.sip_password);//Set authentication password
 		}
 		cfg->acc_cnt = 1;
 	}
-	if(strlen(pl_pjsip->sip_user_sec.sip_user))
+	if(strlen(_pjapp_cfg->sip_user_sec.sip_user))
 	{
-		pl_pjsip_username(cfg, pl_pjsip->sip_user_sec.sip_user);//Set authentication username
+		pjsua_app_cfg_username(cfg, _pjapp_cfg->sip_user_sec.sip_user);//Set authentication username
 
-		if(strlen(pl_pjsip->sip_user_sec.sip_password))
+		if(strlen(_pjapp_cfg->sip_user_sec.sip_password))
 		{
-			pl_pjsip_password(cfg, pl_pjsip->sip_user_sec.sip_password);//Set authentication password
+			pjsua_app_cfg_password(cfg, _pjapp_cfg->sip_user_sec.sip_password);//Set authentication password
 		}
 		cfg->acc_cnt = 2;
 	}
 
-	pl_pjsip_scheme(cfg, "digest");
+	pjsua_app_cfg_scheme(cfg, "digest");
 
-	if(strlen(pl_pjsip->sip_realm))
+	if(strlen(_pjapp_cfg->sip_realm))
 	{
-		pl_pjsip_realm(cfg, pl_pjsip->sip_realm);//Set authentication password
+		pjsua_app_cfg_realm(cfg, _pjapp_cfg->sip_realm);//Set authentication password
 	}
 	else
-		pl_pjsip_realm(cfg, "*");
+		pjsua_app_cfg_realm(cfg, "*");
 
-	if(strlen(pl_pjsip->sip_server.sip_address))
+	if(strlen(_pjapp_cfg->sip_server.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_server.sip_address, pl_pjsip->sip_server.sip_port);
-		pl_pjsip_registrar(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		snprintf(buf, sizeof(buf), "sip:%s:%d", _pjapp_cfg->sip_server.sip_address, _pjapp_cfg->sip_server.sip_port);
+		pjsua_app_cfg_registrar(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s@%s:%d", pl_pjsip->sip_user.sip_user,
-				pl_pjsip->sip_server.sip_address, pl_pjsip->sip_server.sip_port);
-		pl_pjsip_url_id(cfg, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
+		snprintf(buf, sizeof(buf), "sip:%s@%s:%d", _pjapp_cfg->sip_user.sip_user,
+				_pjapp_cfg->sip_server.sip_address, _pjapp_cfg->sip_server.sip_port);
+		pjsua_app_cfg_url_id(cfg, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
 
 		cur_acc->cred_count = 1;
 	}
 
-	if(strlen(pl_pjsip->sip_server_sec.sip_address))
+	if(strlen(_pjapp_cfg->sip_server_sec.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_server_sec.sip_address, pl_pjsip->sip_server_sec.sip_port);
-		pl_pjsip_registrar(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		snprintf(buf, sizeof(buf), "sip:%s:%d", _pjapp_cfg->sip_server_sec.sip_address, _pjapp_cfg->sip_server_sec.sip_port);
+		pjsua_app_cfg_registrar(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 
 		memset(buf, 0, sizeof(buf));
-		if(pl_pjsip->sip_user_cnt == 1 && strlen(pl_pjsip->sip_user.sip_user))
-			snprintf(buf, sizeof(buf), "sip:%s@%s:%d", pl_pjsip->sip_user.sip_user,
-				pl_pjsip->sip_server_sec.sip_address, pl_pjsip->sip_server_sec.sip_port);
+		if(_pjapp_cfg->sip_user_cnt == 1 && strlen(_pjapp_cfg->sip_user.sip_user))
+			snprintf(buf, sizeof(buf), "sip:%s@%s:%d", _pjapp_cfg->sip_user.sip_user,
+				_pjapp_cfg->sip_server_sec.sip_address, _pjapp_cfg->sip_server_sec.sip_port);
 
-		if(pl_pjsip->sip_user_cnt == 2 && strlen(pl_pjsip->sip_user_sec.sip_user))
-			snprintf(buf, sizeof(buf), "sip:%s@%s:%d", pl_pjsip->sip_user_sec.sip_user,
-				pl_pjsip->sip_server_sec.sip_address, pl_pjsip->sip_server_sec.sip_port);
+		if(_pjapp_cfg->sip_user_cnt == 2 && strlen(_pjapp_cfg->sip_user_sec.sip_user))
+			snprintf(buf, sizeof(buf), "sip:%s@%s:%d", _pjapp_cfg->sip_user_sec.sip_user,
+				_pjapp_cfg->sip_server_sec.sip_address, _pjapp_cfg->sip_server_sec.sip_port);
 
 
-		pl_pjsip_url_id(cfg, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
+		pjsua_app_cfg_url_id(cfg, buf /*"sip:100@192.168.0.103"*/);//Set the URL of local ID (used in From header)
 
 		cur_acc->cred_count = 2;
 	}
-	//pl_pjsip_credential(cfg, 0);
-	//pl_pjsip_next_account(cfg);
-	if(pl_pjsip->sip_local.sip_port)
-		pl_pjsip_local_port(cfg, pl_pjsip->sip_local.sip_port);
+	//pjsua_app_cfg_credential(cfg, 0);
+	//pjsua_app_cfg_next_account(cfg);
+	if(_pjapp_cfg->sip_local.sip_port)
+		pjsua_app_cfg_local_port(cfg, _pjapp_cfg->sip_local.sip_port);
 
-	if(strlen(pl_pjsip->sip_proxy.sip_address))
+	if(strlen(_pjapp_cfg->sip_proxy.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof(buf), "sip:%s:%d",
-				pl_pjsip->sip_proxy.sip_address, pl_pjsip->sip_proxy.sip_port);
-		pl_pjsip_proxy(cfg, buf);
+				_pjapp_cfg->sip_proxy.sip_address, _pjapp_cfg->sip_proxy.sip_port);
+		pjsua_app_cfg_proxy(cfg, buf);
 	}
 
 	cfg->no_tcp = PJ_TRUE;
 	cfg->no_udp = PJ_FALSE;
-	switch(pl_pjsip->proto)
+	switch(_pjapp_cfg->proto)
 	{
 	case PJSIP_PROTO_UDP:
 		cfg->no_tcp = PJ_TRUE;
-		//pl_pjsip_ice_nortcp_enable(cfg, zpl_true);
+		//pjsua_app_cfg_ice_nortcp_enable(cfg, zpl_true);
 		cfg->no_udp = PJ_FALSE;
 		break;
 	case PJSIP_PROTO_TCP:
@@ -1858,71 +1858,71 @@ int pjsip_load_config(pjsua_app_config *cfg)
 	default:
 		break;
 	}
-	pl_pjsip_100rel(cfg, pl_pjsip->sip_100_rel);
+	pjsua_app_cfg_100rel(cfg, _pjapp_cfg->sip_100_rel);
 	//"SIP Account options:"
 	//
-	if(pl_pjsip->sip_reg_proxy != PJSIP_REGISTER_NONE)
-		pl_pjsip_reg_use_proxy(cfg, pl_pjsip->sip_reg_proxy);
-	if(pl_pjsip->sip_rereg_delay)
-		pl_pjsip_reg_retry_interval(cfg, pl_pjsip->sip_rereg_delay);
-	pl_pjsip_register_timeout(cfg, pl_pjsip->sip_expires/*pl_pjsip->sip_reg_timeout*/);
+	if(_pjapp_cfg->sip_reg_proxy != PJSIP_REGISTER_NONE)
+		pjsua_app_cfg_reg_use_proxy(cfg, _pjapp_cfg->sip_reg_proxy);
+	if(_pjapp_cfg->sip_rereg_delay)
+		pjsua_app_cfg_reg_retry_interval(cfg, _pjapp_cfg->sip_rereg_delay);
+	pjsua_app_cfg_register_timeout(cfg, _pjapp_cfg->sip_expires/*_pjapp_cfg->sip_reg_timeout*/);
 
-	pl_pjsip_publish(cfg, pl_pjsip->sip_publish);			//Send presence PUBLISH for this account
-	pl_pjsip_mwi(cfg, pl_pjsip->sip_mwi);
-	pl_pjsip_ims(cfg, pl_pjsip->sip_ims_enable);
+	pjsua_app_cfg_publish(cfg, _pjapp_cfg->sip_publish);			//Send presence PUBLISH for this account
+	pjsua_app_cfg_mwi(cfg, _pjapp_cfg->sip_mwi);
+	pjsua_app_cfg_ims(cfg, _pjapp_cfg->sip_ims_enable);
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
-	if(pl_pjsip->sip_srtp_mode != PJSIP_SRTP_DISABLE)
-		pl_pjsip_srtp_enable(cfg, pl_pjsip->sip_srtp_mode);
-	if(pl_pjsip->sip_srtp_secure != PJSIP_SRTP_SEC_NO)
+	if(_pjapp_cfg->sip_srtp_mode != PJSIP_SRTP_DISABLE)
+		pjsua_app_cfg_srtp_enable(cfg, _pjapp_cfg->sip_srtp_mode);
+	if(_pjapp_cfg->sip_srtp_secure != PJSIP_SRTP_SEC_NO)
 	{
-		pl_pjsip_srtp_secure(cfg, pl_pjsip->sip_srtp_secure);
-		pl_pjsip_srtp_keying(cfg, pl_pjsip->sip_srtp_keying);
+		pjsua_app_cfg_srtp_secure(cfg, _pjapp_cfg->sip_srtp_secure);
+		pjsua_app_cfg_srtp_keying(cfg, _pjapp_cfg->sip_srtp_keying);
 	}
 	//pjsip_srtp_t		sip_srtp_mode;			//Use SRTP?  0:disabled, 1:optional, 2:mandatory,3:optional by duplicating media offer (def:0)
 	//pjsip_srtp_sec_t	sip_srtp_secure;		//SRTP require secure SIP? 0:no, 1:tls, 2:sips (def:1)
 #endif
-	if(pl_pjsip->sip_timer != PJSIP_TIMER_INACTIVE)
-		pl_pjsip_session_timer(cfg, pl_pjsip->sip_timer);
-	if(pl_pjsip->sip_timer_sec)
-		pl_pjsip_session_timer_expiration(cfg, pl_pjsip->sip_timer_sec);
+	if(_pjapp_cfg->sip_timer != PJSIP_TIMER_INACTIVE)
+		pjsua_app_cfg_session_timer(cfg, _pjapp_cfg->sip_timer);
+	if(_pjapp_cfg->sip_timer_sec)
+		pjsua_app_cfg_session_timer_expiration(cfg, _pjapp_cfg->sip_timer_sec);
 
-	//pl_pjsip_outbound_reg_id(cfg, pl_pjsip->sip_outb_rid);
+	//pjsua_app_cfg_outbound_reg_id(cfg, _pjapp_cfg->sip_outb_rid);
 
-	pl_pjsip_update_nat(cfg, pl_pjsip->sip_auto_update_nat);
+	pjsua_app_cfg_update_nat(cfg, _pjapp_cfg->sip_auto_update_nat);
 	//zpl_uint16				sip_auto_update_nat;	//Where N is 0 or 1 to enable/disable SIP traversal behind symmetric NAT (default 1)
-	pl_pjsip_stun(cfg, pl_pjsip->sip_stun_disable);
+	pjsua_app_cfg_stun(cfg, _pjapp_cfg->sip_stun_disable);
 	//pj_bool_t				sip_stun_disable;		//Disable STUN for this account
 
 	//Transport Options:
 #if defined(PJ_HAS_IPV6) && PJ_HAS_IPV6
-	pl_pjsip_ipv6_enable(cfg, pl_pjsip->sip_ipv6_enable);
+	pjsua_app_cfg_ipv6_enable(cfg, _pjapp_cfg->sip_ipv6_enable);
 #endif
-	pl_pjsip_qos_enable(cfg, pl_pjsip->sip_set_qos);
-	if(pl_pjsip->sip_noudp)
-		pl_pjsip_no_udp(cfg);
-	if(pl_pjsip->sip_notcp)
-		pl_pjsip_no_tcp(cfg);
+	pjsua_app_cfg_qos_enable(cfg, _pjapp_cfg->sip_set_qos);
+	if(_pjapp_cfg->sip_noudp)
+		pjsua_app_cfg_no_udp(cfg);
+	if(_pjapp_cfg->sip_notcp)
+		pjsua_app_cfg_no_tcp(cfg);
 
-	if(strlen(pl_pjsip->sip_nameserver.sip_address))
+	if(strlen(_pjapp_cfg->sip_nameserver.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_nameserver.sip_address, pl_pjsip->sip_nameserver.sip_port);
-		pl_pjsip_nameserver(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		snprintf(buf, sizeof(buf), "sip:%s:%d", _pjapp_cfg->sip_nameserver.sip_address, _pjapp_cfg->sip_nameserver.sip_port);
+		pjsua_app_cfg_nameserver(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
-	if(strlen(pl_pjsip->sip_outbound.sip_address))
+	if(strlen(_pjapp_cfg->sip_outbound.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_outbound.sip_address, pl_pjsip->sip_outbound.sip_port);
-		pl_pjsip_outbound_proxy(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		snprintf(buf, sizeof(buf), "sip:%s:%d", _pjapp_cfg->sip_outbound.sip_address, _pjapp_cfg->sip_outbound.sip_port);
+		pjsua_app_cfg_outbound_proxy(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
-	if(strlen(pl_pjsip->sip_stun_server.sip_address))
+	if(strlen(_pjapp_cfg->sip_stun_server.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_stun_server.sip_address, pl_pjsip->sip_stun_server.sip_port);
-		pl_pjsip_stunserver(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		snprintf(buf, sizeof(buf), "sip:%s:%d", _pjapp_cfg->sip_stun_server.sip_address, _pjapp_cfg->sip_stun_server.sip_port);
+		pjsua_app_cfg_stunserver(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
-	if(strlen(pl_pjsip->sip_local.sip_address))
-		pl_pjsip_bound_address(cfg, pl_pjsip->sip_local.sip_address);
+	if(strlen(_pjapp_cfg->sip_local.sip_address))
+		pjsua_app_cfg_bound_address(cfg, _pjapp_cfg->sip_local.sip_address);
 	//TLS Options:
 /*
 	pj_bool_t				sip_tls_enable;
@@ -1937,150 +1937,150 @@ int pjsip_load_config(pjsua_app_config *cfg)
 */
 
 	//Audio Options:
-	pl_pjsip_clock_rate(cfg, pl_pjsip->sip_clock_rate);
-	pl_pjsip_snd_clock_rate(cfg, pl_pjsip->sip_snd_clock_rate);
+	pjsua_app_cfg_clock_rate(cfg, _pjapp_cfg->sip_clock_rate);
+	pjsua_app_cfg_snd_clock_rate(cfg, _pjapp_cfg->sip_snd_clock_rate);
 
 	//char				sip_codec[PJSIP_DATA_MAX];
 	//char				sip_discodec[PJSIP_DATA_MAX];
 
-	if(pl_pjsip->sip_stereo)
-		pl_pjsip_stereo(cfg);
+	if(_pjapp_cfg->sip_stereo)
+		pjsua_app_cfg_stereo(cfg);
 
-	if(strlen(pl_pjsip->sip_play_file))
-		pl_pjsip_play_file(cfg, pl_pjsip->sip_play_file);
-	//if(strlen(pl_pjsip->sip_play_tone))
-	//	pl_pjsip_play_file(cfg, pl_pjsip->sip_play_tone);
-	if(pl_pjsip->sip_auto_play)
-		pl_pjsip_auto_play(cfg, pl_pjsip->sip_auto_play);
-	if(pl_pjsip->sip_auto_loop)
-		pl_pjsip_auto_loop(cfg, pl_pjsip->sip_auto_loop);
-	if(pl_pjsip->sip_auto_conf)
-		pl_pjsip_auto_config(cfg, pl_pjsip->sip_auto_conf);
+	if(strlen(_pjapp_cfg->sip_play_file))
+		pjsua_app_cfg_play_file(cfg, _pjapp_cfg->sip_play_file);
+	//if(strlen(_pjapp_cfg->sip_play_tone))
+	//	pjsua_app_cfg_play_file(cfg, _pjapp_cfg->sip_play_tone);
+	if(_pjapp_cfg->sip_auto_play)
+		pjsua_app_cfg_auto_play(cfg, _pjapp_cfg->sip_auto_play);
+	if(_pjapp_cfg->sip_auto_loop)
+		pjsua_app_cfg_auto_loop(cfg, _pjapp_cfg->sip_auto_loop);
+	if(_pjapp_cfg->sip_auto_conf)
+		pjsua_app_cfg_auto_config(cfg, _pjapp_cfg->sip_auto_conf);
 
-	if(strlen(pl_pjsip->sip_rec_file))
+	if(strlen(_pjapp_cfg->sip_rec_file))
 	{
-		pl_pjsip_rec_file(cfg, pl_pjsip->sip_rec_file);
-		pl_pjsip_auto_rec(cfg, PJ_TRUE);
+		pjsua_app_cfg_rec_file(cfg, _pjapp_cfg->sip_rec_file);
+		pjsua_app_cfg_auto_rec(cfg, PJ_TRUE);
 	}
-	pl_pjsip_quality(cfg, pl_pjsip->sip_quality);
-	pl_pjsip_ptime(cfg, pl_pjsip->sip_ptime);
+	pjsua_app_cfg_quality(cfg, _pjapp_cfg->sip_quality);
+	pjsua_app_cfg_ptime(cfg, _pjapp_cfg->sip_ptime);
 
-	if(pl_pjsip->sip_no_vad)
-		pl_pjsip_novad(cfg, pl_pjsip->sip_no_vad);
+	if(_pjapp_cfg->sip_no_vad)
+		pjsua_app_cfg_novad(cfg, _pjapp_cfg->sip_no_vad);
 
-	if(pl_pjsip->sip_echo_mode != PJSIP_ECHO_DISABLE)
+	if(_pjapp_cfg->sip_echo_mode != PJSIP_ECHO_DISABLE)
 	{
-		if(pl_pjsip->sip_echo_tail)
-			pl_pjsip_ec_tial(cfg, pl_pjsip->sip_echo_tail);
-		pl_pjsip_ec_options(cfg, pl_pjsip->sip_echo_mode - PJSIP_ECHO_DISABLE);
+		if(_pjapp_cfg->sip_echo_tail)
+			pjsua_app_cfg_ec_tial(cfg, _pjapp_cfg->sip_echo_tail);
+		pjsua_app_cfg_ec_options(cfg, _pjapp_cfg->sip_echo_mode - PJSIP_ECHO_DISABLE);
 	}
-	if(pl_pjsip->sip_ilbc_mode)
-		pl_pjsip_ilbc_mode(cfg, pl_pjsip->sip_ilbc_mode);
+	if(_pjapp_cfg->sip_ilbc_mode)
+		pjsua_app_cfg_ilbc_mode(cfg, _pjapp_cfg->sip_ilbc_mode);
 
-	if(pl_pjsip->sip_capture_lat)
-		pl_pjsip_capture_lat(cfg, pl_pjsip->sip_capture_lat);
+	if(_pjapp_cfg->sip_capture_lat)
+		pjsua_app_cfg_capture_lat(cfg, _pjapp_cfg->sip_capture_lat);
 
-	if(pl_pjsip->sip_playback_lat)
-		pl_pjsip_playback_lat(cfg, pl_pjsip->sip_playback_lat);
+	if(_pjapp_cfg->sip_playback_lat)
+		pjsua_app_cfg_playback_lat(cfg, _pjapp_cfg->sip_playback_lat);
 
-	pl_pjsip_snd_auto_close(cfg, pl_pjsip->sip_snd_auto_close);
-	pl_pjsip_no_tones(cfg, pl_pjsip->sip_notones);
-	if(pl_pjsip->sip_jb_max_size)
-		pl_pjsip_jb_max_size(cfg, pl_pjsip->sip_jb_max_size);
+	pjsua_app_cfg_snd_auto_close(cfg, _pjapp_cfg->sip_snd_auto_close);
+	pjsua_app_cfg_no_tones(cfg, _pjapp_cfg->sip_notones);
+	if(_pjapp_cfg->sip_jb_max_size)
+		pjsua_app_cfg_jb_max_size(cfg, _pjapp_cfg->sip_jb_max_size);
 
-	if(strlen(pl_pjsip->capture_dev_name))
+	if(strlen(_pjapp_cfg->capture_dev_name))
 	{
-		strcpy(cfg->capture_dev_name, pl_pjsip->capture_dev_name);
+		strcpy(cfg->capture_dev_name, _pjapp_cfg->capture_dev_name);
 	}
-	if(strlen(pl_pjsip->playback_dev_name))
+	if(strlen(_pjapp_cfg->playback_dev_name))
 	{
-		strcpy(cfg->playback_dev_name, pl_pjsip->playback_dev_name);
+		strcpy(cfg->playback_dev_name, _pjapp_cfg->playback_dev_name);
 	}
 
 #if PJSUA_HAS_VIDEO
-	if(strlen(pl_pjsip->vcapture_dev_name))
+	if(strlen(_pjapp_cfg->vcapture_dev_name))
 	{
-		strcpy(cfg->vid.vcapture_dev_name, pl_pjsip->vcapture_dev_name);
+		strcpy(cfg->vid.vcapture_dev_name, _pjapp_cfg->vcapture_dev_name);
 	}
 
-	if(strlen(pl_pjsip->vrender_dev_name))
+	if(strlen(_pjapp_cfg->vrender_dev_name))
 	{
-		strcpy(cfg->vid.vrender_dev_name, pl_pjsip->vrender_dev_name);
+		strcpy(cfg->vid.vrender_dev_name, _pjapp_cfg->vrender_dev_name);
 	}
 	//Video Options:
-	if(pl_pjsip->sip_video)
+	if(_pjapp_cfg->sip_video)
 	{
-		pl_pjsip_video_enable(cfg, pl_pjsip->sip_video);
-		if(strlen(pl_pjsip->sip_play_avi))
-			pl_pjsip_play_avi(cfg, pl_pjsip->sip_play_avi);
-		pl_pjsip_auto_play_avi(cfg, pl_pjsip->sip_auto_play_avi);
+		pjsua_app_cfg_video_enable(cfg, _pjapp_cfg->sip_video);
+		if(strlen(_pjapp_cfg->sip_play_avi))
+			pjsua_app_cfg_play_avi(cfg, _pjapp_cfg->sip_play_avi);
+		pjsua_app_cfg_auto_play_avi(cfg, _pjapp_cfg->sip_auto_play_avi);
 	}
 #endif
 	//Media Transport Options:
-	pl_pjsip_ice_enable(cfg, pl_pjsip->sip_ice);
-	pl_pjsip_regular_enable(cfg, pl_pjsip->sip_ice_regular);
-	pl_pjsip_ice_max_hosts(cfg, pl_pjsip->sip_ice_regular);
-	pl_pjsip_ice_nortcp_enable(cfg, pl_pjsip->sip_ice_nortcp);
+	pjsua_app_cfg_ice_enable(cfg, _pjapp_cfg->sip_ice);
+	pjsua_app_cfg_regular_enable(cfg, _pjapp_cfg->sip_ice_regular);
+	pjsua_app_cfg_ice_max_hosts(cfg, _pjapp_cfg->sip_ice_regular);
+	pjsua_app_cfg_ice_nortcp_enable(cfg, _pjapp_cfg->sip_ice_nortcp);
 
-	if(pl_pjsip->sip_rtp_port)
-		pl_pjsip_rtp_port(cfg, pl_pjsip->sip_rtp_port);
+	if(_pjapp_cfg->sip_rtp_port)
+		pjsua_app_cfg_rtp_port(cfg, _pjapp_cfg->sip_rtp_port);
 
-	if(pl_pjsip->sip_rx_drop_pct)
-		pl_pjsip_rx_drop_pct(cfg, pl_pjsip->sip_rx_drop_pct);
-	if(pl_pjsip->sip_tx_drop_pct)
-		pl_pjsip_tx_drop_pct(cfg, pl_pjsip->sip_tx_drop_pct);
+	if(_pjapp_cfg->sip_rx_drop_pct)
+		pjsua_app_cfg_rx_drop_pct(cfg, _pjapp_cfg->sip_rx_drop_pct);
+	if(_pjapp_cfg->sip_tx_drop_pct)
+		pjsua_app_cfg_tx_drop_pct(cfg, _pjapp_cfg->sip_tx_drop_pct);
 
-	pl_pjsip_turn_enable(cfg, pl_pjsip->sip_turn);
-	if(strlen(pl_pjsip->sip_turn_srv.sip_address))
+	pjsua_app_cfg_turn_enable(cfg, _pjapp_cfg->sip_turn);
+	if(strlen(_pjapp_cfg->sip_turn_srv.sip_address))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "sip:%s:%d", pl_pjsip->sip_turn_srv.sip_address, pl_pjsip->sip_turn_srv.sip_port);
-		pl_pjsip_turn_srv(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
+		snprintf(buf, sizeof(buf), "sip:%s:%d", _pjapp_cfg->sip_turn_srv.sip_address, _pjapp_cfg->sip_turn_srv.sip_port);
+		pjsua_app_cfg_turn_srv(cfg, buf/*"sip:192.168.0.103"*/);//Set the URL of registrar server
 	}
-	pl_pjsip_turn_tcp(cfg, pl_pjsip->sip_turn_tcp);
+	pjsua_app_cfg_turn_tcp(cfg, _pjapp_cfg->sip_turn_tcp);
 
-	if(strlen(pl_pjsip->sip_turn_user))
-		pl_pjsip_play_avi(cfg, pl_pjsip->sip_turn_user);
-	if(strlen(pl_pjsip->sip_turn_password))
-		pl_pjsip_play_avi(cfg, pl_pjsip->sip_turn_password);
+	if(strlen(_pjapp_cfg->sip_turn_user))
+		pjsua_app_cfg_play_avi(cfg, _pjapp_cfg->sip_turn_user);
+	if(strlen(_pjapp_cfg->sip_turn_password))
+		pjsua_app_cfg_play_avi(cfg, _pjapp_cfg->sip_turn_password);
 
-	pl_pjsip_rtcp_mux(cfg, pl_pjsip->sip_rtcp_mux);
+	pjsua_app_cfg_rtcp_mux(cfg, _pjapp_cfg->sip_rtcp_mux);
 	//Buddy List (can be more than one):
 	//void				*buddy_list;
 	//User Agent options:
-	if(pl_pjsip->sip_auto_answer_code)
-		pl_pjsip_auto_answer(cfg, pl_pjsip->sip_auto_answer_code);
-	pl_pjsip_max_calls(cfg, pl_pjsip->sip_max_calls);
-	pl_pjsip_thread_cnt(cfg, pl_pjsip->sip_thread_max);
-	pl_pjsip_duration(cfg, pl_pjsip->sip_duration);
-	if(pl_pjsip->sip_norefersub)
-		pl_pjsip_norefersub(cfg);
-	pl_pjsip_compact_form(cfg, pl_pjsip->sip_use_compact_form);
-	pl_pjsip_no_force_lr(cfg, pl_pjsip->sip_no_force_lr);
-	pl_pjsip_accept_redirect(cfg, pl_pjsip->sip_accept_redirect);
+	if(_pjapp_cfg->sip_auto_answer_code)
+		pjsua_app_cfg_auto_answer(cfg, _pjapp_cfg->sip_auto_answer_code);
+	pjsua_app_cfg_max_calls(cfg, _pjapp_cfg->sip_max_calls);
+	pjsua_app_cfg_thread_cnt(cfg, _pjapp_cfg->sip_thread_max);
+	pjsua_app_cfg_duration(cfg, _pjapp_cfg->sip_duration);
+	if(_pjapp_cfg->sip_norefersub)
+		pjsua_app_cfg_norefersub(cfg);
+	pjsua_app_cfg_compact_form(cfg, _pjapp_cfg->sip_use_compact_form);
+	pjsua_app_cfg_no_force_lr(cfg, _pjapp_cfg->sip_no_force_lr);
+	pjsua_app_cfg_accept_redirect(cfg, _pjapp_cfg->sip_accept_redirect);
 
-	if(pl_pjsip->sip_codec.is_active)
+	if(_pjapp_cfg->sip_codec.is_active)
 	{
-		pl_pjsip_add_codec(cfg, pl_pjsip->sip_codec.payload_name);
+		pjsua_app_cfg_add_codec(cfg, _pjapp_cfg->sip_codec.payload_name);
 	}
 
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->codec[i].is_active)
+		if(_pjapp_cfg->codec[i].is_active)
 		{
-			pl_pjsip_add_codec(cfg, pl_pjsip->codec[i].payload_name);
+			pjsua_app_cfg_add_codec(cfg, _pjapp_cfg->codec[i].payload_name);
 		}
 	}
 	for(i = 0; i < PJSIP_CODEC_MAX; i++)
 	{
-		if(pl_pjsip->dicodec[i].is_active)
+		if(_pjapp_cfg->dicodec[i].is_active)
 		{
-			pl_pjsip_dis_codec(cfg, pl_pjsip->dicodec[i].payload_name);
+			pjsua_app_cfg_dis_codec(cfg, _pjapp_cfg->dicodec[i].payload_name);
 		}
 	}
 
-	if(pl_pjsip->mutex)
-		os_mutex_unlock(pl_pjsip->mutex);
+	if(_pjapp_cfg->mutex)
+		os_mutex_unlock(_pjapp_cfg->mutex);
 
 	return PJ_SUCCESS;
 }

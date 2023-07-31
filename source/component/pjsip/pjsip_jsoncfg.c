@@ -25,7 +25,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "pjsua_app.h"
-#include "pjsip_main.h"
 #include "pjsip_app_api.h"
 #include "pjsip_jsoncfg.h"
 

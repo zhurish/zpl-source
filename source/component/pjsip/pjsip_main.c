@@ -28,7 +28,6 @@
  */
 #include "pjsua_app_common.h"
 #include "pjsua_app.h"
-#include "pjsip_main.h"
 #include "pjsip_app_api.h"
 
 #include "auto_include.h"
@@ -42,16 +41,16 @@
 extern zpl_bool host_waitting_loadconfig(void);
 
 
-static int pl_pjsip_task_load(void *p);
+static int pjapp_task_load(void *p);
 
 /* Called when CLI (re)started */
-static void on_app_started(pj_status_t status, const char *msg)
+static void pjapp_on_started(pj_status_t status, const char *msg)
 {
 	//PJ_LOG(5, ("main", "--------------on_app_started-----------"));
     pj_perror(3, THIS_FILE, status, (msg)?msg:"");
 }
 
-static void on_app_stopped(pj_bool_t restart, int argc, char** argv)
+static void pjapp_on_stopped(pj_bool_t restart, int argc, char** argv)
 {
 /*    if (argv) {
 	_global_config.app_cfg.argc = argc;
@@ -62,13 +61,13 @@ static void on_app_stopped(pj_bool_t restart, int argc, char** argv)
     _global_config.app_running = restart;
 }
 
-static int main_func(int argc, char *argv[])
+static int pjapp_main_func(int argc, char *argv[])
 {
 	pj_status_t status = PJ_TRUE;
 
 	pj_bzero(&_global_config.app_cfg, sizeof(_global_config.app_cfg));
-	_global_config.app_cfg.on_started = &on_app_started;
-	_global_config.app_cfg.on_stopped = &on_app_stopped;
+	_global_config.app_cfg.on_started = &pjapp_on_started;
+	_global_config.app_cfg.on_stopped = &pjapp_on_stopped;
 	//_global_config.app_cfg.argc = argc;
 	//_global_config.app_cfg.argv = argv;
 	_global_config.app_running = PJ_TRUE;
@@ -79,7 +78,7 @@ static int main_func(int argc, char *argv[])
 		status = pjsua_app_init(&_global_config.app_cfg);
 		if (status == PJ_SUCCESS)
 		{
-			os_task_foreach(pl_pjsip_task_load, NULL);
+			os_task_foreach(pjapp_task_load, NULL);
 			status = pjsua_app_run(PJ_TRUE);
 		}
 		else
@@ -102,7 +101,7 @@ static int main_func(int argc, char *argv[])
 }
 
 
-static int pl_pjsip_task_load(void *p)
+static int pjapp_task_load(void *p)
 {
 	os_task_t *task = p;
 	if(task)
@@ -116,14 +115,14 @@ static int pl_pjsip_task_load(void *p)
 }
 
 
-static void * pl_pjsip_task_self(pthread_t td_thread)
+static void * pjapp_task_self(pthread_t td_thread)
 {
 	void *p = os_task_priv_get(0, os_task_pthread_self());
 	//printf("===============%s======== p=%u=========\r\n", __func__, p);
 	return p;
 }
 
-static int pl_pjsip_task_add(char *name, int pri, int op, void *entry, void *arg, int stacksize,
+static int pjapp_task_add(char *name, int pri, int op, void *entry, void *arg, int stacksize,
 		int td_thread, void *p)
 {
 	//int Priority = 0;
@@ -135,7 +134,7 @@ static int pl_pjsip_task_add(char *name, int pri, int op, void *entry, void *arg
 	return 0;
 }
 
-static int _pl_pjsip_task_create(void *p)
+static int _pjapp_task_create(void *p)
 {
 	os_task_t *task = p;
 	if(task && strstr(task->td_name, "alsa"))
@@ -146,7 +145,7 @@ static int _pl_pjsip_task_create(void *p)
 	return OK;
 }
 
-static int _pl_pjsip_task_destroy(void *p)
+static int _pjapp_task_destroy(void *p)
 {
 	os_task_t *task = p;
 	if(task && strstr(task->td_name, "alsa"))
@@ -157,7 +156,7 @@ static int _pl_pjsip_task_destroy(void *p)
 	return OK;
 }
 
-int pjsip_media_wait_quit(void)
+static int pjapp_wait_quit(void)
 {
 	//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
 	while(_global_config.media_quit > 0)
@@ -168,7 +167,7 @@ int pjsip_media_wait_quit(void)
 	return OK;
 }
 
-static int pjmain(void *p)
+static int pjMainTask(void *p)
 {
 	int pjargc = 1;
 	char *pjargv[] = {NULL, NULL};
@@ -177,42 +176,62 @@ static int pjmain(void *p)
 
 	_global_config.app_running = PJ_TRUE;
 
-	os_task_add_create_hook(_pl_pjsip_task_create);
-	os_task_add_destroy_hook(_pl_pjsip_task_destroy);
+	os_task_add_create_hook(_pjapp_task_create);
+	os_task_add_destroy_hook(_pjapp_task_destroy);
 	pj_init();
-	pj_task_cb_init(pl_pjsip_task_add, os_task_thread_del, os_task_thread_refresh_id, pl_pjsip_task_self);
+	pj_task_cb_init(pjapp_task_add, os_task_thread_del, os_task_thread_refresh_id, pjapp_task_self);
 
-    return pj_run_app(&main_func, pjargc, pjargv, 0);
+    return pj_run_app(&pjapp_main_func, pjargc, pjargv, 0);
 }
 
 
 
-int pjsip_module_init(void)
+static int pjapp_module_init(void)
 {
-	memset(&_global_config, 0, sizeof(_global_config));
+	if(_pjapp_cfg == NULL)
+		_pjapp_cfg = XMALLOC(MTYPE_VOIP, sizeof(pjapp_cfg_t));
+	if(!_pjapp_cfg)
+		return ERROR;
+	os_memset(_pjapp_cfg, 0, sizeof(pjapp_cfg_t));
+	_pjapp_cfg->mutex = os_mutex_name_create("_pjapp_cfg->mutex");
+	pjapp_cfg_config_default(_pjapp_cfg);
+
 	return OK;
 }
 
-int pjsip_module_exit(void)
+
+static int pjapp_module_exit(void)
 {
 	pjsua_app_exit();
-	pjsip_media_wait_quit();
+	pjapp_wait_quit();
 	pjsua_app_destroy();
 	memset(&_global_config, 0, sizeof(_global_config));
+	if(_pjapp_cfg == NULL)
+		XFREE(MTYPE_VOIP, _pjapp_cfg);
+	_pjapp_cfg = NULL;
 	return OK;
 }
 
-int pjsip_module_task_init(void)
+static int pjapp_module_task_init(void)
 {
 	return os_task_create("pjMainTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, pjmain, NULL, OS_TASK_DEFAULT_STACK*4);
-
-	return OK;
+	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*4);
 }
 
-int pjsip_module_task_exit(void)
+static int pjapp_module_task_exit(void)
 {
 	return OK;
 }
 
 
+struct module_list module_list_pjsip = 
+{ 
+	.module=MODULE_PJAPP, 
+	.name="PJSIP\0", 
+	.module_init=pjapp_module_init, 
+	.module_exit=pjapp_module_exit, 
+	.module_task_init=pjapp_module_task_init, 
+	.module_task_exit=pjapp_module_task_exit, 
+	.module_cmd_init=pjapp_cmd_init, 
+	.taskid=0,
+};

@@ -290,7 +290,7 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
         }
 
 	    sessparams.SetOwnTimestampUnit(1.0/jrtpsess->clock);		
-	    sessparams.SetAcceptOwnPackets(true);
+	    sessparams.SetAcceptOwnPackets(false);
         if(jrtpsess->isipv6)
         {
             struct in6_addr addrv6;
@@ -342,6 +342,7 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
                 jrtpsess->clock/jrtpsess->framerate);    
             //jrtpsess->real_clock  = jrtplib::RTPTime::CurrentTime().GetMicroSeconds() + 1000/jrtpsess->framerate;
         }    
+        jrtpsess->jrtp_sess->SetSessionBandwidth(2560000/8);
         jrtpsess->active = 1;
         pthread_mutex_unlock(&jrtpsess->mutex); 
         return 0;
@@ -366,6 +367,7 @@ int jrtp_session_start(jrtp_session_t *jrtpsess)
         return -1;
     pthread_mutex_lock(&jrtpsess->mutex);
     jrtpsess->state = 1;
+    
     printf("=============jrtp_session_start==============\r\n");
     pthread_mutex_unlock(&jrtpsess->mutex);
     jrtp_session_sched_add(jrtpsess);
