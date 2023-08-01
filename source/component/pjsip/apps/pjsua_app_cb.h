@@ -48,6 +48,9 @@ int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, vo
 int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state);
 int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, zpl_uint32 state);
 
+
+int pjsip_callback_init(void);
+
 #ifdef __cplusplus
 }
 #endif

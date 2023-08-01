@@ -1410,10 +1410,6 @@ static int stdout_refresh_proc(void *arg)
 {
     PJ_UNUSED_ARG(arg);
     sleep(10);
-    //pjapp_ms_test();
-    /* Set thread to lowest priority so that it doesn't clobber
-     * stdout output
-     */
     while (!_global_config.stdout_refresh_quit) {
         pj_thread_sleep(_global_config.stdout_refresh * 1000);
     }
@@ -1461,6 +1457,7 @@ static pj_status_t app_init(void)
 		pj_pool_release(tmp_pool);
 		return status;
     }
+    pjsip_callback_init();
     /* Initialize application callbacks */
     _global_config.app_config.cfg.cb.on_call_state = &on_call_state;
     _global_config.app_config.cfg.cb.on_stream_destroyed = &on_stream_destroyed;

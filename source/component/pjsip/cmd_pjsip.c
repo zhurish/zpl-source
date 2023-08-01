@@ -3482,7 +3482,7 @@ int pjapp_cmd_init(void)
 	{
 		temp->module = 0;
 		strcpy(temp->name, "service pjsip");
-		strcpy(temp->prompt, "service-sip"); /* (config-app-esp)# */
+		strcpy(temp->prompt, "service-sip"); 
 		temp->pVoid = NULL;
 		temp->write_template = pjsip_write_config;
 		lib_template_install(temp, 0);
