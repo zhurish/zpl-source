@@ -4,16 +4,19 @@
  *  Created on: Jun 22, 2019
  *      Author: zhurish
  */
-
+#include <pjsua-lib/pjsua.h>
+#include "pjsua_app_config.h"
+#include "pjsua_app_cb.h"
 #include "pjsua_app_common.h"
+#include "pjsua_app_cfgapi.h"
 #include "pjsip_app_api.h"
 
 #define THIS_FILE "pjmeida_file.c"
 
 int pjsip_app_callback_init(void *p, pjsip_callback_tbl *cb)
 {
-	pjsua_app_config *app = p;
-	memcpy(&app->cbtbl, cb, sizeof(pjsip_callback_tbl));
+	//pjapp_config_t *app = p;
+	//memcpy(&app->cbtbl, cb, sizeof(pjsip_callback_tbl));
 	return PJ_SUCCESS;
 }
 
@@ -98,19 +101,19 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 {
 	if (input == '#')
 	{
-		if(app_incoming_call())
+		if(pjapp_incoming_call())
 		{
 			PJ_LOG(1, (THIS_FILE, "HUIFU/NONE Product recv dtmf:%c and open door", input));
-			return OK;
+			return PJ_SUCCESS;
 		}
 	}
 	else
 	{
 		PJ_LOG(1, (THIS_FILE, "module recv dtmf:%c", input));
-		return ERROR;
+		return -1;
 	}
 	//PJ_LOG(1, (THIS_FILE, "module recv dtmf:%c", input);
-	return OK;
+	return PJ_SUCCESS;
 }
 
 static int voip_app_register_state_callback(int id, void *p, int input)
@@ -120,17 +123,8 @@ static int voip_app_register_state_callback(int id, void *p, int input)
 	if(pjsua_acc_get_info(id, &reginfo) == PJ_SUCCESS)
 	{
 		pjapp_cfg_account_set_api(id, &reginfo);
-
-		if(_pjapp_cfg->sip_user.register_svr)
-		{
-
-		}
-		else if(_pjapp_cfg->sip_user_sec.register_svr)
-		{
-
-		}
 	}
-	return OK;
+	return PJ_SUCCESS;
 }
 
 static int voip_app_call_state_callback(int id, void *p, int input)
@@ -158,15 +152,15 @@ static int voip_app_call_state_callback(int id, void *p, int input)
 	else if(input == PJSIP_INV_STATE_DISCONNECTED)
 	{
 	}
-	return OK;
+	return PJ_SUCCESS;
 }
 
 
 static int voip_app_call_incoming_callback(int id, void *p, int input)
 {
-	if (app_incoming_call())
+	if (pjapp_incoming_call())
 	{
-		if (find_current_call() == id)
+		if (pjapp_current_call() == id)
 		{
 			pjsua_call_info *call_info = p;
 			if (input == 0)
@@ -188,8 +182,9 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 			}
 		}
 	}
-	return OK;
+	return PJ_SUCCESS;
 }
+
 
 int pjsip_callback_init(void)
 {
@@ -200,6 +195,6 @@ int pjsip_callback_init(void)
 	cb.pjsip_reg_state = voip_app_register_state_callback;
 	cb.cli_account_state_get = pjapp_cfg_account_set_api;
 	cb.pjsip_call_incoming = voip_app_call_incoming_callback;
-	pjsip_app_callback_init(&_global_config.app_config, &cb);
-	return OK;
+	//pjsip_app_callback_init(&_pjAppCfg.app_cfg, &cb);
+	return PJ_SUCCESS;
 }

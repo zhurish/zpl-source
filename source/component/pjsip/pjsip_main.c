@@ -26,15 +26,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include "pjsua_app_common.h"
-#include "pjsua_app.h"
-#include "pjsip_app_api.h"
-
 #include "auto_include.h"
-#include <zplos_include.h>
 #include "lib_include.h"
-#include "nsm_include.h"
 #include "vty_include.h"
+#include <pjsua-lib/pjsua.h>
+#include "pjsua_app_config.h"
+#include "pjsua_app_cb.h"
+#include "pjsua_app_common.h"
+#include "pjsua_app_cfgapi.h"
+#include "pjsua_app.h"
 
 #define THIS_FILE	"pjsip_main.c"
 
@@ -43,39 +43,17 @@ extern zpl_bool host_waitting_loadconfig(void);
 
 static int pjapp_task_load(void *p);
 
-/* Called when CLI (re)started */
-static void pjapp_on_started(pj_status_t status, const char *msg)
-{
-	//PJ_LOG(5, ("main", "--------------on_app_started-----------"));
-    pj_perror(3, THIS_FILE, status, (msg)?msg:"");
-}
-
-static void pjapp_on_stopped(pj_bool_t restart, int argc, char** argv)
-{
-/*    if (argv) {
-	_global_config.app_cfg.argc = argc;
-	_global_config.app_cfg.argv = argv;
-    }*/
-    //PJ_LOG(5, ("main", "--------------on_app_stopped-----------"));
-    //pj_perror(3, THIS_FILE, status, (msg)?msg:"","on_app_started");
-    _global_config.app_running = restart;
-}
 
 static int pjapp_main_func(int argc, char *argv[])
 {
 	pj_status_t status = PJ_TRUE;
 
-	pj_bzero(&_global_config.app_cfg, sizeof(_global_config.app_cfg));
-	_global_config.app_cfg.on_started = &pjapp_on_started;
-	_global_config.app_cfg.on_stopped = &pjapp_on_stopped;
-	//_global_config.app_cfg.argc = argc;
-	//_global_config.app_cfg.argv = argv;
-	_global_config.app_running = PJ_TRUE;
+	_pjAppCfg.app_running = PJ_TRUE;
 
-	while (_global_config.app_running && OS_TASK_TRUE())
+	while (_pjAppCfg.app_running && OS_TASK_TRUE())
 	{
 		//__ZPL_PJSIP_DEBUG( "%s:pjsua_app_init","main_func");
-		status = pjsua_app_init(&_global_config.app_cfg);
+		status = pjsua_app_init();
 		if (status == PJ_SUCCESS)
 		{
 			os_task_foreach(pjapp_task_load, NULL);
@@ -83,7 +61,7 @@ static int pjapp_main_func(int argc, char *argv[])
 		}
 		else
 		{
-			_global_config.app_running = PJ_FALSE;
+			_pjAppCfg.app_running = PJ_FALSE;
 		}
 		if (status == PJ_SUCCESS)
 			break;
@@ -92,9 +70,9 @@ static int pjapp_main_func(int argc, char *argv[])
 		pjsua_app_destroy();
 		//__ZPL_PJSIP_DEBUG("======================================================4\r\n");
 
-		if(_global_config.restart)
+		if(_pjAppCfg.restart)
 		{
-			_global_config.app_running = PJ_TRUE;
+			_pjAppCfg.app_running = PJ_TRUE;
 		}
 	}
 	return 0;
@@ -139,7 +117,7 @@ static int _pjapp_task_create(void *p)
 	os_task_t *task = p;
 	if(task && strstr(task->td_name, "alsa"))
 	{
-		_global_config.media_quit++;
+		_pjAppCfg.media_quit++;
 		//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
 	}
 	return OK;
@@ -150,7 +128,7 @@ static int _pjapp_task_destroy(void *p)
 	os_task_t *task = p;
 	if(task && strstr(task->td_name, "alsa"))
 	{
-		_global_config.media_quit--;
+		_pjAppCfg.media_quit--;
 		//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
 	}
 	return OK;
@@ -159,7 +137,7 @@ static int _pjapp_task_destroy(void *p)
 static int pjapp_wait_quit(void)
 {
 	//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
-	while(_global_config.media_quit > 0)
+	while(_pjAppCfg.media_quit > 0)
 	{
 		os_msleep(50);
 	}
@@ -174,7 +152,7 @@ static int pjMainTask(void *p)
 
 	host_waitting_loadconfig();
 
-	_global_config.app_running = PJ_TRUE;
+	_pjAppCfg.app_running = PJ_TRUE;
 
 	os_task_add_create_hook(_pjapp_task_create);
 	os_task_add_destroy_hook(_pjapp_task_destroy);
@@ -187,15 +165,16 @@ static int pjMainTask(void *p)
 
 
 static int pjapp_module_init(void)
-{
-	if(_pjapp_cfg == NULL)
-		_pjapp_cfg = XMALLOC(MTYPE_VOIP, sizeof(pjapp_cfg_t));
-	if(!_pjapp_cfg)
+{/*
+	if(_pjAppCfg == NULL)
+		_pjAppCfg = XMALLOC(MTYPE_VOIP, sizeof(pjapp_cfg_t));
+	if(!_pjAppCfg)
 		return ERROR;
-	os_memset(_pjapp_cfg, 0, sizeof(pjapp_cfg_t));
-	_pjapp_cfg->mutex = os_mutex_name_create("_pjapp_cfg->mutex");
-	pjapp_cfg_config_default(_pjapp_cfg);
-
+	os_memset(_pjAppCfg, 0, sizeof(pjapp_cfg_t));
+	_pjAppCfg->mutex = os_mutex_name_create("_pjAppCfg->mutex");
+	pjapp_cfg_config_default(_pjAppCfg);
+*/
+	pjapp_config_init();
 	return OK;
 }
 
@@ -205,23 +184,22 @@ static int pjapp_module_exit(void)
 	pjsua_app_exit();
 	pjapp_wait_quit();
 	pjsua_app_destroy();
-	memset(&_global_config, 0, sizeof(_global_config));
-	if(_pjapp_cfg == NULL)
-		XFREE(MTYPE_VOIP, _pjapp_cfg);
-	_pjapp_cfg = NULL;
+	memset(&_pjAppCfg, 0, sizeof(pjsua_app_config));
+
 	return OK;
 }
 
 static int pjapp_module_task_init(void)
 {
 	return os_task_create("pjMainTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*4);
+	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*8);
 }
 
 static int pjapp_module_task_exit(void)
 {
 	return OK;
 }
+
 
 
 struct module_list module_list_pjsip = 

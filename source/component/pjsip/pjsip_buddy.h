@@ -1,5 +1,5 @@
 /*
- * pjsip_buddy.h
+ * pjapp_buddy.h
  *
  *  Created on: 2019年10月19日
  *      Author: zhurish
@@ -31,40 +31,40 @@ extern "C" {
 typedef struct
 {
 	char 		phone[BUDDY_PHONE_MAX];
-	zpl_uint8		active:1;
-	zpl_uint8		res:7;
-}pjsip_buddy_phone_t;
+	pj_uint8_t		active:1;
+	pj_uint8_t		res:7;
+}pjapp_buddy_phone_t;
 
 typedef struct
 {
 	NODE				node;
 	char 				username[BUDDY_USERNAME_MAX];
-	zpl_uint32				userid;
+	pj_uint32_t				userid;
 	char 				address[BUDDY_ADDRESS_MAX];
 	char 				email[BUDDY_EMAIL_MAX];
 	char 				company[BUDDY_COMPANY_MAX];
 	char 				group[BUDDY_GROUP_MAX];
-	zpl_uint32				groupid;
-	pjsip_buddy_phone_t 		pjsip_buddy_phone[BUDDY_MULTI_NUMBER_MAX];
+	pj_uint32_t				groupid;
+	pjapp_buddy_phone_t 		pjapp_buddy_phone[BUDDY_MULTI_NUMBER_MAX];
 	void				*pVoid;
-}pjsip_buddy_t;
+}pjapp_buddy_t;
 
 #pragma pack(0)
 
-int pjsip_buddy_clean(void);
-int pjsip_buddy_exit(void);
-int pjsip_buddy_load(void);
-int pjsip_buddy_update_save(void);
+int pjapp_buddy_clean(void);
+int pjapp_buddy_exit(void);
+int pjapp_buddy_load(void);
+int pjapp_buddy_update_save(void);
 
-pjsip_buddy_t * pjsip_buddy_node_lookup_by_phonenumber(char *phone);
-pjsip_buddy_t * pjsip_buddy_node_lookup_by_private_ID(int (*pri_cmp)(void *p1, void *p2), void *p2);
-pjsip_buddy_t * pjsip_buddy_lookup_by_username(char *username);
+pjapp_buddy_t * pjapp_buddy_node_lookup_by_phonenumber(char *phone);
+pjapp_buddy_t * pjapp_buddy_node_lookup_by_private_ID(int (*pri_cmp)(void *p1, void *p2), void *p2);
+pjapp_buddy_t * pjapp_buddy_lookup_by_username(char *username);
 
-int pjsip_buddy_username_add(char *username, zpl_uint32 userid);
-int pjsip_buddy_username_del(char *username, zpl_uint32 userid);
+int pjapp_buddy_username_add(char *username, pj_uint32_t userid);
+int pjapp_buddy_username_del(char *username, pj_uint32_t userid);
 
-int pjsip_buddy_username_add_phone(char *username, char *phone);
-int pjsip_buddy_username_del_phone(char *username, char *phone);
+int pjapp_buddy_username_add_phone(char *username, char *phone);
+int pjapp_buddy_username_del_phone(char *username, char *phone);
 
 #ifdef __cplusplus
 }

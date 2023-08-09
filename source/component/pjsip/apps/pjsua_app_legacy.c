@@ -75,7 +75,7 @@ static void print_buddy_list()
  * Input URL.
  */
 static void ui_input_url(const char *title, char *buf, pj_size_t len,
-                         input_result *result)
+                         pjapp_input_result *result)
 {
     result->nb_result = PJSUA_APP_NO_NB;
     result->uri_result = NULL;
@@ -253,10 +253,10 @@ static void keystroke_help()
     i = pjsua_call_get_count();
     printf("You have %d active call%s\n", i, (i>1?"s":""));
 
-    if (_global_config.current_call != PJSUA_INVALID_ID) {
+    if (_pjAppCfg.current_call != PJSUA_INVALID_ID) {
         pjsua_call_info ci;
-        if (pjsua_call_get_info(_global_config.current_call, &ci)==PJ_SUCCESS)
-            printf("Current call id=%d to %.*s [%.*s]\n", _global_config.current_call,
+        if (pjsua_call_get_info(_pjAppCfg.current_call, &ci)==PJ_SUCCESS)
+            printf("Current call id=%d to %.*s [%.*s]\n", _pjAppCfg.current_call,
                    (int)ci.remote_info.slen, ci.remote_info.ptr,
                    (int)ci.state_text.slen, ci.state_text.ptr);
     }
@@ -266,7 +266,7 @@ static void keystroke_help()
 #if PJSUA_HAS_VIDEO
 static void vid_show_help()
 {
-    pj_bool_t vid_enabled = (_global_config.app_config.vid.vid_cnt > 0);
+    pj_bool_t vid_enabled = (_pjAppCfg.vid.vid_cnt > 0);
 
     puts("+=============================================================================+");
     puts("|                            Video commands:                                  |");
@@ -324,7 +324,7 @@ static void vid_handle_menu(char *menuin)
                              strcmp(argv[1], "disable")==0))
     {
         pj_bool_t enabled = (strcmp(argv[1], "enable")==0);
-        _global_config.app_config.vid.vid_cnt = (enabled ? 1 : 0);
+        _pjAppCfg.vid.vid_cnt = (enabled ? 1 : 0);
         PJ_LOG(3,(THIS_FILE, "Video will be %s in next offer/answer",
                   (enabled?"enabled":"disabled")));
     } else if (strcmp(argv[1], "acc")==0) {
@@ -335,7 +335,7 @@ static void vid_handle_menu(char *menuin)
         pjsua_acc_get_config(current_acc, tmp_pool, &acc_cfg);
 
         if (argc == 3 && strcmp(argv[2], "show")==0) {
-            app_config_show_video(NULL, current_acc, &acc_cfg);
+            pjapp_config_show_video(NULL, current_acc, &acc_cfg);
         } else if (argc == 4 && strcmp(argv[2], "autorx")==0) {
             int on = (strcmp(argv[3], "on")==0);
             acc_cfg.vid_in_auto_show = on;
@@ -376,7 +376,7 @@ static void vid_handle_menu(char *menuin)
             pj_bool_t on = (strcmp(argv[3], "on") == 0);
 
             param.med_idx = atoi(argv[4]);
-            if (pjsua_call_get_stream_info(_global_config.current_call, param.med_idx, &si) ||
+            if (pjsua_call_get_stream_info(_pjAppCfg.current_call, param.med_idx, &si) ||
                 si.type != PJMEDIA_TYPE_VIDEO)
             {
                 PJ_PERROR(1,(THIS_FILE, PJ_EINVAL, "Invalid stream"));
@@ -386,7 +386,7 @@ static void vid_handle_menu(char *menuin)
             if (on) param.dir = (si.info.vid.dir | PJMEDIA_DIR_DECODING);
             else param.dir = (si.info.vid.dir & PJMEDIA_DIR_ENCODING);
 
-            status = pjsua_call_set_vid_strm(_global_config.current_call,
+            status = pjsua_call_set_vid_strm(_pjAppCfg.current_call,
                                              PJSUA_CALL_VID_STRM_CHANGE_DIR,
                                              &param);
         }
@@ -397,10 +397,10 @@ static void vid_handle_menu(char *menuin)
 
             param.med_idx = atoi(argv[4]);
 
-            status = pjsua_call_set_vid_strm(_global_config.current_call, op, &param);
+            status = pjsua_call_set_vid_strm(_pjAppCfg.current_call, op, &param);
         }
         else if (argc == 3 && strcmp(argv[2], "add")==0) {
-            status = pjsua_call_set_vid_strm(_global_config.current_call,
+            status = pjsua_call_set_vid_strm(_pjAppCfg.current_call,
                                              PJSUA_CALL_VID_STRM_ADD, NULL);
         }
         else if (argc >= 3 &&
@@ -412,12 +412,12 @@ static void vid_handle_menu(char *menuin)
 
             param.med_idx = argc >= 4? atoi(argv[3]) : -1;
             param.dir = PJMEDIA_DIR_ENCODING_DECODING;
-            status = pjsua_call_set_vid_strm(_global_config.current_call, op, &param);
+            status = pjsua_call_set_vid_strm(_pjAppCfg.current_call, op, &param);
         }
         else if (argc >= 3 && strcmp(argv[2], "cap")==0) {
             param.med_idx = argc >= 4? atoi(argv[3]) : -1;
             param.cap_dev = argc >= 5? atoi(argv[4]) : PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
-            status = pjsua_call_set_vid_strm(_global_config.current_call,
+            status = pjsua_call_set_vid_strm(_pjAppCfg.current_call,
                                              PJSUA_CALL_VID_STRM_CHANGE_CAP_DEV,
                                              &param);
         } else
@@ -429,7 +429,7 @@ static void vid_handle_menu(char *menuin)
 
     } else if (argc >= 3 && strcmp(argv[1], "dev")==0) {
         if (strcmp(argv[2], "list")==0) {
-            vid_list_devs(NULL);
+            pjapp_vid_list_devs(NULL);
         } else if (strcmp(argv[2], "refresh")==0) {
             pjmedia_vid_dev_refresh();
         } else if (strcmp(argv[2], "prev")==0) {
@@ -445,7 +445,7 @@ static void vid_handle_menu(char *menuin)
                     param.wnd_flags = PJMEDIA_VID_DEV_WND_BORDER |
                                       PJMEDIA_VID_DEV_WND_RESIZABLE;
                     pjsua_vid_preview_start(dev_id, &param);
-                    arrange_window(pjsua_vid_preview_get_win(dev_id));
+                    pjapp_arrange_window(pjsua_vid_preview_get_win(dev_id));
                 } else {
                     pjsua_vid_win_id wid;
                     wid = pjsua_vid_preview_get_win(dev_id);
@@ -499,7 +499,7 @@ static void vid_handle_menu(char *menuin)
             size.h = atoi(argv[5]);
             status = pjsua_vid_win_set_size(wid, &size);
         } else if (argc==3 && strcmp(argv[2], "arrange")==0) {
-            arrange_window(PJSUA_INVALID_ID);
+            pjapp_arrange_window(PJSUA_INVALID_ID);
         } else if (argc==5 && (strcmp(argv[2], "full")==0))
         {
             pjsua_vid_win_id wid = atoi(argv[4]);
@@ -694,7 +694,7 @@ static void ui_make_new_call()
 {
     char buf[128];
     pjsua_msg_data msg_data_;
-    input_result result;
+    pjapp_input_result result;
     pj_str_t tmp;
 
     printf("(You currently have %d calls)\n", pjsua_call_get_count());
@@ -720,8 +720,8 @@ static void ui_make_new_call()
 
     pjsua_msg_data_init(&msg_data_);
     TEST_MULTIPART(&msg_data_);
-    pjsua_call_make_call(current_acc, &tmp, &_global_config.call_opt, NULL,
-                         &msg_data_, &_global_config.current_call);
+    pjsua_call_make_call(current_acc, &tmp, &_pjAppCfg.call_opt, NULL,
+                         &msg_data_, &_pjAppCfg.current_call);
 }
 
 static void ui_make_multi_call()
@@ -729,7 +729,7 @@ static void ui_make_multi_call()
     char menuin[32];
     int count;
     char buf[128];
-    input_result result;
+    pjapp_input_result result;
     pj_str_t tmp;
     int i;
 
@@ -759,7 +759,7 @@ static void ui_make_multi_call()
     for (i=0; i<my_atoi(menuin); ++i) {
         pj_status_t status;
 
-        status = pjsua_call_make_call(current_acc, &tmp, &_global_config.call_opt, NULL,
+        status = pjsua_call_make_call(current_acc, &tmp, &_pjAppCfg.call_opt, NULL,
             NULL, NULL);
         if (status != PJ_SUCCESS)
             break;
@@ -778,7 +778,7 @@ static void ui_send_instant_message()
     char *uri = NULL;
     /* i is for call index to send message, if any */
     int i = -1;
-    input_result result;
+    pjapp_input_result result;
     char buf[128];
     char text[128];
     pj_str_t tmp;
@@ -792,7 +792,7 @@ static void ui_send_instant_message()
             return;
 
         } else if (result.nb_result == 0) {
-            i = _global_config.current_call;
+            i = _pjAppCfg.current_call;
         } else {
             pjsua_buddy_info binfo;
             pjsua_buddy_get_info(result.nb_result-1, &binfo);
@@ -846,15 +846,15 @@ static void ui_answer_call()
     char buf[128];
     pjsua_msg_data msg_data_;
 
-    if (_global_config.current_call != -1) {
-        pjsua_call_get_info(_global_config.current_call, &call_info);
+    if (_pjAppCfg.current_call != -1) {
+        pjsua_call_get_info(_pjAppCfg.current_call, &call_info);
     } else {
         /* Make compiler happy */
         call_info.role = PJSIP_ROLE_UAC;
         call_info.state = PJSIP_INV_STATE_DISCONNECTED;
     }
 
-    if (_global_config.current_call == -1 ||
+    if (_pjAppCfg.current_call == -1 ||
         call_info.role != PJSIP_ROLE_UAS ||
         call_info.state >= PJSIP_INV_STATE_CONNECTING)
     {
@@ -893,19 +893,19 @@ static void ui_answer_call()
         * Call may have been disconnected while we're waiting for
         * keyboard input.
         */
-        if (_global_config.current_call == -1) {
+        if (_pjAppCfg.current_call == -1) {
             puts("Call has been disconnected");
             fflush(stdout);
             return;
         }
 
-        pjsua_call_answer2(_global_config.current_call, &_global_config.call_opt, st_code, NULL, &msg_data_);
+        pjsua_call_answer2(_pjAppCfg.current_call, &_pjAppCfg.call_opt, st_code, NULL, &msg_data_);
     }
 }
 
 static void ui_hangup_call(char menuin[])
 {
-    if (_global_config.current_call == -1) {
+    if (_pjAppCfg.current_call == -1) {
         puts("No current call");
         fflush(stdout);
         return;
@@ -915,23 +915,23 @@ static void ui_hangup_call(char menuin[])
         pjsua_call_hangup_all();
     } else {
         /* Hangup current calls */
-        pjsua_call_hangup(_global_config.current_call, 0, NULL, NULL);
+        pjsua_call_hangup(_pjAppCfg.current_call, 0, NULL, NULL);
     }
 }
 
 static void ui_cycle_dialog(char menuin[])
 {
     if (menuin[0] == ']') {
-        find_next_call();
+        pjapp_find_next_call();
 
     } else {
-        find_prev_call();
+        pjapp_find_prev_call();
     }
 
-    if (_global_config.current_call != -1) {
+    if (_pjAppCfg.current_call != -1) {
         pjsua_call_info call_info;
 
-        pjsua_call_get_info(_global_config.current_call, &call_info);
+        pjsua_call_get_info(_pjAppCfg.current_call, &call_info);
         PJ_LOG(3,(THIS_FILE,"Current dialog: %.*s",
             (int)call_info.remote_info.slen,
             call_info.remote_info.ptr));
@@ -1013,7 +1013,7 @@ static void ui_add_account(pjsua_transport_config *rtp_cfg)
     acc_cfg.cred_info[0].data = pj_str(passwd);
 
     acc_cfg.rtp_cfg = *rtp_cfg;
-    app_config_init_video(&acc_cfg);
+    pjapp_config_video_init(&acc_cfg);
 
     status = pjsua_acc_add(&acc_cfg, PJ_TRUE, NULL);
     if (status != PJ_SUCCESS) {
@@ -1059,8 +1059,8 @@ static void ui_delete_account()
 
 static void ui_call_hold()
 {
-    if (_global_config.current_call != -1) {
-        pjsua_call_set_hold(_global_config.current_call, NULL);
+    if (_pjAppCfg.current_call != -1) {
+        pjsua_call_set_hold(_pjAppCfg.current_call, NULL);
     } else {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     }
@@ -1068,14 +1068,14 @@ static void ui_call_hold()
 
 static void ui_call_reinvite()
 {
-    _global_config.call_opt.flag |= PJSUA_CALL_UNHOLD;
-    pjsua_call_reinvite2(_global_config.current_call, &_global_config.call_opt, NULL);
+    _pjAppCfg.call_opt.flag |= PJSUA_CALL_UNHOLD;
+    pjsua_call_reinvite2(_pjAppCfg.current_call, &_pjAppCfg.call_opt, NULL);
 }
 
 static void ui_send_update()
 {
-    if (_global_config.current_call != -1) {
-        pjsua_call_update2(_global_config.current_call, &_global_config.call_opt, NULL);
+    if (_pjAppCfg.current_call != -1) {
+        pjsua_call_update2(_pjAppCfg.current_call, &_pjAppCfg.call_opt, NULL);
     } else {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     }
@@ -1156,27 +1156,27 @@ static void ui_manage_codec_prio()
 
 static void ui_call_transfer(pj_bool_t no_refersub)
 {
-    if (_global_config.current_call == -1) {
+    if (_pjAppCfg.current_call == -1) {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     } else {
-        int call = _global_config.current_call;
+        int call = _pjAppCfg.current_call;
         char buf[128];
         pjsip_generic_string_hdr refer_sub;
         pj_str_t STR_REFER_SUB = { "Refer-Sub", 9 };
         pj_str_t STR_FALSE = { "false", 5 };
         pjsua_call_info ci;
-        input_result result;
+        pjapp_input_result result;
         pjsua_msg_data msg_data_;
 
-        pjsua_call_get_info(_global_config.current_call, &ci);
-        printf("Transferring current call [%d] %.*s\n", _global_config.current_call,
+        pjsua_call_get_info(_pjAppCfg.current_call, &ci);
+        printf("Transferring current call [%d] %.*s\n", _pjAppCfg.current_call,
                (int)ci.remote_info.slen, ci.remote_info.ptr);
 
         ui_input_url("Transfer to URL", buf, sizeof(buf), &result);
 
         /* Check if call is still there. */
 
-        if (call != _global_config.current_call) {
+        if (call != _pjAppCfg.current_call) {
             puts("Call has been disconnected");
             return;
         }
@@ -1194,23 +1194,23 @@ static void ui_call_transfer(pj_bool_t no_refersub)
             } else {
                 pjsua_buddy_info binfo;
                 pjsua_buddy_get_info(result.nb_result-1, &binfo);
-                pjsua_call_xfer( _global_config.current_call, &binfo.uri, &msg_data_);
+                pjsua_call_xfer( _pjAppCfg.current_call, &binfo.uri, &msg_data_);
             }
 
         } else if (result.uri_result) {
             pj_str_t tmp;
             tmp = pj_str(result.uri_result);
-            pjsua_call_xfer( _global_config.current_call, &tmp, &msg_data_);
+            pjsua_call_xfer( _pjAppCfg.current_call, &tmp, &msg_data_);
         }
     }
 }
 
 static void ui_call_transfer_replaces(pj_bool_t no_refersub)
 {
-    if (_global_config.current_call == -1) {
+    if (_pjAppCfg.current_call == -1) {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     } else {
-        int call = _global_config.current_call;
+        int call = _pjAppCfg.current_call;
         int dst_call;
         pjsip_generic_string_hdr refer_sub;
         pj_str_t STR_REFER_SUB = { "Refer-Sub", 9 };
@@ -1229,9 +1229,9 @@ static void ui_call_transfer_replaces(pj_bool_t no_refersub)
             return;
         }
 
-        pjsua_call_get_info(_global_config.current_call, &ci);
+        pjsua_call_get_info(_pjAppCfg.current_call, &ci);
         printf("Transfer call [%d] %.*s to one of the following:\n",
-               _global_config.current_call,
+               _pjAppCfg.current_call,
                (int)ci.remote_info.slen, ci.remote_info.ptr);
 
         for (i=0; i<count; ++i) {
@@ -1256,7 +1256,7 @@ static void ui_call_transfer_replaces(pj_bool_t no_refersub)
 
         /* Check if call is still there. */
 
-        if (call != _global_config.current_call) {
+        if (call != _pjAppCfg.current_call) {
             puts("Call has been disconnected");
             return;
         }
@@ -1292,13 +1292,13 @@ static void ui_call_transfer_replaces(pj_bool_t no_refersub)
 
 static void ui_send_dtmf_2833()
 {
-    if (_global_config.current_call == -1) {
+    if (_pjAppCfg.current_call == -1) {
         PJ_LOG(3,(THIS_FILE, "No current call"));
-    } else if (!pjsua_call_has_media(_global_config.current_call)) {
+    } else if (!pjsua_call_has_media(_pjAppCfg.current_call)) {
         PJ_LOG(3,(THIS_FILE, "Media is not established yet!"));
     } else {
         pj_str_t digits;
-        int call = _global_config.current_call;
+        int call = _pjAppCfg.current_call;
         pj_status_t status;
         char buf[128];
 
@@ -1313,13 +1313,13 @@ static void ui_send_dtmf_2833()
             return;
         }
 
-        if (call != _global_config.current_call) {
+        if (call != _pjAppCfg.current_call) {
             puts("Call has been disconnected");
             return;
         }
 
         digits = pj_str(buf);
-        status = pjsua_call_dial_dtmf(_global_config.current_call, &digits);
+        status = pjsua_call_dial_dtmf(_pjAppCfg.current_call, &digits);
         if (status != PJ_SUCCESS) {
             pjsua_perror(THIS_FILE, "Unable to send DTMF", status);
         } else {
@@ -1330,10 +1330,10 @@ static void ui_send_dtmf_2833()
 
 static void ui_send_dtmf_info()
 {
-    if (_global_config.current_call == -1) {
+    if (_pjAppCfg.current_call == -1) {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     } else {
-        int call = _global_config.current_call;
+        int call = _pjAppCfg.current_call;
         pj_status_t status;
         char buf[128];
         pjsua_call_send_dtmf_param param;
@@ -1344,14 +1344,14 @@ static void ui_send_dtmf_info()
             return;
         }
 
-        if (call != _global_config.current_call) {
+        if (call != _pjAppCfg.current_call) {
             puts("Call has been disconnected");
             return;
         }       
         pjsua_call_send_dtmf_param_default(&param);
         param.digits = pj_str(buf);
         param.method = PJSUA_DTMF_METHOD_SIP_INFO;
-        status = pjsua_call_send_dtmf(_global_config.current_call, &param);
+        status = pjsua_call_send_dtmf(_pjAppCfg.current_call, &param);
         if (status != PJ_SUCCESS) {
             pjsua_perror(THIS_FILE, "Error sending DTMF", status);
         }
@@ -1363,7 +1363,7 @@ static void ui_send_arbitrary_request()
     char text[128];
     char buf[128];
     char *uri;
-    input_result result;
+    pjapp_input_result result;
     pj_str_t tmp;
 
     if (pjsua_acc_get_count() == 0) {
@@ -1387,7 +1387,7 @@ static void ui_send_arbitrary_request()
             return;
         } else if (result.nb_result == 0) {
             uri = NULL;
-            if (_global_config.current_call == PJSUA_INVALID_ID) {
+            if (_pjAppCfg.current_call == PJSUA_INVALID_ID) {
                 puts("No current call");
                 return;
             }
@@ -1407,7 +1407,7 @@ static void ui_send_arbitrary_request()
 
     if (uri) {
         tmp = pj_str(uri);
-        send_request(text, &tmp);
+        pjapp_send_request(text, &tmp);
     } else {
         /* If you send call control request using this method
         * (such requests includes BYE, CANCEL, etc.), it will
@@ -1415,7 +1415,7 @@ static void ui_send_arbitrary_request()
         * unless it's for testing.
         */
         pj_str_t method = pj_str(text);
-        pjsua_call_send_request(_global_config.current_call, &method, NULL);
+        pjsua_call_send_request(_pjAppCfg.current_call, &method, NULL);
     }
 }
 
@@ -1458,7 +1458,7 @@ static void ui_sleep(char menuin[])
 static void ui_subscribe(char menuin[])
 {
     char buf[128];
-    input_result result;
+    pjapp_input_result result;
 
     ui_input_url("(un)Subscribe presence of", buf, sizeof(buf), &result);
     if (result.nb_result != PJSUA_APP_NO_NB) {
@@ -1667,24 +1667,24 @@ static void ui_adjust_volume()
 {
     char buf[128];
     char text[128];
-    sprintf(buf, "Adjust mic level: [%4.1fx] ", _global_config.app_config.mic_level);
+    sprintf(buf, "Adjust mic level: [%4.1fx] ", _pjAppCfg.mic_level);
     if (simple_input(buf,text,sizeof(text))) {
         char *err;
-        _global_config.app_config.mic_level = (float)strtod(text, &err);
-        pjsua_conf_adjust_rx_level(0, _global_config.app_config.mic_level);
+        _pjAppCfg.mic_level = (float)strtod(text, &err);
+        pjsua_conf_adjust_rx_level(0, _pjAppCfg.mic_level);
     }
-    sprintf(buf, "Adjust speaker level: [%4.1fx] ", _global_config.app_config.speaker_level);
+    sprintf(buf, "Adjust speaker level: [%4.1fx] ", _pjAppCfg.speaker_level);
     if (simple_input(buf,text,sizeof(text))) {
         char *err;
-        _global_config.app_config.speaker_level = (float)strtod(text, &err);
-        pjsua_conf_adjust_tx_level(0, _global_config.app_config.speaker_level);
+        _pjAppCfg.speaker_level = (float)strtod(text, &err);
+        pjsua_conf_adjust_tx_level(0, _pjAppCfg.speaker_level);
     }
 }
 
 static void ui_dump_call_quality()
 {
-    if (_global_config.current_call != PJSUA_INVALID_ID) {
-        log_call_dump(_global_config.current_call);
+    if (_pjAppCfg.current_call != PJSUA_INVALID_ID) {
+        pjapp_log_call_dump(_pjAppCfg.current_call);
     } else {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     }
@@ -1695,7 +1695,7 @@ static void ui_dump_configuration()
     char settings[2000];
     int len;
 
-    len = write_settings(&_global_config.app_config, settings, sizeof(settings));
+    //len = write_settings(&_pjAppCfg, settings, sizeof(settings));
     if (len < 1)
         PJ_LOG(1,(THIS_FILE, "Error: not enough buffer"));
     else
@@ -1708,14 +1708,14 @@ static void ui_write_settings(const char *filename)
     char settings[2000];
     int len;
 
-    len = write_settings(&_global_config.app_config, settings, sizeof(settings));
+    //len = write_settings(&_pjAppCfg, settings, sizeof(settings));
     if (len < 1)
         PJ_LOG(1,(THIS_FILE, "Error: not enough buffer"));
     else {
         pj_oshandle_t fd;
         pj_status_t status;
 
-        status = pj_file_open(_global_config.app_config.pool, filename, PJ_O_WRONLY, &fd);
+        status = pj_file_open(_pjAppCfg.pool, filename, PJ_O_WRONLY, &fd);
         if (status != PJ_SUCCESS) {
             pjsua_perror(THIS_FILE, "Unable to open file", status);
         } else {
@@ -1738,22 +1738,22 @@ static void ui_app_dump(pj_bool_t detail)
 
 static void ui_call_redirect(char menuin[])
 {
-    if (_global_config.current_call == PJSUA_INVALID_ID) {
+    if (_pjAppCfg.current_call == PJSUA_INVALID_ID) {
         PJ_LOG(3,(THIS_FILE, "No current call"));
     } else {
-        if (!pjsua_call_is_active(_global_config.current_call)) {
-            PJ_LOG(1,(THIS_FILE, "Call %d has gone", _global_config.current_call));
+        if (!pjsua_call_is_active(_pjAppCfg.current_call)) {
+            PJ_LOG(1,(THIS_FILE, "Call %d has gone", _pjAppCfg.current_call));
         } else if (menuin[1] == 'a') {
-            pjsua_call_process_redirect(_global_config.current_call,
+            pjsua_call_process_redirect(_pjAppCfg.current_call,
                 PJSIP_REDIRECT_ACCEPT_REPLACE);
         } else if (menuin[1] == 'A') {
-            pjsua_call_process_redirect(_global_config.current_call,
+            pjsua_call_process_redirect(_pjAppCfg.current_call,
                 PJSIP_REDIRECT_ACCEPT);
         } else if (menuin[1] == 'r') {
-            pjsua_call_process_redirect(_global_config.current_call,
+            pjsua_call_process_redirect(_pjAppCfg.current_call,
                 PJSIP_REDIRECT_REJECT);
         } else {
-            pjsua_call_process_redirect(_global_config.current_call,
+            pjsua_call_process_redirect(_pjAppCfg.current_call,
                 PJSIP_REDIRECT_STOP);
         }
     }
@@ -1776,7 +1776,7 @@ static void ui_handle_ip_change()
 /*
  * Main "user interface" loop.
  */
-void legacy_main(void)
+void pjapp_legacy_main(void)
 {
     char menuin[80];
     char buf[128];
@@ -1816,9 +1816,9 @@ void legacy_main(void)
         }
 
         /* Update call setting */
-        pjsua_call_setting_default(&_global_config.call_opt);
-        _global_config.call_opt.aud_cnt = _global_config.app_config.aud_cnt;
-        _global_config.call_opt.vid_cnt = _global_config.app_config.vid.vid_cnt;
+        pjsua_call_setting_default(&_pjAppCfg.call_opt);
+        _pjAppCfg.call_opt.aud_cnt = _pjAppCfg.aud_cnt;
+        _pjAppCfg.call_opt.vid_cnt = _pjAppCfg.vid.vid_cnt;
 
         switch (menuin[0]) {
 
@@ -1866,7 +1866,7 @@ void legacy_main(void)
             if (menuin[1] == 'b') {
                 ui_add_buddy();
             } else if (menuin[1] == 'a') {
-                ui_add_account(&_global_config.app_config.rtp_cfg);
+                ui_add_account(&_pjAppCfg.rtp_cfg);
             } else {
                 printf("Invalid input %s\n", menuin);
             }
@@ -1895,7 +1895,7 @@ void legacy_main(void)
                 vid_handle_menu(menuin);
             } else
 #endif
-            if (_global_config.current_call != -1) {
+            if (_pjAppCfg.current_call != -1) {
                 /*
                  * re-INVITE
                  */
@@ -1922,14 +1922,14 @@ void legacy_main(void)
             /*
              * Transfer call.
              */
-            ui_call_transfer(_global_config.app_config.no_refersub);
+            ui_call_transfer(_pjAppCfg.no_refersub);
             break;
 
         case 'X':
             /*
              * Transfer call with replaces.
              */
-            ui_call_transfer_replaces(_global_config.app_config.no_refersub);
+            ui_call_transfer_replaces(_pjAppCfg.no_refersub);
             break;
 
         case '#':
@@ -2016,7 +2016,7 @@ void legacy_main(void)
 
         case 'L':   /* Restart */
         case 'q':
-            legacy_on_stopped(menuin[0]=='L');
+  
             goto on_exit;
 
         case 'R':

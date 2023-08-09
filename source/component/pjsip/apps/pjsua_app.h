@@ -24,34 +24,29 @@
  */
 
 #include "pjsua_app_common.h"
-#include "pjsua_app_cfgapi.h"
+
 PJ_BEGIN_DECL
+
 
 /**
  * This will initiate the pjsua and the user interface (CLI/menu UI) based on 
  * the provided configuration.
  */
-pj_status_t pjsua_app_init(const pjsua_app_cfg_t *app_cfg);
-
+extern pj_status_t pjsua_app_init(void);
+extern int pjsua_app_exit(void);
 /**
  * This will run the CLI/menu based UI.
  * wait_telnet_cli is used for CLI based UI. It will tell the library to block
  * or wait until user invoke the "shutdown"/"restart" command. GUI based app
  * should define this param as PJ_FALSE.
  */
-pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli);
+extern pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli);
 
 /**
  * This will destroy/cleanup the application library.
  */
-pj_status_t pjsua_app_destroy(void);
-int pjsua_app_restart(void);
-int pjsua_app_exit(void);
+extern pj_status_t pjsua_app_destroy(void);
 
-int log_refresh_proc(void *arg);
-
-int pjapp_app_perror(const char *sender, const char *title,
-                      pj_status_t status);
 PJ_END_DECL
     
 #endif  /* __PJSUA_APP_H__ */

@@ -20,7 +20,6 @@
 
 #include <pjsua-lib/pjsua.h>
 #include "pjsua_app_cb.h"
-
 PJ_BEGIN_DECL
 
 #define current_acc     pjsua_acc_get_default()
@@ -28,57 +27,128 @@ PJ_BEGIN_DECL
 #define PJSUA_APP_NO_LIMIT_DURATION     (int)0x7FFFFFFF
 #define PJSUA_APP_MAX_AVI               4
 #define PJSUA_APP_NO_NB                 -2
-#define PJSUA_APP_CODEC_MAX		PJMEDIA_CODEC_MGR_MAX_CODECS
-#define PJSUA_APP_TONES_MAX		32
-#define PJSUA_APP_DEV_NAME_MAX		32
-/* data pjsua_app_cli.c */
-typedef struct input_result
+
+#define PJAPP_CODEC_MAX		PJMEDIA_CODEC_MGR_MAX_CODECS
+#define PJAPP_TONES_MAX		32
+#define PJAPP_DEV_NAME_MAX		32
+
+#define PJAPP_NUMBER_MAX		32
+#define PJAPP_USERNAME_MAX		32
+#define PJAPP_PASSWORD_MAX		32
+#define PJAPP_ADDRESS_MAX		32
+#define PJAPP_FILE_MAX			64
+#define PJAPP_DATA_MAX			128
+
+
+typedef enum pjsua_app_register_state_s
+{
+	PJAPP_STATE_UNKNOW,
+	PJAPP_STATE_UNREGISTER,
+	PJAPP_STATE_REGISTER_FAILED,
+	PJAPP_STATE_REGISTER_SUCCESS,
+}pjapp_register_state_t;
+
+
+typedef enum pjsua_app_connect_state_s
+{
+	PJAPP_STATE_UNCONNECT,
+	PJAPP_STATE_CONNECT_FAILED,
+	PJAPP_STATE_CONNECT_SUCCESS,
+	PJAPP_STATE_CONNECT_LOCAL,
+}pjapp_connect_state_t;
+
+typedef enum pjsua_app_call_state_s
+{
+	//SIP呼叫状态		SIP层面
+	PJAPP_STATE_CALL_IDLE,			//呼叫空闲
+	PJAPP_STATE_CALL_TRYING,
+	PJAPP_STATE_CALL_RINGING,
+	PJAPP_STATE_CALL_PICKING,
+	PJAPP_STATE_CALL_FAILED,			//呼叫失败
+	PJAPP_STATE_CALL_SUCCESS,			//呼叫建立
+	PJAPP_STATE_CALL_CANCELLED,			//
+	PJAPP_STATE_CALL_CLOSED,				//
+	PJAPP_STATE_CALL_RELEASED,
+
+}pjapp_call_state_t;
+
+
+typedef struct pjsua_app_server_s
+{
+	pj_uint8_t		sip_address[PJAPP_ADDRESS_MAX];
+	pj_uint16_t		sip_port;
+	pjapp_connect_state_t state;
+}pjapp_register_server_t;
+
+typedef struct pjsua_app_username_s
+{
+	char				    sip_phone[PJAPP_NUMBER_MAX];
+    pjapp_register_server_t		    register_svr;
+
+	pjapp_register_state_t	sip_state;
+	pjapp_call_state_t	call_state;
+	
+	pj_bool_t				is_default;
+	pj_uint8_t				id;
+	pj_bool_t				is_current;
+}pjapp_username_t;
+
+typedef enum pjapp_transport_proto_s
+{
+	PJAPP_PROTO_UDP,
+	PJAPP_PROTO_TCP,
+	PJAPP_PROTO_TLS,
+	PJAPP_PROTO_DTLS,
+}pjapp_transport_proto_t;
+
+
+typedef struct pjapp_input_result
 {
     int   nb_result;
     char *uri_result;
-} input_result;
+} pjapp_input_result;
 
-/* Call specific data pjsua_app.c */
-typedef struct app_call_data
+/* Call specific data */
+typedef struct pjapp_call_data
 {
     pj_timer_entry          timer;
     pj_bool_t               ringback_on;
     pj_bool_t               ring_on;
-} app_call_data;
+} pjapp_call_data;
 
 /* Video settings */
-typedef struct app_vid
+typedef struct pjapp_video_dev
 {
     unsigned                vid_cnt;
     int                     vcapture_dev;
     int                     vrender_dev;
-    char                    vcapture_dev_name[PJSUA_APP_DEV_NAME_MAX];
-    char                    vrender_dev_name[PJSUA_APP_DEV_NAME_MAX];
     pj_bool_t               in_auto_show;
     pj_bool_t               out_auto_transmit;
-} app_vid;
+    char                    vcapture_dev_name[PJAPP_DEV_NAME_MAX];
+    char                    vrender_dev_name[PJAPP_DEV_NAME_MAX];    
+} pjapp_video_dev;
 
 /* Enumeration of CLI frontends */
 typedef enum {
     CLI_FE_CONSOLE          = 1,
-    CLI_FE_TELNET           = 2,
-    CLI_FE_SOCKET	    = 4,
+    CLI_FE_TELNET           = 2
 } CLI_FE;
 
 /** CLI config **/
-typedef struct cli_cfg_t
+typedef struct pjapp_cli_cfg_s
 {
-    /** Bitmask of CLI_FE **/
+    /** Bitmask of PJAPP_CLI_FE **/
     int                     cli_fe;
     pj_cli_cfg              cfg;
     pj_cli_telnet_cfg       telnet_cfg;
     pj_cli_console_cfg      console_cfg;
     pj_cli_socket_cfg	    socket_cfg;
-} cli_cfg_t;
+} pjapp_cli_cfg_t;
 
 /* Pjsua application data */
-typedef struct pjsua_app_config
+typedef struct pjsua_app_config_s
 {
+    pj_bool_t               initialization;    
     pjsua_config            cfg;
     pjsua_logging_config    log_cfg;
     pjsua_media_config      media_cfg;
@@ -99,26 +169,27 @@ typedef struct pjsua_app_config
     unsigned                buddy_cnt;
     pjsua_buddy_config      buddy_cfg[PJSUA_MAX_BUDDIES];
 
-    app_call_data           call_data[PJSUA_MAX_CALLS];
+    pjapp_call_data         call_data[PJAPP_DATA_MAX];
 
     pj_pool_t              *pool;
     /* Compatibility with older pjsua */
 
     unsigned                codec_cnt;
-    pj_str_t                codec_arg[PJSUA_APP_CODEC_MAX];
+    pj_str_t                codec_arg[PJAPP_CODEC_MAX];
     unsigned                codec_dis_cnt;
-    pj_str_t                codec_dis[PJSUA_APP_CODEC_MAX];
+    pj_str_t                codec_dis[PJAPP_CODEC_MAX];
     pj_bool_t               null_audio;
     unsigned                wav_count;
-    pj_str_t                wav_files[PJSUA_APP_TONES_MAX];
+    pj_str_t                wav_files[PJAPP_FILE_MAX];
     unsigned                tone_count;
-    pjmedia_tone_desc       tones[PJSUA_APP_TONES_MAX];
-    pjsua_conf_port_id      tone_slots[PJSUA_APP_TONES_MAX];
+    pjmedia_tone_desc       tones[PJAPP_TONES_MAX];
+    pjsua_conf_port_id      tone_slots[PJAPP_TONES_MAX];
     pjsua_player_id         wav_id;
     pjsua_conf_port_id      wav_port;
     pj_bool_t               auto_play;
     pj_bool_t               auto_play_hangup;
     pj_timer_entry          auto_hangup_timer;
+    pj_timer_entry          auto_answer_timer;
     pj_bool_t               auto_loop;
     pj_bool_t               auto_conf;
     pj_str_t                rec_file;
@@ -139,8 +210,8 @@ typedef struct pjsua_app_config
 
     int                     capture_dev, playback_dev;
     unsigned                capture_lat, playback_lat;
-    char                    capture_dev_name[PJSUA_APP_DEV_NAME_MAX];
-    char                    playback_dev_name[PJSUA_APP_DEV_NAME_MAX];
+    char                    capture_dev_name[PJAPP_DEV_NAME_MAX];
+    char                    playback_dev_name[PJAPP_DEV_NAME_MAX];
     pj_bool_t               no_tones;
     int                     ringback_slot;
     int                     ringback_cnt;
@@ -149,7 +220,7 @@ typedef struct pjsua_app_config
     int                     ring_cnt;
     pjmedia_port           *ring_port;
 
-    app_vid                 vid;
+    pjapp_video_dev                 vid;
     unsigned                aud_cnt;
 
     /* AVI to play */
@@ -164,114 +235,73 @@ typedef struct pjsua_app_config
 
     /* CLI setting */
     pj_bool_t               use_cli;
-    pj_bool_t               use_legacy;
-    cli_cfg_t               cli_cfg;
-    /* user callback */
-    pjsip_callback_tbl	cbtbl;
-} pjsua_app_config;
+    pjapp_cli_cfg_t               cli_cfg;
+
+    pj_bool_t           pj_inited;
+    pj_caching_pool     cli_cp;
+    pj_bool_t           cli_cp_inited;
+    pj_cli_t            *cli;
+    pj_cli_sess         *cli_cons_sess;
+    pj_cli_front_end    *telnet_front_end;
 
 
-/**
- * This structure contains the configuration of application.
- */
-typedef struct pjsua_app_cfg_t
-{
-    /**
-     * The number of runtime arguments passed to the application.
-     */
-    int       argc;
-
-    /**
-     * The array of arguments string passed to the application. 
-     */
-    char    **argv;
-
-    /** 
-     * Tell app that CLI (and pjsua) is (re)started.
-     * msg will contain start error message such as �Telnet to X:Y�,
-     * �failed to start pjsua lib�, �port busy�..
-     */
-    void (*on_started)(pj_status_t status, const char* title);
-
-    /**
-     * Tell app that library request to stopped/restart.
-     * GUI app needs to use a timer mechanism to wait before invoking the 
-     * cleanup procedure.
-     */
-    void (*on_stopped)(pj_bool_t restart, int argc, char** argv);
-
-    /**
-     * This will enable application to supply customize configuration other than
-     * the basic configuration provided by pjsua. 
-     */
-    void (*on_config_init)(pjsua_app_config *cfg);
-
-} pjsua_app_cfg_t;
-
-
-/* Global application data */
-typedef struct pjsua_global_config
-{
-/** Extern variable declaration **/
     pjsua_call_id        current_call;
-    pjsua_app_config     app_config;
-    int                  stdout_refresh;
-    pj_bool_t            stdout_refresh_quit;
+    pj_str_t             uri_arg;
     pjsua_call_setting   call_opt;
     pjsua_msg_data       msg_data;
+
+    pjsip_callback_tbl	 cbtbl;
+    pj_mutex_t          *_g_lock;
+    pj_pool_t           *_g_pool;
+    pj_bool_t            global_enable;
     pj_bool_t            app_running;
-    pjsua_app_cfg_t      app_cfg;
-    pj_str_t             uri_arg;
-	pj_bool_t			 incomeing;//被叫
-	int					 call_cnt;
-    int media_quit;
-    pj_bool_t restart;   
-}pjsua_global_config;
+    pj_bool_t            restart;
+    pj_bool_t            media_quit;
+    int					 call_cnt;
+    pj_bool_t            incomeing;
+    int                  stdout_refresh;
+    pj_bool_t            stdout_refresh_quit;
+  
+} pjsua_app_config;
 
-extern pjsua_global_config _global_config;
+#define PJAPP_GLOBAL_LOCK() if(_pjAppCfg._g_lock) pj_mutex_lock(_pjAppCfg._g_lock)
+#define PJAPP_GLOBAL_UNLOCK() if(_pjAppCfg._g_lock) pj_mutex_unlock(_pjAppCfg._g_lock)
 
-void pj_cli_out(pj_cli_cmd_val *cval, const char *fmt,...);
-void pj_cli_error_out(pj_cli_cmd_val *cval, int status, const char *fmt,...);
 
-pj_bool_t app_incoming_call(void);
+/** Extern variable declaration **/
+
+extern pjsua_app_config     _pjAppCfg;
+
+
+
 int my_atoi(const char *cs);
 int my_atoi2(const pj_str_t *s);
-pj_bool_t find_next_call(void);
-pj_bool_t find_prev_call(void);
-pjsua_call_id find_current_call(void);
-void send_request(char *cstr_method, const pj_str_t *dst_uri);
-void log_call_dump(int call_id);
-int write_settings(pjsua_app_config *cfg, char *buf, pj_size_t max);
-void app_config_init_video(pjsua_acc_config *acc_cfg);
-void arrange_window(pjsua_vid_win_id wid);
 
-/** Defined in pjsua_app_config.c **/
-/** This is to load the configuration **/
-pj_status_t load_config(int argc, char **argv, pj_str_t *uri_arg);
 
-/** Pjsua app callback **/
-/** This callback is called when CLI is started. **/
-void cli_on_started(pj_status_t status);
-
-/** This callback is called when "shutdown"/"restart" command is invoked **/
-void cli_on_stopped(pj_bool_t restart, int argc, char **argv);
-
-/** This callback is called when "quit"/"restart" command is invoked **/
-void legacy_on_stopped(pj_bool_t restart);
+pj_bool_t pjapp_find_next_call(void);
+pj_bool_t pjapp_find_prev_call(void);
+pj_bool_t pjapp_incoming_call(void);
+pjsua_call_id pjapp_current_call(void);
+void pjapp_send_request(char *cstr_method, const pj_str_t *dst_uri);
+void pjapp_log_call_dump(int call_id);
+void pjapp_config_video_init(pjsua_acc_config *acc_cfg);
+void pjapp_arrange_window(pjsua_vid_win_id wid);
 
 /** Pjsua cli method **/
-pj_status_t cli_init(void);
-pj_status_t cli_main(pj_bool_t wait_telnet_cli);
-void cli_destroy(void);
-void cli_get_info(char *info, pj_size_t size); 
+void pj_cli_out(pj_cli_cmd_val *cval, const char *fmt,...);
+void pj_cli_error_out(pj_cli_cmd_val *cval, int status, const char *fmt,...);
+pj_status_t pjapp_cli_init(void);
+pj_status_t pjapp_cli_main(pj_bool_t wait_telnet_cli);
+void pjapp_cli_destroy(void);
+void pjapp_cli_get_info(char *info, pj_size_t size); 
 
 /** Legacy method **/
-void legacy_main(void);
-void aud_list_devs(pj_cli_cmd_val *cval);
+void pjapp_legacy_main(void);
+void pjapp_aud_list_devs(pj_cli_cmd_val *cval);
 #if PJSUA_HAS_VIDEO
-void vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi, const char *title);
-void vid_list_devs(pj_cli_cmd_val *cval);
-void app_config_show_video(pj_cli_cmd_val *cval, int acc_id, const pjsua_acc_config *acc_cfg);
+void pjapp_vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi, const char *title);
+void pjapp_vid_list_devs(pj_cli_cmd_val *cval);
+void pjapp_config_show_video(pj_cli_cmd_val *cval, int acc_id, const pjsua_acc_config *acc_cfg);
 #endif
 
 #ifdef HAVE_MULTIPART_TEST

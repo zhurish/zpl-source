@@ -34,7 +34,8 @@ void displayWindow(pjsua_vid_win_id wid);
 static char some_buf[SOME_BUF_SIZE];
 
 /** Variable definition **/
-pjsua_global_config _global_config;
+
+pjsua_app_config    _pjAppCfg = {.initialization = 0,};
 
 
 int my_atoi(const char *cs)
@@ -60,68 +61,68 @@ int my_atoi2(const pj_str_t *str)
     }
 }
 
-pj_bool_t app_incoming_call(void)
+pj_bool_t pjapp_incoming_call(void)
 {
-	return _global_config.incomeing;
+	return _pjAppCfg.incomeing;
 }
 /*
  * Find next call when current call is disconnected or when user
  * press ']'
  */
-pj_bool_t find_next_call(void)
+pj_bool_t pjapp_find_next_call(void)
 {
     int i, max;
 
     max = pjsua_call_get_max_count();
-    for (i=_global_config.current_call+1; i<max; ++i) {
+    for (i=_pjAppCfg.current_call+1; i<max; ++i) {
         if (pjsua_call_is_active(i)) {
-            _global_config.current_call = i;
+            _pjAppCfg.current_call = i;
             return PJ_TRUE;
         }
     }
 
-    for (i=0; i<_global_config.current_call; ++i) {
+    for (i=0; i<_pjAppCfg.current_call; ++i) {
         if (pjsua_call_is_active(i)) {
-            _global_config.current_call = i;
+            _pjAppCfg.current_call = i;
             return PJ_TRUE;
         }
     }
-	_global_config.incomeing = PJ_FALSE;
-    _global_config.current_call = PJSUA_INVALID_ID;
+	_pjAppCfg.incomeing = PJ_FALSE;
+    _pjAppCfg.current_call = PJSUA_INVALID_ID;
     return PJ_FALSE;
 }
 
-pj_bool_t find_prev_call(void)
+pj_bool_t pjapp_find_prev_call(void)
 {
     int i, max;
 
     max = pjsua_call_get_max_count();
-    for (i=_global_config.current_call-1; i>=0; --i) {
+    for (i=_pjAppCfg.current_call-1; i>=0; --i) {
         if (pjsua_call_is_active(i)) {
-            _global_config.current_call = i;
+            _pjAppCfg.current_call = i;
             return PJ_TRUE;
         }
     }
 
-    for (i=max-1; i>_global_config.current_call; --i) {
+    for (i=max-1; i>_pjAppCfg.current_call; --i) {
         if (pjsua_call_is_active(i)) {
-            _global_config.current_call = i;
+            _pjAppCfg.current_call = i;
             return PJ_TRUE;
         }
     }
-    _global_config.incomeing = PJ_FALSE;
-    _global_config.current_call = PJSUA_INVALID_ID;
+    _pjAppCfg.incomeing = PJ_FALSE;
+    _pjAppCfg.current_call = PJSUA_INVALID_ID;
     return PJ_FALSE;
 }
 
-pjsua_call_id find_current_call(void)
+pjsua_call_id pjapp_current_call(void)
 {
-	return _global_config.current_call;
+	return _pjAppCfg.current_call;
 }
 /*
  * Send arbitrary request to remote host
  */
-void send_request(char *cstr_method, const pj_str_t *dst_uri)
+void pjapp_send_request(char *cstr_method, const pj_str_t *dst_uri)
 {
     pj_str_t str_method;
     pjsip_method method;
@@ -148,7 +149,7 @@ void send_request(char *cstr_method, const pj_str_t *dst_uri)
  * printing it is a bit tricky, it should be printed part by part as long 
  * as the logger can accept.
  */
-void log_call_dump(int call_id) 
+void pjapp_log_call_dump(int call_id) 
 {
     unsigned call_dump_len;
     unsigned part_len;
@@ -181,27 +182,27 @@ void log_call_dump(int call_id)
 }
 
 #ifdef PJSUA_HAS_VIDEO
-void app_config_init_video(pjsua_acc_config *acc_cfg)
+void pjapp_config_video_init(pjsua_acc_config *acc_cfg)
 {
-    acc_cfg->vid_in_auto_show = _global_config.app_config.vid.in_auto_show;
-    acc_cfg->vid_out_auto_transmit = _global_config.app_config.vid.out_auto_transmit;
+    acc_cfg->vid_in_auto_show = _pjAppCfg.vid.in_auto_show;
+    acc_cfg->vid_out_auto_transmit = _pjAppCfg.vid.out_auto_transmit;
     /* Note that normally GUI application will prefer a borderless
      * window.
      */
     acc_cfg->vid_wnd_flags = PJMEDIA_VID_DEV_WND_BORDER |
                              PJMEDIA_VID_DEV_WND_RESIZABLE;
-    acc_cfg->vid_cap_dev = _global_config.app_config.vid.vcapture_dev;
-    acc_cfg->vid_rend_dev = _global_config.app_config.vid.vrender_dev;
+    acc_cfg->vid_cap_dev = _pjAppCfg.vid.vcapture_dev;
+    acc_cfg->vid_rend_dev = _pjAppCfg.vid.vrender_dev;
 
-    if (_global_config.app_config.avi_auto_play &&
-        _global_config.app_config.avi_def_idx != PJSUA_INVALID_ID &&
-        _global_config.app_config.avi[_global_config.app_config.avi_def_idx].dev_id != PJMEDIA_VID_INVALID_DEV)
+    if (_pjAppCfg.avi_auto_play &&
+        _pjAppCfg.avi_def_idx != PJSUA_INVALID_ID &&
+        _pjAppCfg.avi[_pjAppCfg.avi_def_idx].dev_id != PJMEDIA_VID_INVALID_DEV)
     {
-        acc_cfg->vid_cap_dev = _global_config.app_config.avi[_global_config.app_config.avi_def_idx].dev_id;
+        acc_cfg->vid_cap_dev = _pjAppCfg.avi[_pjAppCfg.avi_def_idx].dev_id;
     }
 }
 #else
-void app_config_init_video(pjsua_acc_config *acc_cfg)
+void pjapp_config_video_init(pjsua_acc_config *acc_cfg)
 {
     PJ_UNUSED_ARG(acc_cfg);
 }
@@ -219,12 +220,12 @@ void app_config_init_video(pjsua_acc_config *acc_cfg)
       if (!alt_part) {
           pj_str_t type, subtype, content;
 
-          alt_part = pjsip_multipart_create_part(app_config.pool);
+          alt_part = pjsip_multipart_create_part(_pjAppCfg.pool);
 
           type = pj_str("text");
           subtype = pj_str("plain");
           content = pj_str("Sample text body of a multipart bodies");
-          alt_part->body = pjsip_msg_body_create(app_config.pool, &type,
+          alt_part->body = pjsip_msg_body_create(_pjAppCfg.pool, &type,
                                                  &subtype, &content);
       }
 
@@ -238,7 +239,7 @@ void app_config_init_video(pjsua_acc_config *acc_cfg)
  *   -1:    arrange all windows
  *   != -1: arrange only this window id
  */
-void arrange_window(pjsua_vid_win_id wid)
+void pjapp_arrange_window(pjsua_vid_win_id wid)
 {
 #if PJSUA_HAS_VIDEO
     pjmedia_coord pos;
@@ -302,7 +303,7 @@ static void aud_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_aud_dev_in
               title);
     pj_cli_out(cval, "    Supported capabilities: %s", capnames);
 }
-void aud_list_devs(pj_cli_cmd_val *cval)
+void pjapp_aud_list_devs(pj_cli_cmd_val *cval)
 {
     unsigned i, count;
     pjmedia_aud_dev_info vdi;
@@ -334,7 +335,7 @@ void aud_list_devs(pj_cli_cmd_val *cval)
     }
 }
 #if PJSUA_HAS_VIDEO
-void vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi, const char *title)
+void pjapp_vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi, const char *title)
 {
     char capnames[120];
     char formats[200];
@@ -394,7 +395,7 @@ void vid_print_dev(pj_cli_cmd_val *cval, int id, const pjmedia_vid_dev_info *vdi
     pj_cli_out(cval, "    Supported formats: %s%s", formats,
                               (st_len<0? " ..." : ""));
 }
-void vid_list_devs(pj_cli_cmd_val *cval)
+void pjapp_vid_list_devs(pj_cli_cmd_val *cval)
 {
     unsigned i, count;
     pjmedia_vid_dev_info vdi;
@@ -411,22 +412,22 @@ void vid_list_devs(pj_cli_cmd_val *cval)
 
     status = pjsua_vid_dev_get_info(PJMEDIA_VID_DEFAULT_RENDER_DEV, &vdi);
     if (status == PJ_SUCCESS)
-        vid_print_dev(cval,PJMEDIA_VID_DEFAULT_RENDER_DEV, &vdi,
+        pjapp_vid_print_dev(cval,PJMEDIA_VID_DEFAULT_RENDER_DEV, &vdi,
                       "(default renderer device)");
 
     status = pjsua_vid_dev_get_info(PJMEDIA_VID_DEFAULT_CAPTURE_DEV, &vdi);
     if (status == PJ_SUCCESS)
-        vid_print_dev(cval,PJMEDIA_VID_DEFAULT_CAPTURE_DEV, &vdi,
+        pjapp_vid_print_dev(cval,PJMEDIA_VID_DEFAULT_CAPTURE_DEV, &vdi,
                       "(default capture device)");
 
     for (i=0; i<count; ++i) {
         status = pjsua_vid_dev_get_info(i, &vdi);
         if (status == PJ_SUCCESS)
-            vid_print_dev(cval,i, &vdi, "");
+            pjapp_vid_print_dev(cval,i, &vdi, "");
     }
 }
 
-void app_config_show_video(pj_cli_cmd_val *cval, int acc_id, const pjsua_acc_config *acc_cfg)
+void pjapp_config_show_video(pj_cli_cmd_val *cval, int acc_id, const pjsua_acc_config *acc_cfg)
 {
     pj_cli_out(cval,
               "Account %d:\n"
