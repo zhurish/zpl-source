@@ -4,9 +4,7 @@
  *  Created on: Jun 15, 2019
  *      Author: zhurish
  */
-#include "auto_include.h"
-#include "lib_include.h"
-#include "vty_include.h"
+
 #include <pjsua-lib/pjsua.h>
 #include "pjsua_app_config.h"
 #include "pjsua_app_cb.h"
@@ -15,7 +13,7 @@
 
 #include "pjsua_app.h"
 #include "pjsip_app_api.h"
-#include "pjsip_util.h"
+//#include "pjsip_util.h"
 
 
 /***************************************************************************************/
@@ -272,7 +270,7 @@ char *pjapp_cfg_call_state_name(pjapp_call_state_t dtmf)
 /***************************************************************************/
 /***************************************************************************/
 /***************************************************************************/
-static int pjapp_cfg_url_get_id(char *url, char *id, char *ip, zpl_uint16 *port)
+static int pjapp_cfg_url_get_id(char *url, char *id, char *ip, pj_uint16_t *port)
 {
 	char tmp[128];
 	char *p = url, *brk = NULL;
@@ -332,7 +330,7 @@ int pjapp_cfg_account_set_api(pjsua_acc_id id, void *p)
 	{
 		char username[64];
 		char address[64];
-		zpl_uint16 port;
+		pj_uint16_t port;
 		memset(username, 0, sizeof(username));
 		memset(address, 0, sizeof(address));
 		//sip:100@192.168.0.103:5060
@@ -345,17 +343,16 @@ int pjapp_cfg_account_set_api(pjsua_acc_id id, void *p)
 			userinfo = acc->user_data;
 		if(userinfo)
 		{
-			if(/*info->online_status && */info->expires > 0)
+			if(info->status == PJSIP_SC_OK)
 				userinfo->sip_state = PJAPP_STATE_REGISTER_SUCCESS;
 			else
 				userinfo->sip_state = PJAPP_STATE_REGISTER_FAILED;
 			userinfo->id = info->id;
 
 			userinfo->is_default = info->is_default;
-			userinfo->is_current = ((id == current_acc)? zpl_true:zpl_false);
+			userinfo->is_current = ((id == current_acc)? PJ_TRUE:PJ_FALSE);
 
-			//userinfo->register_svr = sip_srv ? sip_srv:NULL;
-			if(!info->online_status)
+			if(info->status != PJSIP_SC_OK)
 				userinfo->register_svr.state = PJAPP_STATE_CONNECT_FAILED;
 			else
 			{
@@ -396,7 +393,7 @@ int pjapp_cfg_app_add_acc(char *sip_url, char *sip_srv, char *realm,
 
     status = pjsua_acc_add(&acc_cfg, PJ_TRUE, NULL);
     if (status != PJ_SUCCESS) {
-    	return ERROR;
+    	return -1;
     }
     return PJ_SUCCESS;
 }
@@ -406,19 +403,19 @@ int pjapp_cfg_app_del_acc(pjsua_acc_id accid)
     pj_status_t status;
     if (!pjsua_acc_is_valid(accid))
     {
-    	return ERROR;
+    	return -1;
     }
     status = pjsua_acc_del(accid);
     if (status != PJ_SUCCESS) {
-    	return ERROR;
+    	return -1;
     }
-	return ERROR;
+	return -1;
 }
 
 int pjapp_cfg_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass)
 {
-	return ERROR;
+	return -1;
 }
 
 int pjapp_cfg_app_select_acc(pjsua_acc_id accid, pj_uint32_t type)
@@ -428,18 +425,18 @@ int pjapp_cfg_app_select_acc(pjsua_acc_id accid, pj_uint32_t type)
     {
     	status = pjsua_acc_set_default(accid);
         if (status != PJ_SUCCESS) {
-        	return ERROR;
+        	return -1;
         }
         return PJ_SUCCESS;
     }
-    return ERROR;
+    return -1;
 }
 
 int pjapp_cfg_app_reg_acc(pj_bool_t reg)
 {
 	if(pjsua_acc_is_valid(current_acc))
 		return pjsua_acc_set_registration(current_acc, reg);
-	return ERROR;
+	return -1;
 }
 
 int pjapp_cfg_app_list_acc(pjsua_acc_id accid)
@@ -529,15 +526,18 @@ int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *calli
 	}
 	else
 	{
-		return ERROR;
+		return -1;
 	}
 #endif
-	if(_pjAppCfg.current_call != PJSUA_INVALID_ID)
-		return ERROR;
+	//if(_pjAppCfg.current_call != PJSUA_INVALID_ID)
+	//	return -1;
 	//zlog_debug(MODULE_VOIP, "========%s->voip_volume_control_api", __func__);
 	//voip_volume_control_api(zpl_true);
 	//zlog_debug(MODULE_VOIP, "========%s-> enter pjapp_cfg_app_start_call", __func__);
-
+	snprintf(cmd, sizeof(cmd), "sip:%s@%s:%d",
+					num,
+					"192.168.10.102",
+					5060);
 	//char *pj_call_str = (char *)(cmd + 9);
 	call_uri_arg = pj_str(cmd);
 	//call_uri_arg = pj_str("sip:1003@192.168.3.254");
@@ -545,7 +545,7 @@ int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *calli
 	_pjAppCfg.app_cfg.app_cfg.call_opt.aud_cnt = _pjAppCfg.app_cfg.app_cfg.aud_cnt;
 	_pjAppCfg.app_cfg.app_cfg.call_opt.vid_cnt = _pjAppCfg.app_cfg.app_cfg.vid.vid_cnt;*/
 	if(pjsua_call_make_call(current_acc/*current_acc*/, &call_uri_arg,
-				NULL/*&_pjAppCfg.app_cfg.app_cfg.call_opt*/, NULL, NULL, &_pjAppCfg.current_call) == PJ_SUCCESS)
+				&_pjAppCfg.call_opt, NULL, NULL, &_pjAppCfg.current_call) == PJ_SUCCESS)
 	{
 		if(callid)
 			*callid = _pjAppCfg.current_call;
@@ -557,14 +557,14 @@ int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *calli
 */
 	//zlog_debug(MODULE_VOIP, "========%s-> level pjapp_cfg_app_start_call", __func__);
 	//voip_volume_control_api(zpl_false);
-	return ERROR;
+	return -1;
 }
 
 int pjapp_cfg_app_stop_call(pjsua_call_id callid, pj_bool_t all)
 {
     if (_pjAppCfg.current_call == PJSUA_INVALID_ID)
     {
-    	return ERROR;
+    	return -1;
     }
     else
     {
@@ -589,7 +589,7 @@ int pjapp_cfg_app_stop_call(pjsua_call_id callid, pj_bool_t all)
 		}
     }
 	//voip_volume_control_api(zpl_false);
-	return ERROR;
+	return -1;
 }
 /* Make multi call */
 #if 0
@@ -647,7 +647,7 @@ int pjapp_cfg_app_answer_call(pjsua_call_id callid, pj_uint32_t st_code)
 {
 	pjsua_call_info call_info;
 	if ((st_code < 100) || (st_code > 699))
-		return ERROR;
+		return -1;
 	if (_pjAppCfg.current_call != PJSUA_INVALID_ID)
 	{
 		pjsua_call_get_info(_pjAppCfg.current_call, &call_info);
@@ -663,7 +663,7 @@ int pjapp_cfg_app_answer_call(pjsua_call_id callid, pj_uint32_t st_code)
 			|| call_info.role != PJSIP_ROLE_UAS
 			|| call_info.state >= PJSIP_INV_STATE_CONNECTING)
 	{
-		return ERROR;
+		return -1;
 	}
 	else
 	{
@@ -699,14 +699,14 @@ int pjapp_cfg_app_answer_call(pjsua_call_id callid, pj_uint32_t st_code)
 			//static const pj_str_t err_msg =
 			//		{ "Call has been disconnected\n", 28 };
 			//pj_cli_sess_write_msg(cval->sess, err_msg.ptr, err_msg.slen);
-			return ERROR;
+			return -1;
 		}
 
 		if (pjsua_call_answer2(_pjAppCfg.current_call, &_pjAppCfg.call_opt,
 				st_code, NULL, &_pjAppCfg.msg_data) == PJ_SUCCESS)
 			return PJ_SUCCESS;
 	}
-	return ERROR;
+	return -1;
 }
 
 int pjapp_cfg_app_hold_call(pjsua_call_id callid)
@@ -719,7 +719,7 @@ int pjapp_cfg_app_hold_call(pjsua_call_id callid)
     else
     {
     	//PJ_LOG(3,(THIS_FILE, "No current call"));
-    	return ERROR;
+    	return -1;
     }
     return PJ_SUCCESS;
 }
@@ -738,7 +738,7 @@ int pjapp_cfg_app_reinvite_call(pjsua_call_id callid)
 	else
 	{
 		//PJ_LOG(3,(THIS_FILE, "No current call"));
-		return ERROR;
+		return -1;
 	}
 	return PJ_SUCCESS;
 }
@@ -747,7 +747,7 @@ int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t 
 {
 	if (_pjAppCfg.current_call == PJSUA_INVALID_ID)
 	{
-		return ERROR;
+		return -1;
 	}
 	if (type == 1)
 	{
@@ -764,21 +764,21 @@ int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t 
 		if (!pjsua_call_has_media(_pjAppCfg.current_call))
 		{
 			//PJ_LOG(3, (THIS_FILE, "Media is not established yet!"));
-			return ERROR;
+			return -1;
 		}
 		if (call != _pjAppCfg.current_call)
 		{
 			//static const pj_str_t err_msg =
 			//		{ "Call has been disconnected\n", 28 };
 			//pj_cli_sess_write_msg(cval->sess, err_msg.ptr, err_msg.slen);
-			return ERROR;
+			return -1;
 		}
 
 		status = pjsua_call_dial_dtmf(_pjAppCfg.current_call, &dtmf_digi);
 		if (status != PJ_SUCCESS)
 		{
 			// pjsua_perror(THIS_FILE, "Unable to send DTMF", status);
-			return ERROR;
+			return -1;
 		}
 		return PJ_SUCCESS;
 	}
@@ -791,7 +791,7 @@ int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t 
 
 		if (call != _pjAppCfg.current_call)
 		{
-			return ERROR;
+			return -1;
 		}
 
 		pjsua_msg_data_init(&_pjAppCfg.msg_data);
@@ -806,7 +806,7 @@ int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t 
 				&_pjAppCfg.msg_data);
 		if (status != PJ_SUCCESS)
 		{
-			return ERROR;
+			return -1;
 		}
 		return PJ_SUCCESS;
 	}
@@ -836,7 +836,7 @@ int pjapp_cfg_app_select_call(pjsua_call_id callid, pj_uint32_t type)
 	}
 	else
 	{
-		return ERROR;
+		return -1;
 	}
 	return PJ_SUCCESS;
 }

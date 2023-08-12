@@ -17,17 +17,17 @@ extern "C" {
 typedef struct voip_payload_s
 {
 	char 		payload_name[PJSIP_NUMBER_MAX*2];
-	zpl_int8 		active;
+	int 		active;
 	char 		cmdname[PJSIP_NUMBER_MAX];
-	zpl_uint8 		index;
+	int 		index;
 }voip_payload_t;
 
 int codec_payload_index(char *cmdname);
-const char * codec_payload_name(zpl_uint32 index);
-const char * codec_cmdname(zpl_uint32 index);
+const char * codec_payload_name(int index);
+const char * codec_cmdname(int index);
 
 
-extern zpl_uint32 voip_get_address(ifindex_t ifindex);
+extern int voip_get_address(ifindex_t ifindex);
 
 #ifdef __cplusplus
 }

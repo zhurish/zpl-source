@@ -2455,7 +2455,7 @@ DEFUN (pjsip_call_stop_cli,
 	pjapp_cfg_app_stop_call(_pjAppCfg.current_call, zpl_false);
 	return  CMD_SUCCESS;
 }
-
+#endif
 DEFUN (pjsip_call_start_cli,
 		pjsip_call_start_cli_cmd,
 		"pjsip-call start STRING",
@@ -2467,7 +2467,7 @@ DEFUN (pjsip_call_start_cli,
 	return  CMD_SUCCESS;
 }
 
-
+#if 0
 DEFUN (pjsip_restart_cli,
 	   pjsip_restart_cli_cmd,
 		"pjsip restart",
@@ -2921,6 +2921,7 @@ static void cmd_voip_other_init(int node)
 	install_element(node, CMD_CONFIG_LEVEL, &pjsip_call_stop_cli_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &pjsip_restart_cli_cmd);
 	#endif
+	install_element(node, CMD_VIEW_LEVEL, &pjsip_call_start_cli_cmd);
 }
 
 static void cmd_show_sip_init(int node)

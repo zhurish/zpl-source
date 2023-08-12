@@ -258,6 +258,8 @@ int pjapp_account_add(pjsua_app_config *cfg, char *sip_user)
 			{
 				userdata = cfg->acc_cfg[i].user_data;
 				strcpy(userdata->sip_phone, sip_user);
+				cfg->acc_cfg[i].auth_pref.initial_auth = zpl_false;
+				cfg->acc_cfg[i].allow_contact_rewrite = zpl_true;
 				cfg->acc_cnt++;
 				return PJ_SUCCESS;
 			}
@@ -2480,6 +2482,10 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	char tmp[80];
 	unsigned i = 0;
 	assert(appcfg != NULL);
+
+	extern pj_bool_t pjsip_include_allow_hdr_in_dlg;
+	extern pj_bool_t pjmedia_add_rtpmap_for_static_pt;
+
 	pjsua_config_default(&appcfg->cfg);
 
 	pj_ansi_sprintf(tmp, "PJSUA V%s", pj_get_version());
@@ -2521,9 +2527,21 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 
 	appcfg->vid.vcapture_dev = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
 	appcfg->vid.vrender_dev = PJMEDIA_VID_DEFAULT_RENDER_DEV;
+	appcfg->vid.vid_cnt = 0;
 	appcfg->aud_cnt = 0;
 
 	appcfg->avi_def_idx = PJSUA_INVALID_ID;
+
+	//Media Transport Options:
+	appcfg->no_refersub = PJ_TRUE;//转接通话时禁止事件订阅	
+	pjapp_cfg_loose_route(appcfg, 0);
+
+	pjsip_cfg()->endpt.use_compact_form = 0;
+	/* do not transmit Allow header */
+	pjsip_include_allow_hdr_in_dlg = PJ_FALSE;
+	/* Do not include rtpmap for static payload types (<96) */
+	pjmedia_add_rtpmap_for_static_pt = PJ_FALSE;
+
 
 	appcfg->use_cli = 1;
 	appcfg->cli_cfg.cli_fe = CLI_FE_TELNET;
@@ -2536,6 +2554,8 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	
 	pjapp_account_add(appcfg, "100");
 	pjapp_account_register_server(appcfg, "100", "192.168.10.102", 5060);
+	pjapp_account_stun(appcfg, "100", 0);
+	pjapp_account_media_stun(appcfg, "100", 0);
 
 	pjapp_transport_local_port(appcfg, PJAPP_PROTO_UDP, "192.168.10.100", 5060, 0);
 	//pjapp_transport_public(appcfg, PJAPP_PROTO_UDP, "192.168.10.100");
@@ -2562,8 +2582,10 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	pjapp_media_record_latency(appcfg, PJMEDIA_SND_DEFAULT_REC_LATENCY);
 	pjapp_media_play_latency(appcfg, PJMEDIA_SND_DEFAULT_PLAY_LATENCY);
 
+	//pjapp_global_audio_null(appcfg, zpl_true);
 	pjapp_global_codec_add(appcfg, "pcmu");
 	pjapp_global_codec_add(appcfg, "pcma");
+	_pjAppCfg.aud_cnt++; 
 	
 	return PJ_SUCCESS;
 }

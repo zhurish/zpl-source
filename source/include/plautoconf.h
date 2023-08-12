@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * ZPLSource version: 
  */
-#define MAKECONF_TIMESTAMP "2023-07-31 22:59:31 CST"
+#define MAKECONF_TIMESTAMP "2023-08-12 21:59:05 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -134,7 +134,7 @@
 #undef ZPL_PJSIP_SRTP
 #define ZPL_PJSIP_VIDEO 1
 #undef ZPL_PJSIP_VIDEO_V4L2
-#define ZPL_PJSIP_ALSA 1
+#undef ZPL_PJSIP_ALSA
 #define ZPL_PJSIP_PJSUA2 1
 #undef ZPL_SQLITE_MODULE
 #undef ZPL_SQLITE_EXE_MODULE

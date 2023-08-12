@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ZPLSource version: 
-# Mon Jul 31 22:59:31 2023
+# Sat Aug 12 21:59:05 2023
 #
 CONFIG_HAVE_DOT_CONFIG=true
 
@@ -133,7 +133,7 @@ ZPL_PJSIP_MODULE=true
 # CONFIG_ZPL_PJSIP_SRTP is not set
 ZPL_PJSIP_VIDEO=true
 # CONFIG_ZPL_PJSIP_VIDEO_V4L2 is not set
-ZPL_PJSIP_ALSA=true
+# CONFIG_ZPL_PJSIP_ALSA is not set
 ZPL_PJSIP_PJSUA2=true
 # CONFIG_ZPL_SQLITE_MODULE is not set
 # CONFIG_ZPL_SQLITE_EXE_MODULE is not set

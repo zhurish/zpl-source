@@ -8,7 +8,6 @@
 #include <zplos_include.h>
 #include "lib_include.h"
 #include "nsm_include.h"
-#include "vty_include.h"
 
 #include "pjsip_util.h"
 
@@ -64,7 +63,7 @@ int codec_payload_index(char *cmdname)
 	return -1;
 }
 
-const char * codec_payload_name(zpl_uint32 index)
+const char * codec_payload_name(int index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
@@ -77,7 +76,7 @@ const char * codec_payload_name(zpl_uint32 index)
 	return NULL;
 }
 
-const char * codec_cmdname(zpl_uint32 index)
+const char * codec_cmdname(int index)
 {
 	int i = 0;
 	for(i = 0; i < array_size(_voip_payload_table); i++)
@@ -92,7 +91,7 @@ const char * codec_cmdname(zpl_uint32 index)
 /*************************************************************************/
 /*************************************************************************/
 
-zpl_uint32 voip_get_address(ifindex_t ifindex)
+int voip_get_address(ifindex_t ifindex)
 {
 	struct interface * ifp = (struct interface *)if_lookup_by_index (ifindex);
 	if(ifp)

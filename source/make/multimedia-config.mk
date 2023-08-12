@@ -202,7 +202,7 @@ else
 ZPL_DEFINE += -DPJMEDIA_AUDIO_DEV_HAS_ALSA=0
 endif
 
-
+ZPL_LDLIBS += -lportaudio -lasound
 
 PJSIP_ROOT=$(COMPONENT_DIR)/pjsip
 ZPLPRODS_LAST += $(ZPLBASE)/$(PJSIP_ROOT)

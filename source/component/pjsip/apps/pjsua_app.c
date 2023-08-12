@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
  */
 #include "pjsua_app.h"
-
+#include "pjsua_app_cfgapi.h"
 #define THIS_FILE       "pjsua_app.c"
 
 //#define STEREO_DEMO
@@ -157,6 +157,7 @@ static void call_timeout_callback(pj_timer_heap_t *timer_heap,
                          _pjAppCfg.duration, call_id));
     entry->id = PJSUA_INVALID_ID;
     pjsua_call_hangup(call_id, 200, NULL, &msg_data_);
+    pjsip_app_call_timeout_callback(&_pjAppCfg.cbtbl, call_id, NULL, 0);
 }
 
 /*
@@ -169,7 +170,10 @@ static void pjapp_on_call_state(pjsua_call_id call_id, pjsip_event *e)
     PJ_UNUSED_ARG(e);
 
     pjsua_call_get_info(call_id, &call_info);
-
+	if(!pjapp_incoming_call() && (call_info.state != PJSIP_INV_STATE_DISCONNECTED))
+	{
+		_pjAppCfg.call_cnt++;
+	}
     if (call_info.state == PJSIP_INV_STATE_DISCONNECTED) {
 
         /* Stop all ringback for this call */
@@ -214,7 +218,7 @@ static void pjapp_on_call_state(pjsua_call_id call_id, pjsip_event *e)
             PJ_LOG(5,(THIS_FILE, 
                       "Call %d disconnected, dumping media stats..", 
                       call_id));
-            pjsua_app_log_call_dump(call_id);
+            pjapp_log_call_dump(call_id);
         }
 
     } else {
@@ -311,7 +315,7 @@ static void pjapp_on_stream_destroyed(pjsua_call_id call_id,
         PJ_LOG(5,(THIS_FILE, 
                   "Call %d stream %d destroyed, dumping media stats..", 
                   call_id, stream_idx));
-        pjsua_app_log_call_dump(call_id);
+        pjapp_log_call_dump(call_id);
     }
 }
 
@@ -1987,13 +1991,13 @@ static pj_status_t app_init(void)
             goto on_error;
     }
 #endif
-    if (_pjAppCfg.capture_dev  == PJSUA_INVALID_ID && strlen(_pjAppCfg.capture_dev_name))
+    if (_pjAppCfg.capture_dev  == PJSUA_INVALID_ID /*&& strlen(_pjAppCfg.capture_dev_name)*/)
     {
-
+        pjmedia_aud_dev_lookup("PA", "HDA Intel PCH: ALC3232 Analog (hw:1,0)", &_pjAppCfg.capture_dev);
     }
-    if (_pjAppCfg.playback_dev  == PJSUA_INVALID_ID && strlen(_pjAppCfg.playback_dev_name))
+    if (_pjAppCfg.playback_dev  == PJSUA_INVALID_ID /*&& strlen(_pjAppCfg.playback_dev_name)*/)
     {
-
+        pjmedia_aud_dev_lookup("PA", "HDA Intel HDMI: 0 (hw:0,3)", &_pjAppCfg.playback_dev);
     }
     if (_pjAppCfg.capture_dev  != PJSUA_INVALID_ID ||
         _pjAppCfg.playback_dev != PJSUA_INVALID_ID) 
@@ -2002,6 +2006,7 @@ static pj_status_t app_init(void)
                                    _pjAppCfg.playback_dev);
         if (status != PJ_SUCCESS)
             goto on_error;
+           
     }
     pjsua_conf_adjust_rx_level(0, _pjAppCfg.mic_level);
     pjsua_conf_adjust_tx_level(0, _pjAppCfg.speaker_level);

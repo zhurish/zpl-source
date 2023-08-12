@@ -15,8 +15,8 @@
 
 int pjsip_app_callback_init(void *p, pjsip_callback_tbl *cb)
 {
-	//pjapp_config_t *app = p;
-	//memcpy(&app->cbtbl, cb, sizeof(pjsip_callback_tbl));
+	pjsua_app_config *app = p;
+	memcpy(&app->cbtbl, cb, sizeof(pjsip_callback_tbl));
 	return PJ_SUCCESS;
 }
 
@@ -195,6 +195,6 @@ int pjsip_callback_init(void)
 	cb.pjsip_reg_state = voip_app_register_state_callback;
 	cb.cli_account_state_get = pjapp_cfg_account_set_api;
 	cb.pjsip_call_incoming = voip_app_call_incoming_callback;
-	//pjsip_app_callback_init(&_pjAppCfg.app_cfg, &cb);
+	pjsip_app_callback_init(&_pjAppCfg, &cb);
 	return PJ_SUCCESS;
 }
