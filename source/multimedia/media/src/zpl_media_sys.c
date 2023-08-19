@@ -25,15 +25,8 @@ int zpl_media_system_bind(zpl_media_syschn_t src, zpl_media_syschn_t dst)
     case ZPL_MEDIA_GLOAL_VIDEO_OUTPUT:
         break;    //输出
 
-    case ZPL_MEDIA_GLOAL_AUDIO_INPUT:
+    case ZPL_MEDIA_GLOAL_AUDIO:
         break;
-    case ZPL_MEDIA_GLOAL_AUDIO_ENCODE:
-        break;
-    case ZPL_MEDIA_GLOAL_AUDIO_DECODE:
-        break;
-    case ZPL_MEDIA_GLOAL_AUDIO_OUTPUT:
-        break;
-
     }
     return ret;
 }

@@ -59,6 +59,13 @@ typedef enum
     ZPL_VIDHAL_INDEX_SENSORTYPE   = 0x0B,
     ZPL_VIDHAL_INDEX_ISPDEV = 0x0C, 
 
+    ZPL_VIDHAL_INDEX_AIDEV   = 0x20,       
+    ZPL_VIDHAL_INDEX_AICHN   = 0x21,
+    ZPL_VIDHAL_INDEX_AENCCHN = 0x22,     
+    ZPL_VIDHAL_INDEX_ADECCHN = 0x23,     
+    ZPL_VIDHAL_INDEX_AODEV   = 0x24,       
+    ZPL_VIDHAL_INDEX_AOCHN   = 0x25,
+
     ZPL_VIDHAL_INDEX_MAX,
 } ZPL_VIDHAL_INDEX_E;
 
@@ -100,6 +107,7 @@ typedef struct
     zpl_resdev_t vpssgrp_halres[VPSS_MAX_GRP_NUM];
     zpl_resdev_t vpsschn_halres[VPSS_MAX_GRP_NUM][VPSS_MAX_CHN_NUM];
     zpl_resdev_t venc_halres[VENC_MAX_CHN_NUM];
+
 }zpl_media_halres_t;
 
 extern zpl_media_halres_t _halres;

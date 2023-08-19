@@ -33,6 +33,7 @@ OSOBJ	+= zpl_media_proxy.o
 OSOBJ	+= zpl_media_frame_adap.o
 OSOBJ	+= zpl_media_sys.o
 OSOBJ	+= zpl_media_rtp.o
+OSOBJ	+= zpl_media_audio.o
 
 OSOBJ	+= zpl_media_video_encode.o
 OSOBJ	+= zpl_media_video_vpss.o
@@ -60,6 +61,7 @@ OSOBJ	+= zpl_vidhal_vgs.o
 OSOBJ	+= zpl_vidhal_ive.o
 OSOBJ	+= zpl_vidhal_svp.o
 OSOBJ	+= zpl_vidhal_nnie.o
+OSOBJ	+= zpl_vidhal_audio.o
 
 OSOBJ	+= zpl_syshal.o
 OSOBJ	+= zpl_vidhal.o	

@@ -210,31 +210,26 @@ char *pjapp_cfg_register_state_name(pjapp_register_state_t );
 char *pjapp_cfg_connect_state_name(pjapp_connect_state_t );
 char *pjapp_cfg_call_state_name(pjapp_call_state_t );
 /************************************************************************/
-
-/************************************************************************/
-
-/************************************************************************/
-int pjapp_cfg_account_set_api(pjsua_acc_id id, void *p);
-
 /************************************************************************/
 /************************************************************************/
-int pjapp_cfg_app_add_acc(char *sip_url, char *sip_srv, char *realm,
+/************************************************************************/
+int pjapp_account_add_api(char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass, pjsua_acc_id *accid);
-int pjapp_cfg_app_del_acc(pjsua_acc_id accid);
-int pjapp_cfg_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
+int pjapp_account_del_api(pjsua_acc_id accid);
+int pjapp_account_mod_api(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass);
-int pjapp_cfg_app_select_acc(pjsua_acc_id accid, pj_uint32_t type);
-int pjapp_cfg_app_reg_acc(pj_bool_t reg);
-int pjapp_cfg_app_list_acc(pjsua_acc_id accid);
+int pjapp_account_default_api(pjsua_acc_id accid, pj_uint32_t type);
+int pjapp_account_register_api(pj_bool_t reg);
+int pjapp_account_show_api(pjsua_acc_id accid);
 /************************************************************************/
 /************************************************************************/
-int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid);
-int pjapp_cfg_app_stop_call(pjsua_call_id callid, pj_bool_t all);
-int pjapp_cfg_app_answer_call(pjsua_call_id callid, pj_uint32_t st_code);
-int pjapp_cfg_app_hold_call(pjsua_call_id callid);
-int pjapp_cfg_app_reinvite_call(pjsua_call_id callid);
-int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t code);
-int pjapp_cfg_app_select_call(pjsua_call_id callid, pj_uint32_t type);
+int pjapp_user_start_call_api(pjsua_acc_id accid, char *num, pjsua_call_id *callid);
+int pjapp_user_stop_call_api(pjsua_call_id callid, pj_bool_t all);
+int pjapp_user_answer_call_api(pjsua_call_id callid, pj_uint32_t st_code);
+int pjapp_user_hold_call_api(pjsua_call_id callid);
+int pjapp_user_reinvite_call_api(pjsua_call_id callid);
+int pjapp_user_send_dtmf_api(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t code);
+int pjapp_user_select_call_api(pjsua_call_id callid, pj_uint32_t type);
 /************************************************************************/
 
 /************************************************************************/

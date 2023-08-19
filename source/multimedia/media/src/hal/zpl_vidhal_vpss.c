@@ -22,8 +22,7 @@ int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_media_video_vpsschn_t *vpss)
     if (s32Ret == HI_SUCCESS)
     {
         zpl_video_size_t input_size;
-        //zpl_media_video_encode_t *venc_ptr = vpss->venc_ptr;
-        /* 1.1 mmap frame */
+
         input_size.width = stFrmInfo_vpss.stVFrame.u32Width;
         input_size.height = stFrmInfo_vpss.stVFrame.u32Height;
         zpl_int32 datasize = input_size.width * input_size.height * 3 / 2;
@@ -38,19 +37,9 @@ int zpl_vidhal_vpss_channel_frame_recvfrom(zpl_media_video_vpsschn_t *vpss)
 		}
 		vpss->dbg_recv_count++;
 #endif
-        //zm_msg_debug(" =====VPSS Channel (%d/%d) Get Stream Total Size=%d", vpss->vpssgrp->vpss_group, vpss->vpss_channel, datasize);
-#if 0
-        zpl_uint8 *pbuf = zpl_sys_iommap(stFrmInfo_vpss.stVFrame.u64PhyAddr[0], datasize);
-        if (pbuf && vpss->vpss_frame_handle)
-            (vpss->vpss_frame_handle)(pbuf, datasize, input_size);
-        /* 4. ummap frame */
-        zpl_sys_munmap(pbuf, datasize);
-        pbuf = NULL;
-#endif        
+   
         zpl_media_hardadap_handle(&vpss->callback, &stFrmInfo_vpss, s32MilliSec);
-        /*if(vpss->vpss_sendto)
-            (vpss->vpss_sendto)(vpss->toid, vpss->tochn, &stFrmInfo_vpss,  s32MilliSec);
-        */
+
         if (stFrmInfo_vpss.u32PoolId != -1U)
             HI_MPI_VPSS_ReleaseChnFrame(vpss->vpss_group, vpss->vpss_channel, &stFrmInfo_vpss);
         return OK;

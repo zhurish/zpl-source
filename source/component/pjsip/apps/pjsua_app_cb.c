@@ -9,19 +9,13 @@
 #include "pjsua_app_cb.h"
 #include "pjsua_app_common.h"
 #include "pjsua_app_cfgapi.h"
-#include "pjsip_app_api.h"
+#include "pjsua_app_api.h"
 
 #define THIS_FILE "pjmeida_file.c"
 
-int pjsip_app_callback_init(void *p, pjsip_callback_tbl *cb)
-{
-	pjsua_app_config *app = p;
-	memcpy(&app->cbtbl, cb, sizeof(pjsip_callback_tbl));
-	return PJ_SUCCESS;
-}
 
 
-int pjsip_app_register_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_register_state_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_reg_state)
 	{
@@ -30,7 +24,7 @@ int pjsip_app_register_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, 
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_call_state_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_state)
 	{
@@ -39,7 +33,7 @@ int pjsip_app_call_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_media_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_media_state_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_media_state)
 	{
@@ -48,7 +42,7 @@ int pjsip_app_media_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, voi
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_recv_tdmf_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_dtmf_recv)
 	{
@@ -57,7 +51,7 @@ int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void 
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_call_takeup_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_takeup)
 	{
@@ -66,7 +60,7 @@ int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, voi
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_call_timeout_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_timeout)
 	{
@@ -75,7 +69,7 @@ int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, vo
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_call_hangup_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_hangup)
 	{
@@ -84,7 +78,7 @@ int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, voi
 	return PJ_SUCCESS;
 }
 
-int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
+int pjapp_user_call_incoming_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state)
 {
 	if(cb && cb->pjsip_call_incoming)
 	{
@@ -93,11 +87,106 @@ int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, pjsua_call_id id, v
 	return PJ_SUCCESS;
 }
 
+/***************************************************************************/
+/***************************************************************************/
+static int pjapp_url_get_id(char *url, char *id, char *ip, pj_uint16_t *port)
+{
+	char tmp[128];
+	char *p = url, *brk = NULL;
+	brk = strstr(p, ":");
+	if(brk)
+	{
+		brk++;
+		if(brk)
+		{
+			memset(tmp, 0, sizeof(tmp));
+			sscanf(brk, "%[^@]", tmp);
+			if(id)
+				strcpy(id, tmp);
+		}
+	}
+	brk = strstr(p, "@");
+	if(brk)
+	{
+		brk++;
+		if(brk)
+		{
+			memset(tmp, 0, sizeof(tmp));
+			if(strstr(brk, ":"))
+			{
+				sscanf(brk, "%[^:]", tmp);
+				if(ip)
+					strcpy(ip, tmp);
+
+				brk = strstr(brk, ":");
+				brk++;
+				if(brk)
+				{
+					if(port)
+						*port = atoi(brk);
+					return PJ_SUCCESS;
+				}
+			}
+			else
+			{
+				if(ip)
+					strcpy(ip, tmp);
+				return PJ_SUCCESS;
+			}
+		}
+	}
+	return PJ_SUCCESS;
+}
+
+/***************************************************************************/
+/***************************************************************************/
+static int pjapp_account_state_callback(pjsua_acc_id id, void *p)
+{
+	pjsua_acc_info *info = p;
+	pjapp_username_t *userinfo = NULL;
+	pjsua_acc_config *acc = NULL;
+	if(info->has_registration)
+	{
+		char username[64];
+		char address[64];
+		pj_uint16_t port;
+		memset(username, 0, sizeof(username));
+		memset(address, 0, sizeof(address));
+		//sip:100@192.168.0.103:5060
+		pjapp_url_get_id(info->acc_uri.ptr, username, address, &port);
+
+		//printf("==============%s============(%s-%s-%d)\r\n", __func__, user_tmp.sip_user, srv_tmp.sip_address, srv_tmp.sip_port);
+		//printf("==============%s============(%d:%d)(%s)\r\n", __func__, id, info->id, info->acc_uri.ptr);
+		acc = pjapp_account_acc_lookup(username);
+		if(acc)
+			userinfo = acc->user_data;
+		if(userinfo)
+		{
+			if(info->status == PJSIP_SC_OK)
+				userinfo->sip_state = PJAPP_STATE_REGISTER_SUCCESS;
+			else
+				userinfo->sip_state = PJAPP_STATE_REGISTER_FAILED;
+			userinfo->id = info->id;
+
+			userinfo->is_default = info->is_default;
+			userinfo->is_current = ((id == current_acc)? PJ_TRUE:PJ_FALSE);
+
+			if(info->status != PJSIP_SC_OK)
+				userinfo->register_svr.state = PJAPP_STATE_CONNECT_FAILED;
+			else
+			{
+				userinfo->register_svr.state = PJAPP_STATE_CONNECT_SUCCESS;
+				pjsua_acc_set_online_status(id, PJ_TRUE);
+			}
+		}
+	}
+	return PJ_SUCCESS;
+}
 
 /*
  * dtmf recv callback
  */
-static int voip_app_dtmf_recv_callback(int id, void *p, int input)
+static int pjapp_recv_dtmf_callback(int id, void *p, int input)
 {
 	if (input == '#')
 	{
@@ -116,18 +205,24 @@ static int voip_app_dtmf_recv_callback(int id, void *p, int input)
 	return PJ_SUCCESS;
 }
 
-static int voip_app_register_state_callback(int id, void *p, int input)
+static int pjapp_register_state_callback(int id, void *p, int input)
 {
 	pjsua_acc_info reginfo;
 	memset(&reginfo, 0, sizeof(reginfo));
 	if(pjsua_acc_get_info(id, &reginfo) == PJ_SUCCESS)
 	{
-		pjapp_cfg_account_set_api(id, &reginfo);
+		pjapp_account_state_callback(id, &reginfo);
 	}
 	return PJ_SUCCESS;
 }
-
-static int voip_app_call_state_callback(int id, void *p, int input)
+/**
+ * @brief 
+ * @param  id:               Parameter Description
+ * @param  p:                Parameter Description
+ * @param  input:            Parameter Description
+ * @return : int 
+ */
+static int pjapp_call_state_callback(int id, void *p, int input)
 {
 	//PJ_LOG(1, (THIS_FILE, "call state -> :%d", input);
 	if(input == PJSIP_INV_STATE_NULL)
@@ -155,8 +250,14 @@ static int voip_app_call_state_callback(int id, void *p, int input)
 	return PJ_SUCCESS;
 }
 
-
-static int voip_app_call_incoming_callback(int id, void *p, int input)
+/**
+ * @brief 
+ * @param  id                Param doc
+ * @param  p                 Param doc
+ * @param  input             Param doc
+ * @return int 
+ */
+static int pjapp_call_incoming_callback(int id, void *p, int input)
 {
 	if (pjapp_incoming_call())
 	{
@@ -185,16 +286,23 @@ static int voip_app_call_incoming_callback(int id, void *p, int input)
 	return PJ_SUCCESS;
 }
 
-
-int pjsip_callback_init(void)
+/**
+ * @brief 
+ * @param  cb                Param doc
+ * @return int 
+ */
+int pjapp_user_callback_init(pjapp_user_callback_tbl *cb)
 {
-	pjsip_callback_tbl cb;
-	cb.pjsip_dtmf_recv = voip_app_dtmf_recv_callback;
-	cb.pjsip_call_state = voip_app_call_state_callback;
-	cb.pjsip_reg_state = voip_app_register_state_callback;
-	cb.pjsip_reg_state = voip_app_register_state_callback;
-	cb.cli_account_state_get = pjapp_cfg_account_set_api;
-	cb.pjsip_call_incoming = voip_app_call_incoming_callback;
-	pjsip_app_callback_init(&_pjAppCfg, &cb);
+	cb->pjsip_reg_state = pjapp_register_state_callback;
+	cb->pjsip_call_state = pjapp_call_state_callback;
+	cb->pjsip_call_incoming = pjapp_call_incoming_callback;
+	//cb->pjsip_media_state = pjapp_recv_dtmf_callback;
+	cb->pjsip_dtmf_recv = pjapp_recv_dtmf_callback;
+
+	//cb->pjsip_call_takeup;
+	//cb->pjsip_call_timeout;
+	//cb->pjsip_call_hangup;
+
+	cb->cli_account_state_get = pjapp_account_state_callback;
 	return PJ_SUCCESS;
 }

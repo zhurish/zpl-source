@@ -12,8 +12,7 @@
 #include "pjsua_app_cfgapi.h"
 
 #include "pjsua_app.h"
-#include "pjsip_app_api.h"
-//#include "pjsip_util.h"
+#include "pjsua_app_api.h"
 
 
 /***************************************************************************************/
@@ -269,106 +268,12 @@ char *pjapp_cfg_call_state_name(pjapp_call_state_t dtmf)
 /***************************************************************************************/
 /***************************************************************************/
 /***************************************************************************/
-/***************************************************************************/
-static int pjapp_cfg_url_get_id(char *url, char *id, char *ip, pj_uint16_t *port)
-{
-	char tmp[128];
-	char *p = url, *brk = NULL;
-	brk = strstr(p, ":");
-	if(brk)
-	{
-		brk++;
-		if(brk)
-		{
-			memset(tmp, 0, sizeof(tmp));
-			sscanf(brk, "%[^@]", tmp);
-			if(id)
-				strcpy(id, tmp);
-		}
-	}
-	brk = strstr(p, "@");
-	if(brk)
-	{
-		brk++;
-		if(brk)
-		{
-			memset(tmp, 0, sizeof(tmp));
-			if(strstr(brk, ":"))
-			{
-				sscanf(brk, "%[^:]", tmp);
-				if(ip)
-					strcpy(ip, tmp);
-
-				brk = strstr(brk, ":");
-				brk++;
-				if(brk)
-				{
-					if(port)
-						*port = atoi(brk);
-					return PJ_SUCCESS;
-				}
-			}
-			else
-			{
-				if(ip)
-					strcpy(ip, tmp);
-				return PJ_SUCCESS;
-			}
-		}
-	}
-	return PJ_SUCCESS;
-}
-
-/***************************************************************************/
-/***************************************************************************/
-int pjapp_cfg_account_set_api(pjsua_acc_id id, void *p)
-{
-	pjsua_acc_info *info = p;
-	pjapp_username_t *userinfo = NULL;
-	pjsua_acc_config *acc = NULL;
-	if(info->has_registration)
-	{
-		char username[64];
-		char address[64];
-		pj_uint16_t port;
-		memset(username, 0, sizeof(username));
-		memset(address, 0, sizeof(address));
-		//sip:100@192.168.0.103:5060
-		pjapp_cfg_url_get_id(info->acc_uri.ptr, username, address, &port);
-
-		//printf("==============%s============(%s-%s-%d)\r\n", __func__, user_tmp.sip_user, srv_tmp.sip_address, srv_tmp.sip_port);
-		//printf("==============%s============(%d:%d)(%s)\r\n", __func__, id, info->id, info->acc_uri.ptr);
-		acc = pjapp_account_acc_lookup(username);
-		if(acc)
-			userinfo = acc->user_data;
-		if(userinfo)
-		{
-			if(info->status == PJSIP_SC_OK)
-				userinfo->sip_state = PJAPP_STATE_REGISTER_SUCCESS;
-			else
-				userinfo->sip_state = PJAPP_STATE_REGISTER_FAILED;
-			userinfo->id = info->id;
-
-			userinfo->is_default = info->is_default;
-			userinfo->is_current = ((id == current_acc)? PJ_TRUE:PJ_FALSE);
-
-			if(info->status != PJSIP_SC_OK)
-				userinfo->register_svr.state = PJAPP_STATE_CONNECT_FAILED;
-			else
-			{
-				userinfo->register_svr.state = PJAPP_STATE_CONNECT_SUCCESS;
-				pjsua_acc_set_online_status(id, PJ_TRUE);
-			}
-		}
-	}
-	return PJ_SUCCESS;
-}
 
 /***************************************************************************/
 
 /***************************************************************************/
 /***************************************************************************/
-int pjapp_cfg_app_add_acc(char *sip_url, char *sip_srv, char *realm,
+int pjapp_account_add_api(char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass, pjsua_acc_id *accid)
 {
     pjsua_acc_config acc_cfg;
@@ -398,7 +303,7 @@ int pjapp_cfg_app_add_acc(char *sip_url, char *sip_srv, char *realm,
     return PJ_SUCCESS;
 }
 
-int pjapp_cfg_app_del_acc(pjsua_acc_id accid)
+int pjapp_account_del_api(pjsua_acc_id accid)
 {
     pj_status_t status;
     if (!pjsua_acc_is_valid(accid))
@@ -412,13 +317,13 @@ int pjapp_cfg_app_del_acc(pjsua_acc_id accid)
 	return -1;
 }
 
-int pjapp_cfg_app_mod_acc(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
+int pjapp_account_mod_api(pjsua_acc_id accid, char *sip_url, char *sip_srv, char *realm,
 		char *user, char *pass)
 {
 	return -1;
 }
 
-int pjapp_cfg_app_select_acc(pjsua_acc_id accid, pj_uint32_t type)
+int pjapp_account_default_api(pjsua_acc_id accid, pj_uint32_t type)
 {
     pj_status_t status;
     if (pjsua_acc_is_valid(accid))
@@ -432,14 +337,14 @@ int pjapp_cfg_app_select_acc(pjsua_acc_id accid, pj_uint32_t type)
     return -1;
 }
 
-int pjapp_cfg_app_reg_acc(pj_bool_t reg)
+int pjapp_account_register_api(pj_bool_t reg)
 {
 	if(pjsua_acc_is_valid(current_acc))
 		return pjsua_acc_set_registration(current_acc, reg);
 	return -1;
 }
 
-int pjapp_cfg_app_list_acc(pjsua_acc_id accid)
+int pjapp_account_show_api(pjsua_acc_id accid)
 {
 	pjsua_acc_id acc_ids[16];
 	pj_uint32_t count = PJ_ARRAY_SIZE(acc_ids);
@@ -491,7 +396,7 @@ int pjapp_cfg_app_list_acc(pjsua_acc_id accid)
 }
 
 
-int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *callid)
+int pjapp_user_start_call_api(pjsua_acc_id accid, char *num, pjsua_call_id *callid)
 {
 
 	pj_str_t call_uri_arg;
@@ -560,7 +465,7 @@ int pjapp_cfg_app_start_call(pjsua_acc_id accid, char *num, pjsua_call_id *calli
 	return -1;
 }
 
-int pjapp_cfg_app_stop_call(pjsua_call_id callid, pj_bool_t all)
+int pjapp_user_stop_call_api(pjsua_call_id callid, pj_bool_t all)
 {
     if (_pjAppCfg.current_call == PJSUA_INVALID_ID)
     {
@@ -643,7 +548,7 @@ int pjapp_cfg_app_start_multi_call(pjsua_acc_id accid, char *num, int *callid)
 }
 #endif
 /***************************************************************************/
-int pjapp_cfg_app_answer_call(pjsua_call_id callid, pj_uint32_t st_code)
+int pjapp_user_answer_call_api(pjsua_call_id callid, pj_uint32_t st_code)
 {
 	pjsua_call_info call_info;
 	if ((st_code < 100) || (st_code > 699))
@@ -709,7 +614,7 @@ int pjapp_cfg_app_answer_call(pjsua_call_id callid, pj_uint32_t st_code)
 	return -1;
 }
 
-int pjapp_cfg_app_hold_call(pjsua_call_id callid)
+int pjapp_user_hold_call_api(pjsua_call_id callid)
 {
     if (callid != PJSUA_INVALID_ID)
     {
@@ -724,7 +629,7 @@ int pjapp_cfg_app_hold_call(pjsua_call_id callid)
     return PJ_SUCCESS;
 }
 
-int pjapp_cfg_app_reinvite_call(pjsua_call_id callid)
+int pjapp_user_reinvite_call_api(pjsua_call_id callid)
 {
 	if (callid != PJSUA_INVALID_ID)
 	{
@@ -743,7 +648,7 @@ int pjapp_cfg_app_reinvite_call(pjsua_call_id callid)
 	return PJ_SUCCESS;
 }
 
-int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t code)
+int pjapp_user_send_dtmf_api(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t code)
 {
 	if (_pjAppCfg.current_call == PJSUA_INVALID_ID)
 	{
@@ -813,7 +718,7 @@ int pjapp_cfg_app_dtmf_call(pjsua_call_id callid, pj_uint32_t type, pj_uint32_t 
 	return PJ_SUCCESS;
 }
 
-int pjapp_cfg_app_select_call(pjsua_call_id callid, pj_uint32_t type)
+int pjapp_user_select_call_api(pjsua_call_id callid, pj_uint32_t type)
 {
 	/*
 	 * Cycle next/prev dialog.

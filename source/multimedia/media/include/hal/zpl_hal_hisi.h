@@ -63,6 +63,7 @@ extern "C" {
 #include "mpi_nnie.h"
 #include "hi_ae_comm.h"
 #include "hi_awb_comm.h"
+#include "acodec.h"
 #endif
 
 #define COLOR_RGB_RED      0xFF0000

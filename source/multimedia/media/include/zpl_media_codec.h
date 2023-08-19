@@ -285,6 +285,12 @@ typedef struct
     zpl_uint32			framerate;		//帧率
     zpl_uint32			bitrate;		//码率
     ZPL_BIT_RATE_E		bitrate_type;	//码率类型
+    zpl_uint32          avg_bps;             /**< Average bandwidth in bits/sec  */
+    zpl_uint32          max_bps;             /**< Maximum bandwidth in bits/sec  */
+    zpl_uint32          max_frame_size;   /**< Maximum frame size             */
+    zpl_uint32          clock_rate;     /**< Sampling rate.                 */
+    zpl_uint8           channel_cnt;    /**< Channel count.                 */
+    zpl_uint8           bits_per_sample; /**< Bits/sample in the PCM side    */
 }__attribute__ ((packed)) zpl_audio_codec_t ;
 
 

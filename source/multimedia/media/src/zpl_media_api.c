@@ -33,6 +33,7 @@ int zpl_media_module_init(void)
 	zpl_media_event_create("mediaEvent", 16);
 
 	zpl_media_channel_init();
+	zpl_media_audio_init();
 	zpl_media_video_inputchn_init();
 	zpl_media_video_vpsschn_init();
 	zpl_media_video_encode_init();

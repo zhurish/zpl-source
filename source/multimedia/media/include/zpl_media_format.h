@@ -63,9 +63,33 @@ typedef enum
 
 }ZPL_AUDIO_FRAMERATE_E;
 
-#define ZPL_AUDIO_FRAMERATE_DEFAULT ZPL_AUDIO_FRAMERATE_50
-#define ZPL_VIDEO_FRAMERATE_DEFAULT ZPL_VIDEO_FRAMERATE_30
 
+typedef enum  {
+    ZPL_AUDIO_SAMPLE_RATE_8000   = 8000,    /* 8K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_12000  = 12000,   /* 12K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_11025  = 11025,   /* 11.025K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_16000  = 16000,   /* 16K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_22050  = 22050,   /* 22.050K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_24000  = 24000,   /* 24K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_32000  = 32000,   /* 32K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_44100  = 44100,   /* 44.1K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_48000  = 48000,   /* 48K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_64000  = 64000,   /* 64K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_96000  = 96000,   /* 96K samplerate */
+    ZPL_AUDIO_SAMPLE_RATE_BUTT,
+} ZPL_AUDIO_SAMPLE_RATE_E;
+
+typedef enum  {
+    ZPL_AUDIO_BIT_WIDTH_8   = 0,   /* 8bit width */
+    ZPL_AUDIO_BIT_WIDTH_16  = 1,   /* 16bit width */
+    ZPL_AUDIO_BIT_WIDTH_24  = 2,   /* 24bit width */
+    ZPL_AUDIO_BIT_WIDTH_BUTT,
+} ZPL_AUDIO_BIT_WIDTH_E;
+
+#define ZPL_VIDEO_FRAMERATE_DEFAULT     ZPL_VIDEO_FRAMERATE_30
+
+#define ZPL_AUDIO_FRAMERATE_DEFAULT     ZPL_AUDIO_FRAMERATE_50
+#define ZPL_AUDIO_CLOCK_RATE_DEFAULT    ZPL_AUDIO_SAMPLE_RATE_8000
 
 const char *zpl_media_format_name(int key);
 /* 获取视频分辨率大小 resolution ratio */

@@ -13,18 +13,18 @@ OBJS += pjsua_app_common.o
 OBJS += pjsua_app_legacy.o
 OBJS += pjsua_app.o
 OBJS += pjsua_app_cli.o
-OBJS += pjapp_stream.o
-OBJS += pjapp_media_file.o
-
 OBJS += pjsua_app_cb.o
 OBJS += pjsua_app_cfgapi.o
 OBJS += pjsua_app.o
+OBJS += pjsua_app_api.o
+
+OBJS += pjapp_stream.o
+OBJS += pjapp_media_file.o
 
 OBJS += pjsip_util.o
 OBJS += pjsip_buddy.o
-OBJS += pjsip_jsoncfg.o
 OBJS += pjsip_main.o
-OBJS += pjsip_app_api.o
+
 
 ifeq ($(strip $(ZPL_SHELL_MODULE)),true)
 OBJS += cmd_pjsip.o
@@ -32,7 +32,7 @@ endif
 #############################################################################
 # LIB
 ###########################################################################
-LIBS = libpjsipvoip.a
+LIBS = libpjvoipc.a
 
 
 ifeq ($(strip $(ZPL_PJSIP_PJSUA2)),true)
@@ -51,5 +51,5 @@ PJSUA2OBJ := pjsipjsonconfig.o \
 PJSUA2TEST := pjsiptest.o
 PJSUA2TEST_BIN:= pjsua2-app				
 
-PJSUA2LIBS = libpjsipc++.a
+PJSUA2LIBS = libpjvoipsua2.a
 endif

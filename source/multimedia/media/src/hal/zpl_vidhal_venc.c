@@ -1,8 +1,12 @@
-/*
- * zpl_vidhal_venc.c
- *
- *  Created on: Jul 17, 2018
- *      Author: zhurish
+/**
+ * @file     zpl_vidhal_venc.c
+ * @brief     : Description
+ * @author   zhurish (zhurish@163.com)
+ * @version  1.0
+ * @date     2023-08-13
+ * 
+ * @copyright   Copyright (c) 2023 {author}({email}).Co.Ltd. All rights reserved.
+ * 
  */
 #include "zpl_media.h"
 #include "zpl_media_internal.h"

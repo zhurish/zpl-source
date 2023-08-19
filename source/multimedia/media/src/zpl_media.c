@@ -40,13 +40,9 @@ int zpl_media_global_init(void)
 	{
 		lstInit(&_media_global.input_dev_list);
 	}
-	if(os_mutex_name_init(&_media_global.audio_output_mutex, "audio_output_mutex") == OK)
+	if(os_mutex_name_init(&_media_global.audio_mutex, "audio_mutex") == OK)
 	{
-		lstInit(&_media_global.audio_output_list);
-	}
-	if(os_mutex_name_init(&_media_global.video_input_mutex, "audio_input_mutex") == OK)
-	{
-		lstInit(&_media_global.audio_input_list);
+		lstInit(&_media_global.audio_list);
 	}
 	return OK;
 }
@@ -77,13 +73,9 @@ int zpl_media_global_exit(void)
 	{
 		lstFree(&_media_global.input_dev_list);
 	}
-	if(os_mutex_destroy(&_media_global.audio_output_mutex) == OK)
+	if(os_mutex_destroy(&_media_global.audio_mutex) == OK)
 	{
-		lstFree(&_media_global.audio_output_list);
-	}
-	if(os_mutex_destroy(&_media_global.video_input_mutex) == OK)
-	{
-		lstFree(&_media_global.audio_input_list);
+		lstFree(&_media_global.audio_list);
 	}
 	return OK;
 }
@@ -119,21 +111,9 @@ static int zpl_media_global_list_node_get(ZPL_MEDIA_GLOBAL_E type, LIST **lst, o
         *mutex = &_media_global.video_output_mutex;
         break;
 
-    case ZPL_MEDIA_GLOAL_AUDIO_INPUT:  
-        *lst = &_media_global.audio_input_list; 
-        *mutex = &_media_global.audio_input_mutex;
-        break;
-    case ZPL_MEDIA_GLOAL_AUDIO_ENCODE:  
-        //*lst = &_media_global.input_pipe_list; 
-        //*mutex = &_media_global.input_pipe_mutex;
-        break;
-    case ZPL_MEDIA_GLOAL_AUDIO_DECODE:  
-        //*lst = &_media_global.input_pipe_list; 
-        //*mutex = &_media_global.input_pipe_mutex;
-        break;
-    case ZPL_MEDIA_GLOAL_AUDIO_OUTPUT:  
-        *lst = &_media_global.audio_output_list; 
-        *mutex = &_media_global.audio_output_mutex;
+    case ZPL_MEDIA_GLOAL_AUDIO:  
+        *lst = &_media_global.audio_list; 
+        *mutex = &_media_global.audio_mutex;
         break;
     }
     return OK;

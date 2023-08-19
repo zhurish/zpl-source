@@ -208,7 +208,7 @@ int zpl_media_hwres_load(char *filename)
 	if(tmpobj)
 	{
 		
-		pItem = cJSON_GetObjectItem (tmpobj, "mediahwres");
+		pItem = cJSON_GetObjectItem (tmpobj, "videohwres");
 		if (pItem)
 		{
 			zpl_media_hwres_json_load(pItem, _halres.halres, ZPL_MEDIA_HALRES_NUM);

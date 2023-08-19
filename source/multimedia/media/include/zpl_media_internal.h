@@ -32,6 +32,7 @@ extern "C" {
 #include <zpl_media_resources.h>
 #include <zpl_media_record.h>
 #include <zpl_media_capture.h>
+#include <zpl_media_audio.h>
 
 #include <zpl_media_database.h>
 #include <zpl_media_proxy.h>
@@ -50,6 +51,8 @@ extern "C" {
 
 #include <zpl_media_sensor_type.h>
 #include <zpl_loadbmp.h>
+
+
 
 
 typedef enum 

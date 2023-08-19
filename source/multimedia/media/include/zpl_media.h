@@ -66,9 +66,17 @@ typedef enum
     ZPL_MEDIA_CHANNEL_TYPE_MAIN = 0,	//主码流
     ZPL_MEDIA_CHANNEL_TYPE_SUB,			//次码流
     ZPL_MEDIA_CHANNEL_TYPE_SUB1,		//三码流
+    ZPL_MEDIA_CHANNEL_TYPE_INPUT,       //音频输入 AI -> AENC
+    ZPL_MEDIA_CHANNEL_TYPE_OUTPUT,      //音频输出 ADEV -> AO
     ZPL_MEDIA_CHANNEL_TYPE_MAX,
 } ZPL_MEDIA_CHANNEL_TYPE_E;/* 码流 */
 
+typedef enum
+{
+    ZPL_MEDIA_CONNECT_NONE = 0,			//
+    ZPL_MEDIA_CONNECT_HW = 1,			//
+    ZPL_MEDIA_CONNECT_SW = 2,			//
+} ZPL_MEDIA_CONNECT_TYPE_E;
 
 typedef enum
 {
@@ -113,12 +121,13 @@ typedef struct  {
 
 typedef enum
 {
-    ZPL_MEDIA_FRAME_DATA_ENCODE      = 0x00,           //编码后
-    ZPL_MEDIA_FRAME_DATA_RECORD      = 0x01,			  //录像
-    ZPL_MEDIA_FRAME_DATA_CAPTURE     = 0x02,           //抓拍
-    ZPL_MEDIA_FRAME_DATA_YUV420      = 0x04,		      //YUV输入
-    ZPL_MEDIA_FRAME_DATA_YUV422      = 0x08,		      //
-    ZPL_MEDIA_FRAME_DATA_BMP         = 0x10,           //
+    ZPL_MEDIA_FRAME_DATA_INPUT       = 0x00,
+    ZPL_MEDIA_FRAME_DATA_ENCODE      = 0x01,           //编码后
+    ZPL_MEDIA_FRAME_DATA_RECORD      = 0x02,			  //录像
+    ZPL_MEDIA_FRAME_DATA_CAPTURE     = 0x04,           //抓拍
+    ZPL_MEDIA_FRAME_DATA_YUV420      = 0x08,		      //YUV输入
+    ZPL_MEDIA_FRAME_DATA_YUV422      = 0x10,		      //
+    ZPL_MEDIA_FRAME_DATA_BMP         = 0x20,           //
 } ZPL_MEDIA_FRAME_DATA_E;
 
 
@@ -143,10 +152,7 @@ typedef enum
     ZPL_MEDIA_GLOAL_VIDEO_DECODE     = 0x06,    //解码
     ZPL_MEDIA_GLOAL_VIDEO_OUTPUT     = 0x07,    //输出
 
-    ZPL_MEDIA_GLOAL_AUDIO_INPUT      = 0x11,
-    ZPL_MEDIA_GLOAL_AUDIO_ENCODE     = 0x12,
-    ZPL_MEDIA_GLOAL_AUDIO_DECODE     = 0x13,
-    ZPL_MEDIA_GLOAL_AUDIO_OUTPUT     = 0x14,
+    ZPL_MEDIA_GLOAL_AUDIO      = 0x11,
 
     ZPL_MEDIA_GLOAL_MAX       ,
 } ZPL_MEDIA_GLOBAL_E;
@@ -182,11 +188,8 @@ typedef struct
     LIST input_dev_list;
     os_mutex_t input_dev_mutex;
 
-    LIST audio_output_list;
-    os_mutex_t audio_output_mutex;
-
-    LIST audio_input_list;
-    os_mutex_t audio_input_mutex;   
+    LIST audio_list;
+    os_mutex_t audio_mutex;
 
 }zpl_media_global_t ;
 

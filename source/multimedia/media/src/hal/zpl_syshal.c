@@ -963,13 +963,118 @@ int zpl_syshal_hdmi_unbind_hdmi(zpl_int32 hdmilayer, zpl_int32 hdmichn)
 {
 #ifdef ZPL_HISIMPP_MODULE
     MPP_CHN_S stDestChn;
-
-
     stDestChn.enModId   = HI_ID_VO;
     stDestChn.s32DevId  = hdmilayer;
     stDestChn.s32ChnId  = hdmichn;
-
     return HI_MPI_SYS_UnBind(NULL, &stDestChn);
+#endif	
+	return OK;	
+}
+
+/******************************************************************************
+* function : Ao bind Adec
+******************************************************************************/
+int zpl_syshal_ao_bind_adec(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 adecchn)
+{
+    #ifdef ZPL_HISIMPP_MODULE
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = HI_ID_ADEC;
+    stSrcChn.s32DevId = 0;
+    stSrcChn.s32ChnId = adecchn;
+    stDestChn.enModId = HI_ID_AO;
+    stDestChn.s32DevId = aodev;
+    stDestChn.s32ChnId = aochn;
+    return HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
+#endif	
+	return OK;	
+}
+
+/******************************************************************************
+* function : Ao unbind Adec
+******************************************************************************/
+int zpl_syshal_ao_unbind_adec(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 adecchn)
+{
+    #ifdef ZPL_HISIMPP_MODULE
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = HI_ID_ADEC;
+    stSrcChn.s32ChnId = adecchn;
+    stSrcChn.s32DevId = 0;
+    stDestChn.enModId = HI_ID_AO;
+    stDestChn.s32DevId = aodev;
+    stDestChn.s32ChnId = aochn;
+    return HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn);
+#endif	
+	return OK;	
+}
+
+/******************************************************************************
+* function : Ao bind Ai
+******************************************************************************/
+int zpl_syshal_ao_bind_ai(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 aidev, zpl_int32 aichn)
+{
+    #ifdef ZPL_HISIMPP_MODULE
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = HI_ID_AI;
+    stSrcChn.s32ChnId = aichn;
+    stSrcChn.s32DevId = aidev;
+    stDestChn.enModId = HI_ID_AO;
+    stDestChn.s32DevId = aodev;
+    stDestChn.s32ChnId = aochn;
+    return HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
+#endif	
+	return OK;	
+}
+
+/******************************************************************************
+* function : Ao unbind Ai
+******************************************************************************/
+int zpl_syshal_ao_unbind_ai(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 aidev, zpl_int32 aichn)
+{
+    #ifdef ZPL_HISIMPP_MODULE
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = HI_ID_AI;
+    stSrcChn.s32ChnId = aichn;
+    stSrcChn.s32DevId = aidev;
+    stDestChn.enModId = HI_ID_AO;
+    stDestChn.s32DevId = aodev;
+    stDestChn.s32ChnId = aochn;
+    return HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn);
+#endif	
+	return OK;	
+}
+
+/******************************************************************************
+* function : Aenc bind Ai
+******************************************************************************/
+int zpl_syshal_aenc_bind_ai(zpl_int32 aidev, zpl_int32 aichn, zpl_int32 aencchn)
+{
+    #ifdef ZPL_HISIMPP_MODULE
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = HI_ID_AI;
+    stSrcChn.s32DevId = aidev;
+    stSrcChn.s32ChnId = aichn;
+    stDestChn.enModId = HI_ID_AENC;
+    stDestChn.s32DevId = 0;
+    stDestChn.s32ChnId = aencchn;
+    return HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
+#endif	
+	return OK;	
+}
+
+/******************************************************************************
+* function : Aenc unbind Ai
+******************************************************************************/
+int zpl_syshal_aenc_unbind_ai(zpl_int32 aidev, zpl_int32 aichn, zpl_int32 aencchn)
+{
+    #ifdef ZPL_HISIMPP_MODULE
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = HI_ID_AI;
+    stSrcChn.s32DevId = aidev;
+    stSrcChn.s32ChnId = aichn;
+    stDestChn.enModId = HI_ID_AENC;
+    stDestChn.s32DevId = 0;
+    stDestChn.s32ChnId = aencchn;
+    return HI_MPI_SYS_UnBind(&stSrcChn, &stDestChn);
 #endif	
 	return OK;	
 }

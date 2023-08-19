@@ -18,6 +18,8 @@
  */
 #include "pjsua_app.h"
 #include "pjsua_app_cfgapi.h"
+#include "pjsua_app_cb.h"
+
 #define THIS_FILE       "pjsua_app.c"
 
 //#define STEREO_DEMO
@@ -157,7 +159,7 @@ static void call_timeout_callback(pj_timer_heap_t *timer_heap,
                          _pjAppCfg.duration, call_id));
     entry->id = PJSUA_INVALID_ID;
     pjsua_call_hangup(call_id, 200, NULL, &msg_data_);
-    pjsip_app_call_timeout_callback(&_pjAppCfg.cbtbl, call_id, NULL, 0);
+    pjapp_user_call_timeout_callback(&_pjAppCfg.cbtbl, call_id, NULL, 0);
 }
 
 /*
@@ -201,7 +203,7 @@ static void pjapp_on_call_state(pjsua_call_id call_id, pjsip_event *e)
                   (int)call_info.last_status_text.slen,
                   call_info.last_status_text.ptr));
 
-		pjsip_app_call_state_callback(&_pjAppCfg.cbtbl, call_id, NULL,
+		pjapp_user_call_state_callback(&_pjAppCfg.cbtbl, call_id, NULL,
 				call_info.state);
 
 		PJ_LOG(3,
@@ -276,7 +278,7 @@ static void pjapp_on_call_state(pjsua_call_id call_id, pjsip_event *e)
         if (_pjAppCfg.current_call==PJSUA_INVALID_ID)
             _pjAppCfg.current_call = call_id;
 
-		pjsip_app_call_state_callback(&_pjAppCfg.cbtbl, call_id, NULL,
+		pjapp_user_call_state_callback(&_pjAppCfg.cbtbl, call_id, NULL,
 				call_info.state);
     }
 }
@@ -296,7 +298,7 @@ static void delay_auto_answer_call(pj_timer_heap_t *timer_heap,
     pjsua_call_answer(_pjAppCfg.current_call, _pjAppCfg.auto_answer, NULL, NULL);
 	//pjsua_call_answer2(call_id, &cfg->app_cfg.call_opt, cfg->app_cfg.auto_answer, NULL, NULL);
 
-	pjsip_app_call_incoming_callback(&_pjAppCfg.cbtbl, _pjAppCfg.current_call, NULL, 1);
+	pjapp_user_call_incoming_callback(&_pjAppCfg.cbtbl, _pjAppCfg.current_call, NULL, 1);
     _pjAppCfg.auto_hangup_timer.id = 0;
     }
     return ;
@@ -356,7 +358,7 @@ static void pjapp_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     if (_pjAppCfg.auto_answer > 0) 
     {
         pj_time_val delay;
-    	if(pjsip_app_call_incoming_callback(&_pjAppCfg.cbtbl, call_id, &call_info, 0) == -1)
+    	if(pjapp_user_call_incoming_callback(&_pjAppCfg.cbtbl, call_id, &call_info, 0) == -1)
     	{
     	    pjsua_call_answer(_pjAppCfg.current_call, PJSIP_SC_NOT_ACCEPTABLE, NULL, NULL);
     	    return;
@@ -383,7 +385,7 @@ static void pjapp_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     }
     else
     {
-    	if(pjsip_app_call_incoming_callback(&_pjAppCfg.cbtbl, call_id, &call_info, 0) == -1)
+    	if(pjapp_user_call_incoming_callback(&_pjAppCfg.cbtbl, call_id, &call_info, 0) == -1)
     	{
     	    pjsua_call_answer(_pjAppCfg.current_call, PJSIP_SC_NOT_ACCEPTABLE, NULL, NULL);
     	    return;
@@ -552,7 +554,7 @@ static void pjapp_on_call_audio_state(pjsua_call_info *ci, unsigned mi,
             pjsua_conf_connect(call_conf_slot, 0);
             if (!disconnect_mic)
                 pjsua_conf_connect(0, call_conf_slot);
-	        pjsip_app_call_state_callback(&_pjAppCfg.cbtbl, 0, NULL, PJ_TRUE);
+	        pjapp_user_call_state_callback(&_pjAppCfg.cbtbl, 0, NULL, PJ_TRUE);
 
             /* Automatically record conversation, if desired */
             if (_pjAppCfg.auto_rec && _pjAppCfg.rec_port != PJSUA_INVALID_ID)
@@ -649,13 +651,13 @@ static void call_on_dtmf_callback2(pjsua_call_id call_id,
     switch (info->method) {
     case PJSUA_DTMF_METHOD_RFC2833:
         pj_ansi_snprintf(method, sizeof(method), "RFC2833");
-	    pjsip_app_dtmf_recv_callback(&_pjAppCfg.cbtbl, call_id, NULL, info->digit);
+	    pjapp_user_recv_tdmf_callback(&_pjAppCfg.cbtbl, call_id, NULL, info->digit);
         break;
     case PJSUA_DTMF_METHOD_SIP_INFO:
         pj_ansi_snprintf(method, sizeof(method), "SIP INFO");
         pj_ansi_snprintf(duration, sizeof(duration), ":duration(%d)", 
                          info->duration);
-	    pjsip_app_dtmf_recv_callback(&_pjAppCfg.cbtbl, call_id, NULL, info->digit);
+	    pjapp_user_recv_tdmf_callback(&_pjAppCfg.cbtbl, call_id, NULL, info->digit);
         break;
     };    
     PJ_LOG(3,(THIS_FILE, "Incoming DTMF on call %d: %c%s, using %s method", 
@@ -699,7 +701,7 @@ static void pjapp_on_reg_state(pjsua_acc_id acc_id)
 
     // Log already written.
     //pjsua_acc_set_online_status(acc_id, info->renew ? PJ_TRUE:PJ_FALSE);
-    pjsip_app_register_state_callback(&_pjAppCfg.cbtbl, acc_id, NULL, 0);
+    pjapp_user_register_state_callback(&_pjAppCfg.cbtbl, acc_id, NULL, 0);
 }
 static void pjapp_on_reg_state2(pjsua_acc_id acc_id, pjsua_reg_info *info)
 {
@@ -707,7 +709,7 @@ static void pjapp_on_reg_state2(pjsua_acc_id acc_id, pjsua_reg_info *info)
 	//pjsua_cfg_t *cfg = &_global_pjapp_cfg;
 	//printf("===================Reg state changed (on_reg_state2)%d\r\n", acc_id);
     //pjsua_acc_set_online_status(acc_id, info->renew ? PJ_TRUE:PJ_FALSE);
-    pjsip_app_register_state_callback(&_pjAppCfg.cbtbl, acc_id, NULL, info->renew ? PJ_TRUE:PJ_FALSE);
+    pjapp_user_register_state_callback(&_pjAppCfg.cbtbl, acc_id, NULL, info->renew ? PJ_TRUE:PJ_FALSE);
     // Log already written.
 }
 /*
@@ -1219,7 +1221,7 @@ static void hangup_timeout_callback(pj_timer_heap_t *timer_heap,
 /*
  * A simple registrar, invoked by default_mod_on_rx_request()
  */
-static void simple_registrar(pjsip_rx_data *rdata)
+static void pjapp_simple_registrar(pjsip_rx_data *rdata)
 {
     pjsip_tx_data *tdata;
     const pjsip_expires_hdr *exp;
@@ -1294,7 +1296,7 @@ static pj_bool_t default_mod_on_rx_request(pjsip_rx_data *rdata)
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method,
                          &pjsip_register_method) == 0)
     {
-        simple_registrar(rdata);
+        pjapp_simple_registrar(rdata);
         return PJ_TRUE;
     }
 
@@ -1453,7 +1455,6 @@ static pj_status_t app_init(void)
         return status;
     }
 
-    pjsip_callback_init();
     /* Initialize application callbacks */
     _pjAppCfg.cfg.cb.on_call_state = &pjapp_on_call_state;
     _pjAppCfg.cfg.cb.on_stream_destroyed = &pjapp_on_stream_destroyed;
@@ -1480,6 +1481,8 @@ static pj_status_t app_init(void)
 #ifdef TRANSPORT_ADAPTER_SAMPLE
     _pjAppCfg.cfg.cb.on_create_media_transport = &pjapp_on_create_media_transport;
 #endif
+
+    pjapp_user_callback_init(&_pjAppCfg.cbtbl);
 
     /* Set sound device latency */
     if (_pjAppCfg.capture_lat > 0)
@@ -1993,11 +1996,19 @@ static pj_status_t app_init(void)
 #endif
     if (_pjAppCfg.capture_dev  == PJSUA_INVALID_ID /*&& strlen(_pjAppCfg.capture_dev_name)*/)
     {
+        #if defined(ZPL_BUILD_ARCH_X86_64)||defined(ZPL_BUILD_ARCH_X86)
+        #if PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO
         pjmedia_aud_dev_lookup("PA", "HDA Intel PCH: ALC3232 Analog (hw:1,0)", &_pjAppCfg.capture_dev);
+        #endif
+        #endif
     }
     if (_pjAppCfg.playback_dev  == PJSUA_INVALID_ID /*&& strlen(_pjAppCfg.playback_dev_name)*/)
     {
+        #if defined(ZPL_BUILD_ARCH_X86_64)||defined(ZPL_BUILD_ARCH_X86)
+        #if PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO
         pjmedia_aud_dev_lookup("PA", "HDA Intel HDMI: 0 (hw:0,3)", &_pjAppCfg.playback_dev);
+        #endif
+        #endif
     }
     if (_pjAppCfg.capture_dev  != PJSUA_INVALID_ID ||
         _pjAppCfg.playback_dev != PJSUA_INVALID_ID) 

@@ -35,6 +35,7 @@ extern "C" {
 #include <zpl_vidhal_nnie.h>
 #include <zpl_vidhal_hdmi.h>
 
+#include <zpl_vidhal_audio.h>
 
 #ifdef __cplusplus
 }

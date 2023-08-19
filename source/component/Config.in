@@ -65,12 +65,33 @@ config ZPL_PJSIP_VIDEO_V4L2
 	help
 	Build Pjsip Video V4L2 Module.
 
+config ZPL_PJSIP_HISIVIDEO
+	bool "Pjsip Hisi Video Module"
+	default n
+	depends on ZPL_PJSIP_VIDEO
+	help
+	Build Pjsip Hisi Video Module.
+
 config ZPL_PJSIP_ALSA
 	bool "Pjsip ALSA Module"
 	default n
 	depends on ZPL_PJSIP_MODULE
 	help
 	Build Pjsip ALSA Module.
+
+config ZPL_PJSIP_PORTAUDIO
+	bool "Pjsip PortAudio Module"
+	default n
+	depends on ZPL_PJSIP_MODULE
+	help
+	Build Pjsip PortAudio Module.
+
+config ZPL_PJSIP_HISIAUDIO
+	bool "Pjsip Hisi Audio Module"
+	default n
+	depends on ZPL_PJSIP_MODULE
+	help
+	Build Pjsip Hisi Audio Module.
 
 config ZPL_PJSIP_PJSUA2
 	bool "Pjsip pjsua2 Module"

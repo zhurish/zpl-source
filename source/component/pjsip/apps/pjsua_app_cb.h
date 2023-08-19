@@ -21,7 +21,7 @@ typedef int (*pjsip_call_takeup_cb)(pjsua_call_id, void *, pj_uint32_t);
 typedef int (*pjsip_call_timeout_cb)(pjsua_call_id, void *, pj_uint32_t);
 typedef int (*pjsip_call_hangup_cb)(pjsua_call_id, void *, pj_uint32_t);
 
-typedef struct pjsip_callback_tbl
+typedef struct pjapp_user_callback_tbl
 {
 	pjsip_register_state_cb pjsip_reg_state;
 	pjsip_call_state_cb 	pjsip_call_state;
@@ -33,23 +33,19 @@ typedef struct pjsip_callback_tbl
 	pjsip_call_hangup_cb 	pjsip_call_hangup;
 
 	int (*cli_account_state_get)(pjsua_acc_id, void *);
-}pjsip_callback_tbl;
-
-//extern pjsip_callback_tbl_t	cbtbl;
+}pjapp_user_callback_tbl;
 
 
-int pjsip_app_callback_init(void *p, pjsip_callback_tbl *cb);
-int pjsip_app_register_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_call_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_media_state_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_dtmf_recv_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_call_takeup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_call_timeout_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_call_hangup_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
-int pjsip_app_call_incoming_callback(pjsip_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_callback_init(pjapp_user_callback_tbl *cb);
+int pjapp_user_register_state_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_call_state_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_media_state_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_recv_tdmf_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_call_takeup_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_call_timeout_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_call_hangup_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
+int pjapp_user_call_incoming_callback(pjapp_user_callback_tbl *cb, pjsua_call_id id, void *pVoid, pj_uint32_t state);
 
-
-int pjsip_callback_init(void);
 
 #ifdef __cplusplus
 }

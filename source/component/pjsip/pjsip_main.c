@@ -26,15 +26,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#include <pjsua-lib/pjsua.h>
+#include "pjsua_app_common.h"
+#include "pjsua_app_cfgapi.h"
+#include "pjsua_app_config.h"
+#include "pjsua_app_cb.h"
+#include "pjsua_app.h"
+
 #include "auto_include.h"
 #include "lib_include.h"
 #include "vty_include.h"
-#include <pjsua-lib/pjsua.h>
-#include "pjsua_app_config.h"
-#include "pjsua_app_cb.h"
-#include "pjsua_app_common.h"
-#include "pjsua_app_cfgapi.h"
-#include "pjsua_app.h"
 
 #define THIS_FILE	"pjsip_main.c"
 

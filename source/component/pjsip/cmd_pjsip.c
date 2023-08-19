@@ -20,7 +20,7 @@
 #include "pjsua_app_common.h"
 #include "pjsua_app_cfgapi.h"
 
-#include "pjsip_app_api.h"
+#include "pjsua_app_api.h"
 #include "pjsua_app.h"
 
 /*
@@ -2463,7 +2463,7 @@ DEFUN (pjsip_call_start_cli,
 		"Start\n"
 		"PhoneNumber\n")
 {
-	pjapp_cfg_app_start_call(current_acc, argv[0], NULL);
+	pjapp_user_start_call_api(current_acc, argv[0], NULL);
 	return  CMD_SUCCESS;
 }
 

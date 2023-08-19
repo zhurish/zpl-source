@@ -80,6 +80,30 @@ extern int zpl_syshal_vdec_unbind_vpss(zpl_int32 vdecchn, zpl_int32 vpssgrp);
 extern int zpl_syshal_hdmi_bind_hdmi(zpl_int32 hdmilayer, zpl_int32 hdmichn, 
 	zpl_int32 dsthdmilayer, zpl_int32 dsthdmichn);
 extern int zpl_syshal_hdmi_unbind_hdmi(zpl_int32 hdmilayer, zpl_int32 hdmichn);
+/******************************************************************************
+* function : Ao bind Adec
+******************************************************************************/
+extern int zpl_syshal_ao_bind_adec(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 adecchn);
+/******************************************************************************
+* function : Ao unbind Adec
+******************************************************************************/
+extern int zpl_syshal_ao_unbind_adec(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 adecchn);
+/******************************************************************************
+* function : Ao bind Ai
+******************************************************************************/
+extern int zpl_syshal_ao_bind_ai(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 aidev, zpl_int32 aichn);
+/******************************************************************************
+* function : Ao unbind Ai
+******************************************************************************/
+extern int zpl_syshal_ao_unbind_ai(zpl_int32 aodev, zpl_int32 aochn, zpl_int32 aidev, zpl_int32 aichn);
+/******************************************************************************
+* function : Aenc bind Ai
+******************************************************************************/
+extern int zpl_syshal_aenc_bind_ai(zpl_int32 aidev, zpl_int32 aichn, zpl_int32 aencchn);
+/******************************************************************************
+* function : Aenc unbind Ai
+******************************************************************************/
+extern int zpl_syshal_aenc_unbind_ai(zpl_int32 aidev, zpl_int32 aichn, zpl_int32 aencchn);
 
 #ifdef __cplusplus
 }

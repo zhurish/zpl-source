@@ -96,7 +96,13 @@ typedef struct zpl_media_channel_s
 *                                             -----> hal_venc 
 *
 *
+*     audio_device ----------> audio_channel -----------> audio_enc -----------> 
+*                       |
+*                       -----> audio_channel -----------> audio_enc -----------> 
 *
+*     audio_device <---------- audio_channel <----------- audio_dec <-----------
+*                       |
+*                       <----- audio_channel <----------- audio_dec <-----------
 */
 
 extern int zpl_media_channel_init(void);

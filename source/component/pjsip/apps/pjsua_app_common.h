@@ -250,7 +250,7 @@ typedef struct pjsua_app_config_s
     pjsua_call_setting   call_opt;
     pjsua_msg_data       msg_data;
 
-    pjsip_callback_tbl	 cbtbl;
+    pjapp_user_callback_tbl	 cbtbl;
     pj_mutex_t          *_g_lock;
     pj_pool_t           *_g_pool;
     pj_bool_t            global_enable;

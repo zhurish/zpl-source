@@ -166,7 +166,7 @@ ZPL_INCLUDE	+=   \
 #	-I$(ZPLBASE)/$(PJPROJ_ROOT)/pjsip-apps/include
 
 #
-ZPL_DEFINE += -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -fPIC -Wno-error=redundant-decls
+ZPL_DEFINE += -DPJ_AUTOCONF=1 -DPJ_IS_BIG_ENDIAN=0 -DPJ_IS_LITTLE_ENDIAN=1 -DPJ_LINUX=1 -fPIC -Wno-error=redundant-decls
 ZPL_DEFINE += -DPJSIP_ALLOW_PORT_IN_FROMTO_HDR=1 -fPIC -DPJ_OS_NAME=\"linux\" \
 	-Wno-error=int-conversion -Wno-error=type-limits -Wno-error=unused-label \
 	-DPJ_LINUX_ZPLMEDIA -DHAVE_CONFIG_H  \
@@ -202,7 +202,25 @@ else
 ZPL_DEFINE += -DPJMEDIA_AUDIO_DEV_HAS_ALSA=0
 endif
 
+ifeq ($(ZPL_BUILD_ARCH),X86_64)
+ifeq ($(strip $(ZPL_PJSIP_PORTAUDIO)),true)
+ZPL_DEFINE += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=1
 ZPL_LDLIBS += -lportaudio -lasound
+else
+ZPL_DEFINE += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0
+endif
+endif
+
+ifeq ($(strip $(ZPL_PJSIP_HISIVIDEO)),true)
+ZPL_DEFINE += -DZPL_PJSIP_HISIVIDEO=1
+else
+ZPL_DEFINE += -DZPL_PJSIP_HISIVIDEO=0
+endif
+ifeq ($(strip $(ZPL_PJSIP_HISIAUDIO)),true)
+ZPL_DEFINE += -DZPL_PJSIP_HISIAUDIO=1
+else
+ZPL_DEFINE += -DZPL_PJSIP_HISIAUDIO=0
+endif
 
 PJSIP_ROOT=$(COMPONENT_DIR)/pjsip
 ZPLPRODS_LAST += $(ZPLBASE)/$(PJSIP_ROOT)
