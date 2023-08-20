@@ -11,7 +11,7 @@
 #include "zpl_vidhal_internal.h"
 
 static int zpl_media_audio_read_thread(struct thread *audio);
-
+static int zpl_media_audio_param_reactive(zpl_media_audio_channel_t *audio);
 
 int zpl_media_audio_start(zpl_void *master, zpl_media_audio_channel_t *audio)
 {
@@ -45,9 +45,12 @@ int zpl_media_audio_start(zpl_void *master, zpl_media_audio_channel_t *audio)
 	{
 		ret = OK;
 	}
+	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_AUDIO);
+	zpl_media_audio_param_reactive(audio);
+	zpl_media_global_lock(ZPL_MEDIA_GLOAL_AUDIO);
 	if (ZPL_MEDIA_DEBUG(ENCODE, EVENT))
 	{
-		zm_msg_debug("audio channel(%d) start", audio->channel);
+		zm_msg_debug("\r\naudio channel(%d) start", audio->channel);
 	}
 	if (audio && audio->b_input)
 	{
@@ -55,6 +58,7 @@ int zpl_media_audio_start(zpl_void *master, zpl_media_audio_channel_t *audio)
 		if (master && audio && audio->audio_param.input.hwbind != ZPL_MEDIA_CONNECT_HW && 
 			audio->audio_param.input.encode.t_read == NULL && !ipstack_invalid(audio->audio_param.input.encode.fd))
 		{
+			//zm_msg_debug("==============add zpl_audhal_audio_encode_frame_recvfrom");
 			if(audio->audio_param.input.encode.get_encode_frame == NULL)
 				audio->audio_param.input.encode.get_encode_frame = zpl_audhal_audio_encode_frame_recvfrom;
 			audio->audio_param.input.encode.t_read = thread_add_read(audio->t_master, zpl_media_audio_read_thread, audio, audio->audio_param.input.encode.fd);
@@ -62,6 +66,7 @@ int zpl_media_audio_start(zpl_void *master, zpl_media_audio_channel_t *audio)
 		if (master && audio && audio->audio_param.input.hwbind != ZPL_MEDIA_CONNECT_HW && 
 			audio->audio_param.input.t_read == NULL && !ipstack_invalid(audio->audio_param.input.fd))
 		{
+			//zm_msg_debug("==============add zpl_audhal_audio_input_frame_recvfrom");
 			if(audio->audio_param.input.get_input_frame == NULL)
 				audio->audio_param.input.get_input_frame = zpl_audhal_audio_input_frame_recvfrom;
 			audio->audio_param.input.t_read = thread_add_read(audio->t_master, zpl_media_audio_read_thread, audio, audio->audio_param.input.fd);
@@ -187,6 +192,10 @@ int zpl_media_audio_hal_create(zpl_media_audio_channel_t *audio)
 					zpl_media_global_unlock(ZPL_MEDIA_GLOAL_AUDIO);
 					return ret;
 				}
+				ret = zpl_media_audio_codec_micgain(audio, audio->micgain); // 0-16
+				ret = zpl_media_audio_codec_boost(audio, audio->boost ? 1 : 0);
+				ret = zpl_media_audio_codec_input_volume(audio, audio->in_volume); //[19,50]
+				ret = zpl_media_audio_codec_output_volume(audio, audio->out_volume - 94); //[-121, 6]
 			}
 		}
 		else	
@@ -334,18 +343,24 @@ int zpl_media_audio_param_default(zpl_media_audio_channel_t *audio)
 		encode->bEnable = zpl_true;
 		encode->devid = 0;
 		encode->channel = 0;
+
+		audio->micgain = 12;
+		audio->boost = 1;
+		audio->in_volume = 30;
+
 		audio->b_inner_codec_enable = zpl_true;
 		audio->audio_param.input.bEnable = zpl_true;
 		audio->audio_param.input.devid = 0;         //绑定的设备号
 		audio->audio_param.input.channel = 0;       //底层通道号
 		audio->audio_param.input.bResample = zpl_false;
-		audio->audio_param.input.volume = 10;
+		audio->audio_param.input.volume = 0;
 		audio->audio_param.input.clock_rate = encode->codec.clock_rate;     /**< Sampling rate.                 */
 		audio->audio_param.input.channel_cnt = encode->codec.channel_cnt;
 		audio->audio_param.input.bits_per_sample = encode->codec.bits_per_sample; /*每帧的采样点个数  （1/framerate）* clock_rate */
 		audio->audio_param.input.max_frame_size = encode->codec.max_frame_size;
 		audio->audio_param.input.hwbind = ZPL_MEDIA_CONNECT_SW;
 		audio->audio_param.input.hw_connect_out = ZPL_MEDIA_CONNECT_SW;
+		audio->audio_param.input.input_frame_handle = zpl_audhal_audio_frame_forward_hander;
 	}
 	else if (audio && !audio->b_input)
 	{
@@ -353,12 +368,13 @@ int zpl_media_audio_param_default(zpl_media_audio_channel_t *audio)
 		decode->bEnable = zpl_true;
 		decode->devid = 0;
 		decode->channel = 0;
+		audio->out_volume = 80;
 		audio->b_inner_codec_enable = zpl_true;
 		audio->audio_param.output.bEnable = zpl_true;
 		audio->audio_param.output.devid = 0;         //绑定的设备号
 		audio->audio_param.output.channel = 0;       //底层通道号
 		audio->audio_param.output.bResample = zpl_false;
-		audio->audio_param.output.volume = 10;
+		audio->audio_param.output.volume = 80;
 		audio->audio_param.output.clock_rate = decode->codec.clock_rate;     /**< Sampling rate.                 */
 		audio->audio_param.output.channel_cnt = decode->codec.channel_cnt;
 		audio->audio_param.output.bits_per_sample = decode->codec.bits_per_sample; /*每帧的采样点个数  （1/framerate）* clock_rate */
@@ -367,6 +383,36 @@ int zpl_media_audio_param_default(zpl_media_audio_channel_t *audio)
 	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_AUDIO);
 	return OK;
+}
+
+static int zpl_media_audio_param_reactive(zpl_media_audio_channel_t *audio)
+{
+	int ret = 0;
+	if (audio->b_input && audio->audio_param.input.hw_connect_out)
+	{
+		if (audio->audio_param.input.output == NULL)
+		{
+			zpl_media_audio_channel_t *audio_out = zpl_media_audio_lookup(audio->channel, zpl_false);
+			if (audio_out)
+				audio->audio_param.input.output = &audio_out->audio_param.output;
+		}
+	}
+	if (audio->b_inner_codec_enable)
+	{
+		ret = zpl_audhal_audio_codec_clock_rate(audio, audio->audio_param.input.clock_rate);
+		if (audio->b_input)
+		{
+			ret = zpl_media_audio_codec_micgain(audio, audio->micgain); // 0-16
+			ret = zpl_media_audio_codec_boost(audio, audio->boost ? 1 : 0);
+			ret = zpl_media_audio_codec_input_volume(audio, audio->in_volume); //[19,50]
+		}
+		if (!audio->b_input)
+		{
+			ret = zpl_media_audio_codec_output_volume(audio, audio->out_volume - 94); //[-121, 6]
+			zpl_media_audio_volume(audio, audio->audio_param.output.volume);
+		}
+	}
+	return 0;
 }
 
 int zpl_media_audio_connect_encode(zpl_media_audio_channel_t *audio, ZPL_MEDIA_CONNECT_TYPE_E b_enable)
@@ -578,6 +624,7 @@ static int zpl_media_audio_read_thread(struct thread *thread)
 	if (audio && audio->media_channel)
 	{
 		zpl_media_global_lock(ZPL_MEDIA_GLOAL_AUDIO);
+
 		if(ipstack_same(_sock, audio->audio_param.input.fd))
 			audio->audio_param.input.t_read = NULL;
 		if(ipstack_same(_sock, audio->audio_param.input.encode.fd))
@@ -585,13 +632,13 @@ static int zpl_media_audio_read_thread(struct thread *thread)
 
 		if (audio && audio->b_input)
 		{
-			if(ipstack_same(_sock, audio->audio_param.input.encode.fd) && audio->audio_param.input.encode.get_encode_frame == NULL)
+			if(ipstack_same(_sock, audio->audio_param.input.encode.fd) && audio->audio_param.input.encode.get_encode_frame != NULL)
 			{
-				ret = (audio->audio_param.input.encode.get_encode_frame)(audio->media_channel, audio);
+				ret = (audio->audio_param.input.encode.get_encode_frame)(audio->media_channel, &audio->audio_param.input);
 			}
-			else if(ipstack_same(_sock, audio->audio_param.input.fd) && audio->audio_param.input.get_input_frame == NULL)
+			else if(ipstack_same(_sock, audio->audio_param.input.fd) && audio->audio_param.input.get_input_frame != NULL)
 			{
-				ret = (audio->audio_param.input.get_input_frame)(audio->media_channel, audio);
+				ret = (audio->audio_param.input.get_input_frame)(audio->media_channel, &audio->audio_param.input);
 			}
 		}
 
@@ -605,8 +652,6 @@ static int zpl_media_audio_read_thread(struct thread *thread)
 				audio->audio_param.input.t_read = thread_add_read(audio->t_master, zpl_media_audio_read_thread, audio, audio->audio_param.input.fd);
 			if(ipstack_same(_sock, audio->audio_param.input.encode.fd))
 				audio->audio_param.input.encode.t_read = thread_add_read(audio->t_master, zpl_media_audio_read_thread, audio, audio->audio_param.input.encode.fd);
-
-			//zpl_audhal_audio_input_update_fd(&audio->audio_param.input);
 		}
 		zpl_media_global_unlock(ZPL_MEDIA_GLOAL_AUDIO);
 	}
@@ -648,6 +693,11 @@ int zpl_media_audio_volume(zpl_media_audio_channel_t *audio, int val)
 	zpl_video_assert(audio);
 	zpl_media_global_lock(ZPL_MEDIA_GLOAL_AUDIO);
 	ret = zpl_audhal_audio_output_volume(audio, val);
+	if(ret == 0)
+	{
+		if(!audio->b_input)
+			audio->audio_param.output.volume = val;
+	}
 	zpl_media_global_unlock(ZPL_MEDIA_GLOAL_AUDIO);
 	return ret;
 }
@@ -708,13 +758,15 @@ int zpl_media_audio_codec_output_volume(zpl_media_audio_channel_t *audio, int va
 #ifdef ZPL_SHELL_MODULE
 int zpl_media_audio_show(void *pvoid)
 {
+	int flag = 0;
 	NODE *node;
 	zpl_media_audio_channel_t *audio;
 	struct vty *vty = (struct vty *)pvoid;
 	LIST *_lst = NULL;
 	os_mutex_t *_mutex = NULL;
+	char *connect_typestr[] = {"none", "hwbind", "sfconnect"};
 	char *bitrate_typestr[] = {"none", "CBR", "VBR", "ABR"};
-
+	int bits_per_sample[4] = {8, 16, 24, 32};
 	zpl_media_global_get(ZPL_MEDIA_GLOAL_AUDIO, &_lst, &_mutex);
 
 	if (_lst == NULL)
@@ -724,7 +776,7 @@ int zpl_media_audio_show(void *pvoid)
 
 	if (lstCount(_lst))
 	{
-		vty_out(vty, "-----------------------------------------%s", VTY_NEWLINE);
+		vty_out(vty, " -----------------------------------------------%s", VTY_NEWLINE);
 	}
 	for (node = lstFirst(_lst); node != NULL; node = lstNext(node))
 	{
@@ -734,6 +786,7 @@ int zpl_media_audio_show(void *pvoid)
 			vty_out(vty, "channel            : %d%s", audio->channel, VTY_NEWLINE);
 			if(audio->b_input)
 			{
+				vty_out(vty, " -----------------------------------------------%s", VTY_NEWLINE);
 				vty_out(vty, " dir               : input%s", VTY_NEWLINE);
 				vty_out(vty, " devid             : %d%s", audio->audio_param.input.devid, VTY_NEWLINE);
 				vty_out(vty, " channel           : %d%s", audio->audio_param.input.channel, VTY_NEWLINE);
@@ -746,7 +799,10 @@ int zpl_media_audio_show(void *pvoid)
 				//vty_out(vty, " Noise             : %s%s", audio->audio_param.input.bNoise?"enable":"disable", VTY_NEWLINE);
 				vty_out(vty, " volume            : %d%s", audio->audio_param.input.volume, VTY_NEWLINE);
 				vty_out(vty, " clock rate        : %d%s", audio->audio_param.input.clock_rate, VTY_NEWLINE);
-				vty_out(vty, " bits per sample   : %d%s", audio->audio_param.input.bits_per_sample, VTY_NEWLINE);
+				vty_out(vty, " bits per sample   : %d%s", bits_per_sample[audio->audio_param.input.bits_per_sample], VTY_NEWLINE);
+
+				vty_out(vty, " encode connect    : %s%s", connect_typestr[audio->audio_param.input.hwbind], VTY_NEWLINE);
+				vty_out(vty, " local out connect : %s(%p)%s", connect_typestr[audio->audio_param.input.hw_connect_out], audio->audio_param.input.output, VTY_NEWLINE);
 
 				if(audio->audio_param.input.encode.bEnable)
 				{
@@ -757,12 +813,14 @@ int zpl_media_audio_show(void *pvoid)
 					vty_out(vty, "  bitrate type     : %s%s", bitrate_typestr[audio->audio_param.input.encode.codec.bitrate_type], VTY_NEWLINE);
 					vty_out(vty, "  channel_cnt      : %d%s", audio->audio_param.input.encode.codec.channel_cnt, VTY_NEWLINE);
 					vty_out(vty, "  clock rate       : %d%s", audio->audio_param.input.encode.codec.clock_rate, VTY_NEWLINE);
-					vty_out(vty, "  bits per sample  : %d%s", audio->audio_param.input.encode.codec.bits_per_sample, VTY_NEWLINE);
+					vty_out(vty, "  bits per sample  : %d%s", bits_per_sample[audio->audio_param.input.encode.codec.bits_per_sample], VTY_NEWLINE);
 					vty_out(vty, "  frame size       : %d%s", audio->audio_param.input.encode.codec.max_frame_size, VTY_NEWLINE);
 				}
+				flag++;
 			}
 			else if(!audio->b_input)
 			{
+				vty_out(vty, " -----------------------------------------------%s", VTY_NEWLINE);
 				vty_out(vty, " dir               : output%s", VTY_NEWLINE);
 				vty_out(vty, " devid             : %d%s", audio->audio_param.output.devid, VTY_NEWLINE);
 				vty_out(vty, " channel           : %d%s", audio->audio_param.output.channel, VTY_NEWLINE);
@@ -775,7 +833,7 @@ int zpl_media_audio_show(void *pvoid)
 				//vty_out(vty, " Noise             : %s%s", audio->audio_param.output.bNoise?"enable":"disable", VTY_NEWLINE);
 				vty_out(vty, " volume            : %d%s", audio->audio_param.output.volume, VTY_NEWLINE);
 				vty_out(vty, " clock rate        : %d%s", audio->audio_param.output.clock_rate, VTY_NEWLINE);
-				vty_out(vty, " bits per sample   : %d%s", audio->audio_param.output.bits_per_sample, VTY_NEWLINE);
+				vty_out(vty, " bits per sample   : %d%s", bits_per_sample[audio->audio_param.output.bits_per_sample], VTY_NEWLINE);
 
 				if(audio->audio_param.output.decode.bEnable)
 				{
@@ -786,12 +844,15 @@ int zpl_media_audio_show(void *pvoid)
 					vty_out(vty, "  bitrate type     : %s%s", bitrate_typestr[audio->audio_param.output.decode.codec.bitrate_type], VTY_NEWLINE);
 					vty_out(vty, "  channel_cnt      : %d%s", audio->audio_param.output.decode.codec.channel_cnt, VTY_NEWLINE);
 					vty_out(vty, "  clock rate       : %d%s", audio->audio_param.output.decode.codec.clock_rate, VTY_NEWLINE);
-					vty_out(vty, "  bits per sample  : %d%s", audio->audio_param.output.decode.codec.bits_per_sample, VTY_NEWLINE);
+					vty_out(vty, "  bits per sample  : %d%s", bits_per_sample[audio->audio_param.output.decode.codec.bits_per_sample], VTY_NEWLINE);
 					vty_out(vty, "  frame size       : %d%s", audio->audio_param.input.encode.codec.max_frame_size, VTY_NEWLINE);
 				}
+				flag++;
 			}
 		}
 	}
+	if(flag)
+		vty_out(vty, " -----------------------------------------------%s", VTY_NEWLINE);
 	if (_mutex)
 		os_mutex_unlock(_mutex);
 	return OK;

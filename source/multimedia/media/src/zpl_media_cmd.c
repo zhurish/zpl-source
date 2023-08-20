@@ -644,6 +644,33 @@ DEFUN (media_channel_audio_connect_loutput,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
+DEFUN (media_channel_audio_volume,
+		media_channel_audio_volume_cmd,
+		"media channel audio <0-1> volume <0-100>" ,
+		MEDIA_CHANNEL_STR
+		"Audio Channel Configure\n"
+		"Channel Number Select\n"
+		"Volume Configure\n"
+		"Local Output Channel\n")
+{
+	int ret = ERROR;
+	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
+	zpl_media_audio_channel_t *audio = NULL;
+	channel = ZPL_MEDIA_CHANNEL_AUDIO_0 + atoi(argv[0]);
+	int value = atoi(argv[1]);
+	audio = zpl_media_audio_lookup(channel, zpl_true);
+
+	if(audio != NULL)
+	{
+		ret = zpl_media_audio_volume(audio, value);
+	}
+	else
+	{
+		vty_out(vty, " media channel %d %s is not exist. %s", channel, argv[1], VTY_NEWLINE);	
+	}
+	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
+}
+
 DEFUN (media_channel_audio_inner_codec,
 		media_channel_audio_inner_codec_cmd,
 		"media channel audio codec (enable|disable)" ,
@@ -679,8 +706,12 @@ DEFUN (media_channel_audio_codec_param,
 		MEDIA_CHANNEL_STR
 		"Audio Channel Configure\n"
 		"Codec Configure\n"
-		"Enable Configure\n"
-		"Disable Configure\n")
+		"Mic Gain Configure,[0,16]\n"
+		"Boost Configure,[0,1]\n"
+		"Input Volume Configure,[19,50]\n"
+		"Output Volume Configure,[-121, 6]\n"
+		"Value Configure\n"
+		"Value\n")
 {
 	int ret = ERROR;
 	int value = 0;
@@ -693,13 +724,21 @@ DEFUN (media_channel_audio_codec_param,
 	if(audio != NULL)
 	{
 		if(strncmp(argv[0],"micgain", 5) == 0)
-			ret = zpl_media_audio_codec_enable(audio, value);
+		{
+			ret = zpl_media_audio_codec_micgain(audio, value);//0-16
+		}
 		else if(strncmp(argv[0],"boost", 5) == 0)
-			ret = zpl_media_audio_codec_boost(audio, value);
+		{
+			ret = zpl_media_audio_codec_boost(audio, value?1:0);
+		}
 		else if(strncmp(argv[0],"in-volume", 5) == 0)
-			ret = zpl_media_audio_codec_input_volume(audio, value);
+		{
+			ret = zpl_media_audio_codec_input_volume(audio, value);//[19,50]
+		}
 		else if(strncmp(argv[0],"out-volume", 5) == 0)
-			ret = zpl_media_audio_codec_output_volume(audio, value);
+		{
+			ret = zpl_media_audio_codec_output_volume(audio, value-94);//[-121, 6]
+		}
 	}
 	else
 	{
@@ -1138,6 +1177,9 @@ static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 			vty_out(vty, " media channel %d %s enable%s", chn->channel, 
 				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", VTY_NEWLINE);
 
+			//media channel <0-1> (main|sub) record (enable|disable)
+			//media channel <0-1> (main|sub) alarm capture (enable|disable)
+
 			if(ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
 				vty_out(vty, " media channel %d %s %s%s", chn->channel, 
 					(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
@@ -1152,27 +1194,48 @@ static int media_write_config_one(zpl_media_channel_t *chn, struct vty *vty)
 				vty_out(vty, " media channel %d %s alarm capture %s%s", chn->channel, 
 					(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
 					chn->p_capture.enable?"enable":"disable", VTY_NEWLINE);
-			#if 0
-			if(chn->p_mucast.enable)
-			{
-				zpl_mediartp_session_t* my_session = chn->p_mucast.param;
-				if(my_session)
-					vty_out(vty, " media channel %d %s multicast %s %d %s enable%s", chn->channel, 
-						(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_MAIN)?"main":"sub", 
-						my_session->address, my_session->rtp_port, my_session->local_address, VTY_NEWLINE);
-			}
-			#endif
+#if 0
+media channel <0-1> (main|sub) multicast A.B.C.D <1024-65530> local A.B.C.D enable
+media channel <0-1> (main|sub) multicast disable
+#endif
 			zpl_media_channel_area_config(chn, vty);
 		}
 		else if(chn->media_type == ZPL_MEDIA_AUDIO)
 		{
-			vty_out(vty, " media channel audio %d %s enable%s", chn->channel, 
+			zpl_media_audio_channel_t *audio = chn->media_param.audio_media.halparam;
+			vty_out(vty, " media channel audio %d %s enable%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, 
 				(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_INPUT)?"input":"output", VTY_NEWLINE);
-
+/*
 			if(ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))
-				vty_out(vty, " media channel audio %d %s %s%s", chn->channel, 
+				vty_out(vty, " media channel audio %d %s %s%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, 
 					(chn->channel_index==ZPL_MEDIA_CHANNEL_TYPE_INPUT)?"input":"output", 
 					(ZPL_TST_BIT(chn->flags, ZPL_MEDIA_STATE_START))?"active":"inactive", VTY_NEWLINE);
+*/
+			//media channel audio <0-1> volume <0-100>
+			//media channel audio codec (micgain|boost|in-volume|out-volume) value <0-100>
+			if(audio)
+			{
+				if(audio->b_input)
+				{
+					if(audio->audio_param.input.hw_connect_out/*&& audio->audio_param.input.output*/)
+						vty_out(vty, " media channel audio %d connect local-output%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, VTY_NEWLINE);
+				}
+				
+				if(!audio->b_input)
+					vty_out(vty, " media channel audio %d volume %d%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, audio->audio_param.output.volume, VTY_NEWLINE);
+				if(audio->b_inner_codec_enable)
+				{
+					vty_out(vty, " media channel audio codec enable%s", VTY_NEWLINE);
+					if(audio->b_input)
+					{
+						vty_out(vty, " media channel audio codec micgain value %d%s", audio->micgain, VTY_NEWLINE);
+						vty_out(vty, " media channel audio codec boost value %d%s", audio->boost, VTY_NEWLINE);
+						vty_out(vty, " media channel audio codec in-volume value %d%s", audio->in_volume, VTY_NEWLINE);
+					}
+					if(!audio->b_input)
+						vty_out(vty, " media channel audio codec out-volume value %d%s", audio->out_volume, VTY_NEWLINE);
+				}
+			}	
 		}
 		return OK;
 	}
@@ -1213,6 +1276,7 @@ static void cmd_mediaservice_init(void)
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_connect_loutput_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_inner_codec_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_codec_param_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_volume_cmd);
 
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_record_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_alarm_capture_cmd);

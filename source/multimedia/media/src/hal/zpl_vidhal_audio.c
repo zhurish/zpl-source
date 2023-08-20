@@ -103,18 +103,33 @@ static int zpl_audhal_aichn_VqeAttr(zpl_audio_input_t *audio)
         stVqeConfig.stAgcCfg.s8OutputMode = 0;
         stVqeConfig.stAgcCfg.s16NoiseSupSwitch = 1;//开启噪声抑制
     #endif
-        HI_MPI_AI_DisableVqe(audio->devid, audio->channel);
+        s32Ret = HI_MPI_AI_DisableVqe(audio->devid, audio->channel);
+        if (HI_SUCCESS != s32Ret)
+        {
+            zm_msg_err("%s: HI_MPI_AI_DisableVqe(%d) failed with %#x(%s)\n", __FUNCTION__, audio->channel, s32Ret, zpl_syshal_strerror(s32Ret));
+            return HI_FAILURE;
+        }
         s32Ret = HI_MPI_AI_SetTalkVqeAttr(audio->devid, audio->channel, audio->output->devid, audio->output->channel, &stVqeConfig);
         if (HI_SUCCESS != s32Ret)
         {
             zm_msg_err("%s: HI_MPI_AI_SetTalkVqeAttr(%d) failed with %#x(%s)\n", __FUNCTION__, audio->channel, s32Ret, zpl_syshal_strerror(s32Ret));
             return HI_FAILURE;
         }
-        HI_MPI_AI_EnableVqe(audio->devid, audio->channel);
+        s32Ret = HI_MPI_AI_EnableVqe(audio->devid, audio->channel);
+        if (HI_SUCCESS != s32Ret)
+        {
+            zm_msg_err("%s: HI_MPI_AI_EnableVqe(%d) failed with %#x(%s)\n", __FUNCTION__, audio->channel, s32Ret, zpl_syshal_strerror(s32Ret));
+            return HI_FAILURE;
+        }
     }
     else
     {
-        HI_MPI_AI_DisableVqe(audio->devid, audio->channel);
+        s32Ret = HI_MPI_AI_DisableVqe(audio->devid, audio->channel);
+        if (HI_SUCCESS != s32Ret)
+        {
+            zm_msg_err("%s: HI_MPI_AI_DisableVqe(%d) failed with %#x(%s)\n", __FUNCTION__, audio->channel, s32Ret, zpl_syshal_strerror(s32Ret));
+            return HI_FAILURE;
+        }
     }
     return HI_SUCCESS;
 #else
@@ -129,8 +144,12 @@ static int zpl_audhal_aichn_start(zpl_audio_input_t *audio, int start)
     if(start)
     {
         s32Ret = HI_MPI_AI_EnableChn(audio->devid, audio->channel);
-        HI_MPI_AI_EnableVqe(audio->devid, audio->channel);
-        zpl_audhal_aichn_VqeAttr(audio);
+        if (HI_SUCCESS != s32Ret)
+        {
+            zm_msg_err("%s: HI_MPI_AI_EnableChn(%d) failed with %#x(%s)\n", __FUNCTION__, audio->channel, s32Ret, zpl_syshal_strerror(s32Ret));
+            return HI_FAILURE;
+        }
+        return zpl_audhal_aichn_VqeAttr(audio);
     }
     else
         s32Ret = HI_MPI_AI_DisableChn(audio->devid, audio->channel);
@@ -181,7 +200,7 @@ static int zpl_audhal_aichn_update_fd(zpl_audio_input_t *audio)
         ipstack_type(audio->fd) = IPSTACK_OS;
         ipstack_fd(audio->fd) = HI_MPI_AI_GetFd(audio->devid, audio->channel);
         if (ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-            zm_msg_debug(" audio audio channel %d fd %d\n", audio->channel, ipstack_fd(audio->fd));
+            zm_msg_debug(" audio channel %d fd %d\n", audio->channel, ipstack_fd(audio->fd));
         return OK;
     }
     return OK;
@@ -189,6 +208,26 @@ static int zpl_audhal_aichn_update_fd(zpl_audio_input_t *audio)
     return OK;
 #endif
 }
+static int zpl_audhal_aichn_frame_handle(zpl_audio_input_t *audio, char *p, char *p2, int ti)
+{
+#ifdef ZPL_HISIMPP_MODULE    
+    int s32Ret = 0;
+    if(audio->hwbind == ZPL_MEDIA_CONNECT_SW)
+    {
+        //zm_msg_debug(" audio channel %d frame sendto encode %d \n", audio->channel, audio->encode.channel);
+        s32Ret = HI_MPI_AENC_SendFrame(audio->encode.channel, p, p2);
+    }
+    if(audio->hw_connect_out == ZPL_MEDIA_CONNECT_SW && audio->output)
+    {
+        //zm_msg_debug(" audio channel %d frame sendto ao %d/%d \n", audio->channel, audio->output->devid, audio->output->channel);
+        s32Ret = HI_MPI_AO_SendFrame(audio->output->devid, audio->output->channel, p, 1000);
+    }
+    return s32Ret;
+#else
+    return OK;
+#endif
+}
+
 static int zpl_audhal_aichn_frame_recvfrom(void *media_channel, zpl_audio_input_t *audio)
 {
 #ifdef ZPL_HISIMPP_MODULE
@@ -203,26 +242,30 @@ static int zpl_audhal_aichn_frame_recvfrom(void *media_channel, zpl_audio_input_
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-            zm_msg_debug(" audio get audio channel %d stream failed with:%s\n", audio->encode.channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_debug(" audio get audio channel %d stream failed with:%s\n", audio->channel, zpl_syshal_strerror(s32Ret));
         return ERROR;
     }
-    if(audio->hwbind == ZPL_MEDIA_CONNECT_SW)
+    if(audio->input_frame_handle)
+        (audio->input_frame_handle)(audio, &stFrame, &stAecFrm, 1000);
+    //zm_msg_debug(" audio channel %d frame read \n", audio->channel);
+    /*if(audio->hwbind == ZPL_MEDIA_CONNECT_SW)
     {
+        //zm_msg_debug(" audio channel %d frame sendto encode %d \n", audio->channel, audio->encode.channel);
         s32Ret = HI_MPI_AENC_SendFrame(audio->encode.channel, &stFrame, &stAecFrm);
     }
     if(audio->hw_connect_out == ZPL_MEDIA_CONNECT_SW && audio->output)
     {
+        //zm_msg_debug(" audio channel %d frame sendto ao %d/%d \n", audio->channel, audio->output->devid, audio->output->channel);
         s32Ret = HI_MPI_AO_SendFrame(audio->output->devid, audio->output->channel, &stFrame, 1000);
-    }
-    s32Ret = zpl_media_channel_skbuffer_frame_put(media_channel, ZPL_MEDIA_AUDIO, ZPL_MEDIA_FRAME_DATA_INPUT,
-                                               0, stFrame.u64TimeStamp, (HI_S8*)stFrame.u64VirAddr[0], stFrame.u32Len); /// 1000U
-
+    }*/
+    //s32Ret = zpl_media_channel_skbuffer_frame_put(media_channel, ZPL_MEDIA_AUDIO, ZPL_MEDIA_FRAME_DATA_INPUT,
+    //                                           0, stFrame.u64TimeStamp, (HI_S8*)stFrame.u64VirAddr[0], stFrame.u32Len); /// 1000U
     /* finally you must release the stream */
     s32Ret = HI_MPI_AI_ReleaseFrame(audio->devid, audio->channel, &stFrame, &stAecFrm);
     if (HI_SUCCESS != s32Ret)
     {
         if (ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-            zm_msg_debug(" audio release audio channel %d stream failed with:%s\n", audio->encode.channel, zpl_syshal_strerror(s32Ret));
+            zm_msg_debug(" audio channel %d release stream failed with:%s\n", audio->encode.channel, zpl_syshal_strerror(s32Ret));
         return ERROR;
     }
     return 1;
@@ -358,14 +401,16 @@ static int zpl_audhal_encode_create(zpl_audio_input_t *audio)
     s32Ret = HI_MPI_AI_GetChnParam(audio->encode.devid, audio->encode.channel, &stAiChnPara);
     if (HI_SUCCESS != s32Ret)
     {
-        zm_msg_err("%s: Get ai chn param failed\n", __FUNCTION__);
+        zm_msg_err("HI_MPI_AI_GetChnParam(%d) failed with:%s\n", audio->encode.channel, zpl_syshal_strerror(s32Ret));
         return s32Ret;
     }
-    stAiChnPara.u32UsrFrmDepth = audio->encode.codec.framerate;
+    stAiChnPara.u32UsrFrmDepth = audio->encode.codec.framerate/4;
+    if(stAiChnPara.u32UsrFrmDepth > 30)
+        stAiChnPara.u32UsrFrmDepth = 8;
     s32Ret = HI_MPI_AI_SetChnParam(audio->encode.devid, audio->encode.channel, &stAiChnPara);
     if (HI_SUCCESS != s32Ret)
     {
-        zm_msg_err("%s: set ai chn param failed\n", __FUNCTION__);
+        zm_msg_err("HI_MPI_AI_SetChnParam(%d) u32UsrFrmDepth=%d failed with:%s\n", audio->encode.channel, stAiChnPara.u32UsrFrmDepth, zpl_syshal_strerror(s32Ret));
         return s32Ret;
     }
     return HI_SUCCESS;
@@ -403,7 +448,7 @@ static int zpl_audhal_encode_update_fd(zpl_audio_input_t *audio)
         ipstack_type(audio->encode.fd) = IPSTACK_OS;
         ipstack_fd(audio->encode.fd) = HI_MPI_AENC_GetFd(audio->encode.channel);
         if (ZPL_MEDIA_DEBUG(ENCODE, EVENT) && ZPL_MEDIA_DEBUG(ENCODE, DETAIL))
-            zm_msg_debug(" audio audio channel %d fd %d\n", audio->encode.channel, ipstack_fd(audio->encode.fd));
+            zm_msg_debug(" audio encode channel %d fd %d\n", audio->encode.channel, ipstack_fd(audio->encode.fd));
         return OK;
     }
     return OK;
@@ -428,6 +473,7 @@ static int zpl_audhal_encode_frame_recvfrom(void *media_channel, zpl_audio_input
             zm_msg_debug(" audio get audio channel %d stream failed with:%s\n", audio->encode.channel, zpl_syshal_strerror(s32Ret));
         return ERROR;
     }
+    //zm_msg_debug(" audio encode channel %d frame read \n", audio->encode.channel);
     s32Ret = zpl_media_channel_skbuffer_frame_put(media_channel, ZPL_MEDIA_AUDIO, ZPL_MEDIA_FRAME_DATA_ENCODE,
                                                0, stStream.u64TimeStamp, stStream.pStream, stStream.u32Len); /// 1000U
     /* finally you must release the stream */
@@ -476,6 +522,10 @@ himm 0x120DA000 0X08
 echo 83 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio83/direction
 echo 1 > /sys/class/gpio/gpio83/value
+
+echo 84 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio84/direction
+echo 0 > /sys/class/gpio/gpio84/value
 */
 /*********************************************************/
 
@@ -912,10 +962,8 @@ int zpl_audhal_audio_input_stop(zpl_audio_input_t *audio)
 int zpl_audhal_audio_input_update_fd(zpl_audio_input_t *audio)
 {
     int ret = 0;
-    if(audio->encode.bEnable)
-        ret = zpl_audhal_encode_update_fd(audio);
-    else    
-        ret = zpl_audhal_aichn_update_fd(audio);
+    ret = zpl_audhal_encode_update_fd(audio);  
+    ret = zpl_audhal_aichn_update_fd(audio);
     return ret;    
 }
 
@@ -937,6 +985,10 @@ int zpl_audhal_audio_encode_frame_sendto(void *media_channel, zpl_audio_input_t 
     return zpl_audhal_encode_frame_sendto(audio, p, NULL);
 }
 
+int zpl_audhal_audio_frame_forward_hander(zpl_audio_input_t *audio, char *p, char *p2, int ti)/*向编码单元发送数据*/
+{
+    return zpl_audhal_aichn_frame_handle(audio, p, p2, ti);
+}
 
 int zpl_audhal_audio_output_create(zpl_audio_output_t *audio)
 {

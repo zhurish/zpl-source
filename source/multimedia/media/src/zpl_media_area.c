@@ -657,7 +657,12 @@ static int zpl_media_channel_area_update_start(zpl_media_area_t * area, ZPL_MEDI
     return ERROR;
 }
 
-
+/*
+media channel <0-1> (main|sub) osd (channel|datetime|bitrate|label|other) (enable|disable)
+media channel <0-1> (main|sub) osd (channel|datetime|bitrate|label|other) bgalpha <0-128> fgalpha <5-110>
+media channel <0-1> (main|sub) osd (label|other) keystr .LINE
+media channel <0-1> (main|sub) osd (channel|datetime|bitrate|label|other) x <1-4096> y <1-4096>
+*/
 int zpl_media_channel_area_config(zpl_media_channel_t *chn, struct vty *vty)
 {
 	if(chn)

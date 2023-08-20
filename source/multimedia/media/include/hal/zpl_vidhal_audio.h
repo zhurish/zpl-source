@@ -31,6 +31,7 @@ extern int zpl_audhal_audio_output_destroy(zpl_audio_output_t *audio);
 extern int zpl_audhal_audio_output_start(zpl_audio_output_t *audio);
 extern int zpl_audhal_audio_output_stop(zpl_audio_output_t *audio);
 extern int zpl_audhal_audio_decode_finsh(zpl_audio_output_t *audio);
+extern int zpl_audhal_audio_frame_forward_hander(zpl_audio_input_t *audio, char *p, char *p2, int ti);
 extern int zpl_audhal_audio_output_frame_sendto(void *media_channel, zpl_audio_output_t *audio, void *p);
 extern int zpl_audhal_audio_decode_frame_sendto(void *media_channel, zpl_audio_output_t *audio, void *p);/*向解码单元发送数据*/
 extern int zpl_audhal_audio_decode_frame_recv(void *media_channel, zpl_audio_output_t *audio, void *p);/*向解码单元读取数据*/

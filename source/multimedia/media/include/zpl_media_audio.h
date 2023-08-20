@@ -40,9 +40,11 @@ typedef struct
     zpl_uint8           channel_cnt;
     zpl_uint8           bits_per_sample; /**< Bits/sample in the PCM side    */
     zpl_uint32          max_frame_size;
+
     int (*put_decode_frame)(void *, void *);
+
     ZPL_MEDIA_CONNECT_TYPE_E            hwbind;
-    zpl_audio_encode_decodec_t decode;    
+    zpl_audio_encode_decodec_t          decode;    
 }zpl_audio_output_t;
 
 typedef struct 
@@ -59,6 +61,7 @@ typedef struct
     zpl_uint8           channel_cnt;
     zpl_uint8           bits_per_sample; /*每帧的采样点个数  （1/framerate）* clock_rate */
     zpl_uint32          max_frame_size;
+    int (*input_frame_handle)(void *, char *, char *, zpl_uint32);
     /*
 每帧的采样点个数。
 取值范围：G711、G726、ADPCM_DVI4 编码时取值为 80、
@@ -69,9 +72,9 @@ AI 取值范围为：[80, 2048]，AO 取值范围为：[80, 4096]。
     int (*get_input_frame)(void *, void *);
 
     ZPL_MEDIA_CONNECT_TYPE_E            hwbind;
-    zpl_audio_encode_decodec_t encode;
+    zpl_audio_encode_decodec_t          encode;
     ZPL_MEDIA_CONNECT_TYPE_E            hw_connect_out;
-    zpl_audio_output_t  *output;
+    zpl_audio_output_t                  *output;
 }zpl_audio_input_t;
 
 
@@ -81,7 +84,6 @@ typedef struct
 	int                 channel;
     zpl_bool            b_input;
 
-    zpl_audio_input_t ai;        //输入通道
     union
     {
         zpl_audio_input_t    input;
@@ -94,6 +96,11 @@ typedef struct
 
 	zpl_void			*media_channel;		//指向父级
 
+    zpl_int32           micgain;
+    zpl_int32           boost;
+    zpl_int32           in_volume;
+    zpl_int32           out_volume;
+    //media channel audio codec (micgain|boost|in-volume|out-volume) value <0-100>
 }zpl_media_audio_channel_t;
 
 
@@ -120,10 +127,10 @@ int zpl_media_audio_volume(zpl_media_audio_channel_t *audio, int val);
 
 
 int zpl_media_audio_codec_enable(zpl_media_audio_channel_t *audio, zpl_bool b_enable);
-int zpl_media_audio_codec_micgain(zpl_media_audio_channel_t *audio, int val);
-int zpl_media_audio_codec_boost(zpl_media_audio_channel_t *audio, int val);
-int zpl_media_audio_codec_input_volume(zpl_media_audio_channel_t *audio, int val);
-int zpl_media_audio_codec_output_volume(zpl_media_audio_channel_t *audio, int val);
+int zpl_media_audio_codec_micgain(zpl_media_audio_channel_t *audio, int val);//[0,16]
+int zpl_media_audio_codec_boost(zpl_media_audio_channel_t *audio, int val);//[0,1]
+int zpl_media_audio_codec_input_volume(zpl_media_audio_channel_t *audio, int val);//[19,50]
+int zpl_media_audio_codec_output_volume(zpl_media_audio_channel_t *audio, int val);//[-121, 6]
 
 int zpl_media_audio_frame_queue_set(zpl_int32 channel, void *frame_queue);
 
