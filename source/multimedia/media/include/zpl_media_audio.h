@@ -77,6 +77,20 @@ AI 取值范围为：[80, 2048]，AO 取值范围为：[80, 4096]。
     zpl_audio_output_t                  *output;
 }zpl_audio_input_t;
 
+typedef struct 
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+    zpl_uint8   rev;
+    zpl_uint8   frame_type;
+    zpl_uint8   len;
+    zpl_uint8   seq;
+#else    
+    zpl_uint8   frame_type;
+    zpl_uint8   rev;
+    zpl_uint8   seq;
+    zpl_uint8   len;
+#endif 
+}__attribute__ ((packed)) zpl_audio_frame_hdr_t ;
 
 typedef struct 
 {

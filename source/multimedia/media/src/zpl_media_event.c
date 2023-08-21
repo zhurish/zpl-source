@@ -223,10 +223,10 @@ static int zpl_media_event_dispatch_handle(zpl_media_event_t *event)
     return OK;
 }
 
-int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel)
+int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel, int event)
 {
     if(_media_event_queue_default)
-        zpl_media_event_register(_media_event_queue_default, ZPL_MEDIA_GLOAL_VIDEO_ENCODE,  ZPL_MEDIA_EVENT_DISTPATCH, 
+        zpl_media_event_register(_media_event_queue_default, event,  ZPL_MEDIA_EVENT_DISTPATCH, 
                 zpl_media_event_dispatch_handle, mchannel);
     return OK;            
 }

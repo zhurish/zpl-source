@@ -460,9 +460,9 @@ static int zpl_audhal_encode_update_fd(zpl_audio_input_t *audio)
 static int zpl_audhal_encode_frame_recvfrom(void *media_channel, zpl_audio_input_t *audio)
 {
 #ifdef ZPL_HISIMPP_MODULE
-    zpl_int32 s32Ret = 0;
+    int s32Ret = 0;
     AUDIO_STREAM_S stStream;
-
+    zpl_audio_frame_hdr_t *framehdr = NULL;
     memset(&stStream, 0, sizeof(stStream));
     zpl_video_assert(audio);
     /* get stream from audio chn */
@@ -474,8 +474,14 @@ static int zpl_audhal_encode_frame_recvfrom(void *media_channel, zpl_audio_input
         return ERROR;
     }
     //zm_msg_debug(" audio encode channel %d frame read \n", audio->encode.channel);
+    framehdr = (zpl_audio_frame_hdr_t *)stStream.pStream;
+
+    //zm_msg_debug(" audio encode channel %d frame read %d  %d(0x%02x 0x%02x 0x%02x 0x%02x)\n", 
+    //    audio->encode.channel, framehdr->len, stStream.u32Len, stStream.pStream[0], stStream.pStream[1],stStream.pStream[2],stStream.pStream[3]);
+
     s32Ret = zpl_media_channel_skbuffer_frame_put(media_channel, ZPL_MEDIA_AUDIO, ZPL_MEDIA_FRAME_DATA_ENCODE,
-                                               0, stStream.u64TimeStamp, stStream.pStream, stStream.u32Len); /// 1000U
+                                               0, stStream.u64TimeStamp, (char*)(stStream.pStream+4), framehdr->len); /// 1000U
+    
     /* finally you must release the stream */
     s32Ret = HI_MPI_AENC_ReleaseStream(audio->encode.channel, &stStream);
     if (HI_SUCCESS != s32Ret)

@@ -67,7 +67,6 @@ typedef struct zpl_media_channel_s
     zpl_media_client_t          media_client[ZPL_MEDIA_CLIENT_MAX];
 
     zpl_uint32                  bindcount;      //绑定的数量
-    zpl_media_channel_t         *bind_other;    //视频通道绑定的音频通道
 
     zpl_media_unit_t            p_capture;      //通道使能抓拍
     zpl_media_unit_t            p_record;       //通道使能录像
@@ -130,8 +129,6 @@ extern int zpl_media_channel_bind_encode_set(ZPL_MEDIA_CHANNEL_E channel, ZPL_ME
 
 extern zpl_media_channel_t * zpl_media_channel_lookup(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 extern zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID);
-
-extern zpl_media_channel_t * zpl_media_channel_lookup_bind(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 
 extern ZPL_MEDIA_STATE_E zpl_media_channel_state(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index);
 

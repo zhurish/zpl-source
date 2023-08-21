@@ -32,6 +32,7 @@ typedef struct os_url_s
     zpl_int32     	level;
     zpl_char        url[128];
     zpl_uint16    	mode;
+	zpl_uint8		type;
 }os_url_t;
 
 extern int os_url_split(const zpl_char * URL, os_url_t *spliurl);

@@ -8,7 +8,7 @@ extern "C" {
 /*
  * 发送一帧数据
  */
-int rtp_payload_send_g7xx(void *session, const u_int8_t *buffer, u_int32_t len, int user_ts);
+int rtp_payload_send_g7xx(void *session, const u_int8_t *buffer, u_int32_t len);
 
 #ifdef __cplusplus
 }

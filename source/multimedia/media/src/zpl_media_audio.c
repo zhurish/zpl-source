@@ -644,7 +644,7 @@ static int zpl_media_audio_read_thread(struct thread *thread)
 
 		if (audio->frame_queue && ret > 0)
 		{
-			zpl_media_event_dispatch_signal(audio->media_channel);
+			zpl_media_event_dispatch_signal(audio->media_channel, ZPL_MEDIA_GLOAL_AUDIO);
 		}
 		if (audio && audio->b_input)
 		{

@@ -157,7 +157,8 @@ void rtsp_url_stream_path(const char *url, rtsp_urlpath_t *urlpath)
 } 
 #else
 
-
+//rtsp://user:pass@192.168.1.1:9988/media/video/channel=1&level=1
+//rtsp://user:pass@192.168.1.1:9988/media/audio/channel=1&level=1
 static void rtsp_url_stream_path_split(const char *url, os_url_t *urlpath)
 {
     char *p, *brk;
@@ -170,6 +171,16 @@ static void rtsp_url_stream_path_split(const char *url, os_url_t *urlpath)
     //    p++;  
     if(p)
     {
+        if(strncmp(p, "video", 5) == 0)
+        {
+            urlpath->type = 0;
+            p+=6; 
+        }
+        if(strncmp(p, "audio", 5) == 0)
+        {
+            urlpath->type = 1;
+            p+=6; 
+        }
         brk = strstr(p, "channel");
         if(brk && strstr(p, "level"))
         {

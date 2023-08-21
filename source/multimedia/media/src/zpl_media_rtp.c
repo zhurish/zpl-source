@@ -16,6 +16,7 @@
 
 #include "rtp_payload.h"
 #include "rtp_h264.h"
+#include "rtp_g7xx.h"
 #ifdef ZPL_JRTPLIB_MODULE
 static int zpl_mediartp_event_dispatch_signal(zpl_media_channel_t *chm);
 #endif
@@ -23,7 +24,7 @@ static zpl_mediartp_scheduler_t _mediaRtpSched;
 
 #define ZPL_MEDIARTP_DEBUG(v)	      ( _mediaRtpSched._debug& (ZPL_VIDEO_DEBUG_ ##v ) )
 
-#if 1
+
 typedef struct rtp_session_adap_s
 {
     char                *name;
@@ -37,7 +38,7 @@ static zpl_mediartp_session_adap_t _rtp_media_adap_tbl[] =
         {"H263", RTP_MEDIA_PAYLOAD_H263, rtp_payload_send_h264, NULL},
         {"H264", RTP_MEDIA_PAYLOAD_H264, rtp_payload_send_h264, NULL},
         
-        /*{"G711A", RTP_MEDIA_PAYLOAD_G711A, rtp_payload_send_h264, NULL},
+        {"G711A", RTP_MEDIA_PAYLOAD_G711A, rtp_payload_send_g7xx, NULL},
         {"G711U", RTP_MEDIA_PAYLOAD_G711U, rtp_payload_send_g7xx, NULL},
 
         {"G722", RTP_MEDIA_PAYLOAD_G722, rtp_payload_send_g7xx, NULL},
@@ -48,7 +49,7 @@ static zpl_mediartp_session_adap_t _rtp_media_adap_tbl[] =
         {"G729A", RTP_MEDIA_PAYLOAD_G729A, rtp_payload_send_g7xx, NULL},
 
         {"PCMA", RTP_MEDIA_PAYLOAD_PCMA, rtp_payload_send_g7xx, NULL},
-        {"PCMU", RTP_MEDIA_PAYLOAD_PCMU, rtp_payload_send_g7xx, NULL},*/
+        {"PCMU", RTP_MEDIA_PAYLOAD_PCMU, rtp_payload_send_g7xx, NULL},
 };
 
 static int zpl_mediartp_session_adap_rtp_sendto(zpl_media_channel_t *chm, uint32_t codec, const uint8_t *buf, uint32_t len)
@@ -68,82 +69,7 @@ static int zpl_mediartp_session_adap_rtp_sendto(zpl_media_channel_t *chm, uint32
     }
     return -1;
 }
-#else
-typedef struct rtp_session_adap_s
-{
-    char                *name;
-    uint32_t            codec;
-    int (*_rtp_packet)(h26x_packetizer *pktz,
-                                            u_int8_t *bits,
-                                            int bits_len,
-                                            unsigned int *bits_pos,
-                                            const u_int8_t **payload,
-                                            int *payload_len);
-    int (*_rtp_unpacket)(h26x_packetizer *pktz,
-                                              const u_int8_t *payload,
-                                              int payload_len,
-                                              u_int8_t *bits,
-                                              int bits_size,
-                                              unsigned int *pos);                   
-}zpl_mediartp_session_adap_t;
 
-static zpl_mediartp_session_adap_t _rtp_media_adap_tbl[] =
-    {
-        {"H263", RTP_MEDIA_PAYLOAD_H263, rtp_h26x_packetize, NULL},
-        {"H264", RTP_MEDIA_PAYLOAD_H264, rtp_h26x_packetize, NULL},
-};
-
-static h26x_packetizer my_h26x_pktz;
-
-static int zpl_mediartp_session_adap_rtp_sendto(zpl_media_channel_t *chm, uint32_t codec, const uint8_t *buf, uint32_t len)
-{
-    u_int8_t *payload = NULL;
-    u_int32_t payload_len = 0;
-    int has_more = 1;
-    int ret = 0;
-    uint32_t i = 0;
-    if (chm)
-    {
-        for (i = 0; i < sizeof(_rtp_media_adap_tbl) / sizeof(_rtp_media_adap_tbl[0]); i++)
-        {
-            if (_rtp_media_adap_tbl[i].codec == codec)
-            {
-                if (_rtp_media_adap_tbl[i]._rtp_packet)
-                {
-                    if (my_h26x_pktz.cfg.codec == 0)
-                    {
-                        rtp_h26x_packetizer_init(codec, MAX_RTP_PAYLOAD_LENGTH,
-                                                 H264_PACKETIZER_MODE_NON_INTERLEAVED, 4, &my_h26x_pktz);
-                    }
-                    my_h26x_pktz.frame_data = buf;
-                    my_h26x_pktz.frame_size = len;
-                    my_h26x_pktz.frame_pos = 0;
-                    while (has_more)
-                    {
-                        ret = (_rtp_media_adap_tbl[i]._rtp_packet)(&my_h26x_pktz, my_h26x_pktz.frame_data,
-                                                                   my_h26x_pktz.frame_size,
-                                                                   &my_h26x_pktz.frame_pos,
-                                                                   &payload, &payload_len);
-                        if (ret != 0)
-                            return -1;
-                        has_more = (my_h26x_pktz.frame_pos < my_h26x_pktz.frame_size);
-#ifdef ZPL_JRTPLIB_MODULE
-                        if (payload)
-                        {
-                            if (len < MAX_RTP_PAYLOAD_LENGTH)
-                                ret = zpl_mediartp_session_rtp_sendto(chm, payload, payload_len, 255, 1, 1);
-                            else
-                                ret = zpl_mediartp_session_rtp_sendto(chm, payload, payload_len, 255, has_more ? 0 : 1, has_more ? 0 : 1);
-                        }
-#endif
-                    }
-                }
-            }
-        }
-    }
-    return ret;
-}
-#endif
 
 int zpl_mediartp_session_rtp_sendto(zpl_media_channel_t *chm, const void *data, size_t len,
 	                u_int8_t pt, bool mark, u_int32_t next_ts)
@@ -340,12 +266,27 @@ static int zpl_mediartp_session_connect(zpl_mediartp_session_t *my_session, int 
             }
         }
         my_session->media_chn = mediachn;
+        if(mediachn->media_type == ZPL_MEDIA_VIDEO)
+        {
+            if (mediachn->media_param.video_media.codec.framerate == 0)
+                my_session->framerate = 30;
+            else
+                my_session->framerate = mediachn->media_param.video_media.codec.framerate;
+            my_session->payload = mediachn->media_param.video_media.codec.codectype;
+        }
+        else if(mediachn->media_type == ZPL_MEDIA_AUDIO)
+        {
+            if (mediachn->media_param.audio_media.codec.framerate == 0)
+                my_session->framerate = 50;
+            else
+                my_session->framerate = mediachn->media_param.audio_media.codec.framerate;
 
-        if (mediachn->media_param.video_media.codec.framerate == 0)
-            my_session->framerate = 30;
-        else
-            my_session->framerate = mediachn->media_param.video_media.codec.framerate;
-        my_session->payload = mediachn->media_param.video_media.codec.codectype;
+            if(mediachn->media_param.audio_media.codec.codectype == RTP_MEDIA_PAYLOAD_G711A)
+                my_session->payload = RTP_MEDIA_PAYLOAD_PCMA;
+            else if(mediachn->media_param.audio_media.codec.codectype == RTP_MEDIA_PAYLOAD_G711U)
+                my_session->payload = RTP_MEDIA_PAYLOAD_PCMU;
+        }
+
         if(ZPL_MEDIARTP_DEBUG(EVENT) && ZPL_MEDIARTP_DEBUG(DETAIL))
         {
             zm_msg_debug("media rtp session keyval %u is connect to %d/%d framerate %d payload %d", 
@@ -816,6 +757,7 @@ static int zpl_mediartp_session_rtpmap_sdptext_h264(zpl_mediartp_session_t* my_s
                                                   "sprop-parameter-sets=%s,%s;packetization-mode=%d;bitrate=%d\r\n",
                                  RTP_MEDIA_PAYLOAD_H264, profile, base64sps, base64pps, my_session->packetization_mode, 48000 /*bitrate*/);
         }
+        sdplength += sprintf((char*)(src + sdplength), "a=framerate:%u\r\n", my_session->framerate);
         if(my_session->i_trackid >= 0)
             sdplength += sprintf((char*)(src + sdplength), "a=control:trackID=%d\r\n", my_session->i_trackid);
 
@@ -1018,10 +960,30 @@ int zpl_mediartp_session_get_trackid(int keyval, int *trackid)
 int zpl_mediartp_session_describe(int keyval, void *pUser, char *src, int *len)
 {
     int sdplength = 0;
-    sdplength = zpl_mediartp_session_rtpmap_h264(keyval, src, *len);
-    //sdplength = rtsp_session_media_build_sdptext(session, src);
-    //if(session->bind_other_session.media_chn)
-    //    sdplength += rtsp_session_media_build_sdptext(&session->bind_other_session, (char*)(src + sdplength));
+    zpl_media_channel_t *mchn = NULL;
+    zpl_mediartp_session_t *my_session = NULL;
+    my_session = zpl_mediartp_rtpparam(keyval);
+    if (!my_session)
+        return 0;
+    mchn = my_session->media_chn; 
+    if(mchn && mchn->media_type == ZPL_MEDIA_VIDEO)
+    {
+        sdplength = zpl_mediartp_session_rtpmap_h264(keyval, src, *len);
+        //sdplength = rtsp_session_media_build_sdptext(session, src);
+        //if(session->bind_other_session.media_chn)
+        //    sdplength += rtsp_session_media_build_sdptext(&session->bind_other_session, (char*)(src + sdplength));
+    }
+    else if(mchn && mchn->media_type == ZPL_MEDIA_AUDIO)
+    {
+        sdplength = sprintf((char*)(src + sdplength), "m=audio 0 RTP/AVP %d\r\n", my_session->payload);
+#ifdef ZPL_JRTPLIB_MODULE
+        if (jrtp_profile_get_rtpmap(my_session->payload))
+            sdplength += sprintf((char*)(src + sdplength), "a=rtpmap:%d %s\r\n", my_session->payload, jrtp_profile_get_rtpmap(my_session->payload));
+        else
+#endif
+            sdplength += sprintf((char*)(src + sdplength), "a=rtpmap:%d PCMA/8000\r\n", my_session->payload);
+        sdplength += sprintf((char*)(src + sdplength), "a=framerate:%d\r\n", my_session->framerate);
+    }
     if(len)
         *len = sdplength;
     return OK;

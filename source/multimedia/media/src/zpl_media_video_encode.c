@@ -427,7 +427,7 @@ static int zpl_media_video_encode_read_thread(struct thread *thread)
 
 		if (encode->frame_queue && ret > 0)
 		{
-			zpl_media_event_dispatch_signal(encode->media_channel);
+			zpl_media_event_dispatch_signal(encode->media_channel, ZPL_MEDIA_GLOAL_VIDEO_ENCODE);
 		}
 		else
 			;//zm_msg_debug("======== zpl_media_event_dispatch_signal get_encode_frame");

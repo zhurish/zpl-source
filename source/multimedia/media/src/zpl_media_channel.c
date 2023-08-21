@@ -837,17 +837,6 @@ zpl_media_channel_t *zpl_media_channel_lookup(ZPL_MEDIA_CHANNEL_E channel, ZPL_M
 	return chn;
 }
 
-zpl_media_channel_t * zpl_media_channel_lookup_bind(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E channel_index)
-{
-	zpl_media_channel_t *chn = NULL;
-	if (media_channel_mutex)
-		os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
-    chn = zpl_media_channel_lookup_entry( channel, channel_index, 0);
-    if (media_channel_mutex)
-        os_mutex_unlock(media_channel_mutex);
-	return chn?chn->bind_other:NULL;
-}
-
 zpl_media_channel_t *zpl_media_channel_lookup_sessionID(zpl_uint32 sessionID)
 {
 	zpl_media_channel_t *chn = NULL;
