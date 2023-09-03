@@ -2664,13 +2664,25 @@ DEFUN (show_debugging_voip,
 	return CMD_SUCCESS;
 }
 #endif
+DEFUN (ip_sip_start,
+		ip_sip_start_cmd,
+		"ipsip start",
+		"SIP configure\n"
+		"start\n")
+{
+	_pjAppCfg.app_start = PJ_TRUE;
+	return  CMD_SUCCESS;
+}
+
 static int pjsip_write_config(struct vty *vty, void *pVoid)
 {
+	extern void pjsip_dump_config(void);
 	if(vty)
 	{
 		vty_out(vty, "service ipsip%s",VTY_NEWLINE);
 		//pjapp_cfg_write_config(vty);
 		pjapp_global_cli_write_config(vty, 0, 0);
+		pjsip_dump_config();
 		return 1;
 	}
 	return 0;
@@ -2922,6 +2934,8 @@ static void cmd_voip_other_init(int node)
 	install_element(node, CMD_CONFIG_LEVEL, &pjsip_restart_cli_cmd);
 	#endif
 	install_element(node, CMD_VIEW_LEVEL, &pjsip_call_start_cli_cmd);
+	install_element(node, CMD_VIEW_LEVEL, &ip_sip_start_cmd);
+	
 }
 
 static void cmd_show_sip_init(int node)

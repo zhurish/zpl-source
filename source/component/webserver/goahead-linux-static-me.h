@@ -264,7 +264,7 @@
     #define ME_GOAHEAD_STEALTH 0
 #endif
 #ifndef ME_GOAHEAD_TRACING
-    #define ME_GOAHEAD_TRACING 1
+    #define ME_GOAHEAD_TRACING 0
 #endif
 #ifndef ME_GOAHEAD_UPLOAD
     #define ME_GOAHEAD_UPLOAD 1

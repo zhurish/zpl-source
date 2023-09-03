@@ -21,69 +21,353 @@ static const char *zpl_syshal_vi_strerror(zpl_uint32 halerrno)
 {
     static char tmpdata[64];
     zpl_uint32 hal_errno = halerrno & 0x1fff;
-    switch(hal_errno)
+    switch (hal_errno)
     {
-    case ERR_VI_FAILED_NOTENABLE:       /* device or channel not enable */
-    return "device or channel not enable";
-    case ERR_VI_FAILED_NOTDISABLE:          /* device not disable */
-    return "device not disable";
-    case ERR_VI_FAILED_CHNOTDISABLE:         /* channel not disable */
-    return "channel not disable";
-    case ERR_VI_CFG_TIMEOUT:                 /* config timeout */
-    return "config timeout";
-    case ERR_VI_NORM_UNMATCH:                /* video norm of ADC and VIU is unmatch */
-    return "video norm of ADC and VIU is unmatch";
-    case ERR_VI_INVALID_WAYID:              /* invlalid way ID */
-    return "invlalid way ID";
-    case ERR_VI_INVALID_PHYCHNID:           /* invalid phychn id */
-    return "invalid phychn id";
-    case ERR_VI_FAILED_NOTBIND:              /* device or channel not bind */
-    return "device or channel not bind";
-    case ERR_VI_FAILED_BINDED:               /* device or channel not unbind */
-    return "device or channel not unbind";
-    case ERR_VI_DIS_PROCESS_FAIL:             /* dis process failed */
-    return "dis process failed";
-    case EN_ERR_BUTT:/* maxium code, private error code of all modules
-                              ** must be greater than it                      */                  
+    case ERR_VI_FAILED_NOTENABLE: /* device or channel not enable */
+        return "device or channel not enable";
+    case ERR_VI_FAILED_NOTDISABLE: /* device not disable */
+        return "device not disable";
+    case ERR_VI_FAILED_CHNOTDISABLE: /* channel not disable */
+        return "channel not disable";
+    case ERR_VI_CFG_TIMEOUT: /* config timeout */
+        return "config timeout";
+    case ERR_VI_NORM_UNMATCH: /* video norm of ADC and VIU is unmatch */
+        return "video norm of ADC and VIU is unmatch";
+    case ERR_VI_INVALID_WAYID: /* invlalid way ID */
+        return "invlalid way ID";
+    case ERR_VI_INVALID_PHYCHNID: /* invalid phychn id */
+        return "invalid phychn id";
+    case ERR_VI_FAILED_NOTBIND: /* device or channel not bind */
+        return "device or channel not bind";
+    case ERR_VI_FAILED_BINDED: /* device or channel not unbind */
+        return "device or channel not unbind";
+    case ERR_VI_DIS_PROCESS_FAIL: /* dis process failed */
+        return "dis process failed";
+    case EN_ERR_BUTT: /* maxium code, private error code of all modules
+                       ** must be greater than it                      */
     default:
-        break;                          
+        break;
     }
-    switch(halerrno)
+    switch (halerrno)
     {
-case HI_ERR_VI_INVALID_PARA: return "invlalid param";
-case HI_ERR_VI_INVALID_DEVID: return "invlalid Dev ID";
-case HI_ERR_VI_INVALID_PIPEID: return "invlalid Pipe ID";
-case HI_ERR_VI_INVALID_STITCHGRPID: return "invlalid Sticth";
-case HI_ERR_VI_INVALID_CHNID: return "invlalid Chn ID";
-case HI_ERR_VI_INVALID_NULL_PTR: return "invlalid point";
-case HI_ERR_VI_FAILED_NOTCONFIG: return "Not Config";
-case HI_ERR_VI_SYS_NOTREADY: return "Not Ready";
-case HI_ERR_VI_BUF_EMPTY: return "Buffer Empty";
-case HI_ERR_VI_BUF_FULL: return "Buffer Full";
-case HI_ERR_VI_NOMEM: return "no mem";
-case HI_ERR_VI_NOT_SUPPORT: return "not support";
-case HI_ERR_VI_BUSY: return "busy";
-case HI_ERR_VI_NOT_PERM: return "HI_ERR_VI_NOT_PERM";
+    case HI_ERR_VI_INVALID_PARA:
+        return "invlalid param";
+    case HI_ERR_VI_INVALID_DEVID:
+        return "invlalid Dev ID";
+    case HI_ERR_VI_INVALID_PIPEID:
+        return "invlalid Pipe ID";
+    case HI_ERR_VI_INVALID_STITCHGRPID:
+        return "invlalid Sticth";
+    case HI_ERR_VI_INVALID_CHNID:
+        return "invlalid Chn ID";
+    case HI_ERR_VI_INVALID_NULL_PTR:
+        return "invlalid point";
+    case HI_ERR_VI_FAILED_NOTCONFIG:
+        return "Not Config";
+    case HI_ERR_VI_SYS_NOTREADY:
+        return "Not Ready";
+    case HI_ERR_VI_BUF_EMPTY:
+        return "Buffer Empty";
+    case HI_ERR_VI_BUF_FULL:
+        return "Buffer Full";
+    case HI_ERR_VI_NOMEM:
+        return "no mem";
+    case HI_ERR_VI_NOT_SUPPORT:
+        return "not support";
+    case HI_ERR_VI_BUSY:
+        return "busy";
+    case HI_ERR_VI_NOT_PERM:
+        return "HI_ERR_VI_NOT_PERM";
 
-case HI_ERR_VI_FAILED_NOTENABLE: return "HI_ERR_VI_FAILED_NOTENABLE";
-case HI_ERR_VI_FAILED_NOTDISABLE: return "HI_ERR_VI_FAILED_NOTDISABLE";
-case HI_ERR_VI_FAILED_CHNOTDISABLE: return "HI_ERR_VI_FAILED_CHNOTDISABLE";
-case HI_ERR_VI_CFG_TIMEOUT: return "HI_ERR_VI_CFG_TIMEOUT";
-case HI_ERR_VI_NORM_UNMATCH : return "HI_ERR_VI_NORM_UNMATCH";
-case HI_ERR_VI_INVALID_WAYID: return "HI_ERR_VI_INVALID_WAYID";
-case HI_ERR_VI_INVALID_PHYCHNID: return "HI_ERR_VI_INVALID_PHYCHNID";
-case HI_ERR_VI_FAILED_NOTBIND: return "HI_ERR_VI_FAILED_NOTBIND";
-case HI_ERR_VI_FAILED_BINDED : return "HI_ERR_VI_FAILED_BINDED";
+    case HI_ERR_VI_FAILED_NOTENABLE:
+        return "HI_ERR_VI_FAILED_NOTENABLE";
+    case HI_ERR_VI_FAILED_NOTDISABLE:
+        return "HI_ERR_VI_FAILED_NOTDISABLE";
+    case HI_ERR_VI_FAILED_CHNOTDISABLE:
+        return "HI_ERR_VI_FAILED_CHNOTDISABLE";
+    case HI_ERR_VI_CFG_TIMEOUT:
+        return "HI_ERR_VI_CFG_TIMEOUT";
+    case HI_ERR_VI_NORM_UNMATCH:
+        return "HI_ERR_VI_NORM_UNMATCH";
+    case HI_ERR_VI_INVALID_WAYID:
+        return "HI_ERR_VI_INVALID_WAYID";
+    case HI_ERR_VI_INVALID_PHYCHNID:
+        return "HI_ERR_VI_INVALID_PHYCHNID";
+    case HI_ERR_VI_FAILED_NOTBIND:
+        return "HI_ERR_VI_FAILED_NOTBIND";
+    case HI_ERR_VI_FAILED_BINDED:
+        return "HI_ERR_VI_FAILED_BINDED";
 
-case HI_ERR_VI_PIPE_EXIST: return "HI_ERR_VI_PIPE_EXIST";
-case HI_ERR_VI_PIPE_UNEXIST: return "HI_ERR_VI_PIPE_UNEXIST";
+    case HI_ERR_VI_PIPE_EXIST:
+        return "HI_ERR_VI_PIPE_EXIST";
+    case HI_ERR_VI_PIPE_UNEXIST:
+        return "HI_ERR_VI_PIPE_UNEXIST";
     default:
-        break;                          
+        break;
     }
     memset(tmpdata, 0, sizeof(tmpdata));
-    sprintf(tmpdata, "Unknow:%#x",halerrno);
+    sprintf(tmpdata, "Unknow:%#x", halerrno);
     return tmpdata;
-}  
+}
+
+static const char *zpl_syshal_aio_strerror(zpl_uint32 halerrno)
+{
+    switch (halerrno)
+    {
+    /* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+    case HI_ERR_AIO_ILLEGAL_PARAM:
+        return "HI_ERR_AIO_ILLEGAL_PARAM";
+        break;
+    /* using a NULL point */
+    case HI_ERR_AIO_NULL_PTR:
+        return "HI_ERR_AIO_NULL_PTR";
+        break;
+    /* operation is not supported by NOW */
+    case HI_ERR_AIO_NOT_PERM:
+        return "HI_ERR_AIO_NOT_PERM";
+        break;
+    /* vqe  err */
+    case HI_ERR_AIO_REGISTER_ERR:
+        return "HI_ERR_AIO_REGISTER_ERR";
+        break;
+
+    /* invlalid device ID */
+    case HI_ERR_AI_INVALID_DEVID:
+        return "HI_ERR_AI_INVALID_DEVID";
+        break;
+    /* invlalid channel ID */
+    case HI_ERR_AI_INVALID_CHNID:
+        return "HI_ERR_AI_INVALID_CHNID";
+        break;
+    /* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+    case HI_ERR_AI_ILLEGAL_PARAM:
+        return "HI_ERR_AI_ILLEGAL_PARAM";
+        break;
+    /* using a NULL point */
+    case HI_ERR_AI_NULL_PTR:
+        return "HI_ERR_AI_NULL_PTR";
+        break;
+    /* try to enable or initialize system,device or channel, before configing attribute */
+    case HI_ERR_AI_NOT_CONFIG:
+        return "HI_ERR_AI_NOT_CONFIG";
+        break;
+    /* operation is not supported by NOW */
+    case HI_ERR_AI_NOT_SUPPORT:
+        return "HI_ERR_AI_NOT_SUPPORT";
+        break;
+    /* operation is not permitted ,eg, try to change stati attribute */
+    case HI_ERR_AI_NOT_PERM:
+        return "HI_ERR_AI_NOT_PERM";
+        break;
+    /* the devide is not enabled  */
+    case HI_ERR_AI_NOT_ENABLED:
+        return "HI_ERR_AI_NOT_ENABLED";
+        break;
+    /* failure caused by malloc memory */
+    case HI_ERR_AI_NOMEM:
+        return "HI_ERR_AI_NOMEM";
+        break;
+    /* failure caused by malloc buffer */
+    case HI_ERR_AI_NOBUF:
+        return "HI_ERR_AI_NOBUF";
+        break;
+    /* no data in buffer */
+    case HI_ERR_AI_BUF_EMPTY:
+        return "HI_ERR_AI_BUF_EMPTY";
+        break;
+    /* no buffer for new data */
+    case HI_ERR_AI_BUF_FULL:
+        return "HI_ERR_AI_BUF_FULL";
+        break;
+    /* system is not ready,had not initialed or loaded */
+    case HI_ERR_AI_SYS_NOTREADY:
+        return "HI_ERR_AI_SYS_NOTREADY";
+        break;
+
+    case HI_ERR_AI_BUSY:
+        return "HI_ERR_AI_BUSY";
+        break;
+    /* vqe  err */
+    case HI_ERR_AI_VQE_ERR:
+        return "HI_ERR_AI_VQE_ERR";
+        break;
+
+    /* invlalid device ID */
+    case HI_ERR_AO_INVALID_DEVID:
+        return "HI_ERR_AO_INVALID_DEVID";
+        break;
+    /* invlalid channel ID */
+    case HI_ERR_AO_INVALID_CHNID:
+        return "HI_ERR_AO_INVALID_CHNID";
+        break;
+    /* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+    case HI_ERR_AO_ILLEGAL_PARAM:
+        return "HI_ERR_AO_ILLEGAL_PARAM";
+        break;
+    /* using a NULL point */
+    case HI_ERR_AO_NULL_PTR:
+        return "HI_ERR_AO_NULL_PTR";
+        break;
+    /* try to enable or initialize system,device or channel, before configing attribute */
+    case HI_ERR_AO_NOT_CONFIG:
+        return "HI_ERR_AO_NOT_CONFIG";
+        break;
+    /* operation is not supported by NOW */
+    case HI_ERR_AO_NOT_SUPPORT:
+        return "HI_ERR_AO_NOT_SUPPORT";
+        break;
+    /* operation is not permitted ,eg, try to change stati attribute */
+    case HI_ERR_AO_NOT_PERM:
+        return "HI_ERR_AO_NOT_PERM";
+        break;
+    /* the devide is not enabled  */
+    case HI_ERR_AO_NOT_ENABLED:
+        return "HI_ERR_AO_NOT_ENABLED";
+        break;
+    /* failure caused by malloc memory */
+    case HI_ERR_AO_NOMEM:
+        return "HI_ERR_AO_NOMEM";
+        break;
+    /* failure caused by malloc buffer */
+    case HI_ERR_AO_NOBUF:
+        return "HI_ERR_AO_NOBUF";
+        break;
+    /* no data in buffer */
+    case HI_ERR_AO_BUF_EMPTY:
+        return "HI_ERR_AO_BUF_EMPTY";
+        break;
+    /* no buffer for new data */
+    case HI_ERR_AO_BUF_FULL:
+        return "HI_ERR_AO_BUF_FULL";
+        break;
+    /* system is not ready,had not initialed or loaded */
+    case HI_ERR_AO_SYS_NOTREADY:
+        return "HI_ERR_AO_SYS_NOTREADY";
+        break;
+
+    case HI_ERR_AO_BUSY:
+        return "HI_ERR_AO_BUSY";
+        break;
+    /* vqe err */
+    case HI_ERR_AO_VQE_ERR:
+        return "HI_ERR_AO_VQE_ERR";
+        break;
+    }
+    return "Unknow";
+}
+
+static const char *zpl_syshal_adec_strerror(zpl_uint32 halerrno)
+{
+    switch (halerrno)
+    {
+    /* invlalid device ID */
+    case HI_ERR_ADEC_INVALID_DEVID:
+        return "HI_ERR_ADEC_INVALID_DEVID";
+    /* invlalid channel ID */
+    case HI_ERR_ADEC_INVALID_CHNID:
+        return "HI_ERR_ADEC_INVALID_CHNID";
+    /* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+    case HI_ERR_ADEC_ILLEGAL_PARAM:
+        return "HI_ERR_ADEC_ILLEGAL_PARAM";
+    /* channel exists */
+    case HI_ERR_ADEC_EXIST:
+        return "HI_ERR_ADEC_EXIST";
+    /* channel unexists */
+    case HI_ERR_ADEC_UNEXIST:
+        return "HI_ERR_ADEC_UNEXIST";
+    /* using a NULL point */
+    case HI_ERR_ADEC_NULL_PTR:
+        return "HI_ERR_ADEC_NULL_PTR";
+    /* try to enable or initialize system,device or channel, before configing attribute */
+    case HI_ERR_ADEC_NOT_CONFIG:
+        return "HI_ERR_ADEC_NOT_CONFIG";
+    /* operation is not supported by NOW */
+    case HI_ERR_ADEC_NOT_SUPPORT:
+        return "HI_ERR_ADEC_NOT_SUPPORT";
+    /* operation is not permitted ,eg, try to change stati attribute */
+    case HI_ERR_ADEC_NOT_PERM:
+        return "HI_ERR_ADEC_NOT_PERM";
+    /* failure caused by malloc memory */
+    case HI_ERR_ADEC_NOMEM:
+        return "HI_ERR_ADEC_NOMEM";
+    /* failure caused by malloc buffer */
+    case HI_ERR_ADEC_NOBUF:
+        return "HI_ERR_ADEC_NOBUF";
+    /* no data in buffer */
+    case HI_ERR_ADEC_BUF_EMPTY:
+        return "HI_ERR_ADEC_BUF_EMPTY";
+    /* no buffer for new data */
+    case HI_ERR_ADEC_BUF_FULL:
+        return "HI_ERR_ADEC_BUF_FULL";
+    /* system is not ready,had not initialed or loaded */
+    case HI_ERR_ADEC_SYS_NOTREADY:
+        return "HI_ERR_ADEC_SYS_NOTREADY";
+    /* decoder internal err */
+    case HI_ERR_ADEC_DECODER_ERR:
+        return "HI_ERR_ADEC_DECODER_ERR";
+    /* input buffer not enough to decode one frame */
+    case HI_ERR_ADEC_BUF_LACK:
+        return "HI_ERR_ADEC_BUF_LACK";
+    }
+    return "Unknow";
+}
+///////////////////
+static const char *zpl_syshal_aenc_strerror(zpl_uint32 halerrno)
+{
+    switch (halerrno)
+    {
+    /* invlalid device ID */
+    case HI_ERR_AENC_INVALID_DEVID:
+        return "HI_ERR_AENC_INVALID_DEVID";
+    /* invlalid channel ID */
+    case HI_ERR_AENC_INVALID_CHNID:
+        return "HI_ERR_AENC_INVALID_CHNID";
+    /* at lease one parameter is illagal ,eg, an illegal enumeration value  */
+    case HI_ERR_AENC_ILLEGAL_PARAM:
+        return "HI_ERR_AENC_ILLEGAL_PARAM";
+    /* channel exists */
+    case HI_ERR_AENC_EXIST:
+        return "HI_ERR_AENC_EXIST";
+    /* channel unexists */
+    case HI_ERR_AENC_UNEXIST:
+        return "HI_ERR_AENC_UNEXIST";
+    /* using a NULL point */
+    case HI_ERR_AENC_NULL_PTR:
+        return "HI_ERR_AENC_NULL_PTR";
+    /* try to enable or initialize system,device or channel, before configing attribute */
+    case HI_ERR_AENC_NOT_CONFIG:
+        return "HI_ERR_AENC_NOT_CONFIG";
+    /* operation is not supported by NOW */
+    case HI_ERR_AENC_NOT_SUPPORT:
+        return "HI_ERR_AENC_NOT_SUPPORT";
+    /* operation is not permitted ,eg, try to change static attribute */
+    case HI_ERR_AENC_NOT_PERM:
+        return "HI_ERR_AENC_NOT_PERM";
+    /* failure caused by malloc memory */
+    case HI_ERR_AENC_NOMEM:
+        return "HI_ERR_AENC_NOMEM";
+    /* failure caused by malloc buffer */
+    case HI_ERR_AENC_NOBUF:
+        return "HI_ERR_AENC_NOBUF";
+    /* no data in buffer */
+    case HI_ERR_AENC_BUF_EMPTY:
+        return "HI_ERR_AENC_BUF_EMPTY";
+    /* no buffer for new data */
+    case HI_ERR_AENC_BUF_FULL:
+        return "HI_ERR_AENC_BUF_FULL";
+    /* system is not ready,had not initialed or loaded */
+    case HI_ERR_AENC_SYS_NOTREADY:
+        return "HI_ERR_AENC_SYS_NOTREADY";
+    /* encoder internal err */
+    case HI_ERR_AENC_ENCODER_ERR:
+        return "HI_ERR_AENC_ENCODER_ERR";
+    /* vqe internal err */
+    case HI_ERR_AENC_VQE_ERR:
+        return "HI_ERR_AENC_VQE_ERR";
+    }
+    return "Unknow";
+}
+
 const char *zpl_syshal_strerror(zpl_uint32 halerrno)
 {
     static char tmpdata[64];
@@ -143,10 +427,35 @@ const char *zpl_syshal_strerror(zpl_uint32 halerrno)
     default:
         break;                          
     }
+    //0xa018 8040
     if(HI_ID_VI == ((halerrno >> 16)&0xff) )
     {
         return zpl_syshal_vi_strerror(halerrno);
     }
+    else if(HI_ID_VO == ((halerrno >> 16)&0xff) )
+    {
+        //return zpl_syshal_vi_strerror(halerrno);
+    }
+    else if(HI_ID_AIO == ((halerrno >> 16)&0xff) )
+    {
+        return zpl_syshal_aio_strerror(halerrno);
+    }  
+    else if(HI_ID_AI == ((halerrno >> 16)&0xff) )
+    {
+        return zpl_syshal_aio_strerror(halerrno);
+    } 
+    else if(HI_ID_AO == ((halerrno >> 16)&0xff) )
+    {
+        return zpl_syshal_aio_strerror(halerrno);
+    }  
+    else if(HI_ID_AENC == ((halerrno >> 16)&0xff) )
+    {
+        return zpl_syshal_aenc_strerror(halerrno);
+    } 
+    else if(HI_ID_ADEC == ((halerrno >> 16)&0xff) )
+    {
+        return zpl_syshal_adec_strerror(halerrno);
+    }  
     memset(tmpdata, 0, sizeof(tmpdata));
     sprintf(tmpdata, "Unknow:%#x",halerrno);
     return tmpdata;

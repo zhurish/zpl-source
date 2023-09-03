@@ -91,7 +91,7 @@
 							//var t = d.toLocaleString();
 							//document.getElementById("localtime-text").innerHTML = t;
 
-							$.get("/goform/localtime", function (data, status) {
+							$.get("/action/localtime", function (data, status) {
 								document.getElementById("localtime-text").innerHTML = data;
 							});
 						}
@@ -109,7 +109,7 @@
 								document.getElementById("syncwebtime").disabled = false; 
 							}, 2000);
 
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "ERROR") {
@@ -174,7 +174,7 @@
 								$("#system_waiting").css("display", "block");
 								setTimeout(function () { $("#system_waiting").css("display", "none") }, 5000);
 							}
-							stxhr.post("/goform/system", argv,
+							stxhr.post("/action/system", argv,
 								function (x, json) {
 									console.log(x);
 									console.log("json:");
@@ -470,7 +470,7 @@
 							$("#sntp_waiting").css("display", "block");
 							setTimeout(function () { $("#sntp_waiting").css("display", "none") }, 5000);
 						}
-						stxhr.post("/goform/setsntp", argv,
+						stxhr.post("/action/setsntp", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);
@@ -674,7 +674,7 @@
 					function syslog_onaction(op) {
 						//使用form对象的submit()方法，实现提交。
 						//document.setsntp.submit(); 
-						////goform/setsyslog     
+						////action/setsyslog     
 						var argv;
 						var stxhr = new XHR();
 						if (op == "GET") {
@@ -695,7 +695,7 @@
 							$("#syslog_waiting").css("display", "block");
 							setTimeout(function () { $("#syslog_waiting").css("display", "none") }, 3000);
 						}
-						stxhr.post("/goform/setsyslog", argv,
+						stxhr.post("/action/setsyslog", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);

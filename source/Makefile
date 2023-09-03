@@ -135,87 +135,7 @@ endif
 	
 #	
 #
-ifneq ($(APP_BIN_DIR),)
-app_bin_install:
-	$(INSTALL) -d $(APP_BIN_DIR)
-	$(INSTALL) -m 755 debug/bin/*bin* $(APP_BIN_DIR)
-	$(INSTALL) -m 755 debug/sbin/* $(APP_BIN_DIR)
-else
-app_bin_install:
-	@$(ECHO) " install -m 755 bin "
-endif
 #
-ifneq ($(APP_ETC_DIR),)
-app_etc_install:
-	$(INSTALL) -d $(APP_ETC_DIR)
-	$(INSTALL) -m 755 debug/etc/* $(APP_ETC_DIR)
-else
-app_etc_install:
-	@$(ECHO) " install -m 755 etc "
-endif
-#
-ifneq ($(APP_WEB_DIR),)
-app_web_install:
-	$(INSTALL) -d $(APP_WEB_DIR)
-	$(INSTALL) -m 755 debug/etc/web/* $(APP_WEB_DIR)
-else
-app_web_install:
-	@$(ECHO) " install -m 755 etc/web "
-endif
-#
-ifneq ($(APP_WWW_DIR),)
-app_www_install:
-	$(INSTALL) -d $(APP_WWW_DIR)
-	$(INSTALL) -m 755 debug/www/* $(APP_WWW_DIR)
-else
-app_www_install:
-	@$(ECHO) " install -m 755 www "
-endif
-#
-ifneq ($(APP_LIB_DIR),)
-app_lib_install:
-	$(INSTALL) -d $(APP_LIB_DIR)
-	$(INSTALL) -m 755 debug/usr/lib/*so* $(APP_LIB_DIR)
-else
-app_lib_install:
-	@$(ECHO) " install -m 755 lib "
-endif
-#
-#
-#
-#
-ifeq ($(BUILD_OPENWRT),true)
-openwrt_install:
-	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-	cd make;./setup.sh $(TAGET)
-else
-openwrt_install:
-	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-endif
-#
-#
-config_install: openwrt_install 
-	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-	$(INSTALL) -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
-	$(INSTALL) -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
-	$(INSTALL) -m 755 startup/etc/openconfig ${ZPL_INSTALL_ETC_DIR}
-	$(INSTALL) -m 755 startup/etc/product ${ZPL_INSTALL_ETC_DIR}
-	$(INSTALL) -m 755 startup/etc/voipconfig ${ZPL_INSTALL_ETC_DIR}
-#	
-#	$(INSTALL) -d ${ZPL_BIN_DIR}
-#	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
-#	$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
-#	$(INSTALL) -d ${ZPL_INSTALL_ETC_DIR} 
-#	cd make;./setup.sh $(TAGET)
-#	$(INSTALL) -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
-#	$(INSTALL) -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
-	#$(INSTALL) -m 755 startup/etc/default-config.cfg ${ZPL_INSTALL_ETC_DIR}
-	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
-#
-#
-#
-app_all_install: app_bin_install app_etc_install app_web_install app_www_install app_lib_install  make_prepare kernel_module
-
 #
 #
 #
@@ -288,22 +208,9 @@ exlib_clean:
 	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@
 
 #install: obj
-install: config_install
-	${MAKE} -C  $(ZPLTOP_DIR)/make/ $@ 
+install: 
 	$(INSTALL) -d ${ZPL_BIN_DIR}
 	$(INSTALL) -m 755 ${TAGET} ${ZPL_BIN_DIR}
-#
-#	$(STRIP) $(ZPL_BIN_DIR)/$(TAGET) 
-	
-	#install -d ${ZPL_INSTALL_ULIB_DIR}
-	#$(CP) $(ULIBSOFILE) ${ZPL_INSTALL_ULIB_DIR}
-	
-	#install -d ${ZPL_INSTALL_ETC_DIR}
-	#cd make;./setup.sh $(TAGET)
-	#install -m 755 make/start-boot.sh ${ZPL_INSTALL_ETC_DIR}  	
-	#install -m 755 startup/etc/plat.conf ${ZPL_INSTALL_ETC_DIR}
-	#install -m 755 startup/etc/default-config.cfg ${ZPL_INSTALL_ETC_DIR}
-	#$(CP) $(TAGET) /home/zhurish/Downloads/tftpboot/
 	
 #all: install $(TAGET)
 all: 

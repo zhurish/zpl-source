@@ -45,7 +45,7 @@
 					<script type="text/javascript">
 						function boardcard_tbl() {
 							var utbl = "";
-							$.get("/goform/boardcard-tbl", function (data, status) {
+							$.get("/action/boardcard-tbl", function (data, status) {
 								var data_json = JSON.parse(data);
 								$.each(data_json, function (index, info) {
 									utbl += "<tr>\n";
@@ -109,7 +109,7 @@
 
 				argv = "ACTION=boardcard&BTNID=" + obj.id + "&ID=" + ID;
 
-				stxhr.post("/goform/button_onclick", argv,
+				stxhr.post("/action/button_onclick", argv,
 					function (x, json) {
 						console.log("x:");
 						console.log(x);

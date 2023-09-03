@@ -178,7 +178,7 @@
 				var stxhr = new XHR();
 				argv = "ACTION=GET";
 
-				stxhr.post("/goform/general", argv,
+				stxhr.post("/action/general", argv,
 					function (x, json) {
 						if (x.responseText != "" && json == null) {
 							if (x.responseText == "ERROR") {
@@ -235,7 +235,7 @@
 					
 				$("#general_waiting").css("display", "block");
 				setTimeout(function () { $("#general_waiting").css("display", "none") }, 5000);
-				stxhr.post("/goform/general", argv,
+				stxhr.post("/action/general", argv,
 					function (x) {
 						console.log(x);
 						if (x.responseText == "OK") {

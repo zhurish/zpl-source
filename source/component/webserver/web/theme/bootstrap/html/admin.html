@@ -147,7 +147,7 @@
 						}
 
 						{
-							///goform/changepasswod     
+							///action/changepasswod     
 							var argv;
 							var stxhr = new XHR();
 							//document.getElementById("username").value = name;
@@ -157,7 +157,7 @@
 							//document.getElementById("user_level").value = level;
 							$("#change_waiting").css("display", "block");
 							setTimeout(function(){$("#change_waiting").css("display", "none")},5000);
-							stxhr.post("/goform/changepasswod", argv,
+							stxhr.post("/action/changepasswod", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "OK") {
@@ -200,7 +200,7 @@
 
 						function username_tbl() {
 							var utbl = "";
-							$.get("/goform/username-tbl", function (data, status) {
+							$.get("/action/username-tbl", function (data, status) {
 								//console.log(data);
 								var data_json = JSON.parse(data);
 								$.each(data_json, function (index, info) {
@@ -321,7 +321,7 @@
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "ERROR") {
@@ -406,7 +406,7 @@
 								//document.getElementById("user_level").value = level;
 								$("#handle_waiting").css("display", "block");
 								setTimeout(function(){$("#handle_waiting").css("display", "none")}, 5000);
-								stxhr.post("/goform/adminuser", argv,
+								stxhr.post("/action/adminuser", argv,
 									function (x) {
 										console.log(x);
 										if (x.responseText == "OK") {

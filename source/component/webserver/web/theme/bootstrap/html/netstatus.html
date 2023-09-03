@@ -40,7 +40,7 @@
             //var stxhr = new XHR();
             function network_tbl() {
               var itbl = "";
-              $.get("/goform/network-tbl", function (data, status) {
+              $.get("/action/network-tbl", function (data, status) {
                 console.log(data);
                 var data_json = JSON.parse(data);
                 $.each(data_json, function (index, info) {

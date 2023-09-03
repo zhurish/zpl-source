@@ -48,7 +48,7 @@ typedef struct
 #define GROUP_INDEX(n)			((n)&0x7f)
 #define ID_INDEX(n)			V9_APP_BOARD_HW_ID((n))
 
-#define V9_USER_GROUP_FILE			SYSCONFDIR"/.usergroupdb"
+#define V9_USER_GROUP_FILE			SYSCONF_REAL_DIR"/.usergroupdb"
 
 
 typedef struct

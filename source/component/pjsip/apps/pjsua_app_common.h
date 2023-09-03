@@ -131,7 +131,7 @@ typedef struct pjapp_video_dev
 /* Enumeration of CLI frontends */
 typedef enum {
     CLI_FE_CONSOLE          = 1,
-    CLI_FE_TELNET           = 2
+    CLI_FE_TELNET           = 2,
 } CLI_FE;
 
 /** CLI config **/
@@ -142,8 +142,18 @@ typedef struct pjapp_cli_cfg_s
     pj_cli_cfg              cfg;
     pj_cli_telnet_cfg       telnet_cfg;
     pj_cli_console_cfg      console_cfg;
-    pj_cli_socket_cfg	    socket_cfg;
 } pjapp_cli_cfg_t;
+
+struct pjapp_sock_cfg
+{
+	int fd[2];
+	pj_uint8_t	ibuf[1024];
+	pj_uint32_t ilen;
+	pj_uint8_t	obuf[1024];
+	pj_uint32_t olen;
+	int (*cmd_hander)(struct pjapp_sock_cfg*, int, char*, int);
+};
+
 
 /* Pjsua application data */
 typedef struct pjsua_app_config_s
@@ -255,13 +265,16 @@ typedef struct pjsua_app_config_s
     pj_pool_t           *_g_pool;
     pj_bool_t            global_enable;
     pj_bool_t            app_running;
+    pj_bool_t            app_start;
     pj_bool_t            restart;
     pj_bool_t            media_quit;
     int					 call_cnt;
     pj_bool_t            incomeing;
-    int                  stdout_refresh;
-    pj_bool_t            stdout_refresh_quit;
-  
+    int                  cfg_refresh;
+    pj_bool_t            cfg_refresh_quit;
+
+    struct pjapp_sock_cfg   sock;
+
 } pjsua_app_config;
 
 #define PJAPP_GLOBAL_LOCK() if(_pjAppCfg._g_lock) pj_mutex_lock(_pjAppCfg._g_lock)

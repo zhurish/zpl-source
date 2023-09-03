@@ -18,14 +18,7 @@
 #define VERSION "0.7.7"
 
 /* #undef LOCALEDIR */
-/*
-#define DATADIR "/usr/share/libssh"
-#define LIBDIR "/usr/lib"
-#define PLUGINDIR "/usr/lib/libssh-4"
-#define SYSCONFDIR "/usr/etc"
-#define BINARYDIR "/home/zhurish/workspace/SWPlatform/component/ssh/libssh-0.7.7"
-#define SOURCEDIR "/home/zhurish/workspace/SWPlatform/component/ssh/libssh-0.7.7"
-*/
+
 
 
 #define MAX_PACKET_LEN 		4096*2

@@ -36,6 +36,13 @@ config ZPL_MBEDTLS_MODULE
 	help
 	Build Mbedtls Module.
 
+config ZPL_OPENSSH_MODULE
+	bool "OpenSSH Module"
+	default n
+	depends on ZPL_OPENSSL_MODULE
+	help
+	Build OpenSSH Module.
+
 config ZPL_FREETYPE_MODULE
 	bool "Freetype Module"
 	default n

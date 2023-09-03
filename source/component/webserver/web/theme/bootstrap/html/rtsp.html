@@ -44,7 +44,7 @@
 					<script type="text/javascript">
 						function allvideostream_get() {
 							var utbl = "";
-							$.get("/goform/allvideostream", function (data, status) {
+							$.get("/action/allvideostream", function (data, status) {
 								var data_json = JSON.parse(data);
 								console.log("allvideostream json:" + data);
 								$.each(data_json, function (index, info) {
@@ -208,7 +208,7 @@
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "ERROR") {
@@ -236,7 +236,7 @@
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "ERROR") {
@@ -387,7 +387,7 @@
 									
 								$("#handle_waiting").css("display", "block");
 								setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-								stxhr.post("/goform/addstream", argv,
+								stxhr.post("/action/addstream", argv,
 									function (x) {
 										console.log(x);
 										if (x.responseText == "OK") {

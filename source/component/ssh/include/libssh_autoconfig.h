@@ -18,14 +18,7 @@
 #define VERSION "0.9.5"
 
 /* #undef LOCALEDIR */
-/*
-#define DATADIR "/usr/share/libssh"
-#define LIBDIR "/usr/lib"
-#define PLUGINDIR "/usr/lib/libssh-4"
-#define SYSCONFDIR "/usr/etc"
-#define BINARYDIR "/home/zhurish/workspace/SWPlatform/component/ssh/libssh-0.7.7"
-#define SOURCEDIR "/home/zhurish/workspace/SWPlatform/component/ssh/libssh-0.7.7"
-*/
+
 
 
 #define MAX_PACKET_LEN 		4096*2
@@ -38,15 +31,15 @@
 #define SSH_BASE_EX
 #define SSH_BASE_DIR	BASE_DIR
 
-#define SYSCONFDIR "etc"
-#define BINARYDIR "/home/zhurish/workspace/working/SWPlatform/source/component/ssh/test/libssh-0.9.5/build"
-#define SOURCEDIR "/home/zhurish/workspace/working/SWPlatform/source/component/ssh/test/libssh-0.9.5"
+//#define SYSCONFDIR "etc"
+//#define BINARYDIR "/home/zhurish/workspace/working/SWPlatform/source/component/ssh/test/libssh-0.9.5/build"
+//#define SOURCEDIR "/home/zhurish/workspace/working/SWPlatform/source/component/ssh/test/libssh-0.9.5"
 
 /* Global bind configuration file path */
-#define GLOBAL_BIND_CONFIG "/etc/ssh/libssh_server_config"
+#define GLOBAL_BIND_CONFIG REAL_SYSCONFDIR"/ssh/libssh_server_config"
 
 /* Global client configuration file path */
-#define GLOBAL_CLIENT_CONFIG "/etc/ssh/ssh_config"
+#define GLOBAL_CLIENT_CONFIG REAL_SYSCONFDIR"/ssh/ssh_config"
 
 /************************** HEADER FILES *************************/
 

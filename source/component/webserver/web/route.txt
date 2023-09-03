@@ -20,116 +20,53 @@
 #       route uri=/action/logout methods=POST handler=action redirect=200@/login.html
 #       route uri=/ auth=form handler=continue redirect=401@/login.html
 #
-################==============================#########################
-#route uri=/old-alias/ redirect=/alias/atest.html handler=redirect
 
 #
 #   Basic and digest authentication required for these directories.
 #   Require the "manage" ability which only "joshua" has.
 #
-#route uri=/auth/basic/admin/  auth=basic abilities=manage
-#route uri=/auth/digest/admin/ auth=digest abilities=manage
-#route uri=/auth/basic/  auth=basic abilities=view
-#route uri=/auth/digest/ auth=digest abilities=view
-
+route uri=/auth/basic/admin/  auth=basic abilities=manage
+route uri=/auth/basic/  auth=basic abilities=view
+route uri=/auth/digest/ auth=digest abilities=view
+route uri=/auth/digest/admin/ auth=digest abilities=manage
 #
 #   Form-based authentication for content under /auth/form
 #   The login form is /auth/form/login.html. The page to display when logged-in is /auth/form/index.html
 #   Everything else under /auth/form is secured and requires the "manage" ability 
-#
-#route uri=/auth/form/login.html
+# 未登陆前可访问的资源
+route uri=/html/login.html
+route uri=/res/
+route uri=/css/
+route uri=/fonts/
+route uri=/js/
 
-#route uri=/action/login methods=POST handler=action redirect=200@/auth/form/index.html redirect=401@/auth/form/login.html
-#route uri=/action/logout methods=GET|POST handler=action redirect=200@/auth/form/login.html
-#route uri=/auth/form/ auth=form handler=continue abilities=manage redirect=401@/auth/form/login.html
+#登陆成功定向到bootstrap页面，不然返回登陆页面
+route uri=/action/login methods=POST handler=action redirect=200@/html/bootstrap.html redirect=401@/html/login.html
+#登陆退出后返回登陆页面
+route uri=/action/logout methods=GET|POST handler=action redirect=200@/html/login.html
+route uri=/html/ auth=form handler=continue redirect=401@/html/login.html
 
 #
 #   Support PUT and DELETE methods only for the BIT_GOAHEAD_PUT_DIR directory
 #
-#route uri=/tmp/ methods=PUT|DELETE
+route uri=/tmp/ methods=PUT|DELETE
 
 #
 #   Require TLS to access anything under /secure
-#
+# secure 目录下的使用TLS加密访问
 #route uri=/secure/ protocol=http redirect=https handler=redirect
-#
-route uri=/ protocol=http redirect=https handler=redirect
-#
-route uri=/action/logout methods=POST handler=action redirect=200@/html/login.html
-route uri=/action/login methods=POST handler=action redirect=200@/html/main.html redirect=401@/html/login.html
 
 #
 #   Standard routes
-#
-#
+# CGI 由 cgi 单元处理
 route uri=/cgi-bin handler=cgi
 route uri=/action handler=action
-route uri=/ extensions=jst,asp,html handler=jst
 route uri=/ methods=OPTIONS|TRACE handler=options
-route uri=/goform handler=action
+# 设置 jst,asp,html后缀的文件支持jst（内嵌javascript）
+route uri=/ extensions=jst,asp,html handler=jst
 
 #
 #   Catch-all route without authentication for all other URIs
-#
+# 其他的在没有认证下也可以访问
 route uri=/
 
-#############################################################################
-################==============================#########################
-#route uri=/old-alias/ redirect=/alias/atest.html handler=redirect
-
-#
-#   Basic and digest authentication required for these directories.
-#   Require the "manage" ability which only "joshua" has.
-#
-#route uri=/auth/basic/admin/  auth=basic abilities=manage
-#route uri=/auth/digest/admin/ auth=digest abilities=manage
-#route uri=/auth/basic/  auth=basic abilities=view
-#route uri=/auth/digest/ auth=digest abilities=view
-
-#
-#   Form-based authentication for content under /auth/form
-#   The login form is /auth/form/login.html. The page to display when logged-in is /auth/form/index.html
-#   Everything else under /auth/form is secured and requires the "manage" ability 
-#
-#route uri=/auth/form/login.html
-
-#route uri=/action/login methods=POST handler=action redirect=200@/auth/form/index.html redirect=401@/auth/form/login.html
-#route uri=/action/logout methods=GET|POST handler=action redirect=200@/auth/form/login.html
-#route uri=/auth/form/ auth=form handler=continue abilities=manage redirect=401@/auth/form/login.html
-
-#
-#   Support PUT and DELETE methods only for the BIT_GOAHEAD_PUT_DIR directory
-#
-#route uri=/tmp/ methods=PUT|DELETE
-
-#
-#   Require TLS to access anything under /secure
-#
-#route uri=/secure/ protocol=http redirect=https handler=redirect
-
-#
-#   Standard routes
-#
-#
-#route uri=/cgi-bin handler=cgi
-#route uri=/action handler=action
-#route uri=/ extensions=jst,asp,html handler=jst
-#route uri=/ methods=OPTIONS|TRACE handler=options
-#route uri=/goform handler=action
-
-#
-#   Catch-all route without authentication for all other URIs
-#
-#route uri=/
-################==============================#########################
-# http 从定向到 https
-#route uri=/ protocol=http redirect=*@https handler=redirect
-# 不需要认证可访问的页面目录
-#route uri=/auth/form/login.html
-# 登录成功跳转到index主页面，失败返回login页面
-#route uri=/action/login methods=POST handler=action redirect=200@/auth/form/index.html redirect=401@/auth/form/login.html
-# 退出登录跳转到login页面
-#route uri=/action/logout methods=GET|POST handler=action redirect=200@/auth/form/login.html
-# 基于表单认证的访问目录,检测没有认证时跳转到login页面
-#route uri=/auth/form/ auth=form handler=continue abilities=manage redirect=401@/auth/form/login.html
-#############################################################################

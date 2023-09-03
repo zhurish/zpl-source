@@ -95,6 +95,10 @@ int zpl_media_client_foreach(zpl_skbuffer_t *bufdata, void *p)
 		if(media_channel->media_type == ZPL_MEDIA_VIDEO)
 			zpl_media_channel_extradata_update(bufdata, media_channel);
 	}	
+	else
+	{
+		zm_msg_debug("------------zpl_media_client_foreach %d/%d\n", ZPL_MEDIA_CHANNEL_GET_C(media_header->ID), ZPL_MEDIA_CHANNEL_GET_I(media_header->ID));
+	}
 
 	if(client)
 	{

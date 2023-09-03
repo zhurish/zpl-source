@@ -20,7 +20,7 @@ lib:
 		$(CHMOD) +x $(OPENSSL_SRC_DIR)/config; \
 		cd $(OPENSSL_SRC_DIR); ./config shared --prefix=${INSTALL_DIR}/_install no-threads CC="gcc" CXX="g++" AR="ar" RANLIB="ranlib" ${OPENSSL_OS}; \
 	fi
-	$(MAKE) -C $(OPENSSL_SRC_DIR) all
+	$(MAKE) -C $(OPENSSL_SRC_DIR) build_sw
 #
 #
 libm: 
@@ -33,7 +33,8 @@ OLIBDIR=lib
 endif
 
 install: $(LIBS)
-	$(MAKE) -C $(OPENSSL_SRC_DIR) install
+	$(MAKE) -C $(OPENSSL_SRC_DIR) install_sw 
+	$(MAKE) -C $(OPENSSL_SRC_DIR) install_ssldirs
 	@install -d $(ZPL_INSTALL_ULIB_DIR)
 	@install -m 755 $(INSTALL_DIR)/_install/$(OLIBDIR)/libssl* $(ZPL_INSTALL_ULIB_DIR)
 	@install -m 755 $(INSTALL_DIR)/_install/$(OLIBDIR)/libcrypto* $(ZPL_INSTALL_ULIB_DIR)

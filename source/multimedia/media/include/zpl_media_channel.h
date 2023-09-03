@@ -27,8 +27,13 @@ typedef struct zpl_media_video_s
 typedef struct zpl_media_audio_s
 {
     zpl_bool                enable;
+    zpl_uint32			    framerate;		//帧率
+
+    zpl_uint32              clock_rate;     /**< Sampling rate.                 */
+    zpl_uint8               channel_cnt;
+    zpl_uint8               bits_per_sample; /*每帧的采样点个数  （1/framerate）* clock_rate */
     zpl_audio_codec_t	    codec;	    //视频编码参数
-    zpl_void                *halparam;          //通道绑定的硬件资源
+    zpl_void                *halparam;  //通道绑定的硬件资源
 }zpl_media_audio_t;
 
 typedef struct zpl_media_unit_s

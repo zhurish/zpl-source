@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-int zpl_stack_init(void);
+int zpl_stack_init(char *cfg);
 int zpl_stack_start(const char* progname, int localport);
 int startup_module_init(int console_enable);
 int startup_module_load(void);

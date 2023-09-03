@@ -150,7 +150,7 @@ static int pjsua_media_cli_write_config(pjsua_media_config *media_cfg, struct vt
 
 static int pjsua_sua_cli_write_config(pjsua_config *cfg, struct vty *vty, pj_bool_t detail, pj_bool_t bwrt)
 {
-    int i = 0;
+    int i = 0, flag = 0;
     //vty_out(vty, " ipsip sua call max %d%s", cfg->max_calls, VTY_NEWLINE);
     //vty_out(vty, " ipsip sua thread max %d%s", cfg->thread_cnt, VTY_NEWLINE);
     //vty_out(vty, " ipsip sua nameserver max %d%s", cfg->nameserver_count, VTY_NEWLINE);
@@ -188,14 +188,30 @@ static int pjsua_sua_cli_write_config(pjsua_config *cfg, struct vty *vty, pj_boo
     for (i = 0; i < PJSUA_ACC_MAX_PROXIES; i++)
     {
         if (cfg->cred_info[i].username.ptr)
+        {
+            flag = 1;
             vty_out(vty, " ipsip sua username %s", cfg->cred_info[i].username.ptr);
+        }
         if (cfg->cred_info[i].data.ptr && cfg->cred_info[i].data_type == 0)
+        {
+            flag = 1;
             vty_out(vty, " password %s",cfg->cred_info[i].data.ptr);
+        }
         if (cfg->cred_info[i].realm.ptr)
+        {
+            flag = 1;
             vty_out(vty, " realm %s", cfg->cred_info[i].realm.ptr);
+        }
         if (cfg->cred_info[i].scheme.ptr)
+        {
+            flag = 1;
             vty_out(vty, " scheme %s", cfg->cred_info[i].scheme.ptr);
-        vty_out(vty, "%s",  VTY_NEWLINE);    
+        }
+        if(flag)
+        {
+            vty_out(vty, "%s",  VTY_NEWLINE);    
+            flag = 0;
+        }
     }
     if (cfg->user_agent.ptr)
         vty_out(vty, " ipsip sua user-agent %s%s", cfg->user_agent.ptr, VTY_NEWLINE);
@@ -280,7 +296,7 @@ static int pjsua_transport_cli_write_config(pjsua_transport_config *cfg, char *h
 
 static int pjsua_account_cli_write_config(pjsua_acc_config *cfg, struct vty *vty, pj_bool_t detail, pj_bool_t bwrt)
 {
-    int i = 0;
+    int i = 0, flag = 0;
     pjapp_username_t *userdata = cfg->user_data;
     if (cfg && userdata)
     {
@@ -325,14 +341,30 @@ static int pjsua_account_cli_write_config(pjsua_acc_config *cfg, struct vty *vty
         for (i = 0; i < PJSUA_ACC_MAX_PROXIES; i++)
         {
             if (cfg->cred_info[i].username.ptr)
+            {
                 vty_out(vty, " ipsip account %s username %s", userdata->sip_phone, cfg->cred_info[i].username.ptr);
+                flag = 1;
+            }
             if (cfg->cred_info[i].data.ptr && cfg->cred_info[i].data_type == 0)
+            {
                 vty_out(vty, " password %s",cfg->cred_info[i].data.ptr);
+                flag = 1;
+            }
             if (cfg->cred_info[i].scheme.ptr)
+            {
                 vty_out(vty, "  scheme %s", cfg->cred_info[i].scheme.ptr);
+                flag = 1;
+            }
             if (cfg->cred_info[i].realm.ptr)
+            {
                 vty_out(vty, " realm %s", cfg->cred_info[i].realm.ptr);
-            vty_out(vty, "%s", VTY_NEWLINE);
+                flag = 1;
+            }
+            if(flag)
+            {
+                vty_out(vty, "%s", VTY_NEWLINE);
+                flag = 0;
+            }
         }
 
         if (cfg->rfc5626_instance_id.ptr)
@@ -399,13 +431,19 @@ static int pjsua_account_cli_write_config(pjsua_acc_config *cfg, struct vty *vty
                         if (cfg->turn_cfg.turn_auth_cred.data.static_cred.data_type == PJ_STUN_PASSWD_PLAIN &&
                             cfg->turn_cfg.turn_auth_cred.data.static_cred.data.ptr)
                         {
+                            flag = 1;
                             vty_out(vty, " password %s", cfg->turn_cfg.turn_auth_cred.data.static_cred.data.ptr);
                         }
                         if (cfg->turn_cfg.turn_auth_cred.data.static_cred.realm.ptr)
                         {
+                            flag = 1;
                             vty_out(vty, " realm %s", cfg->turn_cfg.turn_auth_cred.data.static_cred.realm.ptr);
                         }
-                        vty_out(vty, "%s", VTY_NEWLINE);
+                        if(flag)
+                        {
+                            vty_out(vty, "%s", VTY_NEWLINE);
+                            flag = 0;
+                        }
                     }
 /*
                         if (cfg->turn_cfg.turn_auth_cred.data.static_cred.data_type == PJ_STUN_PASSWD_HASHED &&

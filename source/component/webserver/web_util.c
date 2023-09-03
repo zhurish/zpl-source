@@ -401,7 +401,7 @@ int webs_username_password_update(void *pwp, char *username, char *password)
 	web_app_auth_save_api();
 #endif
 
-#if !ME_GOAHEAD_AUTO_LOGIN
+#if (ME_GOAHEAD_AUTO_LOGIN==0)
 	if(vty_user_create(NULL, username, password, zpl_false , zpl_true ) != CMD_SUCCESS)
 	{
 		if(WEB_IS_DEBUG(EVENT))

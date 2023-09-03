@@ -65,7 +65,7 @@
 						<script type="text/javascript">
 							function sip_reg_state() {
 								var utbl = "";
-								$.get("/goform/sipstate", function (data, status) {
+								$.get("/action/sipstate", function (data, status) {
 									console.log("data:" + data);
 									var data_json = JSON.parse(data);
 									$.each(data_json, function (index, info) {
@@ -119,7 +119,7 @@
 							var stxhr = new XHR();
 							var argv = "ACTION=volume&BTNID=" + input.id + "&volume=" + self.value;
 							//console.log("aaaID:" + input.id + " VAL=" + input.value);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x, json) {
 									//console.log("json:" + json);
 									//console.log(x);
@@ -144,7 +144,7 @@
 
 						$("#state_waiting").css("display", "block");
 						setTimeout(function () { $("#state_waiting").css("display", "none") }, 5000);
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x, json) {
 								//console.log("json:" + json);
 								//console.log(x);
@@ -196,7 +196,7 @@
 								<script type="text/javascript">
 									function interface_tbl() {
 										var itbl = "";
-										$.get("/goform/interface-tbl", function (data, status) {
+										$.get("/action/interface-tbl", function (data, status) {
 											console.log("==============");
 											console.log(data);
 											var data_json = JSON.parse(data);
@@ -1074,7 +1074,7 @@
 						var argv;
 						var stxhr = new XHR();
 						argv = "ACTION=GET";
-						stxhr.post("/goform/setsip", argv,
+						stxhr.post("/action/setsip", argv,
 							function (x, json) {
 								//console.log(x);
 								//console.log(json);
@@ -1181,7 +1181,7 @@
 						$("#handle_waiting").css("display", "block");
 						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
 						
-						stxhr.post("/goform/setsip", argv,
+						stxhr.post("/action/setsip", argv,
 							function (x, json) {
 								//console.log(x);
 								//console.log(json);

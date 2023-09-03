@@ -2,7 +2,7 @@
 /*
 function load_main_page(url, id) {
 	if(url == "logout" || url == "action/logout" || 
-		url == "form/logout" || url == "goform/logout"){
+		url == "form/logout" || url == "action/logout"){
 		return false;
 	}
 	//把 url文件中 id="maincontent" 的元素的内容，加载到指定的 id="main_content" 元素中
@@ -18,7 +18,7 @@ function load_main_page(url, id) {
 */
 function load_main_page(url, id) {
 	if(url == "logout" || url == "action/logout" || 
-		url == "form/logout" || url == "goform/logout"){
+		url == "form/logout" || url == "action/logout"){
 		return false;
 	}
 	var aa = url + ".html" + id;

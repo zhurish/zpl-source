@@ -65,7 +65,7 @@
                             $("#handle_waiting").css("display", "block");
                             //document.getElementById("card_refresh").disabled = true;
 
-                            stxhr.post("/goform/card", argv,
+                            stxhr.post("/action/card", argv,
                                 function (x, json) {
                                     console.log(x);
                                     console.log(json);

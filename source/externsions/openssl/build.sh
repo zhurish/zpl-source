@@ -5,6 +5,8 @@ INSTALL_DIR=$4
 COMPILER=$3
 OS_PLAT=$2
 
+tar -xf openssl-3.1.0-alpha1.tar.gz
+
 FILEDIR=openssl-3.1.0-alpha1
 
 #CC=/opt/toolchain/toolchain-mipsel_24kc_gcc-7.3.0_glibc/bin/mipsel-openwrt-linux-gnu-gcc ./config enable-shared --prefix=/home/zhurish/workspace/SWPlatform/externsions/openssl/mipsl

@@ -17,25 +17,33 @@ extern "C" {
 
 
 
-extern int zpl_audhal_audio_input_create(zpl_audio_input_t *audio);
-extern int zpl_audhal_audio_input_destroy(zpl_audio_input_t *audio);
 extern int zpl_audhal_audio_input_start(zpl_audio_input_t *audio);
 extern int zpl_audhal_audio_input_stop(zpl_audio_input_t *audio);
 extern int zpl_audhal_audio_input_update_fd(zpl_audio_input_t *audio);
-extern int zpl_audhal_audio_input_frame_recvfrom(void *media_channel, zpl_audio_input_t *audio);
-extern int zpl_audhal_audio_encode_frame_recvfrom(void *media_channel, zpl_audio_input_t *audio);
-extern int zpl_audhal_audio_encode_frame_sendto(void *media_channel, zpl_audio_input_t *audio, void *p);/*向编码单元发送数据*/
+extern int zpl_audhal_audio_get_input_frame(void *media_channel, zpl_audio_input_t *audio, zpl_audio_frame_t *frame);
 
-extern int zpl_audhal_audio_output_create(zpl_audio_output_t *audio);
-extern int zpl_audhal_audio_output_destroy(zpl_audio_output_t *audio);
+
+extern int zpl_audhal_audio_encode_start(zpl_audio_encode_decode_t *audio);
+extern int zpl_audhal_audio_encode_stop(zpl_audio_encode_decode_t *audio);
+extern int zpl_audhal_audio_encode_update_fd(zpl_audio_encode_decode_t *audio);
+extern int zpl_audhal_audio_get_encode_frame(void *media_channel, zpl_audio_encode_decode_t *audio, zpl_audio_frame_t *);
+extern int zpl_audhal_audio_encode_frame_sendto(void *media_channel, zpl_audio_encode_decode_t *audio, zpl_audio_frame_t *frame);/*向编码单元发送数据*/
+
+
 extern int zpl_audhal_audio_output_start(zpl_audio_output_t *audio);
 extern int zpl_audhal_audio_output_stop(zpl_audio_output_t *audio);
-extern int zpl_audhal_audio_decode_finsh(zpl_audio_output_t *audio);
+extern int zpl_audhal_audio_output_frame_sendto(void *media_channel, zpl_audio_output_t *audio, zpl_audio_frame_t *frame);
+
+
+extern int zpl_audhal_audio_decode_start(zpl_audio_encode_decode_t *audio);
+extern int zpl_audhal_audio_decode_stop(zpl_audio_encode_decode_t *audio);
+extern int zpl_audhal_audio_decode_finsh(zpl_audio_encode_decode_t *audio);
+extern int zpl_audhal_audio_decode_frame_sendto(void *media_channel, zpl_audio_encode_decode_t *audio, zpl_audio_frame_t *frame);/*向解码单元发送数据*/
+extern int zpl_audhal_audio_get_decode_frame(void *media_channel, zpl_audio_encode_decode_t *audio, zpl_audio_frame_t *frame);/*向解码单元读取数据*/
+
+
 extern int zpl_audhal_audio_frame_forward_hander(zpl_audio_input_t *audio, char *p, char *p2, int ti);
-extern int zpl_audhal_audio_output_frame_sendto(void *media_channel, zpl_audio_output_t *audio, void *p);
-extern int zpl_audhal_audio_decode_frame_sendto(void *media_channel, zpl_audio_output_t *audio, void *p);/*向解码单元发送数据*/
-extern int zpl_audhal_audio_decode_frame_recv(void *media_channel, zpl_audio_output_t *audio, void *p);/*向解码单元读取数据*/
-extern int zpl_audhal_audio_output_volume(zpl_media_audio_channel_t *audio, int val);
+
 
 extern int zpl_audhal_audio_codec_clock_rate(zpl_media_audio_channel_t *, int enSample);
 extern int zpl_audhal_audio_codec_input_volume(zpl_media_audio_channel_t *, int val);

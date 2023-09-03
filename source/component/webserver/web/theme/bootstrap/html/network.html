@@ -46,7 +46,7 @@
 						//var stxhr = new XHR();
 						function network_tbl() {
 							var itbl = "";
-							$.get("/goform/network-tbl", function (data, status) {
+							$.get("/action/network-tbl", function (data, status) {
 								//console.log(data);
 								var data_json = JSON.parse(data);
 								$.each(data_json, function (index, info) {
@@ -321,7 +321,7 @@
 
 							if (imgsrc.search("up") > 0) {
 								/* var jsondata = { "ACTION":"network",  "BTNID":obj.id, "ifname":ifpname, "state":"up"};
-								xhr_simple_submit("/goform/button_onclick", jsondata, $("#connect_waiting"), $("#connect_error"),
+								xhr_simple_submit("/action/button_onclick", jsondata, $("#connect_waiting"), $("#connect_error"),
 									function(x, json) {
 											console.log(x);
 											obj.src = imgsrc.replace("up", "down");
@@ -338,7 +338,7 @@
 								//argv = { "ACTION":"network",  "BTNID":obj.id, "ifname":ifpname, "state":"up"};
 								$("#connect_waiting").css("display", "block");
 								setTimeout(function () { $("#connect_waiting").css("display", "none") }, 5000);
-								stxhr.post("/goform/button_onclick", argv,
+								stxhr.post("/action/button_onclick", argv,
 									function (x, json) {
 										console.log("json:" + json);
 										console.log(x);
@@ -375,7 +375,7 @@
 
 								$("#connect_waiting").css("display", "block");
 								setTimeout(function () { $("#connect_waiting").css("display", "none") }, 5000);
-								stxhr.post("/goform/button_onclick", argv,
+								stxhr.post("/action/button_onclick", argv,
 									function (x) {
 										console.log(x);
 										if (x.responseText == "ERROR") {
@@ -547,7 +547,7 @@
 
 								$("#network_waiting").css("display", "block");
 								setTimeout(function () { $("#network_waiting").css("display", "none") }, 5000);
-								stxhr.post("/goform/networkset", argv,
+								stxhr.post("/action/networkset", argv,
 									function (x, json) {
 										console.log(x);
 										console.log(x, json);

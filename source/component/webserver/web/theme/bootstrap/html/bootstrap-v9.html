@@ -36,17 +36,17 @@
         <nav class="navbar">
             <div class="container-fluid">
                 <div class="navbar-header" style="margin-left:25px">
-                    <h class="navbar-brand">TSLSmart (login: <%jst_username();%>)</h>
+                    <h class="navbar-brand">TSLSmart (login: <% jst_username(); %>)</h>
                 </div>
                 <div style="text-align:center;margin-left: 45%;">
-                    <h class="navbar-brand" style="font-weight:bold;"><%jst_web_header();%></h>
+                    <h class="navbar-brand" style="font-weight:bold;"><% jst_web_header(); %></h>
                 </div>
             </div>
         </nav>
     </header>
     <script type="text/javascript">
     function web_define() {
-        $.get("/goform/web-define", function (data, status) {
+        $.get("/action/web-define", function (data, status) {
         console.log(data);
         var data_json = JSON.parse(data);
         $.each(data_json, function (index, info) {	

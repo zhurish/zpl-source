@@ -406,7 +406,7 @@ function check_cookie(cname) {
 function view_progress_load(self, act, id, func) {
 	var stxhr = new XHR();
 	var argv = "VIEW=" + act + "&ID=" + id;
-	stxhr.post("/goform/progress_view", argv,
+	stxhr.post("/action/progress_view", argv,
 		function (x, json) {
 			if (x.responseText != "" && json != null) {
 				if (json.response == "OK") {
@@ -422,7 +422,7 @@ function view_progress_start(self, act, id, func, timeout) {
 	setInterval(function () {
 		var stxhr = new XHR();
 		var argv = "VIEW=" + act + "&ID=" + id;
-		stxhr.post("/goform/progress_view", argv,
+		stxhr.post("/action/progress_view", argv,
 			function (x, json) {
 				if (x.responseText != "" && json != null) {
 					if (json.response == "OK") {

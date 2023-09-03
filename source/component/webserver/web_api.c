@@ -331,7 +331,6 @@ int web_app_auth_save_api(void)
 	return web_auth_save(WEBGUI_AUTH);
 }
 
-
 int web_app_username_add_api(const char *username, const char *password, const char *roles)
 {
 	//webserver encryption username root password admintsl123456! cipher md5 realm goahead.com

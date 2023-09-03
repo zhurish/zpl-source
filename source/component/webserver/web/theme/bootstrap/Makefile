@@ -62,18 +62,7 @@ web_fonts_install:
 #
 #				
 #
-ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
-web_app_html_install:
-	@install -d $(ZPL_INSTALL_WWW_DIR)/html
-	@$(CP) ./html/switch.html $(ZPL_INSTALL_WWW_DIR)/html/switch.html
-	@$(CP) ./html/factory.html $(ZPL_INSTALL_WWW_DIR)/html/factory.html
-	@$(CP) ./html/sip.html $(ZPL_INSTALL_WWW_DIR)/html/sip.html	
-	@$(CP) ./html/wireless.html $(ZPL_INSTALL_WWW_DIR)/html/wireless.html
-	@$(CP) ./html/card.html $(ZPL_INSTALL_WWW_DIR)/html/card.html
-	@$(CP) ./html/bootstrap-x5.html $(ZPL_INSTALL_WWW_DIR)/html/bootstrap.html
-endif
 
-ifeq ($(strip $(ZPL_APP_V9_MODULE)),true)
 web_app_html_install:
 	@install -d $(ZPL_INSTALL_WWW_DIR)/html
 	@$(CP) ./html/bootstrap-v9.html $(ZPL_INSTALL_WWW_DIR)/html/bootstrap.html
@@ -82,28 +71,24 @@ web_app_html_install:
 	@$(CP) ./html/rtsp.html $(ZPL_INSTALL_WWW_DIR)/html/rtsp.html	
 	@$(CP) ./html/algorithm.html $(ZPL_INSTALL_WWW_DIR)/html/algorithm.html	
 	@$(CP) ./html/facelib.html $(ZPL_INSTALL_WWW_DIR)/html/facelib.html	
-	#$(CP) ./html/upload.html $(ZPL_INSTALL_WWW_DIR)/html/upload.html						
-endif
+	@$(CP) ./html/upload.html $(ZPL_INSTALL_WWW_DIR)/html/upload.html						
+
 #
 web_html_install:
 	@install -d $(ZPL_INSTALL_WWW_DIR)/html
-
 	@$(CP) ./html/systemview.html $(ZPL_INSTALL_WWW_DIR)/html/systemview.html
 	@$(CP) ./html/system.html $(ZPL_INSTALL_WWW_DIR)/html/system.html	
 	@$(CP) ./html/about.html $(ZPL_INSTALL_WWW_DIR)/html/about.html
-	#$(CP) ./html/admin.html $(ZPL_INSTALL_WWW_DIR)/html/admin.html
-	#$(CP) ./html/dhcp.html $(ZPL_INSTALL_WWW_DIR)/html/dhcp.html		
-	#$(CP) ./html/dns.html $(ZPL_INSTALL_WWW_DIR)/html/dns.html
+	@$(CP) ./html/admin.html $(ZPL_INSTALL_WWW_DIR)/html/admin.html
+	@$(CP) ./html/dhcp.html $(ZPL_INSTALL_WWW_DIR)/html/dhcp.html		
+	@$(CP) ./html/dns.html $(ZPL_INSTALL_WWW_DIR)/html/dns.html
 	@$(CP) ./html/filesystem.html $(ZPL_INSTALL_WWW_DIR)/html/filesystem.html
-	#$(CP) ./html/firewall.html $(ZPL_INSTALL_WWW_DIR)/html/firewall.html	
-	#$(CP) ./html/nat.html $(ZPL_INSTALL_WWW_DIR)/html/nat.html		
-	#$(CP) ./html/netstatus.html $(ZPL_INSTALL_WWW_DIR)/html/netstatus.html
+	@$(CP) ./html/nat.html $(ZPL_INSTALL_WWW_DIR)/html/nat.html		
+	@$(CP) ./html/netstatus.html $(ZPL_INSTALL_WWW_DIR)/html/netstatus.html
 	@$(CP) ./html/network.html $(ZPL_INSTALL_WWW_DIR)/html/network.html
-	#$(CP) ./html/route.html $(ZPL_INSTALL_WWW_DIR)/html/route.html
-	#$(CP) ./html/status.html $(ZPL_INSTALL_WWW_DIR)/html/status.html		
-	#$(CP) ./html/switch.html $(ZPL_INSTALL_WWW_DIR)/html/switch.html
+	@$(CP) ./html/route.html $(ZPL_INSTALL_WWW_DIR)/html/route.html	
+	@$(CP) ./html/switch.html $(ZPL_INSTALL_WWW_DIR)/html/switch.html
 	@$(CP) ./html/syslog.html $(ZPL_INSTALL_WWW_DIR)/html/syslog.html
-			
 	@$(CP) ./html/login.html $(ZPL_INSTALL_WWW_DIR)/html/login.html
 	@$(CP) ./html/reboot.html $(ZPL_INSTALL_WWW_DIR)/html/reboot.html
 

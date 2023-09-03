@@ -47,7 +47,7 @@
 							function port_map_tbl() {
 								var utbl = "";
 
-								$.get("/goform/port-map", function (data, status) {
+								$.get("/action/port-map", function (data, status) {
 									var data_json = JSON.parse(data);
 									console.log("json:" + data);
 									$.each(data_json, function (index, info) {
@@ -170,7 +170,7 @@
 									<script type="text/javascript">
 										function interface_tbl(obj) {
 											var itbl = "";
-											$.get("/goform/interface-tbl", function (data, status) {
+											$.get("/action/interface-tbl", function (data, status) {
 												console.log("==============");
 												console.log(data);
 												var data_json = JSON.parse(data);
@@ -304,7 +304,7 @@
 
 						$("#handle_winting").css("display", "block");
 						setTimeout(function () { $("#handle_winting").css("display", "none") }, 5000);
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x, json) {
 								console.log("json:" + json);
 								console.log(x);
@@ -355,7 +355,7 @@
 							function portfilter_rules_tbl() {
 								var utbl = "";
 
-								$.get("/goform/port-filter", function (data, status) {
+								$.get("/action/port-filter", function (data, status) {
 									var data_json = JSON.parse(data);
 									console.log("json:" + data);
 									$.each(data_json, function (index, info) {
@@ -483,7 +483,7 @@
 
 						$("#portfilter_waiting").css("display", "block");
 						setTimeout(function () { $("#portfilter_waiting").css("display", "none") }, 5000);
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x, json) {
 								console.log("json:" + json);
 								console.log(x);

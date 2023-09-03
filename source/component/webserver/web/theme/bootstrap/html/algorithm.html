@@ -570,7 +570,7 @@
 				argv += "&ID=" + id +
 					"&ch=" + ch;
 					
-				stxhr.post("/goform/detecting", argv,
+				stxhr.post("/action/detecting", argv,
 					function (x, json) {
 						if (x.responseText != "" && json == null) {
 							if (x.responseText == "ERROR") {
@@ -603,7 +603,7 @@
 				argv += "&ID=" + id;
 				// +
 				//	"&ch" + get_select_option_value(document.getElementById("identify_channel"));
-				stxhr.post("/goform/identify", argv,
+				stxhr.post("/action/identify", argv,
 					function (x, json) {
 						if (x.responseText != "" && json == null) {
 							if (x.responseText == "ERROR") {
@@ -633,7 +633,7 @@
 				//	"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
 				argv += "&ID=" + id +
 					"&ch=" + ch;	
-				stxhr.post("/goform/helmet", argv,
+				stxhr.post("/action/helmet", argv,
 					function (x, json) {
 						if (x.responseText != "" && json == null) {
 							if (x.responseText == "ERROR") {
@@ -685,7 +685,7 @@
 
 				$("#detecting_waiting").css("display", "block");
 				setTimeout(function () { $("#detecting_waiting").css("display", "none") }, 5000);
-				stxhr.post("/goform/detecting", argv,
+				stxhr.post("/action/detecting", argv,
 					function (x) {
 						console.log(x);
 						if (x.responseText == "OK") {
@@ -738,7 +738,7 @@
 
 				$("#identify_waiting").css("display", "block");
 				setTimeout(function () { $("#identify_waiting").css("display", "none") }, 5000);
-				stxhr.post("/goform/identify", argv,
+				stxhr.post("/action/identify", argv,
 					function (x) {
 						console.log(x);
 						if (x.responseText == "OK") {
@@ -800,7 +800,7 @@
 
 				$("#helmet_waiting").css("display", "block");
 				setTimeout(function () { $("#helmet_waiting").css("display", "none") }, 5000);
-				stxhr.post("/goform/helmet", argv,
+				stxhr.post("/action/helmet", argv,
 					function (x) {
 						console.log(x);
 						if (x.responseText == "OK") {

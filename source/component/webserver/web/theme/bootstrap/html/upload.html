@@ -156,7 +156,7 @@
 							$("#ftp_waiting").css("display", "block");
 							setTimeout(function () { $("#ftp_waiting").css("display", "none") }, 5000);
 						}
-						stxhr.post("/goform/setsntp", argv,
+						stxhr.post("/action/setsntp", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);

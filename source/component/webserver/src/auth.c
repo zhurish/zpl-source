@@ -30,7 +30,9 @@
 #if ME_COMPILER_HAS_PAM
     #include <security/pam_appl.h>
 #endif
-
+#if ME_GOAHEAD_JAVASCRIPT
+#define FUTURE 0
+#endif
 /*********************************** Locals ***********************************/
 
 static WebsHash users = -1;
@@ -39,6 +41,11 @@ static char *masterSecret = NULL;
 static int autoLogin = ME_GOAHEAD_AUTO_LOGIN;
 static WebsVerify verifyPassword = websVerifyPasswordFromFile;
 static int webs_login_num = 0;
+//static bool pmatch(cchar *s1, cchar *s2);
+
+#ifndef ME_GOAHEAD_NONCE_DURATION
+    #define ME_GOAHEAD_NONCE_DURATION 60
+#endif
 
 #if ME_COMPILER_HAS_PAM
 typedef struct {
@@ -1029,7 +1036,7 @@ static bool parseDigestDetails(Webs *wp)
         web_trace(WEBS_WARN, "Access denied: Bad qop");
         wfree(decoded);
         return 0;
-    } else if ((when + (5 * 60)) < time(0)) {
+    } else if ((when + ME_GOAHEAD_NONCE_DURATION) < time(0)) {
         web_trace(WEBS_WARN, "Access denied: Nonce is stale");
         wfree(decoded);
         return 0;

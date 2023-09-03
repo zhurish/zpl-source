@@ -33,11 +33,6 @@ Hello, this is " OEM_PACKAGE_BASE " (version " OEM_VERSION ").\r\n\
 
 int host_sysconfig_sync(void)
 {
-#ifdef ZPL_BUILD_OS_OPENWRT
-#else
-	//cp -arf /app/etc/* /tmp/app/etc/
-	//super_system("cp -a "SYSCONFDIR"/default-config.cfg " SYSCONF_REAL_DIR"/default-config.cfg");
-#endif
 	return OK;
 }
 

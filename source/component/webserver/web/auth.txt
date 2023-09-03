@@ -17,4 +17,5 @@
 #
 
 role name=manager abilities=create,view,edit,delete
-user name=root password=74b34c254bc0d7a47cfd426931aaf2f9 roles=manager
+# admin，123456
+user name=admin password=5e0bf2a815384f2b985289ad0da30b43 roles=manager

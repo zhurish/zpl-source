@@ -35,7 +35,7 @@
 #define FIXED_1      (1 << FSHIFT)     /* 1.0 as fixed-point */
 #define LOAD_INT(x)  (unsigned)((x) >> FSHIFT)
 #define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1 - 1)) * 100)
-#if 0
+
 static int jst_hostname(int eid, webs_t wp, int argc, char **argv)
 {
     websWrite(wp, "%s", host_name_get());
@@ -44,26 +44,8 @@ static int jst_hostname(int eid, webs_t wp, int argc, char **argv)
 
 static int jst_web_header(int eid, webs_t wp, int argc, char **argv)
 {
-#ifdef APP_X5BA_MODULE
-	if(access("/etc/main_version", F_OK) == 0)
-	{
-		char tmp[128];
-		memset(tmp, 0, sizeof(tmp));
-		os_read_file("/etc/main_version", tmp, sizeof(tmp));
-		if(strlen(tmp))
-		{
-			//char *brk = strstr(tmp, "-V");
-			websWrite(wp, "%s", tmp);
-			return 0;
-		}
-	}
-	websWrite(wp, "%s", "TSLSmart-X5CM");
-    //websWrite(wp, "%s", "TSLSmart-X5CM-V1.1.2.3");
-#endif
-#ifdef APP_X5BA_MODULE
 	websWrite(wp, "%s", "TSLSmart-V9");
     //websWrite(wp, "%s", "TSLSmart-X5CM-V1.1.2.3");
-#endif
     return 0;
 }
 
@@ -107,14 +89,14 @@ static int jst_serial_number(int eid, webs_t wp, int argc, char **argv)
     websWrite(wp, "%s", serial);
     return 0;
 }
-#endif
-/*
+
+
 static int jst_localtime(int eid, webs_t wp, int argc, char **argv)
 {
 	websWrite(wp, "%s", os_time_fmt ("date", os_time(NULL)));
     return 0;
 }
-*/
+
 static char *_web_uptime(char *tmp)
 {
 	zpl_uint32 updays = 0, uphours = 0, upminutes = 0;
@@ -132,7 +114,7 @@ static char *_web_uptime(char *tmp)
 		sprintf(tmp + strlen(tmp), "%u min", upminutes);
 	return tmp;
 }
-/*
+
 static int jst_uptime(int eid, webs_t wp, int argc, char **argv)
 {
 	char tmp[128];
@@ -140,7 +122,7 @@ static int jst_uptime(int eid, webs_t wp, int argc, char **argv)
 	websWrite(wp, "%s", _web_uptime(tmp));
 	return 0;
 }
-*/
+
 static char *_web_cpu_load(char *tmp)
 {
 	struct sysinfo info;
@@ -151,7 +133,7 @@ static char *_web_cpu_load(char *tmp)
 			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]));
 	return tmp;
 }
-/*
+
 static int jst_cpu_load(int eid, webs_t wp, int argc, char **argv)
 {
 	char tmp[128];
@@ -159,157 +141,17 @@ static int jst_cpu_load(int eid, webs_t wp, int argc, char **argv)
 	websWrite(wp, "%s", _web_cpu_load(tmp));
 	return 0;
 }
-*/
+
 #undef FSHIFT
 #undef FIXED_1
 #undef LOAD_INT
 #undef LOAD_FRAC
 
-#ifdef THEME_V9UI
 
-static int web_firmware_version_get(char *argv, char *ver)
-{
-#ifdef ZPL_APP_MODULE
-	if(strstr(argv, "VO"))
-	{
-		if(access("/etc/main_version", F_OK) == 0)
-		{
-			char tmp[128];
-			memset(tmp, 0, sizeof(tmp));
-			os_read_file("/etc/main_version", tmp, sizeof(tmp));
-			if(strlen(tmp))
-			{
-				strcpy(ver, tmp);
-				return 0;
-			}
-		}
-		strcpy(ver, "V0.0.0.1");
-	}
-#ifdef APP_X5BA_MODULE
-	else if(strstr(argv, "IO"))
-	{
-		if(x5b_app_mgt && strlen(x5b_app_mgt->app_a.ioversion))
-		{
-			strcpy(ver, x5b_app_mgt->app_a.ioversion);
-			return 0;
-		}
-		strcpy(ver, " ");
-	}
-	else if(strstr(argv, "CO"))
-	{
-		if(x5b_app_mgt && strlen(x5b_app_mgt->app_a.version))
-		{
-			strcpy(ver, x5b_app_mgt->app_a.version);
-			return 0;
-		}
-		strcpy(ver, " ");
-	}
-	else if(strstr(argv, "ZO"))
-	{
-		if(x5b_app_mgt && strlen(x5b_app_mgt->app_c.version))
-		{
-			strcpy(ver, x5b_app_mgt->app_c.version);
-			return 0;
-		}
-		strcpy(ver, " ");
-	}
-#endif
-#ifdef APP_V9_MODULE
-	else if(strstr(argv, "JO"))
-	{
-		strcpy(ver, "V0.0.0.1");
-	}
-#endif
-
-#else
-	if(access("/etc/main_version", F_OK) == 0)
-	{
-		char tmp[128];
-		memset(tmp, 0, sizeof(tmp));
-		os_read_file("/etc/main_version", tmp, sizeof(tmp));
-		if(strlen(tmp))
-		{
-			strcpy(ver, tmp);
-			return 0;
-		}
-	}
-	strcpy(ver, "V0.0.0.1");
-#endif
-	return 0;
-}
 
 static int jst_firmware_version(int eid, webs_t wp, int argc, char **argv)
 {
-#if 1
-	char ver[128];
-	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get(argv[0], ver);
-	if(strlen(ver))
-	{
-		websWrite(wp, "%s", ver);
-		return 0;
-	}
-#else
-#ifdef ZPL_APP_MODULE
-	if(strstr(argv[0], "VO"))
-	{
-		if(access("/etc/main_version", F_OK) == 0)
-		{
-			char tmp[128];
-			memset(tmp, 0, sizeof(tmp));
-			os_read_file("/etc/main_version", tmp, sizeof(tmp));
-			if(strlen(tmp))
-			{
-				websWrite(wp, "%s", tmp);
-				return 0;
-			}
-		}
-		websWrite(wp, "%s", "V0.0.0.1");
-	}
-#ifdef APP_X5BA_MODULE
-	else if(strstr(argv[0], "IO"))
-	{
-		if(x5b_app_mgt && strlen(x5b_app_mgt->app_a.ioversion))
-		{
-			websWrite(wp, "%s", x5b_app_mgt->app_a.ioversion);
-			return 0;
-		}
-		websWrite(wp, "%s", " ");
-	}
-	else if(strstr(argv[0], "CO"))
-	{
-		if(x5b_app_mgt && strlen(x5b_app_mgt->app_a.version))
-		{
-			websWrite(wp, "%s", x5b_app_mgt->app_a.version);
-			return 0;
-		}
-		websWrite(wp, "%s", " ");
-	}
-	else if(strstr(argv[0], "ZO"))
-	{
-		if(x5b_app_mgt && strlen(x5b_app_mgt->app_c.version))
-		{
-			websWrite(wp, "%s", x5b_app_mgt->app_c.version);
-			return 0;
-		}
-		websWrite(wp, "%s", " ");
-	}
-#endif
-#else
-	if(access("/etc/main_version", F_OK) == 0)
-	{
-		char tmp[128];
-		memset(tmp, 0, sizeof(tmp));
-		os_read_file("/etc/main_version", tmp, sizeof(tmp));
-		if(strlen(tmp))
-		{
-			websWrite(wp, "%s", tmp);
-			return 0;
-		}
-	}
 	websWrite(wp, "%s", "V0.0.0.1");
-#endif
-#endif
     return 0;
 }
 
@@ -383,42 +225,6 @@ static int jst_auth_level(int eid, webs_t wp, int argc, char **argv)
 }
 
 
-static int jst_memory_progress_view(Webs *wp, void *p)
-{
-	char *strval = NULL;
-
-	char tmp1[128],tmp2[128];
-	memset(tmp1, 0, sizeof(tmp1));
-	memset(tmp2, 0, sizeof(tmp2));
-	struct host_system host_system;
-	strval = websGetVar(wp, T("ID"), T(""));
-
-	memset(&host_system, 0, sizeof(struct host_system));
-	host_system_information_get(&host_system);
-
-	host_system.mem_total = host_system.s_info.totalram >> 10;//               //total
-	host_system.mem_uses = (host_system.s_info.totalram - host_system.s_info.freeram) >> 10; //used
-	host_system.mem_free = host_system.s_info.freeram >> 10;                 //free
-
-/*	websWrite(wp, "Total:%d MB, Free:%d MB, Uses:%d MB",
-			host_system.mem_total>>10, host_system.mem_free>>10, host_system.mem_uses>>10);*/
-	websSetCookie(wp, "webtype", "homewifi", "/", NULL, 0, 0);
-	//websSetCookie(wp, "webapp", "tslv9", "/", NULL, 0, WEBS_COOKIE_SECURE);
-
-	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "application/json");
-	websWriteEndHeaders(wp);
-
-	websWrite(wp, "{\"response\":\"%s\", \"memuses\":\"%d%%\", \"localtime\":\"%s\", "
-			"\"uptime\":\"%s\", \"cpu_load\":\"%s\"}",
-		"OK", ((host_system.mem_uses*100)/host_system.mem_total),
-		os_time_fmt ("date", os_time(NULL)), _web_uptime(tmp1), _web_cpu_load(tmp2));
-
-	websDone(wp);
-	return OK;
-}
-
 static int jst_web_type(int eid, webs_t wp, int argc, char **argv)
 {
 	if(web_app)
@@ -449,13 +255,13 @@ static int jst_web_os(int eid, webs_t wp, int argc, char **argv)
 {
 	if(web_app)
 	{
-		if(web_app->webtype == WEB_OS_OPENWRT)
+		if(web_app->webos == WEB_OS_OPENWRT)
 		{
 			if(argv[0] && strstr(argv[0], "get"))
 				websWrite(wp, "openwrt");
 			return 0;
 		}
-		else if(web_app->webtype == ZPL_BUILD_LINUX)
+		else if(web_app->webos == WEB_OS_LINUX)
 		{
 			if(argv[0] && strstr(argv[0], "get"))
 				websWrite(wp, "linux");
@@ -507,7 +313,6 @@ static int jst_web_src_prefix(int eid, webs_t wp, int argc, char **argv)
 
 static int web_define_get(Webs *wp, char *path, char *query)
 {
-	//return web_return_text_plain(wp, ERROR);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	//websWriteHeader(wp, "Content-Type", "application/json");
@@ -527,19 +332,13 @@ static int web_define_get(Webs *wp, char *path, char *query)
     var have_wireless = true;
 */
 
-#ifdef APP_V9_MODULE
-	websWrite(wp,"{\"response\":\"%s\", \"webtype\":\"%s\", \
-			\"ostype\":\"%s\", \"platform\":\"%s\", \"device\":\"%s\", \
-			\"switch\":%s, \"dns\":%s, \"dhcp\":%s, \"sip\":%s, \"wireless\":%s}",
-			"OK", web_type_string(web_app), web_os_type_string(web_app), "TSLV9", "TSLV9",
-			"false", "false", "false", "false", "false");
-#else
+
 	websWrite(wp,"{\"response\":\"%s\", \"webtype\":\"%s\", \
 			\"ostype\":\"%s\", \"platform\":\"%s\", \"device\":\"%s\", \
 			\"switch\":%s, \"dns\":%s, \"dhcp\":%s, \"sip\":%s, \"wireless\":%s}",
 			"OK", web_type_string(web_app), web_os_type_string(web_app), "TSLX5", "TSLX5",
 			"false", "false", "false", "true", "true");
-#endif
+
 	websWrite(wp, "%s", "]");
 	websDone(wp);
 	return OK;
@@ -548,10 +347,9 @@ static int web_define_get(Webs *wp, char *path, char *query)
 
 static int jst_app_version(int eid, webs_t wp, int argc, char **argv)
 {
-#ifdef APP_V9_MODULE
 	char ver[128];
 	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get("JO", ver);
+	sprintf(ver, "v1");
 	if(strlen(ver))
 	{
 		websWrite(wp, "<tr>");
@@ -560,59 +358,18 @@ static int jst_app_version(int eid, webs_t wp, int argc, char **argv)
 		websWrite(wp, "</tr>");
 	}
 	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get("ZO", ver);
+	sprintf(ver, "v1");
 	if(strlen(ver))
 	{
 		websWrite(wp, "<tr>");
 		websWrite(wp, "<td>主控模块版本</td>");
-		websWrite(wp, "<td>%s</td>", ver);
-		websWrite(wp, "</tr>");
-	}
-#endif
-#ifdef APP_X5BA_MODULE
-	char ver[128];
-	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get("IO", ver);
-	if(strlen(ver))
-	{
-		websWrite(wp, "<tr>");
-		websWrite(wp, "<td>IO模块版本</td>");
-		websWrite(wp, "<td>%s</td>", ver);
-	    //<td><%jst_firmware_version("IO");%></td>
-		websWrite(wp, "</tr>");
-	}
-	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get("CO", ver);
-	if(strlen(ver))
-	{
-		websWrite(wp, "<tr>");
-		websWrite(wp, "<td>刷卡模块版本</td>");
-		websWrite(wp, "<td>%s</td>", ver);
-		websWrite(wp, "</tr>");
-	}
-	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get("VO", ver);
-	if(strlen(ver))
-	{
-		websWrite(wp, "<tr>");
-		websWrite(wp, "<td>语音模块版本</td>");
 		websWrite(wp, "<td>%s</td>", ver);
 		websWrite(wp, "</tr>");
 	}
 
-	memset(ver, 0, sizeof(ver));
-	web_firmware_version_get("ZO", ver);
-	if(strlen(ver))
-	{
-		websWrite(wp, "<tr>");
-		websWrite(wp, "<td>主控模块版本</td>");
-		websWrite(wp, "<td>%s</td>", ver);
-		websWrite(wp, "</tr>");
-	}
-#endif
 	return 0;
 }
-#endif /* THEME_V9UI */
+
 
 static int jst_systeminfo(Webs *wp, char *path, char *query)
 {
@@ -684,10 +441,6 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 	offset = strlen(buf);
 	sprintf (buf + offset, "\"cpu_load\":\"%s\",", _web_cpu_load(tmp));
 
-#ifdef APP_V9_MODULE
-	offset = strlen(buf);
-	v9_web_device_info(buf + offset);
-#endif
 
 	host_system.mem_total = host_system.s_info.totalram >> 10;//               //total
 	host_system.mem_uses = (host_system.s_info.totalram - host_system.s_info.freeram) >> 10; //used
@@ -707,7 +460,7 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 
 int web_system_jst_init(void)
 {
-#ifdef THEME_V9UI
+
 #ifdef ME_DESCRIPTION
 	websDefineJst("jst_web_description", jst_web_description);
 #endif
@@ -745,8 +498,6 @@ int web_system_jst_init(void)
 
 	websFormDefine("web-define", web_define_get);
 
-	web_progress_view_add_hook("mem", "memtotal", jst_memory_progress_view, NULL);
-#endif /* THEME_V9UI */
 	websFormDefine("systeminfo", jst_systeminfo);
 	return 0;
 }

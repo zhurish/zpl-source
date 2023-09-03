@@ -36,29 +36,87 @@
 
 #include "auto_include.h"
 #include "lib_include.h"
-#include "vty_include.h"
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
+#include "zpl_vidhal.h"
+#include "zpl_vidhal_internal.h"
 
 #define THIS_FILE	"pjsip_main.c"
 
 extern zpl_bool host_waitting_loadconfig(void);
 
+struct pjapp_thread_desc 
+{
+    pj_thread_desc       _thread_desc;
+    pj_thread_t         *_thread;
+};
+extern int (*pj_thread_register_cb)(void);
+/*
+static int pjapp_task_load(void *p)
+{
+	struct pjapp_thread_desc *desc;
+	os_task_t *task = p;
+	if(task)
+	{
+		if(task->active && task->priv == NULL && task->td_thread)
+		{
+			task->priv = malloc(sizeof(struct pjapp_thread_desc));
+			if(task->priv)
+			{
+				desc = (struct pjapp_thread_desc *)task->priv;
+				pj_bzero(task->priv, sizeof(struct pjapp_thread_desc));
+				pj_thread_register(task->td_name, desc->_thread_desc, &desc->_thread);
+			}
+		}
+	}
+	return OK;
+}
+*/
 
-static int pjapp_task_load(void *p);
+static int pj_thread_register_cbaction(void)
+{
+	struct pjapp_thread_desc *desc;
+	os_task_t *task = os_task_self();
+	if(task)
+	{
+		if(task->active && task->priv == NULL && task->td_thread)
+		{
+			task->priv = (struct pjapp_thread_desc *)malloc(sizeof(struct pjapp_thread_desc));
+			if(task->priv)
+			{
+				desc = (struct pjapp_thread_desc *)task->priv;
+				pj_bzero(task->priv, sizeof(struct pjapp_thread_desc));
+				pj_thread_register(task->td_name, desc->_thread_desc, &desc->_thread);
+			}
+		}
+	}
+	return OK;
+}
 
 
-static int pjapp_main_func(int argc, char *argv[])
+static int pjMainTask(void *p)
 {
 	pj_status_t status = PJ_TRUE;
 
+	host_waitting_loadconfig();
+
 	_pjAppCfg.app_running = PJ_TRUE;
+
+	pj_init();
+	pj_thread_register_cb = pj_thread_register_cbaction;
 
 	while (_pjAppCfg.app_running && OS_TASK_TRUE())
 	{
-		//__ZPL_PJSIP_DEBUG( "%s:pjsua_app_init","main_func");
+		#ifdef ZPL_HISIMPP_MODULE
+		if(_pjAppCfg.app_start == PJ_FALSE)
+		{
+			sleep(1);
+			continue;
+		}
+		#endif
 		status = pjsua_app_init();
 		if (status == PJ_SUCCESS)
 		{
-			os_task_foreach(pjapp_task_load, NULL);
 			status = pjsua_app_run(PJ_TRUE);
 		}
 		else
@@ -67,10 +125,10 @@ static int pjapp_main_func(int argc, char *argv[])
 		}
 		if (status == PJ_SUCCESS)
 			break;
-		//__ZPL_PJSIP_DEBUG("======================================================3\r\n");
+		zm_msg_force_trap("======================================================3\r\n");
 
 		pjsua_app_destroy();
-		//__ZPL_PJSIP_DEBUG("======================================================4\r\n");
+		zm_msg_force_trap("======================================================4\r\n");
 
 		if(_pjAppCfg.restart)
 		{
@@ -78,90 +136,6 @@ static int pjapp_main_func(int argc, char *argv[])
 		}
 	}
 	return 0;
-}
-
-
-static int pjapp_task_load(void *p)
-{
-	os_task_t *task = p;
-	if(task)
-	{
-		if(task->active && task->priv == NULL && task->td_thread)
-		{
-			task->priv = pj_thread_register_malloc(task->td_thread, task->td_name);
-		}
-	}
-	return OK;
-}
-
-
-static void * pjapp_task_self(pthread_t td_thread)
-{
-	void *p = os_task_priv_get(0, os_task_pthread_self());
-	//printf("===============%s======== p=%u=========\r\n", __func__, p);
-	return p;
-}
-
-static int pjapp_task_add(char *name, int pri, int op, void *entry, void *arg, int stacksize,
-		int td_thread, void *p)
-{
-	//int Priority = 0;
-	os_task_add_name(name, pri, 0, entry, name, arg, stacksize, td_thread);
-	//os_task_priority_get(id, &Priority);
-	//__ZPL_PJSIP_DEBUG("===============%s=================:%s\r\n", __func__, name);
-	if (os_task_priv_get(0, td_thread) == NULL)
-		os_task_priv_set(0, td_thread, p);
-	return 0;
-}
-
-static int _pjapp_task_create(void *p)
-{
-	os_task_t *task = p;
-	if(task && strstr(task->td_name, "alsa"))
-	{
-		_pjAppCfg.media_quit++;
-		//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
-	}
-	return OK;
-}
-
-static int _pjapp_task_destroy(void *p)
-{
-	os_task_t *task = p;
-	if(task && strstr(task->td_name, "alsa"))
-	{
-		_pjAppCfg.media_quit--;
-		//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
-	}
-	return OK;
-}
-
-static int pjapp_wait_quit(void)
-{
-	//__ZPL_PJSIP_DEBUG( "==============%s===========%d", __func__, app_config.media_quit);
-	while(_pjAppCfg.media_quit > 0)
-	{
-		os_msleep(50);
-	}
-	os_msleep(500);
-	return OK;
-}
-
-static int pjMainTask(void *p)
-{
-	int pjargc = 1;
-	char *pjargv[] = {NULL, NULL};
-
-	host_waitting_loadconfig();
-
-	_pjAppCfg.app_running = PJ_TRUE;
-
-	os_task_add_create_hook(_pjapp_task_create);
-	os_task_add_destroy_hook(_pjapp_task_destroy);
-	pj_init();
-	pj_task_cb_init(pjapp_task_add, os_task_thread_del, os_task_thread_refresh_id, pjapp_task_self);
-
-    return pj_run_app(&pjapp_main_func, pjargc, pjargv, 0);
 }
 
 
@@ -184,7 +158,6 @@ static int pjapp_module_init(void)
 static int pjapp_module_exit(void)
 {
 	pjsua_app_exit();
-	pjapp_wait_quit();
 	pjsua_app_destroy();
 	memset(&_pjAppCfg, 0, sizeof(pjsua_app_config));
 
@@ -194,7 +167,7 @@ static int pjapp_module_exit(void)
 static int pjapp_module_task_init(void)
 {
 	return os_task_create("pjMainTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*8);
+	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*16);
 }
 
 static int pjapp_module_task_exit(void)

@@ -29,16 +29,17 @@ extern "C" {
 #endif
 #endif
 
+
+
+#define REAL_SYSCONFDIR 		SYS_REAL_DIR "/etc"     //flash的etc 目录
+#define REAL_SYSLOGDIR 		   SYS_REAL_DIR "/log"	   //flash的log 目录
+#define REAL_SYSWWWDIR 		   SYS_REAL_DIR "/www"	   //flash的www 目录
+#define REAL_SYSWEBDIR 		   SYS_REAL_DIR "/etc/web"	//flash的/etc/web 目录
 /* 运行时配置文件目录 */
-#define SYSCONF_REAL_DIR 	SYS_REAL_DIR "/etc"
-
-#define SYSCONFDIR 		SYSCONF_REAL_DIR	      //flash的etc 目录
-#define RSYSLOGDIR 		SYS_REAL_DIR "/log"	   //flash的log 目录
-#define RSYSWWWDIR 		SYS_REAL_DIR "/www"	   //flash的www 目录
-#define SYSWEBDIR 		SYSCONF_REAL_DIR "/web"	//flash的/etc/web 目录
+#define SYSCONF_REAL_DIR 	REAL_SYSCONFDIR
 
 
-#define PLSYSCONFDIR 	BASE_DIR "/etc"	//缓存目录
+#define SYSCONFDIR 	   BASE_DIR "/etc"	//缓存目录
 #define SYSLIBDIR 		BASE_DIR "/lib"
 #define SYSSBINDIR 		BASE_DIR "/sbin"
 #define SYSBINDIR 		BASE_DIR "/bin"
@@ -67,24 +68,11 @@ extern "C" {
 
 #define CONF_BACKUP_EXT ".sav"
 
-#ifdef ZPL_BUILD_OS_OPENWRT
 #define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
 #define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
 #define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
 #define SERVICE_CONFIG_FILE	SYSCONFDIR "/os_netservice.cfg"
-#else
-#if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
-#define STARTUP_CONFIG_FILE	PLSYSCONFDIR "/startup-config.cfg"
-#define DEFAULT_CONFIG_FILE	PLSYSCONFDIR "/default-config.cfg"
-#define FACTORY_CONFIG_FILE	PLSYSCONFDIR "/factory-config.cfg"
-#define SERVICE_CONFIG_FILE	PLSYSCONFDIR "/os_netservice.cfg"
-#else
-#define STARTUP_CONFIG_FILE	SYSCONFDIR "/startup-config.cfg"
-#define DEFAULT_CONFIG_FILE	SYSCONFDIR "/default-config.cfg"
-#define FACTORY_CONFIG_FILE	SYSCONFDIR "/factory-config.cfg"
-#define SERVICE_CONFIG_FILE	SYSCONFDIR "/os_netservice.cfg"
-#endif
-#endif
+
 
 
 

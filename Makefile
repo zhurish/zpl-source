@@ -221,6 +221,7 @@ distclean: mrproper
 
 
 install:
+	${MAKE} -C  source/ install
 	mkdir -p $(ZPL_INSTALL_PATH)
 	cp -arf source/debug/usr/lib $(ZPL_INSTALL_PATH)/
 	cp -arf source/debug/etc $(ZPL_INSTALL_PATH)/

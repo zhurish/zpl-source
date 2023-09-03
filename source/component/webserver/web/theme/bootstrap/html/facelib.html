@@ -43,7 +43,7 @@
 					<script type="text/javascript">
 						function allfacelib_get() {
 							var utbl = "";
-							$.get("/goform/allfacelib", function (data, status) {
+							$.get("/action/allfacelib", function (data, status) {
 								var data_json = JSON.parse(data);
 								console.log("allfacelib json:" + data);
 								$.each(data_json, function (index, info) {
@@ -236,7 +236,7 @@
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "ERROR") {
@@ -261,7 +261,7 @@
 							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID;
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 3000);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									if (x.responseText != "ERROR") {
 										clearTimeout();
@@ -416,7 +416,7 @@
 								console.log(argv);
 								$("#handle_waiting").css("display", "block");
 								setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-								stxhr.post("/goform/addfacelib", argv,
+								stxhr.post("/action/addfacelib", argv,
 									function (x) {
 										console.log(x);
 										if (x.responseText == "OK") {

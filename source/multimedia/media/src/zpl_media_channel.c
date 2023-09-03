@@ -111,31 +111,37 @@ static int zpl_media_channel_encode_default(zpl_media_channel_t *chn)
 	else if(chn->media_type == ZPL_MEDIA_AUDIO)
 	{
 		int frame_size = 0;
-		chn->media_param.audio_media.codec.framerate = ZPL_AUDIO_FRAMERATE_DEFAULT; // 帧率
+    	chn->media_param.audio_media.framerate = ZPL_AUDIO_FRAMERATE_DEFAULT;		//帧率
+    	chn->media_param.audio_media.clock_rate	= ZPL_AUDIO_CLOCK_RATE_DEFAULT;     /**< Sampling rate.                 */
+    	chn->media_param.audio_media.channel_cnt	= 1;
+    	chn->media_param.audio_media.bits_per_sample	= ZPL_AUDIO_BIT_WIDTH_DEFAULT; /*每帧的采样点个数  （1/framerate）* clock_rate */	
+
+		chn->media_param.audio_media.codec.framerate = chn->media_param.audio_media.framerate; // 帧率
 		chn->media_param.audio_media.codec.codectype = ZPL_AUDIO_CODEC_G711A;          // 编码类型
 		chn->media_param.audio_media.codec.bitrate = 64;                            // 码率
 		chn->media_param.audio_media.codec.bitrate_type = 0;                        // 码率类型
 		//码率=采样率 x 位深度 x 声道
 		//每帧PCM数据大小：PCM Buffersize=采样率*采样时间*采样位深/8*通道数（Bytes）
 		/*
-假设音频采样率 = 8000，采样通道 = 2，位深度 = 16，采样间隔 = 20ms
-首先我们计算一秒钟总的数据量，采样间隔采用20ms的话，说明每秒钟需采集50次，这个计算大家应该都懂，那么总的数据量计算为
-一秒钟总的数据量 =8000 * 2*16/8 = 32000
-所以每帧音频数据大小 = 32000/50 = 640
-每个通道样本数 = 640/2 = 320
-*/
+		假设音频采样率 = 8000，采样通道 = 2，位深度 = 16，采样间隔 = 20ms
+		首先我们计算一秒钟总的数据量，采样间隔采用20ms的话，说明每秒钟需采集50次，这个计算大家应该都懂，那么总的数据量计算为
+		一秒钟总的数据量 =8000 * 2*16/8 = 32000
+		所以每帧音频数据大小 = 32000/50 = 640
+		每个通道样本数 = 640/2 = 320
+		*/
 		//chn->media_param.audio_media.codec.codectype;		//编码类型
 		//chn->media_param.audio_media.codec.framerate;		//帧率
 		//chn->media_param.audio_media.codec.bitrate;		//码率
 		//chn->media_param.audio_media.codec.bitrate_type;	//码率类型
 		//chn->media_param.audio_media.codec.avg_bps;             /**< Average bandwidth in bits/sec  */
 		//chn->media_param.audio_media.codec.max_bps;             /**< Maximum bandwidth in bits/sec  */
-		
-		chn->media_param.audio_media.codec.clock_rate = ZPL_AUDIO_CLOCK_RATE_DEFAULT;     /**< Sampling rate.                 */
-		chn->media_param.audio_media.codec.channel_cnt = 1;    /**< Channel count.                 */
-		chn->media_param.audio_media.codec.bits_per_sample = ZPL_AUDIO_BIT_WIDTH_16; /**< Bits/sample in the PCM side    */
 
-		frame_size = (chn->media_param.audio_media.codec.clock_rate * chn->media_param.audio_media.codec.channel_cnt )<<chn->media_param.audio_media.codec.bits_per_sample;
+		chn->media_param.audio_media.codec.clock_rate = chn->media_param.audio_media.clock_rate;     /**< Sampling rate.                 */
+		chn->media_param.audio_media.codec.channel_cnt = chn->media_param.audio_media.channel_cnt;    /**< Channel count.                 */
+		chn->media_param.audio_media.codec.bits_per_sample = chn->media_param.audio_media.bits_per_sample; /**< Bits/sample in the PCM side    */
+
+		frame_size = (chn->media_param.audio_media.codec.clock_rate * chn->media_param.audio_media.codec.channel_cnt);
+		frame_size = frame_size * (8*(chn->media_param.audio_media.codec.bits_per_sample+1))/8;
 		frame_size = frame_size/chn->media_param.audio_media.codec.framerate;
 		chn->media_param.audio_media.codec.max_frame_size = frame_size;   /**< Maximum frame size             */
 	}
@@ -160,7 +166,7 @@ int zpl_media_channel_load_default(void)
 		zpl_media_channel_create(ZPL_MEDIA_CHANNEL_0, ZPL_MEDIA_CHANNEL_TYPE_MAIN);
 		zpl_media_channel_create(ZPL_MEDIA_CHANNEL_0, ZPL_MEDIA_CHANNEL_TYPE_SUB);
 		zpl_media_channel_create(ZPL_MEDIA_CHANNEL_AUDIO_0, ZPL_MEDIA_CHANNEL_TYPE_INPUT);
-		zpl_media_channel_create(ZPL_MEDIA_CHANNEL_AUDIO_0, ZPL_MEDIA_CHANNEL_TYPE_OUTPUT);
+		//zpl_media_channel_create(ZPL_MEDIA_CHANNEL_AUDIO_0, ZPL_MEDIA_CHANNEL_TYPE_OUTPUT);
 	}
 	return OK;
 }
@@ -211,13 +217,9 @@ int zpl_media_channel_hal_create(zpl_media_channel_t *chn)
 		}
 		else if(chn->media_type == ZPL_MEDIA_AUDIO)
 		{
-			int ret = ERROR;
+			int ret = OK;
 			ZPL_MEDIA_CHANNEL_UNLOCK(chn);
-			zpl_media_audio_channel_t *audio = chn->media_param.audio_media.halparam;
-			if(!zpl_media_audio_state_check(audio, ZPL_MEDIA_STATE_ACTIVE))
-				ret = zpl_media_audio_hal_create(audio);
-			if(ret == OK)
-				ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+			ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
 			ZPL_MEDIA_CHANNEL_UNLOCK(chn);	
 			return ret;
 		}
@@ -322,36 +324,19 @@ static int zpl_media_channel_lstnode_create(zpl_media_channel_t *chn)
 		}
 		else
 		{
-			if(chn->channel_index == ZPL_MEDIA_CHANNEL_TYPE_INPUT)
+			zpl_media_audio_channel_t *audio_input = zpl_media_audio_create(chn->channel, chn->media_param.audio_media.clock_rate,
+				chn->media_param.audio_media.channel_cnt, chn->media_param.audio_media.bits_per_sample, chn->media_param.audio_media.framerate);
+			if(audio_input)
 			{
-				zpl_media_audio_channel_t *audio_input = zpl_media_audio_create(chn->channel, zpl_true);
-				if(audio_input)
-				{
-					audio_input->frame_queue = chn->frame_queue;
-					audio_input->media_channel = chn;
-					audio_input->t_master = chn->t_master;
-					memcpy(&audio_input->audio_param.input.encode.codec, &chn->media_param.audio_media.codec, sizeof(zpl_audio_codec_t));
-					chn->media_param.audio_media.halparam = audio_input;
-					zpl_media_audio_param_default(audio_input);
-				}
-				else
-					return ERROR;
+				audio_input->frame_queue = chn->frame_queue;
+				audio_input->media_channel = chn;
+				audio_input->t_master = chn->t_master;
+				memcpy(&audio_input->encode.codec, &chn->media_param.audio_media.codec, sizeof(zpl_audio_codec_t));
+				chn->media_param.audio_media.halparam = audio_input;
+				zpl_media_audio_param_default(audio_input);
 			}
 			else
-			{
-				zpl_media_audio_channel_t *audio_output = zpl_media_audio_create(chn->channel, zpl_false);
-				if(audio_output)
-				{
-					audio_output->frame_queue = chn->frame_queue;
-					audio_output->media_channel = chn;
-					audio_output->t_master = chn->t_master;
-					memcpy(&audio_output->audio_param.output.decode.codec, &chn->media_param.audio_media.codec, sizeof(zpl_audio_codec_t));
-					chn->media_param.audio_media.halparam = audio_output;
-					zpl_media_audio_param_default(audio_output);
-				}
-				else
-					return ERROR;
-			}
+				return ERROR;
 		}
 		return OK;
 	}
@@ -471,19 +456,9 @@ int zpl_media_channel_hal_destroy(zpl_media_channel_t *chn)
 		}
 		else
 		{
-			int ret = ERROR;
+			int ret = OK;
 			ZPL_MEDIA_CHANNEL_LOCK(chn);
-			zpl_media_audio_channel_t *audio = NULL;	
-			audio = chn->media_param.audio_media.halparam;
-			if (audio != NULL)
-			{
-				if(zpl_media_audio_state_check(audio, ZPL_MEDIA_STATE_ACTIVE))
-					ret = zpl_media_audio_hal_destroy(audio);
-				else
-					ret = OK;	
-			}
-			if(ret == OK)
-				ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
+			ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_ACTIVE);
 			ZPL_MEDIA_CHANNEL_UNLOCK(chn);				
 			return ret;
 		}
@@ -638,7 +613,14 @@ int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
 					if(zpl_media_audio_state_check(audio, ZPL_MEDIA_STATE_ACTIVE))
 					{
 						if(!zpl_media_audio_state_check(audio, ZPL_MEDIA_STATE_START))
-							ret = zpl_media_audio_start(chn->t_master,  audio);
+						{
+							zpl_media_audio_input_set(audio, 
+								chn->media_param.audio_media.clock_rate,
+								chn->media_param.audio_media.channel_cnt, 
+								chn->media_param.audio_media.bits_per_sample, 
+								chn->media_param.audio_media.framerate);
+							ret = zpl_media_audio_input_start(chn->t_master,  audio);
+						}							
 						else
 							ret = OK;	
 					}
@@ -647,7 +629,6 @@ int zpl_media_channel_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_
 			if(ret == OK)
 			{
 				ZPL_SET_BIT(chn->flags, ZPL_MEDIA_STATE_START);
-				//zpl_media_channel_area_default(chn);
 			}
 			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
 			{
@@ -726,7 +707,7 @@ int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 					if(zpl_media_audio_state_check(audio, ZPL_MEDIA_STATE_ACTIVE))
 					{
 						if(!zpl_media_audio_state_check(audio, ZPL_MEDIA_STATE_START))
-							ret = zpl_media_audio_stop(audio);
+							ret = zpl_media_audio_input_stop(audio);
 						else
 							ret = OK;	
 					}
@@ -735,7 +716,6 @@ int zpl_media_channel_stop(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYPE_E
 			if(ret == OK)
 			{
 				ZPL_CLR_BIT(chn->flags, ZPL_MEDIA_STATE_START);
-				//zpl_media_channel_area_destroy_all(chn);
 			}
 			if (ZPL_MEDIA_DEBUG(CHANNEL, EVENT))
 			{
@@ -1017,7 +997,8 @@ int zpl_media_channel_client_start(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNE
 	    ret = zpl_media_client_start(mchannel->media_client, index, start);
 	if(ret == OK && start)
 	{
-		zpl_media_channel_hal_request_IDR(mchannel); /* 请求关键帧 */
+		if(mchannel->media_type == ZPL_MEDIA_VIDEO)
+			zpl_media_channel_hal_request_IDR(mchannel); /* 请求关键帧 */
 	}
 	if (media_channel_mutex)
 		os_mutex_unlock(media_channel_mutex);
@@ -1617,7 +1598,7 @@ int zpl_media_channel_show(void *pvoid)
 		{
 			char *audio_str[2] = {"input", "output"};
 			int bits_per_sample[4] = {8, 16, 24, 32};
-			zpl_media_audio_channel_t *audio = (zpl_media_audio_channel_t *)chn->media_param.audio_media.halparam;
+			//zpl_media_audio_channel_t *audio = (zpl_media_audio_channel_t *)chn->media_param.audio_media.halparam;
 			vty_out(vty, " -----------------------------------------------%s", VTY_NEWLINE);
 			vty_out(vty, " channel            : %d %s%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, audio_str[chn->channel_index-ZPL_MEDIA_CHANNEL_TYPE_INPUT], VTY_NEWLINE);
 			vty_out(vty, "  type              : %s%s", media_typestr[chn->media_type], VTY_NEWLINE);

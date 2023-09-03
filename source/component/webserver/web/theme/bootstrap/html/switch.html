@@ -43,7 +43,7 @@
 					<script type="text/javascript">
 						function switch_port_tbl() {
 							var utbl = "";
-							$.get("/goform/port-tbl", function (data, status) {
+							$.get("/action/port-tbl", function (data, status) {
 								var data_json = JSON.parse(data);
 								console.log("JSON:" + data_json);
 								$.each(data_json, function (index, info) {
@@ -162,7 +162,7 @@
 
 					$("#handle_waiting").css("display", "block");
 					setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-					stxhr.post("/goform/button_onclick", argv,
+					stxhr.post("/action/button_onclick", argv,
 						function (x, json) {
 							console.log("json:" + json);
 							console.log(x);
@@ -213,7 +213,7 @@
 						$("#handle_waiting").css("display", "block");
 						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
 
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x, json) {
 								//console.log("json:" + json);
 								//console.log(x);
@@ -256,7 +256,7 @@
 						$("#handle_waiting").css("display", "block");
 						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
 
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x, json) {
 								console.log(x);
 								if (x.responseText == "ERROR") {

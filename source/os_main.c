@@ -119,9 +119,9 @@ int main(int argc, char **argv)
 	zpl_base_signal_init(startup_option.daemon_mode);
 
 	//"/home/zhurish/workspace/working/zpl-source/os_netservice.txt"
-	os_netservice_config_load(startup_option.service_file);
+	zpl_stack_init(startup_option.service_file);
 
-	zpl_stack_init();
+
 	zpl_stack_start(startup_option.progname, 8890);
 	//pl_voip_init();
 	//pjmain(0, NULL);

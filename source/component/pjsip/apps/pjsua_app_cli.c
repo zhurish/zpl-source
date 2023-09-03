@@ -268,7 +268,6 @@ pj_status_t pjapp_cli_init(void)
         if (status != PJ_SUCCESS)
             goto on_error;
     }
-
     return PJ_SUCCESS;
 
 on_error:

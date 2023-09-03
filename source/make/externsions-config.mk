@@ -2,6 +2,26 @@
 
 ifeq ($(strip $(ZPL_EXTERNSIONS_MODULE)),true)
 
+ifeq ($(strip $(ZPL_ZLIB_MODULE)),true)
+ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
+
+ifneq ($(ZPL_BUILD_ARCH),X86_64)
+ifeq ($(strip $(ZPL_EXZLIB_MODULE)),true)
+ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
+ZPLEX_INCLUDE += -I$(EXTERNSION_BASE_ROOT)/zlib/_install/include
+ZPLEX_LDFLAGS += -L$(EXTERNSION_BASE_ROOT)/zlib/_install/lib
+ZPLOS_LDLIBS += -lz
+else
+ZLIB_ROOT=$(EXTERNSION_DIR)/zlib
+ZPLEX_DIR += $(ZPLBASE)/$(ZLIB_ROOT)
+ZLIB_SRC = $(ZPLBASE)/$(ZLIB_ROOT)/zlib-1.2.11
+ZPLEX_INCLUDE += -I$(ZLIB_SRC)
+endif #($(strip $(ZPL_EXZLIB_MODULE)),true)
+else
+ZPLOS_LDLIBS += -lz
+endif #($(ZPL_BUILD_ARCH),X86_64)
+endif
+
 #
 # Externsion openssl
 #
@@ -29,25 +49,19 @@ ZPLEX_INCLUDE += -I$(ZPLBASE)/$(MBEDTLS_ROOT)/include
 ZPL_DEFINE += -DZPL_MBEDTLS_MODULE
 endif #($(strip $(ZPL_MBEDTLS_MODULE)),true)
 
-ifeq ($(strip $(ZPL_ZLIB_MODULE)),true)
-ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
-
+ifeq ($(strip $(ZPL_OPENSSH_MODULE)),true)
+OPENSSH_ROOT=$(EXTERNSION_DIR)/openssh
 ifneq ($(ZPL_BUILD_ARCH),X86_64)
-ifeq ($(strip $(ZPL_EXZLIB_MODULE)),true)
-ZPLEX_DEFINE	+= -DZPL_ZLIB_MODULE
-ZPLEX_INCLUDE += -I$(EXTERNSION_BASE_ROOT)/zlib/_install/include
-ZPLEX_LDFLAGS += -L$(EXTERNSION_BASE_ROOT)/zlib/_install/lib
-ZPLOS_LDLIBS += -lz
-else
-ZLIB_ROOT=$(EXTERNSION_DIR)/zlib
-ZPLEX_DIR += $(ZPLBASE)/$(ZLIB_ROOT)
-ZLIB_SRC = $(ZPLBASE)/$(ZLIB_ROOT)/zlib-1.2.11
-ZPLEX_INCLUDE += -I$(ZLIB_SRC)
-endif #($(strip $(ZPL_EXZLIB_MODULE)),true)
-else
-ZPLOS_LDLIBS += -lz
+ZPLEX_DIR += $(ZPLBASE)/$(OPENSSH_ROOT)
+ZPLEX_INCLUDE += -I$(ZPLBASE)/$(OPENSSH_ROOT)/_install/include
+#ZPLEX_LDLIBS += -lssh
+else 
+#ZPLOS_LDLIBS += -lssh
 endif #($(ZPL_BUILD_ARCH),X86_64)
-endif
+ZPL_DEFINE += -DZPL_OPENSSH_MODULE
+else
+endif #($(strip $(ZPL_OPENSSL_MZPL_OPENSSH_MODULEODULE)),true)
+
 
 ifeq ($(strip $(ZPL_READLINE_MODULE)),true)
 ZPLEX_DEFINE	+= -DZPL_READLINE_MODULE

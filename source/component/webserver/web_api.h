@@ -34,32 +34,24 @@ extern "C" {
 
 #ifdef __WEBGUI_DEBUG
 #define WEBGUI_ROUTE 		WEBGUI_SRC_DIR"/web/route.txt"
-#define WEBGUI_AUTH 			WEBGUI_SRC_DIR"/web/auth.txt"
-#define WEBGUI_HOME 			SYSWEBDIR
+#define WEBGUI_AUTH 		WEBGUI_SRC_DIR"/web/auth.txt"
 #define WEBGUI_DOCUMENTS 	WEBGUI_SRC_DIR"/web/theme/bootstrap"
 #else
-#define WEBGUI_ROUTE 		SYSWEBDIR"/route.txt"
-#define WEBGUI_AUTH 			SYSWEBDIR"/auth.txt"
-#define WEBGUI_HOME 			SYSWEBDIR
+#define WEBGUI_ROUTE 		REAL_SYSWEBDIR"/route.txt"
+#define WEBGUI_AUTH 		REAL_SYSWEBDIR"/auth.txt"
 #define WEBGUI_DOCUMENTS 	SYSWWWDIR
 #endif
 
 #if ME_GOAHEAD_LOGIN_HTML
-#ifdef THEME_V9UI
-#define WEB_LOGIN_HTML 		"OK/ERROR"
-#define WEB_LOGOUT_HTML 	"OK/ERROR"
-#define WEB_MAIN_HTML 		"OK/ERROR"
-#else
 #define WEB_LOGIN_HTML 		"/html/login.html"
 #define WEB_LOGOUT_HTML 	"/html/login.html"
 #define WEB_MAIN_HTML 		"/html/bootstrap.html"
 #endif
-#endif
 
-#define WEB_SYSTEM_LOG 		"/var/log/boot.log"
+#define WEB_SYSTEM_LOG 		SYSLOGDIR"/boot.log"
 
 #define WEB_LOGIN_USERNAME 		"root"
-#define WEB_LOGIN_PASSWORD 		"admintsl123456!"
+#define WEB_LOGIN_PASSWORD 		"admin123456"
 
 
 

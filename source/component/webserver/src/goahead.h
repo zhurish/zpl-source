@@ -18,8 +18,8 @@
 #include "zplos_include.h"
 #include "module.h"
 #include "str.h"
-#include    "me.h"
-#include    "osdep.h"
+#include  "me.h"
+#include  "osdep.h"
 
 /************************************ Defaults ********************************/
 
@@ -145,7 +145,6 @@ PUBLIC int websParseArgs(char *args, char **argv, int maxArgc);
 #if ME_GOAHEAD_LOGGING
 
 #define WEBS_L          __func__, __LINE__
-//#define WEBS_L          __FILE__, __LINE__
 #define WEBS_ARGS_DEC   char *file, int line
 #define WEBS_ARGS       file, line
 
@@ -156,7 +155,7 @@ PUBLIC_DATA int __websLogLevel;
     and type flags. The WEBS_LOG_MASK is used to extract the trace level from a flags word. We expect most apps
     to run with level 2 trace enabled.
 */
-#if defined(LOG_TRAP)||defined(ZLOG_LEVEL_DEBUG)
+#if defined(ZLOG_LEVEL_TRAP)||defined(ZLOG_LEVEL_DEBUG)
 #define WEBS_CRIT		ZLOG_LEVEL_CRIT
 #define WEBS_ALERT		ZLOG_LEVEL_ALERT
 #define WEBS_EMERG		ZLOG_LEVEL_EMERG
@@ -196,66 +195,7 @@ PUBLIC_DATA int __websLogLevel;
 #define WEBS_EVENT_MSG      0x800       /**< Originated from trace */
 #define WEBS_HEADER_MSG     0x1000      /**< trace HTTP header */
 
-#if !ME_GOAHEAD_EXTLOG
 
-#if ME_GOAHEAD_TRACING && ME_GOAHEAD_LOGGING
-    #if ME_COMPILER_HAS_MACRO_VARARGS
-      #define web_trace(l, ...) if (((l) & WEBS_LEVEL_MASK) <= websGetLogLevel()) { traceProc(l, __VA_ARGS__); } else {}
-    #else
-        inline void web_trace(int level, cchar *fmt, ...) {
-            WebsLogHandler logHandler = logGetHandler();
-            if ((level & WEBS_LEVEL_MASK) <= websGetLogLevel() && logHandler) {
-                va_list args; va_start(args, fmt);
-                char *message = sfmtv((char*) fmt, args);
-                logHandler(level | WEBS_TRACE_MSG, message);
-                wfree(message);
-                va_end(args);
-            }
-        }
-    #endif
-#else
-    #define web_trace(l, ...) if (1) ; else {}
-#endif
-
-#if ME_GOAHEAD_LOGGING
-    #if ME_COMPILER_HAS_MACRO_VARARGS
-        #define web_logmsg(l, ...) if ((l) <= websGetLogLevel()) { logmsgProc(l, __VA_ARGS__); } else {}
-    #else
-        inline void web_logmsg(int level, cchar *fmt, ...) {
-            WebsLogHandler logHandler = logGetHandler();
-            if ((level & WEBS_LEVEL_MASK) <= websGetLogLevel() && logHandler) {
-                va_list args; va_start(args, fmt);
-                char *message = sfmtv((char*) fmt, args);
-                logHandler(level | WEBS_TRACE_MSG, message);
-                wfree(message);
-                va_end(args);
-            }
-        }
-    #endif
-#else
-    #define web_logmsg(l, ...) if (1) ; else {}
-#endif
-
-
-#if DOXYGEN
-#undef web_assert
-/**
-    Assure that an assert condition is true
-    @param cond Boolean result of a conditional test
-    @stability Stable
- */
-extern void web_assert(bool cond);
-
-#elif ME_GOAHEAD_DEBUG
-    #define web_assert(C)       if (C) \
-								; \
-							else \
-								assertError(WEBS_L, "%s", #C)
-#else
-    #define web_assert(C)       if (1) ; else {}
-#endif
-
-PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...);
 /**
     Callback for emitting trace log output
     @param level Integer between 0 and 9. Zero is the lowest trace level used for the most important messages.
@@ -265,26 +205,6 @@ PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...);
  */
 typedef void (*WebsLogHandler)(int level, cchar *msg);
 
-/**
-    Emit an error message
-    @return Zero if successful
-    @stability Stable
-*/
-
-PUBLIC void flerror(char *file, int line, cchar *fmt, ...);
-#define web_error(...) flerror(__FILE__, __LINE__,__VA_ARGS__)
-/**
-    Open the log logging module
-    @return Zero if successful
-    @internal
- */
-PUBLIC int logOpen(void);
-
-/**
-    Close the log logging module
-    @internal
- */
-PUBLIC void logClose(void);
 
 /**
     Get the  log callback
@@ -301,84 +221,12 @@ PUBLIC WebsLogHandler logGetHandler(void);
  */
 PUBLIC WebsLogHandler logSetHandler(WebsLogHandler handler);
 
-/**
-    Get the current trace log level
-    @return Number between 0 and 9
-    @ingroup Webs
-    @stability Stable
- */
-PUBLIC int websGetLogLevel(void);
-
-/**
-    Set the current trace log level
-    @return Number between 0 and 9
-    @ingroup Webs
-    @stability Prototype
- */
-void websSetLogLevel(int level);
-#if ME_GOAHEAD_LOGFILE
-/**
-    Set the filename to save logging output
-    @param path Filename path to use
-    @stability Stable
- */
-PUBLIC void logSetPath(cchar *path);
-#endif
-/**
-    Emit a message to the log
-    @description This emits a message at the specified level. GoAhead filters logging messages by defining a verbosity
-    level at startup. Level 0 is the least verbose where only the most important messages will be output. Level 9 is the
-    Logging support is enabled by the MakeMe setting: "logging: true" which creates the ME_GOAHEAD_LOGGING define in me.h
-    most verbose. Level 2-4 are the most useful for debugging.
-    @param level Integer verbosity level (0-9).
-    @param fmt Printf style format string
-    @param ... Arguments for the format string
-    @stability Stable
- */
-PUBLIC void logmsgProc(int level, cchar *fmt, ...);
-
-/**
-    Emit a debug trace message to the log
-    @description This emits a message at the specified level. GoAhead filters logging messages by defining a verbosity
-    level at startup. Level 0 is the least verbose where only the most important messages will be output. Level 9 is the
-    most verbose. Level 2-4 are the most useful for debugging.
-    Debug trace support is enabled by the MakeMe setting: "tracing: true" which creates the ME_GOAHEAD_TRACING define in
-    me.h.
-    @param level Integer verbosity level (0-9).
-    @param fmt Printf style format string
-    @param ... Arguments for the format string
-    @stability Stable
- */
-PUBLIC void traceProc(int level, cchar *fmt, ...);
-
-#else /* ME_GOAHEAD_EXTLOG */
-/*
-    #define web_assert(C) if (1) ; else {}
-    #define web_error(l, ...) if (1) ; else {}
-    #define web_trace(l, ...) if (1) ; else {}
-    #define logOpen() if (1) ; else {}
-    #define logClose() if (1) ; else {}
-    #define websGetLogLevel() 0
-    #define web_logmsg(l, ...) if (1) ; else {}
-    #define logSetPath(p) if (1) ; else {}
-*/
 
 #define web_assert(C) 				plzassert(C)
 #define web_error(fmt, ...) 		if (websGetDebug()) { pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, WEBS_ERROR, fmt, ##__VA_ARGS__); } else {}
 #define web_error_proc(f,c,l,fmt, ...) 		if (websGetDebug()) { pl_zlog (f, c, l, MODULE_WEB, WEBS_ERROR, fmt, ##__VA_ARGS__); } else {}
 
-#if 0//ME_GOAHEAD_TRACING
-#define web_trace(l, fmt, ...) 		if (websGetDebug()) { \
-		if((l)) { \
-				pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__); \
-			} \
-		} else {}
-
-#define web_logmsg(l, fmt, ...) 	if (websGetDebug()) { \
-	if((l)) \
-		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__); \
-	} else {}
-#else
+#if ME_GOAHEAD_TRACING
 #define web_trace(l, fmt, ...) 		if (websGetDebug()) { \
 		if((l)&WEBS_RAW_MSG) { \
 			if(websGetLogLevel() & WEBS_RAW_MSG) { \
@@ -400,7 +248,10 @@ PUBLIC void traceProc(int level, cchar *fmt, ...);
 		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ZLOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__); \
 	else \
 		pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, ((l)&WEBS_LEVEL_MASK) + (ZLOG_LEVEL_INFO-2), fmt, ##__VA_ARGS__); \
-	} else {}
+	} else {}  
+#else
+#define web_trace(l, fmt, ...) 
+#define web_logmsg(l, fmt, ...) 
 #endif
 
 /**
@@ -432,9 +283,6 @@ PUBLIC int websGetLogLevel(void);
     @stability Prototype
  */
 void websSetLogLevel(int level);
-
-#endif /*! ME_GOAHEAD_EXTLOG */
-
 /*********************************** HTTP Codes *******************************/
 /*
     Standard HTTP/1.1 status codes
@@ -2074,13 +1922,14 @@ typedef struct Webs {
     int             routeCount;         /**< Route count limiter */
     ssize           rxLen;              /**< Rx content length */
     ssize           rxRemaining;        /**< Remaining content to read from client */
+    ssize           txRemaining;        /**< Remaining content to write */
     ssize           txLen;              /**< Tx content length header value */
     int             wid;                /**< Index into webs */
 #if ME_GOAHEAD_CGI
     char            *cgiStdin;          /**< Filename for CGI program input */
     int             cgifd;              /**< File handle for CGI program input */
 #endif
-#if !ME_ROM
+#if (ME_ROM==0)
     int             putfd;              /**< File handle to write PUT data */
 #endif
     int             docfd;              /**< File descriptor for document being served */
@@ -2437,6 +2286,15 @@ PUBLIC char *websEncode64Block(char *str, ssize len);
 PUBLIC char *websEscapeHtml(cchar *str);
 
 /**
+    Escape unsafe URI characters in a string using %CC substitution
+    @param str String to escape
+    @return An allocated block containing the escaped string. Caller must free.
+    @ingroup Webs
+    @stability Stable
+ */
+PUBLIC char *websEscapeUri(cchar *str);
+
+/**
     Complete a request with an error response
     @param wp Webs request object
     @param code HTTP status code
@@ -2516,6 +2374,8 @@ PUBLIC char *websGetCgiCommName(void);
  */
 PUBLIC cchar *websGetCookie(Webs *wp);
 
+// Internal
+PUBLIC char *websParseCookie(Webs *wp, char *name);
 /**
     Get a date as a string
     @description If sbuf is supplied, it is used to calculate the date. Otherwise, the current time is used.
@@ -2932,7 +2792,7 @@ PUBLIC void websPageSeek(Webs *wp, Offset offset, int origin);
  */
 PUBLIC int websPageStat(Webs *wp, WebsFileInfo *sbuf);
 
-#if !ME_ROM
+#if (ME_ROM==0)
 /**
     Process request PUT body data
     @description This routine is called by the core HTTP engine to process request PUT data.

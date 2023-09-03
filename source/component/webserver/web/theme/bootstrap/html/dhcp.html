@@ -145,7 +145,7 @@
 							<script type="text/javascript">
 								function interface_tbl() {
 									var itbl = "";
-									$.get("/goform/interface-tbl", function (data, status) {
+									$.get("/action/interface-tbl", function (data, status) {
 										console.log("==============");
 										console.log(data);
 										var data_json = JSON.parse(data);
@@ -302,7 +302,7 @@
 					function dhcp_onaction(op) {
 						//使用form对象的submit()方法，实现提交。
 						//document.setdhcp.submit(); 
-						///goform/changepasswod     
+						///action/changepasswod     
 						var argv;
 						var stxhr = new XHR();
 						if (op == "GET") {
@@ -329,7 +329,7 @@
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
 						}
-						stxhr.post("/goform/setdhcp", argv,
+						stxhr.post("/action/setdhcp", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);
@@ -481,7 +481,7 @@
 										</td>";
 									utbl += "</tr>";
 
-								$.get("/goform/dhcp-client", function (data, status) {
+								$.get("/action/dhcp-client", function (data, status) {
 									//console.log("data:" + data);
 									var data_json = JSON.parse(data);
 									$.each(data_json, function (index, info) {
@@ -600,7 +600,7 @@
 
 						$("#add_waiting").css("display", "block");
 						setTimeout(function () { $("#add_waiting").css("display", "none") }, 5000);
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x, json) {
 								console.log("json:" + json);
 								console.log(x);

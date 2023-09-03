@@ -66,12 +66,31 @@ int zpl_media_channel_record_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANN
             return ERROR;
         }
         mediachn->p_record.enable = enable; 
+        if(mediachn->media_type == ZPL_MEDIA_AUDIO)
+        {
+            zpl_media_audio_channel_t *audio = mediachn->media_param.audio_media.halparam;
+            if(audio && audio->input.bEnable)
+            {
+                zpl_media_audio_encode_set(audio, audio->input.clock_rate, audio->input.channel_cnt, audio->input.bits_per_sample, audio->input.framerate);
+                zpl_media_audio_encode_start(mediachn->t_master, audio);
+                zpl_media_audio_input_connect_encode(audio, ZPL_MEDIA_CONNECT_SW);
+            }
+        }
         ZPL_MEDIA_CHANNEL_UNLOCK(mediachn);
         return OK;
     }
     else
     {
         mediachn->p_record.enable = enable; 
+        if(mediachn->media_type == ZPL_MEDIA_AUDIO)
+        {
+            zpl_media_audio_channel_t *audio = mediachn->media_param.audio_media.halparam;
+            if(audio && audio->input.bEnable)
+            {
+                zpl_media_audio_input_connect_encode(audio, ZPL_MEDIA_CONNECT_NONE);
+                zpl_media_audio_encode_stop(audio);
+            }
+        }
         if(mediachn->p_record.cbid)
         { 
             zpl_media_channel_client_start(channel, channel_index, mediachn->p_record.cbid, zpl_false);

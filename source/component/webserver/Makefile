@@ -5,9 +5,7 @@ include config.mk
 WEBGUI_DEBUG=false
 WEBGUI_TRACE=true
 
-export THEME_MATERIAL=false
-export THEME_BOOTSTRAP=false
-export THEME_V9UI=false
+export THEME_BOOTSTRAP=true
 
 ifeq ($(WEBGUI_DEBUG),true)
 WEB_DEFINE = -DME_DEBUG=1 -DME_GOAHEAD_LOGGING=1 -DME_GOAHEAD_EXTLOG=1 -D__WEBGUI_DEBUG -DWEBGUI_SRC_DIR=\"$(WEBGUI_ROOT)\" 
@@ -24,16 +22,8 @@ WEB_DEFINE += -DME_GOAHEAD_TRACING=0
 endif
 
 
-ifeq ($(THEME_MATERIAL),true)
-WEB_DEFINE += -DTHEME_MATERIAL
-endif
-
 ifeq ($(THEME_BOOTSTRAP),true)
 WEB_DEFINE += -DTHEME_BOOTSTRAP
-endif
-
-ifeq ($(THEME_V9UI),true)
-WEB_DEFINE += -DTHEME_V9UI
 endif
 
 OBJS_DIR = $(BASE_ROOT)/$(ZPL_OBJ_DIR)/$(WEBGUI_ROOT)
@@ -76,7 +66,7 @@ goahead_openssl_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(goahead_openssl_OBJS)
 endif
 gopass_DIR = $(BASE_ROOT)/$(WEBGUI_ROOT)/src/utils
 gopass_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(gopass_OBJS))
-
+gopass_UTIL_MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(gopass_util))
 # It's a kind of magic...
 DEP_H = me.h embedtls.h mbedtls.h osdep.h
 
@@ -182,7 +172,7 @@ $(OBJS_DIR)/%.o: $(APP_JST_DIR)/%.c
 #
 $(LIBS) : $(DEP_H) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) $(goahead_mbedtls_MODULE_OBJS) \
 		  $(goahead_openssl_MODULE_OBJS) $(gopass_MODULE_OBJS) $(ZPL_WEBSERVER_MODULE_OBJS) \
-		  $(ZPL_APPLICATION_MODULE_WEB_OBJS) $(ZPL_APPLICATION_MODULE_JST_OBJS)
+		  $(ZPL_APPLICATION_MODULE_WEB_OBJS) $(ZPL_APPLICATION_MODULE_JST_OBJS) 
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) \
 	 $(goahead_mbedtls_MODULE_OBJS) $(goahead_openssl_MODULE_OBJS) \
 	 $(gopass_MODULE_OBJS) $(ZPL_WEBSERVER_MODULE_OBJS) $(ZPL_APPLICATION_MODULE_WEB_OBJS) $(ZPL_APPLICATION_MODULE_JST_OBJS)
@@ -200,8 +190,17 @@ ifeq ($(ME_COM_OPENSSL),1)
 -include $(goahead_openssl_MODULE_OBJS:.o=.d)
 endif
 -include $(gopass_MODULE_OBJS:.o=.d)
+-include $(gopass_util:.o=.d)
 
+LDCLFLAG = $(ZPLOS_LDLIBS) -L$(ZPL_INSTALL_LIB_DIR) -lbase -los -lshell -lm -lgohead
 
+$(WEBBIN) : $(DEP_H) $(MODULE_OBJS) $(mbedtls_MODULE_OBJS) $(goahead_mbedtls_MODULE_OBJS) $(goahead_openssl_MODULE_OBJS)
+	$(CC) $(gopass_UTIL_MODULE_OBJS) $(ZPLCFLAGS) $(LDCLFLAG) -o $(WEBBIN) 
+
+taget: $(WEBBIN)
+	@install -d ${ZPL_INSTALL_SBIN_DIR}
+	@install -m 755 ${WEBBIN} ${ZPL_INSTALL_SBIN_DIR} 
+	@$(STRIP) $(ZPL_INSTALL_SBIN_DIR)/$(WEBBIN)
 
 ifeq ($(ME_COM_SSL),1)
 sslinstall: 
@@ -245,7 +244,7 @@ make_prepare:
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
 	done
 #
-lib: $(LIBS)
+lib: $(LIBS) 
 
 
 obj: $(MODULE_OBJS) $(MODULE_LIBOBJS)
@@ -275,4 +274,4 @@ objclean:
 
 all: lib install
 
-.PHONY:	obj all lib install objclean clean webclean webinstall sslinstall sslclean make_prepare
+.PHONY:	obj all lib install objclean clean webclean webinstall sslinstall sslclean make_prepare taget

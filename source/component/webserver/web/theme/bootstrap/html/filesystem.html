@@ -77,7 +77,7 @@
 						$("#upgrade_waiting").css("display", "block");
 						setTimeout(function () { $("#upgrade_waiting").css("display", "none") }, interval);
 
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x) {
 								if (x.responseText == "ERROR") {
 									clearTimeout();
@@ -122,7 +122,7 @@
 						//var stxhr = new XHR();
 						function filelist_tbl() {
 							var utbl = "";
-							$.get("/goform/file-list", function (data, status) {
+							$.get("/action/file-list", function (data, status) {
 								//console.log(data);
 								console.log("json:" + data);
 								var n;
@@ -279,7 +279,7 @@
 					argv = "ACTION=filetbl&BTNID=" + self.id + "&" + argv + name;
 					$("#handle_waiting").css("display", "block");
 					setTimeout(function () { $("#handle_waiting").css("display", "none") }, interval);
-					stxhr.post("/goform/button_onclick", argv,
+					stxhr.post("/action/button_onclick", argv,
 						function (x) {
 							//console.log("file_handle response x:");
 							//console.log(x);

@@ -36,8 +36,10 @@ ME_COM_OSDEP          = 0
 #else
 #ME_COM_SSL            = 0
 #endif
+#登陆后自定义html页面
 ME_GOAHEAD_LOGIN_HTML = 0
-ME_GOAHEAD_LOGIN_JS   = 1
+#登陆认证采用js交互，不然就使用route配置信息完成页面跳转
+ME_GOAHEAD_LOGIN_JS   = 0
 ME_GOAHEAD_LOGIN_MAX   = 2
 #
 #
@@ -63,7 +65,8 @@ ME_DFLAGS = -D_REENTRANT -DPIC -DME_COM_COMPILER=$(ME_COM_COMPILER) \
 			-DME_GOAHEAD_LOGIN_HTML=$(ME_GOAHEAD_LOGIN_HTML) \
 			-DME_GOAHEAD_LOGIN_JS=$(ME_GOAHEAD_LOGIN_JS) \
 			-DME_GOAHEAD_LOGIN_MAX=$(ME_GOAHEAD_LOGIN_MAX) \
-			-D_FILE_OFFSET_BITS=64 -D_FILE_OFFSET_BITS=64 -DMBEDTLS_USER_CONFIG_FILE=\"embedtls.h\"
+			-D_FILE_OFFSET_BITS=64 -D_FILE_OFFSET_BITS=64 \
+			-DMBEDTLS_USER_CONFIG_FILE=\"embedtls.h\"
 #OS
 
 OBJS += action.o
@@ -98,7 +101,8 @@ endif
 
 #OBJS += goahead.o
 #OBJS += gopass.o
-gopass_OBJS += gopass.o 
+gopass_util += gopass-util.o 
+gopass_OBJS += gopass.o  gopass-util.o 
 #src/utils/gopass.c
 WEBOBJS += web_app.o
 WEBOBJS += web_api.o
@@ -113,20 +117,6 @@ ifeq ($(strip $(ZPL_WEBAPP_MODULE)),true)
 #jst
 APPJSTOBJS += web_html_jst.o
 APPJSTOBJS += web_system_jst.o
-APPJSTOBJS += web_port_jst.o
-APPJSTOBJS += web_vlan_jst.o
-APPJSTOBJS += web_interface_jst.o
-APPJSTOBJS += web_firewall_jst.o
-APPJSTOBJS += web_arp_jst.o
-APPJSTOBJS += web_dhcp_jst.o
-APPJSTOBJS += web_dns_jst.o
-APPJSTOBJS += web_dos_jst.o
-APPJSTOBJS += web_mac_jst.o
-APPJSTOBJS += web_ppp_jst.o
-APPJSTOBJS += web_qos_jst.o
-APPJSTOBJS += web_serial_jst.o
-APPJSTOBJS += web_tunnel_jst.o
-APPJSTOBJS += web_route_jst.o
 
 #form and action
 
@@ -157,7 +147,8 @@ APPWEBOBJS += web_db_html.o
 endif
 endif
 
+WEBBIN = web-gopass
 #############################################################################
 # LIB
 ###########################################################################
-LIBS = libgohead.a
+LIBS = libgoahead.a

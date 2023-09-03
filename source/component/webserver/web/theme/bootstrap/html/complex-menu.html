@@ -29,7 +29,7 @@
 		var have_wireless = true;
 
 			function web_define() {
-				$.get("/goform/web-define", function (data, status) {
+				$.get("/action/web-define", function (data, status) {
 				console.log("==============");
 				console.log(data);
 				var data_json = JSON.parse(data);
@@ -118,7 +118,7 @@
                     var argv;
                     var stxhr = new XHR();
                     argv = "ACTION=system&BTNID=logout";
-                    stxhr.post("/goform/logout", argv,
+                    stxhr.post("/action/logout", argv,
                         function (x) {
                             console.log(x);
                         },

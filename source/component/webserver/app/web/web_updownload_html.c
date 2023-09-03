@@ -37,12 +37,12 @@
 */
 
 #if ME_GOAHEAD_UPLOAD
-#ifndef THEME_V9UI
+
 static char *web_upgrade_file = NULL;
-#endif /* THEME_V9UI */
 
 
-#ifndef THEME_V9UI
+
+
 static int web_filelist_count()
 {
 	DIR *dir = NULL;
@@ -235,7 +235,7 @@ static int web_handle_upgrade(Webs *wp, void *p)
 		   strval ? strval:"null", web_upgrade_file? web_upgrade_file:"null");
 	return ERROR; //;
 }
-#endif /* THEME_V9UI */
+
 /*
  Dump the file upload details. Don't actually do anything with the uploaded file.
  */
@@ -362,7 +362,7 @@ static void web_action_upload(Webs *wp, char *path, char *query)
 	return ;
 }
 #ifdef ZPL_APP_MODULE
-#ifdef THEME_V9UI
+
 static int pic_upload_cb(Webs *wp, WebsUpload *up, void *p)
 {
 	char json[512];
@@ -389,7 +389,7 @@ static int pic_upload_cb(Webs *wp, WebsUpload *up, void *p)
 	web_return_application_json(wp, json);
 	return OK;
 }
-#endif /* THEME_V9UI */
+
 #endif/* ZPL_APP_MODULE */
 static int other_upload_cb(Webs *wp, WebsUpload *up, void *p)
 {
@@ -813,17 +813,17 @@ int web_updownload_app(void)
 
 	websDefineAction("upload", web_action_upload);
 	websDefineAction("upgrade", web_action_upload);
-#ifndef THEME_V9UI
+
 	websFormDefine("file-list", web_file_list);
 
 	web_button_add_hook("filetbl", "delete", web_handle_file_tbl, NULL);
 	web_button_add_hook("filetbl", "install", web_handle_file_tbl, NULL);
 	web_button_add_hook("filetbl", "webupgrade", web_handle_upgrade, NULL);
-#endif /* THEME_V9UI */
+
 #ifdef ZPL_APP_MODULE
-#ifdef THEME_V9UI
+
 	web_upload_add_hook("uploadpic", "pic", pic_upload_cb, NULL);
-#endif /* THEME_V9UI */
+
 #endif/* ZPL_APP_MODULE */
 
 	web_upload_add_hook("uploadir", "dir", dir_upload_cb, NULL);

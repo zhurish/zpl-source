@@ -77,7 +77,7 @@ typedef module_t zlog_proto_t;
 #define LOG_MSG_SIZE	1024
 #define LOG_FILE_CHK_TIME	10
 
-#define ZLOG_REAL_PATH		RSYSLOGDIR"/"
+#define ZLOG_REAL_PATH		REAL_SYSLOGDIR"/"
 #define ZLOG_VIRTUAL_PATH 	DAEMON_LOG_FILE_DIR"/"
 
 #define ZLOG_FILE_DEFAULT 	"sw-log.log"

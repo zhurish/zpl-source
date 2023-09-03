@@ -90,6 +90,7 @@ typedef enum  {
 
 #define ZPL_AUDIO_FRAMERATE_DEFAULT     ZPL_AUDIO_FRAMERATE_50
 #define ZPL_AUDIO_CLOCK_RATE_DEFAULT    ZPL_AUDIO_SAMPLE_RATE_8000
+#define ZPL_AUDIO_BIT_WIDTH_DEFAULT    ZPL_AUDIO_BIT_WIDTH_16
 
 const char *zpl_media_format_name(int key);
 /* 获取视频分辨率大小 resolution ratio */

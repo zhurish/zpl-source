@@ -25,21 +25,16 @@
 
 web_app_t *web_app = NULL;
 
-static int
-web_app_start (web_app_t *web);
+static int web_app_start(web_app_t *web);
 
-static int
-web_app_task (void *argv);
+static int web_app_task(void *argv);
 
-static int
-web_app_html_init (web_app_t *web);
-//static int web_app_html_exit(web_app_t *web);
+static int web_app_html_init(web_app_t *web);
 
-int
-web_app_module_init ()
+int web_app_module_init()
 {
 	web_app = XMALLOC(MTYPE_WEB, sizeof(web_app_t));
-	memset (web_app, 0, sizeof(web_app_t));
+	memset(web_app, 0, sizeof(web_app_t));
 
 	web_app->webtype = WEB_TYPE_HOME_WIFI;
 	web_app->webos = WEB_OS_OPENWRT;
@@ -64,24 +59,24 @@ web_app_module_init ()
 		if (web_app->address && web_app->port)
 		{
 			char tmp[128];
-			memset (tmp, 0, sizeof(tmp));
-			snprintf (tmp, sizeof(tmp), "http://%s:%d", web_app->address,
-					  web_app->port);
+			memset(tmp, 0, sizeof(tmp));
+			snprintf(tmp, sizeof(tmp), "http://%s:%d", web_app->address,
+					 web_app->port);
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (web_app->address && !web_app->port)
 		{
 			char tmp[128];
-			memset (tmp, 0, sizeof(tmp));
-			snprintf (tmp, sizeof(tmp), "http://%s:%d", web_app->address,
-			os_netservice_port_get("web_port"));
+			memset(tmp, 0, sizeof(tmp));
+			snprintf(tmp, sizeof(tmp), "http://%s:%d", web_app->address,
+					 os_netservice_port_get("web_port"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->port)
 		{
 			char tmp[128];
-			memset (tmp, 0, sizeof(tmp));
-			snprintf (tmp, sizeof(tmp), "http://*:%d", web_app->port);
+			memset(tmp, 0, sizeof(tmp));
+			snprintf(tmp, sizeof(tmp), "http://*:%d", web_app->port);
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else
@@ -93,24 +88,24 @@ web_app_module_init ()
 		if (web_app->address && web_app->ssl_port)
 		{
 			char tmp[128];
-			memset (tmp, 0, sizeof(tmp));
-			snprintf (tmp, sizeof(tmp), "https://%s:%d", web_app->address,
-					  web_app->ssl_port);
+			memset(tmp, 0, sizeof(tmp));
+			snprintf(tmp, sizeof(tmp), "https://%s:%d", web_app->address,
+					 web_app->ssl_port);
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (web_app->address && !web_app->ssl_port)
 		{
 			char tmp[128];
-			memset (tmp, 0, sizeof(tmp));
-			snprintf (tmp, sizeof(tmp), "https://%s:%d", web_app->address,
-			os_netservice_port_get("web_sslport"));
+			memset(tmp, 0, sizeof(tmp));
+			snprintf(tmp, sizeof(tmp), "https://%s:%d", web_app->address,
+					 os_netservice_port_get("web_sslport"));
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else if (!web_app->address && web_app->ssl_port)
 		{
 			char tmp[128];
-			memset (tmp, 0, sizeof(tmp));
-			snprintf (tmp, sizeof(tmp), "https://*:%d", web_app->ssl_port);
+			memset(tmp, 0, sizeof(tmp));
+			snprintf(tmp, sizeof(tmp), "https://*:%d", web_app->ssl_port);
 			web_app->endpoints = XSTRDUP(MTYPE_WEB_DOC, tmp);
 		}
 		else
@@ -120,40 +115,39 @@ web_app_module_init ()
 
 	if (web_app->web_route)
 		XFREE(MTYPE_WEB_ROUTE, web_app->web_route);
-	if(WEBGUI_ROUTE)
+	if (WEBGUI_ROUTE)
 		web_app->web_route = XSTRDUP(MTYPE_WEB_ROUTE, WEBGUI_ROUTE);
 
 	if (web_app->web_auth)
 		XFREE(MTYPE_WEB_AUTH, web_app->web_auth);
-	if(WEBGUI_AUTH)
+	if (WEBGUI_AUTH)
 		web_app->web_auth = XSTRDUP(MTYPE_WEB_AUTH, WEBGUI_AUTH);
 #if ME_GOAHEAD_LOGIN_HTML
 	if (web_app->web_login)
 		XFREE(MTYPE_WEB_DOC, web_app->web_login);
-	if(WEB_LOGIN_HTML)
+	if (WEB_LOGIN_HTML)
 		web_app->web_login = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGIN_HTML);
 
 	if (web_app->web_logout)
 		XFREE(MTYPE_WEB_DOC, web_app->web_logout);
-	if(WEB_LOGOUT_HTML)
+	if (WEB_LOGOUT_HTML)
 		web_app->web_logout = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGOUT_HTML);
 
 	if (web_app->web_main)
 		XFREE(MTYPE_WEB_DOC, web_app->web_main);
-	if(WEB_MAIN_HTML)
+	if (WEB_MAIN_HTML)
 		web_app->web_main = XSTRDUP(MTYPE_WEB_DOC, WEB_MAIN_HTML);
 #endif
 	WEB_DEBUG_ON(MSG);
 	WEB_DEBUG_ON(DETAIL);
 	WEB_DEBUG_ON(EVENT);
-	_web_app_debug = _WEB_DEBUG_MSG|_WEB_DEBUG_DETAIL|_WEB_DEBUG_EVENT;
+	_web_app_debug = _WEB_DEBUG_MSG | _WEB_DEBUG_DETAIL | _WEB_DEBUG_EVENT;
 
-	web_app_start (web_app);
+	web_app_start(web_app);
 	return OK;
 }
 
-int
-web_app_module_exit ()
+int web_app_module_exit()
 {
 	if (web_app)
 	{
@@ -206,8 +200,7 @@ web_app_module_exit ()
 	return OK;
 }
 
-int
-web_app_module_task_init ()
+int web_app_module_task_init()
 {
 	zassert(web_app != NULL);
 	if (web_app->taskid == 0)
@@ -222,36 +215,34 @@ web_app_module_task_init ()
 	return ERROR;
 }
 
-int
-web_app_module_task_exit ()
+int web_app_module_task_exit()
 {
 	zassert(web_app != NULL);
 	web_app->finished = zpl_true;
 	return OK;
 }
 
-static int
-web_app_init (web_app_t *web)
+static int web_app_init(web_app_t *web)
 {
-	websUploadSetDir (WEB_UPLOAD_BASE);
+	websUploadSetDir(WEB_UPLOAD_BASE);
 #if ME_GOAHEAD_LOGIN_HTML
-	websSetAutoLoginHtml (0, web->web_login);
-	websSetAutoLoginHtml (1, web->web_main);
-	websSetAutoLoginHtml (2, web->web_logout);
+	websSetAutoLoginHtml(0, web->web_login);
+	websSetAutoLoginHtml(1, web->web_main);
+	websSetAutoLoginHtml(2, web->web_logout);
 #endif
-	if (websOpen (web->documents, web->web_route) < 0)
+	if (websOpen(web->documents, web->web_route) < 0)
 	{
-		zlog_err (MODULE_WEB, "Cannot initialize server. Exiting.");
+		zlog_err(MODULE_WEB, "Cannot initialize server. Exiting.");
 		return -1;
 	}
 #if ME_GOAHEAD_AUTH
-	if (websLoad (web->web_auth) < 0)
+	if (websLoad(web->web_auth) < 0)
 	{
-		zlog_err (MODULE_WEB,"Cannot load %s", web->web_auth);
+		zlog_err(MODULE_WEB, "Cannot load %s", web->web_auth);
 		return -1;
 	}
 #endif
-	if (websListen (web->endpoints) < 0)
+	if (websListen(web->endpoints) < 0)
 	{
 		return -1;
 	}
@@ -259,97 +250,36 @@ web_app_init (web_app_t *web)
 	return 0;
 }
 
-#if !ME_GOAHEAD_EXTLOG
-static void webLogDefaultHandler(zpl_uint32 flags, cchar *buf)
+static PUBLIC bool web_app_VerifyPassword(Webs *wp)
 {
-/*    char    prefix[ME_GOAHEAD_LIMIT_STRING];
-
-    if (logFd >= 0) {
-        if (flags & WEBS_RAW_MSG) {
-            write(logFd, buf, (int) slen(buf));
-        } else {
-            fmt(prefix, sizeof(prefix), "%s: %d: ", ME_NAME, flags & WEBS_LEVEL_MASK);
-            write(logFd, prefix, (int) slen(prefix));
-            write(logFd, buf, (int) slen(buf));
-            write(logFd, "\n", 1);
-#if ME_WIN_LIKE || ME_UNIX_LIKE
-            if (flags & WEBS_ERROR_MSG && websGetBackground()) {
-                syslog(ZLOG_LEVEL_ERR, "%s", buf);
-            }
-#endif
-        }
-    }*/
-
-	if(flags & WEBS_ASSERT_MSG)
-	{
-		//extern void pl_zlog (__FILE__, __FUNCTION__, __LINE__, MODULE_WEB, (flags & WEBS_LEVEL_MASK), "%s", buf);
-		zlog_err(MODULE_WEB, "%s", buf);
-		return;
-	}
-	if(flags & WEBS_ERROR_MSG)
-	{
-		zlog_err(MODULE_WEB, "%s", buf);
-		return;
-	}
-	if(flags & WEBS_TRACE_MSG)
-	{
-		zlog_trap(MODULE_WEB, "%s", buf);
-		return;
-	}
-	switch(flags & WEBS_LEVEL_MASK)
-	{
-		case ZLOG_LEVEL_ERR:
-			zlog_err(MODULE_WEB, "%s", buf);
-			break;
-		case ZLOG_LEVEL_WARNING:
-			zlog_warn(MODULE_WEB, "%s", buf);
-			break;
-		case ZLOG_LEVEL_INFO:
-			zlog_info(MODULE_WEB, "%s", buf);
-			break;
-		case ZLOG_LEVEL_NOTICE:
-			zlog_notice(MODULE_WEB, "%s", buf);
-			break;
-		case ZLOG_LEVEL_DEBUG:
-			zlog_debug(MODULE_WEB, "%s", buf);
-			break;
-		case LOG_TRAP:
-			zlog_trap(MODULE_WEB, "%s", buf);
-			break;
-		default:
-			break;
-	}
+    bool success = true;
+    web_trace(WEBS_NOTICE, "User \"%s\":\"%s\" authenticated", wp->username, wp->user->password);
+    return success;
 }
-#endif /* ME_GOAHEAD_EXTLOG */
 
-static int
-web_app_start (web_app_t *web)
+
+static int web_app_start(web_app_t *web)
 {
 	zassert(web != NULL);
-	websSetDebug (1);
-#if ME_GOAHEAD_LOGFILE
-	logSetPath ("stdout:2");
-#endif /* ME_GOAHEAD_EXTLOG */
-	websSetLogLevel (WEBS_TRAP);
+	websSetDebug(1);
+
+	websSetLogLevel(WEBS_TRAP);
 	websAccessControlSet(ACCESS_CONTROL_ALLOW_ORIGIN);
 	websAccessControlSet(ACCESS_CONTROL_ALLOW_METHODS);
 	websAccessControlSet(ACCESS_CONTROL_ALLOW_HEADERS);
-#if !ME_GOAHEAD_EXTLOG
-	logSetHandler(webLogDefaultHandler);
-#endif /* ME_GOAHEAD_EXTLOG */
-	web_app_init (web);
 
-	web_app_html_init (web);
+	web_app_init(web);
+	websSetPasswordStoreVerify(web_app_VerifyPassword);
+	web_app_html_init(web);
 	web->init = zpl_true;
 	return OK;
 }
 
-static int
-web_app_exit (web_app_t *web)
+static int web_app_exit(web_app_t *web)
 {
 	if (web->enable && web->init)
 	{
-		websClose ();
+		websClose();
 		web->enable = zpl_false;
 		web->finished = zpl_false;
 		web->init = zpl_false;
@@ -366,8 +296,7 @@ web_app_exit (web_app_t *web)
  * home:/etc/goahead
  *
  */
-static int
-web_app_task (void *argv)
+static int web_app_task(void *argv)
 {
 	zassert(argv != NULL);
 	web_app_t *web = argv;
@@ -375,26 +304,26 @@ web_app_task (void *argv)
 	web->enable = zpl_true;
 	while (!web->enable)
 	{
-		os_sleep (1);
+		os_sleep(1);
 	}
-	//web_app_start (web);
+	// web_app_start (web);
 	while (OS_TASK_TRUE())
 	{
 		if (!web->enable)
 		{
-			os_sleep (1);
+			os_sleep(1);
 			continue;
 		}
 		if (web->init == zpl_false)
 		{
-			web_app_init (web);
+			web_app_init(web);
 		}
-		websServiceEvents (&web->finished);
+		websServiceEvents(&web->finished);
 		if (web->reload)
 		{
-			web_app_exit (web);
-			os_sleep (1);
-			web_app_init (web);
+			web_app_exit(web);
+			os_sleep(1);
+			web_app_init(web);
 		}
 		else
 		{
@@ -402,59 +331,41 @@ web_app_task (void *argv)
 				break;
 		}
 	}
-	web_app_exit (web);
+	web_app_exit(web);
 	return OK;
 }
 
-static int
-web_app_html_init (web_app_t *web)
+static int web_app_html_init(web_app_t *web)
 {
-	web_button_cb_init ();
-	web_button_init ();
+	web_button_cb_init();
+	web_button_init();
 
-	web_updownload_cb_init ();
-	//web_login_app ();
+	web_updownload_cb_init();
 #ifdef ZPL_WEBAPP_MODULE
-	web_system_jst_init ();
-	web_html_jst_init ();
-	web_arp_jst_init ();
-#ifdef ZPL_DHCP_MODULE
-	web_dhcp_jst_init ();
-#endif
-	web_dns_jst_init ();
-	web_dos_jst_init ();
-	web_firewall_jst_init ();
-	web_interface_jst_init ();
-	web_mac_jst_init ();
-	web_port_jst_init ();
-	web_ppp_jst_init ();
-	web_qos_jst_init ();
-	web_route_jst_init ();
-	web_serial_jst_init ();
-	web_tunnel_jst_init ();
-	web_vlan_jst_init ();
+	web_system_jst_init();
+	web_html_jst_init();
 
-	web_updownload_app ();
-	web_admin_app ();
+	web_updownload_app();
+	web_admin_app();
 #ifdef ZPL_SERVICE_SNTPC
-	web_sntp_app ();
+	web_sntp_app();
 #endif
 #ifdef ZPL_SERVICE_SYSLOG
-	web_syslog_app ();
+	web_syslog_app();
 #endif
 
-	web_network_app ();
+	web_network_app();
 	web_netservice_app();
 
 #ifdef ZPL_WIFI_MODULE
-	web_wireless_app ();
+	web_wireless_app();
 #endif
 
 #ifdef APP_X5BA_MODULE
-	web_switch_app ();
-	web_sip_app ();
-	web_factory_app ();
-	web_card_app ();
+	web_switch_app();
+	web_sip_app();
+	web_factory_app();
+	web_card_app();
 #endif
 
 #ifdef APP_V9_MODULE
@@ -466,8 +377,9 @@ web_app_html_init (web_app_t *web)
 	web_db_app();
 #endif
 	web_upgrade_app();
-	web_system_app ();
+	web_system_app();
 #endif
+
 
 	return OK;
 }
@@ -479,4 +391,3 @@ web_app_html_init (web_app_t *web)
  return OK;
  }
  */
-

@@ -504,22 +504,17 @@ DEFUN (media_channel_point_osd,
 
 DEFUN (media_channel_audio_enable,
 		media_channel_audio_enable_cmd,
-		"media channel audio <0-1> (input|output)" ,
+		"media channel audio <0-1>" ,
 		MEDIA_CHANNEL_STR
 		"Audio Channel Configure\n"
-		"Channel Number Select\n"
-		"Input Channel\n"
-		"Output Channel\n")
+		"Channel Number Select\n")
 {
 	int ret = ERROR;
 	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
 	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_INPUT;
 	
 	channel = ZPL_MEDIA_CHANNEL_AUDIO_0 + atoi(argv[0]);
-	if(strstr(argv[1],"input"))
-		channel_index = ZPL_MEDIA_CHANNEL_TYPE_INPUT;
-	else if(strstr(argv[1],"output"))
-		channel_index = ZPL_MEDIA_CHANNEL_TYPE_OUTPUT;
+	channel_index = ZPL_MEDIA_CHANNEL_TYPE_INPUT;
 
 	if(zpl_media_channel_lookup(channel,  channel_index) == NULL)
 	{
@@ -534,11 +529,13 @@ DEFUN (media_channel_audio_enable,
 
 DEFUN_HIDDEN (media_channel_audio_enable_alsa,
 		media_channel_audio_enable_alsa_cmd,
-		"media channel audio <0-1> (input|output) (destroy|start|stop)" ,
+		"media channel audio <0-1> (input|encode|decode|output) (destroy|start|stop)" ,
 		MEDIA_CHANNEL_STR
 		"Audio Channel Configure\n"
 		"Channel Number Select\n"
 		"Input Channel\n"
+		"Encode Channel\n"
+		"Decode Channel\n"
 		"Output Channel\n"
 		"Destroy\n"
 		"Start\n"
@@ -547,12 +544,9 @@ DEFUN_HIDDEN (media_channel_audio_enable_alsa,
 	int ret = ERROR;
 	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
 	ZPL_MEDIA_CHANNEL_TYPE_E channel_index = ZPL_MEDIA_CHANNEL_TYPE_INPUT;
-	
+	zpl_media_audio_channel_t * audio = NULL;
 	channel = ZPL_MEDIA_CHANNEL_AUDIO_0 + atoi(argv[0]);
-	if(strstr(argv[1],"input"))
-		channel_index = ZPL_MEDIA_CHANNEL_TYPE_INPUT;
-	else if(strstr(argv[1],"output"))
-		channel_index = ZPL_MEDIA_CHANNEL_TYPE_OUTPUT;
+	channel_index = ZPL_MEDIA_CHANNEL_TYPE_INPUT;	
 
 	if(strstr(argv[2],"destroy"))
 	{
@@ -576,19 +570,50 @@ DEFUN_HIDDEN (media_channel_audio_enable_alsa,
 		}
 		else
 		{
-			if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
+			audio =  zpl_media_audio_lookup(channel);
+			if(audio)
 			{
-				if(!ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
-					ret = zpl_media_channel_start(channel,  channel_index);
-				else
+				if(strncmp(argv[1],"input", 3) == 0)
 				{
-					vty_out(vty, " media channel %d %s is already start %s", channel, argv[1], VTY_NEWLINE);
-				}	
+					if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
+					{
+						if(!ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
+							ret = zpl_media_channel_start(channel,  channel_index);
+						else
+						{
+							vty_out(vty, " media channel %d %s is already start %s", channel, argv[1], VTY_NEWLINE);
+						}	
+					}
+					else
+					{
+						vty_out(vty, " media channel %d %s is not active %s", channel, argv[1], VTY_NEWLINE);
+					}	
+				}
+				else if(strncmp(argv[1],"encode", 3) == 0)
+				{
+					zpl_media_audio_encode_set(audio, audio->input.clock_rate,
+								audio->input.channel_cnt, 
+								audio->input.bits_per_sample, 
+								audio->input.framerate);
+					zpl_media_audio_encode_start(audio->t_master, audio);	
+				}
+				else if(strncmp(argv[1],"decode", 3) == 0)
+				{
+					zpl_media_audio_decode_set(audio, audio->input.clock_rate,
+								audio->input.channel_cnt, 
+								audio->input.bits_per_sample, 
+								audio->input.framerate);
+					zpl_media_audio_decode_start(audio->t_master, audio);	
+				}
+				else if(strncmp(argv[1],"output", 3) == 0)
+				{
+					zpl_media_audio_output_set(audio, audio->input.clock_rate,
+								audio->input.channel_cnt, 
+								audio->input.bits_per_sample, 
+								audio->input.framerate);
+					zpl_media_audio_output_start(audio->t_master, audio);	
+				}
 			}
-			else
-			{
-				vty_out(vty, " media channel %d %s is not active %s", channel, argv[1], VTY_NEWLINE);
-			}	
 		}
 	}
 	else if(strstr(argv[2],"stop"))
@@ -599,18 +624,37 @@ DEFUN_HIDDEN (media_channel_audio_enable_alsa,
 		}
 		else
 		{
-			if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
+			audio =  zpl_media_audio_lookup(channel);
+			if(audio)
 			{
-				if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
-					ret = zpl_media_channel_stop(channel,  channel_index);
-				else
+				if(strncmp(argv[1],"input", 3) == 0)
 				{
-					vty_out(vty, " media channel %d %s is not start %s", channel, argv[1], VTY_NEWLINE);
-				}	
-			}
-			else
-			{
-				vty_out(vty, " media channel %d %s is not active %s", channel, argv[1], VTY_NEWLINE);
+					if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_ACTIVE))
+					{
+						if(ZPL_TST_BIT(zpl_media_channel_state(channel,  channel_index), ZPL_MEDIA_STATE_START))
+							ret = zpl_media_channel_stop(channel,  channel_index);
+						else
+						{
+							vty_out(vty, " media channel %d %s is not start %s", channel, argv[1], VTY_NEWLINE);
+						}	
+					}
+					else
+					{
+						vty_out(vty, " media channel %d %s is not active %s", channel, argv[1], VTY_NEWLINE);
+					}	
+				}
+				else if(strncmp(argv[1],"encode", 3) == 0)
+				{
+					zpl_media_audio_encode_stop(audio);	
+				}
+				else if(strncmp(argv[1],"decode", 3) == 0)
+				{
+					zpl_media_audio_decode_stop(audio);	
+				}
+				else if(strncmp(argv[1],"output", 3) == 0)
+				{
+					zpl_media_audio_output_stop(audio);	
+				}
 			}		
 		}
 	}
@@ -631,11 +675,11 @@ DEFUN (media_channel_audio_connect_loutput,
 	zpl_media_audio_channel_t *audio = NULL;
 	channel = ZPL_MEDIA_CHANNEL_AUDIO_0 + atoi(argv[0]);
 
-	audio = zpl_media_audio_lookup(channel, zpl_true);
+	audio = zpl_media_audio_lookup(channel);
 
 	if(audio != NULL)
 	{
-		ret = zpl_media_audio_connect_local_output(audio, ZPL_MEDIA_CONNECT_SW, channel);
+		ret = zpl_media_audio_input_connect_output(audio, ZPL_MEDIA_CONNECT_SW);
 	}
 	else
 	{
@@ -644,68 +688,11 @@ DEFUN (media_channel_audio_connect_loutput,
 	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
 }
 
-DEFUN (media_channel_audio_volume,
-		media_channel_audio_volume_cmd,
-		"media channel audio <0-1> volume <0-100>" ,
+DEFUN (media_channel_audio_param,
+		media_channel_audio_param_cmd,
+		"media channel audio (micgain|boost|in-volume|out-volume) value <0-100>" ,
 		MEDIA_CHANNEL_STR
 		"Audio Channel Configure\n"
-		"Channel Number Select\n"
-		"Volume Configure\n"
-		"Local Output Channel\n")
-{
-	int ret = ERROR;
-	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
-	zpl_media_audio_channel_t *audio = NULL;
-	channel = ZPL_MEDIA_CHANNEL_AUDIO_0 + atoi(argv[0]);
-	int value = atoi(argv[1]);
-	audio = zpl_media_audio_lookup(channel, zpl_true);
-
-	if(audio != NULL)
-	{
-		ret = zpl_media_audio_volume(audio, value);
-	}
-	else
-	{
-		vty_out(vty, " media channel %d %s is not exist. %s", channel, argv[1], VTY_NEWLINE);	
-	}
-	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-DEFUN (media_channel_audio_inner_codec,
-		media_channel_audio_inner_codec_cmd,
-		"media channel audio codec (enable|disable)" ,
-		MEDIA_CHANNEL_STR
-		"Audio Channel Configure\n"
-		"Codec Configure\n"
-		"Enable Configure\n"
-		"Disable Configure\n")
-{
-	int ret = ERROR;
-	zpl_bool codec_enable = zpl_false;
-	ZPL_MEDIA_CHANNEL_E channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
-	zpl_media_audio_channel_t *audio = NULL;
-	channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
-	if(strncmp(argv[0],"enable", 4) == 0)
-		codec_enable = zpl_true;
-	audio = zpl_media_audio_lookup(channel, zpl_true);
-
-	if(audio != NULL)
-	{
-		ret = zpl_media_audio_codec_enable(audio, codec_enable);
-	}
-	else
-	{
-		vty_out(vty, " media channel %d %s is not exist. %s", channel, argv[1], VTY_NEWLINE);	
-	}
-	return (ret == OK)? CMD_SUCCESS:CMD_WARNING;
-}
-
-DEFUN (media_channel_audio_codec_param,
-		media_channel_audio_codec_param_cmd,
-		"media channel audio codec (micgain|boost|in-volume|out-volume) value <0-100>" ,
-		MEDIA_CHANNEL_STR
-		"Audio Channel Configure\n"
-		"Codec Configure\n"
 		"Mic Gain Configure,[0,16]\n"
 		"Boost Configure,[0,1]\n"
 		"Input Volume Configure,[19,50]\n"
@@ -719,25 +706,25 @@ DEFUN (media_channel_audio_codec_param,
 	zpl_media_audio_channel_t *audio = NULL;
 	channel = ZPL_MEDIA_CHANNEL_AUDIO_0;
 	value = atoi(argv[1]);
-	audio = zpl_media_audio_lookup(channel, zpl_true);
+	audio = zpl_media_audio_lookup(channel);
 
 	if(audio != NULL)
 	{
 		if(strncmp(argv[0],"micgain", 5) == 0)
 		{
-			ret = zpl_media_audio_codec_micgain(audio, value);//0-16
+			ret = zpl_media_audio_input_micgain(audio, value);//0-16
 		}
 		else if(strncmp(argv[0],"boost", 5) == 0)
 		{
-			ret = zpl_media_audio_codec_boost(audio, value?1:0);
+			ret = zpl_media_audio_input_boost(audio, value?1:0);
 		}
 		else if(strncmp(argv[0],"in-volume", 5) == 0)
 		{
-			ret = zpl_media_audio_codec_input_volume(audio, value);//[19,50]
+			ret = zpl_media_audio_input_volume(audio, value);//[19,50]
 		}
 		else if(strncmp(argv[0],"out-volume", 5) == 0)
 		{
-			ret = zpl_media_audio_codec_output_volume(audio, value-94);//[-121, 6]
+			ret = zpl_media_audio_output_volume(audio, value-94);//[-121, 6]
 		}
 	}
 	else
@@ -1215,25 +1202,19 @@ media channel <0-1> (main|sub) multicast disable
 			//media channel audio codec (micgain|boost|in-volume|out-volume) value <0-100>
 			if(audio)
 			{
-				if(audio->b_input)
-				{
-					if(audio->audio_param.input.hw_connect_out/*&& audio->audio_param.input.output*/)
+				if(audio->input.b_connect_output/*&& audio->audio_param.input.output*/)
 						vty_out(vty, " media channel audio %d connect local-output%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, VTY_NEWLINE);
-				}
 				
-				if(!audio->b_input)
-					vty_out(vty, " media channel audio %d volume %d%s", chn->channel-ZPL_MEDIA_CHANNEL_AUDIO_0, audio->audio_param.output.volume, VTY_NEWLINE);
-				if(audio->b_inner_codec_enable)
+				//if(audio->b_inner_codec_enable)
 				{
-					vty_out(vty, " media channel audio codec enable%s", VTY_NEWLINE);
-					if(audio->b_input)
+					if(audio->input.bEnable)
 					{
-						vty_out(vty, " media channel audio codec micgain value %d%s", audio->micgain, VTY_NEWLINE);
-						vty_out(vty, " media channel audio codec boost value %d%s", audio->boost, VTY_NEWLINE);
-						vty_out(vty, " media channel audio codec in-volume value %d%s", audio->in_volume, VTY_NEWLINE);
+						vty_out(vty, " media channel audio codec micgain value %d%s", audio->input.micgain, VTY_NEWLINE);
+						vty_out(vty, " media channel audio codec boost value %d%s", audio->input.boost, VTY_NEWLINE);
+						vty_out(vty, " media channel audio codec in-volume value %d%s", audio->input.in_volume, VTY_NEWLINE);
 					}
-					if(!audio->b_input)
-						vty_out(vty, " media channel audio codec out-volume value %d%s", audio->out_volume, VTY_NEWLINE);
+					if(audio->output.bEnable)
+						vty_out(vty, " media channel audio codec out-volume value %d%s", audio->output.out_volume, VTY_NEWLINE);
 				}
 			}	
 		}
@@ -1274,9 +1255,7 @@ static void cmd_mediaservice_init(void)
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_enable_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_enable_alsa_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_connect_loutput_cmd);
-		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_inner_codec_cmd);
-		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_codec_param_cmd);
-		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_volume_cmd);
+		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_audio_param_cmd);
 
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_record_cmd);
 		install_element(TEMPLATE_NODE, CMD_CONFIG_LEVEL, &media_channel_alarm_capture_cmd);

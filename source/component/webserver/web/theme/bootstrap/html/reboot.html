@@ -65,7 +65,7 @@
                             argv = "ACTION=app&BTNID=reboot";
 
                         $("#reset_waiting").css("display", "block");
-                        stxhr.post("/goform/button_onclick", argv,
+                        stxhr.post("/action/button_onclick", argv,
                             function (x) {
                                 if (x.responseText == "ERROR") {
                                 }

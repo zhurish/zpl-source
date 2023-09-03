@@ -67,7 +67,7 @@ PUBLIC int websOpenFile(cchar *path, int flags, int mode)
 
 PUBLIC void websCloseFile(int fd)
 {
-#if !ME_ROM
+#if (ME_ROM==0)
     if (fd >= 0) {
         close(fd);
     }

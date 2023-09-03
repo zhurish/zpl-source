@@ -26,7 +26,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifndef THEME_V9UI
+
 static int jst_sntp_timezone_list(int eid, webs_t wp, int argc, char **argv)
 {
 	int i = 0;
@@ -154,15 +154,15 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	websDone(wp);
 	return OK;
 }
-#endif /* THEME_V9UI */
+
 
 
 int web_sntp_app(void)
 {
-#ifndef THEME_V9UI
+
 	websDefineJst("jst_timezone_list", jst_sntp_timezone_list);
 	websFormDefine("setsntp", web_sntp_set);
-#endif /* THEME_V9UI */
+
 	return 0;
 }
 

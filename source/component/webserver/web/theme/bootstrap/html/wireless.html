@@ -115,7 +115,7 @@
 									var utbl = "";
 									var ctbl = "";
 									document.getElementById("connected_node").setAttribute("class", "hiden");
-									$.get("/goform/wireless-neighbor", function (data, status) {
+									$.get("/action/wireless-neighbor", function (data, status) {
 										//console.log(data);
 										var data_json = JSON.parse(data);
 										$.each(data_json, function (index, info) {
@@ -376,7 +376,7 @@
 						else
 							argv += "false";
 
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x) {
 								if (x.responseText == "ERROR") {
 								}
@@ -570,7 +570,7 @@
 						argv = "ACTION=wireless&BTNID=" + self.id;
 						$("#wireless_waiting").css("display", "block");
 						setTimeout(function () { $("#wireless_waiting").css("display", "none") }, 5000);
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x) {
 								console.log(x);
 								if (x.responseText == "ERROR") {
@@ -595,7 +595,7 @@
 						var stxhr = new XHR();
 						argv = "ACTION=wireless&BTNID=" + self.id;
 						$("#wifi_scan_icon").css("display", "block");
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x) {
 								console.log(x);
 								if (x.responseText == "ERROR") {
@@ -692,7 +692,7 @@
 							setTimeout(function () { $("#wireless_waiting").css("display", "none") }, 6000);
 						}
 						console.log("argv:" + argv);
-						stxhr.post("/goform/wireless", argv,
+						stxhr.post("/action/wireless", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);
@@ -822,7 +822,7 @@
 							function clienttbl_tbl() {
 								var cnt_connect = 0;
 								var connecttbl = "";
-								$.get("/goform/clienttbl-tbl", function (data, status) {
+								$.get("/action/clienttbl-tbl", function (data, status) {
 									console.log("clienttbl" + data);
 									var data_json = JSON.parse(data);
 									$.each(data_json, function (index, info) {
@@ -882,7 +882,7 @@
 						argv = "ACTION=wireless&BTNID=" + obj.id + "&" + argv + mac;
 						$("#disable_waiting").css("display", "block");
 						setTimeout(function () { $("#disable_waiting").css("display", "none") }, 5000);
-						stxhr.post("/goform/button_onclick", argv,
+						stxhr.post("/action/button_onclick", argv,
 							function (x) {
 								console.log(x);
 								if (x.responseText == "ERROR") {

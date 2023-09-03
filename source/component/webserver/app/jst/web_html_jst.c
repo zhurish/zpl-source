@@ -21,7 +21,7 @@
 #include "web_api.h"
 
 
-#ifndef THEME_V9UI
+
 static int jst_html_file(web_app_t *webgui, char *filename)
 {
 	if(strstr(filename, ".html"))
@@ -163,15 +163,15 @@ static int jst_load(Webs *wp, char *path, char *query)
 	}
     return web_return_text_plain(wp, ERROR);
 }
-#endif /* THEME_V9UI */
+
 
 int web_html_jst_init(void)
 {
-#ifndef THEME_V9UI
+
 	websDefineJst("jst_html_load", jst_html_load);
 	websDefineJst("jst_html_text", jst_html_text);
 	websFormDefine("html_load", jst_load);
-#endif /* THEME_V9UI */
+
 	return 0;
 }
 

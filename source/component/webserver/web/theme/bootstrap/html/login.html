@@ -144,8 +144,7 @@
 
 	<div class="login_div">
 		<div class="col-xs-12 login_title">登录</div>
-		<!--form action="" class="login" method="post"-->
-		<form class="login" action="/goform/login" accept-charset="UTF-8" method="POST">
+		<form class="login" action="/action/login" accept-charset="UTF-8" method="POST">
 			<div class="nav">
 				<div class="nav login_nav">
 					<div class="col-xs-4 login_username">
@@ -164,31 +163,11 @@
 					</div>
 				</div>
 				<div class="col-xs-12 login_btn_div">
-					<input type="submit" class="sub_btn" value="登录" id="login"/>
+					<input type="submit" name="submit" class="sub_btn" value="登录" id="login"/>
 					<!--input type="button" class="sub_btn" value="登录" id="login" onclick="login_onsubmit()" /-->
 				</div>
 			</div>
 		</form>
-		<!--script type="text/javascript">
-			function login_onsubmit() {
-				if (document.getElementById("name").value == "") {
-					return false;
-				}
-				else {
-					var argv;
-					var stxhr = new XHR();
-					argv = "username=" + document.getElementById("username").value;
-					if (document.getElementById("password").value != "")
-						argv = "&password=" + document.getElementById("password").value;
-
-					stxhr.post("/goform/login", argv,
-						function (x, json) {
-						},
-						3000
-					);
-				}
-			}		
-		</script-->
 	</div>
 	</div>
 </body>

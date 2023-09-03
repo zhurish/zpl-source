@@ -45,13 +45,15 @@ static int ipcom_stack_init(int localport)
 	return OK;
 }
 
-int zpl_stack_init(void)
+int zpl_stack_init(char *cfg)
 {
 	os_limit_stack_size(819200);
 	zpl_base_env_init();
 	zpl_base_env_load();
 
 	zplib_module_install(module_lists_tbl);
+
+	os_netservice_config_load(cfg);
 	return OK;
 }
 

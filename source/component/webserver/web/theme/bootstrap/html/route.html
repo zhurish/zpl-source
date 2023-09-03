@@ -43,7 +43,7 @@
 					<script type="text/javascript">
 						function route_tbl() {
 							var utbl = "";
-							$.get("/goform/route-tbl", function (data, status) {
+							$.get("/action/route-tbl", function (data, status) {
 								//console.log(data);
 								var data_json = JSON.parse(data);
 								$.each(data_json, function (index, info) {
@@ -149,7 +149,7 @@
 								<script type="text/javascript">
 									function interface_tbl() {
 										var itbl = "";
-										$.get("/goform/interface-tbl", function (data, status) {
+										$.get("/action/interface-tbl", function (data, status) {
 											console.log("==============");
 											console.log(data);
 											var data_json = JSON.parse(data);
@@ -201,7 +201,7 @@
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/button_onclick", argv,
+							stxhr.post("/action/button_onclick", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "ERROR") {
@@ -342,7 +342,7 @@
 								//+ document.getElementById("metric").value + 
 								$("#handle_waiting").css("display", "block");
 								setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
-								stxhr.post("/goform/addroute", argv,
+								stxhr.post("/action/addroute", argv,
 									function (x) {
 										console.log(x);
 										if (x.responseText == "OK") {

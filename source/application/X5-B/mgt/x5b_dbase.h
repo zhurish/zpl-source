@@ -26,9 +26,9 @@ extern "C" {
 #define APP_IMG_ID_MAX			32
 #define APP_MULTI_NUMBER_MAX	8
 
-#define X5B_DBASE_FILE	SYSCONFDIR"/dbase"
-#define X5B_DBCARD_FILE	SYSCONFDIR"/card"
-#define X5B_DBFACECARD_FILE	SYSCONFDIR"/facecard"
+#define X5B_DBASE_FILE	SYSCONF_REAL_DIR"/dbase"
+#define X5B_DBCARD_FILE	SYSCONF_REAL_DIR"/card"
+#define X5B_DBFACECARD_FILE	SYSCONF_REAL_DIR"/facecard"
 
 #pragma pack(1)
 typedef struct

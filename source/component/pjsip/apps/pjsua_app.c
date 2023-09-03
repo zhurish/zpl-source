@@ -19,6 +19,14 @@
 #include "pjsua_app.h"
 #include "pjsua_app_cfgapi.h"
 #include "pjsua_app_cb.h"
+#include "pjapp_app_util.h"
+
+#include "zpl_media_pjdev.h"
+
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
+#include "zpl_vidhal.h"
+#include "zpl_vidhal_internal.h"
 
 #define THIS_FILE       "pjsua_app.c"
 
@@ -1395,22 +1403,48 @@ static void pjapp_cli_started_callback(pj_status_t status)
  * Public API
  */
 
-static int stdout_refresh_proc(void *arg)
+static int cfg_refresh_proc(void *arg)
 {
-    extern char *stdout_refresh_text;
-
     PJ_UNUSED_ARG(arg);
-
+    int cnt = 0;
     /* Set thread to lowest priority so that it doesn't clobber
-     * stdout output
+     * cfg output
      */
-    pj_thread_set_prio(pj_thread_this(), 
-                       pj_thread_get_prio_min(pj_thread_this()));
+    if(_pjAppCfg.use_cli)
+    {
+        pj_thread_set_prio(pj_thread_this(), 
+                        pj_thread_get_prio_min(pj_thread_this()));
+    }
+	char cmd[512];
+	memset(cmd, '\0', sizeof(cmd));
+    PJ_LOG(3,(THIS_FILE, "========cfg_refresh_proc========"));
+    while (1) 
+    {
+        PJ_LOG(3,(THIS_FILE, "========cfg_refresh_proc=%d=======", cnt));
+        if(cnt < 120)
+        {
+            cnt++;
+            sleep(1);
+            continue;
+        }
+        snprintf(cmd, sizeof(cmd), "sip:%s@%s:%d",
+					"102",
+					"192.168.10.102",
+					5060);
+        pj_str_set(&_pjAppCfg.uri_arg, cmd);
+        if (_pjAppCfg.uri_arg.slen) {
+            PJ_LOG(3,(THIS_FILE, "================call  %s", _pjAppCfg.uri_arg.ptr));
+            pjsua_call_setting_default(&_pjAppCfg.call_opt);
+            _pjAppCfg.call_opt.aud_cnt = _pjAppCfg.aud_cnt;
+            _pjAppCfg.call_opt.vid_cnt = _pjAppCfg.vid.vid_cnt;
 
-    while (1) {
-        pj_thread_sleep(1 * 1000);
-        //puts(stdout_refresh_text);
-        //fflush(stdout);
+            pjsua_call_make_call(current_acc, &_pjAppCfg.uri_arg, &_pjAppCfg.call_opt, NULL, 
+                                NULL, NULL);
+        }   
+
+        pjapp_sock_read_cmd(&_pjAppCfg.sock);
+        //pjapp_sock_write_result(&_pjAppCfg.sock, int ret, char *result);
+        //pj_thread_sleep(1 * 1000);
     }
 
     return 0;
@@ -1507,7 +1541,11 @@ static pj_status_t app_init(void)
 #ifdef STEREO_DEMO
     stereo_demo();
 #endif
-
+    //pjsua_get_pool_factory())
+    //pjmedia_aud_dev_factory* pjmedia_pjdev_hwaudio_factory(pj_pool_factory *pf)
+    #ifdef ZPL_HISIMPP_MODULE
+    //pjmedia_aud_register_factory(pjmedia_pjdev_hwaudio_factory);
+    #endif
     /* Initialize calls data */
     for (i=0; i<PJ_ARRAY_SIZE(_pjAppCfg.call_data); ++i) {
         _pjAppCfg.call_data[i].timer.id = PJSUA_INVALID_ID;
@@ -1525,7 +1563,10 @@ static pj_status_t app_init(void)
         status = pjsua_player_create(&_pjAppCfg.wav_files[i], play_options, 
                                      &wav_id);
         if (status != PJ_SUCCESS)
+        {
+            zm_msg_force_trap("==========pjsua_player_create status=%d", status);
             goto on_error;
+        }
 
         if (_pjAppCfg.wav_id == PJSUA_INVALID_ID) {
             _pjAppCfg.wav_id = wav_id;
@@ -1537,7 +1578,10 @@ static pj_status_t app_init(void)
                 status = pjmedia_wav_player_set_eof_cb2(port, NULL, 
                                                         &pjapp_on_playfile_done);
                 if (status != PJ_SUCCESS)
+                {
+                    zm_msg_force_trap("==========pjmedia_wav_player_set_eof_cb2 status=%d", status);
                     goto on_error;
+                }
 
                 pj_timer_entry_init(&_pjAppCfg.auto_hangup_timer, 0, NULL, 
                                     &hangup_timeout_callback);
@@ -1998,7 +2042,9 @@ static pj_status_t app_init(void)
     {
         #if defined(ZPL_BUILD_ARCH_X86_64)||defined(ZPL_BUILD_ARCH_X86)
         #if PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO
-        pjmedia_aud_dev_lookup("PA", "HDA Intel PCH: ALC3232 Analog (hw:1,0)", &_pjAppCfg.capture_dev);
+        //pjmedia_aud_dev_lookup("PA", "HDA Intel PCH: ALC3232 Analog (hw:1,0)", &_pjAppCfg.capture_dev);
+        #else
+        //pjmedia_aud_dev_lookup("HISI", "hwaudio0", &_pjAppCfg.capture_dev);
         #endif
         #endif
     }
@@ -2006,7 +2052,9 @@ static pj_status_t app_init(void)
     {
         #if defined(ZPL_BUILD_ARCH_X86_64)||defined(ZPL_BUILD_ARCH_X86)
         #if PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO
-        pjmedia_aud_dev_lookup("PA", "HDA Intel HDMI: 0 (hw:0,3)", &_pjAppCfg.playback_dev);
+        //pjmedia_aud_dev_lookup("PA", "HDA Intel HDMI: 0 (hw:0,3)", &_pjAppCfg.playback_dev);
+        #else
+        //pjmedia_aud_dev_lookup("HISI", "hwaudio0", &_pjAppCfg.playback_dev);//1
         #endif
         #endif
     }
@@ -2016,7 +2064,10 @@ static pj_status_t app_init(void)
         status = pjsua_set_snd_dev(_pjAppCfg.capture_dev, 
                                    _pjAppCfg.playback_dev);
         if (status != PJ_SUCCESS)
+        {
+            zm_msg_force_trap("==========pjsua_set_snd_dev status=%d", status);
             goto on_error;
+        }
            
     }
     pjsua_conf_adjust_rx_level(0, _pjAppCfg.mic_level);
@@ -2050,28 +2101,35 @@ on_error:
 pj_status_t pjsua_app_init(void)
 {
     pj_status_t status;
-    //pj_memcpy(&app_cfg, cfg, sizeof(app_cfg));
 
     status = app_init();
     if (status != PJ_SUCCESS)
+    {
+        zm_msg_force_trap("==========app_init %d", status);
         return status;
+    }
 
     /* Init CLI if configured */    
     if (_pjAppCfg.use_cli) {
         status = pjapp_cli_init();
+        zm_msg_force_trap("==========pjapp_cli_init %d", status);
     } 
+    pjapp_sock_cfg_default(&_pjAppCfg.sock);
     return status;
 }
 
 pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
 {
-    pj_thread_t *stdout_refresh_thread = NULL;
+    pj_thread_t *cfg_refresh_thread = NULL;
     pj_status_t status;
 
     /* Start console refresh thread */
-    if (_pjAppCfg.stdout_refresh > 0) {
-        pj_thread_create(_pjAppCfg.pool, "stdout", &stdout_refresh_proc,
-                         NULL, 0, 0, &stdout_refresh_thread);
+    //if(_pjAppCfg.use_cli == PJ_FALSE)
+    {
+        if (_pjAppCfg.cfg_refresh > 0) {
+            pj_thread_create(_pjAppCfg.pool, "cfg", &cfg_refresh_proc,
+                            NULL, 0, 0, &cfg_refresh_thread);
+        }
     }
     _pjAppCfg.current_call = PJSUA_INVALID_ID;
     status = pjsua_start();
@@ -2087,7 +2145,7 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
     }
 
     /* If user specifies URI to call, then call the URI */
-    if (_pjAppCfg.uri_arg.slen) {
+/*    if (_pjAppCfg.uri_arg.slen) {
         pjsua_call_setting_default(&_pjAppCfg.call_opt);
         _pjAppCfg.call_opt.aud_cnt = _pjAppCfg.aud_cnt;
         _pjAppCfg.call_opt.vid_cnt = _pjAppCfg.vid.vid_cnt;
@@ -2095,22 +2153,23 @@ pj_status_t pjsua_app_run(pj_bool_t wait_telnet_cli)
         pjsua_call_make_call(current_acc, &_pjAppCfg.uri_arg, &_pjAppCfg.call_opt, NULL, 
                              NULL, NULL);
     }   
-
+*/
     _pjAppCfg.app_running = PJ_TRUE;
 
     if (_pjAppCfg.use_cli)
         pjapp_cli_main(wait_telnet_cli);      
     else
-        pjapp_legacy_main();
+    {
+        cfg_refresh_proc(&_pjAppCfg);
+    }
+        
 
     status = PJ_SUCCESS;
 
 on_return:
-    if (stdout_refresh_thread) {
-        //stdout_refresh_quit = PJ_TRUE;
-        pj_thread_join(stdout_refresh_thread);
-        pj_thread_destroy(stdout_refresh_thread);
-        //stdout_refresh_quit = PJ_FALSE;
+    if (cfg_refresh_thread) {
+        pj_thread_join(cfg_refresh_thread);
+        pj_thread_destroy(cfg_refresh_thread);
     }
     return status;
 }

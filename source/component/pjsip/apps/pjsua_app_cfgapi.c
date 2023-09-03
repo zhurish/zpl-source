@@ -29,12 +29,53 @@
  */
 static PJ_DEF(void) pjapp_cfg_log_cb(int level, const char *buffer, int len)
 {
+	int i = 0, j = 0, flag = 0;
+	char tmp[4096];
 	zassert(buffer != NULL);
 	if (!len)
 		return;
-	/*	static const char *ltexts[] = { "FATAL:", "ERROR:", " WARN:",
-					  " INFO:", "DEBUG:", "TRACE:", "DETRC:"};*/
-	/* Copy to terminal/file. */
+
+	for(i = 0; i < len; i++)
+	{
+		if(buffer[i] == '\r')
+		{
+			tmp[j++] = buffer[i];
+			flag = 1;
+		}
+		else if(buffer[i] == '\n')
+		{
+			if(flag)
+			{
+				tmp[j++] = buffer[i];
+				flag = 0;
+			}
+			else
+			{
+				tmp[j++] = '\r';
+				tmp[j++] = buffer[i];
+			}
+		}
+		else
+			tmp[j++] = buffer[i];
+	}	
+	if(tmp[j-1] == '\n' && tmp[j-2] == '\r')
+	{
+		tmp[j-1] = '\0';
+		tmp[j-2] = '\0';
+		tmp[j] = '\0';
+	}
+	if(tmp[j-2] == '\n' || tmp[j-2] == '\r')
+	{
+		tmp[j-2] = '\0';
+		tmp[j-1] = '\0';
+		tmp[j] = '\0';
+	}
+	if(tmp[j-1] == '\n' || tmp[j-1] == '\r')
+	{
+		tmp[j-1] = '\0';
+		tmp[j] = '\0';
+	}
+
 	if (pj_log_get_decor() & PJ_LOG_HAS_COLOR)
 	{
 #if defined(PJ_TERM_HAS_COLOR) && PJ_TERM_HAS_COLOR != 0
@@ -45,31 +86,31 @@ static PJ_DEF(void) pjapp_cfg_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_TRAP, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_TRAP, "%s", tmp);
 			break;
 		case 4:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_DEBUG, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_DEBUG, "%s", tmp);
 			break;
 		case 3:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_INFO, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_INFO, "%s", tmp);
 			break;
 		case 5:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_NOTICE, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_NOTICE, "%s", tmp);
 			break;
 		case 2:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_WARNING, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_WARNING, "%s", tmp);
 			break;
 		case 1:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ERR, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ERR, "%s", tmp);
 			break;
 		case 0:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_CRIT, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_CRIT, "%s", tmp);
 			break;
 			/*		case ZLOG_LEVEL_ALERT:
-						zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ALERT + 1, "%s", buffer);
+						zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ALERT + 1, "%s", tmp);
 						break;
 					case ZLOG_LEVEL_EMERG:
-						zlog_other(MODULE_PJAPP, ZLOG_LEVEL_EMERG + 1, "%s", buffer);
+						zlog_other(MODULE_PJAPP, ZLOG_LEVEL_EMERG + 1, "%s", tmp);
 						break;*/
 		default:
 			break;
@@ -85,25 +126,25 @@ static PJ_DEF(void) pjapp_cfg_log_cb(int level, const char *buffer, int len)
 		switch (level)
 		{
 		case (6):
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_TRAP, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_TRAP, "%s", tmp);
 			break;
 		case 4:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_DEBUG, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_DEBUG, "%s", tmp);
 			break;
 		case 3:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_INFO, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_INFO, "%s", tmp);
 			break;
 		case 5:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_NOTICE, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_NOTICE, "%s", tmp);
 			break;
 		case 2:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_WARNING, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_WARNING, "%s", tmp);
 			break;
 		case 1:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ERR, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_ERR, "%s", tmp);
 			break;
 		case 0:
-			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_CRIT, "%s", buffer);
+			zlog_other(MODULE_PJAPP, ZLOG_LEVEL_CRIT, "%s", tmp);
 			break;
 		default:
 			break;
@@ -261,7 +302,7 @@ int pjapp_account_add(pjsua_app_config *cfg, char *sip_user)
 			{
 				userdata = cfg->acc_cfg[i].user_data;
 				strcpy(userdata->sip_phone, sip_user);
-				cfg->acc_cfg[i].auth_pref.initial_auth = zpl_false;
+				cfg->acc_cfg[i].auth_pref.initial_auth = zpl_true;
 				cfg->acc_cfg[i].allow_contact_rewrite = zpl_true;
 				cfg->acc_cnt++;
 				return PJ_SUCCESS;
@@ -2497,7 +2538,7 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	pjsua_logging_config_default(&appcfg->log_cfg);
 	appcfg->log_cfg.cb = pjapp_cfg_log_cb;
 	pj_log_set_decor(PJ_LOG_HAS_NEWLINE | PJ_LOG_HAS_CR | PJ_LOG_HAS_INDENT | PJ_LOG_HAS_THREAD_SWC |
-					 PJ_LOG_HAS_SENDER | PJ_LOG_HAS_THREAD_ID);
+					 PJ_LOG_HAS_SENDER);
 
 	pjsua_media_config_default(&appcfg->media_cfg);
 	appcfg->media_cfg.clock_rate = 8000;
@@ -2515,8 +2556,15 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	appcfg->rec_port = PJSUA_INVALID_ID;
 	appcfg->speaker_level = 1.0;
 	appcfg->mic_level = 1.5;
+	#if defined(ZPL_BUILD_ARCH_X86_64)||defined(ZPL_BUILD_ARCH_X86)
 	appcfg->capture_dev = PJSUA_INVALID_ID;
 	appcfg->playback_dev = PJSUA_INVALID_ID;
+	#else
+	appcfg->capture_dev = PJSUA_INVALID_ID;
+	appcfg->playback_dev = PJSUA_INVALID_ID;
+	#endif
+	appcfg->aud_cnt = 1;
+
 	appcfg->capture_lat = PJMEDIA_SND_DEFAULT_REC_LATENCY;
 	appcfg->playback_lat = PJMEDIA_SND_DEFAULT_PLAY_LATENCY;
 	appcfg->ringback_slot = PJSUA_INVALID_ID;
@@ -2531,7 +2579,6 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	appcfg->vid.vcapture_dev = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
 	appcfg->vid.vrender_dev = PJMEDIA_VID_DEFAULT_RENDER_DEV;
 	appcfg->vid.vid_cnt = 0;
-	appcfg->aud_cnt = 0;
 
 	appcfg->avi_def_idx = PJSUA_INVALID_ID;
 
@@ -2546,7 +2593,7 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	pjmedia_add_rtpmap_for_static_pt = PJ_FALSE;
 
 
-	appcfg->use_cli = 1;
+	appcfg->use_cli = PJ_TRUE;
 	appcfg->cli_cfg.cli_fe = CLI_FE_TELNET;
 	appcfg->cli_cfg.telnet_cfg.port = 2323;
 	appcfg->codec_dis_cnt = 0;
@@ -2559,8 +2606,11 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	pjapp_account_register_server(appcfg, "100", "192.168.10.102", 5060);
 	pjapp_account_stun(appcfg, "100", 0);
 	pjapp_account_media_stun(appcfg, "100", 0);
-
+ #if defined(ZPL_BUILD_ARCH_X86_64)||defined(ZPL_BUILD_ARCH_X86)
 	pjapp_transport_local_port(appcfg, PJAPP_PROTO_UDP, "192.168.10.100", 5060, 0);
+#else
+	pjapp_transport_local_port(appcfg, PJAPP_PROTO_UDP, "192.168.10.1", 5060, 0);
+#endif
 	//pjapp_transport_public(appcfg, PJAPP_PROTO_UDP, "192.168.10.100");
 	pjapp_account_100rel(appcfg, "100", zpl_true);
 	pjapp_cfg_100real(appcfg, PJSUA_100REL_MANDATORY);
@@ -2568,7 +2618,7 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	pjapp_global_qos_enable(appcfg, zpl_true);
 	//pjapp_global_tcp_enable(appcfg, zpl_true);
 	pjapp_global_udp_enable(appcfg, zpl_true);
-	pjapp_account_auth_username_add(appcfg, "100", "100", "100", "*", "digest");
+	pjapp_account_auth_username_add(appcfg, "100", "100", "100", "myvoipapp.com", "digest");
 	pjapp_account_mwi(appcfg, "100", zpl_false);
 	///pjapp_account_mwi_expires(pjsua_app_config *cfg, char *user, int mwi_expires);
 	pjapp_account_publish(appcfg, "100", zpl_false);
@@ -2585,7 +2635,7 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 	pjapp_media_record_latency(appcfg, PJMEDIA_SND_DEFAULT_REC_LATENCY);
 	pjapp_media_play_latency(appcfg, PJMEDIA_SND_DEFAULT_PLAY_LATENCY);
 
-	//pjapp_global_audio_null(appcfg, zpl_true);
+	pjapp_global_audio_null(appcfg, zpl_true);
 	pjapp_global_codec_add(appcfg, "pcmu");
 	pjapp_global_codec_add(appcfg, "pcma");
 	_pjAppCfg.aud_cnt++; 
@@ -2595,8 +2645,8 @@ int pjapp_config_default_setting(pjsua_app_config *appcfg)
 
 int pjapp_cfg_log_config(pjsua_app_config *cfg)
 {
-	pjapp_cfg_log_level(cfg, 6);
-	pjapp_cfg_app_log_level(cfg, 6);
+	pjapp_cfg_log_level(cfg, 5);
+	pjapp_cfg_app_log_level(cfg, 5);
 	pj_log_set_log_func(pjapp_cfg_log_cb);
 	return PJ_SUCCESS;
 }

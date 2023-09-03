@@ -25,8 +25,6 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifdef THEME_V9UI
-
 
 static int v9_app_sntp_config_save(int sntp, char *ip, char *ip1)
 {
@@ -167,7 +165,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		}
 #ifdef ZPL_SERVICE_SYSLOG
 		if (!syslogc_is_enable())
-			syslogc_enable(host.name);
+			syslogc_enable(_global_host.name);
 		zlog_set_level(ZLOG_DEST_SYSLOG, ZLOG_LEVEL_WARNING);
 		syslogc_mode_set(SYSLOG_UDP_MODE);
 		syslogc_host_config_set(syslog_address, 0, 0);
@@ -192,14 +190,13 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 #endif
 	return web_return_text_plain(wp, OK);
 }
-#endif /* THEME_V9UI */
 
 int web_netservice_app(void)
 {
-#ifdef THEME_V9UI
+
 	//websFormDefine("netsrvtbl", web_netservice_goform_get);
 	websFormDefine("netservice", web_netservice_goform);
-#endif /* THEME_V9UI */
+
 	return 0;
 }
 

@@ -29,7 +29,7 @@
 #include "web_app.h"
 #include "web_api.h"
 
-#ifndef THEME_V9UI
+
 
 #ifdef ZPL_BUILD_OS_OPENWRT
 /*
@@ -755,18 +755,18 @@ static int web_switch_port_tbl(Webs *wp, char *path, char *query)
 	websDone(wp);
 	return 0;
 }
-#endif /* THEME_V9UI */
+
 #endif
 
 int web_switch_app(void)
 {
-#ifndef THEME_V9UI
+
 #ifdef ZPL_BUILD_OS_OPENWRT
 	switch_dev_init();
 	websFormDefine("port-tbl", web_switch_port_tbl);
 	web_button_add_hook("switch", "save", web_switch_handle, NULL);
 	web_button_add_hook("switch", "connect", web_switch_handle, NULL);
 #endif
-#endif /* THEME_V9UI */
+
 	return 0;
 }

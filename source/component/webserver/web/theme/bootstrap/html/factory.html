@@ -207,7 +207,7 @@
 						var argv;
 						var stxhr = new XHR();
 						argv = "ACTION=GET";
-						stxhr.post("/goform/factory", argv,
+						stxhr.post("/action/factory", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);
@@ -284,7 +284,7 @@
 
 							$("#change_waiting").css("display", "block");
 							setTimeout(function () { $("#change_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/factory", argv,
+							stxhr.post("/action/factory", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "OK") {
@@ -523,7 +523,7 @@
 						var argv;
 						var stxhr = new XHR();
 						argv = "ACTION=GET";
-						stxhr.post("/goform/open", argv,
+						stxhr.post("/action/open", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);
@@ -602,7 +602,7 @@
 
 							$("#open_waiting").css("display", "block");
 							setTimeout(function () { $("#open_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/open", argv,
+							stxhr.post("/action/open", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "OK") {
@@ -1048,7 +1048,7 @@
 						var argv;
 						var stxhr = new XHR();
 						argv = "ACTION=GET";
-						stxhr.post("/goform/faceset", argv,
+						stxhr.post("/action/faceset", argv,
 							function (x, json) {
 								console.log(x);
 								console.log(json);
@@ -1206,7 +1206,7 @@
 
 							$("#face_waiting").css("display", "block");
 							setTimeout(function () { $("#face_waiting").css("display", "none") }, 5000);
-							stxhr.post("/goform/faceset", argv,
+							stxhr.post("/action/faceset", argv,
 								function (x) {
 									console.log(x);
 									if (x.responseText == "OK") {

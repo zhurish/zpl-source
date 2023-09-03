@@ -22,7 +22,7 @@ extern "C" {
 
 #define BUDDY_MULTI_NUMBER_MAX	8
 
-#define BUDDY_DBASE_FILE	SYSCONFDIR"/buddydbase"
+#define BUDDY_DBASE_FILE	SYSCONF_REAL_DIR"/buddydbase"
 
 
 

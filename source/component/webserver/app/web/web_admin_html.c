@@ -30,7 +30,7 @@
 #include "web_api.h"
 
 
-#ifndef THEME_V9UI
+
 static int web_admin_user(Webs *wp, char *path, char *query)
 {
 	int ret = 0;
@@ -70,7 +70,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	strcpy(authlevel, strval);
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(MODULE_WEB, " get goform/adminuser username:%s password:%s authlevel:%s", username,password,authlevel);
+		zlog_debug(MODULE_WEB, " get action/adminuser username:%s password:%s authlevel:%s", username,password,authlevel);
 	}
 	if(vty_user_create(NULL, username, password, zpl_false , zpl_true ) == CMD_SUCCESS)
 	{
@@ -118,7 +118,7 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 	strcpy(password, strval);
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(MODULE_WEB, " get goform/admin-password username:%s password:%s", wp->username, password);
+		zlog_debug(MODULE_WEB, " get action/admin-password username:%s password:%s", wp->username, password);
 	}
 	if(vty_user_create(NULL, wp->username, password, zpl_false , zpl_true ) == CMD_SUCCESS)
 	{
@@ -189,9 +189,8 @@ static int web_username_tbl(Webs *wp, char *path, char *query)
 	websDone(wp);
 	return 0;
 }
-#endif /* THEME_V9UI */
 
-#ifdef THEME_V9UI
+
 #if ME_GOAHEAD_AUTO_LOGIN
 static bool webs_authentication_verify(Webs *wp, cchar *username, cchar *password)
 {
@@ -318,11 +317,11 @@ static int web_change_password(Webs *wp, char *path, char *query)
 
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
 	{
-		zlog_debug(MODULE_WEB, " get goform/admin-password username:%s password:%s", wp->username, newpassword);
+		zlog_debug(MODULE_WEB, " get action/admin-password username:%s password:%s", wp->username, newpassword);
 	}
 
-#if !ME_GOAHEAD_AUTO_LOGIN
-	if(user_authentication(username, password) != 0)
+#if (ME_GOAHEAD_AUTO_LOGIN==0)
+	if(user_authentication(username, oldpassword) != 0)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not verify password Value");
@@ -346,17 +345,17 @@ static int web_change_password(Webs *wp, char *path, char *query)
 #endif
 	return web_return_text_plain(wp, OK);
 }
-#endif /* THEME_V9UI */
+
 
 int web_admin_app(void)
 {
-#ifdef THEME_V9UI
+
 	websFormDefine("changepassword", web_change_password);
-#else
+
 	websFormDefine("adminuser", web_admin_user);
 	websFormDefine("admin-password", web_admin_change_password);
 	websFormDefine("username-tbl", web_username_tbl);
 	web_button_add_hook("usertbl", "delete", web_admin_deluser, NULL);
-#endif /* THEME_V9UI */
+
 	return 0;
 }

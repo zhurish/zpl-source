@@ -177,10 +177,10 @@ static int       symMax = 0;            /* One past the max symbol table */
 char *embedthisGoAheadCopyright = EMBEDTHIS_GOAHEAD_COPYRIGHT;
 
 #if ME_GOAHEAD_LOGGING
-#if ME_GOAHEAD_LOGFILE
+#if (ME_GOAHEAD_LOGFILE==1)
 static char      *logPath = NULL;          /* Log file name */
 static int       logFd = 0;             /* Log file handle */
-#endif /* ME_GOAHEAD_LOGFILE */
+#endif /* (ME_GOAHEAD_LOGFILE==1) */
 #endif /* ME_GOAHEAD_LOGGING */
 
 /********************************** Forwards **********************************/
@@ -190,10 +190,9 @@ static int getBinBlockSize(int size);
 static int hashIndex(HashTable *tp, cchar *name);
 static WebsKey *hash(HashTable *tp, cchar *name);
 
-#if !ME_GOAHEAD_EXTLOG
-static void defaultLogHandler(int level, cchar *buf);
+
 static WebsLogHandler logHandler = NULL;//defaultLogHandler;
-#endif /* ME_GOAHEAD_EXTLOG */
+
 
 
 static int  getState(char c, int state);
@@ -955,93 +954,6 @@ PUBLIC void valueFree(WebsValue* v)
     v->allocated = 0;
 }
 
-#if !ME_GOAHEAD_EXTLOG
-static void defaultLogHandler(int flags, cchar *buf)
-{
-    char    prefix[ME_GOAHEAD_LIMIT_STRING];
-
-    if (logFd >= 0) {
-        if (flags & WEBS_RAW_MSG) {
-            write(logFd, buf, (int) slen(buf));
-        } else {
-            fmt(prefix, sizeof(prefix), "%s: %d: ", ME_NAME, flags & WEBS_LEVEL_MASK);
-            write(logFd, prefix, (int) slen(prefix));
-            write(logFd, buf, (int) slen(buf));
-            write(logFd, "\n", 1);
-#if ME_WIN_LIKE || ME_UNIX_LIKE
-            if (flags & WEBS_ERROR_MSG && websGetBackground()) {
-                syslog(ZLOG_LEVEL_ERR, "%s", buf);
-            }
-#endif
-        }
-    }
-}
-
-PUBLIC void flerror(char *file, int line, cchar *fmt, ...)
-{
-    va_list     args;
-    char        *fmtBuf = NULL, *message = NULL;
-
-    va_start(args, fmt);
-    fmtBuf = sfmtv(fmt, args);
-
-    message = sfmt("Error %s, (%s,line:%d)\n", fmtBuf, WEBS_ARGS);
-    va_end(args);
-    wfree(fmtBuf);
-    if (logHandler) {
-        logHandler(WEBS_ERROR_MSG, message);
-    }
-    wfree(message);
-}
-
-
-PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...)
-{
-    va_list     args;
-    char        *fmtBuf = NULL, *message = NULL;
-
-    va_start(args, fmt);
-    fmtBuf = sfmtv(fmt, args);
-
-    message = sfmt("Assertion %s, failed at %s %d\n", fmtBuf, WEBS_ARGS);
-    va_end(args);
-    wfree(fmtBuf);
-    if (logHandler) {
-        logHandler(WEBS_ASSERT_MSG, message);
-    }
-    wfree(message);
-}
-
-
-PUBLIC void logmsgProc(int level, cchar *fmt, ...)
-{
-    va_list     args;
-    char        *message = NULL;
-
-    if ((level & WEBS_LEVEL_MASK) <= __websLogLevel && logHandler) {
-        va_start(args, fmt);
-        message = sfmtv(fmt, args);
-        logHandler(level | WEBS_LOG_MSG, message);
-        wfree(message);
-        va_end(args);
-    }
-}
-
-
-PUBLIC void traceProc(int level, cchar *fmt, ...)
-{
-    va_list     args;
-    char        *message = NULL;
-
-    if ((level & WEBS_LEVEL_MASK) <= __websLogLevel && logHandler) {
-        va_start(args, fmt);
-        message = sfmtv(fmt, args);
-        logHandler(NULL, NULL, 0, level | WEBS_TRACE_MSG, message);
-        wfree(message);
-        va_end(args);
-    }
-}
-#endif /* ME_GOAHEAD_EXTLOG*/
 
 PUBLIC int websGetLogLevel(void)
 {
@@ -1054,7 +966,7 @@ void websSetLogLevel(int level)
     __websLogLevel = level;
 }
 
-#if !ME_GOAHEAD_EXTLOG
+
 WebsLogHandler logGetHandler(void)
 {
     return logHandler;
@@ -1074,42 +986,20 @@ WebsLogHandler logSetHandler(WebsLogHandler handler)
     }
     return oldHandler;
 }
-#endif /* ME_GOAHEAD_EXTLOG */
+
 
 PUBLIC int logOpen(void)
 {
-#if !ME_GOAHEAD_EXTLOG
-#if ME_GOAHEAD_LOGFILE
-    if (!logPath) {
-        /* This definition comes from main.me goahead.logfile */
-        logSetPath(ME_GOAHEAD_LOGFILE_PATH);
-    }
-    if (smatch(logPath, "stdout")) {
-        logFd = 1;
-    } else if (smatch(logPath, "stderr")) {
-        logFd = 2;
-#if !ME_ROM
-    } else {
-        if ((logFd = open(logPath, O_CREAT | O_TRUNC | O_APPEND | O_WRONLY, 0666)) < 0) {
-            return -1;
-        }
-        lseek(logFd, 0, SEEK_END);
-#endif
-    }
-#endif /* ME_GOAHEAD_LOGFILE */
     if(logHandler == NULL)
-    	logSetHandler(defaultLogHandler);
-    //else
-    //	logSetHandler(defaultLogHandler);
-#endif /* ME_GOAHEAD_EXTLOG */
+    	logSetHandler(NULL);
     return 0;
 }
 
 
 PUBLIC void logClose(void)
 {
-#if ME_GOAHEAD_LOGFILE
-#if !ME_ROM
+#if (ME_GOAHEAD_LOGFILE==1)
+#if (ME_ROM==0)
     if (logFd > 2) {
         close(logFd);
         logFd = -1;
@@ -1117,24 +1007,6 @@ PUBLIC void logClose(void)
 #endif
 #endif
 }
-
-#if !ME_GOAHEAD_EXTLOG
-#if ME_GOAHEAD_LOGFILE
-PUBLIC void logSetPath(cchar *path)
-{
-    char  *lp = NULL;
-
-    wfree(logPath);
-    logPath = sclone(path);
-    if ((lp = strchr(logPath, ':')) != 0) {
-        *lp++ = '\0';
-        __websLogLevel = atoi(lp);
-    }
-
-}
-#endif /* ME_GOAHEAD_LOGFILE */
-#endif /* ME_GOAHEAD_EXTLOG */
-
 
 /*
     Convert a string to lower case
@@ -2562,6 +2434,9 @@ PUBLIC ssize scopy(char *dest, ssize destMax, cchar *src)
 
     len = slen(src);
     if (destMax <= len) {
+        if (destMax > 0) {
+            *dest = '\0';
+        }
         return -1;
     }
     strcpy(dest, src);
@@ -2587,6 +2462,9 @@ PUBLIC ssize sncopy(char *dest, ssize destMax, cchar *src, ssize count)
     len = slen(src);
     len = min(len, count);
     if (destMax <= len) {
+        if (destMax > 0) {
+            *dest = '\0';
+        }
         return -1;
     }
     if (len > 0) {

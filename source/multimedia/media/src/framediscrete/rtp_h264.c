@@ -813,7 +813,7 @@ int rtp_h26x_unpacketize (h26x_packetizer *pktz,
     }
     else if(pktz->cfg.codec == RTP_MEDIA_PAYLOAD_H264)
     {
-        return rtp_h263_unpacketize(pktz, payload, payload_len, bits, bits_size, pos);
+        return rtp_h264_unpacketize(pktz, payload, payload_len, bits, bits_size, pos);
     }
     return ERROR;
 }
