@@ -203,7 +203,7 @@
 							var ID = $(obj).parent().parent().prevAll()[6].innerText;
 							var ch = $(obj).parent().parent().prevAll()[5].innerText;
 
-							argv = "ACTION=streamtbl&BTNID=" + obj.id + "&ID=" + ID +
+							argv = "button-action=streamtbl&button-ID=" + obj.id + "&ID=" + ID +
 								"&ch=" + ch;
 
 							$("#handle_waiting").css("display", "block");
@@ -231,7 +231,7 @@
 							var ID = $(obj).parent().parent().prevAll()[7].innerText;
 							var ch = $(obj).parent().parent().prevAll()[6].innerText;
 
-							argv = "ACTION=streamtbl&BTNID=" + obj.id + "&ID=" + ID +
+							argv = "button-action=streamtbl&button-ID=" + obj.id + "&ID=" + ID +
 								"&ch=" + ch;
 
 							$("#handle_waiting").css("display", "block");

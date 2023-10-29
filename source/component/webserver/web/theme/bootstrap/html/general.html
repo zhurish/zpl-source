@@ -176,7 +176,7 @@
 			function general_get_action(op) {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=GET";
+				argv = "button-action=GET";
 
 				stxhr.post("/action/general", argv,
 					function (x, json) {
@@ -207,11 +207,11 @@
 			function general_onsubmit() {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=SET&frme=" + document.getElementById("frme").value;
+				argv = "button-action=SET&frme=" + document.getElementById("frme").value;
 
 				argv += "&quality" + document.getElementById("quality").value;
 				argv += "&upload_qulity" + document.getElementById("upload_qulity").value;
-				//argv = "ACTION=SET&ID=" + document.getElementById("general_boardid").value + "&ch="
+				//argv = "button-action=SET&ID=" + document.getElementById("general_boardid").value + "&ch="
 				//	+ document.getElementById("general_channel").value;
 				if(document.getElementById("smoothness").checked)	
 					argv +=  "&smoothness=true";

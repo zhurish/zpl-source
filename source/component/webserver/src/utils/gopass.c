@@ -11,7 +11,7 @@
 #define HAS_BOOL 1
 #include "zplos_include.h"
 #include    "goahead.h"
-#include    "web_util.h"
+#include    "webutil.h"
 /********************************** Locals ************************************/
 
 #define MAX_PASS    64

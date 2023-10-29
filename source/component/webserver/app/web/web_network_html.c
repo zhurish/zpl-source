@@ -26,10 +26,9 @@
 #ifdef ZPL_WIFI_MODULE
 #include "iw_interface.h"
 #endif
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 #ifdef WEB_OPENWRT_PROCESS
 static int web_networkset_set_active(void *a)
@@ -74,7 +73,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 	{
 		_WEB_DBG_TRAP("================%s=======================:ifname:%s\r\n", __func__, websGetVar(wp, T("ifname"), NULL));
 		//printf("================%s=======================:ifname\r\n", __func__);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(web_type_get() == WEB_TYPE_HOME_WIFI)
 	{
@@ -99,23 +98,23 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 	if(!ifp)
 	{
 		_WEB_DBG_TRAP("================%s=======================:if_lookup_by_name\r\n", __func__);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	proto = webs_get_var(wp, T("proto"), T(""));
 	if (NULL == proto)
 	{
 		_WEB_DBG_TRAP("================%s=======================:proto\r\n", __func__);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(strstr(proto, "dhcp"))
 	{
 #ifdef ZPL_DHCP_MODULE
 		if(nsm_interface_dhcp_mode_get_api(ifp) == DHCP_CLIENT)
 		{
-			return web_return_text_plain(wp, OK);
+			return web_return_text_plain(wp, OK, NULL);
 		}
 		if(nsm_interface_dhcp_mode_set_api(ifp, DHCP_CLIENT, NULL) == OK)
-			return web_return_text_plain(wp, OK);
+			return web_return_text_plain(wp, OK, NULL);
 #endif
 #ifdef WEB_OPENWRT_PROCESS
 		if(ifp->ifindex ==ifname2ifindex("ethernet 0/0/2"))
@@ -148,9 +147,9 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		os_uci_save_config("network");
 		os_job_add(OS_JOB_NONE,web_networkset_set_active, NULL);
 		//super_system("/etc/init.d/network restart");
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 #endif
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	else if(strstr(proto, "pppoe"))
 	{
@@ -159,14 +158,14 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		username = webs_get_var(wp, T("username"), T(""));
 		if (NULL == username)
 		{
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 		password = webs_get_var(wp, T("password"), T(""));
 		if (NULL == password)
 		{
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 		//argv += "&username=" + document.getElementById("username").value +
 		//	"&password=" + document.getElementById("password").value;
 	}
@@ -183,13 +182,13 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		if (NULL == ipaddress)
 		{
 			_WEB_DBG_TRAP("================%s=======================:ipaddress\r\n", __func__);
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 		netmask = webs_get_var(wp, T("netmask"), T(""));
 		if (NULL == netmask)
 		{
 			_WEB_DBG_TRAP("================%s=======================:netmask\r\n", __func__);
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 
 		gateway = webs_get_var(wp, T("gateway"), T(""));
@@ -250,7 +249,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		os_uci_save_config("network");
 		os_job_add(OS_JOB_NONE,web_networkset_set_active, NULL);
 		//super_system("/etc/init.d/network restart");
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 #endif
 
 		memset(addressbuf, 0, sizeof(addressbuf));
@@ -260,14 +259,14 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		if(str2prefix_ipv4 (addressbuf, (struct prefix_ipv4 *)&cp) <= 0)
 		{
 			_WEB_DBG_TRAP("================%s=======================:str2prefix_ipv4:%s\r\n", __func__, addressbuf);
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 		nsm_interface_address_get_api(ifp, &ocp);
 		nsm_interface_address_unset_api(ifp, &ocp, zpl_false);
 		if(nsm_interface_address_set_api(ifp, &cp, zpl_false) != OK)
 		{
 			_WEB_DBG_TRAP("================%s=======================:nsm_interface_address_set_api\r\n", __func__);
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 
 		if(dns)
@@ -275,12 +274,12 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 			if (str2prefix (dns, &cp) <= 0)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns str2prefix:%s\r\n", __func__, dns);
-				return web_return_text_plain(wp, ERROR);
+				return web_return_text_plain(wp, ERROR, NULL);
 			}
 			if(nsm_ip_dns_add_api(&cp, zpl_false) != OK)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns\r\n", __func__);
-				return web_return_text_plain(wp, ERROR);
+				return web_return_text_plain(wp, ERROR, NULL);
 			}
 		}
 		if(dns2)
@@ -288,12 +287,12 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 			if (str2prefix (dns2, &cp) <= 0)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns2 str2prefix:%s\r\n", __func__,dns2);
-				return web_return_text_plain(wp, ERROR);
+				return web_return_text_plain(wp, ERROR, NULL);
 			}
 			if(nsm_ip_dns_add_api(&cp, zpl_true) != OK)
 			{
 				_WEB_DBG_TRAP("================%s=======================:dns2\r\n", __func__);
-				return web_return_text_plain(wp, ERROR);
+				return web_return_text_plain(wp, ERROR, NULL);
 			}
 		}
 
@@ -304,13 +303,13 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 				  gateway, NULL, NULL, NULL, NULL) != NULL)
 			{
 				_WEB_DBG_TRAP("================%s=======================:web_static_ipv4_safi\r\n", __func__);
-				return web_return_text_plain(wp, ERROR);
+				return web_return_text_plain(wp, ERROR, NULL);
 			}
 		}
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 	}
 	else
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 }
 
 int web_network_app(void)

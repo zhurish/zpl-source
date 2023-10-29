@@ -137,11 +137,11 @@
 						var argv;
 						var stxhr = new XHR();
 						if (op == "GET") {
-							argv = "ACTION=GET";
+							argv = "button-action=GET";
 						}
 						else {
 							if (document.getElementById("ftp_enable").checked) {
-								argv = "ACTION=SET&ftp_enable=true";
+								argv = "button-action=SET&ftp_enable=true";
 								argv += "&ftp_address=" + document.getElementById("ftp_address").value + "&ftp_timezone="
 									+ document.getElementById("ftp_timezone").value;
 
@@ -150,7 +150,7 @@
 								}
 							}
 							else {
-								argv = "ACTION=SET&ftp_enable=false";
+								argv = "button-action=SET&ftp_enable=false";
 							}
 
 							$("#ftp_waiting").css("display", "block");

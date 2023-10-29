@@ -283,7 +283,7 @@
 							wanip = document.getElementById("wanip").value;
 							proto = document.getElementById("proto").value;
 
-							argv = "ACTION=firewall-map&BTNID=add&name=" + name + "&lanip=" + lanip +
+							argv = "button-action=firewall-map&button-ID=add&name=" + name + "&lanip=" + lanip +
 								"&lanport=" + lanport + "&wanport=" + wanport + "&proto=" + proto;
 							if (wanip != "")
 								argv += "&wanip=" + wanip;
@@ -295,7 +295,7 @@
 							wanport = $(self).parent().parent().prevAll()[3].innerText;
 							proto = $(self).parent().parent().prevAll()[0].innerText;
 	
-							argv = "ACTION=firewall-map&BTNID=" + self.id + "&name=" + name + 
+							argv = "button-action=firewall-map&button-ID=" + self.id + "&name=" + name + 
 							 	"&lanip=" + lanip +
 								"&lanport=" + lanport + "&wanport=" + wanport + "&proto=" + proto;
 								
@@ -464,7 +464,7 @@
 							proto = document.getElementById("tcproto").value;
 							action = document.getElementById("tcaction").value;
 							
-							argv = "ACTION=firewall-filter&BTNID=add&name=" + name + "&wanport=" + 
+							argv = "button-action=firewall-filter&button-ID=add&name=" + name + "&wanport=" + 
 								wanport + "&proto=" + proto  + "&handle=" + action;
 							if (wanip != "")
 								argv += "&wanip=" + wanip;
@@ -475,7 +475,7 @@
 							proto = $(self).parent().parent().prevAll()[1].innerText;
 							action = $(self).parent().parent().prevAll()[0].innerText;
 							
-							argv = "ACTION=firewall-filter&BTNID=delete&name=" + name + 
+							argv = "button-action=firewall-filter&button-ID=delete&name=" + name + 
 								"&wanport=" + wanport + "&proto=" + proto + "&handle=" + action;
 								
 							console.log("argv:" + argv);

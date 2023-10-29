@@ -1517,30 +1517,23 @@ PUBLIC void websSetFormVars(Webs *wp)
 
 static void addJsonVars(Webs *wp, char *vars)
 {
-	char *keyword, *value;
 	web_assert(wp);
 	web_assert(vars);
-	keyword = strchr(vars, '[');
-	if (keyword)
-	{
-		value = strchr(keyword, ']');
-		value++;
-		*value++ = '\0';
-		websSetVar(wp, "jsonarray", keyword);
-		printf("%s:jsonarray:'%s'\r\n", __func__,keyword);
-	}
-	else
-	{
-		keyword = strchr(vars, '{');
-		if (keyword)
-		{
-			value = strchr(keyword, '}');
-			value++;
-			*value++ = '\0';
-			websSetVar(wp, "json", keyword);
-			printf("%s:json:'%s'\r\n", __func__,keyword);
-		}
-	}
+
+    #if ME_GOAHEAD_JSON
+    cJSON *item = cJSON_Parse(vars);
+    if(item)
+    {
+        char *json = cJSON_Print(item);	
+        if(json)
+        {
+            websSetVar(wp, "json", json);
+            cJSON_PrintFree(json);
+        }
+    }
+    #else
+        websSetVar(wp, "json", vars);
+    #endif
 }
 
 PUBLIC void websSetJsonVars(Webs *wp)
@@ -1652,7 +1645,20 @@ PUBLIC cchar *websGetVar(Webs *wp, cchar *var, cchar *defaultGetValue)
     return defaultGetValue;
 }
 
-
+#if ME_GOAHEAD_JSON
+PUBLIC cJSON *websGetJsonVar(Webs *wp)
+{
+    WebsKey   *sp = NULL;
+    web_assert(websValid(wp));
+    if ((sp = hashLookup(wp->vars, "json")) != NULL) {
+        web_assert(sp->content.type == string);
+        if (sp->content.value.string) {
+            return cJSON_Parse(sp->content.value.string);
+        }
+    }
+    return NULL;
+}
+#endif
 /*
     Return TRUE if a webs variable is set to a given value
  */
@@ -1710,18 +1716,50 @@ PUBLIC void websResponseHeaders(Webs *wp, int code, cchar *header, cchar *messag
 {
 	ssize   len = 0;
 	web_assert(websValid(wp));
-	if(header && message)
+	if(header)
     {
 		websSetStatus(wp, code);
-		len = slen(message);
-		websWriteHeaders(wp, -1, 0);
+        if(message)
+		    len = slen(message);
+		websWriteHeaders(wp, (len>0)?(len + 2):0, 0);
 		websWriteHeader(wp, "Content-Type", header);
 		websWriteEndHeaders(wp);
-		websWriteBlock(wp, message, len);
-		//websWriteBlock(wp, "\r\n", 2);
+        if(message)
+        {
+		    websWriteBlock(wp, message, len);
+            websWriteBlock(wp, "\r\n", 2);
+        }
 		websDone(wp);
     }
 }
+#if ME_GOAHEAD_JSON
+PUBLIC void websResponseJson(Webs *wp, int code, cJSON *obj)
+{
+	ssize   len = 0;
+    char *message = NULL;
+	web_assert(websValid(wp));
+
+	websSetStatus(wp, code);
+    if(obj)
+    {
+        message = cJSON_Print(obj);
+        if(message)
+        {
+		    len = slen(message);
+        }
+        cJSON_Delete(obj);
+    }
+	websWriteHeaders(wp,(len>0)?(len + 2):0, 0);
+	websWriteHeader(wp, "Content-Type", "application/json");
+	websWriteEndHeaders(wp); 
+    if(message && len)
+    {
+        websWriteBlock(wp, message, len); 
+        websWriteBlock(wp, "\r\n", 2);
+    }      
+	websDone(wp);
+}
+#endif
 
 static char *makeUri(cchar *scheme, cchar *host, int port, cchar *path)
 {
@@ -1822,7 +1860,12 @@ PUBLIC int websRedirectByStatus(Webs *wp, int status)
         if (status == HTTP_CODE_UNAUTHORIZED) {
             websError(wp, status, "Access Denied. User not logged in.");
         } else {
-            websError(wp, status, 0);
+            if (status == HTTP_CODE_OK) 
+            {
+                websResponse(wp, HTTP_CODE_OK, NULL);
+            }
+            else
+                websError(wp, status, 0);
         }
     }
     return 0;
@@ -2118,7 +2161,51 @@ PUBLIC ssize websWrite(Webs *wp, cchar *fmt, ...)
     return rc;
 }
 
+PUBLIC ssize websWriteCache(Webs *wp, cchar *fmt, ...)
+{
+    va_list     vargs;
+    ssize       rc;
+    web_assert(websValid(wp));
+    web_assert(fmt && *fmt);
 
+    va_start(vargs, fmt);
+    rc = vsprintf(NULL, fmt, vargs);
+    if(rc > 0)
+    {
+        if(wp->web_cache == NULL)
+        {
+            wp->web_cache_max = max(4096, rc);
+            wp->web_cache_len = 0;
+            wp->web_cache = walloc(wp->web_cache_max);
+        }
+        if((wp->web_cache_max - wp->web_cache_len) < rc)
+        {
+            wp->web_cache = wrealloc(wp->web_cache, wp->web_cache_max + rc);
+        }
+        if(wp->web_cache)
+        {
+            wp->web_cache_max += rc;
+            rc = vsnprintf(wp->web_cache + wp->web_cache_len, wp->web_cache_max - wp->web_cache_len, fmt, vargs);
+            if(rc > 0)
+                wp->web_cache_len += rc;
+        }
+    }
+    va_end(vargs);
+    return wp->web_cache_len;
+}
+PUBLIC ssize websWriteCacheFinsh(Webs *wp)
+{
+    if(wp->web_cache && wp->web_cache_len)
+    {
+        websWriteBlock(wp, wp->web_cache, wp->web_cache_len);
+        wp->web_cache_len = 0;
+    }
+    return 0;  
+}
+PUBLIC ssize websWriteCacheLen(Webs *wp)
+{
+    return (wp->web_cache_len>0)?(wp->web_cache_len + 2):0;
+}
 /*
     Non-blocking write to socket.
     Returns number of bytes written. Returns -1 on errors. May return short.
@@ -2432,6 +2519,7 @@ PUBLIC void websDecodeUrl(char *decoded, char *input, ssize len)
  */
 static void logRequest(Webs *wp, int code)
 {
+#if (ME_GOAHEAD_LOGFILE==1)    
     char        *buf, timeStr[28], zoneStr[6], dataStr[16];
     ssize       len;
     WebsTime    timer;
@@ -2470,13 +2558,17 @@ static void logRequest(Webs *wp, int code)
         wp->ipaddr, wp->username == NULL ? "-" : wp->username,
         timeStr, zoneStr, wp->method, wp->path, wp->protoVersion, code, dataStr);
     len = strlen(buf);
-#if (ME_GOAHEAD_LOGFILE==1)
+
     write(accessFd, buf, len);
 #else
+    char *buf = NULL;
+    buf = sfmt("%s from %s username '%s' %s \"%s\" %s\n",
+        wp->protocol?wp->protocol:"http", wp->ipaddr, wp->username == NULL ? "-" : wp->username,
+        wp->method, wp->path, websStatusCodeMsg(code));
     web_logmsg(WEBS_NOTICE, "%s", buf);
 #endif
     wfree(buf);
-}
+} 
 #endif
 
 
@@ -3649,7 +3741,22 @@ PUBLIC cchar *websErrorMsg(int code)
     return websErrorMsg(HTTP_CODE_INTERNAL_SERVER_ERROR);
 }
 
-
+PUBLIC char *websStatusCodeMsg(int code)
+{
+    WebsError   *ep;
+    static char tmpbuf[512];
+    web_assert(code >= 0);
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    code &= WEBS_CODE_MASK;
+    for (ep = websErrors; ep->code; ep++) {
+        if (code == ep->code) {
+            snprintf(tmpbuf, sizeof(tmpbuf), "%d %s", ep->code, ep->msg);
+            return tmpbuf;
+        }
+    }
+    snprintf(tmpbuf, sizeof(tmpbuf), "%d Internal Server Error:Unknow", 500);
+    return tmpbuf;
+}
 /*
     Accessors
  */

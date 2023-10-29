@@ -370,7 +370,7 @@
 					function wireless_enable_check(self) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=wireless&BTNID=active&enable=";
+						argv = "button-action=wireless&button-ID=active&enable=";
 						if (self.checked)
 							argv += "true";
 						else
@@ -567,7 +567,7 @@
 						console.log("ap_disconnect_click");
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=wireless&BTNID=" + self.id;
+						argv = "button-action=wireless&button-ID=" + self.id;
 						$("#wireless_waiting").css("display", "block");
 						setTimeout(function () { $("#wireless_waiting").css("display", "none") }, 5000);
 						stxhr.post("/action/button_onclick", argv,
@@ -593,7 +593,7 @@
 						console.log("ap_scan_click");
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=wireless&BTNID=" + self.id;
+						argv = "button-action=wireless&button-ID=" + self.id;
 						$("#wifi_scan_icon").css("display", "block");
 						stxhr.post("/action/button_onclick", argv,
 							function (x) {
@@ -656,12 +656,12 @@
 						if (op == "GET") {
 							var options = $("#mode option:selected");
 
-							argv = "ACTION=GET&mode=" + options.val();//document.getElementById("mode").value;
+							argv = "button-action=GET&mode=" + options.val();//document.getElementById("mode").value;
 						}
 						else {
 							var options = $("#mode option:selected");
 
-							argv = "ACTION=SET&mode=" + get_select_option_value(document.getElementById("mode"));
+							argv = "button-action=SET&mode=" + get_select_option_value(document.getElementById("mode"));
 
 							if (document.getElementById("mode").value == "AP") {
 								argv += "&name="
@@ -879,7 +879,7 @@
 						var mac = $(obj).parent().parent().prevAll()[1].innerText;
 
 						console.log(mac);
-						argv = "ACTION=wireless&BTNID=" + obj.id + "&" + argv + mac;
+						argv = "button-action=wireless&button-ID=" + obj.id + "&" + argv + mac;
 						$("#disable_waiting").css("display", "block");
 						setTimeout(function () { $("#disable_waiting").css("display", "none") }, 5000);
 						stxhr.post("/action/button_onclick", argv,

@@ -1,19 +1,6 @@
-//#include "zplos_include.h"
-#include "zplos_include.h"
-#include "module.h"
-#include "zmemory.h"
-#include "zassert.h"
-#include "command.h"
-#include "prefix.h"
-#include "host.h"
-#include "log.h"
-#include "vty.h"
-
-#include "web_util.h"
-#include "web_jst.h"
-#include "web_app.h"
-#include "web_api.h"
-
+#define HAS_BOOL 1
+#include "src/goahead.h"
+#include "src/webutil.h"
 
 
 static struct web_button_cb *web_btn_cbtbl[WEB_BTN_CB_MAX];
@@ -35,17 +22,16 @@ int web_button_add_hook(char *action, char *btnid, int (*cb)(void *, void *),
 	{
 		if (web_btn_cbtbl[i] == NULL)
 		{
-			web_btn_cbtbl[i] = XMALLOC(MTYPE_WEB_ROUTE,
-					sizeof(struct web_button_cb));
+			web_btn_cbtbl[i] = walloc(sizeof(struct web_button_cb));
 			memset(web_btn_cbtbl[i], 0, sizeof(struct web_button_cb));
 			strncpy(web_btn_cbtbl[i]->action, action, MIN(sizeof(web_btn_cbtbl[i]->action), strlen(action)));
 			strncpy(web_btn_cbtbl[i]->ID, btnid, MIN(sizeof(web_btn_cbtbl[i]->ID), strlen(btnid)));
 			web_btn_cbtbl[i]->btn_cb = cb;
 			web_btn_cbtbl[i]->pVoid = p;
-			return OK;
+			return 0;
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 int web_button_del_hook(char *action, char *btnid)
@@ -67,13 +53,13 @@ int web_button_del_hook(char *action, char *btnid)
 					&& memcmp(web_btn_cbtbl[i]->ID, iID , sizeof(iID)) == 0)
 			{
 				web_btn_cbtbl[i]->btn_cb = NULL;
-				XFREE(MTYPE_WEB_ROUTE, web_btn_cbtbl[i]);
+				wfree(web_btn_cbtbl[i]);
 				web_btn_cbtbl[i] = NULL;
-				return OK;
+				return 0;
 			}
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 static int web_button_call_hook(char *action, char *btnid, Webs *wp)
@@ -99,7 +85,7 @@ static int web_button_call_hook(char *action, char *btnid, Webs *wp)
 			}
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 
@@ -110,30 +96,59 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 	char ID[64];
 	memset(action, 0, sizeof(action));
 	memset(ID, 0, sizeof(ID));
-	strval = webs_get_var(wp, T("ACTION"), T(""));
-	if (NULL == strval)
+#if ME_GOAHEAD_JSON
+	cJSON *root = NULL;
+#endif
+	if(wp->flags & WEBS_FORM)
 	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get ACTION Value");
-		return web_return_text_plain(wp, ERROR);
+		strval = webs_get_var(wp, T("button-action"), T(""));
+		if (NULL == strval)
+		{
+			web_error( "Can not Get button-action Value");
+			return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-action");
+		}
+		strcpy(action, strval);
+		strval = webs_get_var(wp, T("button-ID"), T(""));
+		if (NULL == strval)
+		{
+			web_error( "Can not Get button-ID Value");
+			return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-ID");
+		}
+		strcpy(ID, strval);
 	}
-	strcpy(action, strval);
+#if ME_GOAHEAD_JSON
+	if(wp->flags & WEBS_JSON)
+	{
+		root = websGetJsonVar(wp);
+		if(root == NULL)
+		{
+			strval = cJSON_GetStringValue(root, "button-action");
+			if (NULL == strval)
+			{
+				web_error( "Can not Get button-action Value");
+				return web_return_application_json_fmt(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-action");
+			}
+			strval = cJSON_GetStringValue(root, "button-ID");
+			if (NULL == strval)
+			{
+				web_error( "Can not Get button-ID Value");
+				return web_return_application_json_fmt(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-ID");
+			}
+		}
+	}
+#endif
 
-	strval = webs_get_var(wp, T("BTNID"), T(""));
-	if (NULL == strval)
+	if (web_button_call_hook(action, ID, wp) == 0)
 	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get BTNID Value");
-		return web_return_text_plain(wp, ERROR);
+		return 0;
 	}
-	strcpy(ID, strval);
-	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
-		zlog_debug(MODULE_WEB, "web Get ACTION=%s BTNID=%s", action, ID);
-	if (web_button_call_hook(action, ID, wp) == OK)
-	{
-		return OK;
-	}
-	return web_return_text_plain(wp, ERROR);
+	if(wp->flags & WEBS_FORM)	
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
+#if ME_GOAHEAD_JSON
+	else if(wp->flags & WEBS_JSON)
+		return web_return_application_json_fmt(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
+#endif
+	return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
 }
 
 
@@ -148,16 +163,15 @@ int web_upload_add_hook(char *form, char *id, int (*cb)(void *, void *, void *),
 	{
 		if (web_upload_cbtbl[i] == NULL)
 		{
-			web_upload_cbtbl[i] = XMALLOC(MTYPE_WEB_ROUTE,
-					sizeof(struct web_upload_cb));
+			web_upload_cbtbl[i] = walloc(sizeof(struct web_upload_cb));
 			strcpy(web_upload_cbtbl[i]->form, form);
 			strcpy(web_upload_cbtbl[i]->ID, id);
 			web_upload_cbtbl[i]->upload_cb = cb;
 			web_upload_cbtbl[i]->pVoid = p;
-			return OK;
+			return 0;
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 int web_upload_del_hook(char *form, char *id)
@@ -171,13 +185,13 @@ int web_upload_del_hook(char *form, char *id)
 					&& strcmp(web_upload_cbtbl[i]->ID, id) == 0)
 			{
 				web_upload_cbtbl[i]->upload_cb = NULL;
-				XFREE(MTYPE_WEB_ROUTE, web_upload_cbtbl[i]);
+				wfree( web_upload_cbtbl[i]);
 				web_upload_cbtbl[i] = NULL;
-				return OK;
+				return 0;
 			}
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 int web_upload_call_hook(char *form, char *id, Webs *wp, WebsUpload *up)
@@ -197,7 +211,7 @@ int web_upload_call_hook(char *form, char *id, Webs *wp, WebsUpload *up)
 			}
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 int web_download_add_hook(char *form, char *id, int (*cb)(void *, char **))
@@ -207,16 +221,15 @@ int web_download_add_hook(char *form, char *id, int (*cb)(void *, char **))
 	{
 		if (web_download_cbtbl[i] == NULL)
 		{
-			web_download_cbtbl[i] = XMALLOC(MTYPE_WEB_ROUTE,
-					sizeof(struct web_upload_cb));
+			web_download_cbtbl[i] = walloc(sizeof(struct web_upload_cb));
 			strcpy(web_download_cbtbl[i]->form, form);
 			strcpy(web_download_cbtbl[i]->ID, id);
 			web_download_cbtbl[i]->download_cb = cb;
 			//web_download_cbtbl[i]->pVoid = p;
-			return OK;
+			return 0;
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 int web_download_del_hook(char *form, char *id)
@@ -230,13 +243,13 @@ int web_download_del_hook(char *form, char *id)
 					&& strcmp(web_download_cbtbl[i]->ID, id) == 0)
 			{
 				web_download_cbtbl[i]->download_cb = NULL;
-				XFREE(MTYPE_WEB_ROUTE, web_download_cbtbl[i]);
+				wfree( web_download_cbtbl[i]);
 				web_download_cbtbl[i] = NULL;
-				return OK;
+				return 0;
 			}
 		}
 	}
-	return ERROR;
+	return -1;
 }
 
 int web_download_call_hook(char *form, char *id, Webs *wp, char **filename)
@@ -255,50 +268,17 @@ int web_download_call_hook(char *form, char *id, Webs *wp, char **filename)
 			}
 		}
 	}
-	return ERROR;
+	return -1;
 }
 #endif
 
 
 
-static int web_progress(Webs *wp, char *path, char *query)
-{
-	char *strval = NULL;
-	char action[64];
-	char ID[64];
-	memset(action, 0, sizeof(action));
-	memset(ID, 0, sizeof(ID));
-	strval = webs_get_var(wp, T("VIEW"), T(""));
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get VIEW Value");
-		return web_return_text_plain(wp, ERROR);
-	}
-	strcpy(action, strval);
-
-	strval = webs_get_var(wp, T("ID"), T(""));
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get ID Value");
-		return web_return_text_plain(wp, ERROR);
-	}
-	strcpy(ID, strval);
-	if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-		zlog_debug(MODULE_WEB, "web Get VIEW=%s ID=%s", action, ID);
-	if (web_button_call_hook(action, ID, wp) == OK)
-	{
-		return web_return_text_plain(wp, OK);
-	}
-
-	return web_return_text_plain(wp, ERROR);
-}
 
 int web_button_cb_init(void)
 {
 	memset(web_btn_cbtbl, 0, sizeof(web_btn_cbtbl));
-	return OK;
+	return 0;
 }
 
 #if ME_GOAHEAD_UPLOAD
@@ -306,15 +286,12 @@ int web_updownload_cb_init(void)
 {
 	memset(web_upload_cbtbl, 0, sizeof(web_upload_cbtbl));
 	memset(web_download_cbtbl, 0, sizeof(web_download_cbtbl));
-	return OK;
+	return 0;
 }
 #endif
 
 int web_button_init(void)
 {
-	websFormDefine("button", web_button_onclick);
 	websFormDefine("button_onclick", web_button_onclick);
-	websFormDefine("btnClick", web_button_onclick);
-	websFormDefine("progress_view", web_progress);
 	return 0;
 }

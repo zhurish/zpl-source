@@ -117,7 +117,7 @@
                 function logout_submit() {
                     var argv;
                     var stxhr = new XHR();
-                    argv = "ACTION=system&BTNID=logout";
+                    argv = "button-action=system&button-ID=logout";
                     stxhr.post("/action/logout", argv,
                         function (x) {
                             console.log(x);

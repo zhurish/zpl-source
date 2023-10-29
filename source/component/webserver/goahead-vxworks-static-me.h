@@ -126,9 +126,7 @@
 #ifndef ME_GOAHEAD_AUTO_LOGIN
     #define ME_GOAHEAD_AUTO_LOGIN 0
 #endif
-#ifndef ME_GOAHEAD_LOGIN_MAX
-    #define ME_GOAHEAD_LOGIN_MAX 2
-#endif
+
 #ifndef ME_GOAHEAD_CGI
     #define ME_GOAHEAD_CGI 1
 #endif

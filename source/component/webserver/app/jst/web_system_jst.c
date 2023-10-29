@@ -17,10 +17,9 @@
 #include "vty.h"
 
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 #ifdef ZPL_APP_MODULE
 #include "application.h"
@@ -314,32 +313,22 @@ static int jst_web_src_prefix(int eid, webs_t wp, int argc, char **argv)
 static int web_define_get(Webs *wp, char *path, char *query)
 {
 	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	//websWriteHeader(wp, "Content-Type", "application/json");
-	websWriteHeader(wp, "Content-Type", "text/plain");
-	websWriteEndHeaders(wp);
-	websWrite(wp, "%s", "[");
 
-/*
-    var webtype = "homewifi";
-    var ostype = "openwrt";
-    var platform = "TSLV9";
-    var device = "TSLV9";
-    var have_switch = true;
-    var have_dns = false;
-    var have_dhcp = true;
-    var have_sip = true;
-    var have_wireless = true;
-*/
+	websWriteCache(wp, "%s", "[");
 
-
-	websWrite(wp,"{\"response\":\"%s\", \"webtype\":\"%s\", \
+	websWriteCache(wp,"{\"response\":\"%s\", \"webtype\":\"%s\", \
 			\"ostype\":\"%s\", \"platform\":\"%s\", \"device\":\"%s\", \
 			\"switch\":%s, \"dns\":%s, \"dhcp\":%s, \"sip\":%s, \"wireless\":%s}",
 			"OK", web_type_string(web_app), web_os_type_string(web_app), "TSLX5", "TSLX5",
 			"false", "false", "false", "true", "true");
 
-	websWrite(wp, "%s", "]");
+	websWriteCache(wp, "%s", "]");
+
+	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+	websWriteHeader (wp, "Content-Type", "text/plain");
+	websWriteEndHeaders (wp);	
+	websWriteCacheFinsh(wp);
+
 	websDone(wp);
 	return OK;
 }
@@ -383,11 +372,6 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 	wp->iValue1 = 0;
 	wp->iValue = 0;
 	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "application/json");
-	//websWriteHeader(wp, "Content-Type", "text/plain");
-	websWriteEndHeaders(wp);
-	//websWrite(wp, "%s", "[");
 
 	//websWrite(wp, "%s", host_name_get());
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
@@ -449,9 +433,11 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 	offset = strlen(buf);
 	sprintf (buf + offset, "\"memload\":\"%d%%\"}", ((host_system.mem_uses*100)/host_system.mem_total));
 
-	websWrite(wp, buf);
-	//if_list_each(web_interface_name_tbl, wp);
-	//websWrite(wp, "%s", "]");
+	websWriteCache(wp, buf);
+	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+	websWriteHeader (wp, "Content-Type", "application/json");
+	websWriteEndHeaders (wp);	
+	websWriteCacheFinsh(wp);
 	websDone(wp);
 	wp->iValue = 0;
 	wp->iValue1 = 0;
@@ -460,7 +446,6 @@ static int jst_systeminfo(Webs *wp, char *path, char *query)
 
 int web_system_jst_init(void)
 {
-
 #ifdef ME_DESCRIPTION
 	websDefineJst("jst_web_description", jst_web_description);
 #endif

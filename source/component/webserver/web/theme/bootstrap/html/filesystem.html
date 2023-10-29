@@ -68,7 +68,7 @@
 						var argv;
 						var interval = 120000;
 						var stxhr = new XHR();
-						argv = "ACTION=filetbl&BTNID=webupgrade";
+						argv = "button-action=filetbl&button-ID=webupgrade";
 						if (document.getElementById("clear").checked)
 							argv += "&clear=true";
 						//else	
@@ -276,7 +276,7 @@
 					var interval = 3000;
 					if (self.id == "install")
 						interval = 120000;
-					argv = "ACTION=filetbl&BTNID=" + self.id + "&" + argv + name;
+					argv = "button-action=filetbl&button-ID=" + self.id + "&" + argv + name;
 					$("#handle_waiting").css("display", "block");
 					setTimeout(function () { $("#handle_waiting").css("display", "none") }, interval);
 					stxhr.post("/action/button_onclick", argv,

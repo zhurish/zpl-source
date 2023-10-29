@@ -20,10 +20,9 @@
 #ifdef ZPL_SERVICE_SYSLOG
 #include "syslogcLib.h"
 #endif
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 
 static int v9_app_sntp_config_save(int sntp, char *ip, char *ip1)
@@ -65,11 +64,11 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 	char *syslog_address = NULL;
 	char *plat_address = NULL;
 
-	strval = webs_get_var(wp, T("ACTION"), T(""));
+	strval = webs_get_var(wp, T("button-action"), T(""));
 	if (NULL == strval)
 	{
-		_WEB_DBG_TRAP("================%s=======================: can not get ACTION\r\n", __func__);
-		return web_return_text_plain(wp, ERROR);
+		_WEB_DBG_TRAP("================%s=======================: can not get button-action\r\n", __func__);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 
 	if (strstr(strval, "GET"))
@@ -121,7 +120,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		_WEB_DBG_TRAP("================%s=======================: can not get plat=%s\r\n", __func__, strval);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	plat = atoi(strval);
 /*
@@ -135,7 +134,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		_WEB_DBG_TRAP("================%s=======================: can not get sntp=%s\r\n", __func__, strval);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(strstr(strval, "true"))
 	{
@@ -144,7 +143,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		if (NULL == sntp_address)
 		{
 			_WEB_DBG_TRAP("================%s=======================: can not get sntpip=%s\r\n", __func__, sntp_address);
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 		sntp_address1 = webs_get_var(wp, T("sntpip1"), T(""));
 	}
@@ -153,7 +152,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 	if (NULL == strval)
 	{
 		_WEB_DBG_TRAP("================%s=======================: can not get syslog=%s\r\n", __func__, strval);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(strstr(strval, "true"))
 	{
@@ -161,7 +160,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		if (NULL == syslog_address)
 		{
 			_WEB_DBG_TRAP("================%s=======================: can not get syslogip=%s\r\n", __func__, syslog_address);
-			return web_return_text_plain(wp, ERROR);
+			return web_return_text_plain(wp, ERROR, NULL);
 		}
 #ifdef ZPL_SERVICE_SYSLOG
 		if (!syslogc_is_enable())
@@ -188,7 +187,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 		os_uci_set_string("product.global.platip", plat_address);
 	os_uci_save_config("product");
 #endif
-	return web_return_text_plain(wp, OK);
+	return web_return_text_plain(wp, OK, NULL);
 }
 
 int web_netservice_app(void)

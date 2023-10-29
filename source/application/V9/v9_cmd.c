@@ -33,7 +33,7 @@
 #include "v9_video_api.h"
 
 #ifdef ZPL_WEBGUI_MODULE
-#include "web_util.h"
+#include "goahead.h"
 #endif
 
 

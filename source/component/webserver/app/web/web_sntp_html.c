@@ -21,10 +21,9 @@
 #ifdef ZPL_SERVICE_SNTPC
 #include "sntpcLib.h"
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 
 static int jst_sntp_timezone_list(int eid, webs_t wp, int argc, char **argv)
@@ -56,10 +55,10 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	char *sntp_timezone = NULL;
 	char *sntp_syncinterval = NULL;
 	int	sntp_timezone_val = 0;
-	strval = webs_get_var(wp, T("ACTION"), T(""));
+	strval = webs_get_var(wp, T("button-action"), T(""));
 	if (NULL == strval)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	sntpc_client_get_api(NULL, API_SNTPC_GET_ENABLE, &enable);
 	if (strstr(strval, "GET"))
@@ -99,27 +98,27 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("sntp_enable"), T(""));
 	if (NULL == strval)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(strstr(strval, "false"))
 	{
 		_WEB_DBG_TRAP("%s: sntp_enable=%s\r\n", __func__, strval);
 		sntpc_client_set_api(NULL, API_SNTPC_SET_ENABLE, NULL);
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 	}
 
 
 	sntp_address = webs_get_var(wp, T("sntp_address"), T(""));
 	if (NULL == sntp_address)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	sntpc_client_set_api(NULL, API_SNTPC_SET_ADDRESS, sntp_address);
 
 	sntp_timezone = webs_get_var(wp, T("sntp_timezone"), T(""));
 	if (NULL == sntp_timezone)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(strstr(sntp_timezone,"U"))
 		sntp_timezone_val = 'U';
@@ -134,7 +133,7 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 	sntp_syncinterval = webs_get_var(wp, T("sntp_syncinterval"), T(""));
 	if (NULL == sntp_syncinterval)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	sntp_timezone_val = atoi(sntp_syncinterval);
 	sntpc_client_set_api(NULL, API_SNTPC_SET_INTERVAL, &sntp_timezone_val);

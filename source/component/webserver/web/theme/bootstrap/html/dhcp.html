@@ -306,10 +306,10 @@
 						var argv;
 						var stxhr = new XHR();
 						if (op == "GET") {
-							argv = "ACTION=GET";
+							argv = "button-action=GET";
 						}
 						else {
-							argv = "ACTION=SET&poolname=" + "lantest" + "&startip=" 
+							argv = "button-action=SET&poolname=" + "lantest" + "&startip=" 
 								+ document.getElementById("startip").value + "&endip="
 								+ document.getElementById("endip").value + "&gateway="
 								+ document.getElementById("gateway").value + "&dns="
@@ -576,13 +576,13 @@
 						var argv;
 						var stxhr = new XHR();
 						if (self.id == "dhcpadd")
-							argv = "ACTION=dhcp&BTNID=" + self.id + "&devmac=" + devmac +
+							argv = "button-action=dhcp&button-ID=" + self.id + "&devmac=" + devmac +
 								"&devip=" + devip;
 						else {
 							devmac = $(self).parentNode.parentNode.prevAll()[2].innerText;
 							devip = $(self).parentNode.parentNode.prevAll()[1].innerText;
 
-							argv = "ACTION=dhcp&BTNID=" + self.id + "&devmac=" + devmac +
+							argv = "button-action=dhcp&button-ID=" + self.id + "&devmac=" + devmac +
 								"&devip=" + devip;
 							devname = "";
 							expires = "";

@@ -232,7 +232,7 @@
 
 							console.log("ID:" + ID);
 
-							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID + "&BID=" + BID[0];
+							argv = "button-action=facelib&button-ID=" + obj.id + "&ID=" + ID + "&BID=" + BID[0];
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
@@ -258,7 +258,7 @@
 							var stxhr = new XHR();
 							var ID = $(obj).parent().parent().prevAll()[2].innerText;
 
-							argv = "ACTION=facelib&BTNID=" + obj.id + "&ID=" + ID;
+							argv = "button-action=facelib&button-ID=" + obj.id + "&ID=" + ID;
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 3000);
 							stxhr.post("/action/button_onclick", argv,

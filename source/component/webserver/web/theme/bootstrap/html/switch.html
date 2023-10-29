@@ -157,7 +157,7 @@
 
 					var argv;
 					var stxhr = new XHR();
-					argv = "ACTION=switch&BTNID=" + obj.id + "&port=" + port + "&vlanid=" + vlanid +
+					argv = "button-action=switch&button-ID=" + obj.id + "&port=" + port + "&vlanid=" + vlanid +
 						"&tagged=" + tagged + "&wanlan=" + wanlan;
 
 					$("#handle_waiting").css("display", "block");
@@ -208,7 +208,7 @@
 					if (imgsrc.search("up") > 0) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=switch&BTNID=" + obj.id + "&" + "port=" + port + "&state=down";
+						argv = "button-action=switch&button-ID=" + obj.id + "&" + "port=" + port + "&state=down";
 
 						$("#handle_waiting").css("display", "block");
 						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);
@@ -251,7 +251,7 @@
 					else {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=port&BTNID=" + obj.id + "&" + "port=" + port + "&state=up";
+						argv = "button-action=port&button-ID=" + obj.id + "&" + "port=" + port + "&state=up";
 
 						$("#handle_waiting").css("display", "block");
 						setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);

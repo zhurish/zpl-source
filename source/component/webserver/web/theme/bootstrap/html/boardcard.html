@@ -107,7 +107,7 @@
 				var stxhr = new XHR();
 				var ID = $(obj).parent().parent().prevAll()[6].innerText;
 
-				argv = "ACTION=boardcard&BTNID=" + obj.id + "&ID=" + ID;
+				argv = "button-action=boardcard&button-ID=" + obj.id + "&ID=" + ID;
 
 				stxhr.post("/action/button_onclick", argv,
 					function (x, json) {

@@ -18,10 +18,9 @@
 #include "prefix.h"
 #include "host.h"
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 web_app_t *web_app = NULL;
 
@@ -122,22 +121,6 @@ int web_app_module_init()
 		XFREE(MTYPE_WEB_AUTH, web_app->web_auth);
 	if (WEBGUI_AUTH)
 		web_app->web_auth = XSTRDUP(MTYPE_WEB_AUTH, WEBGUI_AUTH);
-#if ME_GOAHEAD_LOGIN_HTML
-	if (web_app->web_login)
-		XFREE(MTYPE_WEB_DOC, web_app->web_login);
-	if (WEB_LOGIN_HTML)
-		web_app->web_login = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGIN_HTML);
-
-	if (web_app->web_logout)
-		XFREE(MTYPE_WEB_DOC, web_app->web_logout);
-	if (WEB_LOGOUT_HTML)
-		web_app->web_logout = XSTRDUP(MTYPE_WEB_DOC, WEB_LOGOUT_HTML);
-
-	if (web_app->web_main)
-		XFREE(MTYPE_WEB_DOC, web_app->web_main);
-	if (WEB_MAIN_HTML)
-		web_app->web_main = XSTRDUP(MTYPE_WEB_DOC, WEB_MAIN_HTML);
-#endif
 	WEB_DEBUG_ON(MSG);
 	WEB_DEBUG_ON(DETAIL);
 	WEB_DEBUG_ON(EVENT);
@@ -177,23 +160,6 @@ int web_app_module_exit()
 			XFREE(MTYPE_WEB_AUTH, web_app->web_auth);
 			web_app->web_auth = NULL;
 		}
-#if ME_GOAHEAD_LOGIN_HTML
-		if (web_app->web_login)
-		{
-			XFREE(MTYPE_WEB_DOC, web_app->web_login);
-			web_app->web_login = NULL;
-		}
-		if (web_app->web_logout)
-		{
-			XFREE(MTYPE_WEB_DOC, web_app->web_logout);
-			web_app->web_logout = NULL;
-		}
-		if (web_app->web_main)
-		{
-			XFREE(MTYPE_WEB_DOC, web_app->web_main);
-			web_app->web_main = NULL;
-		}
-#endif
 		XFREE(MTYPE_WEB, web_app);
 		web_app = NULL;
 	}
@@ -225,11 +191,7 @@ int web_app_module_task_exit()
 static int web_app_init(web_app_t *web)
 {
 	websUploadSetDir(WEB_UPLOAD_BASE);
-#if ME_GOAHEAD_LOGIN_HTML
-	websSetAutoLoginHtml(0, web->web_login);
-	websSetAutoLoginHtml(1, web->web_main);
-	websSetAutoLoginHtml(2, web->web_logout);
-#endif
+
 	if (websOpen(web->documents, web->web_route) < 0)
 	{
 		zlog_err(MODULE_WEB, "Cannot initialize server. Exiting.");
@@ -344,7 +306,7 @@ static int web_app_html_init(web_app_t *web)
 #ifdef ZPL_WEBAPP_MODULE
 	web_system_jst_init();
 	web_html_jst_init();
-
+	web_menu_app();
 	web_updownload_app();
 	web_admin_app();
 #ifdef ZPL_SERVICE_SNTPC
@@ -361,21 +323,6 @@ static int web_app_html_init(web_app_t *web)
 	web_wireless_app();
 #endif
 
-#ifdef APP_X5BA_MODULE
-	web_switch_app();
-	web_sip_app();
-	web_factory_app();
-	web_card_app();
-#endif
-
-#ifdef APP_V9_MODULE
-	web_boardcard_app();
-	web_general_app();
-	web_rtsp_app();
-	web_algorithm_app();
-	web_facelib_app();
-	web_db_app();
-#endif
 	web_upgrade_app();
 	web_system_app();
 #endif
@@ -384,10 +331,3 @@ static int web_app_html_init(web_app_t *web)
 	return OK;
 }
 
-/*
-
- static int web_app_html_exit(web_app_t *web)
- {
- return OK;
- }
- */

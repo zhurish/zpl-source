@@ -19,10 +19,9 @@
 #include "str.h"
 
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 #ifdef ZPL_APP_MODULE
 #include "application.h"
@@ -39,8 +38,6 @@
 #if ME_GOAHEAD_UPLOAD
 
 static char *web_upgrade_file = NULL;
-
-
 
 
 static int web_filelist_count()
@@ -93,12 +90,12 @@ static int web_filelist_tbl(Webs *wp, char *path, char *query)
 					d->d_name);
 			fsize = os_file_size(filetmp);
 			if (i)
-				websWrite(wp, ",");
+				websWriteCache(wp, ",");
 			if (fsize != ERROR)
-				websWrite(wp, "{\"name\":\"%s\", \"size\":\"%s\"}", d->d_name,
+				websWriteCache(wp, "{\"name\":\"%s\", \"size\":\"%s\"}", d->d_name,
 						os_file_size_string(fsize));
 			else
-				websWrite(wp, "{\"name\":\"%s\", \"size\":\"%d\"}", d->d_name,
+				websWriteCache(wp, "{\"name\":\"%s\", \"size\":\"%d\"}", d->d_name,
 						0);
 			i++;
 		}
@@ -111,21 +108,22 @@ static int web_file_list(Webs *wp, char *path, char *query)
 {
 	web_assert(wp);
 	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "text/plain");
-	websWriteEndHeaders(wp);
+
 	if (web_filelist_count() > 0)
 	{
-		websWrite(wp, "%s", "[");
+		websWriteCache(wp, "%s", "[");
 		web_filelist_tbl(wp, path, query);
-		websWrite(wp, "%s", "]");
+		websWriteCache(wp, "%s", "]");
 	}
 	else
 	{
-		websWrite(wp, "%s", "[");
-		//websWrite(wp, "{\"name\":\"\", \"size\":\"\"}");
-		websWrite(wp, "%s", "]");
+		websWriteCache(wp, "%s", "[");
+		websWriteCache(wp, "%s", "]");
 	}
+	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+	websWriteHeader (wp, "Content-Type", "text/plain");
+	websWriteEndHeaders (wp);	
+	websWriteCacheFinsh(wp);
 	websDone(wp);
 	return 0;
 }
@@ -136,10 +134,9 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 	char filetmp[256];
 	web_assert(wp);
 	memset(filetmp, 0, sizeof(filetmp));
-	strval = webs_get_var(wp, T("BTNID"), T(""));
+	strval = webs_get_var(wp, T("button-ID"), T(""));
 	if (NULL != strval)
 	{
-		//_WEB_DBG_TRAP("%s: BTNID=%s\r\n", __func__, strval);
 		if (strstr(strval, "delete"))
 		{
 			strval = webs_get_var(wp, T("name"), T(""));
@@ -149,7 +146,7 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 						strval);
 				remove(filetmp);
 				sync();
-				return web_return_text_plain(wp, OK);
+				return web_return_text_plain(wp, OK, NULL);
 			}
 		}
 		else
@@ -157,18 +154,10 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 			strval = webs_get_var(wp, T("name"), T(""));
 			if (NULL != strval)
 			{
-				//int ret = 0;
 				snprintf(filetmp, sizeof(filetmp), "%s/%s", WEB_UPLOAD_BASE, strval);
 				if (access (filetmp, F_OK) >= 0)
-				{
-#ifdef APP_V9_MODULE
-					if(strstr(strval, "sysupgrade") || strstr(strval, "V9"))
-
-#elif defined APP_X5BA_MODULE
-					if(strstr(strval, "sysupgrade") || strstr(strval, "BYQ"))
-#else					
+				{				
 					if(strstr(strval, "sysupgrade"))		
-#endif
 					{
 						if(web_upgrade_file)
 						{
@@ -178,7 +167,7 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 						web_upgrade_file = strdup(strval);
 						_WEB_DBG_TRAP("============%s================web_upgrade_file=%s\r\n",
 							   __func__, web_upgrade_file? web_upgrade_file:"null");
-						return web_return_text_plain(wp, OK);
+						return web_return_text_plain(wp, OK, NULL);
 					}
 					else if(strstr(strval, ".ipk"))
 					{
@@ -186,17 +175,11 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 						memset(filetmp, 0, sizeof(filetmp));
 						snprintf(filetmp, sizeof(filetmp), "opkg --nodeps install %s", strval);
 						system(filetmp);
-						return web_return_text_plain(wp, OK);
+						return web_return_text_plain(wp, OK, NULL);
 					}
-#ifdef APP_X5BA_MODULE
-					if(x5b_app_upgrade_handle(WEB_UPLOAD_BASE, strval) == OK)
-						return web_return_text_plain(wp, OK);
-					return web_return_text_plain(wp, ERROR);
-#else
-					return web_return_text_plain(wp, OK);
-#endif
+					return web_return_text_plain(wp, OK, NULL);
 				}
-				return web_return_text_plain(wp, ERROR);
+				return web_return_text_plain(wp, ERROR, NULL);
 			}
 		}
 	}
@@ -209,10 +192,10 @@ static int web_handle_upgrade(Webs *wp, void *p)
 	char filetmp[512];
 	web_assert(wp);
 	memset (filetmp, 0, sizeof(filetmp));
-	strval = webs_get_var (wp, T("BTNID"), T(""));
+	strval = webs_get_var (wp, T("button-ID"), T(""));
 	if (NULL != strval)
 	{
-		_WEB_DBG_TRAP("============%s================BTNID=%s  web_upgrade_file=%s\r\n", __func__,
+		_WEB_DBG_TRAP("============%s================button-ID=%s  web_upgrade_file=%s\r\n", __func__,
 			   strval, web_upgrade_file? web_upgrade_file:"null");
 		if (strstr (strval, "webupgrade") && web_upgrade_file != NULL)
 		{
@@ -228,102 +211,14 @@ static int web_handle_upgrade(Webs *wp, void *p)
 				web_upgrade_file = NULL;
 			}
 			system (filetmp);
-			return web_return_text_plain (wp, OK);
+			return web_return_text_plain (wp, OK, NULL);
 		}
 	}
-	_WEB_DBG_TRAP("============%s=============2===BTNID=%s  web_upgrade_file=%s\r\n", __func__,
+	_WEB_DBG_TRAP("============%s=============2===button-ID=%s  web_upgrade_file=%s\r\n", __func__,
 		   strval ? strval:"null", web_upgrade_file? web_upgrade_file:"null");
 	return ERROR; //;
 }
 
-/*
- Dump the file upload details. Don't actually do anything with the uploaded file.
- */
-/*
-static char *base64_encode(const zpl_uint8 *str, int str_len)
-{
-	int len = 0;
-	//long str_len;
-	char *res = NULL;
-	int i = 0, j = 0;
-	//定义base64编码表
-	const char base64_table[] =
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-	//计算经过base64编码后的字符串长度
-	//str_len=strlen(str);
-	if (str_len % 3 == 0)
-		len = str_len / 3 * 4;
-	else
-		len = (str_len / 3 + 1) * 4;
-
-	res = malloc (sizeof(zpl_uint8) * len + 1);
-	res[len] = '\0';
-
-	//以3个8位字符为一组进行编码
-	for (i = 0, j = 0; i < len - 2; j += 3, i += 4)
-	{
-		res[i] = base64_table[str[j] >> 2]; //取出第一个字符的前6位并找出对应的结果字符
-		res[i + 1] = base64_table[(str[j] & 0x3) << 4 | (str[j + 1] >> 4)]; //将第一个字符的后位与第二个字符的前4位进行组合并找到对应的结果字符
-		res[i + 2] = base64_table[(str[j + 1] & 0xf) << 2 | (str[j + 2] >> 6)]; //将第二个字符的后4位与第三个字符的前2位组合并找出对应的结果字符
-		res[i + 3] = base64_table[str[j + 2] & 0x3f]; //取出第三个字符的后6位并找出结果字符
-	}
-
-	switch (str_len % 3)
-	{
-		case 1:
-			res[i - 2] = '=';
-			res[i - 1] = '=';
-			break;
-		case 2:
-			res[i - 1] = '=';
-			break;
-	}
-	return res;
-}
-
-
-zpl_uint8 *base64_decode(zpl_uint8 *code)
-{
-	//根据base64表，以字符找到对应的十进制数据
-	int table[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0,
-			0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-			17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28,
-			29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-			46, 47, 48, 49, 50, 51 };
-	long len;
-	long str_len;
-	zpl_uint8 *res;
-	int i, j;
-
-	//计算解码后的字符串长度
-	len = strlen (code);
-	//判断编码后的字符串后是否有=
-	if (strstr (code, "=="))
-		str_len = len / 4 * 3 - 2;
-	else if (strstr (code, "="))
-		str_len = len / 4 * 3 - 1;
-	else
-		str_len = len / 4 * 3;
-
-	res = malloc (sizeof(zpl_uint8) * str_len + 1);
-	res[str_len] = '\0';
-
-	//以4个字符为一位进行解码
-	for (i = 0, j = 0; i < len - 2; j += 3, i += 4)
-	{
-		res[j] = ((zpl_uint8) table[code[i]]) << 2
-				| (((zpl_uint8) table[code[i + 1]]) >> 4); //取出第一个字符对应base64表的十进制数的前6位与第二个字符对应base64表的十进制数的后2位进行组合
-		res[j + 1] = (((zpl_uint8) table[code[i + 1]]) << 4)
-				| (((zpl_uint8) table[code[i + 2]]) >> 2); //取出第二个字符对应base64表的十进制数的后4位与第三个字符对应bas464表的十进制数的后4位进行组合
-		res[j + 2] = (((zpl_uint8) table[code[i + 2]]) << 6)
-				| ((zpl_uint8) table[code[i + 3]]); //取出第三个字符对应base64表的十进制数的后2位与第4个字符进行组合
-	}
-	return res;
-}
-*/
 static void web_action_upload(Webs *wp, char *path, char *query)
 {
 	char *id = NULL;
@@ -341,56 +236,27 @@ static void web_action_upload(Webs *wp, char *path, char *query)
 			if(web_upload_call_hook(s->name.value.string, id, wp, up) == ERROR)
 			{
 				if(id && !strstr(id, "pic"))
-					web_return_text_plain(wp, ERROR);
+					web_return_text_plain(wp, ERROR, NULL);
 				else if(id && !strstr(id, "dir"))
-					web_return_text_plain(wp, ERROR);
+					web_return_text_plain(wp, ERROR, NULL);
 				return ;
 			}
 		}
 		if(id && !strstr(id, "pic"))
-			web_return_text_plain(wp, OK);
+			web_return_text_plain(wp, OK, NULL);
 		else if(id && !strstr(id, "dir"))
 		{
-			web_return_text_plain(wp, OK);
+			web_return_text_plain(wp, OK, NULL);
 		}
 		return ;
 	}
 	if(id && !strstr(id, "pic"))
-		web_return_text_plain(wp, ERROR);
+		web_return_text_plain(wp, ERROR, NULL);
 	else if(id && !strstr(id, "dir"))
-		web_return_text_plain(wp, ERROR);
+		web_return_text_plain(wp, ERROR, NULL);
 	return ;
 }
-#ifdef ZPL_APP_MODULE
 
-static int pic_upload_cb(Webs *wp, WebsUpload *up, void *p)
-{
-	char json[512];
-	char uploadfile[256];
-	memset(uploadfile, 0, sizeof(uploadfile));
-
-	sprintf(uploadfile, "mv %s %s/%s", up->filename, V9_USER_DB_DIR, up->clientFilename);
-	//_WEB_DBG_TRAP("%s: rename %s %s\r\n", __func__, up->filename, uploadfile);
-	super_system(uploadfile);
-	_WEB_DBG_TRAP("%s: %s\r\n", __func__, uploadfile);
-
-	memset(uploadfile, 0, sizeof(uploadfile));
-	sprintf(uploadfile, "%s/%s", V9_USER_DB_DIR, up->clientFilename);
-
-	if (os_file_access(uploadfile) != OK)
-	{
-		//_WEB_DBG_TRAP("%s: rename error(%s)\r\n", __func__, strerror(ipstack_errno));
-		web_return_text_plain(wp, ERROR);
-		return ERROR;
-	}
-	sync();
-	memset(json, 0, sizeof(json));//http://192.168.3.100:8080/tmp/app/tftpboot/ffd7f79c.jpeg
-	sprintf(json, "{\"filename\": \"%s\", \"url\": \"%s\"}", up->clientFilename, uploadfile);
-	web_return_application_json(wp, json);
-	return OK;
-}
-
-#endif/* ZPL_APP_MODULE */
 static int other_upload_cb(Webs *wp, WebsUpload *up, void *p)
 {
 	web_assert(wp);
@@ -409,117 +275,12 @@ static int other_upload_cb(Webs *wp, WebsUpload *up, void *p)
 }
 
 
-#ifdef APP_V9_MODULE
-struct v9_web_load_dir
-{
-	zpl_uint32 tid;
-	zpl_uint32 id;
-	char dirpath[APP_PATH_MAX];
-};
-
-struct v9_web_load_dir *dir_tmp = NULL;
-
-static int v9_video_dir_load_job(void *a)
-{
-	struct v9_web_load_dir *tmp = a;
-	if(tmp && dir_tmp)
-	{
-		if(strlen(tmp->dirpath))
-			v9_video_user_dir_add(tmp->id, tmp->dirpath);
-
-		memset(dir_tmp, 0, sizeof(struct v9_web_load_dir));
-		free(dir_tmp);
-		dir_tmp = NULL;
-	}
-	return OK;
-}
-/*PUBLIC int websStartEvent(int delay, WebsEventProc proc, void *arg)
-PUBLIC void websRestartEvent(int id, int delay)
-PUBLIC void websStopEvent(int id)*/
-#endif /* APP_V9_MODULE*/
 
 static int dir_upload_cb(Webs *wp, WebsUpload *up, void *p)
 {
 	char uploadfile[256];
 	web_assert(wp);
 	web_assert(up);
-#ifdef APP_V9_MODULE
-	if(dir_tmp == NULL)
-	{
-		dir_tmp = malloc(sizeof(struct v9_web_load_dir));
-		if(dir_tmp)
-		{
-			char *s = up->clientFilename;
-			char *t = strchr(up->clientFilename, '/');
-			char *idtmp = webs_get_var(wp, "BID", NULL);
-			if(idtmp == NULL)
-			{
-				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(MODULE_WEB, "Can not create get Board ID");
-				free(dir_tmp);
-				dir_tmp = NULL;
-				web_return_text_plain(wp, ERROR);
-				return ERROR;
-			}
-			memset(dir_tmp, 0, sizeof(struct v9_web_load_dir));
-
-			//dir_tmp->id = V9_APP_BOARD_CALCU_ID(1);
-			dir_tmp->id = V9_APP_BOARD_CALCU_ID(atoi(idtmp));
-			sprintf(dir_tmp->dirpath, "%s/", V9_USER_DB_DIR);
-			if(t)
-				strncpy(dir_tmp->dirpath + strlen(dir_tmp->dirpath), s, t - s);
-			else
-				strcpy(dir_tmp->dirpath + strlen(dir_tmp->dirpath), s);
-
-			if(os_file_access(dir_tmp->dirpath) != OK)
-			{
-				websOsMkdir(dir_tmp->dirpath, 1);
-			}
-			dir_tmp->tid = os_time_create_once(v9_video_dir_load_job, dir_tmp, 2000);
-			if(dir_tmp->tid <= 0)
-			{
-				if(WEB_IS_DEBUG(EVENT))
-					zlog_debug(MODULE_WEB, "Can not create once timer job");
-				web_return_text_plain(wp, ERROR);
-				return ERROR;
-			}
-		}
-		else
-		{
-			if(WEB_IS_DEBUG(EVENT))
-				zlog_debug(MODULE_WEB, "Can not malloc once timer job memory");
-			web_return_text_plain(wp, ERROR);
-			return ERROR;
-		}
-	}
-	else
-	{
-		if(dir_tmp->tid > 0)
-		{
-			os_time_restart(dir_tmp->tid, 2000);
-		}
-		else
-		{
-			web_return_text_plain(wp, ERROR);
-			return ERROR;
-		}
-	}
-	if(dir_tmp)
-	{
-		sprintf(uploadfile, "mv %s %s/%s", up->filename, V9_USER_DB_DIR, up->clientFilename);
-		super_system(uploadfile);
-
-		memset(uploadfile, 0, sizeof(uploadfile));
-		sprintf(uploadfile, "%s/%s", V9_USER_DB_DIR, up->clientFilename);
-
-		if (os_file_access(uploadfile) != OK)
-		{
-			web_return_text_plain(wp, ERROR);
-			return ERROR;
-		}
-	}
-	sync();
-#else
 	memset(uploadfile, 0, sizeof(uploadfile));
 	sprintf(uploadfile, "%s/%s", WEB_UPLOAD_BASE, up->clientFilename);
 	if (rename(up->filename, uploadfile) < 0)
@@ -530,8 +291,6 @@ static int dir_upload_cb(Webs *wp, WebsUpload *up, void *p)
 		return ERROR;
 	}
 	sync();
-#endif /* APP_V9_MODULE*/
-
 	return OK;
 }
 
@@ -542,7 +301,6 @@ static int config_upload_cb(Webs *wp, WebsUpload *up, void *p)
 	web_assert(up);
 	memset(uploadfile, 0, sizeof(uploadfile));
 	sprintf(uploadfile, "%s/%s", SYSCONFDIR, up->clientFilename);
-	//_WEB_DBG_TRAP("%s: save path=%s\r\n", __func__, uploadfile);
 	if (rename(up->filename, uploadfile) < 0)
 	{
 		_WEB_DBG_TRAP("%s: rename error\r\n", __func__);
@@ -810,7 +568,6 @@ static int config_download_cb(Webs *wp, char **filename)
 int web_updownload_app(void)
 {
 	websDefineAction("download", web_action_downLoad);
-
 	websDefineAction("upload", web_action_upload);
 	websDefineAction("upgrade", web_action_upload);
 
@@ -820,19 +577,12 @@ int web_updownload_app(void)
 	web_button_add_hook("filetbl", "install", web_handle_file_tbl, NULL);
 	web_button_add_hook("filetbl", "webupgrade", web_handle_upgrade, NULL);
 
-#ifdef ZPL_APP_MODULE
-
-	web_upload_add_hook("uploadpic", "pic", pic_upload_cb, NULL);
-
-#endif/* ZPL_APP_MODULE */
 
 	web_upload_add_hook("uploadir", "dir", dir_upload_cb, NULL);
 
 	web_upload_add_hook("upload_filename", "other", other_upload_cb, NULL);
-	//web_upload_add_hook("upgrade_filename", "sysupgrade", sys_upgrade_cb, NULL);
 	web_upload_add_hook("upgrade_filename", "upload", other_upload_cb, NULL);
 
-	//web_upload_add_hook("upgrade_filename", "sysupgrade", config_upload_cb, NULL);
 	web_upload_add_hook("upload_config", "config", config_upload_cb, NULL);
 
 	web_download_add_hook("filename", "syslog", syslog_download_cb);

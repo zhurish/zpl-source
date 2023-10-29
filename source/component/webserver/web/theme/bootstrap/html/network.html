@@ -320,7 +320,7 @@
 							console.log("imgsrc:" + imgsrc + "ifpname:" + ifpname);
 
 							if (imgsrc.search("up") > 0) {
-								/* var jsondata = { "ACTION":"network",  "BTNID":obj.id, "ifname":ifpname, "state":"up"};
+								/* var jsondata = { "button-action":"network",  "button-ID":obj.id, "ifname":ifpname, "state":"up"};
 								xhr_simple_submit("/action/button_onclick", jsondata, $("#connect_waiting"), $("#connect_error"),
 									function(x, json) {
 											console.log(x);
@@ -334,8 +334,8 @@
 									*/
 								var argv;
 								var stxhr = new XHR();
-								argv = "ACTION=network&BTNID=" + obj.id + "&" + "ifname=" + ifpname + "&state=down";
-								//argv = { "ACTION":"network",  "BTNID":obj.id, "ifname":ifpname, "state":"up"};
+								argv = "button-action=network&button-ID=" + obj.id + "&" + "ifname=" + ifpname + "&state=down";
+								//argv = { "button-action":"network",  "button-ID":obj.id, "ifname":ifpname, "state":"up"};
 								$("#connect_waiting").css("display", "block");
 								setTimeout(function () { $("#connect_waiting").css("display", "none") }, 5000);
 								stxhr.post("/action/button_onclick", argv,
@@ -371,7 +371,7 @@
 							else {
 								var argv;
 								var stxhr = new XHR();
-								argv = "ACTION=network&BTNID=" + obj.id + "&" + "ifname=" + ifpname + "&state=up";
+								argv = "button-action=network&button-ID=" + obj.id + "&" + "ifname=" + ifpname + "&state=up";
 
 								$("#connect_waiting").css("display", "block");
 								setTimeout(function () { $("#connect_waiting").css("display", "none") }, 5000);
@@ -517,7 +517,7 @@
 								var argv;
 								var stxhr = new XHR();
 
-								argv = "ACTION=SET&ifname=" + document.getElementById("ifpname").value + "&proto="
+								argv = "button-action=SET&ifname=" + document.getElementById("ifpname").value + "&proto="
 									+ document.getElementById("proto").value;
 
 								if (document.getElementById("proto").value == "static") {

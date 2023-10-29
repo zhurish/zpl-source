@@ -20,10 +20,9 @@
 
 #include "syslogcLib.h"
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 
 static int web_syslog_set(Webs *wp, char *path, char *query)
@@ -33,10 +32,10 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 	char *syslog_level = NULL;
 	char *syslog_port = NULL;
 	char *syslog_proto = NULL;
-	strval = webs_get_var(wp, T("ACTION"), T(""));
+	strval = webs_get_var(wp, T("button-action"), T(""));
 	if (NULL == strval)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if (strstr(strval, "GET"))
 	{
@@ -64,7 +63,7 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("syslog_enable"), T(""));
 	if (NULL == strval)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if(strstr(strval, "false"))
 	{
@@ -73,7 +72,7 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 			syslogc_disable();
 		}
 		zlog_set_level(ZLOG_DEST_SYSLOG, ZLOG_DISABLED);
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 	}
 	//if (!syslogc_is_enable())
 	//	syslogc_enable(host.name);
@@ -81,21 +80,21 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 	syslog_address = webs_get_var(wp, T("syslog_address"), T(""));
 	if (NULL == syslog_address)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	_WEB_DBG_TRAP("%s: syslog_address=%s\r\n", __func__, syslog_address);
 
 	syslog_level = webs_get_var(wp, T("syslog_level"), T(""));
 	if (NULL == syslog_level)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	zlog_set_level(ZLOG_DEST_SYSLOG, zlog_priority_match(syslog_level));
 
 	syslog_port = webs_get_var(wp, T("syslog_port"), T(""));
 	if (NULL == syslog_port)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 
 	syslogc_host_config_set(syslog_address, atoi(syslog_port), 0);
@@ -103,7 +102,7 @@ static int web_syslog_set(Webs *wp, char *path, char *query)
 	syslog_proto = webs_get_var(wp, T("syslog_proto"), T(""));
 	if (NULL == syslog_proto)
 	{
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, ERROR, NULL);
 	}
 	if (strstr(syslog_proto, "TCP"))
 		syslogc_mode_set(SYSLOG_TCP_MODE);
@@ -171,11 +170,8 @@ static int jst_syslog(int eid, webs_t wp, int argc, char **argv)
 
 int web_syslog_app(void)
 {
-
 	websDefineJst("jst_syslog", jst_syslog);
-
 	websFormDefine("setsyslog", web_syslog_set);
-
 	return 0;
 }
 

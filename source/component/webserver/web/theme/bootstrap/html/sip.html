@@ -117,7 +117,7 @@
 						clearTimeout();
 						setTimeout(function (input) {
 							var stxhr = new XHR();
-							var argv = "ACTION=volume&BTNID=" + input.id + "&volume=" + self.value;
+							var argv = "button-action=volume&button-ID=" + input.id + "&volume=" + self.value;
 							//console.log("aaaID:" + input.id + " VAL=" + input.value);
 							stxhr.post("/action/button_onclick", argv,
 								function (x, json) {
@@ -137,9 +137,9 @@
 						var number = $(self).parentNode.parentNode.prevAll()[4].innerText;
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=sip&BTNID=" + self.id + "&sip_number=" + number;
+						argv = "button-action=sip&button-ID=" + self.id + "&sip_number=" + number;
 
-						//console.log("BTNID:" + self.id);
+						//console.log("button-ID:" + self.id);
 						//console.log("number:" + number);
 
 						$("#state_waiting").css("display", "block");
@@ -1073,7 +1073,7 @@
 					function sip_get_action(op) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=GET";
+						argv = "button-action=GET";
 						stxhr.post("/action/setsip", argv,
 							function (x, json) {
 								//console.log(x);
@@ -1175,7 +1175,7 @@
 					function sip_set_onaction(op) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=SET&" + sip_get_web_value();
+						argv = "button-action=SET&" + sip_get_web_value();
 
 
 						$("#handle_waiting").css("display", "block");

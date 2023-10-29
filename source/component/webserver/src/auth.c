@@ -40,8 +40,6 @@ static WebsHash roles = -1;
 static char *masterSecret = NULL;
 static int autoLogin = ME_GOAHEAD_AUTO_LOGIN;
 static WebsVerify verifyPassword = websVerifyPasswordFromFile;
-static int webs_login_num = 0;
-//static bool pmatch(cchar *s1, cchar *s2);
 
 #ifndef ME_GOAHEAD_NONCE_DURATION
     #define ME_GOAHEAD_NONCE_DURATION 60
@@ -61,11 +59,7 @@ typedef struct {
 #endif
 
 
-#if ME_GOAHEAD_LOGIN_HTML
-static char *web_login_html = NULL;
-static char *web_main_html = NULL;
-static char *web_logout_html = NULL;
-#endif
+
 /********************************** Forwards **********************************/
 
 static void computeAbilities(WebsHash abilities, cchar *role, int depth);
@@ -204,19 +198,6 @@ PUBLIC void websCloseAuth(void)
         hashFree(roles);
         roles = -1;
     }
-#if ME_GOAHEAD_LOGIN_HTML
-    if(web_login_html)
-		free(web_login_html);
-	web_login_html = NULL;
-
-	if(web_main_html)
-		free(web_main_html);
-	web_main_html = NULL;
-
-	if(web_logout_html)
-		free(web_logout_html);
-	web_logout_html = NULL;
-#endif /* ME_GOAHEAD_AUTO_LOGIN */
 }
 
 
@@ -555,17 +536,11 @@ PUBLIC bool websLogoutUser(Webs *wp)
         websError(wp, HTTP_CODE_UNAUTHORIZED, "Logged out.");
         return 0;
     }
-#if ME_GOAHEAD_LOGIN_HTML
-	if(web_logout_html)
-	{
-    	websRedirect(wp, web_logout_html);
-	}
-#elif ME_GOAHEAD_LOGIN_JS
+#if ME_GOAHEAD_LOGIN_JS
 	websResponseHeaders(wp, HTTP_CODE_OK, "text/plain", "OK");
 #else
 	websRedirectByStatus(wp, HTTP_CODE_OK);
 #endif
-	webs_login_num--;
 	return 1;
 }
 
@@ -580,14 +555,7 @@ static void loginServiceProc(Webs *wp)
 	web_assert(wp);
 	route = wp->route;
 	web_assert(route);
-/*	if(webs_login_num >= ME_GOAHEAD_LOGIN_MAX)
-	{
-		websResponseHeaders(wp, HTTP_CODE_OK, "text/plain", "Too many login");
-		websRemoveSessionVar(wp, WEBS_SESSION_USERNAME);
-		websDestroySession(wp);
-		wp->flags |= WEBS_CLOSED;
-		return;
-	}*/
+
 	if (websLoginUser(wp, websGetVar(wp, "username", ""),
 			websGetVar(wp, "password", "")))
 	{
@@ -599,19 +567,13 @@ static void loginServiceProc(Webs *wp)
 		}
 		else
 		{
-#if ME_GOAHEAD_LOGIN_HTML
-			if(web_main_html)
-			{
-				websRedirect(wp, web_main_html);
-			}
-#elif ME_GOAHEAD_LOGIN_JS
-			websResponseHeaders(wp, HTTP_CODE_OK, "text/plain", "OK");
+#if ME_GOAHEAD_LOGIN_JS
+			websResponse(wp, HTTP_CODE_OK, NULL);
 #else
 			websRedirectByStatus(wp, HTTP_CODE_OK);
 #endif
 		}
 		websSetSessionVar(wp, "loginStatus", "ok");
-		webs_login_num++;
 	}
 	else
 	{
@@ -620,13 +582,8 @@ static void loginServiceProc(Webs *wp)
 			(route->askLogin)(wp);
 		}
 		websSetSessionVar(wp, "loginStatus", "failed");
-#if ME_GOAHEAD_LOGIN_HTML
-		if(web_login_html)
-		{
-			websRedirect(wp, web_login_html);
-		}
-#elif ME_GOAHEAD_LOGIN_JS
-		websResponseHeaders(wp, HTTP_CODE_OK, "text/plain", "ERROR");
+#if ME_GOAHEAD_LOGIN_JS
+		websResponse(wp, HTTP_CODE_UNAUTHORIZED, NULL);
 #else
 		websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
 #endif
@@ -1166,36 +1123,6 @@ PUBLIC int websSetRouteAuth(WebsRoute *route, cchar *auth)
     route->parseAuth = parseAuth;
     return 0;
 }
-
-
-#if ME_GOAHEAD_LOGIN_HTML
-PUBLIC void websSetAutoLoginHtml(int type, char *html)
-{
-	if(type == 0)
-	{
-		if(web_login_html)
-			free(web_login_html);
-		if(html)
-			web_login_html = strdup(html);
-	}
-	else if(type == 1)
-	{
-		if(web_main_html)
-			free(web_main_html);
-		if(html)
-			web_main_html = strdup(html);
-	}
-	else if(type == 2)
-	{
-		if(web_logout_html)
-			free(web_logout_html);
-		if(html)
-			web_logout_html = strdup(html);
-	}
-	return;
-}
-#endif /* ME_GOAHEAD_AUTO_LOGIN */
-
 #endif /* ME_GOAHEAD_AUTH */
 
 /*

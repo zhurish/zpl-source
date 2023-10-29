@@ -317,7 +317,7 @@
 							//var level=$(obj).parent().parent().prevAll()[0].innerText;
 							console.log(name);
 							//document.getElementById("username").value = name;
-							argv = "ACTION=usertbl&BTNID=" + obj.id + "&" + argv + name;
+							argv = "button-action=usertbl&button-ID=" + obj.id + "&" + argv + name;
 
 							$("#handle_waiting").css("display", "block");
 							setTimeout(function () { $("#handle_waiting").css("display", "none") }, 5000);

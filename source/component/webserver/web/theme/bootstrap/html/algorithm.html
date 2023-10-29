@@ -564,7 +564,7 @@
 			function detecting_get_action(op, id, ch) {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=GET";
+				argv = "button-action=GET";
 				//argv += "&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
 				//	"&ch=" + get_select_option_value(document.getElementById("detecting_channel"));
 				argv += "&ID=" + id +
@@ -597,7 +597,7 @@
 			function identify_get_action(op, id, ch) {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=GET";
+				argv = "button-action=GET";
 				//argv += "&ID=" + get_select_option_value(document.getElementById("identify_boardid"));
 
 				argv += "&ID=" + id;
@@ -628,7 +628,7 @@
 			function helmet_get_action(op, id, ch) {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=GET";
+				argv = "button-action=GET";
 				//argv += "&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
 				//	"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
 				argv += "&ID=" + id +
@@ -668,11 +668,11 @@
 			function detecting_onsubmit() {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=SET&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
+				argv = "button-action=SET&ID=" + get_select_option_value(document.getElementById("detecting_boardid")) +
 					"&ch=" + get_select_option_value(document.getElementById("detecting_channel"));
 
 				argv += "&mode=" + get_select_option_value(document.getElementById("mode"));
-				//argv = "ACTION=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
+				//argv = "button-action=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
 				//	+ document.getElementById("detecting_channel").value;
 
 				argv += "&time="
@@ -719,11 +719,11 @@
 			function identify_onsubmit() {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=SET&ID=" + get_select_option_value(document.getElementById("identify_boardid"));// +
+				argv = "button-action=SET&ID=" + get_select_option_value(document.getElementById("identify_boardid"));// +
 					//"&ch" + get_select_option_value(document.getElementById("identify_channel"));
 
 				//argv += "&mode" + get_select_option_value("mode"));
-				//argv = "ACTION=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
+				//argv = "button-action=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
 				//	+ document.getElementById("detecting_channel").value;
 
 				argv += "&de_threshold="
@@ -769,11 +769,11 @@
 			function helmet_onsubmit() {
 				var argv;
 				var stxhr = new XHR();
-				argv = "ACTION=SET&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
+				argv = "button-action=SET&ID=" + get_select_option_value(document.getElementById("helmet_boardid")) +
 					"&ch=" + get_select_option_value(document.getElementById("helmet_channel"));
 
 				//argv += "&mode" + get_select_option_value(document.getElementById("mode"));
-				//argv = "ACTION=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
+				//argv = "button-action=SET&ID=" + document.getElementById("detecting_boardid").value + "&ch="
 				//	+ document.getElementById("detecting_channel").value;
 
 				argv += "&quality="

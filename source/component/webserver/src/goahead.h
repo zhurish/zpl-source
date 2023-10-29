@@ -1967,28 +1967,16 @@ typedef struct Webs {
 #endif
     void            *ssl;               /**< SSL context */
 
-#if ME_GOAHEAD_AUTO_LOGIN
-/*	char 			*web_login_html;
-	char 			*web_main_html;
-	char 			*web_logout_html;*/
-#endif
     void			*pArgv;				/* private argv */
     void			*pArgv1;				/* private argv */
     void			*pArgv2;				/* private argv */
     int				iValue;
     int				iValue1;
     int				iValue2;
-#ifdef cJSON__h
-	cJSON	*json_array;
-	cJSON	*json_item ;
-	unsigned int json_array_size;
-	unsigned int json_array_num;
-#else
-	void	*json_array;
-	void	*json_item;
-	unsigned int json_array_size;
-	unsigned int json_array_num;
-#endif
+
+    char *web_cache;
+    int web_cache_max;
+    int web_cache_len;
 } Webs;
 
 #if ME_GOAHEAD_LEGACY
@@ -2314,7 +2302,7 @@ PUBLIC void webs_error(const char *file, const char *func, const int line, Webs 
     @stability Stable
  */
 PUBLIC cchar *websErrorMsg(int code);
-
+PUBLIC char *websStatusCodeMsg(int code);
 /**
     Open and initialize the file handler
     @ingroup Webs
@@ -2613,7 +2601,9 @@ PUBLIC cchar *websGetUsername(Webs *wp);
     @stability Stable
  */
 PUBLIC cchar *websGetVar(Webs *wp, cchar *name, cchar *defaultValue);
-
+#if ME_GOAHEAD_JSON
+PUBLIC cJSON *websGetJsonVar(Webs *wp);
+#endif
 /**
     Listen on a TCP/IP address endpoint
     @description The URI is mapped to a filename by decoding and prepending with the request directory.
@@ -2880,6 +2870,9 @@ PUBLIC int websRedirectByStatus(Webs *wp, int status);
  */
 PUBLIC void websResponse(Webs *wp, int status, cchar *msg);
 PUBLIC void websResponseHeaders(Webs *wp, int code, cchar *header, cchar *message);
+#if ME_GOAHEAD_JSON
+PUBLIC void websResponseJson(Webs *wp, int code, cJSON *obj);
+#endif
 /**
     Rewrite a request
     @description Handlers may choose to not process a request but rather rewrite requests and then reroute.
@@ -3267,7 +3260,9 @@ PUBLIC int websWriteHeader(Webs *wp, cchar *key, cchar *fmt, ...);
     @stability Stable
  */
 PUBLIC ssize websWrite(Webs *wp, cchar *fmt, ...);
-
+PUBLIC ssize websWriteCache(Webs *wp, cchar *fmt, ...);
+PUBLIC ssize websWriteCacheFinsh(Webs *wp);
+PUBLIC ssize websWriteCacheLen(Webs *wp);
 /**
     Write data to the open file
     @param fd Open file handle returned by websOpenFile
@@ -3914,9 +3909,6 @@ PUBLIC bool websVerifyPasswordFromFile(Webs *wp);
  */
 PUBLIC bool websVerifyPasswordFromPam(Webs *wp);
 #endif
-#if ME_GOAHEAD_LOGIN_HTML
-PUBLIC void websSetAutoLoginHtml(int type, char *html);
-#endif
 #endif /* ME_GOAHEAD_AUTH */
 /************************************** Sessions *******************************/
 /**
@@ -4195,6 +4187,9 @@ PUBLIC int websSetSessionVar(Webs *wp, cchar *name, cchar *value);
 #if ME_CUSTOMIZE
  #include "customize.h"
 #endif
+
+
+#include "webutil.h"
 
 #ifdef __cplusplus
 }

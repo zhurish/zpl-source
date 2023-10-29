@@ -206,7 +206,7 @@
 					function factory_get_action(op) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=GET";
+						argv = "button-action=GET";
 						stxhr.post("/action/factory", argv,
 							function (x, json) {
 								console.log(x);
@@ -268,7 +268,7 @@
 							var argv;
 							var stxhr = new XHR();
 
-							argv = "ACTION=SET&product=" + document.getElementById("product").value + "&device="
+							argv = "button-action=SET&product=" + document.getElementById("product").value + "&device="
 								+ document.getElementById("device_name").value + "&location="
 								+ document.getElementById("location").value + "&customizer="
 								+ document.getElementById("customizer").value + "&direction="
@@ -522,7 +522,7 @@
 					function open_get_action(op) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=GET";
+						argv = "button-action=GET";
 						stxhr.post("/action/open", argv,
 							function (x, json) {
 								console.log(x);
@@ -578,7 +578,7 @@
 							var argv;
 							var stxhr = new XHR();
 
-							argv = "ACTION=SET&waitopen=" + document.getElementById("waitopen").value + "&openhold="
+							argv = "button-action=SET&waitopen=" + document.getElementById("waitopen").value + "&openhold="
 								+ document.getElementById("openhold").value;
 
 							if (document.getElementById("openalarm").checked) {
@@ -1047,7 +1047,7 @@
 					function face_get_action(op) {
 						var argv;
 						var stxhr = new XHR();
-						argv = "ACTION=GET";
+						argv = "button-action=GET";
 						stxhr.post("/action/faceset", argv,
 							function (x, json) {
 								console.log(x);
@@ -1166,7 +1166,7 @@
 							var argv;
 							var stxhr = new XHR();
 
-							argv = "ACTION=SET&record_threshold=" + document.getElementById("record_threshold").value + "&recognize_threshold="
+							argv = "button-action=SET&record_threshold=" + document.getElementById("record_threshold").value + "&recognize_threshold="
 								+ document.getElementById("recognize_threshold").value + "&recognize_sec_threshold="
 								+ document.getElementById("recognize_sec_threshold").value;;
 

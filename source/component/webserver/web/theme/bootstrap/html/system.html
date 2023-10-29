@@ -100,7 +100,7 @@
 							var argv = "timesp=";
 							var stxhr = new XHR();
 							var time = new Date().getTime();
-							argv = "ACTION=webtime&BTNID=" + self.id + "&" + argv + time / 1000;
+							argv = "button-action=webtime&button-ID=" + self.id + "&" + argv + time / 1000;
 
 							document.getElementById("syncwebtime").disabled = true;
 							$("#syncweb_waiting").css("display", "block");
@@ -165,10 +165,10 @@
 							var argv;
 							var stxhr = new XHR();
 							if (op == "GET") {
-								argv = "ACTION=GET";
+								argv = "button-action=GET";
 							}
 							else {
-								argv = "ACTION=SET&hostname=" + document.getElementById("syshostname").value +
+								argv = "button-action=SET&hostname=" + document.getElementById("syshostname").value +
 									"&mac=" + document.getElementById("sysmac").value;
 
 								$("#system_waiting").css("display", "block");
@@ -451,11 +451,11 @@
 						var argv;
 						var stxhr = new XHR();
 						if (op == "GET") {
-							argv = "ACTION=GET";
+							argv = "button-action=GET";
 						}
 						else {
 							if (document.getElementById("sntp_enable").checked) {
-								argv = "ACTION=SET&sntp_enable=true";
+								argv = "button-action=SET&sntp_enable=true";
 								argv += "&sntp_address=" + document.getElementById("sntp_address").value + "&sntp_timezone="
 									+ document.getElementById("sntp_timezone").value;
 
@@ -464,7 +464,7 @@
 								}
 							}
 							else {
-								argv = "ACTION=SET&sntp_enable=false";
+								argv = "button-action=SET&sntp_enable=false";
 							}
 
 							$("#sntp_waiting").css("display", "block");
@@ -678,11 +678,11 @@
 						var argv;
 						var stxhr = new XHR();
 						if (op == "GET") {
-							argv = "ACTION=GET";
+							argv = "button-action=GET";
 						}
 						else {
 							if (document.getElementById("syslog_enable").checked) {
-								argv = "ACTION=SET&syslog_enable=true&syslog_address=" + document.getElementById("syslog_address").value + "&syslog_level="
+								argv = "button-action=SET&syslog_enable=true&syslog_address=" + document.getElementById("syslog_address").value + "&syslog_level="
 									+ document.getElementById("syslog_level").value + "&syslog_proto="
 									+ document.getElementById("syslog_proto").value;
 
@@ -690,7 +690,7 @@
 								argv += "&syslog_port=" + document.getElementById("syslog_port").value;
 							}
 							else {
-								argv = "ACTION=SET&syslog_enable=false";
+								argv = "button-action=SET&syslog_enable=false";
 							}
 							$("#syslog_waiting").css("display", "block");
 							setTimeout(function () { $("#syslog_waiting").css("display", "none") }, 3000);

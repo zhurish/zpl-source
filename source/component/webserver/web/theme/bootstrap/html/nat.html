@@ -229,7 +229,7 @@
 						outif = document.getElementById("interface").value;
 						//proto = document.getElementById("proto").value;
 
-						argv = "ACTION=snat&BTNID=add&name=" + name + "&lanip=" + lanip;
+						argv = "button-action=snat&button-ID=add&name=" + name + "&lanip=" + lanip;
 						if (wanip != "")
 							argv += "&wanip=" + wanip;
 
@@ -240,7 +240,7 @@
 						name = $(self).parent().parent().prevAll()[3].innerText;
 						lanip = $(self).parent().parent().prevAll()[1].innerText;
 
-						argv = "ACTION=snat&BTNID=delete&name=" + name + "&lanip=" + lanip;
+						argv = "button-action=snat&button-ID=delete&name=" + name + "&lanip=" + lanip;
 						
 						console.log("argv:" + argv);
 					}

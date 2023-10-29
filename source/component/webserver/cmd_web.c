@@ -12,7 +12,6 @@
 #include "vty.h"
 #include "template.h"
 #ifdef ZPL_WEBGUI_MODULE
-#include "web_util.h"
 #include "web_api.h"
 #endif
 

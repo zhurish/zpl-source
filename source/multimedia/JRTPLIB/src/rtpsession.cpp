@@ -323,7 +323,7 @@ int RTPSession::InternalCreate(const RTPSessionParams &sessparams)
 	schedparams.SetRequestImmediateBYE(sessparams.GetRequestImmediateBYE());
 	
 	rtcpsched.SetParameters(schedparams);
-
+    printf("===================== sessionbandwidth=%f controlfragment=%d\r\n",  sessionbandwidth, controlfragment);    
 	// copy other parameters
 	
 	acceptownpackets = sessparams.AcceptOwnPackets();

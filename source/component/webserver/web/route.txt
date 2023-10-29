@@ -41,10 +41,10 @@ route uri=/fonts/
 route uri=/js/
 
 #登陆成功定向到bootstrap页面，不然返回登陆页面
-route uri=/action/login methods=POST handler=action redirect=200@/html/bootstrap.html redirect=401@/html/login.html
+route uri=/action/login methods=POST handler=action
 #登陆退出后返回登陆页面
-route uri=/action/logout methods=GET|POST handler=action redirect=200@/html/login.html
-route uri=/html/ auth=form handler=continue redirect=401@/html/login.html
+route uri=/action/logout methods=GET|POST handler=action
+route uri=/html/ auth=form handler=continue
 
 #
 #   Support PUT and DELETE methods only for the BIT_GOAHEAD_PUT_DIR directory

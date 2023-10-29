@@ -196,7 +196,7 @@
 							//var netmask = $(obj).parent().parent().prevAll()[2].innerText;
 							var interface = $(obj).parent().parent().prevAll()[0].innerText;
 
-							argv = "ACTION=routetbl&BTNID=" + obj.id + "&destination=" + dest +
+							argv = "button-action=routetbl&button-ID=" + obj.id + "&destination=" + dest +
 								"&gateway=" + gateway + "&interface=" + interface;
 
 							$("#handle_waiting").css("display", "block");

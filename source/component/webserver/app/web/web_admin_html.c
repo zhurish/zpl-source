@@ -24,14 +24,13 @@
 #include "vty_user.h"
 
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 
 
-static int web_admin_user(Webs *wp, char *path, char *query)
+static int web_admin_add_username(Webs *wp, char *path, char *query)
 {
 	int ret = 0;
 	char *strval = NULL;
@@ -47,7 +46,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Get username Value");
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get username");
 	}
 	strcpy(username, strval);
 
@@ -56,7 +55,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Get password Value");
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get password");
 	}
 	strcpy(password, strval);
 
@@ -65,7 +64,7 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 	{
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Get user_level Value");
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get User Private Level");
 	}
 	strcpy(authlevel, strval);
 	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
@@ -90,48 +89,23 @@ static int web_admin_user(Webs *wp, char *path, char *query)
 		ret = ERROR;
 	}
 	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "text/plain");
-	websWriteEndHeaders(wp);
+
 	if(ret == ERROR)
-		websWrite(wp, "%s", "ERROR");
+		websWriteCache(wp, "%s", "ERROR");
 	else
-		websWrite(wp, "%s", "OK");
+		websWriteCache(wp, "%s", "OK");
+
+	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+	websWriteHeader (wp, "Content-Type", "text/plain");
+	websWriteEndHeaders (wp);	
+	websWriteCacheFinsh(wp);
+
 	websDone(wp);
 	return OK;
 }
 
 
-static int web_admin_change_password(Webs *wp, char *path, char *query)
-{
-	char *strval = NULL;
-	char password[128];
-	memset(password, 0, sizeof(password));
-	strval = webs_get_var(wp, T("new_password"), T(""));
-
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get password Value");
-		return web_return_text_plain(wp, ERROR);
-	}
-	strcpy(password, strval);
-	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
-	{
-		zlog_debug(MODULE_WEB, " get action/admin-password username:%s password:%s", wp->username, password);
-	}
-	if(vty_user_create(NULL, wp->username, password, zpl_false , zpl_true ) == CMD_SUCCESS)
-	{
-		return web_return_text_plain(wp, OK);
-	}
-	if(WEB_IS_DEBUG(EVENT))
-	{
-		zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", wp->username);
-	}
-	return web_return_text_plain(wp, ERROR);
-}
-
-static int web_admin_deluser(Webs *wp, void *p)
+static int web_admin_del_username(Webs *wp, void *p)
 {
 	char *strval = NULL;
 	char username[128];
@@ -149,7 +123,7 @@ static int web_admin_deluser(Webs *wp, void *p)
 
 	if(vty_user_delete(NULL, wp->username, zpl_false , zpl_true ) == CMD_SUCCESS)
 	{
-		return web_return_text_plain(wp, OK);
+		return web_return_text_plain(wp, OK, NULL);
 	}
 	if(WEB_IS_DEBUG(EVENT))
 	{
@@ -162,9 +136,9 @@ static int web_admin_deluser(Webs *wp, void *p)
 static int web_username_one(struct vty_user *user, Webs *wp)
 {
 	if(wp->iValue)
-		websWrite(wp, ",");
+		websWriteCache(wp, ",");
 
-	websWrite(wp, "{\"username\":\"%s\", \"level\":\"%s\"}",
+	websWriteCache(wp, "{\"username\":\"%s\", \"level\":\"%s\"}",
 				user->username,
 				(user->privilege == 4) ? "manage" :
 				(user->privilege == 3) ? "user" : "view");
@@ -173,18 +147,21 @@ static int web_username_one(struct vty_user *user, Webs *wp)
 	return OK;
 }
 
-static int web_username_tbl(Webs *wp, char *path, char *query)
+static int web_username_table(Webs *wp, char *path, char *query)
 {
 	websSetStatus(wp, 200);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "text/plain");
-	websWriteEndHeaders(wp);
-	websWrite(wp, "%s", "[");
+
+	websWriteCache(wp, "%s", "[");
 	wp->iValue = 0;
 	vty_user_foreach (web_username_one, wp);
 
-	websWrite(wp, "%s", "]");
+	websWriteCache(wp, "%s", "]");
 	wp->iValue = 0;
+
+	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+	websWriteHeader (wp, "Content-Type", "text/plain");
+	websWriteEndHeaders (wp);	
+	websWriteCacheFinsh(wp);
 
 	websDone(wp);
 	return 0;
@@ -216,7 +193,7 @@ static bool webs_authentication_verify(Webs *wp, cchar *username, cchar *passwor
 }
 #endif
 
-static int web_change_password(Webs *wp, char *path, char *query)
+static int web_admin_change_password(Webs *wp, char *path, char *query)
 {
 	int ret = ERROR;
 	char *username = NULL, *oldpassword = NULL;
@@ -225,7 +202,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 	char *olduser = NULL, *oldpass = NULL;
 	char encodedPassword[128];
 #endif
-	newpassword = webs_get_var(wp, T("newpassword"), T(""));
+	newpassword = webs_get_var(wp, T("new-password"), T(""));
 
 	if (NULL == newpassword)
 	{
@@ -237,7 +214,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 #endif
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Get new password Value");
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get new password");
 	}
 
 	username = webs_get_var(wp, T("username"), T(""));
@@ -252,7 +229,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 #endif
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Get username Value");
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get new username");
 	}
 	oldpassword = webs_get_var(wp, T("password"), T(""));
 
@@ -266,7 +243,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 #endif
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Get old password Value");
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get old password");
 	}
 #if ME_GOAHEAD_AUTO_LOGIN
 	olduser = sclone(wp->username);
@@ -287,7 +264,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not verify password Value");
 
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not verify password");
 	}
 
 	memset(encodedPassword, 0, sizeof(encodedPassword));
@@ -309,7 +286,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not Encoded password Value");
 
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Encoded password");
 	}
 	websSetUserPassword(username, encodedPassword);
 	web_app_auth_save_api();
@@ -326,7 +303,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
 			zlog_debug(MODULE_WEB, "Can not verify password Value");
 
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not verify password");
 	}
 	if(vty_user_create(NULL, wp->username, newpassword, zpl_false , zpl_true ) != CMD_SUCCESS)
 	{
@@ -334,7 +311,7 @@ static int web_change_password(Webs *wp, char *path, char *query)
 		{
 			zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", wp->username);
 		}
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_fmt(wp, HTTP_CODE_BAD_REQUEST, "Can not Change User Password for '%s'", wp->username);
 	}
 #endif
 #if ME_GOAHEAD_AUTO_LOGIN
@@ -343,19 +320,16 @@ static int web_change_password(Webs *wp, char *path, char *query)
 	if(oldpass)
 		wfree(oldpass);
 #endif
-	return web_return_text_plain(wp, OK);
+	return web_return_text_plain(wp, OK, NULL);
 }
 
 
 int web_admin_app(void)
 {
-
-	websFormDefine("changepassword", web_change_password);
-
-	websFormDefine("adminuser", web_admin_user);
-	websFormDefine("admin-password", web_admin_change_password);
-	websFormDefine("username-tbl", web_username_tbl);
-	web_button_add_hook("usertbl", "delete", web_admin_deluser, NULL);
+	websFormDefine("addusername", web_admin_add_username);
+	websFormDefine("changepassword", web_admin_change_password);
+	websFormDefine("username-table", web_username_table);
+	web_button_add_hook("username-table", "delete", web_admin_del_username, NULL);
 
 	return 0;
 }

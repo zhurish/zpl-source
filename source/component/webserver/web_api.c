@@ -7,10 +7,12 @@
 #include "auto_include.h"
 #include <zplos_include.h>
 
-#include "web_util.h"
+
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
+
+int _web_app_debug = 0;
 
 
 struct module_list module_list_webserver = 
@@ -358,6 +360,102 @@ int web_app_username_del_api(const char *username)
 		return OK;
 	return ERROR;
 }
+
+
+/*
+ *
+ */
+const char * web_type_string(web_app_t *wp)
+{
+	web_assert(wp);
+	if(wp)
+	{
+		if(wp->webtype == WEB_TYPE_HOME_WIFI)
+		{
+			return "homewifi";
+		}
+		else if(wp->webtype == WEB_TYPE_HOME_SWITCH)
+		{
+			return "switch";
+		}
+		else if(wp->webtype == WEB_TYPE_HOME_ROUTE)
+		{
+			return "route";
+		}
+	}
+	return "unknow";
+}
+
+
+const char * web_os_type_string(web_app_t *wp)
+{
+	web_assert(wp);
+	if(wp)
+	{
+		if(wp->webos == WEB_OS_OPENWRT)
+		{
+			return "openwrt";
+		}
+		else if(wp->webos == WEB_OS_LINUX)
+		{
+			return "linux";
+		}
+	}
+	return "unknow";
+}
+
+
+web_type web_type_get(void)
+{
+	if(web_app)
+	{
+		return web_app->webtype;
+	}
+	return WEB_TYPE_HOME_WIFI;
+}
+
+web_os web_os_get(void)
+{
+	if(web_app)
+	{
+		return web_app->webos;
+	}
+	return WEB_OS_OPENWRT;
+}
+
+
+int webs_username_password_update(void *pwp, char *username, char *password)
+{
+#if ME_GOAHEAD_AUTO_LOGIN
+	char encodedPassword[128];
+	memset(encodedPassword, 0, sizeof(encodedPassword));
+	/*
+	 * Password Encoded
+	 */
+	//webserver encoded cipher md5 realm goahead.com username admin password admin
+	if(web_app_gopass_api(username, password, "md5", "goahead.com", encodedPassword) != 0 )
+	{
+		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
+			zlog_debug(MODULE_WEB, "Can not Encoded password Value");
+		return ERROR;
+	}
+	websSetUserPassword(username, encodedPassword);
+	web_app_auth_save_api();
+#endif
+
+#if (ME_GOAHEAD_AUTO_LOGIN==0)
+	if(vty_user_create(NULL, username, password, zpl_false , zpl_true ) != CMD_SUCCESS)
+	{
+		if(WEB_IS_DEBUG(EVENT))
+		{
+			zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", username);
+		}
+		return ERROR;
+	}
+#endif
+	return OK;
+}
+
 /*
 
 WebsUser *websAddUser(cchar *username, cchar *password, cchar *proles)

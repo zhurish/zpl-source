@@ -30,7 +30,7 @@ static int jrpc_server_send_response(struct jrpc_connection * conn, char *respon
 	return 0;
 }
 
-static int jrpc_server_send_error(struct jrpc_connection * conn, int code, char* message,
+static int web_jsonrpc_server_send_error(struct jrpc_connection * conn, int code, char* message,
 		cJSON * id) {
 	int return_value = 0;
 	cJSON *result_root = cJSON_CreateObject();

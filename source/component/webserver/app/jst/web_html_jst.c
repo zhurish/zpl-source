@@ -15,10 +15,9 @@
 #include "log.h"
 #include "vty.h"
 
-#include "web_util.h"
+#include "web_api.h"
 #include "web_jst.h"
 #include "web_app.h"
-#include "web_api.h"
 
 
 
@@ -104,26 +103,18 @@ static int jst_load(Webs *wp, char *path, char *query)
 	char *filename = webs_get_var(wp, T("url"), T(""));
 	char *div = webs_get_var(wp, T("div"), T(""));
 
-	//printf("%s:filename=%s div=%s\r\n", __func__, filename, div);
-
 	if(!filename || !div)
 	{
-		//printf("%s:filename=NULL||div=NULL\r\n", __func__);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "can not get url path");
 	}
 	if(jst_html_file(web_app, filename) == ERROR)
 	{
-		//printf("%s:%s/html/%s\r\n", __func__, web_app->documents, filename);
-		return web_return_text_plain(wp, ERROR);
+		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "url path is not exist");
 	}
-	//printf("%s:%s\r\n", __func__, jst_html_dir(web_app, filename));
 	f = fopen(jst_html_dir(web_app, filename), "r");
 	if (f)
 	{
 		websSetStatus(wp, 200);
-		websWriteHeaders(wp, -1, 0);
-		websWriteHeader(wp, "Content-Type", "text/plain");
-		websWriteEndHeaders(wp);
 		memset(buf, 0, sizeof(buf));
 		while (fgets(buf, sizeof(buf), f))
 		{
@@ -132,7 +123,11 @@ static int jst_load(Webs *wp, char *path, char *query)
 				divcnt -= 1;
 				if(divcnt == 0)
 				{
-					websWrite(wp, buf);
+					websWriteCache(wp, buf);
+					websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+					websWriteHeader (wp, "Content-Type", "text/plain");
+					websWriteEndHeaders (wp);	
+					websWriteCacheFinsh(wp);
 					websDone(wp);
 					fclose(f);
 					return OK;
@@ -153,25 +148,27 @@ static int jst_load(Webs *wp, char *path, char *query)
 				}
 			}
 			if(divcnt)
-				websWrite(wp, buf);
+				websWriteCache(wp, buf);
 
 			memset(buf, 0, sizeof(buf));
 		}
+		websWriteHeaders (wp, websWriteCacheLen(wp), 0);
+		websWriteHeader (wp, "Content-Type", "text/plain");
+		websWriteEndHeaders (wp);	
+		websWriteCacheFinsh(wp);
 		websDone(wp);
 		fclose(f);
 		return OK;
 	}
-    return web_return_text_plain(wp, ERROR);
+    return web_return_text_fmt(wp, HTTP_CODE_BAD_REQUEST, "can not open url path:%s", jst_html_dir(web_app, filename));
 }
 
 
 int web_html_jst_init(void)
 {
-
 	websDefineJst("jst_html_load", jst_html_load);
 	websDefineJst("jst_html_text", jst_html_text);
 	websFormDefine("html_load", jst_load);
-
 	return 0;
 }
 

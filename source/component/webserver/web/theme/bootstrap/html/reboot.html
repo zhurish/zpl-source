@@ -60,9 +60,9 @@
                         var argv;
                         var stxhr = new XHR();
                         if (document.getElementById("clear").checked)
-                            argv = "ACTION=app&BTNID=reset";
+                            argv = "button-action=app&button-ID=reset";
                         else
-                            argv = "ACTION=app&BTNID=reboot";
+                            argv = "button-action=app&button-ID=reboot";
 
                         $("#reset_waiting").css("display", "block");
                         stxhr.post("/action/button_onclick", argv,

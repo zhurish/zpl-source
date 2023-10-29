@@ -95,7 +95,10 @@ void cJSON_Delete(cJSON *c)
 		c=next;
 	}
 }
-
+void cJSON_PrintFree(void *c)
+{
+	(cJSON_free)(c);
+}
 /* Parse the input text to generate a number, and populate the result into item. */
 static const char *parse_number(cJSON *item,const char *num)
 {

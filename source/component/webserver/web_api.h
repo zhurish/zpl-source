@@ -18,7 +18,7 @@ extern "C" {
 
 //#define __WEBGUI_DEBUG
 
-#define T(n)	(n)
+
 
 #define WEBGUI_LISTEN 		"http://*:8080"
 
@@ -42,12 +42,6 @@ extern "C" {
 #define WEBGUI_DOCUMENTS 	SYSWWWDIR
 #endif
 
-#if ME_GOAHEAD_LOGIN_HTML
-#define WEB_LOGIN_HTML 		"/html/login.html"
-#define WEB_LOGOUT_HTML 	"/html/login.html"
-#define WEB_MAIN_HTML 		"/html/bootstrap.html"
-#endif
-
 #define WEB_SYSTEM_LOG 		SYSLOGDIR"/boot.log"
 
 #define WEB_LOGIN_USERNAME 		"root"
@@ -57,6 +51,35 @@ extern "C" {
 
 //#define WEB_OPENWRT_UCI 		1
 #define WEB_OPENWRT_PROCESS 	1//	WEB_OPENWRT_UCI
+
+
+#define _WEB_DEBUG_ENABLE 1
+
+#if defined(_WEB_DEBUG_ENABLE)
+#define _WEB_DBG_ERR(format, ...) 		zlog_err (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_WARN(format, ...) 		zlog_warn (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_INFO(format, ...) 		zlog_info (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_DEBUG(format, ...) 	zlog_debug (MODULE_WEB, format, ##__VA_ARGS__)
+#define _WEB_DBG_TRAP(format, ...) 		zlog_trap (MODULE_WEB, format, ##__VA_ARGS__)
+#else
+#define _WEB_DBG_ERR(format, ...)
+#define _WEB_DBG_WARN(format, ...)
+#define _WEB_DBG_INFO(format, ...)
+#define _WEB_DBG_DEBUG(format, ...)
+#define _WEB_DBG_TRAP(format, ...)
+#endif
+
+#define _WEB_DEBUG_MSG		0X01
+#define _WEB_DEBUG_DETAIL	0X200
+#define _WEB_DEBUG_EVENT	0X800
+#define _WEB_DEBUG_TRACE	0X400
+#define _WEB_DEBUG_RAW		0X200
+#define _WEB_DEBUG_HEADER   0x1000      /**< trace HTTP header */
+
+
+#define WEB_IS_DEBUG(n)		(_WEB_DEBUG_ ## n & _web_app_debug)
+#define WEB_DEBUG_ON(n)		{ _web_app_debug |= (_WEB_DEBUG_ ## n ); __websLogLevel |= (_WEB_DEBUG_ ## n );}
+#define WEB_DEBUG_OFF(n)	{ _web_app_debug &= ~(_WEB_DEBUG_ ## n ); __websLogLevel &= ~(_WEB_DEBUG_ ## n );}
 
 
 typedef enum
@@ -111,6 +134,10 @@ typedef struct web_app_s
 
 
 extern web_app_t *web_app;
+extern int _web_app_debug;
+
+
+
 
 extern int web_app_module_init(void);
 extern int web_app_module_exit(void);
@@ -144,6 +171,15 @@ extern int web_app_debug_write_config(struct vty *vty);
 extern int web_app_write_config(struct vty *vty);
 extern void cmd_webserver_init(void);
  
+
+extern const char * web_type_string(web_app_t *wp);
+extern const char * web_os_type_string(web_app_t *wp);
+extern web_type web_type_get(void);
+extern web_os web_os_get(void);
+
+
+extern int webs_username_password_update(void *pwp, char *username, char *password);
+
 #ifdef __cplusplus
 }
 #endif

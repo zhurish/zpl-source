@@ -13,9 +13,18 @@
 extern "C" {
 #endif
 
+struct web_menu_table
+{
+  const char *path;
+  const char *name;
+  const char *component;
+  int meta;
+  struct web_menu_table *children;
+};
 
 extern int web_login_app(void);
 extern int web_updownload_app(void);
+extern int web_menu_app(void);
 /*
  * admin
  */
@@ -38,23 +47,6 @@ extern int web_wireless_app(void);
 
 extern int web_sip_app(void);
 
-#ifdef APP_X5BA_MODULE
-#ifdef ZPL_PJSIP_MODULE
-
-#endif /*ZPL_PJSIP_MODULE*/
-extern int web_factory_app(void);
-extern int web_card_app(void);
-extern int web_switch_app(void);
-#endif
-
-#ifdef APP_V9_MODULE
-extern int web_boardcard_app(void);
-extern int web_general_app(void);
-extern int web_rtsp_app(void);
-extern int web_algorithm_app(void);
-extern int web_facelib_app(void);
-extern int web_db_app(void);
-#endif
 
 extern int web_upgrade_app(void);
 extern int web_system_app(void);
