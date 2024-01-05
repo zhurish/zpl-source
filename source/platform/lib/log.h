@@ -73,9 +73,9 @@ typedef module_t zlog_proto_t;
 
 #define ZLOG_1M		1024000
 #define ZLOG_FILE_SIZE	(2)
-#define ZLOG_BUFF_SIZE	512
-#define LOG_MSG_SIZE	1024
-#define LOG_FILE_CHK_TIME	10
+#define ZLOG_BUFF_SIZE	512   //缓存log数量
+#define LOG_MSG_SIZE	1024    //每一个log大小
+#define LOG_FILE_CHK_TIME	10  //每10秒检测一下log文件大小，暂时未使用
 
 #define ZLOG_REAL_PATH		REAL_SYSLOGDIR"/"
 #define ZLOG_VIRTUAL_PATH 	DAEMON_LOG_FILE_DIR"/"
@@ -109,6 +109,16 @@ typedef enum
   ZLOG_TIMESTAMP_RFC3164,
   ZLOG_TIMESTAMP_RFC3339,
 } zlog_timestamp_t;
+
+#define ZLOG_COLOR_BLACK		"\033[01;30m"     /* black color */
+#define ZLOG_COLOR_RED      "\033[01;31m"     /* red color */
+#define ZLOG_COLOR_GREEN		"\033[01;32m"     /* green color */
+#define ZLOG_COLOR_YELLOW		"\033[01;33m"     /* yellow color */
+#define ZLOG_COLOR_BLUE     "\033[01;34m"     /* blue color */
+#define ZLOG_COLOR_MAGENTA	"\033[01;35m"     /* magenta color */
+#define ZLOG_COLOR_CYAN     "\033[01;36m"     /* cyan color */
+#define ZLOG_COLOR_WHITE		"\033[01;37m"     /* white color */
+#define ZLOG_COLOR_NONE     "\033[00m"        /* default console color */
 
 
 typedef struct zbuffer_s
@@ -145,6 +155,7 @@ struct zlog
   				   logging destination */
   zlog_level_t default_lvl[ZLOG_NUM_DESTS];	/* maxlvl to use if none is specified */
   zpl_bool	trap_lvl;
+  zpl_bool b_color;
   FILE *fp;
   zpl_char *filename;
   zpl_uint32 filesize;
@@ -256,23 +267,7 @@ extern void pl_zlog_trap (const char *file, const char *func, const zpl_uint32 l
 #define zlog_force_trap(module, format, ...) 	pl_zlog (__FILE__, __FUNCTION__, __LINE__, module, ZLOG_LEVEL_FORCE_TRAP, format, ##__VA_ARGS__)
 #define liblog_trap(format, ...) 	            pl_zlog_trap (__FILE__, __FUNCTION__, __LINE__, MODULE_LIB, format, ##__VA_ARGS__)
 
-#if 0
 
-extern void vzlog(struct zlog *zl, zpl_uint32 module, zpl_uint32 priority, const char *format,
-		va_list args);
-
-/* Generic function for zlog. */
-extern void zlog (zpl_uint32 module, zpl_uint32 priority, const char *format, ...)
-  PRINTF_ATTRIBUTE(3, 4);
-
-/* Handy zlog functions. */
-extern void zlog_err (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_warn (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_info (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_notice (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_debug (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-extern void zlog_trap (zpl_uint32 module, const char *format, ...) PRINTF_ATTRIBUTE(2, 3);
-#endif
 
 /* Set logging level for the given destination.  If the log_level
    argument is ZLOG_DISABLED, then the destination is disabled.

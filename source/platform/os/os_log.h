@@ -14,6 +14,15 @@ extern "C" {
 #include "zpl_type.h"
 
 
+#define OSLOG_COLOR_BLACK		"\033[01;30m"     /* black color */
+#define OSLOG_COLOR_RED      "\033[01;31m"     /* red color */
+#define OSLOG_COLOR_GREEN		"\033[01;32m"     /* green color */
+#define OSLOG_COLOR_YELLOW		"\033[01;33m"     /* yellow color */
+#define OSLOG_COLOR_BLUE     "\033[01;34m"     /* blue color */
+#define OSLOG_COLOR_MAGENTA	"\033[01;35m"     /* magenta color */
+#define OSLOG_COLOR_CYAN     "\033[01;36m"     /* cyan color */
+#define OSLOG_COLOR_WHITE		"\033[01;37m"     /* white color */
+#define OSLOG_COLOR_NONE     "\033[00m"        /* default console color */
 
 /* 16进制格式化 */
 extern int os_loghex(zpl_char *format, zpl_uint32 size, const zpl_uchar *data, zpl_uint32 len);

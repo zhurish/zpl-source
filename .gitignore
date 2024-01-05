@@ -61,7 +61,7 @@ source/externsions/libnl/libnl-3.6.0/*
 source/externsions/libws/*
 source/externsions/openssl/_install/*
 source/externsions/openssl/openssl-3.1.0-alpha1/*
-
+source/externsions/openssh/*
 source/externsions/readline/_install/*
 source/externsions/readline/readline-8.1/*
 source/externsions/readline/ncurses-6.2/*

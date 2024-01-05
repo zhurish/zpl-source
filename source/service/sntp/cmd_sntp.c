@@ -84,21 +84,21 @@ DEFUN (no_sntps_server_interval,
 }
 DEFUN (sntps_server_listen_port,
 		sntps_server_listen_port_cmd,
-	    "sntp server ipstack_listen-port <100-65536>",
+	    "sntp server listen-port <100-65536>",
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server ipstack_listen port configure\n"
+		"sntp server listen port configure\n"
 		"sntp server local UDP port\n")
 {
 	return sntp_server_set_api(vty, API_SNTPS_SET_LISTEN, argv[0]);
 }
 DEFUN (no_sntps_server_listen_port,
 		no_sntps_server_listen_port_cmd,
-	    "no sntp server ipstack_listen-port",
+	    "no sntp server listen-port",
 		NO_STR
 		"sntp protocol configure\n"
 		"sntp server configure\n"
-		"sntp server ipstack_listen port configure\n")
+		"sntp server listen port configure\n")
 {
 	return sntp_server_set_api(vty, API_SNTPS_SET_LISTEN, NULL);
 }

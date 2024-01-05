@@ -246,10 +246,10 @@ DEFUN (tftp_server_enable,
 
 ALIAS (tftp_server_enable,
 		tftp_server_address_cmd,
-	    "tftp server ipstack_bind "CMD_KEY_IPV4,
+	    "tftp server bind "CMD_KEY_IPV4,
 		"TFTP configure\n"
 		"Server configure\n"
-		"ipstack_bind configure\n"
+		"bind configure\n"
 		CMD_KEY_IPV4_HELP)
 
 
@@ -298,10 +298,10 @@ DEFUN (ftp_server_enable,
 
 ALIAS (ftp_server_enable,
 		ftp_server_address_cmd,
-	    "ftp server ipstack_bind "CMD_KEY_IPV4,
+	    "ftp server bind "CMD_KEY_IPV4,
 		"FTP configure\n"
 		"Server configure\n"
-		"ipstack_bind configure\n"
+		"bind configure\n"
 		CMD_KEY_IPV4_HELP)
 
 ALIAS (ftp_server_enable,

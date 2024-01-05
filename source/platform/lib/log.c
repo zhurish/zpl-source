@@ -45,16 +45,14 @@ static int logfile_fd = -1; /* Used in signal handler. */
 
 struct zlog *zlog_default = NULL;
 
-
-
-//static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
-//		"warnings", "notifications", "informational", "debugging", "trapping", "ftrapping", NULL, };
 //#define ZLOG_PRI_FMT	"%-8s"
 //#define ZLOG_PRO_FMT	"%-8s"
 #define ZLOG_PRI_FMT	"%s"
 #define ZLOG_PRO_FMT	"%s"
-static const char *zlog_priority[] = { "emerg", "alert", "crit", "err",
-		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
+//static const char *zlog_priority[] = { "emerg", "alert", "crit", "err",
+//		"warning", "notice", "info", "debug", "trapping", "focetrap", NULL, };
+static const char *zlog_priority[] = { "emergencies", "alerts", "critical", "errors",
+		"warnings", "notifications", "informational", "debugging", "trapping", "focetrap", NULL, };
 
 static const struct facility_map {
 	zpl_uint32 facility;
@@ -257,12 +255,45 @@ int zlog_depth_debug_detail(FILE *fp, zpl_char *buf, zpl_uint32 depth, const cha
 	return 0;
 }
 
+static void vzlog_color_set(zpl_bool bcolor, FILE *fp, zlog_level_t priority)
+{
+	if (!bcolor)
+		return;
+	switch (priority)
+	{
+	case ZLOG_LEVEL_EMERG: /* system is unusable */
+	case ZLOG_LEVEL_ALERT: /* action must be taken immediately */
+	case ZLOG_LEVEL_CRIT:  /* critical conditions */
+	case ZLOG_LEVEL_ERR:   /* error conditions */
+		fputs(ZLOG_COLOR_RED, fp);
+		break;
+	case ZLOG_LEVEL_WARNING: /* warning conditions */
+		fputs(ZLOG_COLOR_YELLOW, fp);
+		break;
+	case ZLOG_LEVEL_NOTICE: /* normal but significant condition */
+		fputs(ZLOG_COLOR_CYAN, fp);
+		break;
+	case ZLOG_LEVEL_INFO: /* informational */
+		fputs(ZLOG_COLOR_GREEN, fp);
+		break;
+	case ZLOG_LEVEL_DEBUG: /* debug-level messages */
+		break;
+	case ZLOG_LEVEL_TRAP:
+	case ZLOG_LEVEL_FORCE_TRAP:
+		fputs(ZLOG_COLOR_BLUE, fp);
+		break;
+	default:
+		fputs(ZLOG_COLOR_NONE, fp);
+		break;
+	}
+	return;
+}
+
 #ifdef ZLOG_TASK_ENABLE
 /* va_list version of zlog. */
 static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priority, const char *format,
 		va_list args) 
 {
-#if 1
 	zpl_char tmpbuf[2048];
 	int original_errno = ipstack_errno, outlen = 0;
 	memset(tmpbuf, '\0', sizeof(tmpbuf));
@@ -275,9 +306,10 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		
 		outlen += sprintf(tmpbuf, ZLOG_PRI_FMT": ", "unknown");
 		outlen += vsprintf(tmpbuf + outlen, format, args);
-
+		vzlog_color_set(zpl_true, stderr, priority);
 		time_print(stderr, ZLOG_TIMESTAMP_DATE);
 		fprintf(stderr, "%s\r\n", tmpbuf);
+		vzlog_color_set(zpl_true, stderr, ZLOG_LEVEL_MAX);
 		fflush(stderr);
 
 		/* In this case we return at here. */
@@ -294,8 +326,10 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_copy(ac, args);
 		outlen += vsprintf(tmpbuf + outlen, format, ac);
 		va_end(ac);
+		vzlog_color_set(zl->b_color, zl->testlog.fp, priority);
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, "%s\n", tmpbuf);
+		vzlog_color_set(zl->b_color, zl->testlog.fp, ZLOG_LEVEL_MAX);
 		fflush(zl->testlog.fp);
 		zl->testlog.file_check_interval++;
 	}
@@ -321,8 +355,10 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_copy(ac, args);
 		outlen += vsprintf(tmpbuf + outlen, format, ac);
 		va_end(ac);
+		vzlog_color_set(zl->b_color, zl->fp, priority);
 		time_print(zl->fp, zl->timestamp);
 		fprintf(zl->fp, "%s\r\n", tmpbuf);
+		vzlog_color_set(zl->b_color, zl->fp, ZLOG_LEVEL_MAX);
 		fflush(zl->fp);
 		zl->file_check_interval++;
 	}
@@ -336,8 +372,10 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 		va_copy(ac, args);
 		outlen += vsprintf(tmpbuf + outlen, format, ac);
 		va_end(ac);
+		vzlog_color_set(zl->b_color, stdout, priority);
 		time_print(stdout, zl->timestamp);
 		fprintf(stdout, "%s\r\n", tmpbuf);
+		vzlog_color_set(zl->b_color, stdout, ZLOG_LEVEL_MAX);
 		fflush(stdout);
 	}
 	/* logbuff output. */
@@ -365,120 +403,14 @@ static void vzlog_output(struct zlog *zl, zpl_uint32 module, zlog_level_t priori
 			va_copy(ac, args);
 			outlen += vsprintf(tmpbuf + outlen, format, ac);
 			va_end(ac);
+			vzlog_color_set(zl->b_color, stdout, priority);
 			time_print(stdout, zl->timestamp);
 			fprintf(stdout, "%s\r\n", tmpbuf);
+			vzlog_color_set(zl->b_color, stdout, ZLOG_LEVEL_MAX);
 			fflush(stdout);
 		}
 	}
 	#endif
-#else
-	int original_errno = ipstack_errno;
-	if (zl == NULL)
-		zl = zlog_default;
-	
-		/* When zlog_default is also NULL, use stderr for logging. */
-	if (zl == NULL) {
-		time_print(stderr, ZLOG_TIMESTAMP_DATE);
-		fprintf(stderr, ZLOG_PRI_FMT": ", "unknown");
-		vfprintf(stderr, format, args);
-		fprintf(stderr, "\r\n");
-		fflush(stderr);
-
-		/* In this case we return at here. */
-		ipstack_errno = original_errno;
-		return;
-	}
-	
-#ifdef ZLOG_TESTING_ENABLE
-	if (zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp)
-	{
-		va_list ac;
-		time_print(zl->testlog.fp, zl->timestamp);
-		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->testlog.fp, ZLOG_PRO_FMT": ", zlog_proto_names(module));
-		va_copy(ac, args);
-		vfprintf(zl->testlog.fp, format, ac);
-		va_end(ac);
-		fprintf(zl->testlog.fp, "\n");
-		fflush(zl->testlog.fp);
-		zl->testlog.file_check_interval++;
-	}
-#endif
-	/* Syslog output */
-	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG]) {
-		va_list ac;
-		va_copy(ac, args);
-#ifndef ZPL_SERVICE_SYSLOG
-		vsyslog(priority | zl->facility, format, ac);
-#else
-		vsysclog(priority, zl->facility, format, args);
-#endif
-		va_end(ac);
-	}
-
-	/* File output. */
-	if ((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) {
-		va_list ac;
-		time_print(zl->fp, zl->timestamp);
-		if (zl->record_priority)
-			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(zl->fp, ZLOG_PRO_FMT": ", zlog_proto_names(module));
-		va_copy(ac, args);
-		vfprintf(zl->fp, format, ac);
-		va_end(ac);
-		fprintf(zl->fp, "\r\n");
-		fflush(zl->fp);
-		zl->file_check_interval++;
-	}
-
-	/* stdout output. */
-	if (priority <= zl->maxlvl[ZLOG_DEST_STDOUT]) {
-		va_list ac;
-		time_print(stdout, zl->timestamp);
-		if (zl->record_priority)
-			fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-		fprintf(stdout, ZLOG_PRO_FMT": ", zlog_proto_names(module));
-		va_copy(ac, args);
-		vfprintf(stdout, format, ac);
-		va_end(ac);
-		fprintf(stdout, "\r\n");
-		fflush(stdout);
-	}
-	/* logbuff output. */
-	if (priority <= zl->maxlvl[ZLOG_DEST_BUFFER]) {
-		zlog_buffer_format(zl, &zl->log_buffer,
-					 module, priority, format,  args);
-	}
-	#ifdef ZPL_SHELL_MODULE
-	/* Terminal monitor. */
-	if (priority <= zl->maxlvl[ZLOG_DEST_MONITOR])
-	{
-		vty_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_names(module), format, zl->timestamp, args);
-	}
-	//trapping
-	if ((priority == ZLOG_LEVEL_TRAP || priority == ZLOG_LEVEL_FORCE_TRAP) && zl->trap_lvl)
-	{
-		if(vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_names(module), format, zl->timestamp, args) != OK)
-		{
-			va_list ac;
-			time_print(stdout, zl->timestamp);
-			if (zl->record_priority)
-				fprintf(stdout, ZLOG_PRI_FMT": ", zlog_priority[priority]);
-			fprintf(stdout, ZLOG_PRO_FMT": ", zlog_proto_names(module));
-			va_copy(ac, args);
-			vfprintf(stdout, format, ac);
-			va_end(ac);
-			fprintf(stdout, "\r\n");
-			fflush(stdout);
-		}
-	}
-	#endif
-#endif	
-	/*if (module != MODULE_NONE) {
-		zl->protocol = protocol;
-	}*/
 	ipstack_errno = original_errno;
 }
 
@@ -503,24 +435,20 @@ void pl_vzlog(const char *file, const char *func, const zpl_uint32 line,
 		zl = zlog_default;
 	if (zl == NULL)
 	{
+		vzlog_color_set(zpl_true, stderr, priority);
 		time_print(stderr, ZLOG_TIMESTAMP_DATE);
 		fprintf(stderr, ZLOG_PRI_FMT": ", "unknown");
 		zlog_depth_debug_detail(stderr, NULL, ZLOG_DEPTH_LEVEL2, file, func, line);
 
 		vfprintf(stderr, format, args);
+		vzlog_color_set(zpl_true, stderr, ZLOG_LEVEL_MAX);
 		fprintf(stderr, "\r\n");
 		fflush(stderr);
 		return;
 	}
 	if (zl->mutex)
 		os_mutex_lock(zl->mutex, OS_WAIT_FOREVER);
-/*		protocol = zl->protocol;
-	if (module != MODULE_NONE)
-	{
-		protocol = zl->protocol;
-		zl->protocol = module;
-	}
-*/
+
 	if (priority <= zl->maxlvl[ZLOG_DEST_SYSLOG] ||
 			priority <= zl->maxlvl[ZLOG_DEST_BUFFER] ||
 			((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) ||
@@ -696,10 +624,12 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 	}
 	/* When zlog_default is also NULL, use stderr for logging. */
 	if (zl == NULL) {
+		vzlog_color_set(zpl_true, stderr, priority);
 		time_print(stderr, zl->timestamp);
 		fprintf(stderr, ZLOG_PRI_FMT": ", "unknown");
 		zlog_depth_debug_detail(stderr, NULL, ZLOG_DEPTH_LEVEL2, file, func, line);
 		vfprintf(stderr, format, args);
+		vzlog_color_set(zpl_true, stderr, ZLOG_LEVEL_MAX);
 		fprintf(stderr, "\n");
 		fflush(stderr);
 
@@ -716,6 +646,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 	if (zl->testing && (priority <= zl->testlog.priority) && zl->testlog.fp)
 	{
 		va_list ac;
+		vzlog_color_set(zl->b_color, zl->testlog.fp, priority);
 		time_print(zl->testlog.fp, zl->timestamp);
 		fprintf(zl->testlog.fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
 		fprintf(zl->testlog.fp, ZLOG_PRO_FMT": ", zlog_proto_names(zl->protocol));
@@ -723,6 +654,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_copy(ac, args);
 		vfprintf(zl->testlog.fp, format, ac);
 		va_end(ac);
+		vzlog_color_set(zl->b_color, zl->testlog.fp, ZLOG_LEVEL_MAX);
 		fprintf(zl->testlog.fp, "\n");
 		fflush(zl->testlog.fp);
 		zl->testlog.file_check_interval++;
@@ -748,6 +680,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 	/* File output. */
 	if ((priority <= zl->maxlvl[ZLOG_DEST_FILE]) && zl->fp) {
 		va_list ac;
+		vzlog_color_set(zl->b_color, zl->fp, priority);
 		time_print(zl->fp, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(zl->fp, ZLOG_PRI_FMT": ", zlog_priority[priority]);
@@ -756,6 +689,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_copy(ac, args);
 		vfprintf(zl->fp, format, ac);
 		va_end(ac);
+		vzlog_color_set(zl->b_color, zl->fp, ZLOG_LEVEL_MAX);
 		fprintf(zl->fp, "\n");
 		fflush(zl->fp);
 		zl->file_check_interval++;
@@ -769,6 +703,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 	/* stdout output. */
 	if (priority <= zl->maxlvl[ZLOG_DEST_STDOUT]) {
 		va_list ac;
+		vzlog_color_set(zl->b_color, stdout, priority);
 		time_print(stdout, zl->timestamp);
 		if (zl->record_priority)
 			fprintf(stdout, "%-2s: ", zlog_priority[priority]);
@@ -777,6 +712,7 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 		va_copy(ac, args);
 		vfprintf(stdout, format, ac);
 		va_end(ac);
+		vzlog_color_set(zl->b_color, stdout, ZLOG_LEVEL_MAX);
 		fprintf(stdout, "\n");
 		fflush(stdout);
 	}
@@ -798,9 +734,25 @@ void vzlog(const char *file, const char *func, const zpl_uint32 line,
 				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
 	}
 	//trapping
-	if ((priority == ZLOG_LEVEL_TRAP) && zl->trap_lvl)
-		vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
-				zlog_proto_names(zl->protocol), format, zl->timestamp, args);
+	if ((priority == ZLOG_LEVEL_TRAP || priority == ZLOG_LEVEL_FORCE_TRAP) && zl->trap_lvl)
+	{
+		if(vty_trap_log((zl->record_priority ? zlog_priority[priority] : NULL),
+				zlog_proto_names(module), format, zl->timestamp, args) != OK)
+		{
+			va_list ac;
+			if (zl->record_priority)
+				outlen += sprintf(tmpbuf + outlen, ZLOG_PRI_FMT": ", zlog_priority[priority]);
+			outlen += sprintf(tmpbuf + outlen, ZLOG_PRO_FMT": ", zlog_proto_names(module));
+			va_copy(ac, args);
+			outlen += vsprintf(tmpbuf + outlen, format, ac);
+			va_end(ac);
+			vzlog_color_set(zl->b_color, stdout, priority);
+			time_print(stdout, zl->timestamp);
+			fprintf(stdout, "%s\r\n", tmpbuf);
+			vzlog_color_set(zl->b_color, stdout, ZLOG_LEVEL_MAX);
+			fflush(stdout);
+		}
+	}
 	#endif
 	if (module != MODULE_NONE) {
 		zl->protocol = protocol;
@@ -1146,7 +1098,7 @@ void zlog_backtrace_sigsafe(zlog_level_t priority, void *program_counter)
 void zlog_backtrace(zlog_level_t priority)
 {
 #ifndef HAVE_GLIBC_BACKTRACE
-	zlog(NULL, priority, "No backtrace available on this platform.");
+	zlog(MODULE_DEFAULT, priority, "No backtrace available on this platform.");
 #else
 	void *array[20];
 	zpl_uint32 size, i;
@@ -1154,7 +1106,7 @@ void zlog_backtrace(zlog_level_t priority)
 	size = backtrace(array, array_size(array));
 	if (size <= 0 || (zpl_size_t)size > array_size(array))
 	{
-		zlog_err(MODULE_DEFAULT, "Cannot get backtrace, returned invalid # of frames %d "
+		zlog(MODULE_DEFAULT, priority, "Cannot get backtrace, returned invalid # of frames %d "
 				"(valid range is between 1 and %lu)",
 				size, (zpl_ulong)(array_size(array)));
 		return;
@@ -1162,7 +1114,7 @@ void zlog_backtrace(zlog_level_t priority)
 	zlog(MODULE_DEFAULT, priority, "Backtrace for %d stack frames:", size);
 	if (!(strings = backtrace_symbols(array, size)))
 	{
-		zlog_err(MODULE_DEFAULT, "Cannot get backtrace symbols (out of memory?)");
+		zlog(MODULE_DEFAULT, priority, "Cannot get backtrace symbols (out of memory?)");
 		for (i = 0; i < size; i++)
 			zlog(MODULE_DEFAULT, priority, "[bt %d] %p",i,array[i]);
 	}
@@ -1306,6 +1258,7 @@ openzlog(const char *progname, zlog_proto_t protocol, zpl_uint32 syslog_flags,
 	zl->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
 
 	zl->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
+	zl->b_color = zpl_true;
 
 	openlog(progname, syslog_flags, zl->facility);
 #ifdef ZPL_SERVICE_SYSLOG
@@ -1353,7 +1306,7 @@ void openzlog_start(struct zlog *zl)
 	zlp->default_lvl[ZLOG_DEST_BUFFER] = ZLOG_LEVEL_NOTICE;
 	zlp->default_lvl[ZLOG_DEST_MONITOR] = ZLOG_LEVEL_MAX;
 	zlp->default_lvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
-	zlp->trap_lvl = zpl_true;//ZLOG_LEVEL_TRAP;
+	zlp->trap_lvl = zpl_true;
 	return ;
 }
 
@@ -1524,11 +1477,7 @@ int zlog_reset_file(zpl_bool bOpen)
 		return 0;
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-/*	if(nsmlog.t_time)
-	{
-		eloop_cancel(nsmlog.t_time);
-		nsmlog.t_time = NULL;
-	}*/
+
 	if (zlog_default->fp)
 	{
 		fflush (zlog_default->fp);
@@ -1578,11 +1527,6 @@ int zlog_set_file(const char *filename, zlog_level_t log_level)
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
 
-/*	if(nsmlog.t_time)
-	{
-		eloop_cancel(nsmlog.t_time);
-		nsmlog.t_time = NULL;
-	}*/
 	/* Open file. */
 	memset(filetmp, 0, sizeof(filetmp));
 	sprintf(filetmp, "%s%s", ZLOG_VIRTUAL_PATH, file_name);
@@ -1609,7 +1553,6 @@ int zlog_set_file(const char *filename, zlog_level_t log_level)
 		return ERROR;
 	}
 
-	//nsmlog.t_time = eloop_add_timer (nsmlog.master, zlog_file_time_thread, NULL, LOG_FILE_CHK_TIME);
 	if (zlog_default->mutex)
 		os_mutex_unlock(zlog_default->mutex);
 	return OK;
@@ -1636,8 +1579,6 @@ int zlog_get_file(const char *filename, zlog_level_t *log_level)
 
 int zlog_close_file(void)
 {
-
-	//zpl_char filetmp[256];
 	if (zlog_default == NULL)
 		return 0;
 
@@ -1645,11 +1586,7 @@ int zlog_close_file(void)
 
 	if (zlog_default->mutex)
 		os_mutex_lock(zlog_default->mutex, OS_WAIT_FOREVER);
-/*	if(nsmlog.t_time)
-	{
-		eloop_cancel(nsmlog.t_time);
-		nsmlog.t_time = NULL;
-	}*/
+
 	zlog_default->fp = NULL;
 	logfile_fd = -1;
 	zlog_default->maxlvl[ZLOG_DEST_FILE] = ZLOG_DISABLED;

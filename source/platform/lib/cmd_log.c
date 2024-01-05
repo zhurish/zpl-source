@@ -564,11 +564,11 @@ DEFUN (no_config_log_record_priority,
 
 DEFUN (config_log_timestamp,
 		config_log_timestamp_cmd,
-		"log timestamp (date|zpl_int16|bsd|iso|rfc3164|rfc3339)",
+		"log timestamp (date|short|bsd|iso|rfc3164|rfc3339)",
 		"Logging control\n"
 		"Timestamp configuration\n"
 		"Timestamp format date\n"
-		"Timestamp format zpl_int16\n"
+		"Timestamp format short\n"
 		"Timestamp format bsd\n"
 		"Timestamp format iso\n"
 		"Timestamp format rfc3164\n"
@@ -581,7 +581,7 @@ DEFUN (config_log_timestamp,
 	}
 	if(os_memcmp(argv[0],"date", 3) == 0)
 		value = ZLOG_TIMESTAMP_DATE;
-	else if(os_memcmp(argv[0],"zpl_int16", 3) == 0)
+	else if(os_memcmp(argv[0],"short", 3) == 0)
 		value = ZLOG_TIMESTAMP_SHORT;
 	else if(os_memcmp(argv[0],"bsd", 3) == 0)
 		value = ZLOG_TIMESTAMP_BSD;
@@ -846,7 +846,7 @@ DEFUN (show_logging,
 	else if(zl->timestamp == ZLOG_TIMESTAMP_DATE)
 		vty_out(vty, "Timestamp           : data%s",VTY_NEWLINE);
 	else if(zl->timestamp == ZLOG_TIMESTAMP_SHORT)
-		vty_out(vty, "Timestamp           : zpl_int16%s",VTY_NEWLINE);
+		vty_out(vty, "Timestamp           : short%s",VTY_NEWLINE);
 	else if(zl->timestamp == ZLOG_TIMESTAMP_BSD)
 		vty_out(vty, "Timestamp           : bsd%s",VTY_NEWLINE);
 	else if(zl->timestamp == ZLOG_TIMESTAMP_ISO)
@@ -1136,7 +1136,7 @@ static int config_write_log (struct vty *vty)
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_DATE)
 		vty_out(vty, "log timestamp date%s",VTY_NEWLINE);
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_SHORT)
-		vty_out(vty, "log timestamp zpl_int16%s",VTY_NEWLINE);
+		vty_out(vty, "log timestamp short%s",VTY_NEWLINE);
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_BSD)
 		vty_out(vty, "log timestamp bsd%s",VTY_NEWLINE);
 	else if(zlog_default->timestamp == ZLOG_TIMESTAMP_ISO)

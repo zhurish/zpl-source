@@ -738,7 +738,7 @@ vty_new()
 	new->max = VTY_BUFSIZ;
 	new->pid = 0;
 	new->pthd = 0;
-	new->trapping = 1;
+	new->trapping = 0;
 	new->monitor = 1;
 	new->cancel = 0;
 	return new;
@@ -2280,7 +2280,7 @@ vty_new_init(zpl_socket_t vty_sock)
 	vty->iac_sb_in_progress = 0;
 	vty->sb_len = 0;
 
-	vty->trapping = zpl_true;
+	vty->trapping = zpl_false;
 	if (ipstack_fd(vty_sock) == STDIN_FILENO)
 		vty->ansync = zpl_true;
 	return vty;
