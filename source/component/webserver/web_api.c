@@ -9,7 +9,6 @@
 
 
 #include "web_api.h"
-#include "web_jst.h"
 #include "web_app.h"
 
 int _web_app_debug = 0;

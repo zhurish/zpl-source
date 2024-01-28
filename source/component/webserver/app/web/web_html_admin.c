@@ -25,7 +25,7 @@
 
 
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 
@@ -324,7 +324,7 @@ static int web_admin_change_password(Webs *wp, char *path, char *query)
 }
 
 
-int web_admin_app(void)
+int web_html_admin_init(void)
 {
 	websFormDefine("addusername", web_admin_add_username);
 	websFormDefine("changepassword", web_admin_change_password);

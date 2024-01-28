@@ -21,7 +21,6 @@
 #include "syslogcLib.h"
 
 #include "web_api.h"
-#include "web_jst.h"
 #include "web_app.h"
 
 
@@ -168,7 +167,7 @@ static int jst_syslog(int eid, webs_t wp, int argc, char **argv)
 }
 
 
-int web_syslog_app(void)
+int web_html_syslog_init(void)
 {
 	websDefineJst("jst_syslog", jst_syslog);
 	websFormDefine("setsyslog", web_syslog_set);

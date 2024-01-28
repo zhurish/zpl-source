@@ -25,7 +25,7 @@
 
 
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 #ifdef ZPL_APP_MODULE
@@ -161,7 +161,7 @@ static int web_localtime(Webs *wp, char *path, char *query)
 }
 
 
-int web_system_app(void)
+int web_html_system_init(void)
 {
 	websFormDefine("system", web_system_handle);
 	websFormDefine("localtime", web_localtime);

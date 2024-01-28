@@ -275,20 +275,15 @@ int web_download_call_hook(char *form, char *id, Webs *wp, char **filename)
 
 
 
-int web_button_cb_init(void)
+int web_button_onclick_init(void)
 {
 	memset(web_btn_cbtbl, 0, sizeof(web_btn_cbtbl));
-	return 0;
-}
-
-#if ME_GOAHEAD_UPLOAD
-int web_updownload_cb_init(void)
-{
+	#if ME_GOAHEAD_UPLOAD
 	memset(web_upload_cbtbl, 0, sizeof(web_upload_cbtbl));
-	memset(web_download_cbtbl, 0, sizeof(web_download_cbtbl));
+	memset(web_download_cbtbl, 0, sizeof(web_download_cbtbl));	
+	#endif
 	return 0;
 }
-#endif
 
 int web_button_init(void)
 {

@@ -1,0 +1,342 @@
+[
+    {
+        "path": "/home",
+        "name": "home",
+        "component": "HomeView",
+        "meta": {
+            "requiresAuth": true
+        },
+        "children": [
+            {
+                "path": "Status",
+                "name": "Status",
+                "component": "SysStatus",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "System",
+                "name": "System",
+                "component": "System",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "Interface",
+                "name": "Interface",
+                "component": "Interface",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                },
+                "children": [
+                    {
+                        "path": "Interf",
+                        "name": "Interf",
+                        "component": "interface/Interf",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "IfState",
+                        "name": "IfState",
+                        "component": "interface/IfState",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "path": "Stp",
+                "name": "Stp",
+                "component": "Stp",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                },
+                "children": [
+                    {
+                        "path": "stp",
+                        "name": "stp",
+                        "component": "stp/stp",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "stpif",
+                        "name": "stpif",
+                        "component": "stp/stpif",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "stpstate",
+                        "name": "stpstate",
+                        "component": "stp/stpstate",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "path": "Vlan",
+                "name": "Vlan",
+                "component": "Vlan",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                },
+                "children": [
+                    {
+                        "path": "vlandatabase",
+                        "name": "vlandatabase",
+                        "component": "vlan/vlandatabase",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "vlanif",
+                        "name": "vlanif",
+                        "component": "vlan/vlanif",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "path": "Qos",
+                "name": "Qos",
+                "component": "Qos",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "StaticRoute",
+                "name": "StaticRoute",
+                "component": "StaticRoute",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "L2Proto",
+                "name": "L2Proto",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "L3Route",
+                "name": "L3Route",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "Service",
+                "name": "Service",
+                "component": "Service",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                },
+                "children": [
+                    {
+                        "path": "Dhcp",
+                        "name": "Dhcp",
+                        "component": "service/Dhcp",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },                       
+                    {
+                        "path": "Ftp",
+                        "name": "Ftp",
+                        "component": "service/Ftp",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "Tftp",
+                        "name": "Tftp",
+                        "component": "service/Tftp",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "Syslog",
+                        "name": "Syslog",
+                        "component": "service/Syslog",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "Sntp",
+                        "name": "Sntp",
+                        "component": "service/Sntp",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "Mqtt",
+                        "name": "Mqtt",
+                        "component": "service/Mqtt",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    },
+                    {
+                        "path": "Modbus",
+                        "name": "Modbus",
+                        "component": "service/Modbus",
+                        "meta": {
+                            "requiresAuth": true,
+                            "roles": [
+                                "administrator",
+                                "customer"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "path": "About",
+                "name": "About",
+                "component": "About",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "Admin",
+                "name": "Admin",
+                "component": "AdminUser",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            },
+            {
+                "path": "Upgrade",
+                "name": "Upgrade",
+                "component": "Upgrade",
+                "meta": {
+                    "requiresAuth": true,
+                    "roles": [
+                        "administrator",
+                        "customer"
+                    ]
+                }
+            }
+        ]
+    }
+]

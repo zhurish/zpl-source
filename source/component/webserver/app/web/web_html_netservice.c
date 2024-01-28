@@ -21,7 +21,7 @@
 #include "syslogcLib.h"
 #endif
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 
@@ -190,7 +190,7 @@ static int web_netservice_goform(Webs *wp, char *path, char *query)
 	return web_return_text_plain(wp, OK, NULL);
 }
 
-int web_netservice_app(void)
+int web_html_netservice_init(void)
 {
 
 	//websFormDefine("netsrvtbl", web_netservice_goform_get);

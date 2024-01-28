@@ -19,7 +19,6 @@
 #include "host.h"
 
 #include "web_api.h"
-#include "web_jst.h"
 #include "web_app.h"
 
 web_app_t *web_app = NULL;
@@ -299,32 +298,30 @@ static int web_app_task(void *argv)
 
 static int web_app_html_init(web_app_t *web)
 {
-	web_button_cb_init();
+	web_button_onclick_init();
 	web_button_init();
 
-	web_updownload_cb_init();
 #ifdef ZPL_WEBAPP_MODULE
-	web_system_jst_init();
-	web_html_jst_init();
-	web_menu_app();
-	web_updownload_app();
-	web_admin_app();
+	web_html_system_init();
+	web_html_menu_init();
+	web_html_updownload_init();
+	web_html_admin_init();
 #ifdef ZPL_SERVICE_SNTPC
-	web_sntp_app();
+	web_html_sntp_init();
 #endif
 #ifdef ZPL_SERVICE_SYSLOG
-	web_syslog_app();
+	web_html_syslog_init();
 #endif
 
-	web_network_app();
-	web_netservice_app();
+	web_html_network_init();
+	web_html_netservice_init();
 
 #ifdef ZPL_WIFI_MODULE
-	web_wireless_app();
+	web_html_wireless_init();
 #endif
 
-	web_upgrade_app();
-	web_system_app();
+	web_html_upgrade_init();
+	web_html_sysinfo_init();
 #endif
 
 

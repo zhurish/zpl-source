@@ -22,7 +22,7 @@
 #include "sntpcLib.h"
 
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 
@@ -156,7 +156,7 @@ static int web_sntp_set(Webs *wp, char *path, char *query)
 
 
 
-int web_sntp_app(void)
+int web_html_sntp_init(void)
 {
 
 	websDefineJst("jst_timezone_list", jst_sntp_timezone_list);

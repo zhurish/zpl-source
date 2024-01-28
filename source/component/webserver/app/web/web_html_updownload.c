@@ -20,7 +20,7 @@
 
 
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 #ifdef ZPL_APP_MODULE
@@ -565,7 +565,7 @@ static int config_download_cb(Webs *wp, char **filename)
 
 
 
-int web_updownload_app(void)
+int web_html_updownload_init(void)
 {
 	websDefineAction("download", web_action_downLoad);
 	websDefineAction("upload", web_action_upload);

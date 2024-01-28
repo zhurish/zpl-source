@@ -27,7 +27,7 @@
 #include "iw_interface.h"
 #endif
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 #ifdef WEB_OPENWRT_PROCESS
@@ -312,7 +312,7 @@ static int web_networkset_set(Webs *wp, char *path, char *query)
 		return web_return_text_plain(wp, ERROR, NULL);
 }
 
-int web_network_app(void)
+int web_html_network_init(void)
 {
 	websFormDefine("networkset", web_networkset_set);
 	return 0;

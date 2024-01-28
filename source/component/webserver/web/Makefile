@@ -27,6 +27,8 @@ webinstall:
 	@install -d $(ZPL_INSTALL_ETC_DIR)/web
 	@$(CP) ./auth.txt $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
 	@$(CP) ./route.txt $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(CP) ./res/vue-menu.json $(ZPL_INSTALL_ETC_DIR)/web/vue-menu.json
+	@$(CP) ./res/vue-router.json $(ZPL_INSTALL_ETC_DIR)/web/vue-router.json
 	#install -d $(ZPL_INSTALL_WWW_DIR)
 	#$(CP) ./theme/build.tar.gz $(ZPL_INSTALL_WWW_DIR)/
 	
@@ -34,6 +36,8 @@ webinstall:
 webclean: 
 	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
 	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/vue-router.json
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/vue-menu.json
 	@$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 #
 #
@@ -53,10 +57,14 @@ install:
 	@install -d $(ZPL_INSTALL_ETC_DIR)/web
 	@$(CP) ./auth.txt $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
 	@$(CP) ./route.txt $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(CP) ./res/vue-menu.json $(ZPL_INSTALL_ETC_DIR)/web/vue-menu.json
+	@$(CP) ./res/vue-router.json $(ZPL_INSTALL_ETC_DIR)/web/vue-router.json
 
 clean:  
 	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/auth.txt
 	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/route.txt
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/vue-router.json
+	@$(RM) $(ZPL_INSTALL_ETC_DIR)/web/vue-menu.json
 	@$(RM) -rf $(ZPL_INSTALL_WWW_DIR)/*
 	
 .PHONY:	install clean

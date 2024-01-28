@@ -19,7 +19,7 @@
 
 
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 #ifdef ZPL_APP_MODULE
@@ -134,7 +134,7 @@ static int sys_upgrade_cb(Webs *wp, WebsUpload *up, void *p)
 	return ERROR;
 }
 
-int web_upgrade_app(void)
+int web_html_upgrade_init(void)
 {
 	web_button_add_hook("upgrade", "upgrade", web_upgrade_handle, NULL);//计算板升级
 	web_upload_add_hook("upgrade_filename", "sysupgrade", sys_upgrade_cb, NULL);

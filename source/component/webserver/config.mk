@@ -117,36 +117,33 @@ WEBOBJS += cmd_web.o
 endif
 
 ifeq ($(strip $(ZPL_WEBAPP_MODULE)),true)
-#jst
-APPJSTOBJS += web_html_jst.o
-APPJSTOBJS += web_system_jst.o
 
 #form and action
-
-APPWEBOBJS += web_menu_html.o
-APPWEBOBJS += web_admin_html.o
-APPWEBOBJS += web_sntp_html.o
-APPWEBOBJS += web_syslog_html.o
-APPWEBOBJS += web_network_html.o
-APPWEBOBJS += web_wireless_html.o
-APPWEBOBJS += web_updownload_html.o
-APPWEBOBJS += web_system_html.o
-APPWEBOBJS += web_upgrade_html.o
-APPWEBOBJS += web_netservice_html.o
+APPWEBOBJS += web_html_sysinfo.o
+APPWEBOBJS += web_html_menu.o
+APPWEBOBJS += web_html_admin.o
+APPWEBOBJS += web_html_sntp.o
+APPWEBOBJS += web_html_syslog.o
+APPWEBOBJS += web_html_network.o
+APPWEBOBJS += web_html_wireless.o
+APPWEBOBJS += web_html_updownload.o
+APPWEBOBJS += web_html_system.o
+APPWEBOBJS += web_html_upgrade.o
+APPWEBOBJS += web_html_netservice.o
 
 ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
-APPWEBOBJS += web_switch_html.o
-APPWEBOBJS += web_sip_html.o
-APPWEBOBJS += web_factory_html.o
-APPWEBOBJS += web_card_html.o
+APPWEBOBJS += web_html_switch.o
+APPWEBOBJS += web_html_sip.o
+APPWEBOBJS += web_html_factory.o
+APPWEBOBJS += web_html_card.o
 endif
 ifeq ($(strip $(ZPL_APP_V9_MODULE)),true)
-APPWEBOBJS += web_boardcard_html.o
-APPWEBOBJS += web_general_html.o
-APPWEBOBJS += web_rtsp_html.o
-APPWEBOBJS += web_algorithm_html.o
-APPWEBOBJS += web_facelib_html.o
-APPWEBOBJS += web_db_html.o
+APPWEBOBJS += web_html_boardcard.o
+APPWEBOBJS += web_html_general.o
+APPWEBOBJS += web_html_rtsp.o
+APPWEBOBJS += web_html_algorithm.o
+APPWEBOBJS += web_html_facelib.o
+APPWEBOBJS += web_html_db.o
 endif
 endif
 

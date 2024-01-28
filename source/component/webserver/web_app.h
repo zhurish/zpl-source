@@ -13,43 +13,35 @@
 extern "C" {
 #endif
 
-struct web_menu_table
-{
-  const char *path;
-  const char *name;
-  const char *component;
-  int meta;
-  struct web_menu_table *children;
-};
 
-extern int web_login_app(void);
-extern int web_updownload_app(void);
-extern int web_menu_app(void);
+
+
+extern int web_html_updownload_init(void);
+extern int web_html_menu_init(void);
 /*
  * admin
  */
-extern int web_admin_app(void);
+extern int web_html_admin_init(void);
 
 #ifdef ZPL_SERVICE_SNTPC
-extern int web_sntp_app(void);
+extern int web_html_sntp_init(void);
 #endif /*ZPL_SERVICE_SNTPC*/
 
 #ifdef ZPL_SERVICE_SYSLOG
-extern int web_syslog_app(void);
+extern int web_html_syslog_init(void);
 #endif /*ZPL_SERVICE_SYSLOG*/
 
-extern int web_network_app(void);
-extern int web_netservice_app(void);
+extern int web_html_network_init(void);
+extern int web_html_netservice_init(void);
 
 #ifdef ZPL_WIFI_MODULE
-extern int web_wireless_app(void);
+extern int web_html_wireless_init(void);
 #endif
 
-extern int web_sip_app(void);
 
-
-extern int web_upgrade_app(void);
-extern int web_system_app(void);
+extern int web_html_upgrade_init(void);
+extern int web_html_system_init(void);
+extern int web_html_sysinfo_init(void);
 
  
 #ifdef __cplusplus

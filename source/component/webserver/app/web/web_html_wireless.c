@@ -32,7 +32,7 @@
 #include "iw_interface.h"
 
 #include "web_api.h"
-#include "web_jst.h"
+
 #include "web_app.h"
 
 
@@ -858,7 +858,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 
 //#endif
 
-int web_wireless_app(void)
+int web_html_wireless_init(void)
 {
 //#ifdef ZPL_WIFI_MODULE
 	websFormDefine("wireless", web_wireless_action);

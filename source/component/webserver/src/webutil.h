@@ -90,7 +90,7 @@ extern int web_return_application_json_fmt(Webs *wp, int ret, char *fmt,...);
  按钮表单 action/button_onclick,数据封装支持application/json和application/x-www-form-urlencoded
  */
 extern int web_button_init(void);
-extern int web_button_cb_init(void);
+extern int web_button_onclick_init(void);
 extern int web_button_add_hook(char *action, char *btnid, int(*cb)(void *, void *), void *);
 extern int web_button_del_hook(char *action, char *btnid);
 
@@ -99,7 +99,7 @@ extern int web_button_del_hook(char *action, char *btnid);
 /*
  * Upload
  */
-extern int web_updownload_cb_init(void);
+
 extern int web_upload_add_hook(char *form, char *id, int (*cb)(void *, void *, void *),
 		void *p);
 extern int web_upload_del_hook(char *form, char *id);

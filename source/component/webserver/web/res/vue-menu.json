@@ -1,0 +1,51 @@
+[
+    { "webpath": "Status", "name": "Status" },
+    { "webpath": "Interface", "name": "Interface",               
+      "tabmenu":[
+            { "webpath": "Interf", "name": "Interf" },
+            { "webpath": "ifState", "name": "ifState" }
+          ]
+        },
+    {
+      "webpath": "", "name": "L2Proto", "submenu": [
+        { "webpath": "Vlan", "name": "Vlan",           
+          "tabmenu":[
+            { "webpath": "vlandatabase", "name": "vlandatabase" },
+            { "webpath": "vlanif", "name": "vlanif" }
+          ]
+        },
+        { "webpath": "Stp", "name": "Stp", 
+          "tabmenu":[
+            { "webpath": "stp", "name": "stp" },
+            { "webpath": "stpif", "name": "stpif" },
+            { "webpath": "stpstate", "name": "stpstate" }
+          ]
+        }
+      ]
+    },
+    {
+      "webpath": "", "name": "L3Route", "submenu": [
+        { "webpath": "StaticRoute", "name": "StaticRoute" }
+      ]
+    },
+    { "webpath": "Qos", "name": "Qos" },
+    { "webpath": "Service", "name": "Service",               
+      "tabmenu":[
+            { "webpath": "Ftp", "name": "Ftp" },
+            { "webpath": "Dhcp", "name": "Dhcp" },
+            { "webpath": "Tftp", "name": "Tftp" },
+            { "webpath": "Sntp", "name": "Sntp" },
+            { "webpath": "Syslog", "name": "Syslog" },
+            { "webpath": "Modbus", "name": "Modbus" },
+            { "webpath": "Mqtt", "name": "Mqtt" }
+          ]
+        },
+    {
+      "webpath": "", "name": "System", "submenu": [
+        { "webpath": "Admin", "name": "Admin" },
+        { "webpath": "Upgrade", "name": "Upgrade" }
+      ]
+    },
+
+    { "webpath": "About", "name": "About" }
+]

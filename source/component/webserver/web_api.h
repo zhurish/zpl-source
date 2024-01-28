@@ -42,6 +42,9 @@ extern "C" {
 #define WEBGUI_DOCUMENTS 	SYSWWWDIR
 #endif
 
+#define WEBGUI_VUEROUTE 	REAL_SYSWEBDIR"/vue-router.json"
+#define WEBGUI_VUEMENU 		REAL_SYSWEBDIR"/vue-menu.json"
+
 #define WEB_SYSTEM_LOG 		SYSLOGDIR"/boot.log"
 
 #define WEB_LOGIN_USERNAME 		"root"
