@@ -43,6 +43,7 @@
     {
       "webpath": "", "name": "System", "submenu": [
         { "webpath": "Admin", "name": "Admin" },
+        { "webpath": "Device", "name": "Device" },
         { "webpath": "Upgrade", "name": "Upgrade" }
       ]
     },

@@ -1,8 +1,12 @@
-/*
- * web_wireless_html.c
- *
- *  Created on: 2019年8月11日
- *      Author: zhurish
+/**
+ * @file      : web_html_wireless.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
 #define HAS_BOOL 1
 #include "zplos_include.h"
@@ -106,7 +110,7 @@ static int web_wireless_scan_disconnect(Webs *wp, void *p)
 	btnid = webs_get_var(wp, T("button-ID"), T(""));
 	if (NULL == btnid)
 	{
-		return ERROR; //web_return_text_plain(wp, ERROR, NULL);
+		return ERROR; //web_textplain_result(wp, ERROR, NULL);
 	}
 	if (strstr(btnid, "ap_disconnect"))
 	{
@@ -151,7 +155,7 @@ static int web_wireless_scan_disconnect(Webs *wp, void *p)
 	}
 	if (ret != OK)
 		return ERROR; //
-	return web_return_text_plain(wp, ret, NULL);
+	return web_textplain_result(wp, ret, NULL);
 	//return OK;
 }
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)
@@ -164,13 +168,13 @@ static int web_wireless_sta(Webs *wp, char *path, char *query)
 	ssid = webs_get_var(wp, T("name"), T(""));
 	if (NULL == ssid)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	_WEB_DBG_TRAP("%s: name=%s\r\n", __func__, ssid);
 	pass = webs_get_var(wp, T("password"), T(""));
 	if (NULL == pass)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	_WEB_DBG_TRAP("%s: password=%s\r\n", __func__, pass);
 
@@ -197,7 +201,7 @@ static int web_wireless_sta(Webs *wp, char *path, char *query)
 			}
 		}
 	}
-	web_return_text_plain(wp, ERROR, NULL);
+	web_textplain_result(wp, ERROR, NULL);
 	return ERROR;
 }
 #endif
@@ -290,15 +294,15 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 			}
 		}
 		else
-			return web_return_text_plain(wp, ERROR, NULL);
+			return web_textplain_result(wp, ERROR, NULL);
 	}
 	else
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 
 	name = webs_get_var(wp, T("name"), T(""));
 	if (NULL == name)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 
 	ret |= iw_ap_ssid_set_api(&iw->private.ap, name);
@@ -306,7 +310,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	encrytype = webs_get_var(wp, T("encrytype"), T(""));
 	if (NULL == encrytype)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	if (strstr(encrytype, "NONE"))
 		ret |= iw_ap_auth_set_api(&iw->private.ap, IW_ENCRY_NONE);
@@ -326,7 +330,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 		password = webs_get_var(wp, T("password"), T(""));
 		if (NULL == password)
 		{
-			return web_return_text_plain(wp, ERROR, NULL);
+			return web_textplain_result(wp, ERROR, NULL);
 		}
 		ret |= iw_ap_password_set_api(&iw->private.ap, password);
 	}
@@ -334,14 +338,14 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	type = webs_get_var(wp, T("type"), T(""));
 	if (NULL == type)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	//ret |= iw_ap_hw_mode_set_api(&iw->private.ap, type);
 
 	freq = webs_get_var(wp, T("freq"), T(""));
 	if (NULL == freq)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	//ret |= iw_ap_freq_set_api(&iw->private.ap, freq);
 
@@ -356,7 +360,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	chennel = webs_get_var(wp, T("chennel"), T(""));
 	if (NULL == chennel)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	ret |= iw_ap_channel_set_api(&iw->private.ap, atoi(chennel));
 */
@@ -405,7 +409,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	if (NULL == name)
 	{
 		zlog_debug(MODULE_WEB, "=======%s======name", __func__);
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	os_uci_set_string("wireless.radio0.ssid", name);
 
@@ -413,7 +417,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	if (NULL == encrytype)
 	{
 		zlog_debug(MODULE_WEB, "=======%s======encrytype", __func__);
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	
 	//zlog_debug(MODULE_WEB, "=======%s======encrytype=%s", __func__, encrytype);
@@ -437,7 +441,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 		if (NULL == password)
 		{
 			zlog_debug(MODULE_WEB, "=======%s======password", __func__);
-			return web_return_text_plain(wp, ERROR, NULL);
+			return web_textplain_result(wp, ERROR, NULL);
 		}
 		//zlog_debug(MODULE_WEB, "=======%s======password=%s", __func__, password);
 		os_uci_set_string("wireless.radio0.key", password);
@@ -448,7 +452,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	if (NULL == type)
 	{
 		zlog_debug(MODULE_WEB, "=======%s======type", __func__);
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	if (strstr(type, "Auto"))
 		os_uci_set_string("wireless.radio0.encryption", "none");
@@ -467,7 +471,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	if (NULL == freq)
 	{
 		zlog_debug(MODULE_WEB, "=======%s======freq", __func__);
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	os_uci_set_integer("wireless.ra0.ht", atoi(freq));
 
@@ -482,7 +486,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 	chennel = webs_get_var(wp, T("chennel"), T(""));
 	if (NULL == chennel)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	os_uci_save_config("wireless");
 
@@ -498,7 +502,7 @@ static int web_wireless_ap(Webs *wp, char *path, char *query)
 			  type ? type : "", freq ? freq : "", chennel ? chennel : "", hiden ? hiden : "false");
 	websDone(wp);
 
-	web_return_text_plain(wp, OK, NULL);
+	web_textplain_result(wp, OK, NULL);
 
 	os_job_add(OS_JOB_NONE,web_wireless_disable_job, NULL);
 
@@ -659,7 +663,7 @@ static int web_wireless_action(Webs *wp, char *path, char *query)
 	strval = webs_get_var(wp, T("button-action"), T(""));
 	if (NULL == strval)
 	{
-		return web_return_text_plain(wp, ERROR, NULL);
+		return web_textplain_result(wp, ERROR, NULL);
 	}
 	if (strstr(strval, "GET"))
 	{
@@ -712,10 +716,10 @@ static int web_wireless_action(Webs *wp, char *path, char *query)
 					return OK;
 				}
 				else
-					return web_return_text_plain(wp, ERROR, NULL);
+					return web_textplain_result(wp, ERROR, NULL);
 			}
 			else
-				return web_return_text_plain(wp, ERROR, NULL);
+				return web_textplain_result(wp, ERROR, NULL);
 		}
 #else
 		//zlog_debug(MODULE_WEB, "=======%s======%s", __func__, strval);
@@ -727,7 +731,7 @@ static int web_wireless_action(Webs *wp, char *path, char *query)
 		strval = webs_get_var(wp, T("mode"), T(""));
 		if (NULL == strval)
 		{
-			return web_return_text_plain(wp, ERROR, NULL);
+			return web_textplain_result(wp, ERROR, NULL);
 		}
 		//zlog_debug(MODULE_WEB, "=======%s======%s", __func__, strval);
 		if (strstr(strval, "AP"))
@@ -778,25 +782,25 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 				{
 					nsm_iw_enable_api(ifp, zpl_true);
 					vty_execute_shell(NULL, "write memory");
-					return web_return_text_plain(wp, OK, NULL);
+					return web_textplain_result(wp, OK, NULL);
 				}
 				else if (strstr(strval, "false"))
 				{
 					os_job_add(OS_JOB_NONE,web_wireless_disable_job, ifp);
 /*					nsm_iw_enable_api(ifp, zpl_false);
 					vty_execute_shell(NULL, "write memory");*/
-					return web_return_text_plain(wp, OK, NULL);
+					return web_textplain_result(wp, OK, NULL);
 				}
 			}
 			else
 			{
-				//return web_return_text_plain(wp, ERROR, NULL);
+				//return web_textplain_result(wp, ERROR, NULL);
 				return ERROR;
 			}
 		}
 		else
 		{
-			//return web_return_text_plain(wp, ERROR, NULL);
+			//return web_textplain_result(wp, ERROR, NULL);
 			return ERROR;
 		}
 #else
@@ -808,7 +812,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 			os_uci_save_config("wireless");
 			os_job_add(OS_JOB_NONE,web_wireless_disable_job, NULL);
 #endif
-			return web_return_text_plain(wp, OK, NULL);
+			return web_textplain_result(wp, OK, NULL);
 		}
 		else if (strstr(strval, "false"))
 		{
@@ -817,21 +821,21 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 			os_uci_save_config("wireless");
 			os_job_add(OS_JOB_NONE,web_wireless_disable_job, NULL);
 #endif
-			return web_return_text_plain(wp, OK, NULL);
+			return web_textplain_result(wp, OK, NULL);
 		}
 		else
 		{
-			//return web_return_text_plain(wp, ERROR, NULL);
+			//return web_textplain_result(wp, ERROR, NULL);
 			return ERROR;
 		}
 #endif
 		//vty_execute_shell(NULL, "write memory");
-		//return web_return_text_plain(wp, OK, NULL);
+		//return web_textplain_result(wp, OK, NULL);
 	}
 	strval = webs_get_var(wp, T("mac"), T(""));
 	if (NULL == strval)
 	{
-		return ERROR; //web_return_text_plain(wp, ERROR, NULL);
+		return ERROR; //web_textplain_result(wp, ERROR, NULL);
 	}
 	ifp = if_lookup_by_name("wireless 0/0/1");
 	if (ifp)
@@ -853,7 +857,7 @@ static int web_wireless_client_disable(Webs *wp, void *p)
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 14, 0)		
 	vty_execute_shell(NULL, "write memory");
 #endif	
-	return web_return_text_plain(wp, ret, NULL);
+	return web_textplain_result(wp, ret, NULL);
 }
 
 //#endif

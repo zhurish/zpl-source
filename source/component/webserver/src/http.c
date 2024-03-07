@@ -1074,6 +1074,47 @@ static void parseFirstLine(Webs *wp)
 }
 
 
+               /**< HTTP request method */
+webs_method_t websGetMethodCode(Webs *wp)
+{
+    if (smatch(wp->method, "GET")) 
+    {
+        wp->method_type = WEBS_METHOD_GET;
+    }
+    else if (smatch(wp->method, "POST")) 
+    {
+        wp->method_type = WEBS_METHOD_POST;
+    }
+    else if (smatch(wp->method, "HEAD")) 
+    {
+        wp->method_type = WEBS_METHOD_HEAD;
+    }
+    else if (smatch(wp->method, "PUT")) 
+    {
+        wp->method_type = WEBS_METHOD_PUT;
+    }
+    else if (smatch(wp->method, "DELETE")) 
+    {
+        wp->method_type = WEBS_METHOD_DELETE;
+    }
+    else if (smatch(wp->method, "PATCH")||smatch(wp->method, "UPDATE")) 
+    {
+        wp->method_type = WEBS_METHOD_PATCH;
+    }
+    else if (smatch(wp->method, "OPTIONS")) 
+    {
+        wp->method_type = WEBS_METHOD_OPTIONS;
+    }
+    else if (smatch(wp->method, "CONNECT")) 
+    {
+        wp->method_type = WEBS_METHOD_CONNECT;
+    }
+    else if (smatch(wp->method, "TRACE")) 
+    {
+        wp->method_type = WEBS_METHOD_TRACE;
+    }
+    return wp->method_type;
+}
 /*
     Parse a full request
  */
@@ -1756,6 +1797,7 @@ PUBLIC void websResponseJson(Webs *wp, int code, cJSON *obj)
     {
         websWriteBlock(wp, message, len); 
         websWriteBlock(wp, "\r\n", 2);
+        cJSON_PrintFree(message);
     }      
 	websDone(wp);
 }

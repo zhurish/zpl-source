@@ -1,3 +1,13 @@
+/**
+ * @file      : webutton.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
+ */
 #define HAS_BOOL 1
 #include "src/goahead.h"
 #include "src/webutil.h"
@@ -11,7 +21,7 @@ static struct web_download_cb *web_download_cbtbl[WEB_UPLOAD_CB_MAX];
 #endif
 
 
-int web_button_add_hook(char *action, char *btnid, int (*cb)(void *, void *),
+int web_button_add_hook(char *action, char *btnid, int (*cb)(Webs *, void *),
 		void *p)
 {
 	int i = 0;
@@ -105,14 +115,14 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 		if (NULL == strval)
 		{
 			web_error( "Can not Get button-action Value");
-			return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-action");
+			return web_textplain_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-action");
 		}
 		strcpy(action, strval);
 		strval = webs_get_var(wp, T("button-ID"), T(""));
 		if (NULL == strval)
 		{
 			web_error( "Can not Get button-ID Value");
-			return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-ID");
+			return web_textplain_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-ID");
 		}
 		strcpy(ID, strval);
 	}
@@ -120,20 +130,23 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 	if(wp->flags & WEBS_JSON)
 	{
 		root = websGetJsonVar(wp);
-		if(root == NULL)
+		if(root != NULL)
 		{
 			strval = cJSON_GetStringValue(root, "button-action");
 			if (NULL == strval)
 			{
+				cJSON_Delete(root);
 				web_error( "Can not Get button-action Value");
-				return web_return_application_json_fmt(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-action");
+				return web_json_format_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-action");
 			}
 			strval = cJSON_GetStringValue(root, "button-ID");
 			if (NULL == strval)
 			{
+				cJSON_Delete(root);
 				web_error( "Can not Get button-ID Value");
-				return web_return_application_json_fmt(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-ID");
+				return web_json_format_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find button-ID");
 			}
+			cJSON_Delete(root);
 		}
 	}
 #endif
@@ -143,19 +156,19 @@ static int web_button_onclick(Webs *wp, char *path, char *query)
 		return 0;
 	}
 	if(wp->flags & WEBS_FORM)	
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
+		return web_textplain_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
 #if ME_GOAHEAD_JSON
 	else if(wp->flags & WEBS_JSON)
-		return web_return_application_json_fmt(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
+		return web_json_format_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
 #endif
-	return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
+	return web_textplain_result(wp, HTTP_CODE_BAD_REQUEST, "button onclick from can not find acton hander");
 }
 
 
 
 
 #if ME_GOAHEAD_UPLOAD
-int web_upload_add_hook(char *form, char *id, int (*cb)(void *, void *, void *),
+int web_upload_add_hook(char *form, char *id, int (*cb)(Webs *, WebsUpload *, void *),
 		void *p)
 {
 	int i = 0;
@@ -214,7 +227,7 @@ int web_upload_call_hook(char *form, char *id, Webs *wp, WebsUpload *up)
 	return -1;
 }
 
-int web_download_add_hook(char *form, char *id, int (*cb)(void *, char **))
+int web_download_add_hook(char *form, char *id, int (*cb)(Webs *, char **))
 {
 	int i = 0;
 	for (i = 0; i < WEB_UPLOAD_CB_MAX; i++)

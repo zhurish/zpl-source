@@ -69,7 +69,7 @@ static struct vty_user *vty_user_add (struct vty_user *user)
 }
 
 
-static struct vty_user * vty_user_lookup (const char *name)
+struct vty_user * vty_user_lookup (const char *name)
 {
 	zpl_char lname[VTY_USERNAME_MAX];
 	struct listnode *node = NULL;

@@ -22,6 +22,11 @@
 #include  "osdep.h"
 
 /************************************ Defaults ********************************/
+#ifdef ZPL_OS_JSON 
+#if !ME_GOAHEAD_JSON
+#define ME_GOAHEAD_JSON 1
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -286,6 +291,11 @@ void websSetLogLevel(int level);
 /*********************************** HTTP Codes *******************************/
 /*
     Standard HTTP/1.1 status codes
+1.1xx：信息，请求收到，继续处理
+2.2xx：成功，行为被成功地接受、理解和采纳
+3.3xx：重定向，为了完成请求，必须进一步执行的动作
+4.4xx：客户端错误，请求包含语法错误或者请求无法实现
+5.5xx：服务器错误，服务器不能实现一种明显无效的请求    
  */
 #define HTTP_CODE_CONTINUE                  100     /**< Continue with request, only partial content transmitted */
 #define HTTP_CODE_OK                        200     /**< The request completed successfully */
@@ -1862,6 +1872,22 @@ PUBLIC websAppPrivate_t *websAppPrivateGet(int wid);
 PUBLIC int websAppPrivateAlloc(int wid);
 PUBLIC int websAppPrivateFree(int wid);
 #endif
+
+typedef enum webs_method_s
+{
+    WEBS_METHOD_NONE,
+    WEBS_METHOD_GET,        //HTTP/1.0
+    WEBS_METHOD_POST,       //HTTP/1.0
+    WEBS_METHOD_HEAD,       //HTTP/1.0
+    WEBS_METHOD_PUT,        //HTTP/1.1
+    WEBS_METHOD_DELETE,     //HTTP/1.1
+    WEBS_METHOD_PATCH,     //HTTP/1.1
+    WEBS_METHOD_UPDATE = WEBS_METHOD_PATCH,
+    WEBS_METHOD_OPTIONS,    //HTTP/1.1
+    WEBS_METHOD_CONNECT,
+    WEBS_METHOD_TRACE       //HTTP/1.1  OPTIONS、PUT、DELETE、TRACE、CONNECT
+}webs_method_t;
+
 /**
     GoAhead request structure. This is a per-socket connection structure.
     @defgroup Webs Webs
@@ -1967,6 +1993,7 @@ typedef struct Webs {
 #endif
     void            *ssl;               /**< SSL context */
 
+    webs_method_t    method_type;            /**< HTTP request method */
     void			*pArgv;				/* private argv */
     void			*pArgv1;				/* private argv */
     void			*pArgv2;				/* private argv */
@@ -2477,7 +2504,7 @@ PUBLIC cchar *websGetIndex(void);
     @stability Stable
  */
 PUBLIC cchar *websGetMethod(Webs *wp);
-
+PUBLIC webs_method_t websGetMethodCode(Webs *wp);
 /**
     Get the request password
     @description The request password may be encoded depending on the authentication scheme.

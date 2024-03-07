@@ -206,7 +206,7 @@ static int maxHandshakes;
 /************************************ Forwards ********************************/
 
 static DH   *dhcallback(SSL *handle, int is_export, int keylength);
-static DH   *getDhKey();
+static DH   *getDhKey(void);
 static char *mapCipherNames(char *ciphers);
 static int  sslSetCertFile(char *certFile);
 static int  sslSetKeyFile(char *keyFile);
@@ -217,7 +217,7 @@ static void infoCallback(const SSL *ssl, int where, int rc);
 /*
     Open the SSL module
  */
-PUBLIC int sslOpen()
+PUBLIC int sslOpen(void)
 {
     RandBuf     randBuf;
     X509_STORE  *store;
@@ -447,7 +447,7 @@ PUBLIC int sslOpen()
 /*
     Close the SSL module
  */
-PUBLIC void sslClose()
+PUBLIC void sslClose(void)
 {
     if (sslctx != NULL) {
         SSL_CTX_free(sslctx);
@@ -835,7 +835,7 @@ static char *mapCipherNames(char *ciphers)
     Get the DH parameters
  */
 
-static DH *getDhKey()
+static DH *getDhKey(void)
 {
     static unsigned char dh2048_p[] = {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2, 0x21, 0x68, 0xC2, 0x34,
@@ -896,7 +896,7 @@ static DH *dhcallback(SSL *handle, int isExport, int keyLength)
     return dhKey;
 }
 
-void opensslDummy() {}
+//void opensslDummy(void) {}
 #endif
 
 /*

@@ -1,10 +1,13 @@
-/*
- * web_syslog_html.c
- *
- *  Created on: 2019年8月9日
- *      Author: DELL
+/**
+ * @file      : web_html_menu.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
-
 #define HAS_BOOL 1
 #include "zplos_include.h"
 
@@ -19,7 +22,7 @@
 
 #include "web_app.h"
 
-#define ME_GOAHEAD_JSON 1
+
 #if ME_GOAHEAD_JSON
 static cJSON* web_resource_load(char *filename)
 {

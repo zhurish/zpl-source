@@ -65,9 +65,10 @@ extern void     ftpdEnableSecurity (void);
 extern void     ftpdDisableSecurity (void);
 extern void     ftpdLingerSecondsSet (zpl_ulong seconds);
 
-extern int ftpdEnable(char *address, int port);
+extern zpl_bool ftpdIsEnable(void);
+extern int ftpdEnable(char *address, int port, char *base);
 extern int ftpdDisable(void);
-
+extern int tpdCfgGet(zpl_bool *enable, char *localipaddress, int *port, char *path);
 
 #ifdef __cplusplus
 }

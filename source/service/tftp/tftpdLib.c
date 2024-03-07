@@ -252,8 +252,33 @@ int tftpdUnInit(void)
 	}
 	return OK;
 }
+zpl_bool tftpdIsEnable(void)
+{
+	if(tftpd_config)
+	{
+		return tftpd_config->enable;
+	}
+	return zpl_false;
+}
 
-int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
+int tftpdCfgGet(zpl_bool *enable, char *localipaddress, int *port, char *path)
+{
+	if(tftpd_config)
+	{
+		if(enable)
+			*enable = tftpd_config->enable;
+		if(port)
+			*port = tftpd_config->port;
+		if(path)
+			strcpy(path, tftpd_config->dirName);
+		if(localipaddress)
+			strcpy(localipaddress, tftpd_config->address);
+		return OK;	
+	}
+	return ERROR;
+}
+
+int tftpdEnable(zpl_bool enable, char *localipaddress, int port, char *path)
 {
 	if(tftpd_config && enable)
 	{
@@ -269,6 +294,13 @@ int tftpdEnable(zpl_bool enable, char *localipaddress, int port)
 			if(!ipstack_invalid(tftpd_config->sock))
 				ipstack_close(tftpd_config->sock);
 		}
+				
+		if(path)
+		{
+			memset(tftpd_config->dirName, 0, sizeof(tftpd_config->dirName));
+			strcpy(tftpd_config->dirName, path);
+		}
+
 		tftpd_config->port = port;
 		if(localipaddress)
 			strcpy(tftpd_config->address, localipaddress);

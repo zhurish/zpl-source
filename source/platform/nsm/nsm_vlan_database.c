@@ -622,7 +622,7 @@ int nsm_vlan_database_destroy_api(vlan_t vlan)
 		os_mutex_unlock(gvlan.mutex);
 	if(ret == OK && tmpvlan.vlan)
 	{
-		ret = nsm_vlan_database_callback_api(nsm_vlan_database_update_batch_list, &tmpvlan);
+		ret = nsm_vlan_database_callback_api(0, nsm_vlan_database_update_batch_list, &tmpvlan);
 	}	
 	return ret;
 }
@@ -717,7 +717,7 @@ int nsm_vlan_database_batch_destroy_api(vlan_t minvlan, vlan_t maxvlan)
 		os_mutex_unlock(gvlan.mutex);
 	if(ret == OK && tmpvlan.vlan)
 	{
-		ret = nsm_vlan_database_callback_api(nsm_vlan_database_update_batch_list, &tmpvlan);
+		ret = nsm_vlan_database_callback_api(0, nsm_vlan_database_update_batch_list, &tmpvlan);
 	}	
 	return ret;
 }
@@ -897,7 +897,7 @@ void * nsm_vlan_database_lookup_by_name_api(const char *name)
 	return value;
 }
 
-int nsm_vlan_database_callback_api(nsm_vlan_database_cb cb, void *pVoid)
+int nsm_vlan_database_callback_api(vlan_t vlan, nsm_vlan_database_cb cb, void *pVoid)
 {
 	nsm_vlan_database_t *pstNode = NULL;
 	NODE index;
@@ -909,9 +909,19 @@ int nsm_vlan_database_callback_api(nsm_vlan_database_cb cb, void *pVoid)
 		index = pstNode->node;
 		if(pstNode)
 		{
-			if(cb)
+			if(vlan > 0 && pstNode->vlan == vlan)
 			{
-				(cb)(pstNode, pVoid);
+				if(cb)
+				{
+					(cb)(pstNode, pVoid);
+				}
+			}
+			else
+			{
+				if(cb)
+				{
+					(cb)(pstNode, pVoid);
+				}
 			}
 		}
 	}

@@ -23,7 +23,7 @@ typedef struct dyn_lease {
 	zpl_uint32 	lease_netmask;
 	zpl_uint32 	lease_gateway;
 	zpl_uint32 	lease_gateway2;
-
+	zpl_uint32 	lease_tftp;
 	leasetime_t expires;
 	leasetime_t starts;
 	leasetime_t ends;
@@ -60,6 +60,7 @@ extern int dhcp_lease_del_address(LIST *lst, zpl_uint32 lease_address);
 extern int dhcp_lease_del(LIST *lst, dyn_lease_t *pstNode);
 extern int dhcp_lease_clean(LIST *lst);
 extern dyn_lease_t *dhcp_lease_lookup_expired_lease(LIST *lst);
+extern int dhcp_lease_foreach_one(dhcp_pool_t *config, int(*cb)(dyn_lease_t *, void *p), void *p);
 extern int dhcpd_lease_foreach(int(*cb)(dyn_lease_t *, void *p), void *p);
 extern int dhcpd_lease_save(void);
 extern int dhcpd_lease_load(void);

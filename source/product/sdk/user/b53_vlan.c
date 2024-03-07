@@ -323,7 +323,7 @@ int b53125_vlan_port_mode(sdk_driver_t *dev, zpl_phyport_t port, int mode)
 	u8 reg = 0;
 	ret |= b53125_read8(dev->sdk_device, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, &reg);
 	sdk_debug_detail(dev, "read %s(ret=%d) page=0x%x reg=0x%x entry=0x%x", __func__, ret, B53_VLAN_PAGE, B53_GLOBAL_VLAN_CTRL3, reg);
-	if(mode == IF_MODE_TRUNK_L2 || mode == IF_MODE_DOT1Q_TUNNEL)
+	if(mode == IF_MODE_TRUNK_L2)
 		reg |= BIT(port);
 	else
 		reg &= ~BIT(port);

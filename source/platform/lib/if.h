@@ -80,6 +80,9 @@ extern const char *if_encapsulation_string(if_enca_t enca);
 extern int if_name_set(struct interface *, const char *str);
 extern int if_kname_set(struct interface *, const char *str);
 
+
+extern zpl_bool if_can_create(struct interface *);
+extern zpl_bool if_can_delete(struct interface *);
 /* Delete and free the interface structure: calls if_delete_retain and then
    deletes it from the interface list and frees the structure. */
 extern void if_delete(struct interface *);

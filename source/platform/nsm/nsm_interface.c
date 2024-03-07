@@ -45,6 +45,24 @@ static struct nsm_interface_cb nsm_intf_cb[NSM_INTF_MAX + 1];
 
 static int nsm_interface_mode_hook_handler(nsm_submodule_t module, struct interface *ifp, if_mode_t oldmode, if_mode_t newmode);
 
+
+static char *const _duplex_strname[] = {"--","auto","full","half","--"};
+static char *const _speed_strname[] = {"--","auto","10M","100M","1000M","1G","10G","40G","--"};
+
+
+const char *nsm_interface_duplex_name(nsm_duplex_en duplex)
+{
+	if(duplex >= NSM_IF_DUPLEX_NONE && duplex < NSM_IF_DUPLEX_MAX)
+		return _duplex_strname[duplex];
+	return "--";	
+}
+const char *nsm_interface_speed_name(nsm_speed_en speed)
+{
+	if(speed >= NSM_IF_SPEED_NONE && speed < NSM_IF_SPEED_MAX)
+		return _speed_strname[speed];
+	return "--";	
+}
+
 void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid)
 {
 	struct nsm_interface *nsm_intf = NULL;
@@ -264,7 +282,7 @@ int nsm_interface_create_hook(struct interface *ifp)
 	{
 		return ERROR;
 	}
-	nsm_interface->shutdown = NSM_IF_SHUTDOWN_OFF;
+	//nsm_interface->shutdown = IF_INTERFACE_SHUTDOWN_OFF;
 	nsm_interface->duplex = NSM_IF_DUPLEX_AUTO;
 	nsm_interface->speed = NSM_IF_SPEED_AUTO;
 
@@ -538,7 +556,7 @@ static int nsm_interface_ip_address_install(struct interface *ifp, struct prefix
 		SET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
 	/* In case of this route need to install kernel. */
-	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE) && !(if_data && if_data->shutdown == NSM_IF_SHUTDOWN_ON))
+	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE) && !(if_data && ifp->shutdown == IF_INTERFACE_SHUTDOWN_ON))
 	{
 
 		/* Some system need to up the interface to set IP address. */
@@ -690,7 +708,7 @@ nsm_interface_ipv6_address_install(struct interface *ifp,
 		SET_FLAG(ifc->conf, IF_IFC_CONFIGURED);
 
 	/* In case of this route need to install kernel. */
-	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE) && !(if_data && if_data->shutdown == NSM_IF_SHUTDOWN_ON))
+	if (CHECK_FLAG(ifp->status, IF_INTERFACE_ACTIVE) && !(if_data && ifp->shutdown == IF_INTERFACE_SHUTDOWN_ON))
 	{
 		if (!if_is_up(ifp))
 		{
@@ -993,8 +1011,8 @@ int nsm_interface_up_set_api(struct interface *ifp)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	struct nsm_interface *zif = ifp->info[MODULE_NSM];
-	if (zif->shutdown != NSM_IF_SHUTDOWN_OFF)
+	//struct nsm_interface *zif = ifp->info[MODULE_NSM];
+	if (ifp->shutdown != IF_INTERFACE_SHUTDOWN_OFF)
 	{
 		ret = nsm_halpal_interface_up(ifp);
 		if (ret == OK)
@@ -1004,7 +1022,7 @@ int nsm_interface_up_set_api(struct interface *ifp)
 				if_addr_wakeup(ifp);
 			}
 			if_up(ifp);
-			zif->shutdown = NSM_IF_SHUTDOWN_OFF;
+			ifp->shutdown = IF_INTERFACE_SHUTDOWN_OFF;
 // nsm_client_notify_interface_up(ifp);
 #ifdef ZPL_NSM_MODULE
 			nsm_redistribute_interface_updown(ifp, zpl_true);
@@ -1023,14 +1041,14 @@ int nsm_interface_down_set_api(struct interface *ifp)
 	zassert(ifp);
 	zassert(ifp->info[MODULE_NSM]);
 	IF_DATA_LOCK();
-	struct nsm_interface *zif = ifp->info[MODULE_NSM];
-	if (zif->shutdown != NSM_IF_SHUTDOWN_ON)
+	//struct nsm_interface *zif = ifp->info[MODULE_NSM];
+	if (ifp->shutdown != IF_INTERFACE_SHUTDOWN_ON)
 	{
 		ret = nsm_halpal_interface_down(ifp);
 		if (ret == OK)
 		{
 			if_down(ifp);
-			zif->shutdown = NSM_IF_SHUTDOWN_ON;
+			ifp->shutdown = IF_INTERFACE_SHUTDOWN_ON;
 #ifdef ZPL_NSM_MODULE
 			nsm_redistribute_interface_updown(ifp, zpl_false);
 #endif
@@ -1109,7 +1127,7 @@ int nsm_interface_address_unset_api(struct interface *ifp, struct prefix *cp, zp
 	return ret;
 }
 
-
+/*
 int nsm_interface_bandwidth_set_api(struct interface *ifp, zpl_uint32 bandwidth)
 {
 	int ret = ERROR;
@@ -1139,7 +1157,7 @@ int nsm_interface_bandwidth_get_api(struct interface *ifp, zpl_uint32 *bandwidth
 	IF_DATA_UNLOCK();
 	return ret;
 }
-
+*/
 int nsm_interface_vrf_set_api(struct interface *ifp, vrf_id_t vrf_id)
 {
 	int ret = ERROR;
@@ -1464,12 +1482,13 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	vty_out(vty, "Interface %s is ", ifp->name);
 	if (if_is_up(ifp))
 	{
-		vty_out(vty, "up, line protocol%s", VTY_NEWLINE);
+		vty_out(vty, "up, line protocol");
 	}
 	else
 	{
-		vty_out(vty, "down%s", VTY_NEWLINE);
+		vty_out(vty, "down");
 	}
+	vty_out(vty, ", Link is %s%s", nsm_interface->link_status?"up":"down", VTY_NEWLINE);
 
 	if (ifp->vrf_id != VRF_DEFAULT)
 		vty_out(vty, "  ip forward vrf: %s%s", ip_vrf_vrfid2name(ifp->vrf_id), VTY_NEWLINE);
@@ -1513,12 +1532,12 @@ void nsm_interface_show_api(struct vty *vty, struct interface *ifp)
 	}
 
 	/* Bandwidth in kbps */
-	if (ifp->bandwidth != 0)
+/*	if (ifp->bandwidth != 0)
 	{
 		vty_out(vty, "  bandwidth %u kbps", ifp->bandwidth);
 		vty_out(vty, "%s", VTY_NEWLINE);
 	}
-
+*/
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, connected))
 	{
 		connected_dump_vty(vty, connected);
@@ -1566,11 +1585,11 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 	struct connected *connected;
 	struct listnode *node;
 	struct prefix *p;
-	//struct nsm_interface *nsm_interface;
+	struct nsm_interface *nsm_interface = NULL;
 	zpl_char pstatus[32];
 	zpl_uint32 offset = 0;
 	IF_DATA_LOCK();
-	//nsm_interface = ifp->info[MODULE_NSM];
+	nsm_interface = ifp->info[MODULE_NSM];
 	if (status)
 	{
 		if (head && *head)
@@ -1597,7 +1616,7 @@ void nsm_interface_show_brief_api(struct vty *vty, struct interface *ifp, zpl_bo
 		}
 	}
 	os_memset(pstatus, 0, sizeof(pstatus));
-	sprintf(pstatus, "%s/%s", if_is_running(ifp) ? "UP" : "DOWN", if_is_up(ifp) ? "UP" : "DOWN");
+	sprintf(pstatus, "%s/%s", ifp->shutdown ? "DOWN" : "UP", nsm_interface->link_status ? "UP" : "DOWN");
 	vty_out(vty, "%-24s %-16s", ifp->name, pstatus);
 	if (status)
 	{
@@ -1753,6 +1772,8 @@ static int nsm_interface_mode_hook_handler(nsm_submodule_t module, struct interf
 		(nsm_intf_cb[module].nsm_intf_mode_cb)(ifp, oldmode, newmode);
 	return OK;
 }
+
+
 
 /* Allocate and initialize interface vector. */
 void nsm_interface_init(void)

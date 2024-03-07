@@ -1,10 +1,13 @@
-/*
- * web_app.h
- *
- *  Created on: Mar 23, 2019
- *      Author: zhurish
+/**
+ * @file      : web_api.h
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
-
 #ifndef __WEB_API_H__
 #define __WEB_API_H__
 

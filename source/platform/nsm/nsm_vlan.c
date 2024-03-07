@@ -693,9 +693,9 @@ static int nsm_vlan_mode_callback(struct interface *ifp, if_mode_t oldmode, if_m
 		/* 把 vlan 全部移除 */
 		nsm_vlan_mode_change_vlan_remove(ifp, nsm_vlan, 3);
 	}
-	else if (IF_MODE_BRIGDE == newmode)
+	/*else if (IF_MODE_BRIGDE == newmode)
 	{
-	}
+	}*/
 	return OK;
 }
 
@@ -751,6 +751,69 @@ int nsm_interface_qinq_vlan_set_api(struct interface *ifp, vlan_t vlan)
 	return ret;
 }
 
+int nsm_vlan_interface_vlanlist(struct interface *ifp, char *vlist)
+{
+	zpl_uint32 i = 0;
+	int count = 0;
+	zpl_char tmp[128];
+	zpl_char tmpcli_str[256];
+	nsm_vlan_t *nsm_vlan = NULL;
+	//NSM_ENTER_FUNC();
+	if(if_is_ethernet(ifp)/* && !IF_IS_SUBIF_GET(ifp->ifindex)*/)
+	{
+		memset(tmpcli_str, 0, sizeof(tmpcli_str));
+		nsm_vlan = (nsm_vlan_t *)nsm_intf_module_data(ifp, NSM_INTF_VLAN);
+		if(!nsm_vlan)
+			return ERROR;
+		IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
+		if(ifp->if_mode == IF_MODE_TRUNK_L2)
+		{
+			if(nsm_vlan->native)
+				;//vty_out(vty, " switchport trunk native vlan %d%s", nsm_vlan->native, VTY_NEWLINE);
+			if(nsm_vlan->allow_all)
+				;//vty_out(vty, " switchport trunk allowed vlan all%s", VTY_NEWLINE);
+			else
+			{
+				int max_count = nsm_vlan->allowed_max + 1;
+				for(i = 0; i < max_count; i++)
+				{
+					memset(tmp, 0, sizeof(tmp));
+					if(nsm_vlan->trunk_allowed[i].minvlan && nsm_vlan->trunk_allowed[i].maxvlan)
+					{
+						if(nsm_vlan->trunk_allowed[i].vlan == nsm_vlan->trunk_allowed[i].minvlan)
+						{
+							sprintf(tmp, "%d-%d", nsm_vlan->trunk_allowed[i].vlan, nsm_vlan->trunk_allowed[i].maxvlan);
+							if(count)
+							{
+								strcat(tmpcli_str, ",");
+							}
+							strcat(tmpcli_str, tmp);
+							count = 1;
+						}
+					}
+					else
+					{
+						if(nsm_vlan->trunk_allowed[i].vlan)
+						{
+							sprintf(tmp, "%d", nsm_vlan->trunk_allowed[i].vlan);
+							if(count)
+							{
+								strcat(tmpcli_str, ",");
+							}
+							strcat(tmpcli_str, tmp);
+							count = 1;
+						}
+					}
+				}//end for
+				if(count && vlist)
+					strcpy(vlist, tmpcli_str);
+					//vty_out(vty, " switchport trunk allowed add vlan %s%s", tmpcli_str, VTY_NEWLINE);
+			}
+		}
+		IF_NSM_VLAN_DATA_UNLOCK(nsm_vlan);
+	}
+	return count?OK:ERROR;
+}
 #ifdef ZPL_SHELL_MODULE
 int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 {
@@ -770,7 +833,7 @@ int nsm_vlan_interface_write_config(struct vty *vty, struct interface *ifp)
 		IF_NSM_VLAN_DATA_LOCK(nsm_vlan);
 		if(ifp->if_mode == IF_MODE_L3)
 			vty_out(vty, " no switchport%s", VTY_NEWLINE);
-		else if(ifp->if_mode == IF_MODE_DOT1Q_TUNNEL)
+		else if(ifp->if_mode == IF_MODE_TRUNK_L2 && CHECK_FLAG(ifp->status, IF_INTERFACE_QINQ))
 		{
 			vty_out(vty, " switchport%s", VTY_NEWLINE);
 			vty_out(vty, " switchport dot1q-tunnel%s", VTY_NEWLINE);

@@ -1,10 +1,13 @@
-/*
- * webutil.h
- *
- *  Created on: 2019年8月26日
- *      Author: DELL
+/**
+ * @file      : webutil.h
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
-
 #ifndef _goahead_WEBUTIL_H__
 #define _goahead_WEBUTIL_H__
 
@@ -74,15 +77,15 @@ extern int web_auth_save(const char *authFile);
 /*
  * 返回成功失败字串
  */
-extern int web_return_text_plain(Webs *wp, int ret, char *msg);
-extern int web_return_text_fmt(Webs *wp, int ret, char *fmt,...);
+extern int web_textplain_result(Webs *wp, int ret, char *msg);
+extern int web_textplain_format_result(Webs *wp, int ret, char *fmt,...);
 
 /*
  * 返回json数据
  */
 #if ME_GOAHEAD_JSON
-extern int web_return_application_json(Webs *wp,  int ret, cJSON* json);
-extern int web_return_application_json_fmt(Webs *wp, int ret, char *fmt,...);
+extern int web_json_result(Webs *wp,  int ret, cJSON* json);
+extern int web_json_format_result(Webs *wp, int ret, char *fmt,...);
 #endif
 /*
  * Button
@@ -91,7 +94,7 @@ extern int web_return_application_json_fmt(Webs *wp, int ret, char *fmt,...);
  */
 extern int web_button_init(void);
 extern int web_button_onclick_init(void);
-extern int web_button_add_hook(char *action, char *btnid, int(*cb)(void *, void *), void *);
+extern int web_button_add_hook(char *action, char *btnid, int(*cb)(Webs *, void *), void *);
 extern int web_button_del_hook(char *action, char *btnid);
 
 #define web_progress_view_add_hook(v,b,c,p) 	web_button_add_hook(v,b,c,p)
@@ -100,12 +103,12 @@ extern int web_button_del_hook(char *action, char *btnid);
  * Upload
  */
 
-extern int web_upload_add_hook(char *form, char *id, int (*cb)(void *, void *, void *),
+extern int web_upload_add_hook(char *form, char *id, int (*cb)(Webs *, WebsUpload *, void *),
 		void *p);
 extern int web_upload_del_hook(char *form, char *id);
 extern int web_upload_call_hook(char *form, char *id, Webs *wp, WebsUpload *up);
 
-extern int web_download_add_hook(char *form, char *id, int (*cb)(void *, char **));
+extern int web_download_add_hook(char *form, char *id, int (*cb)(Webs *, char **));
 extern int web_download_del_hook(char *form, char *id);
 extern int web_download_setup(Webs *, char *, char *, char *, char **);
 extern int web_download_call_hook(char *form, char *id, Webs *wp, char **filename);

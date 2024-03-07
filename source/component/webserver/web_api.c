@@ -1,8 +1,12 @@
-/*
- * web_app.c
- *
- *  Created on: Mar 23, 2019
- *      Author: zhurish
+/**
+ * @file      : web_api.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
 #include "auto_include.h"
 #include <zplos_include.h>

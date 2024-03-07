@@ -48,7 +48,7 @@ typedef enum
 
 }nsm_dhcp_type;
 
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 /*
  * DHCP Server
  */
@@ -160,7 +160,7 @@ extern void * nsm_dhcp_interface_get_pravite(struct interface *ifp, nsm_dhcp_typ
 extern int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp);
 #endif
 
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 
 extern int nsm_dhcps_init(void);
 extern int nsm_dhcps_exit(void);
@@ -168,6 +168,7 @@ extern int nsm_dhcps_exit(void);
 extern int nsm_dhcp_interface_create_api(struct interface *ifp);
 extern int nsm_dhcp_interface_del_api(struct interface *ifp);
 
+extern int nsm_dhcps_foreach(int(*cb)(void *, void *), void *p);
 extern nsm_dhcps_t * nsm_dhcps_lookup_api(zpl_char *name);
 extern int nsm_dhcps_add_api(zpl_char *name);
 extern int nsm_dhcps_del_api(zpl_char *name);

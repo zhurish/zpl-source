@@ -59,8 +59,9 @@ typedef struct tftpd_config
 extern int tftpdInit(void *master, char *basedir);
 extern int tftpdUnInit(void);
 
-extern int tftpdEnable(zpl_bool enable, char *localipaddress, int port);
-
+extern zpl_bool tftpdIsEnable(void);
+extern int tftpdEnable(zpl_bool enable, char *localipaddress, int port, char *path);
+extern int tftpdCfgGet(zpl_bool *enable, char *localipaddress, int *port, char *path);
 /*extern int 	tftpdInit (int stackSize, int nDirectories,
 			   char * directoryNames, zpl_bool noControl,
 			   int maxConnections);*/

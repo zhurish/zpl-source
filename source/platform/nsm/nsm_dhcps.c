@@ -15,7 +15,7 @@
 #include "zmemory.h"
 #include "nsm_dhcp.h"
 
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 
 #ifdef ZPL_DHCP_MODULE
 #include "dhcp_config.h"
@@ -112,6 +112,22 @@ static nsm_dhcps_t * nsm_dhcps_lookup_node(zpl_char *name)
 		}
 	}
 	return NULL;
+}
+
+int nsm_dhcps_foreach(int(*cb)(void *, void *), void *p)
+{
+	nsm_dhcps_t *pstNode = NULL;
+	NODE index;
+	for(pstNode = (nsm_dhcps_t *)lstFirst(dhcps_list.dhcpslist);
+			pstNode != NULL;  pstNode = (nsm_dhcps_t *)lstNext((NODE*)&index))
+	{
+		index = pstNode->node;
+		if(cb)
+		{
+			(cb)(pstNode, p);
+		}
+	}
+	return 0;
 }
 
 nsm_dhcps_t * nsm_dhcps_lookup_api(zpl_char *name)

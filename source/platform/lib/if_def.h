@@ -143,9 +143,10 @@ typedef enum if_type_s
    IF_NONE,
    IF_LOOPBACK,
    IF_SERIAL,
-   IF_ETHERNET,
-   IF_GIGABT_ETHERNET,
-   IF_XGIGABT_ETHERNET,
+   IF_ETHERNET,//10M/100M
+   IF_GIGABT_ETHERNET,//1000M
+   IF_TGIGABT_ETHERNET,//10G
+   IF_XGIGABT_ETHERNET,//40G
    //IF_ETHERNET_SUB,     //子接口
    IF_WIRELESS, //wireless interface
    IF_TUNNEL,  //隧道接口
@@ -166,11 +167,10 @@ typedef enum if_type_s
 typedef enum if_mode_s
 {
    IF_MODE_NONE,
-   IF_MODE_ACCESS_L2,
-   IF_MODE_TRUNK_L2,
-   IF_MODE_L3,
-   IF_MODE_DOT1Q_TUNNEL, //QINQ
-   IF_MODE_BRIGDE,
+   IF_MODE_ACCESS_L2,   //L2 access 接口
+   IF_MODE_TRUNK_L2,    //L2 trunk 接口
+   IF_MODE_MPLS_L2,     //L2 mpls 接口
+   IF_MODE_L3,          //L3 ip 接口
 } if_mode_t;
 
 #define IF_MODE_DEFAULT IF_MODE_ACCESS_L2
@@ -238,20 +238,32 @@ struct interface
    zpl_phyport_t  phyid;   //L2 phy port
 	zpl_phyport_t  l3intfid;//L3 intf id
 #define IFPHYID_INTERNAL -1
-   if_type_t if_type;
+   if_type_t if_type;      //接口类型
 
-   if_mode_t if_mode;
+   if_mode_t if_mode;      //l2/l3接口
 #ifdef IF_ENCAPSULATION_ENABLE
    if_enca_t if_enca;   //串口等特殊接口的封装类型
 #endif
-   zpl_bool dynamic;
+   zpl_bool dynamic;    //动态创建的接口
 
-   zpl_bool online;  //板卡在线状态
+   zpl_bool online;     //板卡在线状态
+
+   vrf_id_t vrf_id;
+
+   /* description of the interface. */
+   zpl_char *desc;
+
    /* Zebra internal interface status */
    zpl_uint32 status;
-#define IF_INTERFACE_ACTIVE (1 << 0)
-#define IF_INTERFACE_LINKDETECTION (1 << 2)
-#define IF_INTERFACE_ATTACH (1 << 3)
+#define IF_INTERFACE_ACTIVE         (1 << 0)
+#define IF_INTERFACE_LINKDETECTION  (1 << 2)
+#define IF_INTERFACE_ATTACH         (1 << 3)
+
+#define IF_INTERFACE_QINQ           (1 << 8)   //  IF_MODE_DOT1Q_TUNNEL, //QINQ
+
+#define IF_INTERFACE_IS_SWITCHPORT  (1 << 16)   //  IS SWITCHPORT
+#define IF_INTERFACE_CAN_DELETE      (1 << 17)  //可删除的接口
+
    /* Interface flags. */
    zpl_uint64 flags;
 
@@ -261,40 +273,36 @@ struct interface
    /* Interface MTU. */
    zpl_uint32  mtu;  /* IPv4 MTU */
    zpl_uint32  mtu6; /* IPv6 MTU - probably, but not neccessarily same as mtu */
+#define IF_INTERFACE_MTU_DEFAULT	1500
 
    /* Link-layer information and hardware address */
    enum if_link_type ll_type;
    zpl_uchar hw_addr[IF_HWADDR_MAX];
    zpl_uint32 hw_addr_len;
 
-   /* interface bandwidth, kbits */
-   zpl_uint32  bandwidth;
-
-   /* description of the interface. */
-   zpl_char *desc;
-
+   /* Shutdown configuration. */
+   zpl_bool shutdown;
+/* For interface shutdown configuration. */
+#define IF_INTERFACE_SHUTDOWN_OFF    zpl_false
+#define IF_INTERFACE_SHUTDOWN_ON     zpl_true
    /* Distribute list. */
    void *distribute_in;
    void *distribute_out;
 
    /* Connected address list. */
    struct list *connected;
-   zpl_bool dhcp;
-   /* Daemon specific interface data pointer. */
+   zpl_bool dhcp;//接口IP地址是否使用dhcp客户端自动获取
 
-   void *info[MODULE_MAX];
 
-   /* Statistics fileds. */
-   struct if_stats stats;
-
-   vrf_id_t vrf_id;
-
-   zpl_uint32  ifmember;
+   zpl_uint32  ifmember;//汇聚/桥接口的子接口，
 #define IF_TRUNK_MEM (1 << 0)
 #define IF_BRIDGE_MEM (1 << 2)
 
    zpl_uint32 count;
    zpl_uint32 raw_status;
+
+    /* Daemon specific interface data pointer. */
+   void *info[MODULE_MAX];
 };
 
 
@@ -341,10 +349,10 @@ struct if_master
 
 #elif IF_PORT_MAX == IF_PORT_MAX_64
 
-#define IF_TYPE_GET(n) (((n) >> 26) & 0x3F)  //0-63, 64
-#define IF_UNIT_GET(n) (((n) >> 23) & 0x07)  //0-7, 8
-#define IF_SLOT_GET(n) (((n) >> 18) & 0x1F)  //0-31, 32
-#define IF_PORT_GET(n) (((n) >> 12) & 0x3F)  //0-63, 64
+#define IF_TYPE_GET(n) (((n) >> 26) & 0x3F)  //6 0-63, 64
+#define IF_UNIT_GET(n) (((n) >> 23) & 0x07)  //3 0-7, 8
+#define IF_SLOT_GET(n) (((n) >> 18) & 0x1F)  //5 0-31, 32
+#define IF_PORT_GET(n) (((n) >> 12) & 0x3F)  //6 0-63, 64
 
 #define IF_TYPE_SET(n) (((n)&0x3F) << 26)
 #define IF_TYPE_CLR(n) (((n)) & 0x03FFFFFF)

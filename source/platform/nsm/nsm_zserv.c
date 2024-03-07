@@ -372,7 +372,7 @@ int nsm_zserv_send_interface_state(zpl_uint16 cmd, struct zserv *client, struct 
   stream_putl(s, ifp->metric);
   stream_putl(s, ifp->mtu);
   stream_putl(s, ifp->mtu6);
-  stream_putl(s, ifp->bandwidth);
+  //stream_putl(s, ifp->bandwidth);
   stream_putl(s, ifp->ll_type);
   stream_putl(s, ifp->hw_addr_len);
   if (ifp->hw_addr_len)

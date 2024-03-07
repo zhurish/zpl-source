@@ -282,14 +282,14 @@ static int bsp_port_mode_set(void *driver, hal_port_header_t *port, hal_port_par
 		{
 			bspdev->phyports[port->phyport].mode = param->value;
 		}
-		else if(param->value == IF_MODE_DOT1Q_TUNNEL)
+		/*else if(param->value == IF_MODE_DOT1Q_TUNNEL)
 		{
 			bspdev->phyports[port->phyport].mode = param->value;
 		}
 		else if(param->value == IF_MODE_BRIGDE)
 		{
 			bspdev->phyports[port->phyport].mode = param->value;
-		}
+		}*/
 	}	
 	BSP_LEAVE_FUNC();
 	return ret;

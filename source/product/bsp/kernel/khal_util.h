@@ -23,8 +23,8 @@ typedef enum if_mode_s
    IF_MODE_ACCESS_L2,
    IF_MODE_TRUNK_L2,
    IF_MODE_L3,
-   IF_MODE_DOT1Q_TUNNEL, //QINQ
-   IF_MODE_BRIGDE,
+   //IF_MODE_DOT1Q_TUNNEL, //QINQ
+   //IF_MODE_BRIGDE,
 } if_mode_t;
 
 struct sdk_driver_port 

@@ -788,7 +788,7 @@ void zclient_interface_if_set_value(struct stream *s, struct interface *ifp)
   ifp->metric = stream_getl(s);
   ifp->mtu = stream_getl(s);
   ifp->mtu6 = stream_getl(s);
-  ifp->bandwidth = stream_getl(s);
+  //ifp->bandwidth = stream_getl(s);
 #ifdef HAVE_STRUCT_SOCKADDR_DL
   stream_get(&ifp->sdl, s, sizeof(ifp->sdl_storage));
 #else

@@ -1065,6 +1065,7 @@ static int sntps_server_listen_port_cmd(struct vty *vty, char *argv[])
 	if(sntp_server == NULL)
 		return CMD_WARNING;
 	int port = SNTPC_SERVER_PORT;
+	port = atoi(argv[0]);
 	if( (port > SNTPC_SERVER_PORT_MAX)||(port < SNTPC_SERVER_PORT_MIN) )
 	{
 

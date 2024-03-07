@@ -1,8 +1,12 @@
-/*
- * updownload.c
- *
- *  Created on: Mar 24, 2019
- *      Author: zhurish
+/**
+ * @file      : web_html_updownload.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
 #include "zplos_include.h"
 #include "vty.h"
@@ -146,7 +150,7 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 						strval);
 				remove(filetmp);
 				sync();
-				return web_return_text_plain(wp, OK, NULL);
+				return web_textplain_result(wp, OK, NULL);
 			}
 		}
 		else
@@ -167,7 +171,7 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 						web_upgrade_file = strdup(strval);
 						_WEB_DBG_TRAP("============%s================web_upgrade_file=%s\r\n",
 							   __func__, web_upgrade_file? web_upgrade_file:"null");
-						return web_return_text_plain(wp, OK, NULL);
+						return web_textplain_result(wp, OK, NULL);
 					}
 					else if(strstr(strval, ".ipk"))
 					{
@@ -175,11 +179,11 @@ static int web_handle_file_tbl(Webs *wp, void *p)
 						memset(filetmp, 0, sizeof(filetmp));
 						snprintf(filetmp, sizeof(filetmp), "opkg --nodeps install %s", strval);
 						system(filetmp);
-						return web_return_text_plain(wp, OK, NULL);
+						return web_textplain_result(wp, OK, NULL);
 					}
-					return web_return_text_plain(wp, OK, NULL);
+					return web_textplain_result(wp, OK, NULL);
 				}
-				return web_return_text_plain(wp, ERROR, NULL);
+				return web_textplain_result(wp, ERROR, NULL);
 			}
 		}
 	}
@@ -211,7 +215,7 @@ static int web_handle_upgrade(Webs *wp, void *p)
 				web_upgrade_file = NULL;
 			}
 			system (filetmp);
-			return web_return_text_plain (wp, OK, NULL);
+			return web_textplain_result (wp, OK, NULL);
 		}
 	}
 	_WEB_DBG_TRAP("============%s=============2===button-ID=%s  web_upgrade_file=%s\r\n", __func__,
@@ -236,24 +240,24 @@ static void web_action_upload(Webs *wp, char *path, char *query)
 			if(web_upload_call_hook(s->name.value.string, id, wp, up) == ERROR)
 			{
 				if(id && !strstr(id, "pic"))
-					web_return_text_plain(wp, ERROR, NULL);
+					web_textplain_result(wp, ERROR, NULL);
 				else if(id && !strstr(id, "dir"))
-					web_return_text_plain(wp, ERROR, NULL);
+					web_textplain_result(wp, ERROR, NULL);
 				return ;
 			}
 		}
 		if(id && !strstr(id, "pic"))
-			web_return_text_plain(wp, OK, NULL);
+			web_textplain_result(wp, OK, NULL);
 		else if(id && !strstr(id, "dir"))
 		{
-			web_return_text_plain(wp, OK, NULL);
+			web_textplain_result(wp, OK, NULL);
 		}
 		return ;
 	}
 	if(id && !strstr(id, "pic"))
-		web_return_text_plain(wp, ERROR, NULL);
+		web_textplain_result(wp, ERROR, NULL);
 	else if(id && !strstr(id, "dir"))
-		web_return_text_plain(wp, ERROR, NULL);
+		web_textplain_result(wp, ERROR, NULL);
 	return ;
 }
 

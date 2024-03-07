@@ -11,6 +11,7 @@
 #include "log.h"
 #include "nsm_include.h"
 #include "dhcp_def.h"
+#include "dhcpd.h"
 #include "dhcp_lease.h"
 #include "dhcp_util.h"
 #include "dhcp_main.h"

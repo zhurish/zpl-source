@@ -631,7 +631,29 @@ int ftpdInit
 	return (OK);
 }
 
-int ftpdEnable(char *address, int port)
+zpl_bool ftpdIsEnable(void)
+{
+	return ftpd_config.ftpsActive;
+}
+
+int tpdCfgGet(zpl_bool *enable, char *localipaddress, int *port, char *path)
+{
+	//if(tftpd_config)
+	{
+		if(enable)
+			*enable = ftpd_config.ftpsActive;
+		if(port)
+			*port = ftpd_config.port;
+		if(path)
+			strcpy(path, ftpd_config.baseDirName);
+		if(localipaddress)
+			strcpy(localipaddress, inet_address(ftpd_config.address.s_addr));
+		return OK;	
+	}
+	//return ERROR;
+}
+
+int ftpdEnable(char *address, int port, char *base)
 {
 	int restart = 0;
 	int on = 1;
@@ -650,6 +672,12 @@ int ftpdEnable(char *address, int port)
 	if(address)
 		ftpd_config.address.s_addr = ipstack_inet_addr(address);
 	ftpd_config.port = port;
+	if(base)
+    	strcpy(ftpd_config.baseDirName, base);
+    if(access(FTPD_BASEDIR_DEFAULT, 0) != 0)
+    {
+    	mkdir(FTPD_BASEDIR_DEFAULT, 0766);
+    }
 
 	if(restart)
 	{

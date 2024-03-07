@@ -20,9 +20,9 @@
                 }
             },
             {
-                "path": "System",
-                "name": "System",
-                "component": "System",
+                "path": "Device",
+                "name": "Device",
+                "component": "Device",
                 "meta": {
                     "requiresAuth": true,
                     "roles": [

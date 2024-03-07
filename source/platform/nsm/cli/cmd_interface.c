@@ -568,7 +568,7 @@ DEFUN(no_nsm_interface_shutdown,
 	return CMD_WARNING;
 }
 
-
+#if 0
 DEFUN(nsm_interface_bandwidth,
 	  nsm_interface_bandwidth_cmd,
 	  "bandwidth <1-10000000>",
@@ -639,7 +639,7 @@ DEFUN(no_nsm_interface_bandwidth,
 	}
 	return CMD_WARNING;
 }
-
+#endif
 DEFUN(nsm_interface_mtu,
 	  nsm_interface_mtu_cmd,
 	  "mtu <64-9600>",
@@ -691,7 +691,7 @@ DEFUN(no_nsm_interface_mtu,
 
 	if (ifp)
 	{
-		ret = nsm_interface_mtu_set_api(ifp, NSM_IF_MTU_DEFAULT);
+		ret = nsm_interface_mtu_set_api(ifp, IF_INTERFACE_MTU_DEFAULT);
 		return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
 	}
 	else if (vty->index_range)
@@ -701,7 +701,7 @@ DEFUN(no_nsm_interface_mtu,
 		{
 			if (vty->vty_range_index[i])
 			{
-				ret = nsm_interface_mtu_set_api(vty->vty_range_index[i], NSM_IF_MTU_DEFAULT);
+				ret = nsm_interface_mtu_set_api(vty->vty_range_index[i], IF_INTERFACE_MTU_DEFAULT);
 				if (ret != OK)
 					return CMD_WARNING;
 			}
@@ -898,19 +898,25 @@ DEFUN(no_nsm_interface_mac,
 
 DEFUN(nsm_interface_speed,
 	  nsm_interface_speed_cmd,
-	  "speed (10|100|1000|10000|auto)",
+	  "speed (10|100|1000|1g|auto)",
 	  "Set Interface encapsulation informational parameter\n"
-	  "Set Interface 10M duplex\n"
-	  "Set Interface 100M duplex\n"
-	  "Set Interface 1000M duplex\n"
-	  "Set Interface 10000M duplex\n"
-	  "Set Interface auto duplex\n")
+	  "Set Interface 10M speed\n"
+	  "Set Interface 100M speed\n"
+	  "Set Interface 1000M speed\n"
+	  "Set Interface 1G speed\n"
+	  "Set Interface auto speed\n")
 {
 	int ret = 0;
 	nsm_speed_en speed = 0;
 	struct interface *ifp = (struct interface *)vty->index;
 	if (strncmp(argv[0], "auto", 2) == 0)
 		speed = NSM_IF_SPEED_AUTO;
+	else if (strncmp(argv[0], "1g", 2) == 0)
+		speed = NSM_IF_SPEED_1G;
+	else if (strncmp(argv[0], "10g", 2) == 0)
+		speed = NSM_IF_SPEED_10G;
+	else if (strncmp(argv[0], "40g", 2) == 0)
+		speed = NSM_IF_SPEED_40G;
 	else // if(strcmp(argv[0], "full", 2) == 0)
 	{
 		ret = atoi(argv[0]);
@@ -926,7 +932,7 @@ DEFUN(nsm_interface_speed,
 			speed = NSM_IF_SPEED_1000M;
 			break;
 		case 10000:
-			speed = NSM_IF_SPEED_10000M;
+			speed = NSM_IF_SPEED_1G;
 			break;
 		}
 	}
@@ -1582,8 +1588,14 @@ static int nsm_interface_duplexspeed_info_write(struct interface *ifp, struct vt
 		case NSM_IF_SPEED_1000M:
 			vty_out(vty, " speed 1000%s", VTY_NEWLINE);
 			break;
-		case NSM_IF_SPEED_10000M:
-			vty_out(vty, " speed 10000%s", VTY_NEWLINE);
+		case NSM_IF_SPEED_1G:
+			vty_out(vty, " speed 1g%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_SPEED_10G:
+			vty_out(vty, " speed 10g%s", VTY_NEWLINE);
+			break;
+		case NSM_IF_SPEED_40G:
+			vty_out(vty, " speed 40g%s", VTY_NEWLINE);
 			break;
 		case NSM_IF_SPEED_AUTO:
 			//vty_out(vty, " speed auto%s", VTY_NEWLINE);
@@ -1648,8 +1660,8 @@ static int nsm_interface_bandwidth_info_write(struct interface *ifp, struct vty 
 {
 	if (ifp->if_type == IF_ETHERNET || ifp->if_type == IF_GIGABT_ETHERNET || ifp->if_type == IF_XGIGABT_ETHERNET)
 	{
-		if (ifp->bandwidth != 0)
-			vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
+		//if (ifp->bandwidth != 0)
+		//	vty_out(vty, " bandwidth %u%s", ifp->bandwidth, VTY_NEWLINE);
 	}
 	return 0;
 }
@@ -1706,7 +1718,7 @@ static int nsm_interface_loopback_config_write(struct vty *vty)
 
 				if (if_data)
 				{
-					if (if_data->shutdown == NSM_IF_SHUTDOWN_ON)
+					if (ifp->shutdown == IF_INTERFACE_SHUTDOWN_ON)
 						vty_out(vty, " shutdown%s", VTY_NEWLINE);
 				}
 				vty_out(vty, "!%s", VTY_NEWLINE);
@@ -1790,7 +1802,7 @@ static int nsm_interface_config_write(struct vty *vty)
 			// nsm_interface_write_hook_handler(-1, vty, ifp);
 			if (if_data)
 			{
-				if (if_data->shutdown == NSM_IF_SHUTDOWN_ON)
+				if (ifp->shutdown == IF_INTERFACE_SHUTDOWN_ON)
 					vty_out(vty, " shutdown%s", VTY_NEWLINE);
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);
@@ -1950,8 +1962,8 @@ static void cmd_base_interface_init(int node)
 
 static void cmd_ethernet_interface_init(int node)
 {
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
+	//install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
+	//install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
 
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_duplex_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_duplex_cmd);
@@ -1963,8 +1975,8 @@ static void cmd_ethernet_interface_init(int node)
 
 static void cmd_range_interface_init(int node)
 {
-	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
-	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
+	//install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_bandwidth_cmd);
+	//install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_bandwidth_cmd);
 
 	install_element(node, CMD_CONFIG_LEVEL, &nsm_interface_duplex_cmd);
 	install_element(node, CMD_CONFIG_LEVEL, &no_nsm_interface_duplex_cmd);

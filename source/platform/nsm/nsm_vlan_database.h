@@ -108,7 +108,7 @@ extern int nsm_vlan_database_name_api(vlan_t vlan, const char *name);
 extern void * nsm_vlan_database_lookup_api(vlan_t vlan);
 extern void * nsm_vlan_database_lookup_by_name_api(const char *name);
 
-extern int nsm_vlan_database_callback_api(nsm_vlan_database_cb cb, void *);
+extern int nsm_vlan_database_callback_api(vlan_t, nsm_vlan_database_cb cb, void *);
 
 
 extern int nsm_vlan_database_add_port(vlan_t vlan, ifindex_t ifindex, nsm_vlan_mode_t mode);

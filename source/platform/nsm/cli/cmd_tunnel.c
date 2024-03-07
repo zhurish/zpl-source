@@ -446,7 +446,7 @@ static int nsm_interface_tunnel_config_write(struct vty *vty)
 			}
 			if (if_data)
 			{
-				if (if_data->shutdown == NSM_IF_SHUTDOWN_ON)
+				if (ifp->shutdown == IF_INTERFACE_SHUTDOWN_ON)
 					vty_out(vty, " shutdown%s", VTY_NEWLINE);
 			}
 			vty_out(vty, "!%s", VTY_NEWLINE);

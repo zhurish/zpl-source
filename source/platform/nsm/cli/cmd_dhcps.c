@@ -18,7 +18,7 @@
 #include "if_name.h"
 
 
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 
 DEFUN (ip_dhcp_pool,
 		ip_dhcp_pool_cmd,

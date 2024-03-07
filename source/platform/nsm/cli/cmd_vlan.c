@@ -440,7 +440,7 @@ DEFUN(switchport_dot1q_tunnel_vlan,
 	}
 	if (ifp)
 	{
-		if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+		if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_TRUNK_L2)
 		{
 			ret = nsm_interface_qinq_vlan_set_api(ifp, vlan);
 			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
@@ -453,7 +453,7 @@ DEFUN(switchport_dot1q_tunnel_vlan,
 		{
 			if (vty->vty_range_index[i])
 			{
-				if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+				if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_TRUNK_L2)
 				{
 					ret = nsm_interface_qinq_vlan_set_api(ifp, vlan);
 					if (ret != OK)
@@ -486,7 +486,7 @@ DEFUN(no_switchport_dot1q_tunnel,
 	}
 	if (ifp)
 	{
-		if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+		if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_TRUNK_L2)
 		{
 			ret = nsm_interface_qinq_vlan_set_api(ifp, 1);
 			return (ret == OK) ? CMD_SUCCESS : CMD_WARNING;
@@ -499,7 +499,7 @@ DEFUN(no_switchport_dot1q_tunnel,
 		{
 			if (vty->vty_range_index[i])
 			{
-				if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_DOT1Q_TUNNEL)
+				if (nsm_interface_mode_get_api(ifp, &mode) == OK && mode == IF_MODE_TRUNK_L2)
 				{
 					ret = nsm_interface_qinq_vlan_set_api(ifp, 1);
 					if (ret != OK)

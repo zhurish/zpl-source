@@ -1,11 +1,13 @@
-/*
- * web_app_jst.c
- *
- *  Created on: Apr 5, 2019
- *      Author: zhurish
+/**
+ * @file      : web_html_sysinfo.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
-
-//#include "zplos_include.h"
 #include "zplos_include.h"
 #include "module.h"
 #include "zmemory.h"
@@ -180,6 +182,24 @@ static int jst_web_os(int eid, webs_t wp, int argc, char **argv)
 
 static int web_define_get(Webs *wp, char *path, char *query)
 {
+	#if ME_GOAHEAD_JSON	
+	cJSON *root = NULL;
+	cJSON *obj = NULL;
+	obj = cJSON_CreateObject();
+	if(obj)
+	{
+		cJSON_AddStringToObject(obj,"webtype", web_type_string(web_app));
+		cJSON_AddStringToObject(obj,"ostype", web_os_type_string(web_app));
+		root = cJSON_CreateObject();
+		if(root)
+		{
+			cJSON_AddItemToObject(root, "webSys", obj);
+			websResponseJson(wp, HTTP_CODE_OK, root);
+			return OK;
+		}
+		cJSON_Delete(obj);
+	}
+	#else
 	websSetStatus(wp, 200);
 
 	websWriteCache(wp, "%s", "[");
@@ -198,6 +218,7 @@ static int web_define_get(Webs *wp, char *path, char *query)
 	websWriteCacheFinsh(wp);
 
 	websDone(wp);
+	#endif
 	return OK;
 }
 
@@ -262,9 +283,13 @@ static int web_sysinfo_get(Webs *wp, char *path, char *query)
 			websResponseJson(wp, HTTP_CODE_OK, root);
 			return OK;
 		}
+		websResponseJson(wp, HTTP_CODE_OK, NULL);
+		cJSON_Delete(obj);
 	}
+	else
+		websResponseJson(wp, HTTP_CODE_OK, NULL);
 #else	
-	websResponse(wp, HTTP_CODE_NOT_FOUND, NULL);
+	web_json_format_result(wp, HTTP_CODE_UNSUPPORTED_MEDIA_TYPE, "webservice is not support json");
 #endif
 	return OK;
 }

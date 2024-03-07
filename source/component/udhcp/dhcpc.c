@@ -28,6 +28,7 @@
 /* Override ENABLE_FEATURE_PIDFILE - ifupdown needs our pidfile to always exist */
 #define WANT_PIDFILE 1
 #include "dhcp_def.h"
+#include "dhcpd.h"
 #include "dhcp_lease.h"
 #include "dhcp_packet.h"
 #include "dhcp_util.h"

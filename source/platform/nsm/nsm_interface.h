@@ -68,19 +68,12 @@ typedef enum
 }nsm_submodule_t;
 
 
-/* For interface shutdown configuration. */
-#define NSM_IF_SHUTDOWN_OFF    0
-#define NSM_IF_SHUTDOWN_ON     1
-
-
-#define NSM_IF_MTU_DEFAULT	1500
-
-
 typedef enum {
   NSM_IF_DUPLEX_NONE = 0,
   NSM_IF_DUPLEX_AUTO,
   NSM_IF_DUPLEX_FULL,
   NSM_IF_DUPLEX_HALF,
+  NSM_IF_DUPLEX_MAX,
 } nsm_duplex_en;
 
 typedef enum {
@@ -89,11 +82,12 @@ typedef enum {
 	NSM_IF_SPEED_10M,
 	NSM_IF_SPEED_100M,
 	NSM_IF_SPEED_1000M,
-	NSM_IF_SPEED_10000M,
-	NSM_IF_SPEED_1000M_B,
-	NSM_IF_SPEED_1000M_MP,
-	NSM_IF_SPEED_1000M_MP_NO_FIBER,
-
+   NSM_IF_SPEED_1G,
+	NSM_IF_SPEED_10G,
+	NSM_IF_SPEED_40G,
+   NSM_IF_SPEED_MAX,
+//copper：表示该Combo接口的电口被激活，使用双绞线连接。
+//fiber：表示该Combo接口的光口被激活，使用光纤连接。
 } nsm_speed_en;
 
 struct nsm_interface_cb
@@ -247,11 +241,13 @@ struct nsm_rtadvconf
 struct nsm_interface
 {
 	struct interface *ifp;
-	/* Shutdown configuration. */
-	zpl_uchar shutdown;
 
 	nsm_duplex_en	duplex;
 	nsm_speed_en	speed;
+   zpl_bool		   link_status;
+   
+   nsm_duplex_en	hw_duplex;
+	nsm_speed_en	hw_speed;
 
   /* Installed addresses chains tree. */
   //struct route_table *ipv4_subnets;
@@ -273,6 +269,8 @@ struct nsm_interface
 
 
 extern void nsm_interface_init(void);
+extern const char *nsm_interface_duplex_name(nsm_duplex_en duplex);
+extern const char *nsm_interface_speed_name(nsm_speed_en speed);
 
 extern void *nsm_intf_module_data(struct interface *ifp, nsm_submodule_t mid);
 extern int nsm_intf_module_data_set(struct interface *ifp, nsm_submodule_t mid, void *p);

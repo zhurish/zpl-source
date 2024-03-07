@@ -1,15 +1,12 @@
-/*
- * web_admin.c
- *
- *  Created on: Apr 13, 2019
- *      Author: zhurish
- */
-
-/*
- * login.c
- *
- *  Created on: Mar 24, 2019
- *      Author: zhurish
+/**
+ * @file      : web_html_admin.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
 #define HAS_BOOL 1
 #include "zplos_include.h"
@@ -28,147 +25,7 @@
 
 #include "web_app.h"
 
-
-
-static int web_admin_add_username(Webs *wp, char *path, char *query)
-{
-	int ret = 0;
-	char *strval = NULL;
-	char username[64];
-	char password[64];
-	char authlevel[64];
-	memset(username, 0, sizeof(username));
-	memset(password, 0, sizeof(password));
-	memset(authlevel, 0, sizeof(authlevel));
-	web_assert(wp != NULL);
-	strval = webs_get_var(wp, T("username"), T(""));
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get username Value");
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get username");
-	}
-	strcpy(username, strval);
-
-	strval = webs_get_var(wp, T("password"), T(""));
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get password Value");
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get password");
-	}
-	strcpy(password, strval);
-
-	strval = webs_get_var(wp, T("user_level"), T(""));
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get user_level Value");
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get User Private Level");
-	}
-	strcpy(authlevel, strval);
-	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
-	{
-		zlog_debug(MODULE_WEB, " get action/adminuser username:%s password:%s authlevel:%s", username,password,authlevel);
-	}
-	if(vty_user_create(NULL, username, password, zpl_false , zpl_true ) == CMD_SUCCESS)
-	{
-		if(strstr(authlevel, "mana"))
-			ret = vty_user_setting_privilege(NULL, username, CMD_ADMIN_LEVEL);
-		else if(strstr(authlevel, "user"))
-			ret = vty_user_setting_privilege(NULL, username, CMD_CONFIG_LEVEL);
-		else
-			ret = vty_user_setting_privilege(NULL, username, CMD_ENABLE_LEVEL);
-	}
-	else
-	{
-		if(WEB_IS_DEBUG(EVENT))
-		{
-			zlog_debug(MODULE_WEB, " Can not Create User for '%s'", username);
-		}
-		ret = ERROR;
-	}
-	websSetStatus(wp, 200);
-
-	if(ret == ERROR)
-		websWriteCache(wp, "%s", "ERROR");
-	else
-		websWriteCache(wp, "%s", "OK");
-
-	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
-	websWriteHeader (wp, "Content-Type", "text/plain");
-	websWriteEndHeaders (wp);	
-	websWriteCacheFinsh(wp);
-
-	websDone(wp);
-	return OK;
-}
-
-
-static int web_admin_del_username(Webs *wp, void *p)
-{
-	char *strval = NULL;
-	char username[128];
-	memset(username, 0, sizeof(username));
-	strval = webs_get_var(wp, T("username"), T(""));
-
-	if (NULL == strval)
-	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get username Value");
-		return ERROR;
-
-	}
-	strcpy(username, strval);
-
-	if(vty_user_delete(NULL, wp->username, zpl_false , zpl_true ) == CMD_SUCCESS)
-	{
-		return web_return_text_plain(wp, OK, NULL);
-	}
-	if(WEB_IS_DEBUG(EVENT))
-	{
-		zlog_debug(MODULE_WEB, " Can not Delete User '%s'", username);
-	}
-	return ERROR;
-}
-
-
-static int web_username_one(struct vty_user *user, Webs *wp)
-{
-	if(wp->iValue)
-		websWriteCache(wp, ",");
-
-	websWriteCache(wp, "{\"username\":\"%s\", \"level\":\"%s\"}",
-				user->username,
-				(user->privilege == 4) ? "manage" :
-				(user->privilege == 3) ? "user" : "view");
-	wp->iValue++;
-
-	return OK;
-}
-
-static int web_username_table(Webs *wp, char *path, char *query)
-{
-	websSetStatus(wp, 200);
-
-	websWriteCache(wp, "%s", "[");
-	wp->iValue = 0;
-	vty_user_foreach (web_username_one, wp);
-
-	websWriteCache(wp, "%s", "]");
-	wp->iValue = 0;
-
-	websWriteHeaders (wp, websWriteCacheLen(wp), 0);
-	websWriteHeader (wp, "Content-Type", "text/plain");
-	websWriteEndHeaders (wp);	
-	websWriteCacheFinsh(wp);
-
-	websDone(wp);
-	return 0;
-}
-
-
-#if ME_GOAHEAD_AUTO_LOGIN
+#if 0//ME_GOAHEAD_AUTO_LOGIN
 static bool webs_authentication_verify(Webs *wp, cchar *username, cchar *password)
 {
     web_assert(wp);
@@ -193,143 +50,176 @@ static bool webs_authentication_verify(Webs *wp, cchar *username, cchar *passwor
 }
 #endif
 
-static int web_admin_change_password(Webs *wp, char *path, char *query)
+static int web_admin_username_del(Webs *wp, void *p)
+{
+	#if ME_GOAHEAD_JSON	
+	cJSON *root = websGetJsonVar(wp);
+	if(root)
+	{
+		char *username = cJSON_GetStringValue(root, "username");
+		if(username)
+		{
+			if(web_app_username_lookup_api(username) == OK && vty_user_lookup(username))
+			{
+				if(web_app_username_del_api(username) == OK && vty_user_delete(NULL, username, zpl_true, zpl_false) == OK)
+					return web_json_format_result(wp, 0, "OK");
+			}
+		}
+		return web_json_format_result(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "can not get username or delete user faild");
+	}
+	web_json_format_result(wp, HTTP_CODE_UNSUPPORTED_MEDIA_TYPE, "webservice is not support json");
+	#else
+	web_json_format_result(wp, HTTP_CODE_UNSUPPORTED_MEDIA_TYPE, "webservice is not support json");
+	#endif
+	return ERROR;
+}
+
+static int web_admin_add_username(Webs *wp, char *username, char *password, char *authlevel)
 {
 	int ret = ERROR;
-	char *username = NULL, *oldpassword = NULL;
-	char *newpassword = NULL;
-#if ME_GOAHEAD_AUTO_LOGIN
-	char *olduser = NULL, *oldpass = NULL;
+	web_assert(wp != NULL);
+
+	if(web_app_username_add_api(username, password, authlevel) == OK &&
+		vty_user_create(NULL, username, password, zpl_true, zpl_false) == OK)
+	{
+		if(strstr(authlevel, "mana"))
+			ret = vty_user_setting_privilege(NULL, username, CMD_ADMIN_LEVEL);
+		else if(strstr(authlevel, "user"))
+			ret = vty_user_setting_privilege(NULL, username, CMD_CONFIG_LEVEL);
+		else
+			ret = vty_user_setting_privilege(NULL, username, CMD_ENABLE_LEVEL);
+		if(ret == OK)
+		{
+			char encodedPassword[128];
+			memset(encodedPassword, 0, sizeof(encodedPassword));
+			if(web_app_gopass_api(username, password, "md5", "goahead.com", encodedPassword) == 0 )
+			{
+				websSetUserPassword(username, encodedPassword);
+				web_app_auth_save_api();
+				ret = OK;
+			}
+			else
+				ret = ERROR;
+		}	
+	}
+	else
+	{
+		if(WEB_IS_DEBUG(EVENT))
+		{
+			zlog_debug(MODULE_WEB, " Can not Create User for '%s'", username);
+		}
+		ret = ERROR;
+	}
+	return ret;
+}
+
+
+static int web_admin_change_password(Webs *wp, char *username, char *password, char *authlevel)
+{
+	//int ret = ERROR;
 	char encodedPassword[128];
-#endif
-	newpassword = webs_get_var(wp, T("new-password"), T(""));
-
-	if (NULL == newpassword)
-	{
-#if ME_GOAHEAD_AUTO_LOGIN
-		if(olduser)
-			wfree(olduser);
-		if(oldpass)
-			wfree(oldpass);
-#endif
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get new password Value");
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get new password");
-	}
-
-	username = webs_get_var(wp, T("username"), T(""));
-
-	if (NULL == username)
-	{
-#if ME_GOAHEAD_AUTO_LOGIN
-		if(olduser)
-			wfree(olduser);
-		if(oldpass)
-			wfree(oldpass);
-#endif
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get username Value");
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get new username");
-	}
-	oldpassword = webs_get_var(wp, T("password"), T(""));
-
-	if (NULL == oldpassword)
-	{
-#if ME_GOAHEAD_AUTO_LOGIN
-		if(olduser)
-			wfree(olduser);
-		if(oldpass)
-			wfree(oldpass);
-#endif
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Get old password Value");
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Get old password");
-	}
-#if ME_GOAHEAD_AUTO_LOGIN
-	olduser = sclone(wp->username);
-	oldpass = sclone(wp->password);
-
-	ret = webs_authentication_verify(wp, username, oldpassword);
-	if(ret == zpl_false)
-	{
-	    wfree(wp->username);
-	    wp->username = sclone(olduser);
-	    wfree(wp->password);
-	    wp->password = sclone(oldpass);
-
-		if(olduser)
-			wfree(olduser);
-		if(oldpass)
-			wfree(oldpass);
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not verify password Value");
-
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not verify password");
-	}
-
 	memset(encodedPassword, 0, sizeof(encodedPassword));
 	/*
 	 * Password Encoded
 	 */
 	//webserver encoded cipher md5 realm goahead.com username admin password admin
-	if(web_app_gopass_api(username, newpassword, "md5", "goahead.com", encodedPassword) != 0 )
+	if(web_app_gopass_api(username, password, "md5", "goahead.com", encodedPassword) != 0 )
 	{
-	    wfree(wp->username);
-	    wp->username = sclone(olduser);
-	    wfree(wp->password);
-	    wp->password = sclone(oldpass);
-
-		if(olduser)
-			wfree(olduser);
-		if(oldpass)
-			wfree(oldpass);
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not Encoded password Value");
-
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not Encoded password");
+		return ERROR;//web_textplain_result(wp, HTTP_CODE_BAD_REQUEST, "Can not Encoded password");
 	}
 	websSetUserPassword(username, encodedPassword);
 	web_app_auth_save_api();
-#endif
+	return OK;//web_textplain_result(wp, OK, NULL);
+}
 
-	if(WEB_IS_DEBUG(MSG) && WEB_IS_DEBUG(DETAIL))
+
+static int web_username_one(struct vty_user *user, Webs *wp)
+{
+	#if ME_GOAHEAD_JSON	
+	cJSON *obj = cJSON_CreateObject();
+	if(obj)
 	{
-		zlog_debug(MODULE_WEB, " get action/admin-password username:%s password:%s", wp->username, newpassword);
+		cJSON_AddStringToObject(obj,"username", user->username);
+		cJSON_AddStringToObject(obj,"level", (user->privilege == 4) ? "manage" :
+				(user->privilege == 3) ? "user" : "view");
+		cJSON_AddItemToArray(wp->pArgv, obj);
+		wp->iValue++;
 	}
+	#endif
+	return OK;
+}
 
-#if (ME_GOAHEAD_AUTO_LOGIN==0)
-	if(user_authentication(username, oldpassword) != 0)
+static int web_username_form(Webs *wp, char *path, char *query)
+{
+	if(websGetMethodCode(wp) == WEBS_METHOD_GET)
 	{
-		if(WEB_IS_DEBUG(MSG)&&WEB_IS_DEBUG(DETAIL))
-			zlog_debug(MODULE_WEB, "Can not verify password Value");
-
-		return web_return_text_plain(wp, HTTP_CODE_BAD_REQUEST, "Can not verify password");
-	}
-	if(vty_user_create(NULL, wp->username, newpassword, zpl_false , zpl_true ) != CMD_SUCCESS)
-	{
-		if(WEB_IS_DEBUG(EVENT))
+		#if ME_GOAHEAD_JSON	
+		cJSON *obj = cJSON_CreateObject();
+		if(obj)
 		{
-			zlog_debug(MODULE_WEB, " Can not Change User Password for '%s'", wp->username);
+			wp->iValue = 0;
+			wp->pArgv = obj;
+			vty_user_foreach (web_username_one, wp);
+			wp->iValue = 0;
+			wp->pArgv = NULL;
 		}
-		return web_return_text_fmt(wp, HTTP_CODE_BAD_REQUEST, "Can not Change User Password for '%s'", wp->username);
+		websResponseJson(wp, HTTP_CODE_OK, obj);
+		return OK;
+		#endif
 	}
-#endif
-#if ME_GOAHEAD_AUTO_LOGIN
-	if(olduser)
-		wfree(olduser);
-	if(oldpass)
-		wfree(oldpass);
-#endif
-	return web_return_text_plain(wp, OK, NULL);
+	else if(websGetMethodCode(wp) == WEBS_METHOD_POST)
+	{
+		int ret = ERROR;
+		#if ME_GOAHEAD_JSON	
+		cJSON *root = websGetJsonVar(wp);
+		if(root)
+		{
+			char *username = cJSON_GetStringValue(root, "username");
+			char *password = cJSON_GetStringValue(root, "password");
+			char *authlevel = cJSON_GetStringValue(root, "authlevel");
+			if(username && password)
+			{
+				if(web_app_username_lookup_api(username) == OK)
+				{
+					if(authlevel)
+					{
+						ret = web_admin_change_password(wp, username, password, authlevel);
+					}
+					else
+						return web_json_format_result(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "can not get username auth level value");
+					if(ret == OK)
+						return web_json_format_result(wp, 0, "OK");
+					else
+						return web_json_format_result(wp, ret, "failed");	
+				}
+				else
+				{
+					if(authlevel)
+					{
+						ret = web_admin_add_username(wp, username, password, authlevel);
+					}
+					else
+						return web_json_format_result(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "can not get username auth level value");
+					if(ret == OK)
+						return web_json_format_result(wp, 0, "OK");
+					else
+						return web_json_format_result(wp, ret, "failed");	
+				}
+			}
+			else
+				return web_json_format_result(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "can not get username and password value");
+		}
+		else
+			return web_json_format_result(wp, HTTP_CODE_INTERNAL_SERVER_ERROR, "can not get json payload");
+		#endif
+	}
+	return web_json_format_result(wp, HTTP_CODE_BAD_METHOD, "this url only support get and post mehtod");
 }
 
 
 int web_html_admin_init(void)
 {
-	websFormDefine("addusername", web_admin_add_username);
-	websFormDefine("changepassword", web_admin_change_password);
-	websFormDefine("username-table", web_username_table);
-	web_button_add_hook("username-table", "delete", web_admin_del_username, NULL);
-
+	websFormDefine("usertable", web_username_form);
+	web_button_add_hook("usertable", "button-delete", web_admin_username_del, NULL);
 	return 0;
 }

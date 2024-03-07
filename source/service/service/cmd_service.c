@@ -233,12 +233,12 @@ DEFUN (tftp_server_enable,
 {
 	if(argc == 1 && argv[0])
 	{
-		if(tftpdEnable(zpl_true, argv[0], 0) == OK)
+		if(tftpdEnable(zpl_true, argv[0], 0, NULL) == OK)
 			return CMD_SUCCESS;
 	}
 	else
 	{
-		if(tftpdEnable(zpl_true, NULL, 0) == OK)
+		if(tftpdEnable(zpl_true, NULL, 0, NULL) == OK)
 			return CMD_SUCCESS;
 	}
 	return CMD_WARNING;
@@ -261,7 +261,7 @@ DEFUN (no_tftp_server_enable,
 		"Server configure\n"
 		"enable configure\n")
 {
-	if(tftpdEnable(zpl_false, NULL, 0) == OK)
+	if(tftpdEnable(zpl_false, NULL, 0, NULL) == OK)
 		return CMD_SUCCESS;
 	return CMD_WARNING;
 }
@@ -279,18 +279,18 @@ DEFUN (ftp_server_enable,
 	{
 		if(strstr(argv[0], "."))
 		{
-			if(ftpdEnable(argv[0], 0) == OK)
+			if(ftpdEnable(argv[0], 0, NULL) == OK)
 				return CMD_SUCCESS;
 		}
 		else
 		{
-			if(ftpdEnable(NULL, atoi(argv[0])) == OK)
+			if(ftpdEnable(NULL, atoi(argv[0]), NULL) == OK)
 				return CMD_SUCCESS;
 		}
 	}
 	else
 	{
-		if(ftpdEnable(NULL, 0) == OK)
+		if(ftpdEnable(NULL, 0, NULL) == OK)
 			return CMD_SUCCESS;
 	}
 	return CMD_WARNING;

@@ -30,6 +30,7 @@ struct if_name_mgt if_name_mgt[] =
 	{IF_SERIAL, 		"SERIAL", "serial", 	"serial"},
 	{IF_ETHERNET, 		"ETH", 	"eth", 		"ethernet"},
 	{IF_GIGABT_ETHERNET, "GETH","geth", 	"gigabitethernet"},
+	{IF_TGIGABT_ETHERNET, "TGETH","tgeth", 	"tgigabitethernet"},
 	{IF_XGIGABT_ETHERNET, "XGETH","xgeth", 	"xgigabitethernet"},
 	{IF_LOOPBACK, 		"LOOP", "loopback",		"loopback"},
 	{IF_TUNNEL, 		"TUN", 	"tunnel",		"tunnel"},

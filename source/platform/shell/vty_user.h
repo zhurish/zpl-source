@@ -77,6 +77,7 @@ extern int vty_user_create(struct vty *, zpl_char *, zpl_char *, zpl_bool , zpl_
 extern int vty_user_delete(struct vty *, zpl_char *, zpl_bool , zpl_bool );
 extern int vty_user_change(struct vty *, zpl_char *);
 extern int vty_user_foreach (int (*cb)(void *user, void *p), void *p);
+extern struct vty_user * vty_user_lookup (const char *name);
 
 extern zpl_char * vty_user_get(struct vty *);
 

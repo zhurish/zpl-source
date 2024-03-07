@@ -233,7 +233,7 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 			nsm_interface_dhcpc_write_config(ifp, vty);
 		}
 #endif
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 		if(nsm_dhcp->type == DHCP_SERVER)
 		{
 			vty_out(vty, " dhcp select server%s", VTY_NEWLINE);
@@ -255,7 +255,7 @@ int nsm_interface_dhcp_config(struct vty *vty, struct interface *ifp)
 int nsm_dhcp_module_init (void)
 {
 	//nsm_interface_hook_add(NSM_INTF_DHCP, nsm_dhcp_interface_create_api, nsm_dhcp_interface_del_api);
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 	nsm_dhcps_init();
 	udhcp_module_init();
 
@@ -271,7 +271,7 @@ int nsm_dhcp_task_init (void)
 #ifdef ZPL_DHCPC_MODULE
 	udhcp_module_task_init();
 #endif
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 	udhcp_module_task_init();
 #endif
 	return OK;
@@ -282,7 +282,7 @@ int nsm_dhcp_task_exit (void)
 #ifdef ZPL_DHCPC_MODULE
 	udhcp_module_task_exit ();
 #endif
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 	udhcp_module_task_exit ();
 #endif
 	return OK;
@@ -293,7 +293,7 @@ int nsm_dhcp_module_exit (void)
 #ifdef ZPL_DHCPC_MODULE
 	udhcp_module_exit();
 #endif
-#ifdef ZPL_DHCPD_MODULE
+#ifdef ZPL_DHCPS_MODULE
 	udhcp_module_exit();
 	nsm_dhcps_exit();
 #endif

@@ -1,10 +1,13 @@
-/*
- * web_upgrade_html.c
- *
- *  Created on: 2020年3月25日
- *      Author: zhurish
+/**
+ * @file      : web_html_upgrade.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
-
 #define HAS_BOOL 1
 #include "zplos_include.h"
 #include "module.h"
@@ -22,9 +25,6 @@
 
 #include "web_app.h"
 
-#ifdef ZPL_APP_MODULE
-#include "application.h"
-#endif /* ZPL_APP_MODULE */
 
 
 static int web_upgrade_handle(Webs *wp, void *p)
@@ -52,7 +52,7 @@ static int web_upgrade_handle(Webs *wp, void *p)
 				return ERROR;
 			}
 			id = atoi(strval);
-			return web_return_text_plain (wp, ret, NULL);
+			return web_textplain_result (wp, ret, NULL);
 		}
 	}
 	return ERROR; //;

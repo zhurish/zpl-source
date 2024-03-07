@@ -182,7 +182,7 @@ dyn_lease_t *dhcp_lease_lookup_expired_lease(LIST *lst)
 	return NULL;
 }
 
-static int dhcp_lease_foreach_one(dhcp_pool_t *config, int(*cb)(dyn_lease_t *, void *p), void *p)
+int dhcp_lease_foreach_one(dhcp_pool_t *config, int(*cb)(dyn_lease_t *, void *p), void *p)
 {
 	NODE index;
 	dyn_lease_t *pstNode = NULL;

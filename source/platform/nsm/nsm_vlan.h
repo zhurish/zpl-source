@@ -140,6 +140,8 @@ extern int nsm_interface_trunk_allowed_vlan_list_lookup_api(struct interface *if
 
 
 extern int nsm_interface_qinq_vlan_set_api(struct interface *ifp, vlan_t);
+//获取接口下trunk vlan列表字串
+extern int nsm_vlan_interface_vlanlist(struct interface *ifp, char *vlist);
 
 #ifdef ZPL_SHELL_MODULE
 extern void cmd_vlan_init (void);

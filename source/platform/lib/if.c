@@ -441,6 +441,111 @@ int if_kernelname_set(struct interface *ifp)
 }
 #endif
 
+
+zpl_bool if_can_create(struct interface *ifp)
+{
+	if_type_t type = IF_TYPE_GET(ifp->ifindex);
+	switch (type)
+	{
+	case IF_ETHERNET:
+	case IF_GIGABT_ETHERNET:
+	case IF_XGIGABT_ETHERNET:
+	case IF_WIRELESS:
+		if (IF_ID_GET(ifp->ifindex))
+		{
+			return zpl_true;
+		}
+		else
+		{
+			return zpl_false;
+		}
+		break;
+#ifdef ZPL_NSM_BRIGDE
+	case IF_BRIGDE:
+		if (IF_BRIGDE_MAX > if_count_lookup_type(IF_BRIGDE))
+		{
+			return zpl_true;
+		}
+		break;
+#endif
+#ifdef ZPL_NSM_SERIAL
+	case IF_SERIAL:
+		return zpl_false;
+		break;
+#endif		
+#ifdef CUSTOM_INTERFACE
+	case IF_WIFI:
+	case IF_MODEM:
+		return zpl_false;
+		break;
+#endif
+#ifdef ZPL_NSM_TUNNEL
+	case IF_TUNNEL:
+		if (IF_SLOT_GET(ifp->ifindex) != IF_TUNNEL_SLOT)
+		{
+			return zpl_false;
+		}
+		if (if_count_lookup_type(IF_TUNNEL) >= IF_TUNNEL_MAX)
+		{
+			return zpl_false;
+		}
+		return zpl_true;
+		break;
+#endif
+	case IF_LOOPBACK:
+		if (IF_LOOPBACK_MAX > if_count_lookup_type(IF_LOOPBACK))
+		{
+			return zpl_true;
+		}
+		break;
+#ifdef ZPL_NSM_VLAN
+	case IF_VLAN:
+		if (IF_VLAN_MAX > if_count_lookup_type(IF_VLAN))
+		{
+			return zpl_true;
+		}
+		break;
+#endif
+#ifdef ZPL_NSM_TRUNK	
+	case IF_LAG:
+		if (IF_LAG_MAX > if_count_lookup_type(IF_LAG))
+		{
+			return zpl_true;
+		}
+		break;
+#endif
+	default:
+		break;
+	}
+	return zpl_false;
+}
+
+zpl_bool if_can_delete(struct interface *ifp)
+{
+	zpl_bool delete = zpl_false;
+	if (ifp->if_type == IF_ETHERNET || 
+		ifp->if_type == IF_GIGABT_ETHERNET || 
+		ifp->if_type == IF_XGIGABT_ETHERNET ||
+		ifp->if_type == IF_SERIAL || 
+		ifp->if_type == IF_WIRELESS)
+	{
+		if (IF_ID_GET(ifp->uspv))
+			delete = zpl_true;
+	}
+	else if (ifp->if_type == IF_TUNNEL ||
+			 ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG || ifp->if_type == IF_LOOPBACK || ifp->if_type == IF_BRIGDE
+#ifdef CUSTOM_INTERFACE
+	/* || ifp->if_type == IF_WIFI
+	|| ifp->if_type == IF_MODEM */
+#endif
+	)
+	{
+		delete = zpl_true;
+	}
+	return delete;
+}
+
+
 struct interface *
 if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 {

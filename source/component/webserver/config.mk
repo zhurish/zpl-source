@@ -119,17 +119,27 @@ endif
 ifeq ($(strip $(ZPL_WEBAPP_MODULE)),true)
 
 #form and action
-APPWEBOBJS += web_html_sysinfo.o
+
 APPWEBOBJS += web_html_menu.o
 APPWEBOBJS += web_html_admin.o
 APPWEBOBJS += web_html_sntp.o
 APPWEBOBJS += web_html_syslog.o
+APPWEBOBJS += web_html_sysinfo.o
+APPWEBOBJS += web_html_service.o
+APPWEBOBJS += web_html_mqtt.o
+APPWEBOBJS += web_html_interface.o
+APPWEBOBJS += web_html_vlan.o
+
 APPWEBOBJS += web_html_network.o
 APPWEBOBJS += web_html_wireless.o
 APPWEBOBJS += web_html_updownload.o
 APPWEBOBJS += web_html_system.o
 APPWEBOBJS += web_html_upgrade.o
-APPWEBOBJS += web_html_netservice.o
+
+
+ifeq ($(strip $(ZPL_NSM_DHCP)),true)
+APPWEBOBJS += web_html_dhcp.o
+endif
 
 ifeq ($(strip $(ZPL_APP_X5_MODULE)),true)
 APPWEBOBJS += web_html_switch.o

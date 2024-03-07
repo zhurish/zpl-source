@@ -1,10 +1,13 @@
-/*
- * web_app.c
- *
- *  Created on: 2019年10月23日
- *      Author: DELL
+/**
+ * @file      : web_app.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-02-05
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
  */
-
 #include "zplos_include.h"
 #include "vty.h"
 #include "if.h"
@@ -312,9 +315,9 @@ static int web_app_html_init(web_app_t *web)
 #ifdef ZPL_SERVICE_SYSLOG
 	web_html_syslog_init();
 #endif
-
+	web_html_service_init();
+	
 	web_html_network_init();
-	web_html_netservice_init();
 
 #ifdef ZPL_WIFI_MODULE
 	web_html_wireless_init();
@@ -323,8 +326,14 @@ static int web_app_html_init(web_app_t *web)
 	web_html_upgrade_init();
 	web_html_sysinfo_init();
 #endif
-
-
+#ifdef ZPL_NSM_DHCP
+	web_html_dhcp_init();
+#endif /*ZPL_NSM_DHCP*/
+#ifdef ZPL_MQTT_MODULE
+	web_html_mqtt_init();
+#endif
+	web_html_interface_init();
+	web_html_vlan_init();
 	return OK;
 }
 

@@ -339,7 +339,7 @@ DEFUN(show_vlan_brief,
 	vty_out(vty, "%-6s %-16s %-8s %-8s %-16s %-16s%s", "VLANID", "NAME", "STATE", "MSTP", "Untagport", "Tagport", VTY_NEWLINE);
 	vty_out(vty, "%-6s %-16s %-8s %-8s %-16s %-16s%s", "------", "----------------", "--------",
 			"--------", "----------------", "----------------", VTY_NEWLINE);
-	nsm_vlan_database_callback_api((nsm_vlan_database_cb)show_nsm_vlan_database_one, &vuser);
+	nsm_vlan_database_callback_api(0, (nsm_vlan_database_cb)show_nsm_vlan_database_one, &vuser);
 	return CMD_SUCCESS;
 }
 
@@ -481,7 +481,7 @@ DEFUN_HIDDEN(show_vlan_database_node,
 	struct vlan_user vuser;
 	os_memset(&vuser, 0, sizeof(vuser));
 	vuser.vty = vty;
-	nsm_vlan_database_callback_api((nsm_vlan_database_cb)vlan_database_show_node, &vuser);
+	nsm_vlan_database_callback_api(0, (nsm_vlan_database_cb)vlan_database_show_node, &vuser);
 	return CMD_SUCCESS;
 }
 #endif
@@ -536,7 +536,7 @@ static int nsm_vlan_database_config(struct vty *vty)
 		vty_out(vty, "!%s", VTY_NEWLINE);	
 	}
 
-	nsm_vlan_database_callback_api((nsm_vlan_database_cb)nsm_vlan_database_config_one, &vuser);
+	nsm_vlan_database_callback_api(0, (nsm_vlan_database_cb)nsm_vlan_database_config_one, &vuser);
 	if (vuser.total)
 	{
 		vty_out(vty, "vlan-database%s", VTY_NEWLINE);
@@ -564,7 +564,7 @@ static int nsm_vlan_database_node_config(struct vty *vty)
 	struct vlan_user vuser;
 	os_memset(&vuser, 0, sizeof(vuser));
 	vuser.vty = vty;
-	nsm_vlan_database_callback_api((nsm_vlan_database_cb)nsm_vlan_database_node_config_one, &vuser);
+	nsm_vlan_database_callback_api(0, (nsm_vlan_database_cb)nsm_vlan_database_node_config_one, &vuser);
 	if (vuser.total)
 		vty_out(vty, "%s", VTY_NEWLINE);
 	return 1;
