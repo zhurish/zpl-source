@@ -175,7 +175,7 @@ extern int web_app_auth_save_api(void);
 
 extern int web_app_debug_write_config(struct vty *vty);
 extern int web_app_write_config(struct vty *vty);
-extern void cmd_webserver_init(void);
+extern int cmd_webserver_init(void);
  
 
 extern const char * web_type_string(web_app_t *wp);

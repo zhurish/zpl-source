@@ -187,7 +187,7 @@ extern int modem_ansync_timer_del(void *value);
 /*
  * CMD
  */
-extern void cmd_modem_init (void);
+extern int cmd_modem_init (void);
 extern int modem_debug_config(struct vty *vty);
 
 

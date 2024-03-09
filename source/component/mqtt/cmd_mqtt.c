@@ -1072,7 +1072,7 @@ static void cmd_show_mqtt_init(int node)
 	install_element(node, CMD_VIEW_LEVEL, &show_debugging_mqtt_cmd);
 }
 
-void cmd_mqtt_init(void)
+int cmd_mqtt_init(void)
 {
 	template_t * temp = lib_template_new (zpl_true);
 	if(temp)
@@ -1099,5 +1099,6 @@ void cmd_mqtt_init(void)
 		install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &debug_cli_mqtt_cmd);
 		install_element(CONFIG_NODE, CMD_ENABLE_LEVEL, &no_debug_cli_mqtt_cmd);
 	}
+	return 0;
 }
 #endif/* ZPL_MQTT_MODULE */

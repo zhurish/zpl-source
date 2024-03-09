@@ -80,14 +80,14 @@ tftpLib, RFC 783 "TFTP Protocol"
 
 static TFTPD_CONFIG *tftpd_config = NULL;
 
-static char	tftpdErrStr []	= "TFTP server";
+static char	tftpdErrStr []	= "TFTP Server";
 
 /* PROTOTYPES */
 
 static int tftpdRequestVerify (TFTP_DESC *pReplyDesc, int opCode,
 				  char *fileName);
 static int tftpdRequestDecode (TFTP_MSG *pTftpMsg, int *opCode,
-				  char *fileName, char *mode);
+				  char *fileName, char *mode, int *blksize, int *tsize);
 static int tftpdFileRead (TFTP_DESC *pReplyDesc);
 static int tftpdFileWrite (TFTP_DESC *pReplyDesc);
 
@@ -206,7 +206,7 @@ int tftpdInit(void *master, char *basedir)
 			strcpy(tftpd_config->dirName, TFTPD_BASEDIR_DEFAULT);
 
 		tftpd_config->master = master;
-		tftpd_config->tftpdDebug = zpl_false;	/* zpl_true: debugging messages */
+		tftpd_config->tftpdDebug = zpl_true;	/* zpl_true: debugging messages */
 		tftpd_config->tftpdErrorSendTries = 3;
 		tftpd_config->tftpdMaxConnections = 10;
 	}
@@ -227,7 +227,7 @@ int tftpdInit(void *master, char *basedir)
 	    	mkdir(tftpd_config->dirName, 0766);
 	    }
 
-		tftpd_config->tftpdDebug = zpl_false;	/* zpl_true: debugging messages */
+		tftpd_config->tftpdDebug = zpl_true;	/* zpl_true: debugging messages */
 		tftpd_config->tftpdErrorSendTries = 3;
 		tftpd_config->tftpdMaxConnections = 10;
 	}
@@ -667,8 +667,8 @@ static int tftpdTask( struct eloop *thread)
 		zlog_err(MODULE_UTILS,"%s:  could not read on TFTP port\n", tftpdErrStr);
 	}
 	memset(&tftpdDesc, 0, sizeof(tftpdDesc));
-
-	if (tftpdRequestDecode(&requestBuffer, &opCode, NULL, (char *) tftpdDesc.mode)
+#if 0
+	if (tftpdRequestDecode(&requestBuffer, &opCode, NULL, (char *) tftpdDesc.mode, NULL, NULL)
 			== ERROR)
 	{
 
@@ -678,11 +678,13 @@ static int tftpdTask( struct eloop *thread)
 		 */
 		return ERROR;
 	}
-
+#endif
 	/*
 	 * Copy the name of the requested file into the TFTP_DESC
 	 */
-	if (tftpdRequestDecode(&requestBuffer, NULL, (char *) tftpdDesc.fileName, NULL)
+	zlog_err(MODULE_UTILS,"TFTP Server: request: %s", requestBuffer.th.request);
+
+	if (tftpdRequestDecode(&requestBuffer, &opCode, (char *) tftpdDesc.fileName, (char *) tftpdDesc.mode, &tftpdDesc.blksize, &tftpdDesc.tsize)
 			== ERROR)
 	{
 
@@ -693,7 +695,7 @@ static int tftpdTask( struct eloop *thread)
 
 		return ERROR;
 	}
-
+zlog_err(MODULE_UTILS,"TFTP Server: request mode:%s blksize:%d tsize: %d", tftpdDesc.mode, tftpdDesc.blksize, tftpdDesc.tsize);
 	if (tftpdRequestVerify(&tftpdDesc, opCode, tftpdDesc.fileName) != OK)
 	{
 
@@ -825,11 +827,13 @@ static int tftpdRequestDecode
     TFTP_MSG	*pTftpMsg,
     int	*	opCode,		/* pointer to the opCode to return */
     char	*fileName,	/* where to return filename */
-    char	*mode		/* where to return mode */
+    char	*mode,		/* where to return mode */
+	int *blksize, int *tsize
     )
     {
     char	*strIndex;	/* index into pTftpMsg to get mode string */
-
+	int i = 0, offset = 0;
+	char tmp[64];
     if (pTftpMsg == NULL)
     	return (ERROR);
 
@@ -838,8 +842,19 @@ static int tftpdRequestDecode
 
     if (fileName != NULL)
 	{
-    	strncpy (fileName, pTftpMsg->th.request, 128);
-    	fileName [127] = '\0';
+		for(i = 0; i < 128; i++)
+		{
+			if(pTftpMsg->th.request[i] != '\0')
+				fileName[i] = pTftpMsg->th.request[i];
+			else
+			{
+				fileName [i] = '\0';
+				offset = i+1;
+				break;
+			}	
+			//strncpy (fileName, pTftpMsg->th.request, 128);
+			//fileName [127] = '\0';
+		}
 	}
 
     if (mode != NULL)
@@ -849,7 +864,20 @@ static int tftpdRequestDecode
 		 * Need to get the next string in the struct. Use the for loop to
 		 * find the end of the first string.
 		 */
-
+		for(i = 0; i < 32; i++)
+		{
+			if(pTftpMsg->th.request[i+offset] != '\0')
+				mode[i] = pTftpMsg->th.request[i+offset];
+			else
+			{
+				mode [i] = '\0';
+				offset += (i+1);
+				break;
+			}	
+			//strncpy (fileName, pTftpMsg->th.request, 128);
+			//fileName [127] = '\0';
+		}
+		/*
 		for (strIndex = pTftpMsg->th.request;
 			 *strIndex != '\0';
 			 strIndex++)
@@ -857,8 +885,53 @@ static int tftpdRequestDecode
 
 		strncpy(mode, ++strIndex, 32);
 		mode [31] = '\0';
+		*/
 	}
-
+	strIndex = pTftpMsg->th.request + offset;
+    if (blksize != NULL && strstr(strIndex, "blksize"))
+	{
+		offset += 8;
+		strIndex = pTftpMsg->th.request + offset;
+		memset(tmp, 0, sizeof(tmp));
+		for(i = 0; i < 32; i++)
+		{
+			if(strIndex[i] != '\0')
+				tmp[i] = strIndex[i];
+			else
+			{
+				tmp [i] = '\0';
+				offset += (i+1);
+				*blksize = atoi(tmp);
+				break;
+			}	
+		}
+	}	
+	if(blksize)
+		*blksize = TFTP_SEGSIZE_DEFAULT;
+	strIndex = pTftpMsg->th.request + offset;
+    if (tsize != NULL && strstr(strIndex,"tsize"))
+	{
+		if(opCode && *opCode==TFTP_RRQ)
+		{
+			*tsize = 1;
+			return OK;
+		}
+		offset += 6;
+		strIndex = pTftpMsg->th.request + offset;
+		memset(tmp, 0, sizeof(tmp));
+		for(i = 0; i < 32; i++)
+		{
+			if(strIndex[i] != '\0')
+				tmp[i] = strIndex[i];
+			else
+			{
+				tmp [i] = '\0';
+				offset += (i+1);
+				*tsize = atoi(tmp);
+				break;
+			}	
+		}
+	}	
     return (OK);
     }
 
@@ -899,6 +972,20 @@ static int tftpdFileRead
 	}
     else
 	{
+		zlog_err(MODULE_UTILS,"TFTP Server: job mode:%s blksize:%d tsize: %d", pReplyDesc->mode, pReplyDesc->blksize, pReplyDesc->tsize);
+
+		if(pReplyDesc->tsize)
+		{
+			TFTP_MSG pTftpMsg;
+			memset(&pTftpMsg, 0, sizeof(pTftpMsg));
+			pReplyDesc->tftp_size = os_file_size(filepath);
+			int ssize = tftpRequestCreate(&pTftpMsg, TFTP_OACK, NULL, NULL, pReplyDesc->tftp_size, 1);
+
+			zlog_err(MODULE_UTILS,"TFTP Server: job send oack:%s", pTftpMsg.th.request);
+
+			if ((tftpSend(pReplyDesc, &pTftpMsg, ssize, NULL, 0, 0, NULL) == ERROR))
+				return (ERROR);
+		}
 		/*
 		 * We call tftpPut from the server on a read request because the
 		 * server is putting the file to the client
@@ -963,7 +1050,9 @@ static int tftpdFileWrite
 	}
     else
 	{
+		zlog_err(MODULE_UTILS,"TFTP Server: job read tsize:%d", pReplyDesc->tsize);
 
+		pReplyDesc->tftp_size = pReplyDesc->tsize;
 		/*
 		 * We call tftpGet from the server on a read request because the
 		 * server is putting the file to the client
@@ -1041,6 +1130,14 @@ static TFTP_DESC *tftpdDescriptorCreate
     bcopy ((char *) pClientAddr, (char *) &pTftpDesc->serverAddr, sizeof (struct ipstack_sockaddr_in));
     pTftpDesc->sock = sock;
     pTftpDesc->serverPort = clientPort;
+
+    pTftpDesc->sockFamily = desc->sockFamily;
+	pTftpDesc->blksize = desc->blksize;
+	pTftpDesc->tsize = desc->tsize;
+	pTftpDesc->tftp_size = desc->tftp_size;
+	pTftpDesc->tftp_pos = desc->tftp_pos;
+    pTftpDesc->tftp_start_time = desc->tftp_start_time;
+	pTftpDesc->session = desc->session;
 
     /*
      * We've filled the struct, now return a pointer to it

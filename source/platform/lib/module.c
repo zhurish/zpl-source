@@ -207,7 +207,10 @@ int zplib_module_init(zpl_uint32 module)
 				_module_lsttable[i].tbl->index_num = module_init_seq++;
 				ret = (_module_lsttable[i].tbl->module_init)();
 				if(ret != OK)
+				{
+					liblog_trap( "Module : %s Init Failed", _module_lsttable[i].tbl->name);
 					return ERROR;
+				}
 			}
 		}	
 	}
@@ -281,7 +284,10 @@ int zplib_module_exit(zpl_uint32 module)
 					liblog_trap( "Module : %s Exit", _module_lsttable[i].tbl->name);
 				UNSET_FLAG(_module_lsttable[i].tbl->flags,ZPL_MODULE_IS_INIT);
 				if( (_module_lsttable[i].tbl->module_exit)() != OK)
+				{
+					liblog_trap( "Module : %s Exit Failed", _module_lsttable[i].tbl->name);
 					return ERROR;
+				}
 			}	
 		}	
 	}
@@ -317,7 +323,10 @@ int zplib_module_task_init(zpl_uint32 module)
 					liblog_trap( "Module : %s Create Task", _module_lsttable[i].tbl->name);
 				SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK);
 				if( (_module_lsttable[i].tbl->module_task_init)() != OK)
+				{
+					liblog_trap( "Module : %s Create Task Failed", _module_lsttable[i].tbl->name);
 					return ERROR;
+				}
 			}
 		}	
 	}
@@ -352,7 +361,10 @@ int zplib_module_task_exit(zpl_uint32 module)
 					liblog_trap( "Module : %s Destroy Task", _module_lsttable[i].tbl->name);
 				UNSET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_TASK);
 				if( (_module_lsttable[i].tbl->module_task_exit)() != OK)
+				{
+					liblog_trap( "Module : %s Destroy Task Failed", _module_lsttable[i].tbl->name);
 					return ERROR;
+				}
 			}
 		}
 	}
@@ -385,7 +397,10 @@ int zplib_module_cmd_init(zpl_uint32 module)
 					liblog_trap( "Module : %s CLI Init", _module_lsttable[i].tbl->name);
 				SET_FLAG(_module_lsttable[i].tbl->flags, ZPL_MODULE_IS_CMD);
 				if( (_module_lsttable[i].tbl->module_cmd_init)() != OK)
+				{
+					liblog_trap( "Module : %s CLI Init Failed", _module_lsttable[i].tbl->name);
 					return ERROR;
+				}
 			}
 		}	
 	}

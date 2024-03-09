@@ -1825,9 +1825,18 @@ static int ftpPasvReplyParse(
     return OK;
 }
 
+int ftpTransientProgress ( struct ftpc_session *session, int (*progress)(void *, int, void *), void *p)
+{
+    if(session)
+    {
+        session->progress = progress;
+        session->pUser = p;
+    }
+    return OK;
+}
 int ftp_download(struct ftpc_session *session, int (*cli_out)(void *, char *, ...), void *pVoid)
 {
-    int fd = 0;
+    int fd = 0, ret = 0;
     zpl_socket_t dataSock;
     zpl_socket_t cntrlSock;
     char buftmp[BUFSIZ];
@@ -1882,11 +1891,23 @@ int ftp_download(struct ftpc_session *session, int (*cli_out)(void *, char *, ..
         ipstack_close(dataSock);
         return (ERROR);
     }
+    session->local_filesize = 0;
     /* Write out the listing */
     while ((nChars = ipstack_read(dataSock, (char *)buftmp, BUFSIZ)) > 0)
     {
         zlog_debug(MODULE_UTILS, "FTP transfer :%d", nChars);
-        write(fd, (char *)buftmp, nChars);
+        ret = write(fd, (char *)buftmp, nChars);
+        if(ret > 0)
+        {
+            session->local_filesize += ret;
+            if(session->progress)
+                (session->progress)(session, (session->local_filesize*100)/session->remote_filesize, session->pUser);
+        }
+        else
+        {
+            zlog_err(MODULE_UTILS, "FTP transfer error:%s", strerror(errno));
+            break;
+        }
     }
 
     /* Close the sockets opened by ftpXfer */
@@ -1914,7 +1935,7 @@ int ftp_download(struct ftpc_session *session, int (*cli_out)(void *, char *, ..
 
 int ftp_upload(struct ftpc_session *session, int (*cli_out)(void *, char *, ...), void *pVoid)
 {
-    int fd = 0;
+    int fd = 0, ret = 0;
     zpl_socket_t dataSock;
     zpl_socket_t cntrlSock;
     char buftmp[BUFSIZ];
@@ -1959,12 +1980,24 @@ int ftp_upload(struct ftpc_session *session, int (*cli_out)(void *, char *, ...)
         close(fd);
         return (ERROR);
     }
-
+    session->local_filesize = os_file_size(session->localfileName);
+    session->remote_filesize = 0;
     /* Write out the listing */
 
     while ((nChars = read(fd, (char *)buftmp, BUFSIZ)) > 0)
     {
-        ipstack_write(dataSock, (char *)buftmp, nChars);
+        ret = ipstack_write(dataSock, (char *)buftmp, nChars);
+        if(ret > 0)
+        {
+            session->remote_filesize += ret;
+            if(session->progress)
+                (session->progress)(session, (session->remote_filesize*100)/session->local_filesize, session->pUser);
+        }
+        else
+        {
+            zlog_err(MODULE_UTILS, "FTP transfer error:%s", strerror(errno));
+            break;
+        }
     }
 
     /* Close the sockets opened by ftpXfer */

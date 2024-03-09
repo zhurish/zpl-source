@@ -81,6 +81,7 @@ DEFUN (tftp_copy_download,
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
 		{
+			memset(&tftp_session, 0, sizeof(tftp_session));
 			tftp_session.hostName = spliurl.host;
 			tftp_session.port = spliurl.port;
 			tftp_session.user = spliurl.user;
@@ -94,6 +95,7 @@ DEFUN (tftp_copy_download,
 		}
 		else if(strstr(spliurl.proto,"ftp"))
 		{
+			memset(&ftp_session, 0, sizeof(ftp_session));
 			ftp_session.hostName = spliurl.host;
 			ftp_session.port = spliurl.port;
 			ftp_session.user = spliurl.user;
@@ -168,6 +170,7 @@ DEFUN (tftp_copy_upload,
 		vty_out(vty, "%s", VTY_NEWLINE);
 		if(strstr(spliurl.proto,"tftp"))
 		{
+			memset(&tftp_session, 0, sizeof(tftp_session));
 			tftp_session.hostName = spliurl.host;
 			tftp_session.port = spliurl.port;
 			tftp_session.user = spliurl.user;
@@ -181,6 +184,7 @@ DEFUN (tftp_copy_upload,
 		}
 		else if (strstr(spliurl.proto, "ftp"))
 		{
+			memset(&ftp_session, 0, sizeof(ftp_session));
 			ftp_session.hostName = spliurl.host;
 			ftp_session.port = spliurl.port;
 			ftp_session.user = spliurl.user;

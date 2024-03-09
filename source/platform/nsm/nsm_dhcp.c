@@ -308,7 +308,7 @@ struct module_list module_list_nsmdhcp =
 	.module_exit=nsm_dhcp_module_exit, 
 	.module_task_init=nsm_dhcp_task_init, 
 	.module_task_exit=nsm_dhcp_task_exit, 
-	.module_cmd_init=cmd_dhcp_init, 
+	.module_cmd_init=NULL,//cmd_dhcp_init, 
 	.flags = 0,
 	.taskid=0,
 };

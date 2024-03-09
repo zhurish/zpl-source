@@ -646,18 +646,23 @@ static int sslSetCertFile(char *certFile)
     }
     if ((buf = websReadWholeFile(certFile)) == 0) {
         web_error("Unable to read certificate %s", certFile);
+        return rc;
 
     } else if ((bio = BIO_new_mem_buf(buf, -1)) == 0) {
         web_error("Unable to allocate memory for certificate %s", certFile);
+        return rc;
 
     } else if ((cert = PEM_read_bio_X509(bio, NULL, 0, NULL)) == 0) {
         web_error("Unable to parse certificate %s", certFile);
+        return rc;
 
     } else if (SSL_CTX_use_certificate(sslctx, cert) != 1) {
         web_error("Unable to use certificate %s", certFile);
+        return rc;
 
     } else if (!SSL_CTX_check_private_key(sslctx)) {
         web_error("Unable to check certificate key %s", certFile);
+        return rc;
 
     } else {
         rc = 0;
@@ -696,15 +701,19 @@ static int sslSetKeyFile(char *keyFile)
 
     } else if ((buf = websReadWholeFile(keyFile)) == 0) {
         web_error("Unable to read certificate %s", keyFile);
+        return rc;
 
     } else if ((bio = BIO_new_mem_buf(buf, -1)) == 0) {
         web_error("Unable to allocate memory for key %s", keyFile);
+        return rc;
 
     } else if ((key = PEM_read_bio_RSAPrivateKey(bio, NULL, 0, NULL)) == 0) {
         web_error("Unable to parse key %s", keyFile);
+        return rc;
 
     } else if (SSL_CTX_use_RSAPrivateKey(sslctx, key) != 1) {
         web_error("Unable to use key %s", keyFile);
+        return rc;
 
     } else {
         rc = 0;

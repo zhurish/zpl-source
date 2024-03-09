@@ -122,6 +122,6 @@ int mqtt_module_init(void);
 int mqtt_module_exit(void);
 int mqtt_module_task_init(void);
 int mqtt_module_task_exit(void);
-void cmd_mqtt_init(void);
+int cmd_mqtt_init(void);
 
 #endif /* __MQTT_APP_API_H__ */

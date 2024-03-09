@@ -167,10 +167,13 @@ struct ftpc_session
     char *fileName;
     char *localfileName;
     int   remote_filesize;
+    int   local_filesize;
 
     void *cli;
     int (*cli_out)(void *, char *,...);
     int (*cli_write)(void *, char *, int );
+    int (*progress)(void *, int, void *);
+    void *pUser;
 };
 
 /* function declarations */
@@ -199,6 +202,9 @@ extern int ftpReplyGetEnhanced(struct ftpc_session *, zpl_socket_t ctrlSock, zpl
 extern int ftpTransientConfigSet (zpl_uint32 maxRetryCount, zpl_uint32 retryInterval);
 extern int ftpTransientConfigGet (zpl_uint32 *maxRetryCount, zpl_uint32 *retryInterval);
 extern int ftpTransientFatalInstall ( zpl_bool (*configlette)(zpl_uint32));
+
+extern int ftpTransientProgress ( struct ftpc_session *session, int (*progress)(void *, int, void *), void *p);
+
 
 extern int ftp_download(struct ftpc_session *, int (*cli_out)(void *, char *, ...), void *);
 extern int ftp_upload(struct ftpc_session *, int (*cli_out)(void *, char *, ...), void *);

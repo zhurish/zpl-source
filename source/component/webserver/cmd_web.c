@@ -294,7 +294,7 @@ static int webserver_write_config(struct vty *vty, void *pVoid)
 }
 
 
-void cmd_webserver_init(void)
+int cmd_webserver_init(void)
 {
 	{
 		template_t * temp = lib_template_new (zpl_false);
@@ -337,4 +337,5 @@ void cmd_webserver_init(void)
 		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &webserver_gopass_cmd);
 		install_element(ENABLE_NODE, CMD_CONFIG_LEVEL, &webserver_gopass_roles_cmd);
 	}
+	return OK;
 }

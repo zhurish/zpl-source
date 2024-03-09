@@ -1932,7 +1932,7 @@ static void cmd_modem_show_init (int node)
 	install_element(node, CMD_VIEW_LEVEL, &show_modem_usb_key_cmd);
 }
 
-void cmd_modem_init (void)
+int cmd_modem_init (void)
 {
 	install_node(&modem_profile_node, modem_write_config);
 	install_node(&modem_channel_node, modem_serial_write_cb);
@@ -1973,6 +1973,7 @@ void cmd_modem_init (void)
 
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_modem_debug_cmd);
 	install_element(CONFIG_NODE, CMD_CONFIG_LEVEL, &no_modem_debug_detail_cmd);
+	return OK;
 }
 
 /*

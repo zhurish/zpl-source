@@ -295,6 +295,9 @@ int nsm_module_cmd_init(void)
 #ifdef ZPL_NSM_SECURITY
 	cmd_security_init();
 #endif
+#ifdef ZPL_NSM_DHCP
+	cmd_dhcp_init();
+#endif
 #ifdef ZPL_NSM_QOS
 	cmd_qos_init();
 #endif
@@ -305,6 +308,7 @@ int nsm_module_cmd_init(void)
 	nsm_rtadv_cmd_init();
 #endif
 	cmd_nsm_zserv_init();
+
 	return OK;
 }
 

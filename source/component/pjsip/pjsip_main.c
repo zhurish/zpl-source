@@ -166,8 +166,10 @@ static int pjapp_module_exit(void)
 
 static int pjapp_module_task_init(void)
 {
-	return os_task_create("pjMainTask", OS_TASK_DEFAULT_PRIORITY,
-	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*16);
+	if(os_task_create("pjMainTask", OS_TASK_DEFAULT_PRIORITY,
+	               0, pjMainTask, NULL, OS_TASK_DEFAULT_STACK*16)>0)
+		return OK;
+	return ERROR;				   
 }
 
 static int pjapp_module_task_exit(void)

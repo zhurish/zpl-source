@@ -54,7 +54,7 @@ enum node_type
 
   INTERFACE_NODE,			/* L2 Interface mode node(default). */
   INTERFACE_RANGE_NODE,
-  INTERFACE_L3_NODE,		/* Interface mode node. */
+  INTERFACE_L3_NODE,		/* 27 Interface mode node. */
   INTERFACE_L3_RANGE_NODE,
 
   WIRELESS_INTERFACE_NODE,	/* Interface mode node. */

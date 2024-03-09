@@ -43,7 +43,7 @@ extern "C" {
 /* defines */
 
 /* TFTP constant values.  */
-
+#define	TFTP_SEGSIZE_DEFAULT 512
 #define	TFTP_SEGSIZE        512                 /* data segment size    */
 #define	TFTP_REQSIZE        TFTP_SEGSIZE + 2
 #define TFTP_FILENAME_SIZE  128		        /* max length of        */
@@ -63,7 +63,7 @@ extern "C" {
 #define	TFTP_DATA	03                      /* data packet          */
 #define	TFTP_ACK	04                      /* acknowledgement      */
 #define	TFTP_ERROR 	05                      /* error packet         */
-
+#define	TFTP_OACK 	06                      /* error packet         */
 /*
   TFTP message formats are:
 
@@ -114,10 +114,12 @@ struct tftpc_session
     char *passwd;
     char *fileName;
     char *localfileName;
-
+    int   local_filesize;
     void *cli;
     int (*cli_out)(void *, char *, ...);
     int (*cli_write)(void *, char *, int);
+    int (*progress)(void *, int, void *);
+    void *pUser;    
 };
 
 /* TFTP packet structure.  */
@@ -192,8 +194,12 @@ typedef struct tftp_desc
     int     sockFamily;                     /* IPSTACK_AF_INET(6)           */
     zpl_ushort	serverPort;                 /* server port number   */
     char	fileName [TFTP_FILENAME_SIZE];	/* requested file name  */
+    int blksize;
+    int tsize;
     int tftp_size;
-    int	tftp_start_time;
+    int	tftp_pos;
+    int tftp_start_time;
+    zpl_bool    isClient;
     struct tftpc_session *session;
     } TFTP_DESC;
 
@@ -227,7 +233,11 @@ extern int tftpCopy(struct tftpc_session *,
 extern TFTP_DESC *tftpInit (void);
 extern int 	tftpQuit (TFTP_DESC * pTftpDesc);
 
-
+extern int tftpRequestCreate(TFTP_MSG * pTftpMsg, /* TFTP message pointer	*/
+		int opCode, /* request opCode 	*/
+		char * pFilename, /* remote filename 	*/
+		char * pMode, /* TFTP transfer mode	*/
+		int tsize, int reqsize);
 /*extern int 	tftpModeSet (TFTP_DESC * pTftpDesc, char * pMode);
 extern int 	tftpPeerSet (TFTP_DESC * pTftpDesc, char * pHostname,
 			     int port);*/
@@ -243,7 +253,7 @@ extern int 	tftpSend (TFTP_DESC *, TFTP_MSG *, int ,
 extern int 	tftpErrorCreate (TFTP_MSG * pTftpMsg, int errorNum);
 
 
-
+extern int tftpProgress ( struct tftpc_session *session, int (*progress)(void *, int, void *), void *p);
 
 extern zpl_bool tftpDebug;
 
