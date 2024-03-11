@@ -852,16 +852,14 @@ static int rtp_payload_send_h264_oneframe(void *session, const u_int8_t *buffer,
                                         &payload, &payload_len);
             if(ret != 0)
                 return -1;                      
-            has_more = (my_h264_pktz->frame_pos < my_h264_pktz->frame_size);
-#ifdef ZPL_JRTPLIB_MODULE 
+            has_more = (my_h264_pktz->frame_pos < my_h264_pktz->frame_size); 
             if(payload)
             {
                 if(len < MAX_RTP_PAYLOAD_LENGTH)
                     ret = zpl_mediartp_session_rtp_sendto(session, payload, payload_len, 255, 1, 1);
                 else
                     ret = zpl_mediartp_session_rtp_sendto(session, payload, payload_len, 255, has_more?0:1, has_more?0:1);
-            }
-#endif                                     
+            }                                    
         }
     }
     return ret;

@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 
 	startup_module_waitting();
 
-	zpl_base_start_pid(MODULE_DEFAULT, os_netservice_sockpath_get(PL_PID), NULL);
+	zpl_base_start_pid(MODULE_LIB, os_netservice_sockpath_get(PL_PID), NULL);
 
 	/*
 	 * os shell start
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
 	openzlog_start(NULL);
 	host_config_loading(startup_option.config_file);
 
-	zlog_notice(MODULE_DEFAULT, "Zebra host_config_loading");
+	zlog_notice(MODULE_LIB, "Zebra host_config_loading");
 	os_task_sigexecute(0, NULL);
 	os_test();
     //testmain(0, NULL);

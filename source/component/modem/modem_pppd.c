@@ -957,7 +957,7 @@ static int modem_pppd_task_connect(modem_pppd_t *pppd)
 	zpl_pid_t pid = child_process_create();
 	if(pid < 0)
 	{
-		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", ipstack_strerror(ipstack_errno));
+		  zlog_warn(MODULE_MODEM, "Can't create child process (%s), continuing", ipstack_strerror(ipstack_errno));
 		  return -1;
 	}
 	else if(pid == 0)

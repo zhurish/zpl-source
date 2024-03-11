@@ -1680,7 +1680,7 @@ int nsm_interface_hook_add(nsm_submodule_t module, int (*add_cb)(struct interfac
 	}
 	if (NOT_INT_MAX_MIN_SPACE(module, NSM_INTF_NONE, NSM_INTF_MAX))
 		return ERROR;
-	// zlog_debug(MODULE_DEFAULT, "===========nsm_interface_hook_add module=%d",module);
+	// zlog_debug(MODULE_NSM, "===========nsm_interface_hook_add module=%d",module);
 	nsm_intf_cb[module].nsm_intf_add_cb = add_cb;
 	nsm_intf_cb[module].nsm_intf_del_cb = del_cb;
 	return OK;
@@ -1695,7 +1695,7 @@ int nsm_interface_write_hook_add(nsm_submodule_t module, int (*write_cb)(struct 
 	}
 	if (NOT_INT_MAX_MIN_SPACE(module, NSM_INTF_NONE, NSM_INTF_MAX))
 		return ERROR;
-	// zlog_debug(MODULE_DEFAULT, "===========nsm_interface_write_hook_add module=%d",module);
+	// zlog_debug(MODULE_NSM, "===========nsm_interface_write_hook_add module=%d",module);
 	nsm_intf_cb[module].nsm_intf_write_cb = write_cb;
 	return OK;
 }
@@ -1719,7 +1719,7 @@ int nsm_interface_hook_handler(zpl_bool add, nsm_submodule_t module, struct inte
 	//if(add)
 	//	zlog_warn(MODULE_NSM, "====carate(%s): if_type %x ifindex 0x%x uspv %x", 
 	//		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv);
-	// zlog_debug(MODULE_DEFAULT, "===========nsm_interface_hook_handler %d %d %s",add, module, ifp->name);
+	// zlog_debug(MODULE_NSM, "===========nsm_interface_hook_handler %d %d %s",add, module, ifp->name);
 	if (module == NSM_INTF_ALL)
 	{
 		int i = 0;

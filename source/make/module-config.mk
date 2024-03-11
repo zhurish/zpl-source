@@ -254,11 +254,11 @@ LIBSSH_ROOT=$(COMPONENT_DIR)/ssh
 ZPLPRODS += $(ZPLBASE)/$(LIBSSH_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBSSH_ROOT)
 ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBSSH_ROOT)/include
-
-ifeq ($(ZPL_BUILD_ARCH),X86_64)
-ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBSSH_ROOT)/include
+ZPL_LDLIBS += -lutil -lssl -lcrypto
+#ifeq ($(ZPL_BUILD_ARCH),X86_64)
+#ZPL_INCLUDE += -I$(ZPLBASE)/$(LIBSSH_ROOT)/include
 #ZPLOS_LDLIBS += -lutil -lssl -lcrypto -lz
-endif #($(ZPL_BUILD_ARCH),X86_64)
+#endif #($(ZPL_BUILD_ARCH),X86_64)
 
 ifeq ($(ZPL_BUILD_ARCH),MIPS)
 ifneq ($(OPENEWRT_BASE),)

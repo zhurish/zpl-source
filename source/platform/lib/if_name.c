@@ -122,14 +122,14 @@ zpl_uint32  if_name_hash_make(const char *name)
 {
 	if(name == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"ifname is NULL when make hash code");
+		zlog_err(MODULE_LIB,"ifname is NULL when make hash code");
 		return ERROR;
 	}
 	if(if_ifname_split(name))
 	{
 		return string_hash_make(if_ifname_split(name));
 	}
-	zlog_err(MODULE_DEFAULT,"ifname :%s split ERROR when make hash code",name);
+	zlog_err(MODULE_LIB,"ifname :%s split ERROR when make hash code",name);
 	return ERROR;
 }
 
@@ -139,7 +139,7 @@ static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 	static zpl_char buf[IF_NAME_MAX];
 	if(ifname == NULL || uspv == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"if type or uspv is NULL ifname when make ifname");
+		zlog_err(MODULE_LIB,"if type or uspv is NULL ifname when make ifname");
 		return NULL;
 	}
 	os_memset(buf, 0, sizeof(buf));
@@ -169,7 +169,7 @@ static const char * _if_name_make_argv(const char *ifname, const char *uspv)
 		sprintf(buf, "%s%s", ifname, uspv);
 		return buf;
 	}
-	zlog_err(MODULE_DEFAULT,"if type ERRPR when make ifname:type=%s uspv=%s",
+	zlog_err(MODULE_LIB,"if type ERRPR when make ifname:type=%s uspv=%s",
 	           ifname ? ifname:"null", uspv ? uspv:"null");
 	return NULL;
 }
@@ -233,7 +233,7 @@ const char * if_ifname_split(const char *name)
 	{
 		if(os_strlen(name))
 			return name;
-		zlog_err(MODULE_DEFAULT,"if name split ERROR input=%s",name);
+		zlog_err(MODULE_LIB,"if name split ERROR input=%s",name);
 		return NULL;
 	}
 
@@ -246,7 +246,7 @@ const char * if_ifname_split(const char *name)
 		os_strcat(buf, name + n);
 		return buf;
 	}
-	zlog_err(MODULE_DEFAULT,"if name split ERROR input=%s",name);
+	zlog_err(MODULE_LIB,"if name split ERROR input=%s",name);
 	return NULL;
 }
 
@@ -385,7 +385,7 @@ if_type_t if_iftype_make(const char *str)
 	if_type_t type = 0;
 	if(str == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"if type format ERROR input ifname NULL");
+		zlog_err(MODULE_LIB,"if type format ERROR input ifname NULL");
 		return type;
 	}
 	type = name2type(str);
@@ -408,7 +408,7 @@ int if_uspv_type_setting(struct interface *ifp)
 	zpl_uint32 unit = 0, slot = 0, port = 0, id = 0, rend = 0;
 	if(ifp == NULL || ifp->name == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"ifp is NULL when setting unit/solt/port code");
+		zlog_err(MODULE_LIB,"ifp is NULL when setting unit/solt/port code");
 		return ERROR;
 	}
 	str = strstr(ifp->name," ");
@@ -435,10 +435,10 @@ int if_uspv_type_setting(struct interface *ifp)
 			//ifp->k_name_hash;
 			//ifp->k_ifindex;
 			//ifp->phyid = id;
-			zlog_err(MODULE_DEFAULT,"============ unit/solt/port 0x%x %d/%d/%d %d  uspv=0x%x",ifp->if_type, unit, slot, port, id, ifp->uspv);
+			zlog_err(MODULE_LIB,"============ unit/solt/port 0x%x %d/%d/%d %d  uspv=0x%x",ifp->if_type, unit, slot, port, id, ifp->uspv);
 			return OK;
 		}
-		zlog_err(MODULE_DEFAULT,"format unit/solt/port when setting unit/solt/port code,str=%s",str);
+		zlog_err(MODULE_LIB,"format unit/solt/port when setting unit/solt/port code,str=%s",str);
 	}
 	else if(ifp->if_type == IF_VLAN || ifp->if_type == IF_LAG || ifp->if_type == IF_LOOPBACK)
 	{
@@ -446,7 +446,7 @@ int if_uspv_type_setting(struct interface *ifp)
 		
 		return OK;
 	}
-	zlog_err(MODULE_DEFAULT,"format if type when setting unit/solt/port code,str=%s",str);
+	zlog_err(MODULE_LIB,"format if type when setting unit/solt/port code,str=%s",str);
 	return ERROR;
 }
 
@@ -465,7 +465,7 @@ static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *s
 #endif
 	if (string == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"if iusp format ERROR input is NULL");
+		zlog_err(MODULE_LIB,"if iusp format ERROR input is NULL");
 		return 0;
 	}
 	//os_memset(buf, 0, sizeof(buf));
@@ -484,7 +484,7 @@ static int vty_iusp_explain (const char *string, zpl_uint32 *unit, zpl_uint32 *s
 	count = strspn (str, base2);
 	if (count != strlen (str))
 	{
-		zlog_err(MODULE_DEFAULT,"if iusp format ERROR input is:%s(%s)",str, string);
+		zlog_err(MODULE_LIB,"if iusp format ERROR input is:%s(%s)",str, string);
 		return 0;
 	}
 	if(strccnt(str, '/') == 2)
@@ -589,14 +589,14 @@ int vty_mac_get (const char *str, zpl_uchar *mac)
 	zpl_char *base2 = "0123456789abcdefABCDEF-";
 	if (str == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"mac address format ERROR input NULL");
+		zlog_err(MODULE_LIB,"mac address format ERROR input NULL");
 		return 0;
 	}
 	os_memset(buf, 0, sizeof(buf));
 	count = strspn(str,base2);
 	if(count != strlen(str))
 	{
-		zlog_err(MODULE_DEFAULT,"mac address decode ERROR input:%s",str);
+		zlog_err(MODULE_LIB,"mac address decode ERROR input:%s",str);
 		return 0;
 	}
 	//base = os_strdup(str);
@@ -646,7 +646,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 #endif
 	if (string == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"if iusp format ERROR input is NULL");
+		zlog_err(MODULE_LIB,"if iusp format ERROR input is NULL");
 		return 0;
 	}
 	os_memset(buf, 0, sizeof(buf));
@@ -665,7 +665,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 	count = strspn (str, base2);
 	if (count != strlen (str))
 	{
-		zlog_err(MODULE_DEFAULT,"if iusp format ERROR input is:%s",str);
+		zlog_err(MODULE_LIB,"if iusp format ERROR input is:%s",str);
 		return 0;
 	}
 	v = p = (zpl_char *)str;
@@ -693,7 +693,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 	p = strchr (str, '/');
 	if (p == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"if iusp format ERROR can find '/'");
+		zlog_err(MODULE_LIB,"if iusp format ERROR can find '/'");
 	    return 0;
 	}
 	len = p - v;
@@ -708,7 +708,7 @@ static int vty_iusp_explain (const char *string, int *unit, int *slot, int *port
 		p = strchr (p, '/');
 		if (p == NULL)
 		{
-			zlog_err(MODULE_DEFAULT,"if iusp format ERROR can find '/'");
+			zlog_err(MODULE_LIB,"if iusp format ERROR can find '/'");
 		    return 0;
 		}
 		len = p - v;
@@ -822,14 +822,14 @@ int vty_mac_get (const char *str, zpl_uchar *mac)
 	zpl_char *base2 = "0123456789abcdefABCDEF-";
 	if (str == NULL)
 	{
-		zlog_err(MODULE_DEFAULT,"mac address format ERROR input NULL");
+		zlog_err(MODULE_LIB,"mac address format ERROR input NULL");
 		return 0;
 	}
 	os_memset(buf, 0, sizeof(buf));
 	count = strspn(str,base2);
 	if(count != strlen(str))
 	{
-		zlog_err(MODULE_DEFAULT,"mac address decode ERROR input:%s",str);
+		zlog_err(MODULE_LIB,"mac address decode ERROR input:%s",str);
 		return 0;
 	}
 	//base = os_strdup(str);

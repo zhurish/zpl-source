@@ -537,7 +537,7 @@ int os_write_iov(int fd, int type, struct iovec *iov, int iovcnt)
 {
 	int written = 0;
 
-		written = writev(fd, iov, iovcnt);
+	written = writev(fd, iov, iovcnt);
 
 	/* only place where written should be sign compared */
 	if (written < 0)
@@ -1163,7 +1163,7 @@ int ipstack_write_iov(zpl_socket_t fd, int type, struct iovec *iov, int iovcnt)
 {
 	int written = 0;
 
-		written = ipstack_writev(fd, iov, iovcnt);
+	written = ipstack_writev(fd, iov, iovcnt);
 
 	/* only place where written should be sign compared */
 	if (written < 0)

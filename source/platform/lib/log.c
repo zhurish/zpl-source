@@ -1091,7 +1091,7 @@ void zlog_backtrace_sigsafe(zlog_level_t priority, void *program_counter)
 void zlog_backtrace(zlog_level_t priority)
 {
 #ifndef HAVE_GLIBC_BACKTRACE
-	zlog(MODULE_DEFAULT, priority, "No backtrace available on this platform.");
+	zlog(MODULE_LIB, priority, "No backtrace available on this platform.");
 #else
 	void *array[20];
 	zpl_uint32 size, i;
@@ -1099,22 +1099,22 @@ void zlog_backtrace(zlog_level_t priority)
 	size = backtrace(array, array_size(array));
 	if (size <= 0 || (zpl_size_t)size > array_size(array))
 	{
-		zlog(MODULE_DEFAULT, priority, "Cannot get backtrace, returned invalid # of frames %d "
+		zlog(MODULE_LIB, priority, "Cannot get backtrace, returned invalid # of frames %d "
 				"(valid range is between 1 and %lu)",
 				size, (zpl_ulong)(array_size(array)));
 		return;
 	}
-	zlog(MODULE_DEFAULT, priority, "Backtrace for %d stack frames:", size);
+	zlog(MODULE_LIB, priority, "Backtrace for %d stack frames:", size);
 	if (!(strings = backtrace_symbols(array, size)))
 	{
-		zlog(MODULE_DEFAULT, priority, "Cannot get backtrace symbols (out of memory?)");
+		zlog(MODULE_LIB, priority, "Cannot get backtrace symbols (out of memory?)");
 		for (i = 0; i < size; i++)
-			zlog(MODULE_DEFAULT, priority, "[bt %d] %p",i,array[i]);
+			zlog(MODULE_LIB, priority, "[bt %d] %p",i,array[i]);
 	}
 	else
 	{
 		for (i = 0; i < size; i++)
-			zlog(MODULE_DEFAULT, priority, "[bt %d] %s",i,strings[i]);
+			zlog(MODULE_LIB, priority, "[bt %d] %s",i,strings[i]);
 		free(strings);
 	}
 #endif /* HAVE_GLIBC_BACKTRACE */
@@ -1193,7 +1193,7 @@ ZLOG_FUNC(pl_zlog_trap, LOG_TRAP)
 
 static void zlog_thread_info(zlog_level_t log_level)
 {
-	zlog(MODULE_DEFAULT, log_level,"Current %s", zpl_backtrace_symb_info());
+	zlog(MODULE_LIB, log_level,"Current %s", zpl_backtrace_symb_info());
 }
 
 
@@ -1205,7 +1205,7 @@ void _zlog_assert_failed(const char *assertion, const char *file,
 			&& ((logfile_fd = open_crashlog()) >= 0) && ((zlog_default->fp =
 					fdopen(logfile_fd, "w")) != NULL))
 		zlog_default->maxlvl[ZLOG_DEST_FILE] = ZLOG_LEVEL_ERR;
-	zlog(MODULE_DEFAULT, ZLOG_LEVEL_CRIT,
+	zlog(MODULE_LIB, ZLOG_LEVEL_CRIT,
 			"Assertion `%s' failed in file %s, line %u, function %s", assertion,
 			file, line, (function ? function : "?"));
 	zlog_backtrace(ZLOG_LEVEL_CRIT);
@@ -1723,7 +1723,7 @@ static int zlog_testing_check_file (struct zlog *zl)
 	{
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
-		//zlog_debug(MODULE_DEFAULT, "========%s:%d %p", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
+		//zlog_debug(MODULE_LIB, "========%s:%d %p", __func__, fsize.st_size, zl->testlog.filesize * ZLOG_1M);
 		if (fsize.st_size < (zl->testlog.filesize * ZLOG_1M))
 		{
 			if (zl->mutex)
@@ -1818,7 +1818,7 @@ static int zlog_check_file (struct zlog *zl)
 		memset (&fsize, 0, sizeof(fsize));
 		(void) stat (filetmp, &fsize);
 
-		//zlog_debug(MODULE_DEFAULT, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
+		//zlog_debug(MODULE_LIB, "========%s:%d %d", __func__, fsize.st_size, zl->filesize * ZLOG_1M);
 		if (fsize.st_size < (zl->filesize * ZLOG_1M))
 		{
 			if (zl->mutex)
@@ -2087,7 +2087,7 @@ int zlog_rotate(void)
 		umask(oldumask);
 		if (zlog_default->fp == NULL)
 		{
-			zlog_err(MODULE_DEFAULT,
+			zlog_err(MODULE_LIB,
 					"Log rotate failed: cannot open file %s for append: %s",
 					zlog_default->filename, ipstack_strerror(save_errno));
 			if (zlog_default->mutex)
@@ -2141,14 +2141,14 @@ message_lookup(const struct message *meslist, zpl_uint32 max, zpl_uint32 index, 
 			if (meslist->key == index) {
 				const char *str = (meslist->str ? meslist->str : none);
 
-				zlog_debug(MODULE_DEFAULT,
+				zlog_debug(MODULE_LIB,
 						"message index %d [%s] found in %s at position %d (max is %d)",
 						index, str, mesname, i, max);
 				return str;
 			}
 		}
 	}
-	zlog_err(MODULE_DEFAULT, "message index %d not found in %s (max is %d)",
+	zlog_err(MODULE_LIB, "message index %d not found in %s (max is %d)",
 			index, mesname, max);
 	assert(none);
 	return none;
@@ -2165,21 +2165,21 @@ zroute_lookup(zpl_uint32 zroute) {
 	zpl_uint32 i;
 
 	if (zroute >= array_size(route_types)) {
-		zlog_err(MODULE_DEFAULT, "unknown zebra route type: %u", zroute);
+		zlog_err(MODULE_LIB, "unknown zebra route type: %u", zroute);
 		return &zr_unknown;
 	}
 	if (zroute == route_types[zroute].type)
 		return &route_types[zroute];
 	for (i = 0; i < array_size(route_types); i++) {
 		if (zroute == route_types[i].type) {
-			zlog_warn(MODULE_DEFAULT,
+			zlog_warn(MODULE_LIB,
 					"internal error: route type table out of order "
 							"while searching for %u, please notify developers",
 					zroute);
 			return &route_types[i];
 		}
 	}
-	zlog_err(MODULE_DEFAULT,
+	zlog_err(MODULE_LIB,
 			"internal error: cannot find route type %u in table!", zroute);
 	return &zr_unknown;
 }
@@ -2312,5 +2312,5 @@ void zlog_hexdump(void *mem, zpl_uint32  len) {
 			s += sprintf(s, "\n");
 		}
 	}
-	zlog_debug(MODULE_DEFAULT, "\n%s", buf);
+	zlog_debug(MODULE_LIB, "\n%s", buf);
 }

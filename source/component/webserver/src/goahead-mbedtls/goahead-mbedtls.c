@@ -92,7 +92,7 @@ PUBLIC int sslOpen()
         /*
             Load a decrypted PEM format private key. The last arg is the private key.
          */
-        if (parseKey(&cfg.pkey, ME_GOAHEAD_SSL_KEY) < 0) {
+        if (parseKey(&cfg.pkey, websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_KEY)) < 0) {
             return -1;
         }
     }
@@ -100,12 +100,12 @@ PUBLIC int sslOpen()
         /*
             Load a PEM format certificate file
          */
-        if (parseCert(&cfg.cert, ME_GOAHEAD_SSL_CERTIFICATE) < 0) {
+        if (parseCert(&cfg.cert, websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_CERTIFICATE)) < 0) {
             return -1;
         }
     }
     if (*ME_GOAHEAD_SSL_AUTHORITY) {
-        if (parseCert(&cfg.ca, ME_GOAHEAD_SSL_AUTHORITY) != 0) {
+        if (parseCert(&cfg.ca, websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_AUTHORITY)) != 0) {
             return -1;
         }
     }
@@ -113,7 +113,7 @@ PUBLIC int sslOpen()
         /*
             Load a PEM format certificate file
          */
-        if (parseCrl(&cfg.revoke, (char*) ME_GOAHEAD_SSL_REVOKE) != 0) {
+        if (parseCrl(&cfg.revoke, (char*) websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_REVOKE)) != 0) {
             return -1;
         }
     }

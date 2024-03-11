@@ -59,18 +59,6 @@ static struct sntp_client *sntp_client = NULL;
 struct sntp_global_config sntp_global_config;
 
 
-struct module_list module_list_sntpc = 
-{ 
-	.module=MODULE_SNTP, 
-	.name="SNTP\0", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=cmd_sntpc_init, 
-	.flags = 0,
-	.taskid=0,
-};
 /* forward declarations */
 /*******************************************************************************
 *
@@ -215,11 +203,11 @@ static int sntp_socket_write(struct sntp_client *client)
     {
         //close (client->sock);
         if(client->time_debug)
-        	zlog_err(MODULE_SNTP, "Transmit SNTP equest from %s:%d(%s)",ipstack_inet_ntoa(client->address),client->sntpcPort,ipstack_strerror(ipstack_errno));
+        	zlog_err(MODULE_SERVICE, "Transmit SNTP equest from %s:%d(%s)",ipstack_inet_ntoa(client->address),client->sntpcPort,ipstack_strerror(ipstack_errno));
         return (ERROR);
     }
     if(client->time_debug)
-    	zlog_debug(MODULE_SNTP, "Transmit SNTP request from %s:%d",ipstack_inet_ntoa(client->address),client->sntpcPort);
+    	zlog_debug(MODULE_SERVICE, "Transmit SNTP request from %s:%d",ipstack_inet_ntoa(client->address),client->sntpcPort);
     return OK;
 }
 static int sntp_socket_read(struct sntp_client *client)
@@ -237,7 +225,7 @@ static int sntp_socket_read(struct sntp_client *client)
     {
         //close (client->sock);
     	if(client->time_debug)
-    		zlog_err(MODULE_SNTP, "SNTP receive from %s:%d(%s)",ipstack_inet_ntoa(srcAddr.sin_addr),ntohs(srcAddr.sin_port),ipstack_strerror(ipstack_errno));
+    		zlog_err(MODULE_SERVICE, "SNTP receive from %s:%d(%s)",ipstack_inet_ntoa(srcAddr.sin_addr),ntohs(srcAddr.sin_port),ipstack_strerror(ipstack_errno));
         return (ERROR);
     }
 
@@ -274,7 +262,7 @@ static int sntp_socket_read(struct sntp_client *client)
     }
     if(client->time_debug)
     {
-    	zlog_debug(MODULE_SNTP, "SNTP receive SNTP %s from %s:%d",ver,ipstack_inet_ntoa(srcAddr.sin_addr),ntohs(srcAddr.sin_port));
+    	zlog_debug(MODULE_SERVICE, "SNTP receive SNTP %s from %s:%d",ver,ipstack_inet_ntoa(srcAddr.sin_addr),ntohs(srcAddr.sin_port));
     }
     /*
      * Return error if the server clock is unsynchronized, or the version is 
@@ -285,7 +273,7 @@ static int sntp_socket_read(struct sntp_client *client)
         sntpMessage.transmitTimestampSec == 0)
     {
         if(client->time_debug)
-        	zlog_warn(MODULE_SNTP, "SNTP server clock unsynchronized");
+        	zlog_warn(MODULE_SERVICE, "SNTP server clock unsynchronized");
         //errnoSet (S_sntpcLib_SERVER_UNSYNC);
         return (ERROR);
     }
@@ -294,7 +282,7 @@ static int sntp_socket_read(struct sntp_client *client)
         (sntpMessage.leapVerMode & SNTP_VN_MASK) > SNTP_VN_3)
     {
         if(client->time_debug)
-        	zlog_warn(MODULE_SNTP, "SNTP version (%s) unsupported",ver);
+        	zlog_warn(MODULE_SERVICE, "SNTP version (%s) unsupported",ver);
         //errnoSet (S_sntpcLib_VERSION_UNSUPPORTED);
         return (ERROR);
     }
@@ -338,16 +326,16 @@ static int sntp_read(struct thread *thread)
 		clock_settime(CLOCK_REALTIME, &client->sntpTime);//SET SYSTEM LOCAL TIME
 		time_sec = time(NULL);
 		if(client->time_debug)
-			zlog_debug(MODULE_SNTP, "SNTP receive and set sys time:%s",ctime(&time_sec));
+			zlog_debug(MODULE_SERVICE, "SNTP receive and set sys time:%s",ctime(&time_sec));
 		sntp_global_timezone_get(&timezone);
 		time_sec += timezone;//LOCAL_GMT_OFSET;
 		if(client->time_debug)
-			zlog_debug(MODULE_SNTP, "SNTP receive and set sys time:%s",ctime(&time_sec));
+			zlog_debug(MODULE_SERVICE, "SNTP receive and set sys time:%s",ctime(&time_sec));
 	}
 	else
 	{
 		if(client->time_debug)
-			zlog_warn(MODULE_SNTP, "SNTP protocol can't receive sys time");
+			zlog_warn(MODULE_SERVICE, "SNTP protocol can't receive sys time");
 	}
 	return OK;
 }

@@ -29,7 +29,7 @@ ZPLPRODS_OBJ += $(BASE_ROOT)/empty
 #
 #
 #
-.PHONY:	obj all lib clean exlib exlib_clean rebuild install objclean help usage  packet debug prebuilts make_prepare kernel_module
+.PHONY:	obj all exall lib clean exclean exlib exlib_clean rebuild install objclean help usage  packet debug prebuilts make_prepare kernel_module
 #
 #
 help:usage
@@ -123,17 +123,23 @@ lib:
 	done
 		
 all: 
-	@for i in $(ZPLEX_DIR); do	\
-		$(MAKE) -C $$i all || exit "$$?"; 	\
-		$(MAKE) -C $$i install || exit "$$?"; 	\
-	done
 	@for i in $(ZPLPRODS); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
 	done
 
+exall: 
+	@for i in $(ZPLEX_DIR); do	\
+		$(MAKE) -C $$i all || exit "$$?"; 	\
+		$(MAKE) -C $$i install || exit "$$?"; 	\
+	done
+
+exclean: 
+	@for i in $(ZPLEX_DIR); do	\
+		$(MAKE) -C $$i clean || exit "$$?"; 	\
+		$(MAKE) -C $$i distclean || exit "$$?"; 	\
+	done	
 #
-LEXLIBDIR=${EXLIBDIR}
-ifeq ($(LEXLIBDIR),)
+
 exlib:
 	@for i in $(ZPLEX_DIR); do	\
 		$(MAKE) -C $$i all || exit "$$?"; 	\
@@ -142,16 +148,9 @@ exlib:
 
 exlib_clean:
 	@for i in $(ZPLEX_DIR); do	\
-		$(MAKE) -C $$i clean; 	\
+		$(MAKE) -C $$i clean || exit "$$?"; 	\
+		$(MAKE) -C $$i distclean || exit "$$?"; 	\
 	done
-else
-exlib:
-	$(MAKE) -C $(EXTERNSION_BASE_ROOT)/${LEXLIBDIR} all || exit "$$?"; 
-	$(MAKE) -C $(EXTERNSION_BASE_ROOT)/${LEXLIBDIR} install || exit "$$?"; 
-
-exlib_clean:
-	$(MAKE) -C $(EXTERNSION_BASE_ROOT)/${LEXLIBDIR} clean;
-endif
 
 
 debug:

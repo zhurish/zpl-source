@@ -429,7 +429,7 @@ funcname_thread_add_read_write(zpl_uint32 dir, struct thread_master *m,
 
 	if (FD_ISSET(ipstack_fd(fd), fdset))
 	{
-		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", ipstack_fd(fd));
+		zlog(MODULE_LIB, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir = THREAD_READ) ? "read" : "write", ipstack_fd(fd));
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
 		return NULL;
@@ -626,7 +626,7 @@ void thread_cancel(struct thread *thread)
 		queue = thread->master->background;
 		break;
 	default:
-		zlog_debug(MODULE_DEFAULT, "thread->type=%d", thread->type);
+		zlog_debug(MODULE_LIB, "thread->type=%d", thread->type);
 		if (thread->master->mutex)
 			os_mutex_unlock(thread->master->mutex);
 		return;
@@ -856,7 +856,7 @@ thread_fetch(struct thread_master *m)
 		if (m->bquit)
 		{
 			m->bquit = zpl_false;
-			zlog_debug(MODULE_DEFAULT, "thread fetch (%s) ret null and quit", os_task_self_name_alisa());
+			zlog_debug(MODULE_LIB, "thread fetch (%s) ret null and quit", os_task_self_name_alisa());
 			if (m->mutex)
 				os_mutex_unlock(m->mutex);
 			return NULL;
@@ -912,7 +912,7 @@ thread_fetch(struct thread_master *m)
 		{
 			if (ipstack_errno == IPSTACK_ERRNO_EINTR || ipstack_errno == IPSTACK_ERRNO_EAGAIN/*  || m->max_fd == 0*/)
 				continue; /* signal received - process it */
-			zlog_warn(MODULE_DEFAULT, "select() error: %s", ipstack_strerror(ipstack_errno));
+			zlog_warn(MODULE_LIB, "select() error: %s", ipstack_strerror(ipstack_errno));
 
 			return NULL;
 		}
@@ -1099,7 +1099,7 @@ void thread_call(struct thread *thread)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-		/*		zlog_warn(MODULE_DEFAULT,
+		/*		zlog_warn(MODULE_LIB,
 						"SLOW THREAD: task %s (%lx) ran for %lums (cpu time %lums)",
 						thread->funcname, (zpl_ulong) thread->func, realtime / 1000,
 						cputime / 1000);*/

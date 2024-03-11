@@ -128,6 +128,7 @@ typedef struct web_app_s
 	char *documents;
 	char *web_route;
 	char *web_auth;
+	char *cfgBaseDir;
 
 	//页面文件
 	char *web_login;

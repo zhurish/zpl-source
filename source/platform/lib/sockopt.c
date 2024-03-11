@@ -34,7 +34,7 @@ setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)
   
   if ( (ret = ipstack_setsockopt (sock, IPSTACK_SOL_SOCKET, IPSTACK_SO_RCVBUF, (zpl_char *)
                           &size, sizeof (zpl_uint32))) < 0)
-    zlog_err (MODULE_DEFAULT, "fd %d: can't setsockopt IPSTACK_SO_RCVBUF to %d: %s",
+    zlog_err (MODULE_LIB, "fd %d: can't setsockopt IPSTACK_SO_RCVBUF to %d: %s",
 	      ipstack_fd(sock),size,ipstack_strerror(ipstack_errno));
 
   return ret;
@@ -47,7 +47,7 @@ setsockopt_so_sendbuf (const zpl_socket_t sock, zpl_uint32 size)
     (zpl_char *)&size, sizeof (zpl_uint32));
   
   if (ret < 0)
-    zlog_err (MODULE_DEFAULT, "fd %d: can't setsockopt IPSTACK_SO_SNDBUF to %d: %s",
+    zlog_err (MODULE_LIB, "fd %d: can't setsockopt IPSTACK_SO_SNDBUF to %d: %s",
       ipstack_fd(sock), size, ipstack_strerror (ipstack_errno));
 
   return ret;
@@ -62,7 +62,7 @@ getsockopt_so_sendbuf (const zpl_socket_t sock)
     (zpl_char *)&optval, &optlen);
   if (ret < 0)
   {
-    zlog_err (MODULE_DEFAULT, "fd %d: can't getsockopt IPSTACK_SO_SNDBUF: %d (%s)",
+    zlog_err (MODULE_LIB, "fd %d: can't getsockopt IPSTACK_SO_SNDBUF: %d (%s)",
       ipstack_fd(sock), ipstack_errno, ipstack_strerror (ipstack_errno));
     return ret;
   }
@@ -94,11 +94,11 @@ setsockopt_ipv6_pktinfo (zpl_socket_t sock, zpl_uint32 val)
 #ifdef IPSTACK_IPV6_RECVPKTINFO		/*2292bis-01*/
   ret = ipstack_setsockopt(sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_RECVPKTINFO, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_RECVPKTINFO : %s", ipstack_strerror (ipstack_errno));
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_RECVPKTINFO : %s", ipstack_strerror (ipstack_errno));
 #else	/*RFC2292*/
   ret = ipstack_setsockopt(sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_PKTINFO, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_PKTINFO : %s", ipstack_strerror (ipstack_errno));
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_PKTINFO : %s", ipstack_strerror (ipstack_errno));
 #endif /* INIA_IPV6 */
   return ret;
 }
@@ -115,7 +115,7 @@ setsockopt_ipv6_checksum (zpl_socket_t sock, zpl_uint32 val)
   ret = ipstack_setsockopt(sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_CHECKSUM, &val, sizeof(val));
 #endif /* GNU_LINUX */
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_CHECKSUM");
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_CHECKSUM");
   return ret;
 }
 
@@ -127,7 +127,7 @@ setsockopt_ipv6_multicast_hops (zpl_socket_t sock, zpl_uint32 val)
 
   ret = ipstack_setsockopt(sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_MULTICAST_HOPS, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_MULTICAST_HOPS");
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_MULTICAST_HOPS");
   return ret;
 }
 
@@ -139,7 +139,7 @@ setsockopt_ipv6_unicast_hops (zpl_socket_t sock, zpl_uint32 val)
 
   ret = ipstack_setsockopt(sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_UNICAST_HOPS, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_UNICAST_HOPS");
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_UNICAST_HOPS");
   return ret;
 }
 
@@ -151,11 +151,11 @@ setsockopt_ipv6_hoplimit (zpl_socket_t sock, zpl_uint32 val)
 #ifdef IPSTACK_IPV6_RECVHOPLIMIT	/*2292bis-01*/
   ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_RECVHOPLIMIT, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_RECVHOPLIMIT");
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_RECVHOPLIMIT");
 #else	/*RFC2292*/
   ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_HOPLIMIT, &val, sizeof(val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_HOPLIMIT");
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_HOPLIMIT");
 #endif
   return ret;
 }
@@ -169,7 +169,7 @@ setsockopt_ipv6_multicast_loop (zpl_socket_t sock, zpl_uint32 val)
   ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_MULTICAST_LOOP, &val,
 		    sizeof (val));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "can't setsockopt IPSTACK_IPV6_MULTICAST_LOOP");
+    zlog_warn (MODULE_LIB, "can't setsockopt IPSTACK_IPV6_MULTICAST_LOOP");
   return ret;
 }
 
@@ -191,7 +191,7 @@ setsockopt_ipv6_tclass(zpl_socket_t sock, zpl_uint32 tclass)
 #ifdef IPSTACK_IPV6_TCLASS /* RFC3542 */
   ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_TCLASS, &tclass, sizeof (tclass));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "Can't set IPSTACK_IPV6_TCLASS option for fd %d to %#x: %s",
+    zlog_warn (MODULE_LIB, "Can't set IPSTACK_IPV6_TCLASS option for fd %d to %#x: %s",
 	       ipstack_fd(sock), tclass, ipstack_strerror(ipstack_errno));
 #endif
   return ret;
@@ -263,7 +263,7 @@ setsockopt_ipv4_multicast(zpl_socket_t sock,
     {
       /* see above: handle possible problem when interface comes back up */
       zpl_char buf[1][IPSTACK_INET_ADDRSTRLEN];
-      zlog_info(MODULE_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
+      zlog_info(MODULE_LIB, "setsockopt_ipv4_multicast attempting to drop and "
                 "re-add (fd %d, mcast %s, ifindex %u)",
                 ipstack_fd(sock),
                 ipstack_inet_ntop(IPSTACK_AF_INET, &mreqn.imr_multiaddr,
@@ -300,7 +300,7 @@ setsockopt_ipv4_multicast(zpl_socket_t sock,
     {
       /* see above: handle possible problem when interface comes back up */
       zpl_char buf[1][IPSTACK_INET_ADDRSTRLEN];
-      zlog_info(MODULE_DEFAULT, "setsockopt_ipv4_multicast attempting to drop and "
+      zlog_info(MODULE_LIB, "setsockopt_ipv4_multicast attempting to drop and "
                 "re-add (fd %d, mcast %s, ifindex %u)",
                 ipstack_fd(sock),
                 ipstack_inet_ntop(IPSTACK_AF_INET, &mreq.imr_multiaddr,
@@ -383,11 +383,11 @@ setsockopt_ipv4_ifindex (zpl_socket_t sock, ifindex_t val)
 
 #if defined (IP_PKTINFO)
   if ((ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IP, IPSTACK_IP_PKTINFO, &val, sizeof (val))) < 0)
-    zlog_warn (MODULE_DEFAULT, "Can't set IP_PKTINFO option for fd %d to %d: %s",
+    zlog_warn (MODULE_LIB, "Can't set IP_PKTINFO option for fd %d to %d: %s",
 	       ipstack_fd(sock),val,ipstack_strerror(ipstack_errno));
 #elif defined (IP_RECVIF)
   if ((ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IP, IPSTACK_IP_RECVIF, &val, sizeof (val))) < 0)
-    zlog_warn (MODULE_DEFAULT, "Can't set IP_RECVIF option for fd %d to %d: %s",
+    zlog_warn (MODULE_LIB, "Can't set IP_RECVIF option for fd %d to %d: %s",
 	       ipstack_fd(sock),val,ipstack_strerror(ipstack_errno));
 #else
 #warning "Neither IP_PKTINFO nor IP_RECVIF is available."
@@ -406,7 +406,7 @@ setsockopt_ipv4_tos(zpl_socket_t sock, zpl_uint32 tos)
 
   ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IP, IPSTACK_IP_TOS, &tos, sizeof (tos));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "Can't set IP_TOS option for fd %d to %#x: %s",
+    zlog_warn (MODULE_LIB, "Can't set IP_TOS option for fd %d to %#x: %s",
 	       ipstack_fd(sock), tos, ipstack_strerror(ipstack_errno));
   return ret;
 }
@@ -428,7 +428,7 @@ setsockopt_ifindex (zpl_family_t family, zpl_socket_t sock, ifindex_t val)
         break;
 #endif
       default:
-        zlog_warn (MODULE_DEFAULT, "setsockopt_ifindex: unknown address family %d", family);
+        zlog_warn (MODULE_LIB, "setsockopt_ifindex: unknown address family %d", family);
     }
   return ret;
 }
@@ -502,7 +502,7 @@ getsockopt_ipv4_ifindex (struct ipstack_msghdr *msgh)
   ifindex = 0;
 
 #endif /* IP_PKTINFO */ 
-  //zlog_debug(MODULE_DEFAULT, "kernel %s->%d",ifkernelindex2kernelifname(ifindex),ifindex);
+  //zlog_debug(MODULE_LIB, "kernel %s->%d",ifkernelindex2kernelifname(ifindex),ifindex);
   return ifkernel2ifindex(ifindex);
 }
 
@@ -521,7 +521,7 @@ getsockopt_ifindex (zpl_family_t family, struct ipstack_msghdr *msgh)
         break;
 #endif
       default:
-        zlog_warn (MODULE_DEFAULT, "getsockopt_ifindex: unknown address family %d", family);
+        zlog_warn (MODULE_LIB, "getsockopt_ifindex: unknown address family %d", family);
         return 0;
     }
 }
@@ -533,7 +533,7 @@ setsockopt_ipv4_multicast_loop(zpl_socket_t sock, zpl_uint32 opt)
   zpl_uint32 optval = opt;
   ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IP, IPSTACK_IP_MULTICAST_LOOP, &optval, sizeof (optval));
   if (ret < 0)
-    zlog_warn (MODULE_DEFAULT, "Can't set IP_MULTICAST_LOOP option for fd %d to %#x: %s",
+    zlog_warn (MODULE_LIB, "Can't set IP_MULTICAST_LOOP option for fd %d to %#x: %s",
 	       ipstack_fd(sock), opt, ipstack_strerror(ipstack_errno));
   return ret;
 }
@@ -672,7 +672,7 @@ sockopt_tcp_signature (zpl_socket_t sock, union sockunion *su, const char *passw
       if (IPSTACK_ERRNO_ENOENT == ipstack_errno)
 	ret = 0;
       else
-	zlog_err (MODULE_DEFAULT, "sockopt_tcp_signature: setsockopt(%d): %s",
+	zlog_err (MODULE_LIB, "sockopt_tcp_signature: setsockopt(%d): %s",
 		  ipstack_fd(sock), ipstack_strerror(ipstack_errno));
     }
   return ret;
@@ -695,7 +695,7 @@ sockopt_reuseaddr (zpl_socket_t sock)
 		    (void *) &on, sizeof (on));
   if (ret < 0)
     {
-      zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't set sockopt IPSTACK_SO_REUSEADDR to socket %d", ipstack_fd(sock));
+      zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "can't set sockopt IPSTACK_SO_REUSEADDR to socket %d", ipstack_fd(sock));
       return -1;
     }
   return 0;
@@ -712,7 +712,7 @@ sockopt_reuseport (zpl_socket_t sock)
 		    (void *) &on, sizeof (on));
   if (ret < 0)
     {
-      zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't set sockopt IPSTACK_SO_REUSEPORT to socket %d", ipstack_fd(sock));
+      zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "can't set sockopt IPSTACK_SO_REUSEPORT to socket %d", ipstack_fd(sock));
       return -1;
     }
   return 0;
@@ -764,14 +764,14 @@ int sockopt_bindtodevice(zpl_socket_t fd, const char *iface)
 	 * But just in case it's not true on some obscure arch... */
 	r = ipstack_setsockopt(fd, IPSTACK_SOL_SOCKET, IPSTACK_SO_BINDTODEVICE, &ifr, sizeof(ifr));
 	if (r)
-		zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't bind to interface %s", iface);
+		zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "can't bind to interface %s", iface);
 	return r;
 }
 #else
 int sockopt_bindtodevice(zpl_socket_t fd,
 		const char *iface)
 {
-	zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "IPSTACK_SO_BINDTODEVICE is not supported on this system");
+	zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "IPSTACK_SO_BINDTODEVICE is not supported on this system");
 	return -1;
 }
 #endif
@@ -788,7 +788,7 @@ sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl)
 			(void *) &ttl, sizeof (int));
       if (ret < 0)
 	{
-	  zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't set sockopt IP_TTL %d to socket %d", ttl, ipstack_fd(sock));
+	  zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "can't set sockopt IP_TTL %d to socket %d", ttl, ipstack_fd(sock));
 	  return -1;
 	}
       return 0;
@@ -801,7 +801,7 @@ sockopt_ttl (zpl_family_t family, zpl_socket_t sock, int ttl)
 			(void *) &ttl, sizeof (int));
       if (ret < 0)
 	{
-	  zlog (MODULE_DEFAULT,  ZLOG_LEVEL_WARNING, "can't set sockopt IPSTACK_IPV6_UNICAST_HOPS %d to socket %d",
+	  zlog (MODULE_LIB,  ZLOG_LEVEL_WARNING, "can't set sockopt IPSTACK_IPV6_UNICAST_HOPS %d to socket %d",
 		    ttl, ipstack_fd(sock));
 	  return -1;
 	}
@@ -829,7 +829,7 @@ sockopt_minttl (zpl_family_t family, zpl_socket_t sock, int minttl)
     {
       int ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IP, IPSTACK_IP_MINTTL, &minttl, sizeof(minttl));
       if (ret < 0)
-	  zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING,
+	  zlog (MODULE_LIB, ZLOG_LEVEL_WARNING,
 		"can't set sockopt IP_MINTTL to %d on socket %d: %s",
 		minttl, ipstack_fd(sock), ipstack_strerror (ipstack_errno));
       return ret;
@@ -840,7 +840,7 @@ sockopt_minttl (zpl_family_t family, zpl_socket_t sock, int minttl)
     {
       int ret = ipstack_setsockopt (sock, IPSTACK_IPPROTO_IPV6, IPSTACK_IPV6_MINHOPCNT, &minttl, sizeof(minttl));
       if (ret < 0)
-	  zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING,
+	  zlog (MODULE_LIB, ZLOG_LEVEL_WARNING,
 		"can't set sockopt IPV6_MINHOPCNT to %d on socket %d: %s",
 		minttl, ipstack_fd(sock), ipstack_strerror (ipstack_errno));
       return ret;
@@ -864,7 +864,7 @@ sockopt_v6only (zpl_family_t family, zpl_socket_t sock)
 			(void *) &on, sizeof (int));
       if (ret < 0)
 	{
-	  zlog (MODULE_DEFAULT,  ZLOG_LEVEL_WARNING, "can't set sockopt IPV6_V6ONLY "
+	  zlog (MODULE_LIB,  ZLOG_LEVEL_WARNING, "can't set sockopt IPV6_V6ONLY "
 		    "to socket %d", ipstack_fd(sock));
 	  return -1;
 	}

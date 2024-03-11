@@ -2437,7 +2437,7 @@ PUBLIC cchar *websGetDir(Webs *wp);
     @stability Stable
  */
 PUBLIC char *websGetDocuments(void);
-
+PUBLIC char *websGetCfgBaseDir(void);
 /**
     Get the request EOF status
     @description The request EOF status is set to true when all the request body (POST|PUT) data has been received.
@@ -2710,7 +2710,7 @@ PUBLIC int websRuntimeOpen(void);
     @ingroup Webs
     @stability Stable
  */
-PUBLIC int websOpen(cchar *documents, cchar *routes);
+PUBLIC int websOpen(cchar *cfgdir, cchar *documents, cchar *routes);
 
 /**
     Close the O/S dependent code.
@@ -2955,7 +2955,7 @@ PUBLIC int websStatFile(cchar *path, WebsFileInfo *sbuf);
     @ingroup Webs
     @stability Stable
  */
-PUBLIC int websServer(cchar *endpoint, cchar *documents);
+PUBLIC int websServer(cchar *cfgdir, cchar *endpoint, cchar *documents);
 
 /**
     Service I/O events until finished
@@ -3023,7 +3023,7 @@ PUBLIC void websSetDebug(int on);
     @stability Stable
  */
 PUBLIC void websSetDocuments(cchar *dir);
-
+PUBLIC void websSetCfgBaseDir(cchar *dir);
 /**
     Create the CGI environment variables for the current request.
     @param wp Webs request object
@@ -4210,6 +4210,8 @@ PUBLIC int websSetSessionVar(Webs *wp, cchar *name, cchar *value);
     typedef WebsRomIndex websRomIndexType;
 #endif
 #endif
+
+PUBLIC cchar * websFilePathFmt(cchar *format, ...);
 
 #if ME_CUSTOMIZE
  #include "customize.h"

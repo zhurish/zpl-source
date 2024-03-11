@@ -194,7 +194,7 @@ static int web_app_init(web_app_t *web)
 {
 	websUploadSetDir(WEB_UPLOAD_BASE);
 
-	if (websOpen(web->documents, web->web_route) < 0)
+	if (websOpen(REAL_SYSWEBDIR, web->documents, web->web_route) < 0)
 	{
 		zlog_err(MODULE_WEB, "Cannot initialize server. Exiting.");
 		return -1;

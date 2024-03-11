@@ -360,12 +360,12 @@ static int vtyrl_stdio_timeout(void *p)
 
 static int vtyrl_stdio_task(void *p)
 {
-	zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task 1");
+	zlog_warn(MODULE_SHELL, "==== vtyrl_stdio_task 1");
 	while(vtyrl_stdio.status == 0)
 	{
 		os_sleep(1);
 	} 
-	zlog_warn(MODULE_LIB, "====  vtyrl_stdio_task 2");
+	zlog_warn(MODULE_SHELL, "====  vtyrl_stdio_task 2");
 	while (vtyrl_stdio.rl_exit && OS_TASK_TRUE())
 	{
 		vty_hello(vtyrl_stdio.vty);
@@ -421,7 +421,7 @@ static int vty_readline_init(void)
 	rl_attempted_completion_function = (rl_completion_func_t *)vtyrl_stdio_new_completion;
 	vty_readline_attribute();
 	signal (SIGWINCH, sigwinch_handler);
-	zlog_warn(MODULE_LIB, "==== vty_readline_init");
+	zlog_warn(MODULE_SHELL, "==== vty_readline_init");
 	return 0;
 }
 
@@ -437,7 +437,7 @@ int vtyrl_stdio_init(void)
 		vtyrl_stdio.vty->login_type = VTY_LOGIN_VTYSH_STDIO;
 		vtyrl_stdio.vty->vty_output = vtyrl_stdio_vty_output;
 		vtyrl_stdio.vty->p_output = stdout;
-		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_init");
+		zlog_warn(MODULE_SHELL, "==== vtyrl_stdio_init");
 		vtyrl_stdio.init = 1;
 		return vty_readline_init();
 	}
@@ -472,7 +472,7 @@ int vtyrl_stdio_task_init(void)
 	if(vtyrl_stdio.init)
 	{
 		vtyrl_stdio.rl_exit = 1;
-		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_init");
+		zlog_warn(MODULE_SHELL, "==== vtyrl_stdio_task_init");
 		if (vtyrl_stdio.rl_taskid == 0)
 			vtyrl_stdio.rl_taskid = os_task_create("stdioTask", OS_TASK_DEFAULT_PRIORITY,
 														0, vtyrl_stdio_task, &vtyrl_stdio, OS_TASK_DEFAULT_STACK);
@@ -486,7 +486,7 @@ int vtyrl_stdio_task_exit(void)
 	if(vtyrl_stdio.init)
 	{
 		vtyrl_stdio.rl_exit = 0;
-		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_task_exit");
+		zlog_warn(MODULE_SHELL, "==== vtyrl_stdio_task_exit");
 		vtyrl_stdio.rl_taskid = 0;
 	}
 	return OK;
@@ -497,7 +497,7 @@ int vtyrl_stdio_start(zpl_bool s)
 	if(vtyrl_stdio.init)
 	{
 		vtyrl_stdio.status = s;
-		zlog_warn(MODULE_LIB, "==== vtyrl_stdio_start");
+		zlog_warn(MODULE_SHELL, "==== vtyrl_stdio_start");
 		vtyrl_stdio_task_init();
 	}
 	return OK;

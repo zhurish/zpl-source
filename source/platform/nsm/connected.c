@@ -214,7 +214,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	struct connected *ifc;
 	if (!addr)
 	{
-		zlog_warn(MODULE_DEFAULT, "warning: add ip address is NULL on interface %s ",
+		zlog_warn(MODULE_NSM, "warning: add ip address is NULL on interface %s ",
 				  ifp->name);
 		return;
 	}
@@ -251,7 +251,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 		if (CONNECTED_PEER(ifc))
 		{
 			if (IPV4_ADDR_SAME(addr, broad))
-				zlog_warn(MODULE_DEFAULT, "warning: interface %s has same local and peer "
+				zlog_warn(MODULE_NSM, "warning: interface %s has same local and peer "
 									"address %s, routing protocols may malfunction",
 						  ifp->name, ipstack_inet_ntoa(*addr));
 		}
@@ -265,7 +265,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 				memset(buf, 0, sizeof(buf));
 				snprintf(buf, sizeof(buf), "%s", ipstack_inet_ntoa(*broad));
 
-				zlog_warn(MODULE_DEFAULT, "warning: interface %s broadcast addr %s/%d != "
+				zlog_warn(MODULE_NSM, "warning: interface %s broadcast addr %s/%d != "
 									"calculated %s, routing protocols may malfunction",
 						  ifp->name,
 						  buf,
@@ -278,7 +278,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	{
 		if (CHECK_FLAG(ifc->flags, IF_IFA_PEER))
 		{
-			zlog_warn(MODULE_DEFAULT, "warning: %s called for interface %s "
+			zlog_warn(MODULE_NSM, "warning: %s called for interface %s "
 								"with peer flag set, but no peer address supplied",
 					  __func__, ifp->name);
 			UNSET_FLAG(ifc->flags, IF_IFA_PEER);
@@ -286,7 +286,7 @@ void connected_add_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 
 		/* no broadcast or destination address was supplied */
 		if ((prefixlen == IPV4_MAX_PREFIXLEN) && if_is_pointopoint(ifp))
-			zlog_warn(MODULE_DEFAULT, "warning: PtP interface %s with addr %s/%d needs a "
+			zlog_warn(MODULE_NSM, "warning: PtP interface %s with addr %s/%d needs a "
 								"peer address",
 					  ifp->name, ipstack_inet_ntoa(*addr), prefixlen);
 	}
@@ -314,7 +314,7 @@ void connected_delete_ipv4(struct interface *ifp, zpl_uint32 flags, struct ipsta
 	struct connected *ifc;
 	if (!addr)
 	{
-		zlog_warn(MODULE_DEFAULT, "warning: del ip address is NULL on interface %s ",
+		zlog_warn(MODULE_NSM, "warning: del ip address is NULL on interface %s ",
 				  ifp->name);
 		return;
 	}
@@ -342,7 +342,7 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	struct connected *ifc;
 	if (!addr)
 	{
-		zlog_warn(MODULE_DEFAULT, "warning: add ipv6 address is NULL on interface %s ",
+		zlog_warn(MODULE_NSM, "warning: add ipv6 address is NULL on interface %s ",
 				  ifp->name);
 		return;
 	}
@@ -370,7 +370,7 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	if (broad)
 	{
 		if (IPSTACK_IN6_IS_ADDR_UNSPECIFIED(broad))
-			zlog_warn(MODULE_DEFAULT, "warning: %s called for interface %s with unspecified "
+			zlog_warn(MODULE_NSM, "warning: %s called for interface %s with unspecified "
 								"destination address; ignoring!",
 					  __func__, ifp->name);
 		else
@@ -384,7 +384,7 @@ void connected_add_ipv6(struct interface *ifp, zpl_uint32 flags, struct ipstack_
 	}
 	if (CHECK_FLAG(ifc->flags, IF_IFA_PEER) && !ifc->destination)
 	{
-		zlog_warn(MODULE_DEFAULT, "warning: %s called for interface %s "
+		zlog_warn(MODULE_NSM, "warning: %s called for interface %s "
 							"with peer flag set, but no peer address supplied",
 				  __func__,
 				  ifp->name);
@@ -418,7 +418,7 @@ void connected_delete_ipv6(struct interface *ifp, struct ipstack_in6_addr *addre
 	struct connected *ifc;
 	if (!address)
 	{
-		zlog_warn(MODULE_DEFAULT, "warning: delete ipv6 address is NULL on interface %s ",
+		zlog_warn(MODULE_NSM, "warning: delete ipv6 address is NULL on interface %s ",
 				  ifp->name);
 		return;
 	}

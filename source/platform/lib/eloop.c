@@ -399,7 +399,7 @@ funcname_eloop_add_read_write(zpl_uint32 dir, struct eloop_master *m,
 
 	if (IPSTACK_FD_ISSET(ipstack_fd(fd), fdset))
 	{
-		zlog(MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir =
+		zlog(MODULE_LIB, ZLOG_LEVEL_WARNING, "There is already %s fd [%d]", (dir =
 				ELOOP_READ) ? "read" : "write", fd);
 		if (m->mutex)
 			os_mutex_unlock(m->mutex);
@@ -620,7 +620,7 @@ void eloop_cancel(struct eloop *eloop)
 		//	list = eloop->master->background;
 		break;
 	default:
-		zlog_debug(MODULE_DEFAULT, "eloop->type=%d", eloop->type);
+		zlog_debug(MODULE_LIB, "eloop->type=%d", eloop->type);
 		if (eloop->master && eloop->master->mutex)
 			os_mutex_unlock(eloop->master->mutex);
 		return;
@@ -858,7 +858,7 @@ eloop_fetch(struct eloop_master *m)
 		if(m->bquit)
 		{
 			m->bquit = zpl_false;
-			zlog_debug(MODULE_DEFAULT, "eloop fetch (%s) ret null and quit", os_task_self_name_alisa());
+			zlog_debug(MODULE_LIB, "eloop fetch (%s) ret null and quit", os_task_self_name_alisa());
 			if (m->mutex)
 				os_mutex_unlock(m->mutex);
 			return NULL;
@@ -915,7 +915,7 @@ eloop_fetch(struct eloop_master *m)
 			if (ipstack_errno == IPSTACK_ERRNO_EINTR || ipstack_errno == IPSTACK_ERRNO_EAGAIN/*  || m->max_fd == 0*/)
 				continue; /* signal received - process it */
 			printf("select(max_fd=%d) error: %s\r\n", m->max_fd, ipstack_strerror(ipstack_errno));
-			zlog_warn(MODULE_DEFAULT, "select() error: %s", ipstack_strerror(ipstack_errno));
+			zlog_warn(MODULE_LIB, "select() error: %s", ipstack_strerror(ipstack_errno));
 			return NULL;
 		}
 		if (m->mutex)
@@ -1103,7 +1103,7 @@ void eloop_call(struct eloop *eloop)
 		 * Whinge about it now, so we're aware this is yet another task
 		 * to fix.
 		 */
-/*		zlog_warn(MODULE_DEFAULT,
+/*		zlog_warn(MODULE_LIB,
 				"SLOW ELOOP: task %s (%lx) ran for %lums (cpu time %lums)",
 				eloop->funcname, (zpl_ulong) eloop->func, realtime / 1000,
 				cputime / 1000);*/

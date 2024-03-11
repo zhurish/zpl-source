@@ -567,7 +567,7 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 
 	if (if_ifname_setup(ifp, name, namelen) != OK)
 	{
-		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected  %u!", name, namelen);
+		zlog_err(MODULE_LIB, "if_create(%s): corruption detected  %u!", name, namelen);
 
 		XFREE(MTYPE_IF, ifp);
 		return NULL;
@@ -596,11 +596,11 @@ if_create_vrf_dynamic(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
 	else
-		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
+		zlog_err(MODULE_LIB, "if_create(%s): corruption detected -- interface with this "
 						   "name exists already in VRF %u!",
 				 ifp->name, vrf_id);
 
-	zlog_debug(MODULE_DEFAULT, "================if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
+	zlog_debug(MODULE_LIB, "================if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
 
 	if (_zpl_if_master_lst.if_master_add_cb)
@@ -655,11 +655,11 @@ if_create_vrf(const char *name, zpl_uint32 namelen, vrf_id_t vrf_id)
 	if (if_lookup_by_name_vrf(ifp->name, vrf_id) == NULL)
 		listnode_add_sort(intf_list, ifp);
 	else
-		zlog_err(MODULE_DEFAULT, "if_create(%s): corruption detected -- interface with this "
+		zlog_err(MODULE_LIB, "if_create(%s): corruption detected -- interface with this "
 						   "name exists already in VRF %u!",
 				 ifp->name, vrf_id);
 
-	zlog_debug(MODULE_DEFAULT, "if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
+	zlog_debug(MODULE_LIB, "if_create(%s): if_type  %x ifindex  0x%x uspv  %x id %d", 
 		ifp->name, ifp->if_type, ifp->ifindex, ifp->uspv, IF_IFINDEX_ID_GET(ifp->ifindex));
 
 	if (_zpl_if_master_lst.if_master_add_cb)
@@ -1594,7 +1594,7 @@ connected_log(struct connected *connected, zpl_char *str)
 		strncat(logbuf, ipstack_inet_ntop(p->family, &p->u.prefix, buf, BUFSIZ),
 				BUFSIZ - strlen(logbuf));
 	}
-	zlog_info(MODULE_DEFAULT, "%s", logbuf);
+	zlog_info(MODULE_LIB, "%s", logbuf);
 }
 
 /* Printout flag information into log */
@@ -1660,7 +1660,7 @@ static void if_dump(const struct interface *ifp)
 	struct connected *c __attribute__((unused));
 
 	for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, c))
-		zlog_info(MODULE_DEFAULT, "Interface %s vrf %u index %d metric %d mtu %d "
+		zlog_info(MODULE_LIB, "Interface %s vrf %u index %d metric %d mtu %d "
 #ifdef ZPL_BUILD_IPV6
 							"mtu6 %d "
 #endif /* ZPL_BUILD_IPV6 */
@@ -1763,7 +1763,7 @@ if_link_type_str(enum if_link_type llt)
 		llts(IF_LLT_MODEM, "Modem");
 		llts(IF_LLT_WIRELESS, "Wireless");
 	default:
-		zlog_warn(MODULE_DEFAULT, "Unknown value %d", llt);
+		zlog_warn(MODULE_LIB, "Unknown value %d", llt);
 		return "Unknown type!";
 #undef llts
 	}

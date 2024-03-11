@@ -218,13 +218,13 @@ static int ipcbc_serv_recv_ack_async(struct ipcbc_serv *client, struct ipcbc_res
     already = ipstack_read_timeout(ipcbc_server.ack_sock[0], recvtmp + nbyte, 2 - nbyte, timeoutval);
     if (already == OS_TIMEOUT)
     {
-      zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+      zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
       return OS_TIMEOUT;
     }
     else if (already == ERROR)
     {
       client->recv_faild_cnt++;
-      zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
+      zlog_err(MODULE_LIB, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
       return OS_CLOSE;
     }
     if (already != 2)
@@ -235,7 +235,7 @@ static int ipcbc_serv_recv_ack_async(struct ipcbc_serv *client, struct ipcbc_res
       timeoutval -= (current_timeval - start_timeval);
       if (timeoutval <= 0)
       {
-        zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+        zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
         return OS_TIMEOUT;
       }
       continue;

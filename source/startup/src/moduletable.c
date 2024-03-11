@@ -2,13 +2,9 @@
 #include "module.h"
 #include "log.h"
  
-extern struct module_list module_list_default;
 extern struct module_list module_list_lib;
 extern struct module_list module_list_osal;
-extern struct module_list module_list_timer;
-extern struct module_list module_list_job;
-extern struct module_list module_list_console;
-extern struct module_list module_list_telnet;
+extern struct module_list module_list_shell;
 extern struct module_list module_list_standby;
 extern struct module_list module_list_rib;
 extern struct module_list module_list_nsmdhcp;
@@ -21,8 +17,7 @@ extern struct module_list module_list_modem;
 extern struct module_list module_list_mqtt;
 extern struct module_list module_list_webserver;
 extern struct module_list module_list_modbus;
-extern struct module_list module_list_sntpc;
-extern struct module_list module_list_sntps;
+extern struct module_list module_list_libssh;
 extern struct module_list module_list_utils;
 extern struct module_list module_list_sdk;
 extern struct module_list module_list_rtsp;
@@ -31,13 +26,9 @@ extern struct module_list module_list_medie_proxy;
 extern struct module_list module_list_pjsip;
  
 struct module_alllist module_lists_tbl[MODULE_MAX] = {
-  &module_list_default,
   &module_list_lib,
   &module_list_osal,
-  &module_list_timer,
-  &module_list_job,
-  &module_list_console,
-  &module_list_telnet,
+  &module_list_shell,
   &module_list_standby,
   &module_list_rib,
   &module_list_nsmdhcp,
@@ -50,8 +41,7 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_mqtt,
   &module_list_webserver,
   &module_list_modbus,
-  &module_list_sntpc,
-  &module_list_sntps,
+  &module_list_libssh,
   &module_list_utils,
   &module_list_sdk,
   &module_list_rtsp,

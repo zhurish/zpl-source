@@ -2722,6 +2722,17 @@ PUBLIC int fmtAlloc(char **sp, int n, cchar *format, ...)
 }
 #endif
 
+PUBLIC cchar * websFilePathFmt(cchar *format, ...)
+{
+    va_list     args;
+    static char tmppath[256];
+    memset(tmppath, 0, sizeof(tmppath));
+    va_start(args, format);
+    vsprintf(tmppath, format, args);
+    va_end(args);
+    web_trace(WEBS_NOTICE, "websFilePathFmt {%s}", tmppath);
+    return tmppath;
+}
 /*
     Copyright (c) Embedthis Software. All Rights Reserved.
     This software is distributed under commercial and open source licenses.

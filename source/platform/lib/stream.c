@@ -55,7 +55,7 @@
  * using stream_put..._at() functions.
  */
 #define STREAM_WARN_OFFSETS(S) \
-  zlog_warn (MODULE_DEFAULT, "&(struct stream): %p, size: %lu, getp: %lu, endp: %lu\n", \
+  zlog_warn (MODULE_LIB, "&(struct stream): %p, size: %lu, getp: %lu, endp: %lu\n", \
              (void *)(S), \
              (zpl_ulong) (S)->size, \
              (zpl_ulong) (S)->getp, \
@@ -71,7 +71,7 @@
 
 #define STREAM_BOUND_WARN(S, WHAT) \
   do { \
-    zlog_warn (MODULE_DEFAULT, "%s: Attempt to %s out of bounds", __func__, (WHAT)); \
+    zlog_warn (MODULE_LIB, "%s: Attempt to %s out of bounds", __func__, (WHAT)); \
     STREAM_WARN_OFFSETS(S); \
     assert (0); \
   } while (0)
@@ -81,7 +81,7 @@
   do { \
     if (((S)->endp + (Z)) > (S)->size) \
       { \
-        zlog_warn (MODULE_DEFAULT, "CHECK_SIZE: truncating requested size %lu\n", \
+        zlog_warn (MODULE_LIB, "CHECK_SIZE: truncating requested size %lu\n", \
                    (zpl_ulong) (Z)); \
         STREAM_WARN_OFFSETS(S); \
         (Z) = (S)->size - (S)->endp; \
@@ -98,7 +98,7 @@ stream_new (zpl_size_t size)
   
   if (size == 0)
     {
-      zlog_warn (MODULE_DEFAULT, "stream_new(): called with 0 size!");
+      zlog_warn (MODULE_LIB, "stream_new(): called with 0 size!");
       return NULL;
     }
   
@@ -841,7 +841,7 @@ stream_read_try(struct stream *s, zpl_socket_t fd, zpl_size_t size)
   /* Error: was it transient (return -2) or fatal (return -1)? */
   if (IPSTACK_ERRNO_RETRY(ipstack_errno))
     return -2;
-  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
+  zlog_warn(MODULE_LIB, "%s: read failed on fd %d: %s", __func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
   return -1;
 }
 
@@ -873,7 +873,7 @@ stream_recvfrom (struct stream *s, zpl_socket_t fd, zpl_size_t size, zpl_uint32 
   /* Error: was it transient (return -2) or fatal (return -1)? */
   if (IPSTACK_ERRNO_RETRY(ipstack_errno))
     return -2;
-  zlog_warn(MODULE_DEFAULT, "%s: read failed on fd %d: %s", __func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
+  zlog_warn(MODULE_LIB, "%s: read failed on fd %d: %s", __func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
   return -1;
 }
 

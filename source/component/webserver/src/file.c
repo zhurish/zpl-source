@@ -12,6 +12,7 @@
 
 static char   *websIndex = NULL;                   /* Default page name */
 static char   *websDocuments = NULL;               /* Default Web page directory */
+static char   *websCfgBaseDir = NULL;               /* Default Web page directory */
 
 /**************************** Forward Declarations ****************************/
 
@@ -200,6 +201,8 @@ static void fileClose(void)
     websIndex = NULL;
     wfree(websDocuments);
     websDocuments = NULL;
+	wfree(websCfgBaseDir);
+	websCfgBaseDir = NULL;
 }
 
 
@@ -222,6 +225,10 @@ PUBLIC cchar *websGetIndex(void)
 PUBLIC char *websGetDocuments(void)
 {
     return websDocuments;
+}
+PUBLIC char *websGetCfgBaseDir(void)
+{
+    return websCfgBaseDir;
 }
 
 
@@ -250,7 +257,14 @@ PUBLIC void websSetDocuments(cchar *dir)
     }
     websDocuments = sclone(dir);
 }
-
+PUBLIC void websSetCfgBaseDir(cchar *dir)
+{
+    web_assert(dir && *dir);
+    if (websCfgBaseDir) {
+        wfree(websCfgBaseDir);
+    }
+    websCfgBaseDir = sclone(dir);
+}
 /*
     Copyright (c) Embedthis Software. All Rights Reserved.
     This software is distributed under commercial and open source licenses.

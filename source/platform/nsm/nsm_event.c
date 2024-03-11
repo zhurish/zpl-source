@@ -63,7 +63,7 @@ static const struct nsm_event_desc_table command_types[] = {
 const char *
 zserv_command_string(zpl_uint32  command) {
 	if (command >= array_size(command_types)) {
-		zlog_err(MODULE_DEFAULT, "unknown zserv command type: %u", command);
+		zlog_err(MODULE_NSM, "unknown zserv command type: %u", command);
 		return unknown.string;
 	}
 	return command_types[command].string;

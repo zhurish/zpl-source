@@ -636,7 +636,7 @@ void udhcp_run_script(void *p, const char *name)
 	pid = child_process_create();
 	if(pid < 0)
 	{
-		  zlog_warn(MODULE_DEFAULT, "Can't create child process (%s), continuing", ipstack_strerror(ipstack_errno));
+		  zlog_warn(MODULE_DHCP, "Can't create child process (%s), continuing", ipstack_strerror(ipstack_errno));
 		  return ;
 	}
 	else if(pid == 0)

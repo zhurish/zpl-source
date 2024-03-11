@@ -11,21 +11,6 @@
 #include "module.h"
 #include "log.h"
 
-
-
-struct module_list module_list_default = 
-{ 
-	.module=MODULE_DEFAULT, 
-	.name="DEFAULT\0", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.taskid=0,
-	.flags=0,
-};
-
 struct module_list module_list_lib = 
 { 
 	.module=MODULE_LIB, 
@@ -43,31 +28,6 @@ struct module_list module_list_osal =
 { 
 	.module=MODULE_OSAL, 
 	.name="OSAL\0", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.taskid=0,
-	.flags=0,
-};
-
-struct module_list module_list_timer = 
-{ 
-	.module=MODULE_TIMER, 
-	.name="TIMER\0", 
-	.module_init=NULL, 
-	.module_exit=NULL, 
-	.module_task_init=NULL, 
-	.module_task_exit=NULL, 
-	.module_cmd_init=NULL, 
-	.taskid=0,
-	.flags=0,
-};
-struct module_list module_list_job = 
-{ 
-	.module=MODULE_JOB, 
-	.name="JOB\0", 
 	.module_init=NULL, 
 	.module_exit=NULL, 
 	.module_task_init=NULL, 

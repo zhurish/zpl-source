@@ -904,7 +904,7 @@ zpl_uint32 os_time_create_entry(os_time_type type, int (*time_entry)(void *),
 		os_time_interval_refresh();
 
 #ifdef OS_TIMER_DEBUG
-	zlog_debug(MODULE_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, func_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
+	zlog_debug(MODULE_OSAL, "%s '%s' time=%lu.%lu\r\n", __func__, func_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
 			(t->interrupt_timestamp)%TIMER_MSEC_MICRO);
 #endif
 		if(_global_timer.time_mutex)
@@ -967,7 +967,7 @@ int os_time_destroy(zpl_uint32 id)
 			t->lstid = OS_TIMER_UNUSE;
 		}
 		t->state = OS_TIMER_FALSE;
-		//zlog_debug(MODULE_DEFAULT, "=========================%s:%s", __func__, t->entry_name);
+		//zlog_debug(MODULE_OSAL, "=========================%s:%s", __func__, t->entry_name);
 		t->t_id = 0;
 		os_time_interval_refresh();
 		if(_global_timer.time_mutex)
@@ -1021,7 +1021,7 @@ int os_time_restart(zpl_uint32 id, zpl_uint32 msec)
 		t->msec = msec;
 		os_time_interval_update(t);
 #ifdef OS_TIMER_DEBUG
-		zlog_debug(MODULE_DEFAULT, "%s '%s' time=%lu.%lu\r\n", __func__, t->entry_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
+		zlog_debug(MODULE_OSAL, "%s '%s' time=%lu.%lu\r\n", __func__, t->entry_name, t->interrupt_timestamp/TIMER_MSEC_MICRO,
 			(t->interrupt_timestamp)%TIMER_MSEC_MICRO);
 #endif
 		t->state = OS_TIMER_TRUE;
@@ -1111,7 +1111,7 @@ static int os_time_task(void *p)
 
 					lstDelete (&tmplist, (NODE *)t);
 #ifdef OS_TIMER_DEBUG
-					zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
+					zlog_debug(MODULE_OSAL, "%s '%s'\r\n", __func__, t->entry_name);
 #endif
 					if(_global_timer.time_mutex)
 						os_mutex_unlock(_global_timer.time_mutex);
@@ -1130,7 +1130,7 @@ static int os_time_task(void *p)
 				{
 					lstDelete (&tmplist, (NODE *)t);
 #ifdef OS_TIMER_DEBUG
-					zlog_debug(MODULE_DEFAULT, "%s '%s'\r\n", __func__, t->entry_name);
+					zlog_debug(MODULE_OSAL, "%s '%s'\r\n", __func__, t->entry_name);
 #endif
 					if(_global_timer.time_mutex)
 						os_mutex_unlock(_global_timer.time_mutex);

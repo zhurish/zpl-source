@@ -38,7 +38,12 @@
 #ifdef ZPL_SERVICE_TRACEROUTE
 #include "tracerouteLib.h"
 #endif
-
+#ifdef ZPL_SERVICE_SNTPC
+#include "sntpcLib.h"
+#endif
+#ifdef ZPL_SERVICE_SNTPS
+#include "sntpsLib.h"
+#endif
 #include "tty_com.h"
 
 
@@ -664,6 +669,12 @@ int service_clicmd_init()
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &traceroute_start_len_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &traceroute_start_len_ttl_cmd);
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &traceroute_start_ttl_len_cmd);
+#endif
+#ifdef ZPL_SERVICE_SNTPC
+	cmd_sntpc_init();
+#endif
+#ifdef ZPL_SERVICE_SNTPS
+	cmd_sntps_init();
 #endif
 
 	install_element(ENABLE_NODE, CMD_CONFIG_LEVEL,  &load_image_xyz_modem_cmd);

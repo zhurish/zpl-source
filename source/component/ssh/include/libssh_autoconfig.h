@@ -154,7 +154,7 @@
 //#define HAVE_OPENSSL_EVP_KDF_CTX_NEW_ID 1
 
 /* Define to 1 if you have the `FIPS_mode' function. */
-#define HAVE_OPENSSL_FIPS_MODE 1
+//#define HAVE_OPENSSL_FIPS_MODE 0
 
 /* Define to 1 if you have the `EVP_DigestSign' function. */
 #define HAVE_OPENSSL_EVP_DIGESTSIGN 1

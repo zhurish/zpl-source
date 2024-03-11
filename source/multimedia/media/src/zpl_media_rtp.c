@@ -55,7 +55,6 @@ static zpl_mediartp_session_adap_t _rtp_media_adap_tbl[] =
 static int zpl_mediartp_session_adap_rtp_sendto(zpl_media_channel_t *chm, uint32_t codec, const uint8_t *buf, uint32_t len)
 {
     uint32_t i = 0;
-    //int ret = 0;
     if (chm)
     {
         for (i = 0; i < sizeof(_rtp_media_adap_tbl) / sizeof(_rtp_media_adap_tbl[0]); i++)
@@ -1108,5 +1107,3 @@ int zpl_mediartp_scheduler_stop(void)
     return OK;
 }
 
-
-// #endif /* ZPL_LIBORTP_MODULE */

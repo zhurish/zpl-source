@@ -168,7 +168,7 @@ static zpl_socket_t tftpd_socket_init(TFTPD_CONFIG *config)
 	      sizeof (struct ipstack_sockaddr_in)) == ERROR)
 	{
     	ipstack_close(serverSocket);
-    	zlog_debug(MODULE_UTILS,"%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
+    	zlog_debug(MODULE_SERVICE,"%s: could not ipstack_bind to TFTP port\n", tftpdErrStr);
     	return (serverSocket);
 	}
     while(1)
@@ -664,7 +664,7 @@ static int tftpdTask( struct eloop *thread)
 
 	if (value == ERROR)
 	{
-		zlog_err(MODULE_UTILS,"%s:  could not read on TFTP port\n", tftpdErrStr);
+		zlog_err(MODULE_SERVICE,"%s:  could not read on TFTP port\n", tftpdErrStr);
 	}
 	memset(&tftpdDesc, 0, sizeof(tftpdDesc));
 #if 0
@@ -682,7 +682,7 @@ static int tftpdTask( struct eloop *thread)
 	/*
 	 * Copy the name of the requested file into the TFTP_DESC
 	 */
-	zlog_err(MODULE_UTILS,"TFTP Server: request: %s", requestBuffer.th.request);
+	zlog_err(MODULE_SERVICE,"TFTP Server: request: %s", requestBuffer.th.request);
 
 	if (tftpdRequestDecode(&requestBuffer, &opCode, (char *) tftpdDesc.fileName, (char *) tftpdDesc.mode, &tftpdDesc.blksize, &tftpdDesc.tsize)
 			== ERROR)
@@ -695,7 +695,7 @@ static int tftpdTask( struct eloop *thread)
 
 		return ERROR;
 	}
-zlog_err(MODULE_UTILS,"TFTP Server: request mode:%s blksize:%d tsize: %d", tftpdDesc.mode, tftpdDesc.blksize, tftpdDesc.tsize);
+zlog_err(MODULE_SERVICE,"TFTP Server: request mode:%s blksize:%d tsize: %d", tftpdDesc.mode, tftpdDesc.blksize, tftpdDesc.tsize);
 	if (tftpdRequestVerify(&tftpdDesc, opCode, tftpdDesc.fileName) != OK)
 	{
 
@@ -707,7 +707,7 @@ zlog_err(MODULE_UTILS,"TFTP Server: request mode:%s blksize:%d tsize: %d", tftpd
 
 	if (tftpd_config && tftpd_config->tftpdDebug)
 	{
-		zlog_debug(MODULE_UTILS,"%s: Request: Opcode = %d, file = %s, client = %s\n",
+		zlog_debug(MODULE_SERVICE,"%s: Request: Opcode = %d, file = %s, client = %s\n",
 				tftpdErrStr, opCode, tftpdDesc.fileName, tftpdDesc.serverName);
 	}
 	/*
@@ -967,12 +967,12 @@ static int tftpdFileRead
     if (requestFd == ERROR)
 	{
 
-		zlog_debug(MODULE_UTILS,"%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
+		zlog_debug(MODULE_SERVICE,"%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
 		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
 	{
-		zlog_err(MODULE_UTILS,"TFTP Server: job mode:%s blksize:%d tsize: %d", pReplyDesc->mode, pReplyDesc->blksize, pReplyDesc->tsize);
+		zlog_err(MODULE_SERVICE,"TFTP Server: job mode:%s blksize:%d tsize: %d", pReplyDesc->mode, pReplyDesc->blksize, pReplyDesc->tsize);
 
 		if(pReplyDesc->tsize)
 		{
@@ -981,7 +981,7 @@ static int tftpdFileRead
 			pReplyDesc->tftp_size = os_file_size(filepath);
 			int ssize = tftpRequestCreate(&pTftpMsg, TFTP_OACK, NULL, NULL, pReplyDesc->tftp_size, 1);
 
-			zlog_err(MODULE_UTILS,"TFTP Server: job send oack:%s", pTftpMsg.th.request);
+			zlog_err(MODULE_SERVICE,"TFTP Server: job send oack:%s", pTftpMsg.th.request);
 
 			if ((tftpSend(pReplyDesc, &pTftpMsg, ssize, NULL, 0, 0, NULL) == ERROR))
 				return (ERROR);
@@ -1003,7 +1003,7 @@ static int tftpdFileRead
 
     if (returnValue == ERROR)
 	{
-    	zlog_debug(MODULE_UTILS,"%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
+    	zlog_debug(MODULE_SERVICE,"%s:  could not ipstack_send client file \"%s\"\n", tftpdErrStr,pReplyDesc->fileName);
 	}
 
 
@@ -1045,12 +1045,12 @@ static int tftpdFileWrite
 
     if (requestFd == ERROR)
 	{
-		zlog_debug(MODULE_UTILS,"%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
+		zlog_debug(MODULE_SERVICE,"%s: Could not open file %s\n", tftpdErrStr, pReplyDesc->fileName);
 		tftpdErrorSend (pReplyDesc, ipstack_errno);
 	}
     else
 	{
-		zlog_err(MODULE_UTILS,"TFTP Server: job read tsize:%d", pReplyDesc->tsize);
+		zlog_err(MODULE_SERVICE,"TFTP Server: job read tsize:%d", pReplyDesc->tsize);
 
 		pReplyDesc->tftp_size = pReplyDesc->tsize;
 		/*
@@ -1070,7 +1070,7 @@ static int tftpdFileWrite
 
     if (returnValue == ERROR)
 	{
-    	zlog_debug(MODULE_UTILS,"%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
+    	zlog_debug(MODULE_SERVICE,"%s:  could not ipstack_send \"%s\" to client\n", tftpdErrStr, pReplyDesc->fileName);
 	}
 
     tftpdDescriptorDelete (pReplyDesc);
@@ -1137,6 +1137,7 @@ static TFTP_DESC *tftpdDescriptorCreate
 	pTftpDesc->tftp_size = desc->tftp_size;
 	pTftpDesc->tftp_pos = desc->tftp_pos;
     pTftpDesc->tftp_start_time = desc->tftp_start_time;
+	pTftpDesc->isClient = desc->isClient;
 	pTftpDesc->session = desc->session;
 
     /*

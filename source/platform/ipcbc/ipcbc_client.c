@@ -93,7 +93,7 @@ void ipcbc_client_init(struct ipcbc_client *client, zpl_uint32 slot, zpl_uint32 
 {
   /* Schedule first client connection. */
   if (client->debug)
-    zlog_debug(MODULE_DEFAULT, "client start scheduled");
+    zlog_debug(MODULE_LIB, "client start scheduled");
   client->slot = slot;
   client->proto = proto;
   ipcbc_client_event(ZPL_IPCMSG_SCHEDULE, client);
@@ -103,7 +103,7 @@ void ipcbc_client_init(struct ipcbc_client *client, zpl_uint32 slot, zpl_uint32 
 void ipcbc_client_stop(struct ipcbc_client *client)
 {
   if (client->debug)
-    zlog_debug(MODULE_DEFAULT, "client stopped");
+    zlog_debug(MODULE_LIB, "client stopped");
 
   /* Stop threads. */
   THREAD_OFF(client->t_connect);
@@ -226,7 +226,7 @@ ipcbc_client_timeout(struct thread *t)
 int ipcbc_client_start(struct ipcbc_client *client)
 {
   if (client->debug)
-    zlog_debug(MODULE_DEFAULT, "ipcbc_client_start is called");
+    zlog_debug(MODULE_LIB, "ipcbc_client_start is called");
 
   /* If already connected to the ipcbc. */
   if (!ipstack_invalid(client->sock))
@@ -239,19 +239,19 @@ int ipcbc_client_start(struct ipcbc_client *client)
   if (ipstack_invalid(ipcbc_client_socket_connect(client)))
   {
     if (client->debug)
-      zlog_debug(MODULE_DEFAULT, "client connection fail");
+      zlog_debug(MODULE_LIB, "client connection fail");
     client->fail++;
     ipcbc_client_event(ZPL_IPCMSG_CONNECT, client);
     return -1;
   }
 
   if (ipstack_set_nonblocking(client->sock) < 0)
-    zlog_warn(MODULE_DEFAULT, "%s: set_nonblocking(%d) failed", __func__, ipstack_fd(client->sock));
+    zlog_warn(MODULE_LIB, "%s: set_nonblocking(%d) failed", __func__, ipstack_fd(client->sock));
 
   /* Clear fail count. */
   client->fail = 0;
   if (client->debug)
-    zlog_debug(MODULE_DEFAULT, "client ipstack_connect success with ipstack_socket [%d]", ipstack_fd(client->sock));
+    zlog_debug(MODULE_LIB, "client ipstack_connect success with ipstack_socket [%d]", ipstack_fd(client->sock));
 
   ipcbc_client_register_send(client);
   ipcbc_client_event(ZPL_IPCMSG_TIMEOUT, client);
@@ -270,7 +270,7 @@ ipcbc_client_connect(struct thread *t)
   client->t_connect = NULL;
 
   if (client->debug)
-    zlog_debug(MODULE_DEFAULT, "ipcbc_client_connect is called");
+    zlog_debug(MODULE_LIB, "ipcbc_client_connect is called");
 
   return ipcbc_client_start(client);
 }
@@ -299,14 +299,14 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
     if (nbyte == OS_TIMEOUT)
     {
       stream_reset(client->ibuf);
-      zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+      zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
       return OS_TIMEOUT;
     }
     else if (nbyte == ERROR)
     {
       client->recv_faild_cnt++;
       stream_reset(client->ibuf);
-      zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
+      zlog_err(MODULE_LIB, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
       return OS_CLOSE;
     }
     if (nbyte != (ssize_t)(ZPL_IPCMSG_HEADER_SIZE - client->ibuf->endp))
@@ -317,7 +317,7 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
       if (timeoutval <= 0)
       {
         stream_reset(client->ibuf);
-        zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+        zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
         return OS_TIMEOUT;
       }
       continue;
@@ -342,7 +342,7 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
     {
       client->pkt_err_cnt++;
       stream_reset(client->ibuf);
-      zlog_err(MODULE_DEFAULT, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
+      zlog_err(MODULE_LIB, "%s: ipstack_socket %d version mismatch, marker %d, version %d",
                __func__, ipstack_fd(client->sock), marker, version);
       return ERROR;
     }
@@ -351,7 +351,7 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
     {
       client->pkt_err_cnt++;
       stream_reset(client->ibuf);
-      zlog_err(MODULE_DEFAULT, "%s: ipstack_socket %d message length %u is less than %d ",
+      zlog_err(MODULE_LIB, "%s: ipstack_socket %d message length %u is less than %d ",
                __func__, ipstack_fd(client->sock), length, ZPL_IPCMSG_HEADER_SIZE);
       return ERROR;
     }
@@ -360,7 +360,7 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
     if (length > STREAM_SIZE(client->ibuf))
     {
       struct stream *ns;
-      zlog_warn(MODULE_DEFAULT, "%s: message size %u exceeds buffer size %lu, expanding...",
+      zlog_warn(MODULE_LIB, "%s: message size %u exceeds buffer size %lu, expanding...",
                 __func__, length, (u_long)STREAM_SIZE(client->ibuf));
       ns = stream_new(length);
       stream_copy(ns, client->ibuf);
@@ -377,14 +377,14 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
         if (nbyte == OS_TIMEOUT)
         {
           stream_reset(client->ibuf);
-          zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+          zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
           return OS_TIMEOUT;
         }
         else if (nbyte == ERROR)
         {
           stream_reset(client->ibuf);
           client->recv_faild_cnt++;
-          zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
+          zlog_err(MODULE_LIB, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
           return OS_CLOSE;
         }
         if (nbyte != (ssize_t)(length - already))
@@ -395,7 +395,7 @@ static int __ipcbc_client_recv_message(struct ipcbc_client *client, struct ipcbc
           if (timeoutval <= 0)
           {
             stream_reset(client->ibuf);
-            zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+            zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
             return OS_TIMEOUT;
           }
           continue;
@@ -454,13 +454,13 @@ static int ipcbc_client_recv_ack_async(struct ipcbc_client *client, struct ipcbc
     already = ipstack_read_timeout(client->ack_sock[0], recvtmp + nbyte, 2 - nbyte, timeoutval);
     if (already == OS_TIMEOUT)
     {
-      zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+      zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
       return OS_TIMEOUT;
     }
     else if (already == ERROR)
     {
       client->recv_faild_cnt++;
-      zlog_err(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
+      zlog_err(MODULE_LIB, "Server Recv msg from [%d] unit %s is ERROR:%s", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)), ipstack_strerror(ipstack_errno));
       return OS_CLOSE;
     }
     if (already != 2)
@@ -471,7 +471,7 @@ static int ipcbc_client_recv_ack_async(struct ipcbc_client *client, struct ipcbc
       timeoutval -= (current_timeval - start_timeval);
       if (timeoutval <= 0)
       {
-        zlog_warn(MODULE_DEFAULT, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
+        zlog_warn(MODULE_LIB, "Server Recv msg from [%d] unit %s is timeout", ipstack_fd(client->sock), prefix2str(pu, cbuf, sizeof(cbuf)));
         return OS_TIMEOUT;
       }
       continue;
@@ -797,7 +797,7 @@ ipcbc_client_event(enum ipcmsg_event event, struct ipcbc_client *client)
     if (client->fail >= 10)
       return;
     if (client->debug)
-      zlog_debug(MODULE_DEFAULT, "client ipstack_connect schedule interval is %d",
+      zlog_debug(MODULE_LIB, "client ipstack_connect schedule interval is %d",
                  client->fail < 3 ? 10 : 60);
     if (!client->t_connect)
       client->t_connect =

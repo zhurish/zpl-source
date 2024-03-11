@@ -215,6 +215,15 @@ static void infoCallback(const SSL *ssl, int where, int rc);
 
 /************************************** Code **********************************/
 /*
+static cchar * websCfgPathGet(cchar *dir, cchar *filepath)
+{
+    static char tmppath[256];
+    memset(tmppath, 0, sizeof(tmppath));
+    sprintf(tmppath, "%s/%s", dir, filepath);
+    web_trace(WEBS_NOTICE, "websCfgPathGet {%s}", tmppath);
+    return tmppath;
+}*/
+/*
     Open the SSL module
  */
 PUBLIC int sslOpen(void)
@@ -249,11 +258,11 @@ PUBLIC int sslOpen(void)
     /*
           Set the server certificate and key files
      */
-    if (*ME_GOAHEAD_SSL_KEY && sslSetKeyFile(ME_GOAHEAD_SSL_KEY) < 0) {
+    if (*ME_GOAHEAD_SSL_KEY && sslSetKeyFile(websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_KEY)) < 0) {
         sslClose();
         return -1;
     }
-    if (*ME_GOAHEAD_SSL_CERTIFICATE && sslSetCertFile(ME_GOAHEAD_SSL_CERTIFICATE) < 0) {
+    if (*ME_GOAHEAD_SSL_CERTIFICATE && sslSetCertFile(websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_CERTIFICATE)) < 0) {
         sslClose();
         return -1;
     }
@@ -268,7 +277,7 @@ PUBLIC int sslOpen(void)
           Set the client certificate verification locations
      */
     if (ME_GOAHEAD_SSL_AUTHORITY && *ME_GOAHEAD_SSL_AUTHORITY) {
-        if ((!SSL_CTX_load_verify_locations(sslctx, ME_GOAHEAD_SSL_AUTHORITY, NULL)) ||
+        if ((!SSL_CTX_load_verify_locations(sslctx, websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_AUTHORITY), NULL)) ||
             (!SSL_CTX_set_default_verify_paths(sslctx))) {
             web_error("Unable to read cert verification locations");
             sslClose();
@@ -278,11 +287,11 @@ PUBLIC int sslOpen(void)
             Define the list of CA certificates to send to the client before they send their client
             certificate for validation
          */
-        SSL_CTX_set_client_CA_list(sslctx, SSL_load_client_CA_file(ME_GOAHEAD_SSL_AUTHORITY));
+        SSL_CTX_set_client_CA_list(sslctx, SSL_load_client_CA_file(websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_AUTHORITY)));
     }
     if (ME_GOAHEAD_SSL_REVOKE && *ME_GOAHEAD_SSL_REVOKE) {
         store = SSL_CTX_get_cert_store(sslctx);
-        if (!X509_STORE_load_locations(store, ME_GOAHEAD_SSL_REVOKE, 0)) {
+        if (!X509_STORE_load_locations(store, websFilePathFmt("%s/%s",websGetCfgBaseDir(),ME_GOAHEAD_SSL_REVOKE), 0)) {
             web_error("Cannot load certificate revoke list: %s", ME_GOAHEAD_SSL_REVOKE);
             sslClose();
             return -1;

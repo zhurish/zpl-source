@@ -229,13 +229,20 @@ static void     logRequest(Webs *wp, int code);
 
 /*********************************** Code *************************************/
 
-PUBLIC int websOpen(cchar *documents, cchar *routeFile)
+PUBLIC int websOpen(cchar *cfgdir, cchar *documents, cchar *routeFile)
 {
     WebsMime    *mt;
 
     webs = NULL;
     websMax = 0;
+    web_assert(cfgdir != NULL);
 
+    if (documents) {
+        websSetDocuments(documents);
+    }
+    if (cfgdir) {
+        websSetCfgBaseDir(cfgdir);
+    }   
     websOsOpen();
     websRuntimeOpen();
     websTimeOpen();
@@ -259,9 +266,7 @@ PUBLIC int websOpen(cchar *documents, cchar *routeFile)
     if (!websDebug) {
         pruneId = websStartEvent(WEBS_SESSION_PRUNE, (WebsEventProc) pruneSessions, 0);
     }
-    if (documents) {
-        websSetDocuments(documents);
-    }
+
     if (websOpenRoute() < 0) {
         return -1;
     }
@@ -3654,11 +3659,11 @@ static void freeSessions(void)
 /*
     One line embedding
  */
-PUBLIC int websServer(cchar *endpoint, cchar *documents)
+PUBLIC int websServer(cchar *cfgdir, cchar *endpoint, cchar *documents)
 {
     int     finished = 0;
 
-    if (websOpen(documents, "route.txt") < 0) {
+    if (websOpen(cfgdir, documents, "route.txt") < 0) {
         web_error("Cannot initialize server. Exiting.");
         return -1;
     }

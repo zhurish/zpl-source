@@ -251,7 +251,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 
 	if (height < 1)
 	{
-		zlog_warn(MODULE_DEFAULT,
+		zlog_warn(MODULE_LIB,
 				"%s called with non-positive window height %d, forcing to 1",
 				__func__, height);
 		height = 1;
@@ -260,7 +260,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 		height--;
 	if (width < 1)
 	{
-		zlog_warn(MODULE_DEFAULT,
+		zlog_warn(MODULE_LIB,
 				"%s called with non-positive window width %d, forcing to 1",
 				__func__, width);
 		width = 1;
@@ -319,7 +319,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 			iov_alloc *= 2;
 			if (iov != small_iov)
 			{
-				zlog_warn(MODULE_DEFAULT, "%s: growing iov array to %d; "
+				zlog_warn(MODULE_LIB, "%s: growing iov array to %d; "
 						"width %d, height %d, size %lu", __func__, iov_alloc,
 						width, height, (u_long) b->size);
 				iov = XREALLOC(MTYPE_TMP, iov, iov_alloc * sizeof(*iov));
@@ -327,7 +327,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 			else
 			{
 				/* This should absolutely never occur. */
-				zlog_err(MODULE_DEFAULT,
+				zlog_err(MODULE_LIB,
 						"%s: corruption detected: iov_small overflowed; "
 								"head %p, tail %p, head->next %p", __func__,
 						(void *) b->head, (void *) b->tail,
@@ -361,7 +361,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 			nbytes = ipstack_writev(fd, c_iov, iov_size);
 			if (nbytes < 0)
 			{
-				zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s",
+				zlog_warn(MODULE_LIB, "%s: writev to fd %d failed: %s",
 						__func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
 				break;
 			}
@@ -374,7 +374,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, zpl_socket_t fd, zpl_uint3
 #else  /* IOV_MAX */
 		nbytes = ipstack_writev(fd, iov, iov_index);
 	if (nbytes < 0)
-		zlog_warn(MODULE_DEFAULT, "%s: writev to fd %d failed: %s", __func__, ipstack_fd(fd),
+		zlog_warn(MODULE_LIB, "%s: writev to fd %d failed: %s", __func__, ipstack_fd(fd),
 				ipstack_strerror(ipstack_errno));
 #endif /* IOV_MAX */
 
@@ -436,7 +436,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 		if (IPSTACK_ERRNO_RETRY(ipstack_errno))
 			/* Calling code should try again later. */
 			return BUFFER_PENDING;
-		zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s", __func__, ipstack_fd(fd),
+		zlog_warn(MODULE_LIB, "%s: write error on fd %d: %s", __func__, ipstack_fd(fd),
 				ipstack_strerror(ipstack_errno));
 		return BUFFER_ERROR;
 	}
@@ -451,7 +451,7 @@ buffer_status_t buffer_flush_available(struct buffer *b, zpl_socket_t fd)
 		//struct buffer_data *d = NULL;
 		if (!(d = b->head))
 		{
-			zlog_err(MODULE_DEFAULT,
+			zlog_err(MODULE_LIB,
 					"%s: corruption detected: buffer queue empty, "
 							"but written is %lu", __func__, (u_long) written);
 			break;
@@ -499,7 +499,7 @@ buffer_status_t buffer_write(struct buffer *b, zpl_socket_t fd, const void *p,
 				nbytes = 0;
 			else
 			{
-				zlog_warn(MODULE_DEFAULT, "%s: write error on fd %d: %s",
+				zlog_warn(MODULE_LIB, "%s: write error on fd %d: %s",
 						__func__, ipstack_fd(fd), ipstack_strerror(ipstack_errno));
 				return BUFFER_ERROR;
 			}

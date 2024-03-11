@@ -48,6 +48,16 @@ config ZPL_ARCH_X86
 	bool "X86"
 config ZPL_ARCH_X86_64
 	bool "X86-64"	
+config ZPL_ARCH_MIPS32
+	bool "MIPS32"
+config ZPL_ARCH_MIPS64
+	bool "MIPS64"
+config ZPL_ARCH_LOONGARCH64
+	bool "LOONGARCH64"	
+config ZPL_ARCH_RISCV32
+	bool "RISCV32"
+config ZPL_ARCH_RISCV64
+	bool "RISCV64"
 endchoice
 
 choice

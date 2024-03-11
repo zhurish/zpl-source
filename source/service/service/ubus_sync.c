@@ -73,13 +73,13 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 	int ret = 0;
 	if(!uci)
 	{
-		//zlog_debug(MODULE_UTILS, "---------------------------");
+		//zlog_debug(MODULE_SERVICE, "---------------------------");
 		return ERROR;
 	}
 	memset(uci->buf, 0, sizeof(uci->buf));
 	if(ipstack_invalid(uci->sock))
 	{
-		//zlog_debug(MODULE_UTILS, "------------ sock ----------");
+		//zlog_debug(MODULE_SERVICE, "------------ sock ----------");
 		return ERROR;
 	}
 	uci->len = ret = ipstack_read(uci->sock, uci->buf, sizeof(uci->buf));
@@ -87,7 +87,7 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 	{
 		zpl_uint32 i = 0;
 		if(uci->debug & UBUS_SYNC_DEBUG)
-			zlog_debug(MODULE_UTILS, "UCI UBUS read %d byte:'%s'",uci->len, uci->buf);
+			zlog_debug(MODULE_SERVICE, "UCI UBUS read %d byte:'%s'",uci->len, uci->buf);
 		ret = 0;
 		for(i = 0; i < UBUS_SYNC_CB_MAX; i++)
 		{
@@ -99,21 +99,21 @@ static int ubus_sync_handle(ubus_sync_t *uci)
 		if(ret == OK)
 		{
 			if(uci->debug & UBUS_SYNC_DEBUG)
-				zlog_debug(MODULE_UTILS, "UCI UBUS respone OK");
+				zlog_debug(MODULE_SERVICE, "UCI UBUS respone OK");
 			ubus_sync_respone(uci, 0);
 			return OK;
 		}
 		else
 		{
 			if(uci->debug & UBUS_SYNC_DEBUG)
-				zlog_debug(MODULE_UTILS, "UCI UBUS respone ERROR");
+				zlog_debug(MODULE_SERVICE, "UCI UBUS respone ERROR");
 			ubus_sync_respone(uci, 1);
 			return OK;
 		}
 	}
 	else
 	{
-		//zlog_debug(MODULE_UTILS, "------------ read %s ----------", strerror(ipstack_errno));
+		//zlog_debug(MODULE_SERVICE, "------------ read %s ----------", strerror(ipstack_errno));
 		if(ret < 0)
 		{
 			if (IPSTACK_ERRNO_RETRY(ipstack_errno))
@@ -140,16 +140,16 @@ static int ubus_sync_read_eloop(struct eloop *thread)
 		}
 		else
 		{
-			//zlog_debug(MODULE_DEFAULT, "--------%s: reset udp ipstack_socket", __func__);
+			//zlog_debug(MODULE_SERVICE, "--------%s: reset udp ipstack_socket", __func__);
 			if(ubus->debug & UBUS_SYNC_DEBUG)
-				zlog_debug(MODULE_UTILS, "UCI UBUS ipstack_socket close");
+				zlog_debug(MODULE_SERVICE, "UCI UBUS ipstack_socket close");
 			//ubus_sync_reset();
 			ipstack_close(ubus->sock);
 			//ubus->sock = 0;
 			return ERROR;
 		}
 	}
-	//zlog_debug(MODULE_UTILS, "-------------UCI UBUS ipstack_socket close");
+	//zlog_debug(MODULE_SERVICE, "-------------UCI UBUS ipstack_socket close");
 	ipstack_close(ubus->sock);
 	//ubus->sock = 0;
 	return ERROR;
@@ -160,14 +160,14 @@ static int ubus_sync_accept_eloop(struct eloop *thread)
 	zpl_socket_t sock;
 	zpl_socket_t accept = ELOOP_FD(thread);
 	ubus_sync_t *ubus = ELOOP_ARG(thread);
-	//zlog_debug(MODULE_DEFAULT, "--------%s:", __func__);
+	//zlog_debug(MODULE_SERVICE, "--------%s:", __func__);
 	ubus->t_accept = NULL;//eloop_add_read(ubus_sync_ctx.master, ubus_sync_accept_eloop, ubus, ipstack_accept);
 	if(ubus)
 	{
 		ipstack_fd(sock) = os_sock_unix_accept(ipstack_fd(accept), NULL);
 		if(ipstack_fd(sock) > 0)
 		{
-			//zlog_debug(MODULE_DEFAULT, "--------%s:%d", __func__, sock);
+			//zlog_debug(MODULE_SERVICE, "--------%s:%d", __func__, sock);
 			if(ipstack_fd(ubus->sock) > 0)
 			{
 				//ubus->t_accept = eloop_add_read(ubus->master, ubus_sync_accept_eloop, ubus, ipstack_accept);

@@ -225,7 +225,7 @@ sockunion_socket (const union sockunion *su)
   sock = ipstack_socket (IPSTACK_IPCOM, su->sa.sa_family, IPSTACK_SOCK_STREAM, 0);
   if (ipstack_invalid(sock))
     {
-      zlog (MODULE_DEFAULT,  ZLOG_LEVEL_WARNING, "Can't make socket : %s", ipstack_strerror (ipstack_errno));
+      zlog (MODULE_LIB,  ZLOG_LEVEL_WARNING, "Can't make socket : %s", ipstack_strerror (ipstack_errno));
       return (zpl_socket_t)sock;
     }
 
@@ -343,7 +343,7 @@ sockunion_connect (zpl_socket_t fd, const union sockunion *peersu, zpl_ushort po
       if (ipstack_errno != IPSTACK_ERRNO_EINPROGRESS)
 	{
 	  zpl_char str[SU_ADDRSTRLEN];
-	  zlog_info (MODULE_DEFAULT, "can't connect to %s fd %d : %s",
+	  zlog_info (MODULE_LIB, "can't connect to %s fd %d : %s",
 		     sockunion_log (&su, str, sizeof str),
 		     ipstack_fd(fd), ipstack_strerror (ipstack_errno));
 	  return connect_error;
@@ -367,7 +367,7 @@ sockunion_stream_socket (union sockunion *su)
   sock = ipstack_socket (IPSTACK_IPCOM, su->sa.sa_family, IPSTACK_SOCK_STREAM, 0);
 
   if (ipstack_invalid(sock))
-    zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't make socket sockunion_stream_socket");
+    zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "can't make socket sockunion_stream_socket");
 
   return sock;
 }
@@ -412,7 +412,7 @@ sockunion_bind (zpl_socket_t sock, union sockunion *su, zpl_ushort port,
 
   ret = ipstack_bind (sock, (struct ipstack_sockaddr *)su, size);
   if (ret < 0)
-    zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "can't bind socket : %s", ipstack_strerror (ipstack_errno));
+    zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "can't bind socket : %s", ipstack_strerror (ipstack_errno));
 
   return ret;
 }
@@ -555,7 +555,7 @@ sockunion_getsockname (zpl_socket_t fd)
   ret = ipstack_getsockname (fd, (struct ipstack_sockaddr *)&name, &len);
   if (ret < 0)
     {
-      zlog_warn (MODULE_DEFAULT, "Can't get local address and port by getsockname: %s",
+      zlog_warn (MODULE_LIB, "Can't get local address and port by getsockname: %s",
 		 ipstack_strerror (ipstack_errno));
       return NULL;
     }
@@ -600,7 +600,7 @@ sockunion_getpeername (zpl_socket_t fd)
   ret = ipstack_getpeername (fd, (struct ipstack_sockaddr *)&name, &len);
   if (ret < 0)
     {
-      zlog (MODULE_DEFAULT, ZLOG_LEVEL_WARNING, "Can't get remote address and port: %s",
+      zlog (MODULE_LIB, ZLOG_LEVEL_WARNING, "Can't get remote address and port: %s",
 	    ipstack_strerror (ipstack_errno));
       return NULL;
     }

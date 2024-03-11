@@ -51,7 +51,7 @@ pid_output (const char *path)
     }
   /* XXX Why do we continue instead of exiting?  This seems incompatible
      with the behavior of the fcntl version below. */
-  zlog_warn(MODULE_DEFAULT, "Can't fopen pid lock file %s (%s), continuing",
+  zlog_warn(MODULE_LIB, "Can't fopen pid lock file %s (%s), continuing",
 	    path, ipstack_strerror(ipstack_errno));
   umask(oldumask);
   return -1;
@@ -78,7 +78,7 @@ pid_input (const char *path)
     }
   /* XXX Why do we continue instead of exiting?  This seems incompatible
      with the behavior of the fcntl version below. */
-  zlog_warn(MODULE_DEFAULT, "Can't fopen pid lock file %s (%s), continuing",
+  zlog_warn(MODULE_LIB, "Can't fopen pid lock file %s (%s), continuing",
 	    path, ipstack_strerror(ipstack_errno));
   umask(oldumask);
   return -1;
@@ -101,7 +101,7 @@ pid_output (const char *path)
   fd = open (path, O_RDWR | O_CREAT, PIDFILE_MASK);
   if (fd < 0)
     {
-      zlog_err(MODULE_DEFAULT, "Can't create pid lock file %s (%s), exiting",
+      zlog_err(MODULE_LIB, "Can't create pid lock file %s (%s), exiting",
 	       path, ipstack_strerror(ipstack_errno));
       umask(oldumask);
       exit(1);
@@ -119,17 +119,17 @@ pid_output (const char *path)
       if (fcntl(fd, F_SETLK, &lock) < 0)
         {
           fprintf(stderr,"Could not write pid %d to pid_file (%s)\r\n",pid,strerror(ipstack_errno));
-          zlog_err(MODULE_DEFAULT, "Could not lock pid_file %s, exiting", path);
+          zlog_err(MODULE_LIB, "Could not lock pid_file %s, exiting", path);
           exit(1);
         }
 
       sprintf (buf, "%d\n", (int) pid);
       pidsize = strlen(buf);
       if ((tmp = write (fd, buf, pidsize)) != (int)pidsize)
-        zlog_err(MODULE_DEFAULT, "Could not write pid %d to pid_file %s, rc was %d: %s",
+        zlog_err(MODULE_LIB, "Could not write pid %d to pid_file %s, rc was %d: %s",
 	         (int)pid,path,tmp,ipstack_strerror(ipstack_errno));
       else if (ftruncate(fd, pidsize) < 0)
-        zlog_err(MODULE_DEFAULT, "Could not truncate pid_file %s to %u bytes: %s",
+        zlog_err(MODULE_LIB, "Could not truncate pid_file %s to %u bytes: %s",
 	         path,(zpl_uint32)pidsize,ipstack_strerror(ipstack_errno));
     }
   return pid;

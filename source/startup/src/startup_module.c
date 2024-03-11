@@ -86,7 +86,7 @@ int zpl_stack_start(const char *progname, int localport)
 #endif
 	zplib_module_cmd_all();
 	
-	openzlog(progname, MODULE_DEFAULT, LOG_LOCAL7, 0);
+	openzlog(progname, MODULE_LIB, LOG_LOCAL7, 0);
 	// zlog_set_level (ZLOG_DEST_STDOUT, ZLOG_LEVEL_DEBUG);
 
 	ipcom_stack_init(localport);
@@ -193,8 +193,7 @@ int startup_module_stop(void)
 	zplib_module_task_exit(MODULE_NSM);	
 #endif
 
-	zplib_module_task_exit(MODULE_TELNET);
-	zplib_module_task_exit(MODULE_CONSOLE);
+	zplib_module_task_exit(MODULE_SHELL);
 
 	return OK;
 }
@@ -218,8 +217,7 @@ int startup_module_exit(void)
 	zplib_module_exit(MODULE_NSM);	
 #endif
 
-	zplib_module_exit(MODULE_TELNET);
-	zplib_module_exit(MODULE_CONSOLE);
+	zplib_module_exit(MODULE_SHELL);
 	
 	cmd_terminate();
 
@@ -234,14 +232,12 @@ int startup_module_exit(void)
 
 int zpl_base_shell_start(char *shell_path, char *shell_addr, int shell_port, const char *tty)
 {
-	zplib_module_init(MODULE_CONSOLE);
-	zplib_module_init(MODULE_TELNET);
-	vty_tty_init(tty);
-	vty_serv_init(shell_addr, shell_port, shell_path, tty);
-	zlog_notice(MODULE_DEFAULT, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
+	zplib_module_init(MODULE_SHELL);
+	//vty_tty_init(tty);
+	vty_shell_start(shell_addr, shell_port, shell_path, tty);
+	zlog_notice(MODULE_SHELL, "Zebra %s starting: vty@%d", OEM_VERSION, shell_port);
 
-	zplib_module_task_init(MODULE_CONSOLE);
-	zplib_module_task_init(MODULE_TELNET);
+	zplib_module_task_init(MODULE_SHELL);
 	return OK;
 }
 
@@ -255,6 +251,6 @@ int zpl_base_start_pid(int pro, char *pid_file, int *pid)
 	if (pid)
 		*pid = getpid();
 
-	zlog_notice(MODULE_DEFAULT, "Zebra %s starting pid:%d", OEM_VERSION, getpid());
+	zlog_notice(MODULE_SHELL, "Zebra %s starting pid:%d", OEM_VERSION, getpid());
 	return OK;
 }

@@ -50,6 +50,27 @@ ifeq ($(ZPL_ARCH_X86_64),true)
 export ARCH_TYPE=X86_64
 endif
 
+ifeq ($(ZPL_ARCH_MIPS32),true)
+export ARCH_TYPE=MIPS32
+endif
+
+ifeq ($(ZPL_ARCH_MIPS64),true)
+export ARCH_TYPE=MIPS64
+endif
+
+ifeq ($(ZPL_ARCH_LOONGARCH64),true)
+export ARCH_TYPE=LOONGARCH64
+endif
+
+ifeq ($(ZPL_ARCH_RISCV32),true)
+export ARCH_TYPE=RISCV32
+endif
+
+ifeq ($(ZPL_ARCH_RISCV64),true)
+export ARCH_TYPE=RISCV64
+endif
+
+
 ifeq ($(ZPL_EXTERNAL_TOOLCHAIN_MODULE),true)
 
 ifeq ($(ZPL_TOOLCHAIN_GLIBC),true)

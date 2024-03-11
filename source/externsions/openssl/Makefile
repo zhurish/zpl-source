@@ -27,7 +27,7 @@ libm:
 	$(SHELL) build.sh lib $(RUNHOST) $(CC) $(INSTALL_DIR); 
 
 ifeq ($(ZPL_BUILD_ARCH),X86_64)
-OLIBDIR=lib64
+OLIBDIR=lib
 else
 OLIBDIR=lib
 endif
@@ -42,6 +42,9 @@ install: $(LIBS)
 clean: 
 	$(MAKE) -C $(OPENSSL_SRC_DIR) clean
 
+distclean: 
+	$(MAKE) -C $(OPENSSL_SRC_DIR) distclean
+
 all: lib
 
-.PHONY:	 all lib install clean 
+.PHONY:	 all lib install clean distclean

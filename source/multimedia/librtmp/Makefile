@@ -11,6 +11,7 @@ LIB_DIR = $(BASE_ROOT)/$(ZPL_LIB_DIR)
 MODULE_OBJS  := $(addprefix $(OBJS_DIR)/,$(OBJS))
 MODULE_OBJS_DEP:=$(MODULE_OBJS:%.o=%.d)
 -include $(MODULE_OBJS_DEP)
+PLFLAGS += -I$(SRC_DIR)/include -I$(SRC_DIR)/source
 
 $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	@if test ! -d $(OBJS_DIR) ; \
@@ -19,6 +20,15 @@ $(OBJS_DIR)/%.o: $(SRC_DIR)/%.c
 	fi
 	@$(ECHO) CC '$(PLFLAGS) $(ZPLDEFINE) $(DEF) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
 	@$(CC) -fPIC $(PLFLAGS) $(ZPLDEFINE) $(DEF) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
+
+$(OBJS_DIR)/%.o: $(SRC_DIR)/source/%.c
+	@if test ! -d $(OBJS_DIR) ; \
+		then \
+		$(MKDIR) -p $(OBJS_DIR) ; \
+	fi
+	@$(ECHO) CC '$(PLFLAGS) $(ZPLDEFINE) $(DEF) $(ZPLDEBUG) $(ZPLINCLUDE)' $@
+	@$(CC) -fPIC $(PLFLAGS) $(ZPLDEFINE) $(DEF) $(ZPLDEBUG) -g -c  $< -o $@ $(ZPLINCLUDE) 
+
 
 $(LIBS) : $(MODULE_OBJS)
 	@$(AR) -rs $(LIBS) $(MODULE_OBJS)
