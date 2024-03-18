@@ -46,7 +46,7 @@ static int rtsp_mainlv5_task(void* argv)
     host_waitting_loadconfig();
     if(rtsp_server.lv5)
     {
-        rtsp_server_start(rtsp_server.lv5, 8554, 1);
+        rtsp_server_start(rtsp_server.lv5, 8554, 65);
         rtsp_server_event_loop_running(rtsp_server.lv5);
     }
     return OK;
@@ -74,8 +74,6 @@ static int rtsp_logcb(const char *fmt,...)
     len += vsnprintf(lbuf+len, sizeof(lbuf)-len, fmt, args);
     va_end (args);
     zlog_debug(MODULE_RTSP,"%s", lbuf);
-    //fprintf(stdout, "%s\r\n", lbuf);
-    //fflush(stdout);
     return OK;
 }
 #endif
@@ -83,7 +81,7 @@ int rtsp_module_init(void)
 {
 #ifdef ZPL_LIVE555_MODULE
     //livertsp_server_init(8554, "/nfsroot"/*BASEUSAGEENV_BASE_DIR*/, rtsp_logcb);
-    rtsp_server.lv5 = rtsp_server_create(rtsp_logcb);
+    rtsp_server.lv5 = rtsp_server_create("/home/zhurish/Downloads/tftpboot",rtsp_logcb);
 #endif
     rtsp_server.t_master = eloop_master_name_create("RTSP");
     rtsp_server.rtsp_srv = rtsp_srv_create(rtsp_server.t_master, NULL, 554, MODULE_RTSP);  

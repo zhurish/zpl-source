@@ -46,7 +46,11 @@ DynamicRTSPServer::DynamicRTSPServer(UsageEnvironment &env, int ourSocketIPv4, i
 DynamicRTSPServer::~DynamicRTSPServer()
 {
 }
-
+int DynamicRTSPServer::DynamicRTSPServerBaseDir(char *dir)
+{
+  envir().UsageEnvironmentBaseDirSet(dir);
+  return 0;
+}
 static ServerMediaSession *createNewSMS(UsageEnvironment &env,
                                         char const *fileName, FILE *fid); // forward
 
@@ -56,13 +60,22 @@ void DynamicRTSPServer ::lookupServerMediaSession(char const *streamName,
                                                   Boolean isFirstLookupInSession)
 {
   // First, check whether the specified "streamName" exists as a local file:
-  FILE *fid = fopen(streamName, "rb");
-  Boolean const fileExists = fid != NULL;
+  std::string filename = streamName;
+  std::string baseDirName = envir().baseDir;
+  std::string baseFileName = envir().baseDir?(baseDirName + "/" + filename):("./" + filename);
+  envir() << "streamName:" << streamName << "\n";
+  envir() << "baseFileName:" << baseFileName.c_str() << "\n";
+  char cwd[128];
+	getcwd(cwd, 128);
+  envir() << "getcwd:" << cwd << "\n";//在rtsp目录
 
+  FILE *fid = fopen(baseFileName.c_str(), "rb");
+  Boolean const fileExists = fid != NULL;
+  envir() << "fileExists:" << fileExists << "\n";
   // Next, check whether we already have a "ServerMediaSession" for this file:
   ServerMediaSession *sms = getServerMediaSession(streamName);
   Boolean const smsExists = sms != NULL;
-
+envir() << "smsExists:" << smsExists << "\n";
   // Handle the four possibilities for "fileExists" and "smsExists":
   if (!fileExists)
   {
@@ -136,7 +149,7 @@ static void onOggDemuxCreation(OggFileServerDemux *newDemux, void *clientData)
   } while (0)
 
 static ServerMediaSession *createNewSMS(UsageEnvironment &env,
-                                        char const *fileName, FILE * /*fid*/)
+                                        char const *fileName, FILE * fid)
 {
   // Use the file name extension to determine the type of "ServerMediaSession":
   char const *extension = strrchr(fileName, '.');
@@ -171,6 +184,7 @@ static ServerMediaSession *createNewSMS(UsageEnvironment &env,
   }
   else if (strcmp(extension, ".264") == 0)
   {
+    env << "Assumed to be a H.264 Video Elementary Stream file:" << fileName << "\n";
     // Assumed to be a H.264 Video Elementary Stream file:
     NEW_SMS("H.264 Video");
     OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.264 frames

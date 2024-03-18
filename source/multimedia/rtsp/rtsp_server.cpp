@@ -1,13 +1,13 @@
-﻿/* ---------------------------------------------------------------------------
-** This software is in the public domain, furnished "as is", without technical
-** support, and with no warranty, express or implied, as to its usefulness for
-** any purpose.
-**
-** rtsp_server.h
-**
-** RTSP server
-**
-** -------------------------------------------------------------------------*/
+﻿/**
+ * @file      : rtsp_server.cpp
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-03-18
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
+ */
 #include <sstream>
 #include <iostream>
 
@@ -21,6 +21,7 @@
 
 struct rtsp_srv_s
 {
+    char baseDir[256];
     pthread_mutex_t mutex;
 
     char m_stop;
@@ -36,13 +37,15 @@ extern "C"
 {
 #endif
 
-    rtsp_srv_t *rtsp_server_create(int (*logcb)(const char *fmt, ...))
+    rtsp_srv_t *rtsp_server_create(char *dir, int (*logcb)(const char *fmt, ...))
     {
-        rtsp_srv_t *info = malloc(sizeof(rtsp_srv_t));
+        rtsp_srv_t *info = (rtsp_srv_t *)malloc(sizeof(rtsp_srv_t));
         if (info)
         {
             memset(info, 0, sizeof(rtsp_srv_t));
-            info->m_stop = 1;
+            strcpy(info->baseDir, dir);
+            info->m_stop = 0;
+            info->m_auth_db = NULL;
             info->m_scheduler = BasicTaskScheduler::createNew();
             info->m_env = BasicUsageEnvironment::createNew(*info->m_scheduler);
             info->m_env->UsageEnvironmentLogSet(logcb);
@@ -70,13 +73,14 @@ extern "C"
     int rtsp_server_start(rtsp_srv_t *info, int port, unsigned int reclamationTestSeconds)
     {
         if (info->m_rtsp_server == NULL)
-            info->m_rtsp_server = DynamicRTSPServer::createNew(*info->m_env, 8554, info->m_auth_db, reclamationTestSeconds);
+            info->m_rtsp_server = DynamicRTSPServer::createNew(*info->m_env, port, info->m_auth_db, reclamationTestSeconds);
         if (info->m_rtsp_server != NULL)
         {
             // Also, attempt to create a HTTP server for RTSP-over-HTTP tunneling.
             // Try first with the default HTTP port (80), and then with the alternative HTTP
             // port numbers (8000 and 8080).
-
+            if(strlen(info->baseDir))
+                info->m_rtsp_server->DynamicRTSPServerBaseDir(info->baseDir);
             // m_rtsp_server->setLocalIPAddress("127.0.0.1", False);
             // m_env->UsageEnvironmentStart("127.0.0.1", True);
             if (info->m_rtsp_server->setUpTunnelingOverHTTP(80) || info->m_rtsp_server->setUpTunnelingOverHTTP(8000) || info->m_rtsp_server->setUpTunnelingOverHTTP(8080))
@@ -159,7 +163,7 @@ extern "C"
         ServerMediaSession *sms = ServerMediaSession::createNew(*info->m_env, sessionName);
         if (sms)
         {
-            sms->addSubsession(subSession);
+            sms->addSubsession((ServerMediaSubsession *)subSession);
             info->m_rtsp_server->addServerMediaSession(sms);
             char *url = info->m_rtsp_server->rtspURL(sms);
             *info->m_env << "Play this stream using the URL: " << url << "\n";
@@ -202,7 +206,7 @@ extern "C"
         resultSession = ServerMediaSession::createNew(*info->m_env, sessionName);
         if (resultSession)
         {
-            resultSession->addSubsession(subSession);
+            resultSession->addSubsession((ServerMediaSubsession *)subSession);
             info->m_rtsp_server->addServerMediaSession(resultSession);
             char *url = info->m_rtsp_server->rtspURL(resultSession);
             *info->m_env << "Play this stream using the URL: " << url << "\n";

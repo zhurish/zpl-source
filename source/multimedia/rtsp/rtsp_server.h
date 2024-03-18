@@ -17,7 +17,7 @@ extern "C" {
 
 typedef struct rtsp_srv_s rtsp_srv_t;
 
-rtsp_srv_t *rtsp_server_create(int (*logcb)(const char *fmt,...));
+rtsp_srv_t *rtsp_server_create(char *dir, int (*logcb)(const char *fmt,...));
 int rtsp_server_destroy(rtsp_srv_t *info);
 int rtsp_server_start(rtsp_srv_t *info, int ourPort, unsigned int reclamationTestSeconds);
 int rtsp_server_event_loop_running(rtsp_srv_t *info);

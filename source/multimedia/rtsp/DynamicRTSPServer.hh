@@ -30,7 +30,7 @@ public:
   static DynamicRTSPServer* createNew(UsageEnvironment& env, Port ourPort,
 				      UserAuthenticationDatabase* authDatabase,
 				      unsigned reclamationTestSeconds = 65);
-
+	int DynamicRTSPServerBaseDir(char *dir);				  
 protected:
   DynamicRTSPServer(UsageEnvironment& env, int ourSocketIPv4, int ourSocketIPv6, Port ourPort,
 		    UserAuthenticationDatabase* authDatabase, unsigned reclamationTestSeconds);
@@ -41,7 +41,7 @@ protected: // redefined virtual functions
   virtual void lookupServerMediaSession(char const* streamName,
 					lookupServerMediaSessionCompletionFunc* completionFunc,
 					void* completionClientData,
-					Boolean isFirstLookupInSession);
+					Boolean isFirstLookupInSession);				
 };
 
 #endif
