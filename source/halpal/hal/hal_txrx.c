@@ -163,7 +163,7 @@ static int hal_txrx_thread(os_ansync_t *thread)
 static int hal_txrx_task(void *pVoid)
 {
   os_ansync_lst *master = (struct os_ansync_lst *)pVoid;
-  module_setup_task(master->module, os_task_id_self());
+  //module_setup_task(master->module, os_task_id_self());
   os_ansync_main(master, OS_ANSYNC_EXECUTE_ARGV);
   return OK;
 }
@@ -218,7 +218,7 @@ int hal_txrx_module_task_init(void)
                                          0, hal_txrx_task, hal_txrx.master, OS_TASK_DEFAULT_STACK * 4);
     if (hal_txrx.taskid > 0)
     {
-        module_setup_task(MODULE_TXRX, hal_txrx.taskid);
+        //module_setup_task(MODULE_TXRX, hal_txrx.taskid);
         return OK;
     }
     return ERROR;

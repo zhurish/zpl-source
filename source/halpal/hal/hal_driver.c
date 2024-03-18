@@ -38,7 +38,7 @@ static int hal_main_task(void *p)
 {
 
 	struct thread_master *master = (struct thread_master *)p;
-	module_setup_task(master->module, os_task_id_self());
+	//module_setup_task(master->module, os_task_id_self());
 
 	while(thread_mainloop(master))
 		;
@@ -50,7 +50,7 @@ static int hal_main_task(void *p)
 int hal_module_init(void)
 {
 	memset(&hal_driver, 0, sizeof(hal_driver_t));
-	hal_driver.master = thread_master_module_create(MODULE_HAL);
+	hal_driver.master = thread_master_name_create("HAL");
 	hal_ipcsrv_init(hal_driver.master, os_netservice_port_get("hal_port"), os_netservice_sockpath_get(HAL_IPCMSG_CMD_PATH)/*HAL_IPCMSG_CMD_PATH*/);
 	return OK;
 }
@@ -70,14 +70,14 @@ int hal_module_task_init(void)
 {
 	if(!hal_driver.master)
 	{	
-		hal_driver.master = thread_master_module_create(MODULE_HAL);
+		hal_driver.master = thread_master_name_create("HAL");
 	}
 	if(hal_driver.taskid <= 0)
 		hal_driver.taskid = os_task_create("halTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, hal_main_task, hal_driver.master, OS_TASK_DEFAULT_STACK*4);
 	if(hal_driver.taskid > 0)
 	{
-		module_setup_task(MODULE_HAL, hal_driver.taskid);
+		//module_setup_task(MODULE_HAL, hal_driver.taskid);
 		return OK;
 	}
 	return ERROR;

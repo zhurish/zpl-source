@@ -345,7 +345,7 @@ int v9_serial_init(char *devname, zpl_uint32 speed)
 	if(_v9_serial_hw_init() == OK)
 	{
 		if(master_eloop[MODULE_APP_START] == NULL)
-			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+			master_eloop[MODULE_APP_START] = eloop_master_name_create(MODULE_APP_START);
 
 		v9_serial->master = master_eloop[MODULE_APP_START];
 		v9_serial->mutex = os_mutex_name_create("v9_serial->mutex");
@@ -414,7 +414,7 @@ static int v9_app_mgt_task(void *argv)
 	zassert(argv != NULL);
 	v9_serial_t *mgt = (v9_serial_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP_START, os_task_id_self());
+	//module_setup_task(MODULE_APP_START, os_task_id_self());
 	host_waitting_loadconfig();
 	if(!mgt->enable)
 	{
@@ -430,14 +430,14 @@ static int v9_app_task_init (v9_serial_t *mgt)
 {
 	zassert(mgt != NULL);
 	if(master_eloop[MODULE_APP_START] == NULL)
-		mgt->master = master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+		mgt->master = master_eloop[MODULE_APP_START] = eloop_master_name_create(MODULE_APP_START);
 
 	mgt->enable = zpl_true;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, v9_app_mgt_task, mgt, OS_TASK_DEFAULT_STACK * 2);
 	if(mgt->task_id)
 	{
-		module_setup_task(MODULE_APP_START, mgt->task_id);
+		//module_setup_task(MODULE_APP_START, mgt->task_id);
 		return OK;
 	}
 	return ERROR;

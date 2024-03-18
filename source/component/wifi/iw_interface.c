@@ -619,7 +619,7 @@ int nsm_iw_debug_write_config(struct vty *vty)
 #ifdef IW_ONCE_TASK
 static int iw_task(void *p)
 {
-	module_setup_task(MODULE_WIFI, os_task_id_self());
+	//module_setup_task(MODULE_WIFI, os_task_id_self());
 	host_waitting_loadconfig();
 	thread_mainloop(master_thread);
 	return OK;
@@ -628,14 +628,14 @@ static int iw_task(void *p)
 
 static int iw_task_start(void)
 {
-	master_thread = thread_master_module_create (MODULE_WIFI);
+	master_thread = thread_master_name_create ("WIFI");
 
 	if(iw_taskid == 0)
 		iw_taskid = os_task_create("iwApTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, iw_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(iw_taskid)
 	{
-		module_setup_task(MODULE_WIFI, iw_taskid);
+		//module_setup_task(MODULE_WIFI, iw_taskid);
 		return OK;
 	}
 	return ERROR;

@@ -182,7 +182,7 @@ int zpl_media_channel_capture_enable(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHAN
             return ERROR;
         }
         memset(capture, 0, sizeof(zpl_media_capture_t));    
-        capture->event_queue = zpl_media_event_default();
+        capture->event_queue = mediachn->event;
 		capture->images_queue = zpl_media_imglst_create("capture", ZPL_MEDIA_BUFFER_FRAME_CACHESIZE);
 		if (capture->images_queue == NULL)
 		{

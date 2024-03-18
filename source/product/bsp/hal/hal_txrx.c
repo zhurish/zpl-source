@@ -391,7 +391,7 @@ static int hal_txrx_thread(struct thread *thread)
 static int hal_txrx_task(void *pVoid)
 {
   struct thread_master *master = (struct thread_master *)pVoid;
-  module_setup_task(master->module, os_task_id_self());
+  //module_setup_task(master->module, os_task_id_self());
   
   while (thread_mainloop(master))
     ;
@@ -403,7 +403,7 @@ int hal_txrx_module_init(void)
     memset(&hal_txrx, 0, sizeof(hal_txrx));
     if (!hal_txrx.master)
     {
-        hal_txrx.master = thread_master_module_create(MODULE_TXRX);
+        hal_txrx.master = thread_master_name_create("TXRX");
     }
     hal_txrx.debug = 0xffffff;
     hal_txrx.netlink_data = lib_netlink_create(4096, 64);
@@ -426,14 +426,14 @@ int hal_txrx_module_task_init(void)
 {
     if (!hal_txrx.master)
     {
-        hal_txrx.master = thread_master_module_create(MODULE_TXRX);
+        hal_txrx.master = thread_master_name_create("TXRX");
     }
     if (hal_txrx.taskid <= 0)
         hal_txrx.taskid = os_task_create("txrxTask", OS_TASK_DEFAULT_PRIORITY,
                                          0, hal_txrx_task, hal_txrx.master, OS_TASK_DEFAULT_STACK * 4);
     if (hal_txrx.taskid > 0)
     {
-        module_setup_task(MODULE_TXRX, hal_txrx.taskid);
+        //module_setup_task(MODULE_TXRX, hal_txrx.taskid);
         return OK;
     }
     return ERROR;

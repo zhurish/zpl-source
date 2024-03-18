@@ -324,7 +324,7 @@ static int v9_video_sdk_task(void *argv)
 	zassert(argv != NULL);
 	v9_video_sdk_t *mgt = (v9_video_sdk_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
+	//module_setup_task(MODULE_APP_START + 1, os_task_id_self());
 	host_waitting_loadconfig();
 /*	if(!mgt->enable)
 	{
@@ -347,7 +347,7 @@ int v9_video_sdk_task_init ()
 {
 	zassert(v9_sdk_data != NULL);
 	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		v9_sdk_data->master = master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+		v9_sdk_data->master = master_eloop[MODULE_APP_START + 1] = eloop_master_name_create(MODULE_APP_START + 1);
 
 	zlog_debug(MODULE_APP, "---------%s---------", __func__);
 	//v9_sdk_data->enable = zpl_true;
@@ -440,7 +440,7 @@ int v9_video_sdk_restart_all()
 	if(!v9_sdk_data)
 		return ERROR;
 	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+		master_eloop[MODULE_APP_START + 1] = eloop_master_name_create(MODULE_APP_START + 1);
 
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{

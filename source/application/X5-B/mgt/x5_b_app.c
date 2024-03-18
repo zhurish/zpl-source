@@ -1699,7 +1699,7 @@ int x5b_app_module_init(char *local, zpl_uint16 port)
 		memset(x5b_app_mgt, 0, sizeof(x5b_app_mgt_t));
 
 		if(x5b_app_mgt->master == NULL)
-			x5b_app_mgt->master = eloop_master_module_create(MODULE_APP);
+			x5b_app_mgt->master = eloop_master_name_create(MODULE_APP);
 
 
 		x5b_app_mgt->mutex = os_mutex_name_create("x5b_app_mgt->mutex");
@@ -1770,7 +1770,7 @@ static int x5b_app_mgt_task(void *argv)
 	zassert(argv != NULL);
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP, os_task_id_self());
+	//module_setup_task(MODULE_APP, os_task_id_self());
 	host_waitting_loadconfig();
 	if(!mgt->enable)
 	{
@@ -1786,7 +1786,7 @@ static int x5b_app_task_init (x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
 	if(mgt->master == NULL)
-		mgt->master = eloop_master_module_create(MODULE_APP);
+		mgt->master = eloop_master_name_create(MODULE_APP);
 
 	mgt->enable = zpl_true;
 	mgt->task_id = os_task_create("appTask", OS_TASK_DEFAULT_PRIORITY,

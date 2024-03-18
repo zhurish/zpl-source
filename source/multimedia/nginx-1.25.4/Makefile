@@ -70,9 +70,9 @@ install:nginx
 clean: objclean
 	@if test -f $(ZPL_INSTALL_SBIN_DIR)/nginx ; \
 		then \
-		$(RM) $(ZPL_INSTALL_SBIN_DIR)/nginx ; \
+		$(RM) -rf $(ZPL_INSTALL_SBIN_DIR)/nginx ; \
 	fi
-	$(RM) $(ZPL_INSTALL_ETC_DIR)/nginx/ 
+	$(RM) -rf $(ZPL_INSTALL_ETC_DIR)/nginx/* 
 
 objclean: 
 	@$(RM) -rf $(OBJS_DIR)/*

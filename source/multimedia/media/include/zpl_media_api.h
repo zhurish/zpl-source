@@ -13,14 +13,9 @@ extern "C" {
 #endif
 
 
-int zpl_media_module_init(void);
-int zpl_media_module_exit(void);
-int zpl_media_task_init(void);
-int zpl_media_task_exit(void);
-int zpl_media_cmd_init(void);
 
 #ifdef ZPL_SHELL_MODULE
-void cmd_video_init(void);
+int zpl_media_cmd_init(void);
 #endif
 
 

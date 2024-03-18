@@ -320,7 +320,7 @@ int ipcstandby_init(void)
 {
     memset(&_host_standby, 0, sizeof(struct ipcstandby));
     _host_standby.slot = _global_host.slot;
-    _host_standby.master = thread_master_module_create(MODULE_STANDBY);
+    _host_standby.master = thread_master_name_create("Standby");
     _host_standby._lock = os_mutex_name_create("_host_standby.mutex");
     _host_standby.ipcstandby_client = ipcstandby_client_new(_host_standby.master);
     _host_standby.ipcstandby_server = ipcstandby_serv_init(_host_standby.master, os_netservice_port_get("standbyd_port"));
@@ -378,7 +378,7 @@ static int standby_main_task(void *p)
 {
 
     struct thread_master *master = (struct thread_master *)p;
-    module_setup_task(master->module, os_task_id_self());
+    ////module_setup_task(master->module, os_task_id_self());
 
     while (thread_mainloop(master))
         ;
@@ -389,14 +389,14 @@ int ipcstandby_task_init(void)
 {
     if (!_host_standby.master)
     {
-        _host_standby.master = thread_master_module_create(MODULE_STANDBY);
+        _host_standby.master = thread_master_name_create("Standby");
     }
     if (_host_standby.taskid <= 0)
         _host_standby.taskid = os_task_create("standbyTask", OS_TASK_DEFAULT_PRIORITY,
                                               0, standby_main_task, _host_standby.master, OS_TASK_DEFAULT_STACK * 4);
     if (_host_standby.taskid > 0)
     {
-        module_setup_task(MODULE_STANDBY, _host_standby.taskid);
+        //module_setup_task(MODULE_STANDBY, _host_standby.taskid);
         return OK;
     }
     return ERROR;

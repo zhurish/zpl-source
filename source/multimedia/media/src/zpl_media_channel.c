@@ -247,8 +247,6 @@ static int zpl_media_channel_lstnode_create(zpl_media_channel_t *chn)
 			if (video_encode == NULL)
 			{
 				zm_msg_error("can not create hal for media channel(%d/%d)", chn->channel, chn->channel_index);
-				chn->frame_queue = NULL;
-				os_free(chn);
 				return ERROR;
 			}
 
@@ -262,8 +260,6 @@ static int zpl_media_channel_lstnode_create(zpl_media_channel_t *chn)
 			{
 				zm_msg_error("can not create hal for media channel(%d/%d)", chn->channel, chn->channel_index);
 				zpl_media_video_encode_destroy(video_encode);
-				chn->frame_queue = NULL;
-				os_free(chn);
 				return ERROR;
 			}
 			if(hwres->inputchn >= 0 && hwres->inputpipe >= 0 && hwres->devid >= 0 && hwres->mipidev >= 0 && 
@@ -278,8 +274,6 @@ static int zpl_media_channel_lstnode_create(zpl_media_channel_t *chn)
 				zm_msg_error("can not create hal for media channel(%d/%d)", chn->channel, chn->channel_index);
 				zpl_media_video_encode_destroy(video_encode);
 				zpl_media_video_vpsschn_destroy(video_vpsschn);
-				chn->frame_queue = NULL;
-				os_free(chn);
 				return ERROR;
 			}
 			video_inputchn->inputdev.snsdev = hwres->sensordev;
@@ -367,10 +361,10 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 			chn->media_type = ZPL_MEDIA_VIDEO;
 			chn->media_param.video_media.enable = zpl_true;
 		}
-		chn->t_master = tvideo_task.t_master;
+		chn->t_master = _media_global.mthreadpool[chn->channel].t_master;
 		zpl_media_channel_encode_default(chn);
 
-		chn->frame_queue = zpl_skbqueue_create(os_name_format("mediaBufQueue-%d/%d", channel, channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);	
+		chn->frame_queue = zpl_skbqueue_create(os_name_format("mBufQueue%d.%d", channel, channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);	
 
 		if (chn->frame_queue == NULL)
 		{
@@ -378,26 +372,40 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 			os_free(chn);
 			return ERROR;
 		}
-
 		zpl_skbqueue_attribute_set(chn->frame_queue, ZPL_SKBQUEUE_FLAGS_LIMIT_MAX);
-
+		chn->event = zpl_media_event_create(os_name_format("mediaEvent%d.%d",channel, channel_index), 16);
+		if(chn->event == NULL)
+		{
+			zm_msg_error("can not create event for media channel(%d/%d)", channel, channel_index);
+			zpl_skbqueue_destroy(chn->frame_queue);
+			os_free(chn);
+			return ERROR;
+		}
+		chn->_mutex = os_mutex_name_create(os_name_format("mutex%d.%d",channel, channel_index));
+        if (chn->_mutex == NULL)
+        {
+			zpl_media_event_destroy(chn->event);
+			zpl_skbqueue_destroy(chn->frame_queue);
+			os_free(chn);
+			return ERROR;
+        }
 		if(zpl_media_channel_lstnode_create(chn) != OK)
 		{
+			os_mutex_destroy(chn->_mutex);
+			zpl_media_event_destroy(chn->event);
 			zpl_skbqueue_destroy(chn->frame_queue);
 			os_free(chn);
 			return ERROR;
 		}
 		if(zpl_media_channel_hal_create(chn) != OK)
 		{
+			os_mutex_destroy(chn->_mutex);
+			zpl_media_event_destroy(chn->event);
 			zpl_skbqueue_destroy(chn->frame_queue);
 			os_free(chn);
 			return ERROR;
 		}
-		
-        if (chn->_mutex == NULL)
-        {
-            chn->_mutex = os_mutex_name_create("media_channel_mutex");
-        }
+
 		if (media_channel_mutex)
 			os_mutex_lock(media_channel_mutex, OS_WAIT_FOREVER);
 		if (media_channel_list)
@@ -405,7 +413,9 @@ int zpl_media_channel_create(ZPL_MEDIA_CHANNEL_E channel,
 
 		if (media_channel_mutex)
 			os_mutex_unlock(media_channel_mutex);
-		zpl_media_task_ready(MODULE_MEDIA);	
+		zpl_media_global_ready(channel, zpl_true);	
+		zpl_media_event_start(chn->event, 60, OS_TASK_DEFAULT_STACK*2);
+		zpl_media_sched_start_channel(chn);
 		return OK;
 	}
 	return ERROR;
@@ -522,6 +532,10 @@ int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 	chn = zpl_media_channel_lookup_entry(channel, channel_index, 0);
     if(chn)
 	{
+		zpl_media_global_ready(channel, zpl_false);
+		zpl_media_sched_stop_channel(chn);
+		zpl_media_event_destroy(chn->event);
+
 		ZPL_MEDIA_CHANNEL_LOCK(chn);
 		if(zpl_media_channel_lstnode_destroy(chn) != OK)
 		{
@@ -530,7 +544,6 @@ int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 				os_mutex_unlock(media_channel_mutex);
 			return ERROR;
 		}
-		
         lstDelete(media_channel_list, (NODE *)chn);
 		if(chn->frame_queue)	
 		{
@@ -538,6 +551,7 @@ int zpl_media_channel_destroy(ZPL_MEDIA_CHANNEL_E channel, ZPL_MEDIA_CHANNEL_TYP
 			chn->frame_queue = NULL;
 		}
 		ZPL_MEDIA_CHANNEL_UNLOCK(chn);
+	
         if (os_mutex_destroy(chn->_mutex) == OK)
 			chn->_mutex = NULL;
         free(chn);

@@ -34,7 +34,7 @@ $(LIBS) : $(MODULE_OBJS)
 
 make_prepare:
 ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
-	cd $(ZPLBASE)/$(LIVE555_ROOT);./genMakefiles pl
+#cd $(ZPLBASE)/$(LIVE555_ROOT);./genMakefiles pl
 endif
 	@for i in $(patsubst %.o,%.c,$(OBJS)); do	\
 		$(ZPL_MAKE_DIR)/moduletypes.sh scan $$i $(PLATFORM_BASE_ROOT); \
@@ -44,7 +44,17 @@ endif
 #
 lib: $(LIBS) 
 
+#ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
+#live555:
+#	@if test -f $(ZPLBASE)/$(LIVE555_ROOT)/Makefile ; \
+#		then \
+#		make -C $(ZPLBASE)/$(LIVE555_ROOT)/Makefiles \
+#	fi
+#
+#obj: $(MODULE_OBJS)	
+#else	
 obj: $(MODULE_OBJS)
+#endif
 
 install: $(LIBS) 
 	@install -d $(LIB_DIR)
@@ -61,4 +71,4 @@ objclean:
 
 all: lib install 
 
-.PHONY:	obj all lib install objclean clean 
+.PHONY:	obj all lib install objclean clean live555

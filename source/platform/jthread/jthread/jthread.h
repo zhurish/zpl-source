@@ -45,6 +45,7 @@ class JTHREAD_IMPORTEXPORT JThread
 {
 public:
 	JThread();
+	JThread(char*);
 	virtual ~JThread();
 	int Start();
 	int Kill();
@@ -72,7 +73,7 @@ private:
 #endif // JTHREAD_CONFIG_WIN32THREADS
 	void *retval;
 	bool running;
-	
+	char *t_name;
 	JMutex runningmutex;
 	JMutex continuemutex,continuemutex2;
 	bool mutexinit;

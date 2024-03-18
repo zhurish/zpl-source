@@ -1114,7 +1114,7 @@ int mqtt_module_task_init(void)
 				mqtt_app_task, mqtt_config, OS_TASK_DEFAULT_STACK);
 	if (mqtt_config->taskid)
 	{
-		module_setup_task(MODULE_MQTT, mqtt_config->taskid);
+		//module_setup_task(MODULE_MQTT, mqtt_config->taskid);
 		return OK;
 	}
 	return ERROR;

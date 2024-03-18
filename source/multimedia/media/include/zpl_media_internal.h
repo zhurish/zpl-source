@@ -26,6 +26,7 @@ extern "C" {
 #include <zpl_media_hardadap.h>
 #include <zpl_media_client.h>
 #include <zpl_media_channel.h>
+#include <zpl_media_sched.h>
 #include <zpl_media_file.h>
 #include <zpl_media_frame_adap.h>
 
@@ -39,7 +40,7 @@ extern "C" {
 #include <zpl_media_log.h>
 
 #include <zpl_media_rtp.h>
-#include <zpl_media_task.h>
+
 
 
 #include <zpl_media_video_encode.h>

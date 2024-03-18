@@ -6,28 +6,26 @@
 VERSION=v2.3
 ZPL_DEFINE += -DRTMPDUMP_VERSION=\"$(VERSION)\"
 
-OBJS += rtmp.o rtmplog.o rtmpamf.o rtmphashswf.o rtmpparseurl.o 
-#rtmpsrv.o
+OBJS += rtmplog.o rtmpamf.o rtmpparseurl.o rtmphashswf.o rtmp.o  
 
-OBJS += rtmp-chunk-header.o rtmp-chunk-read.o rtmp-chunk-write.o rtmp-client.o \
-	rtmp-control-handler.o rtmp-control-message.o rtmp-event.o rtmp-handler.o rtmp-handshake.o \
-	rtmp-invoke-handler.o rtmp-netconnection.o rtmp-netstream.o rtmp-server.o
+OBJS += rtmp-client-api.o rtmp-send-h264.o
 
 #OBJS += rtmp_thread.o rtmpgw.o rtmpsuck.o rtmpsrv.o rtmpdump.o 
 
 ifeq ($(strip $(ZPL_OPENSSL_MODULE)),true)
-#ZPL_DEFINE += -DUSE_OPENSSL
+#ZPL_DEFINE += -DUSE_OPENSSL -DCRYPTO
 #ZPL_LDLIBS += -lssl -lcrypto -lz
+ZPL_DEFINE += -DNO_CRYPTO 
 else
-ZPL_DEFINE += -DNO_CRYPTO -DNO_SSL
+ZPL_DEFINE += -DNO_CRYPTO 
 endif
 ifeq ($(strip $(ZPL_POLARSSL_MODULE)),true)
 ZPL_DEFINE += -DUSE_POLARSSL
-ZPL_LDLIBS += -lpolarssl -lz
+#ZPL_LDLIBS += -lpolarssl -lz
 endif
 ifeq ($(strip $(ZPL_GNUTLS_MODULE)),true)
 ZPL_DEFINE += -DUSE_GNUTLS
-ZPL_LDLIBS += -lgnutls -lgcrypt -lz
+#ZPL_LDLIBS += -lgnutls -lgcrypt -lz
 endif
 
 #############################################################################

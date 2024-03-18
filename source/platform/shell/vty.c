@@ -4165,13 +4165,13 @@ int vty_shell_init(void)
 		g_vtyshell.mutex = os_mutex_name_create("climutex");
 #ifdef ZPL_IPCOM_MODULE
 		if (g_vtyshell.m_eloop_master == NULL)
-			g_vtyshell.m_eloop_master = eloop_master_module_create(MODULE_SHELL);
+			g_vtyshell.m_eloop_master = eloop_master_name_create("SHELL");
 
 		if (g_vtyshell.m_thread_master == NULL)
-			g_vtyshell.m_thread_master = thread_master_module_create(MODULE_SHELL);
+			g_vtyshell.m_thread_master = thread_master_name_create("SHELL");
 #else
 		if (g_vtyshell.m_thread_master == NULL)
-			g_vtyshell.m_eloop_master = g_vtyshell.m_thread_master = thread_master_module_create(MODULE_SHELL);
+			g_vtyshell.m_eloop_master = g_vtyshell.m_thread_master = thread_master_name_create("SHELL");
 #endif
 		/* For further configuration read, preserve current directory. */
 		vty_save_cwd();
@@ -4267,7 +4267,7 @@ int cli_shell_result (const char *format, ...)
 #ifdef ZPL_IPCOM_MODULE
 static int cli_telnet_task(void *argv)
 {
-	module_setup_task(MODULE_SHELL, os_task_id_self());
+	//module_setup_task(MODULE_SHELL, os_task_id_self());
 	host_waitting_loadconfig();
 	eloop_mainloop(argv);
 	return 0;
@@ -4276,14 +4276,14 @@ static int cli_telnet_task(void *argv)
 static int cli_telnet_task_init(void)
 {
 	if (g_vtyshell.m_eloop_master == NULL)
-		g_vtyshell.m_eloop_master = eloop_master_module_create(MODULE_SHELL);
+		g_vtyshell.m_eloop_master = eloop_master_name_create("SHELL");
 
 	if (g_vtyshell.telnet_taskid == 0)
 		g_vtyshell.telnet_taskid = os_task_create("telnetdTask", OS_TASK_DEFAULT_PRIORITY,
 												 0, cli_telnet_task, g_vtyshell.m_eloop_master, OS_TASK_DEFAULT_STACK*4);
 	if (g_vtyshell.telnet_taskid)
 	{
-		module_setup_task(MODULE_SHELL, g_vtyshell.telnet_taskid);
+		//module_setup_task(MODULE_SHELL, g_vtyshell.telnet_taskid);
 		return OK;
 	}
 	return ERROR;
@@ -4306,7 +4306,7 @@ static int cli_console_task(void *argv)
 static int cli_shell_task(void *argv)
 #endif
 {
-	module_setup_task(MODULE_SHELL, os_task_id_self());
+	//module_setup_task(MODULE_SHELL, os_task_id_self());
 	host_waitting_loadconfig();
 	thread_mainloop(argv);
 	return 0;
@@ -4315,7 +4315,7 @@ static int cli_shell_task(void *argv)
 static int cli_console_task_init(void)
 {
 	if (g_vtyshell.m_thread_master == NULL)
-		g_vtyshell.m_thread_master = thread_master_module_create(MODULE_SHELL);
+		g_vtyshell.m_thread_master = thread_master_name_create("SHELL");
 #ifdef ZPL_IPCOM_MODULE
 	if (g_vtyshell.console_taskid == 0)
 		g_vtyshell.console_taskid = os_task_create("consoleTask", OS_TASK_DEFAULT_PRIORITY,
@@ -4327,7 +4327,7 @@ static int cli_console_task_init(void)
 #endif
 	if (g_vtyshell.console_taskid)
 	{
-		module_setup_task(MODULE_SHELL, g_vtyshell.console_taskid);
+		//module_setup_task(MODULE_SHELL, g_vtyshell.console_taskid);
 		return OK;
 	}
 	return ERROR;

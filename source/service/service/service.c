@@ -74,7 +74,7 @@ static int ftpd_loginVerify(char *user, char *pass)
 static int service_main_task(void *argv)
 {
 	module_list_utils.taskid = os_task_id_self();
-	module_setup_task(MODULE_SERVICE, os_task_id_self());
+	//module_setup_task(MODULE_SERVICE, os_task_id_self());
 	host_waitting_loadconfig();
 	eloop_mainloop(master_eloop);
 	return 0;
@@ -83,14 +83,14 @@ static int service_main_task(void *argv)
 int service_task_init (void)
 {
 	if(master_eloop == NULL)
-		master_eloop = eloop_master_module_create(MODULE_SERVICE);
+		master_eloop = eloop_master_name_create("SERVICE");
 	if(sys_task_id == 0)
 		sys_task_id = os_task_create("sysTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, service_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(sys_task_id)
 	{
 		module_list_utils.taskid = sys_task_id;
-		module_setup_task(MODULE_SERVICE, sys_task_id);
+		//module_setup_task(MODULE_SERVICE, sys_task_id);
 		return OK;
 	}
 	return ERROR;
@@ -108,7 +108,7 @@ int service_task_exit (void)
 int service_module_init (void)
 {
 	if(master_eloop == NULL)
-		master_eloop = eloop_master_module_create(MODULE_SERVICE);
+		master_eloop = eloop_master_name_create("SERVICE");
 #ifdef ZPL_SERVICE_TFTPC
 #endif
 #ifdef ZPL_SERVICE_TFTPD

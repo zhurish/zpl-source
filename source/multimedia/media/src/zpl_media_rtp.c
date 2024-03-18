@@ -248,22 +248,25 @@ static int zpl_mediartp_session_connect(zpl_mediartp_session_t *my_session, int 
     zpl_media_channel_t * mediachn = zpl_media_channel_lookup(channel, level);    
     if (my_session && mediachn)
     {
-        if(mediachn->rtp_param.cbid <= 0)
-        {
-            mediachn->rtp_param.cbid = zpl_media_channel_client_add(mediachn->channel, mediachn->channel_index, zpl_mediartp_session_rtp_clone, mediachn);       
-            if((int)mediachn->rtp_param.cbid <= 0)
-            {
-                return ERROR;
-            }
-        }
         if(mediachn->rtp_param.param == NULL)
         {
-            mediachn->rtp_param.param = zpl_skbqueue_create(os_name_format("rtpSkbQueue-%d/%d", mediachn->channel, mediachn->channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);
+            mediachn->rtp_param.param = zpl_skbqueue_create(os_name_format("rtpQueue%d.%d", mediachn->channel, mediachn->channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);
             if(mediachn->rtp_param.param == NULL)
             {
                 return ERROR;
             }
         }
+        if(mediachn->rtp_param.cbid <= 0)
+        {
+            mediachn->rtp_param.cbid = zpl_media_channel_client_add(mediachn->channel, mediachn->channel_index, zpl_mediartp_session_rtp_clone, mediachn);       
+            if((int)mediachn->rtp_param.cbid <= 0)
+            {
+                zpl_skbqueue_destroy(mediachn->rtp_param.param);
+                mediachn->rtp_param.param = NULL;
+                return ERROR;
+            }
+        }
+
         my_session->media_chn = mediachn;
         if(mediachn->media_type == ZPL_MEDIA_VIDEO)
         {
@@ -489,25 +492,26 @@ int zpl_mediartp_session_start(int keyval, zpl_bool start)
     {
         if (start)
         {
-            if(mchn->rtp_param.cbid <= 0)
-            {
-                mchn->rtp_param.cbid = zpl_media_channel_client_add(mchn->channel, mchn->channel_index, zpl_mediartp_session_rtp_clone, mchn);       
-                if((int)mchn->rtp_param.cbid <= 0)
-                {
-                    ZPL_MEDIARTP_CHANNEL_UNLOCK(my_session);
-                    return ERROR;
-                }
-            }
             if(mchn->rtp_param.param == NULL)
             {
-                mchn->rtp_param.param = zpl_skbqueue_create(os_name_format("rtpSkbQueue-%d/%d", mchn->channel, mchn->channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);
+                mchn->rtp_param.param = zpl_skbqueue_create(os_name_format("rtpQueue%d.%d", mchn->channel, mchn->channel_index), ZPL_MEDIA_BUFQUEUE_SIZE, zpl_false);
                 if(mchn->rtp_param.param == NULL)
                 {
                     ZPL_MEDIARTP_CHANNEL_UNLOCK(my_session);
                     return ERROR;
                 }
             }
-
+            if(mchn->rtp_param.cbid <= 0)
+            {
+                mchn->rtp_param.cbid = zpl_media_channel_client_add(mchn->channel, mchn->channel_index, zpl_mediartp_session_rtp_clone, mchn);       
+                if((int)mchn->rtp_param.cbid <= 0)
+                {
+                    zpl_skbqueue_destroy(mchn->rtp_param.param);
+                    mchn->rtp_param.param = NULL;
+                    ZPL_MEDIARTP_CHANNEL_UNLOCK(my_session);
+                    return ERROR;
+                }
+            }
             if (mchn->rtp_param.enable == zpl_false)
             {
                 if(ZPL_MEDIARTP_DEBUG(EVENT) && ZPL_MEDIARTP_DEBUG(DETAIL))

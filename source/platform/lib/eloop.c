@@ -23,7 +23,6 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "module.h"
 #include "log.h"
 #include "zmemory.h"
 #include "command.h"
@@ -119,16 +118,19 @@ static int eloop_master_del_list(struct eloop_master *node)
 	return OK;
 }
 
-static struct eloop_master *eloop_master_get_list(int mode)
+static struct eloop_master *eloop_master_get_list(char *name)
 {
 	struct eloop_master *cutmp = NULL;
 	struct eloop_master *next = NULL;
+	char cmdname[OS_ELOOP_MANE_MAX];
 	if (_master_mutex)
 		os_mutex_lock(_master_mutex, OS_WAIT_FOREVER);	
+	memset(cmdname, 0, sizeof(cmdname));	
+	strcpy(cmdname,name);
 	for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 	{
 		next = cutmp->next;
-		if (cutmp && cutmp->module == mode)
+		if (cutmp && memcmp(cutmp->name, cmdname, OS_ELOOP_MANE_MAX) == 0)
 		{
 			break;
 		}
@@ -185,35 +187,30 @@ eloop_master_create()
 	return rv;
 }
 
-struct eloop_master *eloop_master_module_create(zpl_uint32 module)
+struct eloop_master *eloop_master_name_create(char *name)
 {
 	if (os_mt_init == 0)
 	{
 		memset(&_master_eloop_list, 0, sizeof(_master_eloop_list));
 		os_mt_init = 1;
 	}
-	if (NOT_INT_MAX_MIN_SPACE(module, MODULE_NONE, (MODULE_MAX - 1)))
-		return NULL;
-
-	if (eloop_master_get_list(module))
-		return eloop_master_get_list(module);
+	if (eloop_master_get_list(name))
+		return eloop_master_get_list(name);
 
 	struct eloop_master * m = eloop_master_create();
 	if (m)
 	{
-		m->module = module;
+		memset(m->name, 0, sizeof(m->name));	
+		strcpy(m->name,name);	
 		return m;
 	}
 	return NULL;
 }
 
-struct eloop_master *eloop_master_module_lookup (zpl_uint32 module)
+struct eloop_master *eloop_master_name_lookup (char * name)
 {
-	if (NOT_INT_MAX_MIN_SPACE(module, MODULE_NONE, (MODULE_MAX - 1)))
-		return NULL;
-
-	if (eloop_master_get_list(module))
-		return eloop_master_get_list(module);
+	if (eloop_master_get_list(name))
+		return eloop_master_get_list(name);
 	return NULL;
 }
 /* Add a new eloop to the list.  */
@@ -1359,8 +1356,7 @@ DEFUN(show_eloop_cpu,
 		{
 			if (vty_eloop_cpu_get_history(cutmp))
 			{
-				vty_out(vty, "%s of cpu process:%s", module2name(cutmp->module),
-						VTY_NEWLINE);
+				vty_out(vty, "%s of cpu process:%s", cutmp->name, VTY_NEWLINE);
 				vty_eloop_cpu_show_detail(cutmp, vty, 1, filter);
 			}
 		}
@@ -1392,7 +1388,6 @@ DEFUN(show_eloop_task_cpu,
 		"Thread CPU usage\n"
 		"Display filter (rwtexb)\n")
 {
-	zpl_uint32 index = 0;
 	eloop_type filter = 0xff;
 
 	struct eloop_master *cutmp = NULL;
@@ -1407,19 +1402,15 @@ DEFUN(show_eloop_task_cpu,
 			if (filter == 0)
 				return CMD_WARNING;
 		}
-		os_memset(input, 0, sizeof(input));
-		os_strcpy(input, argv[0]);
-		index = name2module(input);
 
 		for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 		{
 			next = cutmp->next;
-			if (cutmp && cutmp->module == index)
+			if (cutmp && strcmp(cutmp->name, argv[0]) == 0)
 			{
 				if (vty_eloop_cpu_get_history(cutmp))
 				{
-					vty_out(vty, "%s of cpu process:%s", module2name(index),
-							VTY_NEWLINE);
+					vty_out(vty, "%s of cpu process:%s", cutmp->name,VTY_NEWLINE);
 					vty_eloop_cpu_show_head(vty);
 					vty_eloop_cpu_show_detail(cutmp, vty, 1,
 											   filter);
@@ -1428,9 +1419,7 @@ DEFUN(show_eloop_task_cpu,
 			}
 		}
 		{
-			vty_out(vty, "%s of cpu process: no thread use cpu%s",
-					module2name(index),
-					VTY_NEWLINE);
+			vty_out(vty, "%s of cpu process: no thread use cpu%s",cutmp->name,VTY_NEWLINE);
 		}
 	}
 	return CMD_SUCCESS;
@@ -1480,7 +1469,6 @@ DEFUN(clear_eloop_task_cpu,
 		"Thread CPU usage\n"
 		"Display filter (rwtexb)\n")
 {
-	zpl_uint32 index = 0;
 	eloop_type filter = 0xff;
 
 	struct eloop_master *cutmp = NULL;
@@ -1496,14 +1484,11 @@ DEFUN(clear_eloop_task_cpu,
 			if (filter == 0)
 				return CMD_WARNING;
 		}
-		os_memset(input, 0, sizeof(input));
-		os_strcpy(input, argv[0]);
-		index = name2module(input);
 
 		for (cutmp = _master_eloop_list.head; cutmp; cutmp = next)
 		{
 			next = cutmp->next;
-			if (cutmp && cutmp->module == index)
+			if (cutmp && strcmp(cutmp->name, argv[0]) == 0)
 			{
 				if (vty_eloop_cpu_get_history(cutmp))
 				{
@@ -1602,7 +1587,7 @@ DEFUN (show_eloop_dump,
 		next = cutmp->next;
 		if (cutmp)
 		{
-			vty_out(vty, "%s of cpu process:%s", module2name(cutmp->module), VTY_NEWLINE);
+			vty_out(vty, "%s of cpu process:%s", cutmp->name, VTY_NEWLINE);
 			cpu_eloop_show(cutmp, vty);
 		}
 	}

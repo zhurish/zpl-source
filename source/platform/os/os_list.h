@@ -75,6 +75,7 @@ extern "C"
 /* Prototypes. */
 extern os_list_t *os_list_new(void); /* encouraged: set list.del callback on new lists */
 extern void os_list_free (os_list_t *);
+extern void os_list_init(os_list_t *pList, void (*freecb)(void *));
 
 extern void os_listnode_add (os_list_t *, void *);
 extern void os_listnode_add_sort (os_list_t *, void *);

@@ -13,6 +13,7 @@ typedef struct rtsp_server_s
     void            *t_master;
     #ifdef ZPL_LIVE555_MODULE
     zpl_taskid_t    t_lv5taskid; 
+    rtsp_srv_t      *lv5;
     #endif
     //rtsp_session_list rtsp_seslst;
 

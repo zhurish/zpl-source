@@ -25,9 +25,6 @@
  *  http://www.gnu.org/copyleft/lgpl.html
  */
 
-#if !defined(NO_CRYPTO) && !defined(CRYPTO)
-//#define CRYPTO
-#endif
 
 #include <errno.h>
 #include <stdint.h>
@@ -41,6 +38,9 @@ extern "C"
 #endif
 
 #define RTMP_LIB_VERSION	0x020300	/* 2.3 */
+
+#define RTMP_SIG_SIZE 1536
+#define RTMP_LARGE_HEADER_SIZE 12
 
 #define RTMP_FEATURE_HTTP	0x01
 #define RTMP_FEATURE_ENC	0x02
@@ -67,9 +67,9 @@ extern "C"
 
   extern const char RTMPProtocolStringsLower[][7];
   extern const AVal RTMP_DefaultFlashVer;
-  extern int RTMP_ctrlC;
 
-  uint32_t RTMP_GetTime(void);
+
+
 
 #define RTMP_PACKET_TYPE_AUDIO 0x08
 #define RTMP_PACKET_TYPE_VIDEO 0x09
@@ -112,6 +112,7 @@ extern "C"
     char sb_buf[RTMP_BUFFER_CACHE_SIZE];	/* data read from socket */
     int sb_timedout;
     void *sb_ssl;
+    void  *rtmp;
   } RTMPSockBuf;
 
   void RTMPPacket_Reset(RTMPPacket *p);
@@ -252,8 +253,13 @@ extern "C"
     RTMPPacket m_write;
     RTMPSockBuf m_sb;
     RTMP_LNK Link;
+#ifndef _WIN32
+    int clk_tck;
+#endif    
+    int RTMP_ctrlC;
   } RTMP;
 
+  uint32_t RTMP_GetTime(RTMP *r);
   int RTMP_ParseURL(const char *url, int *protocol, AVal *host,
 		     unsigned int *port, AVal *playpath, AVal *app);
 
@@ -308,7 +314,7 @@ extern "C"
   void RTMP_EnableWrite(RTMP *r);
 
   int RTMP_LibVersion(void);
-  void RTMP_UserInterrupt(void);	/* user typed Ctrl-C */
+  void RTMP_UserInterrupt(RTMP *r);	/* user typed Ctrl-C */
 
   int RTMP_SendCtrl(RTMP *r, short nType, unsigned int nObject,
 		     unsigned int nTime);

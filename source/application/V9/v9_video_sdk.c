@@ -297,7 +297,7 @@ int v9_video_sdk_init(v9_video_sdk_t *sdk, void *board)
 #endif
 		if (master_eloop[MODULE_APP_START + 1] == NULL)
 			sdk->master = master_eloop[MODULE_APP_START + 1] =
-					eloop_master_module_create(MODULE_APP_START + 1);
+					eloop_master_name_create(MODULE_APP_START + 1);
 
 		sdk->interval = 5;
 		//sdk->cnt = 0;
@@ -669,7 +669,7 @@ static void v9_video_sdk_test()
 
 static int v9_video_sdk_task(void *argv)
 {
-	module_setup_task(MODULE_APP_START + 1, os_task_id_self());
+	//module_setup_task(MODULE_APP_START + 1, os_task_id_self());
 	host_waitting_loadconfig();
 
 	v9_video_sdk_restart_all();
@@ -686,7 +686,7 @@ int v9_video_sdk_task_init ()
 /*
 	zassert(v9_video_board != NULL);
 	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		v9_video_board->master = master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+		v9_video_board->master = master_eloop[MODULE_APP_START + 1] = eloop_master_name_create(MODULE_APP_START + 1);
 */
 
 	//V9_SDK_DBGPRF("---------%s---------", __func__);
@@ -708,7 +708,7 @@ int v9_video_sdk_restart_all()
 	if(!v9_video_board)
 		return ERROR;
 	if(master_eloop[MODULE_APP_START + 1] == NULL)
-		master_eloop[MODULE_APP_START + 1] = eloop_master_module_create(MODULE_APP_START + 1);
+		master_eloop[MODULE_APP_START + 1] = eloop_master_name_create(MODULE_APP_START + 1);
 	v9_video_board_lock();
 	for(i = 0; i < V9_APP_BOARD_MAX; i++)
 	{

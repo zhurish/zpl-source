@@ -51,7 +51,7 @@ int pal_socket_vrf(int domain, zpl_uint32 type, zpl_uint16 protocol, vrf_id_t vr
 /***************************************************************/
 static int pal_main_task(void *argv)
 {
-	module_setup_task(MODULE_PAL, os_task_id_self());
+	//module_setup_task(MODULE_PAL, os_task_id_self());
 	host_waitting_loadconfig();
 	linux_driver_start(getpid(), if_nametoindex("eth0"));
 	eloop_mainloop(master_eloop_kernel);
@@ -62,14 +62,14 @@ static int pal_main_task(void *argv)
 static int kernel_task_init (void)
 {
 	if(master_eloop_kernel == NULL)
-		master_eloop_kernel = eloop_master_module_create(MODULE_PAL);
+		master_eloop_kernel = eloop_master_name_create("PAL");
 
 	if(kernel_task_id == 0)
 		kernel_task_id = os_task_create("kernelTask", OS_TASK_DEFAULT_PRIORITY,
 	               0, pal_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(kernel_task_id)
 	{
-		module_setup_task(MODULE_PAL, kernel_task_id);
+		//module_setup_task(MODULE_PAL, kernel_task_id);
 		return OK;
 	}
 	return ERROR;
@@ -83,7 +83,7 @@ int pal_module_init(void)
 		return ERROR;
 	}
 	if(master_eloop_kernel == NULL)
-		master_eloop_kernel = eloop_master_module_create(MODULE_PAL);
+		master_eloop_kernel = eloop_master_name_create("PAL");
 	iplinux_stack_init();
 	#ifdef ZPL_NSM_ARP
 	pal_arp_stack_init();

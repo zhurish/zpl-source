@@ -234,7 +234,7 @@ int bsp_driver_report(bsp_driver_t *bspdriver, char *data, int len)
 static int bsp_driver_task(void *p)
 {
   struct thread_master *master = (struct thread_master *)p;
-  module_setup_task(master->module, os_task_id_self());
+  //module_setup_task(master->module, os_task_id_self());
   while (thread_mainloop(master))
     ;
   return OK;
@@ -255,7 +255,7 @@ int bsp_driver_init(bsp_driver_t *bspdriver)
 	}
 
     bsp->debug = 0xffff;
-    bsp->thread_master = bspdriver->master = thread_master_module_create(MODULE_BSP);
+    bsp->thread_master = bspdriver->master = thread_master_name_create("BSP");
     bspdriver->hal_client = bsp;
     //hal_client_hwport_register(struct hal_client *hal_client, zpl_int8 portnum, struct hal_ipcmsg_hwport *tbl);
     hal_client_start(bsp, "127.0.0.1", os_netservice_port_get("hal_port")/*HAL_IPCMSG_CMD_PORT*/, 0);
@@ -288,14 +288,14 @@ int bsp_driver_task_init(bsp_driver_t *bspdriver)
 {
   if (!bspdriver->master)
   {
-    bspdriver->master = thread_master_module_create(MODULE_BSP);
+    bspdriver->master = thread_master_name_create("BSP");
   }
   if (bspdriver->taskid <= 0)
     bspdriver->taskid = os_task_create("bspTask", OS_TASK_DEFAULT_PRIORITY,
                                     0, bsp_driver_task, bspdriver->master, OS_TASK_DEFAULT_STACK * 4);
   if (bspdriver->taskid > 0)
   {
-    module_setup_task(MODULE_BSP, bspdriver->taskid);
+    //module_setup_task(MODULE_BSP, bspdriver->taskid);
     return OK;
   }
   return ERROR;

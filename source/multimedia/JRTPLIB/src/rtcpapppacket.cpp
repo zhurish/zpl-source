@@ -74,7 +74,7 @@ void RTCPAPPPacket::Dump()
 	RTCPPacket::Dump();
 	if (!IsKnownFormat())
 	{
-		std::cout << "    Unknown format!" << std::endl;
+		rtpDebug << "    Unknown format!" << std::endl;
 	}
 	else
 	{

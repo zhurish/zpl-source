@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ZPLSource version: 
-# Sat Mar  9 22:09:06 2024
+# Mon Mar 18 14:41:44 2024
 #
 CONFIG_HAVE_DOT_CONFIG=true
 
@@ -28,6 +28,11 @@ ZPL_ARCH_MODULE=true
 # CONFIG_ZPL_ARCH_AARCH64 is not set
 # CONFIG_ZPL_ARCH_X86 is not set
 ZPL_ARCH_X86_64=true
+# CONFIG_ZPL_ARCH_MIPS32 is not set
+# CONFIG_ZPL_ARCH_MIPS64 is not set
+# CONFIG_ZPL_ARCH_LOONGARCH64 is not set
+# CONFIG_ZPL_ARCH_RISCV32 is not set
+# CONFIG_ZPL_ARCH_RISCV64 is not set
 # CONFIG_ZPL_ARM_A5 is not set
 # CONFIG_ZPL_ARM_A6 is not set
 # CONFIG_ZPL_ARM_A7 is not set
@@ -206,7 +211,7 @@ ZPL_LIBJPEG_MODULE=true
 ZPL_LIBMEDIA_MODULE=true
 # CONFIG_ZPL_HISIMPP_MODULE is not set
 # CONFIG_ZPL_HISIMPP_HWDEBUG is not set
-# CONFIG_ZPL_LIVE555_MODULE is not set
+ZPL_LIVE555_MODULE=true
 # CONFIG_ZPL_SOFTCODEC_MODULE is not set
 # CONFIG_ZPL_LIBX264_MODULE is not set
 # CONFIG_ZPL_OPENH264_MODULE is not set

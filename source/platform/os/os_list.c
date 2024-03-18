@@ -757,6 +757,13 @@ os_list_new (void)
 {
   return malloc (sizeof (os_list_t));
 }
+void os_list_init(os_list_t *pList, void (*freecb)(void *))
+{
+    pList->node.next = NULL;
+    pList->node.previous = NULL;
+    pList->count = 0;
+    pList->free = freecb;
+}
 
 /* Free list. */
 void

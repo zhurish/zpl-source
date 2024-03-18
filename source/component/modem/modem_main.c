@@ -189,7 +189,7 @@ int modem_task_init (void)
 	               0, modem_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if(modem_task_id)
 	{
-		module_setup_task(MODULE_MODEM, modem_task_id);
+		//module_setup_task(MODULE_MODEM, modem_task_id);
 		return OK;
 	}
 	return ERROR;

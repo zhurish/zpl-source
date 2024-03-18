@@ -1356,7 +1356,7 @@ int iw_ap_task_start(iw_ap_t *iw_ap)
 	if(!iw_ap)
 		return ERROR;
 	/* Make master thread emulator. */
-	iw_ap->master = thread_master_module_create (MODULE_WIFI);
+	iw_ap->master = thread_master_name_create ("WIFI");
 
 	if(iw_ap->taskid == 0)
 		iw_ap->taskid = os_task_create("iwApTask", OS_TASK_DEFAULT_PRIORITY,
@@ -1368,7 +1368,7 @@ int iw_ap_task_start(iw_ap_t *iw_ap)
 	if(!iw_ap)
 		return ERROR;
 	/* Make master thread emulator. */
-	iw_ap->master = thread_master_module_create (MODULE_WIFI);
+	iw_ap->master = thread_master_name_create ("WIFI");
 	return OK;
 #endif
 }

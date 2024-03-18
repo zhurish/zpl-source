@@ -65,7 +65,7 @@ typedef struct
 }zpl_media_event_queue_t;
 
 extern zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uint32 maxsize);
-extern zpl_media_event_queue_t *zpl_media_event_default(void);
+
 extern int zpl_media_event_destroy(zpl_media_event_queue_t *queue);
 extern int zpl_media_event_start(zpl_media_event_queue_t *queue, int pri, int stacksize);
 

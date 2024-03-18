@@ -1273,7 +1273,7 @@ static void cmd_mediaservice_init(void)
 	return;
 }
 
-void cmd_video_init(void)
+int zpl_media_cmd_init(void)
 {
 	cmd_mediaservice_init();
 
@@ -1288,6 +1288,7 @@ void cmd_video_init(void)
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_video_channel_extradata_info_brief_cmd);
 
 	install_element(ENABLE_NODE, CMD_VIEW_LEVEL, &show_media_rtpsess_info_cmd);
+	return OK;
 }
 
 #endif

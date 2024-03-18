@@ -29,7 +29,6 @@ extern "C" {
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "module.h"
 
 #ifndef ZPL_IPCOM_MODULE
 #include "thread.h"
@@ -60,8 +59,8 @@ extern "C" {
 #define eloop_add_background  thread_add_background
 
 #define eloop_master_create  thread_master_create
-#define eloop_master_module_create  thread_master_module_create
-#define eloop_master_module_lookup  thread_master_module_lookup
+#define eloop_master_name_create  thread_master_name_create
+#define eloop_master_name_lookup  thread_master_name_lookup
 #define eloop_master_free  thread_master_free
 #define eloop_cancel  thread_cancel
 
@@ -80,7 +79,7 @@ extern "C" {
 #define eloop_consumed_time  thread_consumed_time
 
 #else
-
+#define OS_ELOOP_MANE_MAX	32
 /* Linked list of eloop. */
 struct eloop_list
 {
@@ -124,7 +123,7 @@ struct eloop_master
   eloop_fd_set exceptfd;
   zpl_ulong alloc;
 
-  zpl_uint32 module;
+  char name[OS_ELOOP_MANE_MAX];
 
   int max_fd;
   struct eloop_cpu cpu_record[OS_ELOOP_CPU_MAX];
@@ -241,8 +240,8 @@ struct cpu_eloop_history
 /* Prototypes. */
 extern struct eloop_master *eloop_master_create (void);
 
-extern struct eloop_master *eloop_master_module_create (zpl_uint32 );
-extern struct eloop_master *eloop_master_module_lookup (zpl_uint32 module);
+extern struct eloop_master *eloop_master_name_create (char *);
+extern struct eloop_master *eloop_master_name_lookup (char *);
 
 extern void eloop_master_free (struct eloop_master *);
 

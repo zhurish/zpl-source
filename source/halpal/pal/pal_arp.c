@@ -203,8 +203,8 @@ static int pal_arp_thread(struct eloop *eloop)
 {
 	zpl_socket_t sock = ELOOP_FD(eloop);
 
-	if(eloop_master_module_lookup(MODULE_PAL))
-		eloop_add_read(eloop_master_module_lookup(MODULE_PAL), pal_arp_thread, NULL, sock);
+	if(eloop_master_name_lookup("PAL"))
+		eloop_add_read(eloop_master_name_lookup("PAL"), pal_arp_thread, NULL, sock);
 
 	return pal_arp_recv(sock);
 }
@@ -283,8 +283,8 @@ int pal_arp_stack_init(void)
 	pal_stack.ip_stack_arp_request = pal_arp_request;
 	sock = pal_arp_sock_init();
 
-	if(!ipstack_invalid(sock) && eloop_master_module_lookup(MODULE_PAL))
-		eloop_add_read(eloop_master_module_lookup(MODULE_PAL), pal_arp_thread, NULL, sock);
+	if(!ipstack_invalid(sock) && eloop_master_name_lookup("PAL"))
+		eloop_add_read(eloop_master_name_lookup("PAL"), pal_arp_thread, NULL, sock);
 
 	return OK;
 }

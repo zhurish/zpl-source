@@ -29,8 +29,9 @@ extern "C" {
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "module.h"
 
+
+#define OS_THREAD_MANE_MAX	32
 
 #define THREAD_MASTER_LIST
 
@@ -80,7 +81,7 @@ struct thread_master
 
   zpl_ulong alloc;
 
-  zpl_uint32 module;
+  char name[OS_THREAD_MANE_MAX];
 
   int max_fd;
   struct thread_cpu cpu_record[OS_THREAD_CPU_MAX];
@@ -197,8 +198,8 @@ struct cpu_thread_history
 /* Prototypes. */
 extern struct thread_master *thread_master_create (void);
 
-extern struct thread_master *thread_master_module_create (zpl_uint32 );
-extern struct thread_master *thread_master_module_lookup (zpl_uint32 module);
+extern struct thread_master *thread_master_name_create (char* );
+extern struct thread_master *thread_master_name_lookup (char* );
 extern void thread_master_free (struct thread_master *);
 
 extern struct thread *funcname_thread_add_read (struct thread_master *, 

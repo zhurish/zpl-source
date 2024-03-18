@@ -472,6 +472,36 @@ int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint32_t offset, uint32_t len)
 	return ERROR;
 }
 
+/* clone 数据前面的数据  */
+int zpl_skbuffer_get_startsize(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
+{
+	if(skbuf->skb_start >= 0 && skbuf->skb_len >= len)
+	{
+		memcpy(data, skbuf->skb_data + skbuf->skb_start, len);
+		return  len;
+	}
+	else if(skbuf->skb_start >= 0 && skbuf->skb_len < len)
+	{
+		memcpy(data, skbuf->skb_data + skbuf->skb_start, skbuf->skb_len);
+		return  skbuf->skb_len;
+	}
+	return -1;
+}
+/* 复制 数据前面的数据  */
+int zpl_skbuffer_put_startsize(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)
+{
+	if (skbuf->skb_maxsize < (skbuf->skb_len + ZPL_SKBUF_ALIGN(len)))
+	{
+		memcpy(skbuf->skb_data + skbuf->skb_start, data, skbuf->skb_len);
+		return  skbuf->skb_len;
+	}
+	else if (skbuf->skb_maxsize >= (skbuf->skb_len + ZPL_SKBUF_ALIGN(len)))
+	{
+		memcpy(skbuf->skb_data + skbuf->skb_start, data, len);
+		return  len;
+	}
+	return -1;
+}
 
 
 int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len)

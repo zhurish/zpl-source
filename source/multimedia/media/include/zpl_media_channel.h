@@ -73,10 +73,14 @@ typedef struct zpl_media_channel_s
 
     zpl_uint32                  bindcount;      //绑定的数量
 
+    zpl_media_event_t           *event;
     zpl_media_unit_t            p_capture;      //通道使能抓拍
     zpl_media_unit_t            p_record;       //通道使能录像
+    zpl_media_unit_t            p_sched;       //通道sched
+
     zpl_media_unit_t            p_mucast;       //通道多播发送
     zpl_media_unit_t            rtp_param;      //RTP单元接收队列
+    zpl_media_unit_t            rtmp_param;     //RTMP单元接收队列
     zpl_void                    *t_master;
     os_mutex_t                  *_mutex;
 }zpl_media_channel_t;
@@ -107,6 +111,25 @@ typedef struct zpl_media_channel_s
 *     audio_device <---------- audio_channel <----------- audio_dec <-----------
 *                       |
 *                       <----- audio_channel <----------- audio_dec <-----------
+*
+*       Old:
+*       Process(HW Input) -----------> Event(Main Process) -----------> record/capture 
+*                                           |
+*                                           -----> RtpSched -----------> rtp
+*                                           |
+*                                           -----> ProxyTask ----------> sdk
+*
+*       New
+*       Process(HW Input) ---> Event(Main Process) ---> record/capture 
+*                                 |
+*                                 ---> MstreamSched --->
+*                                                      |
+*                                                      --> RtpSched --> rtp
+*                                                                        |
+*                                                                        --> ProxyTask --> sdk
+*                                                                                           |                    
+*                                                                                           --> RtmpSched --> rtmp
+*
 */
 
 extern int zpl_media_channel_init(void);

@@ -492,7 +492,7 @@ static int x5b_app_test_module_init(char *local, zpl_uint16 port)
 		memset(mgt_test, 0, sizeof(x5b_app_mgt_t));
 
 		if(master_eloop[MODULE_APP + 1] == NULL)
-			master_eloop[MODULE_APP + 1] = eloop_master_module_create(MODULE_APP + 1);
+			master_eloop[MODULE_APP + 1] = eloop_master_name_create(MODULE_APP + 1);
 
 		mgt_test->master = master_eloop[MODULE_APP + 1];
 
@@ -551,7 +551,7 @@ static int x5b_app_test_mgt_task(void *argv)
 	zassert(argv != NULL);
 	x5b_app_mgt_t *mgt = (x5b_app_mgt_t *)argv;
 	zassert(mgt != NULL);
-	module_setup_task(MODULE_APP + 1, os_task_id_self());
+	//module_setup_task(MODULE_APP + 1, os_task_id_self());
 	host_waitting_loadconfig);
 	if(!mgt->enable)
 	{
@@ -567,7 +567,7 @@ static int x5b_app_test_task_init (x5b_app_mgt_t *mgt)
 {
 	zassert(mgt != NULL);
 	if(master_eloop[MODULE_APP + 1] == NULL)
-		master_eloop[MODULE_APP + 1] = eloop_master_module_create(MODULE_APP + 1);
+		master_eloop[MODULE_APP + 1] = eloop_master_name_create(MODULE_APP + 1);
 
 	mgt->enable = zpl_true;
 	mgt->task_id = os_task_create("appTest", OS_TASK_DEFAULT_PRIORITY,

@@ -158,7 +158,7 @@ int v9_app_slipnet_init(v9_serial_t *serial, char *devname, zpl_uint32 speed)
 	{
 		if(master_eloop[MODULE_APP_START] == NULL)
 		{
-			master_eloop[MODULE_APP_START] = eloop_master_module_create(MODULE_APP_START);
+			master_eloop[MODULE_APP_START] = eloop_master_name_create(MODULE_APP_START);
 			serial->master = master_eloop[MODULE_APP_START];
 		}
 #ifdef V9_SLIPNET_UDP

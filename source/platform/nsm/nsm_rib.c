@@ -123,7 +123,7 @@ static const struct
 
 static int nsm_rib_task(void *argv)
 {
-	module_setup_task(MODULE_RIB, os_task_id_self());
+	//module_setup_task(MODULE_RIB, os_task_id_self());
 	host_waitting_loadconfig();
 	thread_mainloop(nsm_ribd.master);
 	return 0;
@@ -135,7 +135,7 @@ static int nsm_rib_init(void)
 	{
 		memset(&nsm_ribd, 0, sizeof(nsm_ribd));
 		if(nsm_ribd.master == NULL)
-			nsm_ribd.master = thread_master_module_create(MODULE_RIB);
+			nsm_ribd.master = thread_master_name_create("Rib");
 		if(nsm_ribd.master)	
 		{
 			nsm_ribd.initialise = 1;
@@ -149,14 +149,14 @@ static int nsm_rib_task_init(void)
 	if(nsm_ribd.initialise == 1)
 	{
 		if(nsm_ribd.master == NULL)
-			nsm_ribd.master = thread_master_module_create(MODULE_RIB);
+			nsm_ribd.master = thread_master_name_create("Rib");
 
 		if(nsm_ribd.rib_task_id == 0)
 			nsm_ribd.rib_task_id = os_task_create("ribTask", OS_TASK_DEFAULT_PRIORITY,
 									0, nsm_rib_task, NULL, OS_TASK_DEFAULT_STACK);
 		if (nsm_ribd.rib_task_id)
 		{
-			module_setup_task(MODULE_RIB, nsm_ribd.rib_task_id);
+			//module_setup_task(MODULE_RIB, nsm_ribd.rib_task_id);
 			return OK;
 		}	
 	}
@@ -3796,7 +3796,7 @@ void rib_init(void)
 	{
 		memset(&nsm_ribd, 0, sizeof(nsm_ribd));
 		if(nsm_ribd.master == NULL)
-			nsm_ribd.master = thread_master_module_create(MODULE_RIB);
+			nsm_ribd.master = thread_master_name_create("Rib");
 		if(nsm_ribd.master)	
 		{
 			nsm_ribd.initialise = 1;

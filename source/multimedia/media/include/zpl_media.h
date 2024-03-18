@@ -44,7 +44,7 @@ extern "C" {
 #define ZPL_MEDIA_CHANNEL_GET_T(n)	        ((n) & 0x0F)
 
 #define ZPL_MEDIA_CHANNEL_AUDIO(n)	        ((n) | 0x30)
-
+#define ZPL_MEDIA_HWCHANNEL_MAX     1
 typedef enum
 {
     ZPL_MEDIA_CHANNEL_NONE = -1,
@@ -56,7 +56,7 @@ typedef enum
     ZPL_MEDIA_CHANNEL_AUDIO_0 = 0x30,			//通道0
     ZPL_MEDIA_CHANNEL_AUDIO_1 = 0x31,			//通道1
     ZPL_MEDIA_CHANNEL_AUDIO_2 = 0x32,			//通道2
-    ZPL_MEDIA_CHANNEL_AUDIO_3 = 0x33,            //通道3
+    ZPL_MEDIA_CHANNEL_AUDIO_3 = 0x33,           //通道3
     ZPL_MEDIA_CHANNEL_MAX,
 } ZPL_MEDIA_CHANNEL_E; /* 通道 */
 
@@ -83,6 +83,15 @@ typedef enum
     ZPL_MEDIA_VIDEO = 1,			//
     ZPL_MEDIA_AUDIO = 2,			//
 } ZPL_MEDIA_E;
+
+typedef enum
+{
+    ZPL_MEDIA_SCHED_RTP = 1,			//
+    ZPL_MEDIA_SCHED_RTMP,			//
+    ZPL_MEDIA_SCHED_MULTICAST,			//
+    ZPL_MEDIA_SCHED_PROXY,
+    ZPL_MEDIA_SCHED_SDK
+} ZPL_MEDIA_SCHED_E;
 
 typedef struct zpl_point_s
 {
@@ -167,6 +176,12 @@ typedef struct
 
 typedef struct zpl_media_channel_s zpl_media_channel_t;
 
+typedef struct
+{
+	zpl_taskid_t	t_taskid;
+	zpl_uint32		t_ready;
+	zpl_void*		t_master;
+}zpl_mthread_pool_t ;
 
 typedef struct
 {
@@ -191,7 +206,11 @@ typedef struct
     LIST audio_list;
     os_mutex_t audio_mutex;
 
+    zpl_mthread_pool_t mthreadpool[ZPL_MEDIA_HWCHANNEL_MAX];
 }zpl_media_global_t ;
+
+
+extern zpl_media_global_t _media_global;
 
 extern int zpl_media_global_init(void);
 extern int zpl_media_global_exit(void);
@@ -208,8 +227,8 @@ extern int zpl_media_global_foreach(ZPL_MEDIA_GLOBAL_E type, int (*func)(void*, 
 extern int zpl_media_system_bind(zpl_media_syschn_t src, zpl_media_syschn_t dst);
 extern int zpl_media_system_unbind(zpl_media_syschn_t src, zpl_media_syschn_t dst);
 
-int zpl_media_system_init(void);
-
+extern int zpl_media_system_init(void);
+extern int zpl_media_global_ready(int , zpl_bool);
 #endif
 
 #ifdef __cplusplus

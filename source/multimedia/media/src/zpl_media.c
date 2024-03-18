@@ -9,11 +9,12 @@
 #include "zpl_media_internal.h"
 
 
-static zpl_media_global_t _media_global;
+zpl_media_global_t _media_global;
 
 
 int zpl_media_global_init(void)
 {
+    memset(&_media_global, 0, sizeof(_media_global));
 	if(os_mutex_name_init(&_media_global.video_encode_mutex, "video_encode_mutex") == OK)
 	{
 		lstInit(&_media_global.video_encode_list);

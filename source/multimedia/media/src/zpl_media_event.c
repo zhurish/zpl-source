@@ -9,8 +9,6 @@
 #include "zpl_media.h"
 #include "zpl_media_internal.h"
 
-static zpl_media_event_queue_t *_media_event_queue_default = NULL;
-
 static int media_event_task(void *p);
 
 
@@ -22,11 +20,6 @@ static int zpl_media_eventcb_free(zpl_media_event_t *data)
         free(data);
 	}	
 	return OK;
-}
-
-zpl_media_event_queue_t *zpl_media_event_default(void)
-{
-    return _media_event_queue_default;
 }
 
 zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uint32 maxsize)
@@ -42,8 +35,6 @@ zpl_media_event_queue_t *zpl_media_event_create(const char *name, zpl_uint32 max
             queue->name = strdup(name);
         lstInitFree (&queue->list, zpl_media_eventcb_free);
         lstInitFree (&queue->ulist, zpl_media_eventcb_free);
-        if(_media_event_queue_default == NULL)
-            _media_event_queue_default = queue;
 		return queue;
 	}
 	return NULL;
@@ -75,9 +66,12 @@ int zpl_media_event_destroy(zpl_media_event_queue_t *queue)
 int zpl_media_event_start(zpl_media_event_queue_t *queue, int pri, int stacksize)
 {
     if(queue && queue->taskid == 0)
+    {
         queue->taskid = os_task_create(queue->name, pri?pri:OS_TASK_DEFAULT_PRIORITY,
 	               0, media_event_task, queue, stacksize?stacksize:OS_TASK_DEFAULT_STACK);
-    return OK;               
+        return queue->taskid?OK:ERROR;           
+    }
+    return ERROR;               
 }
 
 int zpl_media_event_push(zpl_media_event_queue_t *queue, zpl_media_event_t *data)
@@ -225,8 +219,8 @@ static int zpl_media_event_dispatch_handle(zpl_media_event_t *event)
 
 int zpl_media_event_dispatch_signal(zpl_media_channel_t *mchannel, int event)
 {
-    if(_media_event_queue_default)
-        zpl_media_event_register(_media_event_queue_default, event,  ZPL_MEDIA_EVENT_DISTPATCH, 
+    if(mchannel->event)
+        zpl_media_event_register(mchannel->event, event,  ZPL_MEDIA_EVENT_DISTPATCH, 
                 zpl_media_event_dispatch_handle, mchannel);
     return OK;            
 }

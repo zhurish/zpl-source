@@ -39,20 +39,27 @@ extern "C" {
 #endif
 
 typedef enum
-{ RTMP_LOGCRIT=0, RTMP_LOGERROR, RTMP_LOGWARNING, RTMP_LOGINFO,
+{ RTMP_LOGCRIT=2, RTMP_LOGERROR, RTMP_LOGWARNING, RTMP_LOGNOTICE, RTMP_LOGINFO,
   RTMP_LOGDEBUG, RTMP_LOGDEBUG2, RTMP_LOGALL
 } RTMP_LogLevel;
 
 extern RTMP_LogLevel RTMP_debuglevel;
 
-typedef void (RTMP_LogCallback)(int level, const char *fmt, va_list);
+typedef void (RTMP_LogCallback)(const char *file, const char *func, const int line, int level, const char *fmt, va_list);
 void RTMP_LogSetCallback(RTMP_LogCallback *cb);
-void RTMP_LogSetOutput(FILE *file);
-void RTMP_LogPrintf(const char *format, ...);
-void RTMP_LogStatus(const char *format, ...);
+
+void _rtmp_log_Log(const char *file, const char *func, const int line, int level, const char *format, ...);
+void _rtmp_log_LogHex(const char *file, const char *func, const int line, int level, const uint8_t *data, unsigned long len);
+void _rtmp_log_LogHexString(const char *file, const char *func, const int line, int level, const uint8_t *data, unsigned long len);
+
+#define RTMP_Log(level, format, ...) 	_rtmp_log_Log (__FILE__, __FUNCTION__, __LINE__, level, format, ##__VA_ARGS__)
+#define RTMP_LogHex(level, data, len) 	_rtmp_log_LogHex (__FILE__, __FUNCTION__, __LINE__, level, data, len)
+#define RTMP_LogHexString(level, data, len) 	_rtmp_log_LogHexString (__FILE__, __FUNCTION__, __LINE__, level, data, len)
+/*
 void RTMP_Log(int level, const char *format, ...);
 void RTMP_LogHex(int level, const uint8_t *data, unsigned long len);
 void RTMP_LogHexString(int level, const uint8_t *data, unsigned long len);
+*/
 void RTMP_LogSetLevel(RTMP_LogLevel lvl);
 RTMP_LogLevel RTMP_LogGetLevel(void);
 

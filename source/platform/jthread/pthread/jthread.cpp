@@ -29,6 +29,10 @@
 #include <sys/time.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
 
 namespace jthread
 {
@@ -39,10 +43,22 @@ JThread::JThread()
 	mutexinit = false;
 	running = false;
 	threadid = 0;
+	t_name = NULL;
 }
-
+JThread::JThread(char *name)
+{
+	retval = NULL;
+	mutexinit = false;
+	running = false;
+	threadid = 0;
+	t_name = NULL;
+	if(name)
+		t_name = strdup(name);
+}
 JThread::~JThread()
 {
+	if(t_name)
+		free(t_name);
 	Kill();
 }
 
@@ -91,7 +107,10 @@ int JThread::Start()
 		continuemutex.Unlock();
 		return ERR_JTHREAD_CANTSTARTTHREAD;
 	}
-	
+#ifdef __USE_GNU
+	if(t_name)
+		pthread_setname_np(threadid, t_name);
+#endif
 	/* Wait until 'running' is set */
 	
 	runningmutex.Lock();			
@@ -181,9 +200,9 @@ void *JThread::TheThread(void *param)
 {
 	JThread *jthread;
 	void *ret;
-	
 	jthread = (JThread *)param;
-	
+	if(jthread->t_name)
+    	prctl(PR_SET_NAME, jthread->t_name, 0);
 	jthread->continuemutex2.Lock();
 	jthread->runningmutex.Lock();
 	jthread->running = true;

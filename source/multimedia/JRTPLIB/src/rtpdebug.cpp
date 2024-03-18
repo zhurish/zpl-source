@@ -38,10 +38,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include "rtpdebug.h"
 
+#if 0
 #ifdef RTP_SUPPORT_THREAD
 #include <jthread/jmutex.h>
-#include <jthread/jmutexautolock.h>
+//#include <jthread/jmutexautolock.h>
 using namespace jthread;
 #endif // RTP_SUPPORT_THREAD
 
@@ -202,5 +205,95 @@ void operator delete[](void *p)
 	dodelete(p);
 }
 
+#endif
+
+/*********************************************/
+namespace jrtplib
+{
+
+static int (*logcallback)(const char *fmt,...) = nullptr; 
+const RtpDebug& RtpDebug::operator << (uint32_t value)const
+{
+	char buftmp[64];
+	memset(buftmp, 0, sizeof(buftmp));
+	sprintf(buftmp, "%u", value);
+	std::string aabuftmp = std::string(buftmp);
+	logstring += aabuftmp;
+    return* this;//注意这个返回……
+}
+const RtpDebug& RtpDebug::operator << (size_t value)const
+{
+	char buftmp[64];
+	memset(buftmp, 0, sizeof(buftmp));
+	sprintf(buftmp, "%u", value);
+	std::string aabuftmp = std::string(buftmp);
+	logstring += aabuftmp;
+    return* this;//注意这个返回……
+}
+const RtpDebug& RtpDebug::operator<<(int value)const
+{
+	char buftmp[64];
+	memset(buftmp, 0, sizeof(buftmp));
+	sprintf(buftmp, "%d", value);
+	std::string aabuftmp = std::string(buftmp);
+	logstring += aabuftmp;
+    return* this;//注意这个返回……
+}
+const RtpDebug& RtpDebug::operator << (char* str)const
+{
+	std::string aabuftmp = std::string(str);
+	logstring += aabuftmp;
+    return* this;//注意这个返回……
+}
+const RtpDebug& RtpDebug::operator << (double val)const
+{
+	char buftmp[64];
+	memset(buftmp, 0, sizeof(buftmp));
+	sprintf(buftmp, "%f", val);
+	std::string aabuftmp = std::string(buftmp);
+	logstring += aabuftmp;
+    return* this;//注意这个返回……
+}
+const RtpDebug & RtpDebug::operator << (std::ostream& (*__pf)(std::ostream&))const
+{
+      this->logstring += "\r\n";
+      if(logcallback != nullptr)
+      {
+        (logcallback)(this->logstring.c_str());
+      }
+      this->logstring.clear();
+      return* this;
+} 
+
+RtpDebug rtpDebug;
+/*void RtpDebug::endl(RtpDebug &obj) 
+{
+    obj.logstring += "\r\n";
+	if(logcallback != nullptr)
+	{
+		(logcallback)(obj.logstring.c_str());
+	}
+	obj.logstring.clear();
+}
+*/
+/*
+const RtpDebug& RtpDebug::endl(RtpDebug *obj)
+{
+	if(logcallback != nullptr)
+	{
+		(logcallback)(obj->logstring.c_str());
+	}
+	obj->logstring.clear();
+    return* this;//同样，这里也留意一下……
+}
+*/
+
+int RtpDebugLogSet(int (*logcb)(const char *fmt,...))
+{
+	logcallback = logcb;
+	return 0;
+}
+
+}
 #endif // RTPDEBUG
 

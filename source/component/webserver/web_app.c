@@ -177,7 +177,7 @@ int web_app_module_task_init()
 										 OS_TASK_DEFAULT_STACK);
 	if (web_app->taskid)
 	{
-		module_setup_task(MODULE_WEB, web_app->taskid);
+		//module_setup_task(MODULE_WEB, web_app->taskid);
 		return OK;
 	}
 	return ERROR;

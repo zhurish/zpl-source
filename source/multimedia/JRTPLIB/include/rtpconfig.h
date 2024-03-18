@@ -116,6 +116,6 @@
 // No 'WSAPoll' support
 
 #define RTP_HAVE_MSG_NOSIGNAL
-
+#define RTPDEBUG
 #endif // RTPCONFIG_UNIX_H
-//#define RTPDEBUG
+

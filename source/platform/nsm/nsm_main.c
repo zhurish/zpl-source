@@ -68,12 +68,12 @@ int nsm_module_init(void)
 {
 	nsm_srv = &m_nsm_srv;
 	if(nsm_srv->master == NULL)
-		nsm_srv->master = thread_master_module_create(MODULE_NSM);
+		nsm_srv->master = thread_master_name_create("Nsm");
 
 	lib_event_init();
 #if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)
 	memset(&nsm_rtadv, 0, sizeof(struct nsm_rtadv_t));
-		nsm_rtadv.master = eloop_master_module_create(MODULE_NSM);
+		nsm_rtadv.master = eloop_master_name_create("Nsm");
 	if(nsm_rtadv.master)
 		nsm_rtadv.initialise = 1;	
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
@@ -328,7 +328,7 @@ int nsm_module_start(void)
 
 static int nsm_main_task(void *argv)
 {
-	module_setup_task(MODULE_NSM, os_task_id_self());
+	//module_setup_task(MODULE_NSM, os_task_id_self());
 	host_waitting_loadconfig();
 	thread_mainloop(nsm_srv->master);
 	return 0;
@@ -363,7 +363,7 @@ int nsm_task_init(void)
 								 0, nsm_main_task, NULL, OS_TASK_DEFAULT_STACK);
 	if (nsm_srv->nsm_task_id)
 	{
-		module_setup_task(MODULE_NSM, nsm_srv->nsm_task_id);
+		//module_setup_task(MODULE_NSM, nsm_srv->nsm_task_id);
 		return OK;
 	}	
 	return ERROR;

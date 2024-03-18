@@ -90,6 +90,7 @@ int jrtp_session_sched::jrtp_session_sched_add(jrtp_session_t *sec)
     return 0;
 }
 
+
 int jrtp_session_sched::jrtp_session_sched_del(jrtp_session_t *sec)
 {
     int i = 0;
@@ -304,7 +305,7 @@ int jrtp_session_create(jrtp_session_t *jrtpsess)
             ret = jrtpsess->jrtp_sess->Create(sessparams, &transparamsv6, proto);
             if( ret != 0)
             {
-                printf("====================jrtpsess->jrtp_sess->Create=======================error=%s \r\n", jrtplib::RTPGetErrorString(ret).c_str());
+                //zlog_debug(MODULE_MEDIA, "====================jrtpsess->jrtp_sess->Create=======================error=%s \r\n", jrtplib::RTPGetErrorString(ret).c_str());
                 pthread_mutex_unlock(&jrtpsess->mutex);
                 return -1; 
             }  

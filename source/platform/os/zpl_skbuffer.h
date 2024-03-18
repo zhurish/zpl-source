@@ -276,13 +276,19 @@ extern int zpl_skbqueue_distribute(zpl_skbqueue_t *queue, int(*func)(zpl_skbuffe
 extern int zpl_skbqueue_async_wait_distribute(zpl_skbqueue_t *queue, int sync_wait_ms, int(*func)(zpl_skbuffer_t*, void *), void *p);
 
 /* zpl_skbuffer_t */
-/* 在报文offset前面添加数据 */
+/* 在报文offset前面添加数据， 数据起始地址后移  */
 extern int zpl_skbuffer_push(zpl_skbuffer_t *skbuf, uint32_t offset, uint8_t *data, uint32_t len);
-/* 在报文offset处删除数据 */
+/* 在报文offset处删除数据， 数据起始地址后移 */
 extern int zpl_skbuffer_pull(zpl_skbuffer_t *skbuf, uint32_t offset, uint32_t len);
 
-/* 报文后面数据 */
+/* 报文后面添加数据 */
 extern int zpl_skbuffer_put(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+
+/* clone 数据前面的数据  */
+extern int zpl_skbuffer_get_startsize(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+/* 复制 数据前面的数据  */
+extern int zpl_skbuffer_put_startsize(zpl_skbuffer_t *skbuf, uint8_t *data, uint32_t len);
+
 
 extern int zpl_skbuffer_init_default(zpl_skbuffer_t *skbuf, zpl_skbuf_type_t skbtype, int maxlen);
 

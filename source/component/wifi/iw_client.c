@@ -1378,7 +1378,7 @@ int iw_client_init(iw_client_t *iw_client, ifindex_t ifindex)
 
 	iw_client_db_load(iw_client);
 #ifdef IW_ONCE_TASK
-	iw_client->master = thread_master_module_create (MODULE_WIFI);
+	iw_client->master = thread_master_name_create ("WIFI");
 #endif
 
 

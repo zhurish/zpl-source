@@ -35,10 +35,39 @@
 #define RTPDEBUG_H
 
 #include "rtpconfig.h"
+#include <string.h>
+#include <iostream>
+#include <string>
 
 #ifdef RTPDEBUG
 	#include "rtptypes.h"
+  
+namespace jrtplib
+{
 
+int RtpDebugLogSet(int (*logcb)(const char *fmt,...));
+ 
+class RtpDebug
+{
+    public:
+    RtpDebug(){logstring.clear();}
+	  ~RtpDebug(){ }
+    const RtpDebug& operator << (uint32_t value)const;
+    const RtpDebug& operator << (size_t value)const;
+    const RtpDebug& operator << (int value)const;//对整型变量的重载
+    const RtpDebug& operator << (char*str)const;//对字符串型的重载
+    const RtpDebug& operator << (double val)const;//对字符串型的重载
+    //static void endl(RtpDebug &obj);
+    const RtpDebug &operator << (std::ostream& (*__pf)(std::ostream&))const;
+
+    std::string logstring;
+};
+
+
+
+extern RtpDebug rtpDebug;//随时随地为我们服务的全局对象myout
+}
+/*
 	void *operator new(size_t s,char filename[],int line);
 #ifdef RTP_HAVE_ARRAYALLOC
 	void *operator new[](size_t s,char filename[],int line);
@@ -46,6 +75,7 @@
 #else
 	#define new new ((char*)__FILE__,__LINE__)
 #endif // RTP_HAVE_ARRAYALLOC
+*/
 #endif // RTPDEBUG
 
 #endif // RTPDEBUG_H

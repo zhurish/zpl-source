@@ -405,7 +405,7 @@ int modbus_module_task_init(void)
 #endif
 	if(modbus_config->taskid > 0)
 	{
-		module_setup_task(MODULE_MODBUS, modbus_config->taskid);
+		//module_setup_task(MODULE_MODBUS, modbus_config->taskid);
 		return OK;
 	}
 	return ERROR;

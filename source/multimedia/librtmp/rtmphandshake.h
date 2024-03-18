@@ -63,27 +63,9 @@ typedef gcry_cipher_hd_t	RC4_handle;
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/rc4.h>
-#include <openssl/types.h>
 #if OPENSSL_VERSION_NUMBER < 0x0090800 || !defined(SHA256_DIGEST_LENGTH)
 #error Your OpenSSL is too old, need 0.9.8 or newer with SHA256
 #endif
-/*
-typedef struct hmac_ctx_st {
-    const EVP_MD *md;
-    EVP_MD_CTX *md_ctx;
-    EVP_MD_CTX *i_ctx;
-    EVP_MD_CTX *o_ctx;
-    unsigned int key_length;
-    unsigned char key[HMAC_MAX_MD_CBLOCK_SIZE];
-}HMAC_CTX;*/
-typedef struct hmac_ctx_st {
-    const EVP_MD *md;
-    EVP_MD_CTX md_ctx;
-    EVP_MD_CTX i_ctx;
-    EVP_MD_CTX o_ctx;
-    unsigned int key_length;
-    unsigned char key[HMAC_MAX_MD_CBLOCK];
-} HMAC_CTX;
 #define HMAC_setup(ctx, key, len)	HMAC_CTX_init(&ctx); HMAC_Init_ex(&ctx, key, len, EVP_sha256(), 0)
 #define HMAC_crunch(ctx, buf, len)	HMAC_Update(&ctx, buf, len)
 #define HMAC_finish(ctx, dig, dlen)	HMAC_Final(&ctx, dig, &dlen); HMAC_CTX_cleanup(&ctx)

@@ -54,7 +54,6 @@
 #define RTPUDPV6TRANS_IFREQBUFSIZE							8192
 
 
-
 #define RTPUDPV6TRANS_MCASTMEMBERSHIP(socket,type,mcastip,status)	{\
 										struct ipv6_mreq mreq;\
 										\

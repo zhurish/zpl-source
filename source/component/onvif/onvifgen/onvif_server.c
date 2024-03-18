@@ -245,7 +245,7 @@ int onvif_soapsrv_init(struct onvif_soapsrv *srv)
     zlog_err(MODULE_ONVIF, "%s", logtmp);
     return ERROR;
   }
-  srv->master = master_thread[MODULE_ONVIF] = thread_master_module_create(MODULE_ONVIF);
+  srv->master = master_thread[MODULE_ONVIF] = thread_master_name_create("Onvif");
   srv->onvif_client[0].t_read = thread_add_read(srv->master, onvif_soapsrv_read, &srv->onvif_client[0], srv->onvif_client[0].soap.master);
   srv->t_read = thread_add_read(srv->master, onvif_soapsrv_dis_read, srv, srv->dis_soap.master);
   return OK;

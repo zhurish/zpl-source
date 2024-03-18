@@ -60,7 +60,6 @@
 #define RTPUDPV4TRANS_RTCPTRANSMITBUFFER						32768
 #define RTPUDPV4TRANS_IS_MCASTADDR(x)							(((x)&0xF0000000) == 0xE0000000)
 
-
 namespace jrtplib
 {
 

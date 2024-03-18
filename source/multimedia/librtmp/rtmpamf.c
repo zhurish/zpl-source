@@ -27,7 +27,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "rtmp_sys.h"
+#include "rtmpsys.h"
 #include "rtmpamf.h"
 #include "rtmplog.h"
 #include "rtmpbytes.h"

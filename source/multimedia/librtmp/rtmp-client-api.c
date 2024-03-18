@@ -1,287 +1,140 @@
-#include "sockutil.h"
-#include "sys/system.h"
-#include "rtmp-client.h"
-#include "flv-reader.h"
-#include "flv-proto.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <time.h>
+/**
+ * @file      : rtmp-client-api.c
+ * @brief     : Description
+ * @author    : zhurish (zhurish@163.com)
+ * @version   : 1.0
+ * @date      : 2024-03-14
+ * 
+ * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
+ * 
+ */
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "module.h"
+#include "log.h"
+#include "rtmpsys.h"
+#include "rtmplog.h"
+#include "rtmp-client-api.h"
+/*
+RTMP_Alloc() ：用于创建一个RTMP会话的句柄。
+RTMP_Init()：初始化句柄。
+RTMP_SetupURL()：设置会话的参数。
+RTMP_Connect()：建立RTMP链接中的网络连接（NetConnection）。
+RTMP_ConnectStream()：建立RTMP链接中的网络流（NetStream）。
+RTMP_Read()：读取RTMP流的内容。
+客户端可以在调用RTMP_Connect()之前调用RTMP_EnableWrite()，然后在会话开始之后调用 RTMP_Write()。
+RTMP_Pause()：流播放的时候可以用于暂停和继续
+RTMP_Seek()：改变流播放的位置
+当RTMP_Read()返回0 字节的时候,代表流已经读取完毕，而后可以调用RTMP_Close()
+RTMP_Free()：用于清理会话。
+*/
 
-//#define CORRUPT_RTMP_CHUNK_DATA
-
-#if defined(CORRUPT_RTMP_CHUNK_DATA)
-static void rtmp_corrupt_data(const void* data, size_t bytes)
+rtmp_client_t *rtmp_client_create(void *mchn, char *url)
 {
-    static unsigned int seed;
-    if (0 == seed)
-    {
-        seed = (unsigned int)time(NULL);
-        srand(seed);
-    }
-
-    if (bytes < 1)
-        return;
-
-    //size_t i = bytes > 20 ? 20 : bytes;
-    //i = rand() % i;
-
-    //uint8_t v = ((uint8_t*)data)[i];
-    //((uint8_t*)data)[i] = rand() % 255;
-    //printf("rtmp_corrupt_data[%d] %d == %d\n", i, (int)v, (int)((uint8_t*)data)[i]);
- 
-    if (5 == rand() % 10)
-    {
-        size_t i = rand() % bytes;
-        uint8_t v = ((uint8_t*)data)[i];
-        ((uint8_t*)data)[i] = rand() % 255;
-        printf("rtmp_corrupt_data[%d] %d == %d\n", i, (int)v, (int)((uint8_t*)data)[i]);
-    }
-}
-
-static uint8_t s_buffer[4 * 1024 * 1024];
-static size_t s_offset;
-static FILE* s_fp;
-static void fwritepacket(uint32_t timestamp)
-{
-    assert(4 == fwrite(&s_offset, 1, 4, s_fp));
-    assert(4 == fwrite(&timestamp, 1, 4, s_fp));
-    assert(s_offset == fwrite(s_buffer, 1, s_offset, s_fp));
-    s_offset = 0;
-}
-#endif
-
-static void rtmp_socket_setbufvec(struct iovec* vec, int idx, void* ptr, size_t len)
-{
-#if defined(OS_WINDOWS)
-	vec[idx].buf = (CHAR*)ptr;
-	vec[idx].len = (ULONG)len;
-#else
-	vec[idx].iov_base = ptr;
-	vec[idx].iov_len = len;
-#endif
-}
-
-static int rtmp_client_send(void* param, const void* header, size_t len, const void* data, size_t bytes)
-{
-	zpl_socket_t socket = (zpl_socket_t )param;
-	struct iovec vec[2];
-	rtmp_socket_setbufvec(vec, 0, (void*)header, len);
-	rtmp_socket_setbufvec(vec, 1, (void*)data, bytes);
-
-#if defined(CORRUPT_RTMP_CHUNK_DATA)
-	//if (len > 0)
-	//{
-	//    assert(s_offset + len < sizeof(s_buffer));
-	//    memcpy(s_buffer + s_offset, header, len);
-	//    s_offset += len;
-	//}
-	//if (bytes > 0)
-	//{
-	//    assert(s_offset + bytes < sizeof(s_buffer));
-	//    memcpy(s_buffer + s_offset, data, bytes);
-	//    s_offset += bytes;
-	//}
-	
-	rtmp_corrupt_data(header, len);
-  rtmp_corrupt_data(data, bytes);
-#endif
-  if(is_ipcom_stack(socket))
-    return ipstack_write_iov(socket, 0, vec, bytes > 0 ? 2 : 1);
-	return ipstack_write_iov(ipstack_fd(socket), 0, vec, bytes > 0 ? 2 : 1);
-}
-
-static int rtmp_spspps_send(rtmp_client_t* rtmp, char *sps, int spslen, char *pps, int ppslen)  
-{  
-    char body[1024] = {0};;  
-
-    int i = 0;  
-    body[i++] = 0x17; // 1:keyframe  7:AVC  
-    body[i++] = 0x00; // AVC sequence header  
-  
-    body[i++] = 0x00;  
-    body[i++] = 0x00;  
-    body[i++] = 0x00; // fill in 0;  
-  
-    // AVCDecoderConfigurationRecord.  
-    body[i++] = 0x01; // configurationVersion  
-    body[i++] = sps[1]; // AVCProfileIndication  
-    body[i++] = sps[2]; // profile_compatibility  
-    body[i++] = sps[3]; // AVCLevelIndication   
-    body[i++] = 0xff; // lengthSizeMinusOne    
-  
-    // sps nums  
-    body[i++] = 0xE1; //&0x1f  
-    // sps data length  
-    body[i++] = spslen>>8;  
-    body[i++] = spslen&0xff;  
-    // sps data  
-    memcpy(&body[i],sps, spsLen);  
-    i= i+spsLen;  
-  
-    // pps nums  
-    body[i++] = 0x01; //&0x1f  
-    // pps data length   
-    body[i++] = ppsLen>>8;  
-    body[i++] = ppsLen&0xff;  
-    // sps data  
-    memcpy(&body[i],pps,ppsLen);  
-    i= i+ppsLen;  
-  
-    return rtmp_client_push_video(rtmp, body,i);  
-  
-}  
-  
-static int rtmp_nal_send(rtmp_client_t* rtmp, unsigned char *data, unsigned int size,bool bIsKeyFrame,unsigned int nTimeStamp)  
-{  
-    if(data == NULL && size<11)  
-    {  
-        return false;  
-    }  
-  
-    unsigned char *body;// = new unsigned char[size+9];  
-  
-    int i = 0;  
-    if(bIsKeyFrame)  
-    {  
-        body[i++] = 0x17;// 1:Iframe  7:AVC  
-    }  
-    else  
-    {  
-        body[i++] = 0x27;// 2:Pframe  7:AVC  
-    }  
-    body[i++] = 0x01;// AVC NALU  
-    body[i++] = 0x00;  
-    body[i++] = 0x00;  
-    body[i++] = 0x00;  
-  
-    // NALU size  
-    body[i++] = size>>24;  
-    body[i++] = size>>16;  
-    body[i++] = size>>8;  
-    body[i++] = size&0xff;;  
-  
-    // NALU data  
-    memcpy(&body[i],data,size);  
-
-    return rtmp_client_push_video(rtmp, body,i+size, nTimeStamp);  
-}
-
-
-static void rtmp_client_push(const char* flv, rtmp_client_t* rtmp)
-{
-	int r, type;
-	int avcrecord = 0;
-    int aacconfig = 0;
-	size_t taglen;
-	uint32_t timestamp;
-	uint32_t s_timestamp = 0;
-	uint32_t diff = 0;
-	uint64_t clock;
-	
-	static char packet[2 * 1024 * 1024];
-	while (1)
+	rtmp_client_t *info = malloc(sizeof(rtmp_client_t));
+	if(info)
 	{
-		void* f = flv_reader_create(flv);
-
-		clock = system_clock(); // timestamp start from 0
-		while (1 == flv_reader_read(f, &type, &timestamp, &taglen, packet, sizeof(packet)))
+		memset(info, 0, sizeof(rtmp_client_t));
+		RTMP_Init(&info->_rtmp); 
+		if(!RTMP_SetupURL(&info->_rtmp, url))
 		{
-			uint64_t t = system_clock();
-			if (clock + timestamp > t && clock + timestamp < t + 3 * 1000) // dts skip
-				system_sleep(clock + timestamp - t);
-			else if (clock + timestamp > t + 3 * 1000)
-				clock = t - timestamp;
-			
-			timestamp += diff;
-			s_timestamp = timestamp > s_timestamp ? timestamp : s_timestamp;
-
-			if (FLV_TYPE_AUDIO == type)
-			{
-                if (0 == packet[1])
-                {
-                    if(0 != aacconfig)
-                        continue;
-                    aacconfig = 1;
-                }
-				r = rtmp_client_push_audio(rtmp, packet, taglen, timestamp);
-			}
-			else if (FLV_TYPE_VIDEO == type)
-			{
-                if (0 == packet[1] || 2 == packet[1])
-                {
-                    if (0 != avcrecord)
-                        continue;
-                    avcrecord = 1;
-                }
-				//bool keyframe = 1 == ((packet[0] & 0xF0) >> 4);
-				//printf("timestamp: %u, s_timestamp: %u%s\n", timestamp, s_timestamp, keyframe ? " [I]" : "");
-				//if (timestamp > 10 * 1000 && keyframe)
-				//{
-				//	uint8_t header[5];
-				//	header[0] = (1 << 4) /* FrameType */ | 7 /* AVC */;
-				//	header[1] = 2; // AVC end of sequence
-				//	header[2] = 0;
-				//	header[3] = 0;
-				//	header[4] = 0;
-				//	r = rtmp_client_push_video(rtmp, header, 5, timestamp);
-				//	system_sleep(600 * 1000);
-				//}
-				r = rtmp_client_push_video(rtmp, packet, taglen, timestamp);
-			}
-			else if (FLV_TYPE_SCRIPT == type)
-			{
-				r = rtmp_client_push_script(rtmp, packet, taglen, timestamp);
-			}
-			else
-			{
-				assert(0);
-				r = 0; // ignore
-			}
-
-			if (0 != r)
-			{
-				assert(0);
-				break; // TODO: handle send failed
-			}
+			free(info);
+			return NULL;
 		}
-
-		flv_reader_destroy(f);
-
-		diff = s_timestamp + 30;
+		info->media_channel = mchn;
+		RTMP_EnableWrite(&info->_rtmp);
+		return info;
 	}
-
-EXIT:
-	return;
+	return NULL;
 }
 
-// rtmp://video-center.alivecdn.com/live/hello?vhost=your.domain
-// rtmp_publish_test("video-center.alivecdn.com", "live", "hello?vhost=your.domain", local-flv-file-name)
-void rtmp_publish_test(const char* host, const char* app, const char* stream, const char* flv)
+int rtmp_client_start(rtmp_client_t *rtmp)
 {
-	static char packet[2 * 1024 * 1024];
-	snprintf(packet, sizeof(packet), "rtmp://%s/%s", host, app); // tcurl
-
-	struct rtmp_client_handler_t handler;
-	memset(&handler, 0, sizeof(handler));
-	handler.send = rtmp_client_send;
-
-	socket_init();
-	socket_t socket = socket_connect_host(host, 1935, 2000);
-	socket_setnonblock(socket, 0);
-
-	rtmp_client_t* rtmp = rtmp_client_create(app, stream, packet/*tcurl*/, &socket, &handler);
-	int r = rtmp_client_start(rtmp, 0);
-
-	while (4 != rtmp_client_getstate(rtmp) && (r = socket_recv(socket, packet, sizeof(packet), 0)) > 0)
+	if(rtmp)
 	{
-		assert(0 == rtmp_client_input(rtmp, packet, r));
+		if(!RTMP_Connect(&rtmp->_rtmp, NULL)) 
+		{
+			return -1;
+		}
+		if(!RTMP_ConnectStream(&rtmp->_rtmp, 0))
+		{
+			RTMP_Close(&rtmp->_rtmp);
+			return -1;
+		}
+		return 0;
 	}
+	return -1;
+}
 
-	rtmp_client_push(flv, rtmp);
+int rtmp_client_pause(rtmp_client_t *rtmp, int val)
+{
+	if(rtmp)
+	{
+		if(RTMP_IsConnected(&rtmp->_rtmp))
+		{
+			if(RTMP_Pause(&rtmp->_rtmp, val))
+				return 0;
+			return -1;	
+		}
+		return 0;
+	}
+	return -1;
+}
 
-	rtmp_client_destroy(rtmp);
-	socket_close(socket);
-	socket_cleanup();
+int rtmp_client_destroy(rtmp_client_t *rtmp)
+{
+	if(rtmp)
+	{
+		RTMP_DeleteStream(&rtmp->_rtmp); 
+		RTMP_Close(&rtmp->_rtmp);
+		return 0;
+	}
+	return -1;
+}
+/**
+ * 发送RTMP数据包
+ *
+ * @param nPacketType 数据类型
+ * @param data 存储数据内容
+ * @param size 数据大小
+ * @param nTimestamp 当前包的时间戳
+ *
+ * @成功则返回 1 , 失败则返回一个小于0的数
+ */
+int rtmp_client_send_packet(rtmp_client_t *rtmp, int type, char *data, int len, int timestamp)  
+{  
+	int nRet =0;
+	if (RTMP_IsConnected(&rtmp->_rtmp))
+	{
+		rtmp->_packet.m_nBodySize = len;
+		//memcpy(rtmp->_packet.m_body, data, size);
+		rtmp->_packet.m_body = data;
+		rtmp->_packet.m_hasAbsTimestamp = 0;
+		rtmp->_packet.m_packetType = type; /*此处为类型有两种一种是音频,一种是视频*/
+		rtmp->_packet.m_nInfoField2 = rtmp->_stream_id;
+		rtmp->_packet.m_nChannel = 0x04;
+
+		rtmp->_packet.m_headerType = RTMP_PACKET_SIZE_LARGE;
+		if (RTMP_PACKET_TYPE_AUDIO ==type && len !=4)
+		{
+			rtmp->_packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
+		}
+		rtmp->_packet.m_nTimeStamp = timestamp;
+
+		nRet = RTMP_SendPacket(&rtmp->_rtmp, &rtmp->_packet, false); /*TRUE为放进发送队列,FALSE是不放进发送队列,直接发送*/
+	}
+	return nRet;  
+}  
+
+int rtmp_client_send(rtmp_client_t *rtmp, int type, char *data, int len, int timestamp)
+{
+	if(rtmp)
+	{
+		if(RTMP_IsConnected(&rtmp->_rtmp))
+		{
+			return rtmp_client_send_packet(rtmp, type, data, len, timestamp) ;
+		}
+		return -1;
+	}
+	return -1;
 }

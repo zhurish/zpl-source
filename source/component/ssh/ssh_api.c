@@ -84,7 +84,7 @@ int ssh_module_task_init(void)
 	               0, sshd_task, &ssh_config, OS_TASK_DEFAULT_STACK);
 	if(ssh_config.sshd_taskid)
 	{
-		module_setup_task(MODULE_SSH, ssh_config.sshd_taskid);
+		//module_setup_task(MODULE_SSH, ssh_config.sshd_taskid);
 		return OK;
 	}
 	return ERROR;

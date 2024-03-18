@@ -651,7 +651,7 @@ static int zpl_media_channel_area_update_start(zpl_media_area_t * area, ZPL_MEDI
         if(area->t_timer)
             THREAD_TIMER_OFF(area->t_timer);
         if(bactive)    
-		    area->t_timer = thread_add_timer_msec(tvideo_task.t_master, zpl_media_channel_area_update_thread, area->mchn, 1000);
+		    area->t_timer = thread_add_timer_msec(_media_global.mthreadpool[area->mchn->channel].t_master, zpl_media_channel_area_update_thread, area->mchn, 1000);
         return OK;    
 	}
     return ERROR;

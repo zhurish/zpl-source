@@ -13,7 +13,7 @@
 #include "host.h"
 
 #ifdef ZPL_LIVE555_MODULE
-#include "livertsp_server.h"
+#include "rtsp_server.h"
 #endif
 #include "zpl_rtsp.h"
 #include "zpl_rtsp_util.h"
@@ -26,8 +26,6 @@
 #include "zpl_rtsp_client.h"
 #include "zpl_rtsp_media.h"
 #include "zpl_rtsp_api.h"
-
-
 
 
 static rtsp_server_t rtsp_server;
@@ -46,21 +44,25 @@ struct module_list module_list_rtsp = {
 static int rtsp_mainlv5_task(void* argv)
 {   
     host_waitting_loadconfig();
-    livertsp_server_loop(NULL);
+    if(rtsp_server.lv5)
+    {
+        rtsp_server_start(rtsp_server.lv5, 8554, 1);
+        rtsp_server_event_loop_running(rtsp_server.lv5);
+    }
     return OK;
 }
-#else  
+#endif  
 static int rtsp_main_task(void* argv)
 {    
     if(rtsp_server.rtsp_srv)
     {
-		rtsp_server.rtsp_srv->t_master = eloop_master_module_create(MODULE_RTSP);
+		rtsp_server.rtsp_srv->t_master = eloop_master_name_create("RTSP");
         host_waitting_loadconfig();
         eloop_mainloop(rtsp_server.rtsp_srv->t_master);
     }
     return OK;
 }
-#endif
+
 #ifdef ZPL_LIVE555_MODULE
 static int rtsp_logcb(const char *fmt,...)
 {
@@ -71,7 +73,7 @@ static int rtsp_logcb(const char *fmt,...)
     memset(lbuf, 0, sizeof(lbuf));
     len += vsnprintf(lbuf+len, sizeof(lbuf)-len, fmt, args);
     va_end (args);
-    zlog_debug(MODULE_RTSP,"%s\r\n", lbuf);
+    zlog_debug(MODULE_RTSP,"%s", lbuf);
     //fprintf(stdout, "%s\r\n", lbuf);
     //fflush(stdout);
     return OK;
@@ -80,24 +82,24 @@ static int rtsp_logcb(const char *fmt,...)
 int rtsp_module_init(void)
 {
 #ifdef ZPL_LIVE555_MODULE
-    livertsp_server_init(8554, "/nfsroot"/*BASEUSAGEENV_BASE_DIR*/, rtsp_logcb);
-#else
-    rtsp_server.t_master = eloop_master_module_create(MODULE_RTSP);
-    rtsp_server.rtsp_srv = rtsp_srv_create(rtsp_server.t_master, NULL, 554, MODULE_RTSP);
-#endif    
+    //livertsp_server_init(8554, "/nfsroot"/*BASEUSAGEENV_BASE_DIR*/, rtsp_logcb);
+    rtsp_server.lv5 = rtsp_server_create(rtsp_logcb);
+#endif
+    rtsp_server.t_master = eloop_master_name_create("RTSP");
+    rtsp_server.rtsp_srv = rtsp_srv_create(rtsp_server.t_master, NULL, 554, MODULE_RTSP);  
     return OK;
 }
 
 int rtsp_module_exit(void)
 {
 #ifdef ZPL_LIVE555_MODULE
-    livertsp_server_exit();
-#else    
+    rtsp_server_destroy(rtsp_server.lv5);
+    rtsp_server.lv5 = NULL;
+#endif    
     if(rtsp_server.rtsp_srv)
     {
         rtsp_srv_destroy(rtsp_server.rtsp_srv);
-    }
-#endif    
+    }   
     return OK;
 }
 
@@ -106,14 +108,13 @@ int rtsp_module_task_init(void)
  #ifdef ZPL_LIVE555_MODULE
 	rtsp_server.t_lv5taskid = os_task_create("lv5Task", OS_TASK_DEFAULT_PRIORITY,
 								 0, rtsp_mainlv5_task, NULL, OS_TASK_DEFAULT_STACK*8);
-#else
+#endif
     if(rtsp_server.rtsp_srv)
     {
 		rtsp_server.t_taskid = os_task_create("rtspTask", OS_TASK_DEFAULT_PRIORITY,
 								 0, rtsp_main_task, NULL, OS_TASK_DEFAULT_STACK*8);
         return OK;
     }
-#endif
     return OK;
 }
 
@@ -122,13 +123,12 @@ int rtsp_module_task_exit(void)
 #ifdef ZPL_LIVE555_MODULE
     if(rtsp_server.t_lv5taskid)
 		os_task_destroy(rtsp_server.t_lv5taskid);
-#else     
+#endif     
     if(rtsp_server.rtsp_srv)
     {
         if(rtsp_server.t_taskid)
 		    os_task_destroy(rtsp_server.t_taskid);
 	    rtsp_server.t_taskid = 0;
     }
-#endif
     return OK;
 }

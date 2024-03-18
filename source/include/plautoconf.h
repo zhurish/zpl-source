@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * ZPLSource version: 
  */
-#define MAKECONF_TIMESTAMP "2024-03-09 22:09:06 CST"
+#define MAKECONF_TIMESTAMP "2024-03-18 14:41:44 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -29,6 +29,11 @@
 #undef ZPL_ARCH_AARCH64
 #undef ZPL_ARCH_X86
 #define ZPL_ARCH_X86_64 1
+#undef ZPL_ARCH_MIPS32
+#undef ZPL_ARCH_MIPS64
+#undef ZPL_ARCH_LOONGARCH64
+#undef ZPL_ARCH_RISCV32
+#undef ZPL_ARCH_RISCV64
 #undef ZPL_ARM_A5
 #undef ZPL_ARM_A6
 #undef ZPL_ARM_A7
@@ -207,7 +212,7 @@
 #define ZPL_LIBMEDIA_MODULE 1
 #undef ZPL_HISIMPP_MODULE
 #undef ZPL_HISIMPP_HWDEBUG
-#undef ZPL_LIVE555_MODULE
+#define ZPL_LIVE555_MODULE 1
 #undef ZPL_SOFTCODEC_MODULE
 #undef ZPL_LIBX264_MODULE
 #undef ZPL_OPENH264_MODULE

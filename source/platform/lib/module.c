@@ -80,7 +80,7 @@ zpl_taskid_t module2task(zpl_uint32 module)
 	}
 	return 0;
 }
-
+#if 0
 zpl_uint32 task2module(zpl_taskid_t taskid)
 {
 	zpl_uint32 i = 0;
@@ -118,7 +118,7 @@ int module_setup_task(zpl_uint32 module, zpl_taskid_t taskid)
 	}
 	return 0;
 }
-
+#endif
 
 
 

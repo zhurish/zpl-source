@@ -117,7 +117,7 @@ ZPLOS_GNU_WERROR += -Werror=type-limits
 ZPLOS_CFLAGS += -Wnested-externs $(ZPLOS_GCC_WARNING) $(ZPLOS_GNU_WERROR) $(ZPLOS_GCC_WERROR)
 #			  
 #
-ZPLOS_CPPFLAGS += -fcheck-new -Wnon-virtual-dtor $(ZPLOS_GCC_WARNING) $(ZPLOS_GNU_WERROR) $(ZPLOS_GPP_WERROR)
+ZPLOS_CPPFLAGS += -fcheck-new -Wnon-virtual-dtor $(ZPLOS_GCC_WARNING) $(ZPLOS_GNU_WERROR) $(ZPLOS_GPP_WERROR) -fpermissive
 #-fsyntax-only
 #			 
 

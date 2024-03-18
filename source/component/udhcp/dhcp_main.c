@@ -26,7 +26,7 @@ static int dhcpd_config_init(dhcp_global_t *config)
 	lstInit(&config->client_list);
 	lstInit(&config->relay_list);
 	if (master_eloop_dhcp == NULL)
-		config->eloop_master = master_eloop_dhcp = eloop_master_module_create(MODULE_DHCP);
+		config->eloop_master = master_eloop_dhcp = eloop_master_name_create("DHCP");
 
 	config->server_port = os_netservice_port_get("dhcpd_port");//DHCP_SERVER_PORT;
 	config->client_port = os_netservice_port_get("dhcpc_port");//DHCP_CLIENT_PORT;
@@ -106,7 +106,7 @@ static int udhcp_main_task(void *p)
 {
 	//dhcp_pool_t *pool = NULL;
 	dhcp_global_t *config = (dhcp_global_t *) p;
-	module_setup_task(MODULE_DHCP, os_task_id_self());
+	//module_setup_task(MODULE_DHCP, os_task_id_self());
 	host_waitting_loadconfig();
 /*	os_sleep(5);
 	struct interface * ifp = if_lookup_by_name("ethernet 0/0/2");
@@ -221,7 +221,7 @@ int udhcp_module_task_init(void)
 			OS_TASK_DEFAULT_STACK);
 	if(dhcp_global_config.task_id)
 	{
-		module_setup_task(MODULE_DHCP, dhcp_global_config.task_id);
+		//module_setup_task(MODULE_DHCP, dhcp_global_config.task_id);
 		return OK;
 	}
 	return ERROR;
