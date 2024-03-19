@@ -6,6 +6,7 @@
 
 ifeq ($(strip $(ZPL_LIVE555_MODULE)),true)
 OBJS += DynamicRTSPServer.o \
+		FramedLiveSource.o LiveVideoServerMediaSubssion.o \
 			rtsp_server.o 
 #RTSPServerSupportingHTTPStreaming.o \	
 endif		

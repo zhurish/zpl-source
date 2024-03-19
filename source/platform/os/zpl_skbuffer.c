@@ -36,7 +36,7 @@ int zpl_skbuffer_destroy(zpl_skbuffer_t *skbuf)
 	return OK;
 }
 
-zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem)
+zpl_skbqueue_t *zpl_skbqueue_create(const char *name, zpl_uint32 max_num, zpl_bool sem)
 {
 	zpl_skbqueue_t *queue = os_malloc(sizeof(zpl_skbqueue_t));
 	if (queue)
@@ -693,7 +693,7 @@ static int zpl_skbuffer_netpkt_parse_header(zpl_skbuffer_t *skbuf, uint8_t *data
 	return OK;
 }
 
-zpl_proto_t zpl_skbuf_ethtype(char *src)
+zpl_proto_t zpl_skbuf_ethtype(zpl_uint8 *src)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)src;
 	if(ntohs(hdr->ethhdr.ethtype) == 0x8100)
@@ -703,7 +703,7 @@ zpl_proto_t zpl_skbuf_ethtype(char *src)
 	return ntohs(hdr->ethhdr.ethtype);
 }
 
-zpl_vlan_t zpl_skbuf_qinq(char *src, vlan_tpid_t tpid)
+zpl_vlan_t zpl_skbuf_qinq(zpl_uint8 *src, vlan_tpid_t tpid)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)src;
 	if(ntohs(hdr->ethhdr.ethtype) == tpid)
@@ -713,7 +713,7 @@ zpl_vlan_t zpl_skbuf_qinq(char *src, vlan_tpid_t tpid)
 	return 0;
 }
 
-zpl_vlan_t zpl_skbuf_vlan(char *src)
+zpl_vlan_t zpl_skbuf_vlan(zpl_uint8 *src)
 {
 	zpl_skb_ethvlan_t *hdr = (zpl_skb_ethvlan_t *)src;
 	if(ntohs(hdr->ethhdr.ethtype) == 0x8100)

@@ -47,7 +47,7 @@ static int rtsp_mainlv5_task(void* argv)
     if(rtsp_server.lv5)
     {
         rtsp_server_start(rtsp_server.lv5, 8554, 65);
-        rtsp_server_event_loop_running(rtsp_server.lv5);
+        rtsp_server_event_loop(rtsp_server.lv5);
     }
     return OK;
 }

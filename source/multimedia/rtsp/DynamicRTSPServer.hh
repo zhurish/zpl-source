@@ -41,7 +41,15 @@ protected: // redefined virtual functions
   virtual void lookupServerMediaSession(char const* streamName,
 					lookupServerMediaSessionCompletionFunc* completionFunc,
 					void* completionClientData,
-					Boolean isFirstLookupInSession);				
+					Boolean isFirstLookupInSession);
+private:
+   void DynamicRTSPServerParaURL(const char *url);
+   int channel;
+   int level;
+   Boolean multcast;
+   Boolean tls;
+   Boolean overtcp;
+   char *media_filename;								
 };
 
 #endif

@@ -256,7 +256,7 @@ typedef struct
 extern zpl_uint32 zpl_skb_timerstamp(void);
 
 /* zpl_skbqueue_t */
-extern zpl_skbqueue_t *zpl_skbqueue_create(char *name, zpl_uint32 max_num, zpl_bool sem);
+extern zpl_skbqueue_t *zpl_skbqueue_create(const char *name, zpl_uint32 max_num, zpl_bool sem);
 extern int zpl_skbqueue_destroy(zpl_skbqueue_t *queue);
 extern int zpl_skbqueue_attribute_set(zpl_skbqueue_t *queue, zpl_int32);
 extern int zpl_skbqueue_attribute_unset(zpl_skbqueue_t *queue, zpl_int32);
@@ -311,9 +311,9 @@ extern int zpl_skbuffer_reason_set(zpl_skbuffer_t *skbuf, zpl_uint32 reason);
 extern int zpl_skbuffer_timestamp_set(zpl_skbuffer_t *skbuf, zpl_uint32 timestamp);
 extern int zpl_skbuffer_source_set(zpl_skbuffer_t *skbuf, zpl_uint8 unit, ifindex_t ifindex, zpl_phyport_t trunk, zpl_phyport_t phyid);
 
-extern zpl_proto_t zpl_skbuf_ethtype(char *src);
-extern zpl_vlan_t zpl_skbuf_vlan(char *src);
-extern zpl_vlan_t zpl_skbuf_qinq(char *src, vlan_tpid_t tpid);
+extern zpl_proto_t zpl_skbuf_ethtype(zpl_uint8 *src);
+extern zpl_vlan_t zpl_skbuf_vlan(zpl_uint8 *src);
+extern zpl_vlan_t zpl_skbuf_qinq(zpl_uint8 *src, vlan_tpid_t tpid);
 
 #ifdef __cplusplus
 }
