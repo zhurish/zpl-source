@@ -21,19 +21,20 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "zpl_ipcmsg.h"
+#include "os_ipstack.h"
+#include "os_socket.h"
 #include "module.h"
 #include "zmemory.h"
-
+#include "linklist.h"
 #include "thread.h"
 #include "stream.h"
-#include "network.h"
-#include "sockunion.h"
+//#include "network.h"
+//#include "sockunion.h"
 #include "log.h"
-#include "linklist.h"
-#include "network.h"
-#include "buffer.h"
-#include "vty_include.h"
+//#include "network.h"
+
 #include "ipcstandby_client.h"
 
 /* Prototype for event manager. */

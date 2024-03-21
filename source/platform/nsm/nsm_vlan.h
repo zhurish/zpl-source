@@ -11,10 +11,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "auto_include.h"
-#include "zplos_include.h"
-
+#include "os_sem.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+#include "if.h"
 #include "nsm_vlan_database.h"
 
 /* VLAN Action definitions. */

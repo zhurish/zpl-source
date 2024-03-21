@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
+
 
 #ifdef ZPL_SHELL_MODULE
 

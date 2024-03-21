@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include "zpl_type.h"
-#include "auto_include.h"
 
 //#define OSSTACK_DEBUG_ENABLE
 

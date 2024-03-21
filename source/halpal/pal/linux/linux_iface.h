@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "if.h"
 extern int ip_ifp_stack_init(void);
 
 extern int librtnl_create_interface(struct interface *ifp);

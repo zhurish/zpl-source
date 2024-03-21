@@ -20,14 +20,24 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_time.h"
+#include "os_task.h"
+#include "os_ipstack.h"
+#include "os_socket.h"
+#include "module.h"
+#include "str.h"
+#include "zmemory.h"
+#include "pqueue.h"
 #include "thread.h"
 #include "log.h"
-#include "hash.h"
-#include "pqueue.h"
-#include "command.h"
-#include "pqueue.h"
-#include "zmemory.h"
+
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+
+
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_time.h>

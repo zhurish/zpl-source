@@ -22,7 +22,7 @@
 
 #ifndef __LIB_TABLE_H
 #define __LIB_TABLE_H
-
+#include "prefix.h"
 /*
  * Forward declarations.
  */

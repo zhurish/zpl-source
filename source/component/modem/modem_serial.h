@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+#include "os_list.h"
 #include "modem.h"
 //#include "modem_client.h"
 

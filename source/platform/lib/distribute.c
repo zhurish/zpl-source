@@ -21,15 +21,17 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-#include "prefix.h"
-#include "if.h"
-#include "hash.h"
-#include "filter.h"
-#include "command.h"
-#include "distribute.h"
 #include "zmemory.h"
+#include "hash.h"
+#include "prefix.h"
+#include "filter.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "distribute.h"
+
 
 /* Hash of distribute list. */
 //struct hash *disthash;

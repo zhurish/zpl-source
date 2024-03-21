@@ -32,6 +32,7 @@ extern "C" {
 #ifdef ZPL_VRF_MODULE
 #include "ipvrf.h"
 #endif
+#include "if_name.h"
 
 /* Prototypes. */
 extern struct list *if_list_get(void);

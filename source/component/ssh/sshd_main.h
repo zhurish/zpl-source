@@ -13,7 +13,6 @@ extern "C" {
 #endif
 
 #include "libssh_autoconfig.h"
-
 #include <libssh/callbacks.h>
 #include <libssh/poll.h>
 #include <libssh/server.h>
@@ -40,9 +39,6 @@ extern "C" {
 #include <sys/wait.h>
 #include <stdio.h>
 
-
-#include "zplos_include.h"
-
 #if defined(ZPL_BUILD_ARCH_X86)||defined(ZPL_BUILD_ARCH_X86_64)
 #define KEYS_FOLDER 		"/home/zhurish/.ssh/"
 #define USER 				"zhurish"
@@ -57,64 +53,6 @@ extern "C" {
 #define SESSION_END 		(SSH_CLOSED | SSH_CLOSED_ERROR)
 #define SFTP_SERVER_PATH 	"/usr/lib/sftp-server"
 
-//#define SSH_SCPD_ENABLE
-
-
-#include "ssh_api.h"
-
-
-/*typedef struct sshd_s
-{
-	zpl_bool			init;
-	zpl_bool			quit;
-	zpl_bool			running;
-	int				sshd_taskid;
-    ssh_bind 		sshbind;
-    ssh_event 		event;
-}sshd_t;*/
-
-
-struct scpd_data
-{
-	zpl_uint32 	mode;
-	char	 *filename;
-    socket_t input;
-    socket_t output;
-    ssh_scp	 scp;
-};
-
-typedef struct sshd_client_s
-{
-	ssh_config_t		*config;
-    ssh_session 		session;
-
-    struct ssh_channel_callbacks_struct ssh_channel_cb;
-
-    struct ssh_server_callbacks_struct 	ssh_server_cb;
-
-    struct winsize 		winsize;
-
-    ssh_channel 		channel;
-
-    zpl_uint32 				auth_attempts;
-    zpl_uint32 				authenticated;
-
-    enum
-	{
-    	SSH_C_NONE,
-		SSH_C_SHELL,
-		SSH_C_SCP,
-		SSH_C_SFTP
-	} type;
-
-    struct vty 			*vty;
-    int 				sock;
-#ifdef SSH_SCPD_ENABLE
-    struct scpd_data	scp_data;
-#endif
-}sshd_client_t;
-
-//extern sshd_t sshd_config;
 
 
 extern int sshd_accept(socket_t fd, zpl_uint32 revents, void *userdata);

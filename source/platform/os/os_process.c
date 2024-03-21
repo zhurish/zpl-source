@@ -6,9 +6,9 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include <log.h>
-#include <sys/wait.h>
+#include "zpl_type.h"
+#include "os_socket.h"
+#include "os_process.h"
 
 int super_system(const zpl_char *cmd)
 {

@@ -8,30 +8,17 @@
  * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
  *
  */
-#include "zplos_include.h"
-#include "zassert.h"
-#include "vty.h"
+#include "goahead.h"
+#include "webutil.h"
 #include "if.h"
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "zmemory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
 #include "nsm_ipvrf.h"
 #include "nsm_interface.h"
 #include "nsm_dhcp.h"
 #ifdef ZPL_WIFI_MODULE
 #include "iw_interface.h"
 #endif
-#include "nsm_include.h"
+//#include "nsm_include.h"
 #include "web_api.h"
-
 #include "web_app.h"
 
 static int web_interface_all_one_api(struct interface *ifp, void *pVoid)
@@ -44,7 +31,7 @@ static int web_interface_all_one_api(struct interface *ifp, void *pVoid)
 		struct prefix address;
 		char prefixbuf[128];
 		union prefix46constptr pu;
-		struct nsm_interface *zif = ifp->info[MODULE_NSM];
+		//struct nsm_interface *zif = ifp->info[MODULE_NSM];
 		//{ interface: 'loopback1', iftype: 'loopback', ifmode: 'access', switchport: false,
 		// delete: true, prefix: '192.168.14.1/24', vrf: '0', admin: true, link: true }
 		cJSON_AddStringToObject(obj, "interface", ifp->name);
@@ -111,7 +98,7 @@ static int web_interface_all_switchport_api(struct interface *ifp, void *pVoid)
 		struct prefix address;
 		char prefixbuf[128];
 		union prefix46constptr pu;
-		struct nsm_interface *zif = ifp->info[MODULE_NSM];
+		//struct nsm_interface *zif = ifp->info[MODULE_NSM];
 		//{ interface: 'loopback1', iftype: 'loopback', ifmode: 'access', switchport: false,
 		// delete: true, prefix: '192.168.14.1/24', vrf: '0', admin: true, link: true }
 		cJSON_AddStringToObject(obj, "interface", ifp->name);
@@ -271,8 +258,8 @@ static int web_interface_button(Webs *wp, void *pVoid)
 		{
 			char *ifmode = cJSON_GetStringValue(root, "ifmode");
 			char *prefix = cJSON_GetStringValue(root, "prefix");
-			char *iftype = cJSON_GetStringValue(root, "iftype");
-			zpl_bool admin = cJSON_GetBoolValue(root, "admin");
+			//char *iftype = cJSON_GetStringValue(root, "iftype");
+			//zpl_bool admin = cJSON_GetBoolValue(root, "admin");
 			zpl_bool create = cJSON_GetBoolValue(root, "create");
 			if (create)
 			{

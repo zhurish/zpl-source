@@ -6,12 +6,9 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
+#include "zpl_type.h"
+#include "os_sem.h"
+#include "log.h"
 #include "checksum.h"
 #include "nsm_include.h"
 

@@ -6,10 +6,11 @@
  */
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
-#include "hal_ipccmd.h"
-#include "hal_ipcmsg.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "prefix.h"
+#include "if.h"
+#include "nsm_rib.h"
 #include "pal_router.h"
 #include "pal_global.h"
 

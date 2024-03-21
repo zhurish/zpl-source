@@ -8,23 +8,9 @@
  * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
  * 
  */
-#include "zplos_include.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "zmemory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-
+#include "goahead.h"
 
 #include "web_api.h"
-
 #include "web_app.h"
 
 #ifdef ZPL_APP_MODULE

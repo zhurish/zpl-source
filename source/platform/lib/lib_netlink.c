@@ -1,4 +1,7 @@
-#include "zplos_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+#include "os_socket.h"
 #include "module.h"
 #include "zmemory.h"
 #include "log.h"

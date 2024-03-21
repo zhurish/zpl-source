@@ -1,6 +1,6 @@
 
 #include "auto_include.h"
-
+#include "zpl_type.h"
 #include "os_bitmap.h"
 
 static const zpl_uchar bitMask[8] = {

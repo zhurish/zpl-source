@@ -13,14 +13,14 @@ extern "C" {
 #endif
 #ifdef ZPL_SDK_USER
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "nsm_include.h"
-#include "lib_include.h"
-#include "vty_include.h"
+#include "zpl_type.h"
+#include "zmemory.h"
+#include "log.h"
 #include "hal_include.h"
 #include "bsp_include.h"
-#include "bsp_driver.h"
 #include "bsp_types.h"
+#include "bsp_driver.h"
+#include "vty_include.h"
 #else
 #include <linux/kernel.h>
 #include <linux/phy.h>
@@ -29,10 +29,6 @@ extern "C" {
 #include <linux/brcmphy.h>
 #include <linux/rtnetlink.h>
 
-#include "bsp_types.h"
-#include "hal_ipcmsg.h"
-#include "hal_ipccmd.h"
-#include "hal_client.h"
 #endif
 #ifdef ZPL_SDK_USER
 typedef zpl_uint8 u8;

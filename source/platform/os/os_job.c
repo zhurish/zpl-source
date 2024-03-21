@@ -5,10 +5,15 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
+#include "os_job.h"
 #ifdef ZPL_SHELL_MODULE
-#include "vty.h"
+#include "vty_include.h"
 #endif
+
 #define OS_JOB_NAME_MAX 128
 
 typedef struct os_job_s

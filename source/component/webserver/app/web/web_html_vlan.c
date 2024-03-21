@@ -8,21 +8,7 @@
  * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
  * 
  */
-#include "zplos_include.h"
-#include "zassert.h"
-#include "vty.h"
-#include "if.h"
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "zmemory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
+#include "goahead.h"
 #include "nsm_ipvrf.h"
 #include "nsm_interface.h"
 #include "nsm_include.h"

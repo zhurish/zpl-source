@@ -21,15 +21,12 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
 #include "zmemory.h"
-#include "thread.h"
+#include "log.h"
 #include "if.h"
-#include "vty.h"
-
-#include "command.h"
-#include "prefix.h"
 
 #ifdef ZPL_NETNS_ENABLE
 #undef _GNU_SOURCE
@@ -39,12 +36,6 @@
 #endif
 
 #include "pal_include.h"
-#include "nsm_debug.h"
-#include "nsm_vlan.h"
-#include "nsm_arp.h"
-#include "nsm_include.h"
-#include "nsm_firewalld.h"
-#include "nsm_vlaneth.h"
 #include "linux_driver.h"
 #ifndef IFLA_VRF_TABLE
 #define IFLA_VRF_TABLE 1

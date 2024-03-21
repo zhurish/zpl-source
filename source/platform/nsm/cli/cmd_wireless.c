@@ -7,11 +7,12 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
-#include "vty.h"
+#include "if.h"
+#include "vty_include.h"
+
 
 #ifdef ZPL_WIFI_MODULE
 #include "iw_config.h"

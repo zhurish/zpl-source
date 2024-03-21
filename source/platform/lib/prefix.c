@@ -21,13 +21,11 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-
-#include "prefix.h"
-#include "vty.h"
-#include "sockunion.h"
 #include "zmemory.h"
+#include "sockunion.h"
+#include "prefix.h"
 #include "log.h"
 /* Maskbit. */
 static const zpl_uchar maskbit[] = {0x00, 0x80, 0xc0, 0xe0, 0xf0,

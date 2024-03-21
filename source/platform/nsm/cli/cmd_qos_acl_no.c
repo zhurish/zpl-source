@@ -1,10 +1,11 @@
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
+#include "if.h"
+#include "vty_include.h"
+
 #include "nsm_interface.h"
-#include "vty.h"
 #include "nsm_qos_acl.h"
 
 #define QOS_CLASS_MAP_STR "Class Map List\n"

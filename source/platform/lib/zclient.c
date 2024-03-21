@@ -21,18 +21,24 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
+#include "zmemory.h"
+#include "buffer.h"
+#include "route_types.h"
 #include "prefix.h"
 #include "stream.h"
-#include "buffer.h"
 #include "network.h"
-#include "if.h"
 #include "log.h"
 #include "thread.h"
+#include "ipvrf.h"
+#include "if.h"
+#include "zclient_event.h"
 #include "zclient.h"
-#include "zmemory.h"
-#include "table.h"
+
+
+
 
 /* Zebra client events. */
 enum event
@@ -304,7 +310,7 @@ void zclient_create_header(struct stream *s, zpl_uint16 command, vrf_id_t vrf_id
 {
   /* length placeholder, caller can update */
   stream_putw(s, ZCLIENT_HEADER_SIZE);
-  stream_putc(s, MSG_HEADER_MARKER);
+  stream_putc(s, ZCLIENT_HEADER_MARKER);
   stream_putc(s, ZSERV_VERSION);
   stream_putw(s, vrf_id);
   stream_putw(s, command);
@@ -927,7 +933,7 @@ zclient_read(struct thread *thread)
   vrf_id = stream_getw(zclient->ibuf);
   command = stream_getw(zclient->ibuf);
 
-  if (marker != MSG_HEADER_MARKER || version != ZSERV_VERSION)
+  if (marker != ZCLIENT_HEADER_MARKER || version != ZSERV_VERSION)
   {
     zlog_err(MODULE_LIB, "%s: socket %d version mismatch, marker %d, version %d",
              __func__, ipstack_fd(zclient->sock), marker, version);

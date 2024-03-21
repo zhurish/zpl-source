@@ -6,11 +6,12 @@
  */
 
 
-#include "auto_include.h"
-#include <zplos_include.h>
-#include "command.h"
-#include "vty.h"
+#include "goahead.h"
+#include "webutil.h"
 #include "template.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif	
 #ifdef ZPL_WEBGUI_MODULE
 #include "web_api.h"
 #endif

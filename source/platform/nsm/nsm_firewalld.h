@@ -12,9 +12,11 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-
+#include "os_list.h"
+#include "prefix.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 
 /*
  * 对于 INPUT NAT MANGLE 等， WAN侧时源， 本的是目的

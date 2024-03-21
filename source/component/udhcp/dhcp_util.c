@@ -5,11 +5,6 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include <zplos_include.h>
-#include "module.h"
-#include "log.h"
-#include "nsm_include.h"
 #include "dhcp_def.h"
 #include "dhcpd.h"
 #include "dhcp_lease.h"
@@ -17,8 +12,10 @@
 #include "dhcp_main.h"
 #include "dhcpc.h"
 #include "dhcp_util.h"
-
+#include "route_types.h"
 #include "nsm_dns.h"
+#include "nsm_halpal.h"
+
 
 const zpl_uint8 DHCP_MAC_BCAST_ADDR[6] ALIGN2 = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff

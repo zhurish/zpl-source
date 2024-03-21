@@ -12,9 +12,12 @@
 extern "C" {
 #endif
 
+#include "os_list.h"
 #include "filter.h"
 #include "nsm_qos.h"
-
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #define ZPL_FILTER_NOSEQ
 
 #define NSM_QOS_ACL_NAME_MAX	32
@@ -56,7 +59,7 @@ typedef struct qos_access_filter_s
       struct filter_zebos_ext zextfilter;
       #endif
       #ifdef ZPL_FILTER_MAC
-      struct filter_l2    mac_filter
+      struct filter_l2    mac_filter;
       #endif
     } u;
 	

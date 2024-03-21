@@ -7,15 +7,12 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
 #include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
+#include "log.h"
+#include "log.h"
 #include "str.h"
 #include "prefix.h"
-#include "nsm_interface.h"
 
 #include "modem.h"
 #include "modem_attty.h"

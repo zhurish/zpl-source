@@ -21,19 +21,17 @@ along with GNU Zebra; see the file COPYING.  If not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "zmemory.h"
-#include "log.h"
-#include "host.h"
-#include "thread.h"
 #include "vector.h"
 #include "str.h"
 #include "hash.h"
+#include "host.h"
+
 #include "vty.h"
 #include "command.h"
-#include "workqueue.h"
-#include "cli.h"
+
+
 
 
 /* Command vector which includes some level of command lists. Normally

@@ -5,8 +5,6 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
 
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>

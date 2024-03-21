@@ -12,11 +12,9 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
+
 #include "vty.h"
-#include "md5.h"
 #include "command.h"
-//#define VTY_USER_DEBUG
 
 #define VTY_USERNAME_DEFAULT	"admin"
 #define VTY_PASSWORD_DEFAULT	"admin"

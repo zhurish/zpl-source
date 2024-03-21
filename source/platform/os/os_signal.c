@@ -6,10 +6,12 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-
-
-
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_signal.h"
+#include "os_process.h"
+#include "os_socket.h"
+#include "os_time.h"
 #ifdef SA_SIGINFO
 #ifdef HAVE_UCONTEXT_H
 #ifdef GNU_LINUX

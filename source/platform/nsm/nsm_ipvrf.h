@@ -27,7 +27,51 @@
 extern "C" {
 #endif
 
-    extern int ipvrf_nsm_init(void);
+
+#include "linklist.h"
+#include "prefix.h"
+#include "table.h"
+#include "nsm_rtadv.h"
+/* Routing table instance.  */
+struct nsm_ipvrf
+{
+  /* Identifier. */
+  vrf_id_t vrf_id;
+
+  /* Routing table name.  */
+  zpl_char *name;
+
+  /* Description.  */
+  zpl_char *desc;
+
+  /* FIB identifier.  */
+  zpl_uchar fib_id;
+
+  /* Routing table.  */
+  struct route_table *table[AFI_MAX][SAFI_MAX];
+
+  /* Static route configuration.  */
+  struct route_table *stable[AFI_MAX][SAFI_MAX];
+
+  /* 2nd pointer type used primarily to quell a warning on
+   * ALL_LIST_ELEMENTS_RO
+   */
+  struct list _rid_all_sorted_list;
+  struct list _rid_lo_sorted_list;
+  struct list *rid_all_sorted_list;
+  struct list *rid_lo_sorted_list;
+  struct prefix rid_user_assigned;
+
+#if defined (ZPL_NSM_RTADV) 
+  struct rtadv rtadv;
+#endif /* ZPL_NSM_RTADV */
+
+
+  /* Recursive Nexthop table */
+  struct route_table *rnh_table[AFI_MAX];
+};
+
+extern int ipvrf_nsm_init(void);
 
 #ifdef __cplusplus
 }

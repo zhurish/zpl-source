@@ -9,20 +9,13 @@
  * 
  */
 #define HAS_BOOL 1
-#include "zplos_include.h"
-#include "module.h"
-#include "zmemory.h"
-#include "zassert.h"
-#include "command.h"
-#include "prefix.h"
-#include "host.h"
-#include "log.h"
+#include "goahead.h"
+#include "webutil.h"
+
 #include "vty.h"
 #include "vty_user.h"
 
-
 #include "web_api.h"
-
 #include "web_app.h"
 
 #if 0//ME_GOAHEAD_AUTO_LOGIN

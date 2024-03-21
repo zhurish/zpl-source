@@ -5,7 +5,7 @@
  *      Author: DELL
  */
 
-#include "zplos_include.h"
+#include "mqtt-config.h"
 #include "zmemory.h"
 #include "vty.h"
 #include "buffer.h"
@@ -15,9 +15,6 @@
 #include "template.h"
 
 #ifdef ZPL_MQTT_MODULE
-#include "zplos_include.h"
-#include "zmemory.h"
-#include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>
 #include "mqtt_app_conf.h"

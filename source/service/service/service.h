@@ -38,5 +38,10 @@ extern int service_module_init (void);
 extern int service_module_exit (void);
 extern int service_clicmd_init (void);
 
+//sock fd, struct sockaddr_in, user param
+extern int ip_tcpsrv_add(char *ipaddress, int port, int (*_accept_func)(zpl_socket_t, void *, void *), void *pUser);
+extern int ip_tcpsrv_del(int port);
+
+
 
 #endif /* __SYSTOOLS_H__ */

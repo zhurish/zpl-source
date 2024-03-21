@@ -21,12 +21,13 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
+#include "zmemory.h"
 #include "prefix.h"
 #include "table.h"
-#include "zmemory.h"
-#include "sockunion.h"
+
+//#include "sockunion.h"
 
 static void route_node_delete (struct route_node *);
 static void route_table_free (struct route_table *);

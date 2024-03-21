@@ -13,8 +13,8 @@ extern "C" {
 #endif
 
 
-
-
+#include "if.h"
+#include "nexthop.h"
 typedef struct hal_l3if_param_s
 {
   hal_port_header_t porthdr;

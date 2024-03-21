@@ -20,14 +20,14 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-#include "hash.h"
-#include "command.h"
 #include "zmemory.h"
-#include "if.h"
+#include "hash.h"
 #include "if_rmap.h"
-
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 struct hash *ifrmaphash;
 
 /* Hook functions. */

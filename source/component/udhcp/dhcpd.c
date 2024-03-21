@@ -35,9 +35,6 @@
 //usage:	IF_FEATURE_UDHCP_PORT(
 //usage:     "\n	-P N	Use port N (default 67)"
 //usage:	)
-#include "auto_include.h"
-#include <zplos_include.h>
-
 #include "dhcp_def.h"
 #include "dhcp_packet.h"
 #include "dhcpd.h"

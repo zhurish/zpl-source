@@ -11,7 +11,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "prefix.h"
+#include "if.h"
+#include "nsm_rib.h"
 //interface
 extern int pal_interface_create(struct interface *ifp);
 extern int pal_interface_destroy(struct interface *ifp);

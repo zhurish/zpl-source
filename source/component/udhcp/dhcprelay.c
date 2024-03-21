@@ -20,29 +20,20 @@
 //usage:       "Relay DHCP requests between clients and server"
 
 #include "dhcp_def.h"
-#include "dhcp_packet.h"
+#include "dhcp_pool.h"
+#include "dhcp_util.h"
+#include "dhcp_lease.h"
 #include "dhcp_main.h"
 #include "dhcpd.h"
-
+#include "dhcp_packet.h"
+#include "dhcprelay.h"
 
 /* lifetime of an xid entry in sec. */
 #define DHCP_RELAY_MAX_LIFETIME   2*60
 /* select timeout in sec. */
 #define DHCP_RELAY_SELECT_TIMEOUT (DHCP_RELAY_MAX_LIFETIME / 8)
 
-#include "auto_include.h"
-#include <zplos_include.h>
-#include "lib_include.h"
-#include "nsm_include.h"
 
-
-#include "dhcp_def.h"
-#include "dhcp_lease.h"
-#include "dhcp_pool.h"
-#include "dhcp_util.h"
-#include "dhcp_main.h"
-#include "dhcpd.h"
-#include "dhcprelay.h"
 
 /************************************************************************************/
 /* This list holds information about clients. The xid_* functions manipulate this list. */

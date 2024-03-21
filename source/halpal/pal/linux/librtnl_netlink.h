@@ -25,6 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "if.h"
 
 #ifdef ZPL_LIBNL_MODULE
 #include <netlink/netlink.h>

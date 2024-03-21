@@ -8,14 +8,16 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_ansync.h"
+#include "os_file.h"
+#include "os_process.h"
 #include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
 #include "str.h"
-#include "nsm_include.h"
+#include "log.h"
+#include "vty.h"
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/socket.h>

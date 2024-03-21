@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+#include "if.h"
 
 int linux_ioctl_if_set_prefix(struct interface *ifp, struct connected *ifc);
 int linux_ioctl_if_unset_prefix(struct interface *ifp, struct connected *ifc);

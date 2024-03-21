@@ -7,14 +7,9 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "zmemory.h"
+#include "zpl_type.h"
+#include "log.h"
 #include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "nsm_interface.h"
-
 #include "modem.h"
 #include "modem_client.h"
 #include "modem_machine.h"

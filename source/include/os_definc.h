@@ -11,7 +11,6 @@
 extern "C" {
 #endif
 
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +34,7 @@ extern "C" {
 #include <stdarg.h>
 #include <endian.h>
 #include <netdb.h>
+#include "sys/epoll.h"
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>
@@ -49,7 +49,7 @@ extern "C" {
 #include <sys/select.h>
 #include <sys/wait.h>
 #include <sys/time.h>
-
+#include <assert.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip_icmp.h>

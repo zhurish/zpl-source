@@ -6,19 +6,14 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "nsm_event.h"
-#include "module.h"
-#include "zmemory.h"
-#include "thread.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+#include "os_list.h"
+#include "os_task.h"
 #include "if.h"
-#include "vty.h"
+#include "log.h"
+#include "eloop.h"
 #include "host.h"
-#include "command.h"
-#include "prefix.h"
-
-
-#include "nsm_include.h"
 #include "pal_include.h"
 #include "pal_global.h"
 #include "linux_driver.h"

@@ -10,7 +10,8 @@
  * This file is released under the GPL license.
  *     Copyright (c) 1997-2007 Jean Tourrilhes <jt@hpl.hp.com>
  */
-
+#include "auto_include.h"
+#include "zpl_type.h"
 #include "iwlib.h"		/* Header */
 #include "iwioctl.h"
 /**************************** CONSTANTS ****************************/

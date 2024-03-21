@@ -6,8 +6,9 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-
+#include "zpl_type.h"
+#include "os_log.h"
+#include "os_netservice.h"
 
 static oslog_callback _oslog_func = NULL;
 

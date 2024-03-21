@@ -65,7 +65,6 @@ extern "C" {
 #endif
 
 
-//#include "product.h"
 
 #ifdef __cplusplus
 }

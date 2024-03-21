@@ -12,31 +12,8 @@
 extern "C" {
 #endif
 
-#include "zplos_include.h"
-#include "vty.h"
-
-#include "libssh_autoconfig.h"
-
-#include <libssh/callbacks.h>
-#include <libssh/poll.h>
-#include <libssh/server.h>
-
-#include "ssh_api.h"
-#include "sshd_main.h"
-
-typedef struct ssh_scp_connect
-{
-  zpl_bool 			is_ssh;
-  char 			*user;
-  char 			*host;
-  zpl_uint16			port;
-  char 			*path;
-  char 			*password;
-  ssh_session 	session;
-  ssh_scp 		scp;
-  FILE 			*file;
-
-}ssh_sftp_connect;
+#include "ssh_def.h"
+#include "os_url.h"
 
 
 

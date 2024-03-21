@@ -20,19 +20,18 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-
-#include "prefix.h"
-#include "command.h"
 #include "zmemory.h"
-#include "plist.h"
 #include "sockunion.h"
-#include "buffer.h"
 #include "stream.h"
+#include "prefix.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "plist.h"
 #include "log.h"
 
-#include "plist_int.h"
 
 
 /* List of struct prefix_list. */
@@ -2580,7 +2579,7 @@ prefix_bgp_orf_remove_all (afi_t afi, zpl_char *name)
 
 /* return prefix count */
 int
-prefix_bgp_show_prefix_list (struct vty *vty, afi_t afi, zpl_char *name)
+prefix_bgp_show_prefix_list (struct vty *vty, afi_t afi, char *name)
 {
   struct prefix_list *plist;
   struct prefix_list_entry *pentry;

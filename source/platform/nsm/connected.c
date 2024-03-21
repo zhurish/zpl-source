@@ -21,17 +21,17 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-
-
-#include "prefix.h"
-#include "linklist.h"
-#include "if.h"
-#include "table.h"
-#include "log.h"
+#include "route_types.h"
 #include "zmemory.h"
-
+#include "linklist.h"
+#include "prefix.h"
+#ifdef ZPL_VRF_MODULE
+#include "ipvrf.h"
+#endif
+#include "if.h"
+#include "log.h"
 #include "connected.h"
 #ifdef ZPL_NSM_MODULE
 #include "nsm_rib.h"

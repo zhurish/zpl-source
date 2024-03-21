@@ -1,10 +1,14 @@
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_ansync.h"
+#include "os_socket.h"
+#include "os_task.h"
+
+#include "if.h"
 #include "module.h"
 #include "zmemory.h"
-#include "if.h"
-
-#include "nsm_include.h"
 #include "hal_txrx.h"
 #include "hal_netpkt.h"
 

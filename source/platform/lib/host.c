@@ -6,19 +6,20 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_file.h"
 #include "module.h"
 #include "zmemory.h"
-#include "vty.h"
-#include "host.h"
-#include "prefix.h"
 #include "str.h"
 #include "linklist.h"
-#include "vty.h"
-#include "vty_user.h"
+#include "prefix.h"
+#include "host.h"
 #include "template.h"
 #include "sys/sysinfo.h"
 
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 
 struct zpl_host _global_host;
 

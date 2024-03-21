@@ -12,7 +12,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "os_list.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+#include "if.h"
 #define NSM_TRUNK_ID_MAX	2
 #define NSM_TRUNK_MEMBER_MAX	4
 

@@ -12,8 +12,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
-
+#include "os_list.h"
 enum os_job_type
 {
     OS_JOB_NONE,

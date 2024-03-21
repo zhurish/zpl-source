@@ -9,17 +9,14 @@
  * 
  */
 #define HAS_BOOL 1
-#include "zplos_include.h"
-
-#include "module.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "cJSON.h"
+#include "os_ipstack.h"
 #include "zmemory.h"
-#include "zassert.h"
-#include "command.h"
-#include "prefix.h"
-#include "host.h"
+#include "module.h"
 #include "log.h"
-#include "vty.h"
-#include "vty_user.h"
+#include "prefix.h"
 
 #ifdef ZPL_SERVICE_SNTPC
 #include "sntpcLib.h"
@@ -27,8 +24,8 @@
 #ifdef ZPL_SERVICE_SNTPS
 #include "sntpsLib.h"
 #endif
-#include "web_api.h"
 
+#include "web_api.h"
 #include "web_app.h"
 
 #ifdef ZPL_SERVICE_SNTPC

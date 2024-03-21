@@ -7,14 +7,12 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "route_types.h"
-#include "nsm_event.h"
-#include "zmemory.h"
-#include "if.h"
-
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
-#include "command.h"
+#include "if.h"
+#include "vty_include.h"
+
 #include "nsm_trunk.h"
 
 struct trunk_user

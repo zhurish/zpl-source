@@ -5,6 +5,8 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
+#include "zplos_include.h"
+#include "lib_include.h"
 #include "getopt.h"
 #include <log.h>
 //#include "if_name.h"

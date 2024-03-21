@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-#include "zpl_type.h"
-#include "os_list.h"
+
 
 #define OS_QDATA_START_OFFSET    64
 #define OS_QDATA_ALIGN(n)      (((((n)+3)/4)*4))

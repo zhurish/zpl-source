@@ -6,6 +6,9 @@ extern "C" {
 
 
 #include "auto_include.h"
+#include "zpl_type.h"
+#include "os_sem.h"
+#include "linklist.h"
 #include "hal_ipcmsg.h"
 
 

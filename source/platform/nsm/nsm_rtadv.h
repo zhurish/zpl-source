@@ -23,11 +23,31 @@
 #ifndef __NSM_RTADV_H__
 #define __NSM_RTADV_H__
 
-#include "vty.h"
+#include "eloop.h"
+#include "prefix.h"
 #include "if.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+
+
 
 /* NB: RTADV is defined in zebra/interface.h above */
 #if defined (ZPL_NSM_RTADV)
+
+/* Structure which hold status of router advertisement. */
+struct rtadv
+{
+  zpl_socket_t sock;
+
+  zpl_uint32 adv_if_count;
+  zpl_uint32 adv_msec_if_count;
+
+  struct eloop *ra_read;
+  struct eloop *ra_timer;
+  void  *ipvrf;
+};
+
 
 /* Router advertisement prefix. */
 struct nsm_rtadv_prefix
@@ -100,8 +120,8 @@ extern const char *rtadv_pref_strs[];
 
 #endif /* ZPL_NSM_RTADV */
 
-extern void nsm_rtadv_init (struct nsm_ipvrf *);
-extern void nsm_rtadv_terminate (struct nsm_ipvrf *);
+extern void nsm_rtadv_init (struct rtadv *, vrf_id_t);
+extern void nsm_rtadv_terminate (struct rtadv *);
 extern void nsm_rtadv_cmd_init (void);
 
 #endif /* __NSM_RTADV_H__ */

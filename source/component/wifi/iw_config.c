@@ -5,7 +5,6 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include <zplos_include.h>
 
 #include "iw_config.h"
 

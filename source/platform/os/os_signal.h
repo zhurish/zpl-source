@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
 
 
 #define OS_SIGNAL_FILE SYSLOGDIR"/signal.log"

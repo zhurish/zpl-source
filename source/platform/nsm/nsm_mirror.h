@@ -12,7 +12,9 @@
 extern "C" {
 #endif
 
-#include "nsm_mac.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 
 #define MIRROR_SESSION_MAX	2
 #define MIRROR_SOURCE_MAX	4

@@ -6,8 +6,11 @@
  */
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "osker_list.h"
+#include "os_ipstack.h"
+#include "if.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 #include "hal_txrx.h"

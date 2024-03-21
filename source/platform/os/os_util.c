@@ -6,7 +6,9 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_util.h"
+#include "os_ipstack.h"
 
 
 #define PROC_BASE "/proc"

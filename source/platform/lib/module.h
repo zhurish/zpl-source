@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-#include "route_types.h"
-#include "nsm_event.h"
+
 #include "moduletypes.h"
 
 

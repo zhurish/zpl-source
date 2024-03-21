@@ -11,7 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-//#include "nsm_qos.h"
+
+#include "nsm_qos.h"
 
 
 

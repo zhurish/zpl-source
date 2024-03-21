@@ -6,14 +6,13 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include <sys/prctl.h>
-#include <sys/syscall.h>
-#include <dirent.h>
-#include <sys/resource.h>
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_time.h"
+#include "os_task.h"
 #ifdef ZPL_SHELL_MODULE
-#include "command.h"
-#include "vty.h"
+#include "vty_include.h"
 #endif
 
 #define OS_TASK_ENTRY_LOCK(n) if(n) pthread_mutex_lock(&n->td_mutex)

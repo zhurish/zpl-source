@@ -1,16 +1,13 @@
-#include <stdio.h>
-#ifndef _MSC_VER
-#include <unistd.h>
-#endif
-#include <stdlib.h>
-#include <errno.h>
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
 #include "module.h"
 #include "host.h"
 #include <modbus.h>
 #include "modbus-api.h"
-#include "os_task.h"
+
 
 static const uint16_t UT_BITS_ADDRESS = 0;	//线圈状态寄存器起始地址
 static const uint16_t UT_BITS_NB = 8;		//线圈状态寄存器数量

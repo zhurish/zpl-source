@@ -6,8 +6,7 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "os_sem.h"
+#include "zpl_type.h"
 #include "os_rng.h"
 
 

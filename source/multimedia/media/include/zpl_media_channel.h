@@ -81,6 +81,7 @@ typedef struct zpl_media_channel_s
     zpl_media_unit_t            p_mucast;       //通道多播发送
     zpl_media_unit_t            rtp_param;      //RTP单元接收队列
     zpl_media_unit_t            rtmp_param;     //RTMP单元接收队列
+    zpl_media_unit_t            rtsp_param;     //RTMP单元接收队列
     zpl_void                    *t_master;
     os_mutex_t                  *_mutex;
 }zpl_media_channel_t;

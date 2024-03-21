@@ -35,7 +35,7 @@
 #include <linux/if_addr.h>
 */
 #include "auto_include.h"
-#include <zplos_include.h>
+
 #include "dhcp_def.h"
 
 #ifdef ZPL_DHCPV6C_MODULE

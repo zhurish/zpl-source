@@ -11,11 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
-#include "pthread.h"
-#include "semaphore.h"
-#include "os_sem.h"
-
 
 
 #ifdef OS_LOCK_ERR_CHECK_GRAPH_VIEW

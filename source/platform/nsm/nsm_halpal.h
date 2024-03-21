@@ -33,7 +33,7 @@ extern "C" {
 
 #endif
 #include "nsm_interface.h"
-
+#include "nsm_rib.h"
 
 
 

@@ -1,11 +1,14 @@
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "nsm_event.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+#include "os_sem.h"
+#include "os_socket.h"
 #include "module.h"
 #include "zmemory.h"
 #include "thread.h"
-#include "prefix.h"
 #include "log.h"
+#include "hal_ipccmd.h"
+#include "hal_ipcmsg.h"
 #include "hal_client.h"
 
 struct module_list module_list_bsp =

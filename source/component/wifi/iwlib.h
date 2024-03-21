@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 /*#include "CHANGELOG.h"*/
-#include "zplos_include.h"
+
 /***************************** INCLUDES *****************************/
 
 /* Standard headers */

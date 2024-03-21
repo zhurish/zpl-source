@@ -22,8 +22,6 @@
 //kbuild:lib-$(CONFIG_UDHCPC) += dhcpc.o
 //kbuild:lib-$(CONFIG_FEATURE_UDHCPC_ARPING) += arpping.o
 //kbuild:lib-$(CONFIG_FEATURE_UDHCP_RFC3397) += domain_codec.o
-#include "auto_include.h"
-#include <zplos_include.h>
 
 /* Override ENABLE_FEATURE_PIDFILE - ifupdown needs our pidfile to always exist */
 #define WANT_PIDFILE 1
@@ -36,6 +34,7 @@
 #include "dhcpc.h"
 #include "checksum.h"
 #include "host.h"
+#include "sockopt.h"
 #include <netinet/if_ether.h>
 #include <linux/filter.h>
 #include <linux/if_packet.h>

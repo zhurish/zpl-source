@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
+
 
 #define OS_PIPE_BASE	SYSRUNDIR
 /*

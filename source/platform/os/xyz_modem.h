@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
 
 #define xyzModem_xmodem 1
 #define xyzModem_ymodem 2

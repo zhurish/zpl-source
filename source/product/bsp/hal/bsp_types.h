@@ -13,8 +13,8 @@ extern "C" {
 #endif
 
 #if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
-#include "zplos_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
 #include "hal_include.h"
 #include "hal_client.h"
 #include "bsp_driver.h"

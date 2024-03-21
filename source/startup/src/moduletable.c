@@ -14,6 +14,7 @@ extern struct module_list module_list_txrx;
 extern struct module_list module_list_hal;
 extern struct module_list module_list_pal;
 extern struct module_list module_list_modem;
+extern struct module_list module_list_wifi;
 extern struct module_list module_list_mqtt;
 extern struct module_list module_list_webserver;
 extern struct module_list module_list_modbus;
@@ -38,6 +39,7 @@ struct module_alllist module_lists_tbl[MODULE_MAX] = {
   &module_list_hal,
   &module_list_pal,
   &module_list_modem,
+  &module_list_wifi,
   &module_list_mqtt,
   &module_list_webserver,
   &module_list_modbus,

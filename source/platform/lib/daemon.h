@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
 
 
 zpl_pid_t pid_output (const char *);

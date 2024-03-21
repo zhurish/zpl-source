@@ -6,15 +6,14 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "zmemory.h"
+#include "linklist.h"
 #include "vty.h"
-#include "vty_user.h"
 #include "command.h"
 #include "host.h"
-#include "linklist.h"
-
-
+#include "vty_user.h"
+#include "md5.h"
 
 zpl_char * vty_user_setting (struct vty *vty, const char *name)
 {

@@ -7,14 +7,17 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_ansync.h"
+#include "os_time.h"
+#include "os_process.h"
 #include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "nsm_include.h"
-
+#include "log.h"
+#include "nsm_interface.h"
+#include "nsm_serial.h"
+#include "nsm_halpal.h"
 #include "modem_enum.h"
 #include "modem.h"
 #include "modem_attty.h"

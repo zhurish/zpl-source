@@ -7,11 +7,9 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "zmemory.h"
-#include "command.h"
-#include "vty.h"
+#include "vty_include.h"
 
 
 static void show_memory_info_separator(struct vty *vty)

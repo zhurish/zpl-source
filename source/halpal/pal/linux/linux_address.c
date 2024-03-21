@@ -28,10 +28,7 @@
 #include "vty.h"
 #include "command.h"
 #include "prefix.h"
-
 #include "nsm_debug.h"
-#include "nsm_rib.h"
-#include "nsm_include.h"
 #include "linux_driver.h"
 
 #ifdef ZPL_KERNEL_NETLINK

@@ -11,9 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
-#include "pthread.h"
-#include "semaphore.h"
+
 
 //#define OS_SEM_PROCESS
 #define OS_LOCK_ERR_CHECK 

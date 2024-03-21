@@ -7,10 +7,15 @@
 
 
 
-
-#include "zplos_include.h"
-#include "buffer.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "os_process.h"
+#include "module.h"
+#include "zmemory.h"
+#include "log.h"
+#include "vty.h"
 #include "iw_config.h"
+#include "buffer.h"
 #include "iw_ap.h"
 #include "iw_client.h"
 #include "iw_interface.h"

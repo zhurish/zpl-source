@@ -12,9 +12,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
 #include "os_list.h"
-
 //#define OS_TIMER_DEBUG
 
 #define OS_TIMER_POSIX

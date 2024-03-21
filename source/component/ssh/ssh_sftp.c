@@ -4,15 +4,11 @@
  *  Created on: Nov 3, 2018
  *      Author: zhurish
  */
-
-
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-
+#include "ssh_def.h"
 #include "ssh_api.h"
 #include "ssh_util.h"
-
+#include "os_url.h"
+#include "vty_include.h"
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 

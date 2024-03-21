@@ -27,8 +27,14 @@
 #ifndef _IRDP_H
 #define _IRDP_H
 
-#include "vty.h"
+#include "linklist.h"
 
+#include "eloop.h"
+#include "stream.h"
+#include "if.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #define TRUE 1
 #define FALSE 0
 
@@ -140,6 +146,20 @@ struct nsm_adv
   struct in_addr ip;
   int pref;
 };
+
+struct nsm_irdp_t
+{
+  /* eloop master */
+  struct eloop_master *master;
+  zpl_socket_t irdp_sock;
+  struct eloop *t_irdp_raw;
+
+  zpl_taskid_t irdp_task_id;  
+  int initialise;  
+};
+
+extern struct nsm_irdp_t _nsm_irdp;
+
 
 extern void cmd_nsm_irdp_init(void);
 extern zpl_socket_t nsm_irdp_sock_init(void);

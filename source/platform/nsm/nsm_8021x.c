@@ -6,12 +6,17 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "module.h"
+#include "route_types.h"
 #include "zmemory.h"
-#include "if.h"
 #include "template.h"
-#include "nsm_include.h"
-#include "hal_include.h"
+#include "log.h"
+#include "nsm_interface.h"
+
+#include "nsm_8021x.h"
+#include "nsm_mac.h"
+#include "hal_8021x.h"
 
 static Gdot1x_t gDot1x_t;
 

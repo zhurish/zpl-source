@@ -6,14 +6,18 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
-
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_time.h"
+#include "zmemory.h"
+#include "nsm_interface.h"
+#include "nsm_dhcp.h"
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_interface.h"
 #include "iwlib.h"
 #include "vty.h"
-#include "vty_user.h"
 #include "iwioctl.h"
 #include "checksum.h"
 

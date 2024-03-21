@@ -12,7 +12,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
+
 
 #if defined(container_of)
   #undef container_of

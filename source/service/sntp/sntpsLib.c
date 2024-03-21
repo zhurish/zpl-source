@@ -87,7 +87,11 @@ SEE ALSO: sntpcLib, RFC 1769
 #include "errnoLib.h"
 */
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zplos_include.h"
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 #include "zmemory.h"
 #include "vty.h"
 #include "command.h"

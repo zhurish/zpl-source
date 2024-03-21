@@ -21,12 +21,13 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 #include "nsm_debug.h"
-#include "zmemory.h"
-#include "if.h"
-#include "vty.h"
-#include "command.h"
+
 
 /* For debug statement. */
 zpl_ulong nsm_debug_event;

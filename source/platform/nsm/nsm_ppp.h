@@ -12,6 +12,12 @@
 extern "C" {
 #endif
 
+#include "os_sem.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+#include "if.h"
+
 #define PPP_OPTIONS_MAX	64
 
 typedef struct pppd_options_s

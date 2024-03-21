@@ -44,7 +44,6 @@ static zpl_mediartp_session_adap_t _rtp_media_adap_tbl[] =
         {"G722", RTP_MEDIA_PAYLOAD_G722, rtp_payload_send_g7xx, NULL},
         {"G726", RTP_MEDIA_PAYLOAD_G726, rtp_payload_send_g7xx, NULL},
 
-        {"G728", RTP_MEDIA_PAYLOAD_G728, rtp_payload_send_g7xx, NULL},
         {"G729", RTP_MEDIA_PAYLOAD_G729, rtp_payload_send_g7xx, NULL},
         {"G729A", RTP_MEDIA_PAYLOAD_G729A, rtp_payload_send_g7xx, NULL},
 

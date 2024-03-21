@@ -12,22 +12,7 @@
 extern "C" {
 #endif
 
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdbool.h>
-#include <endian.h>
-#include <math.h>
-#include <signal.h>
-//#ifdef ZPL_BUILD_LINUX
-#include <pthread.h>
-#include <semaphore.h>
-//#endif
+#include "auto_include.h"
 
 #ifndef NSM_MAC_MAX
 #define NSM_MAC_MAX	6
@@ -288,7 +273,8 @@ typedef struct sched_param zpl_sched_param_t;
 
 
 #include "zpl_errno.h"
-#include "zpl_def.h"
+#include "os_memory.h"
+//#include "zpl_def.h"
 
 
 #ifdef __cplusplus

@@ -5,17 +5,12 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-
-#include "libssh_autoconfig.h"
-#include "libssh/priv.h"
-#include "libssh/scp.h"
+#include "ssh_def.h"
 #include "ssh_api.h"
 #include "ssh_util.h"
 #include "sshd_main.h"
-
+#include "os_url.h"
+#include "vty_include.h"
 /*
  * scp -P 9225 root@183.63.84.114:/root/ipran_u3-w.tat.bz ./
  * scp ipran_u3-w.tat.bz -P 9225 root@183.63.84.114:/root/ipran_u3-w.tat.bz

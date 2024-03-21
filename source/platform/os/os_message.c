@@ -5,9 +5,9 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "os_message.h"
-#include <assert.h>
+
 #define IPSTACK_ERRNO_RETRY(EN) \
 	(((EN) == IPSTACK_ERRNO_EAGAIN) || ((EN) == IPSTACK_ERRNO_EWOULDBLOCK) || ((EN) == IPSTACK_ERRNO_EINTR))
 

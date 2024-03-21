@@ -7,11 +7,10 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "vty.h"
+#include "vty_user.h"
 #include "command.h"
-#include "log.h"
 #include "host.h"
 #include <arpa/telnet.h>
 #include <termios.h>

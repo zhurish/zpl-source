@@ -6,14 +6,21 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "if.h"
-#include "vty.h"
+#include "zpl_type.h"
+#include "module.h"
+#include "route_types.h"
 #include "zmemory.h"
+#include "prefix.h"
 #include "log.h"
 #include "template.h"
-#include "hash.h"
-#include "nsm_include.h"
+#include "zclient.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#include "nsm_vlan_database.h"
+#include "nsm_vlan.h"
+#include "nsm_qos.h"
 #include "hal_include.h"
 
 #ifdef ZPL_HAL_MODULE

@@ -27,11 +27,11 @@ class LiveVideoServerMediaSubssion : public OnDemandServerMediaSubsession
 {
 
 public:
-  static LiveVideoServerMediaSubssion *createNew(UsageEnvironment &env, Boolean reuseFirstSource, void *);
+  static LiveVideoServerMediaSubssion *createNew(UsageEnvironment &env, Boolean reuseFirstSource, int codec, void *);
 
 
 protected:
-  LiveVideoServerMediaSubssion(UsageEnvironment &env, Boolean reuseFirstSource, void *);
+  LiveVideoServerMediaSubssion(UsageEnvironment &env, Boolean reuseFirstSource, int codec, void *);
   ~LiveVideoServerMediaSubssion();
 
 protected: // redefined virtual functions
@@ -42,6 +42,7 @@ protected: // redefined virtual functions
 private:
 
   void *frame_queue = NULL;
+  int m_codec;
 };
 
 #endif

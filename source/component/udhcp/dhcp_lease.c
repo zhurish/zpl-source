@@ -5,16 +5,15 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
 #include "zmemory.h"
 #include "vty.h"
 #include "command.h"
-#include "if.h"
-
+#include "dhcp_def.h"
 #include "nsm_interface.h"
 #include "nsm_dhcp.h"
 
-#include "dhcp_def.h"
+
 #include "dhcpd.h"
 #include "dhcp_lease.h"
 

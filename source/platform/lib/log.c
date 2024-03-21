@@ -23,13 +23,26 @@
 #define ROUTE_DEFINE_DESC_TABLE
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_time.h"
+#include "os_socket.h"
+#include "os_task.h"
+#include "os_util.h"
+#include "os_file.h"
+#include "os_log.h"
+#include "os_backtrace.h"
 #include "module.h"
 #include "zmemory.h"
 #include "log.h"
 #include "host.h"
 #include "route_types.h"
-#include "vty.h"
+#ifdef ZPL_SERVICE_SYSLOG
+#include "syslogcLib.h"
+#endif
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 #ifndef SUNOS_5
 #include <sys/un.h>
 #endif

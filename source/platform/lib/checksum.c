@@ -7,8 +7,7 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "checksum.h"
 
 #define POLYNOMIAL          0x1021

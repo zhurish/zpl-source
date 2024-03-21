@@ -20,7 +20,7 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
 
 #ifdef ZPL_NSM_SNMP

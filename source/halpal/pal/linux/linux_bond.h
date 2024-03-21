@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "if.h"
 #ifdef ZPL_NSM_TRUNK
 extern int linux_ioctl_bond_create(struct interface *ifp);
 extern int linux_ioctl_bond_delete(struct interface *ifp);

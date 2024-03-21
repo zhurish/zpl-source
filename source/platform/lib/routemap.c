@@ -21,18 +21,17 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-
 #include "linklist.h"
 #include "zmemory.h"
 #include "vector.h"
 #include "prefix.h"
-#include "routemap.h"
+
 #include "command.h"
 #include "vty.h"
 #include "log.h"
-
+#include "routemap.h"
 /* Vector for route match rules. */
 static vector route_match_vec;
 

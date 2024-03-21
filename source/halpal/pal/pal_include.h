@@ -11,12 +11,6 @@
 extern "C" {
 #endif
 
-#include <auto_include.h>
-#include <zplos_include.h>
-
-#include "hal_ipccmd.h"
-#include "hal_ipcmsg.h"
-#include "hal_ipcsrv.h"
 
 #include "pal_global.h"
 #include "pal_arp.h"

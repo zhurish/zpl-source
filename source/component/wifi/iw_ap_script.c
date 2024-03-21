@@ -6,7 +6,13 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_process.h"
+#include "module.h"
+#include "zmemory.h"
+#include "thread.h"
+#include "nsm_interface.h"
+#include "log.h"
 #include "str.h"
 #include "iw_config.h"
 #include "iw_ap.h"

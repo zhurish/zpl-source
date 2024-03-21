@@ -5,7 +5,9 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_task.h"
 #include "os_backtrace.h"
 
 static struct zpl_backtrace_symb  m_backtrace_symb;

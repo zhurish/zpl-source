@@ -17,8 +17,10 @@
 #else
 #include "stdint.h"
 #endif
-
 #include "auto_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+
 #define HAVE_STRLCPY
 #include "modbus-version.h"
 

@@ -12,6 +12,9 @@
 extern "C" {
 #endif
 
+#include "prefix.h"
+#include "if.h"
+#include "nsm_rib.h"
 //route
 extern int pal_create_vrf(struct ip_vrf *vrf);
 extern int pal_delete_vrf(struct ip_vrf *vrf);

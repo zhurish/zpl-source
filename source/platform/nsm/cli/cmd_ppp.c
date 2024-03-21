@@ -8,12 +8,14 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
+#include "if.h"
+#include "vty_include.h"
+
 #include "nsm_ppp.h"
-#include "vty.h"
+
 
 DEFUN (ppp_authentication,
 		ppp_authentication_cmd,

@@ -14,7 +14,13 @@ extern "C" {
 #endif
 
 #ifdef ZPL_DHCP_MODULE
-
+#include "os_list.h"
+#include "os_sem.h"
+#include "prefix.h"
+#include "if.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #define DHCPS_NAME_MAX	64
 
 typedef enum

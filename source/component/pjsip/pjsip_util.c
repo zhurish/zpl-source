@@ -5,7 +5,7 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zplos_include.h"
 #include "lib_include.h"
 #include "nsm_include.h"
 

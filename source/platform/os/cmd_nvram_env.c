@@ -8,10 +8,13 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "module.h"
-#include "vty.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_nvram.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif // ZPL_SHELL_MODULE
+
 
 
 DEFUN (os_nvram_env_add_cli,

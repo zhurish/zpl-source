@@ -6,7 +6,11 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_util.h"
+#include "os_task.h"
 #include "os_sem_errchk.h"
 
 

@@ -10,7 +10,8 @@
  */
 
 /***************************** INCLUDES *****************************/
-
+#include "auto_include.h"
+#include "zpl_type.h"
 #include "iwlib.h"		/* Header */
 #include "iwioctl.h"
 /************************ CONSTANTS & MACROS ************************/

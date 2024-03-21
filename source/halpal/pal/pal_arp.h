@@ -11,6 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "prefix.h"
+#include "if.h"
 
 //ip arp
 #ifdef ZPL_NSM_ARP

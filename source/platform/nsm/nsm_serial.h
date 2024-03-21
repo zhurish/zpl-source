@@ -13,7 +13,11 @@ extern "C" {
 #endif
 
 #include "tty_com.h"
-
+#include "os_sem.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+#include "if.h"
 
 #define IF_SERIAL_INDEX_SET(t, n)		(((t)<<8)|(n))
 #define IF_SERIAL_TYPE_GET(t)			(((t)>>8))

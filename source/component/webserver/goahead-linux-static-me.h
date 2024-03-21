@@ -7,13 +7,13 @@
 
 #ifdef ZPL_NSM_MODULE
 #define HAS_BOOL
-#include "zplos_include.h"
-#include "vty.h"
-#include "if.h"
-#include "buffer.h"
-#include "log.h"
-#include "zmemory.h"
+#include "auto_include.h"
+#include "zpl_type.h"
 #include "cJSON.h"
+#include "os_ipstack.h"
+#include "zmemory.h"
+#include "module.h"
+#include "log.h"
 #undef ME_GOAHEAD_UPLOAD_DIR
 #ifndef ME_GOAHEAD_UPLOAD_DIR
 #define ME_GOAHEAD_UPLOAD_DIR SYSUPLOADDIR

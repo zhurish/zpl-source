@@ -19,21 +19,23 @@
  * 02111-1307, USA.  
  */
 
-#include <auto_include.h>
-#include <zplos_include.h>
-#include <nsm_event.h>
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "module.h"
+#include "route_types.h"
 #include "zmemory.h"
 #include "prefix.h"
-#include "nsm_rib.h"
-#include "command.h"
-#include "filter.h"
-#ifdef ZPL_VRF_MODULE
-
-#endif
-#include "nexthop.h"
-#include "plist.h"
+#include "table.h"
+#include "log.h"
+#include "template.h"
 #include "routemap.h"
-
+#include "plist.h"
+#include "filter.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#include "nsm_rib.h"
 #include "nsm_zserv.h"
 
 /* Add zebra route map rule */

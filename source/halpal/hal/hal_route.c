@@ -4,8 +4,10 @@
  *  Created on: 2019年9月10日
  *      Author: DELL
  */
-#include "zplos_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "if.h"
+#include "nsm_rib.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 #include "hal_route.h"

@@ -8,9 +8,15 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_util.h"
+#include "os_sem.h"
+#include "os_time.h"
+#include "zmemory.h"
+#include "nsm_interface.h"
+#include "nsm_dhcp.h"
 #include "vty.h"
-#include "vty_user.h"
 #include "iw_config.h"
 #include "iw_client.h"
 #include "iw_interface.h"

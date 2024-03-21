@@ -13,16 +13,8 @@ extern "C" {
 #endif
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "nsm_event.h"
-#include "route_types.h"
-#include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "prefix.h"
-#include "sockopt.h"
+#include "zplos_include.h"
+//#include "lib_include.h"
 #include "nsm_interface.h"
 #include "nsm_dhcp.h"
 

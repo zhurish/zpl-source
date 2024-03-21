@@ -4,8 +4,15 @@
  *  Created on: 2019年9月10日
  *      Author: DELL
  */
-#include "bsp_types.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "log.h"
 #include "hal_client.h"
+#include "hal_driver.h"
+#include "hal_qos.h"
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
+#include "bsp_driver.h"
+#endif
 #include "bsp_qos.h"
 
 

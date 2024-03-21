@@ -14,12 +14,9 @@
 #define ME_MAX_IP 64                /**< Maximum IP address size */
 
 /************************************ Includes ********************************/
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-#include "str.h"
-#include  "me.h"
-#include  "osdep.h"
+
+#include "me.h"
+#include "osdep.h"
 
 /************************************ Defaults ********************************/
 #ifdef ZPL_OS_JSON 

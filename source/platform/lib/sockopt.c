@@ -20,13 +20,13 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
-#include "log.h"
 #include "sockopt.h"
 #include "sockunion.h"
 #include "if.h"
-
+#include "log.h"
 int
 setsockopt_so_recvbuf (zpl_socket_t sock, zpl_uint32 size)
 {

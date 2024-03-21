@@ -6,33 +6,19 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "nsm_event.h"
-#include "module.h"
-#include "zmemory.h"
-#include "thread.h"
+#include "zpl_type.h"
 #include "if.h"
-#include "vty.h"
-#include "command.h"
-#include "prefix.h"
+#include "hal_ipccmd.h"
+#include "hal_ipcmsg.h"
 
-#include "nsm_debug.h"
-#include "nsm_rib.h"
-#include "module.h"
-#include "zmemory.h"
-#include "thread.h"
-#include "if.h"
-#include "vty.h"
-#include "command.h"
-#include "prefix.h"
+#include "pal_include.h"
+#include "linux_driver.h"
 
-#include "nsm_include.h"
 #include <netinet/if_ether.h>
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
 
-#include "linux_driver.h"
-#include "pal_include.h"
+
 #if defined(ZPL_SDK_KERNEL)
 #undef ZPL_SDK_KERNEL
 #endif

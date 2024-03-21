@@ -27,7 +27,7 @@
 #include <netinet/in.h>
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
 
 #ifdef ZPL_DHCPV6C_MODULE
 

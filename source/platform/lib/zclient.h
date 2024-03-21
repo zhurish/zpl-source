@@ -26,17 +26,22 @@
 extern "C" {
 #endif
 #include "route_types.h"
+#include "stream.h"
+#include "ipvrf.h"
+#include "thread.h"
+#include "buffer.h"
 /* For struct zapi_ipv{4,6}. */
 #include "prefix.h"
 
 /* For struct interface and struct connected. */
 #include "if.h"
-
+#include "zclient_event.h"
 /* For input/output buffer to zebra. */
 #define ZCLIENT_MAX_PACKET_SIZ          4096
 
 /* Zebra header size. */
 #define ZCLIENT_HEADER_SIZE             6
+#define ZCLIENT_HEADER_MARKER              255
 
 /* Structure for the zebra client. */
 struct zclient

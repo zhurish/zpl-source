@@ -20,18 +20,20 @@
  * Boston, MA 02111-1307, USA.
  */
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_sem.h"
 #include "module.h"
+#include "zmemory.h"
+#include "str.h"
+#include "hash.h"
 #include "linklist.h"
 #include "prefix.h"
-#include "if_name.h"
-#include "hash.h"
-#include "str.h"
 #include "if.h"
-#include "zmemory.h"
+#include "if_utsp.h"
+
 #include "log.h"
 #ifdef ZPL_VRF_MODULE
-
+#include "ipvrf.h"
 #endif
 
 

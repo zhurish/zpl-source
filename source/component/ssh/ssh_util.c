@@ -8,13 +8,11 @@
 
 
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-
+#include "ssh_def.h"
 #include "ssh_api.h"
 #include "ssh_util.h"
-
+#include "log.h"
+#include "vty_include.h"
 /*
 int ssh_set_log_level(int level)
 int ssh_set_log_callback(ssh_logging_callback cb)

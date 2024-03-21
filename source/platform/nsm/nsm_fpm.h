@@ -26,6 +26,11 @@
 #define _NSM_FPM_H
 
 #ifdef ZPL_NSM_FPM 
+#include "thread.h"
+#include "table.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 /*
  * Externs.
  */

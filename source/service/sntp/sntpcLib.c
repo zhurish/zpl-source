@@ -47,11 +47,11 @@ SEE ALSO: clockLib, RFC 1769
 #include "errnoLib.h"
 */
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "module.h"
+#include "zplos_include.h"
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 #include "sntpcLib.h"
 
 static struct sntp_client *sntp_client = NULL;

@@ -12,10 +12,7 @@
 extern "C" {
 #endif
 
-#include "sys/epoll.h"
-#include "zpl_type.h"
 #include "os_list.h"
-
 //#define __OS_ANSYNC_DEBUG
 
 #define OS_ANSYNC_GLOBAL_LIST

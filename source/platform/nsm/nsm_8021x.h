@@ -12,7 +12,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "os_list.h"
 
 typedef enum dot1x_state_en
 {

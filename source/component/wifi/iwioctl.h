@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-#include "zplos_include.h"
-
 
 #include "iw_config.h"
 #include "iw_ap.h"

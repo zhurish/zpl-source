@@ -11,8 +11,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "os_list.h"
 #include "nsm_port.h"
+
 #define BRIDGE_MEMBER_MAX	16
 
 typedef enum bridge_type_s

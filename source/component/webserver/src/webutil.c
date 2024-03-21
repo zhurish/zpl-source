@@ -11,6 +11,7 @@
 #define HAS_BOOL 1
 #include "src/goahead.h"
 #include "src/webutil.h"
+#include "str.h"
 
 static int webs_code_tohttp(int ret)
 {

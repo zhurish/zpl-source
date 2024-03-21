@@ -32,8 +32,6 @@ extern "C" {
 #endif
 
 
-#include "auto_include.h"
-#include "zplos_include.h"
 
 typedef zpl_ulong	avl_uintptr_t;
 

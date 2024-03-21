@@ -5,15 +5,11 @@
  *      Author: zhurish
  */
 
-
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-
+#include "ssh_def.h"
 #include "ssh_api.h"
 #include "sshd_main.h"
 #include "ssh_util.h"
-
+#include "vty_include.h"
 
 
 

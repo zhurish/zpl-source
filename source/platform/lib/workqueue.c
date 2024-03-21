@@ -22,17 +22,17 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-
 #include "linklist.h"
 #include "zmemory.h"
-#include "log.h"
-#include "command.h"
 #include "thread.h"
 #include "eloop.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 #include "workqueue.h"
-
+#include "log.h"
 /* master list of work_queues */
 static struct list _work_queues;
 /* pointer primarily to avoid an otherwise harmless warning on

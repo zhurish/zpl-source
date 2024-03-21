@@ -8,9 +8,12 @@
  * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
  * 
  */
-#include "auto_include.h"
-#include <zplos_include.h>
 
+#include "src/goahead.h"
+
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif	
 
 #include "web_api.h"
 #include "web_app.h"

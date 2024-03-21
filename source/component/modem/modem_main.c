@@ -8,15 +8,13 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "nsm_interface.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_ansync.h"
+#include "os_task.h"
+#include "os_time.h"
 #include "host.h"
-
 #include "modem.h"
 #include "modem_client.h"
 #include "modem_machine.h"

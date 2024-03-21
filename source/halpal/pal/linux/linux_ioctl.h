@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 
+#include "if.h"
 
 extern void linux_ioctl_ifreq_set_name (struct ipstack_ifreq *ipstack_ifreq, struct interface *ifp);
 extern int linux_ioctl_if_ioctl (zpl_uint32, caddr_t);

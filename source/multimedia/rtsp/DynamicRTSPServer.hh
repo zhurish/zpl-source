@@ -44,12 +44,13 @@ protected: // redefined virtual functions
 					Boolean isFirstLookupInSession);
 private:
    void DynamicRTSPServerParaURL(const char *url);
-   int channel;
-   int level;
-   Boolean multcast;
-   Boolean tls;
-   Boolean overtcp;
-   char *media_filename;								
+   int DynamicRTSPServerMediaAdd(const int channel, int level, const char *streamName);
+   int _url_channel;
+   int _url_level;
+   Boolean _url_multcast;
+   Boolean _url_tls;
+   Boolean _url_overtcp;
+   char *_url_filename;							
 };
 
 #endif

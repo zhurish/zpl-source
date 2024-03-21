@@ -8,19 +8,10 @@
  * @copyright : Copyright (c) - 2024 zhurish(zhurish@163.com).Co.Ltd. All rights reserved.
  * 
  */
-#include "zplos_include.h"
-#include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "zmemory.h"
-#include "prefix.h"
-#include "host.h"
-
+#include "src/goahead.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
 #include "web_api.h"
 #include "web_app.h"
 

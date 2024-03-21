@@ -11,8 +11,9 @@
 extern "C" {
 #endif
 
-#include "zplos_include.h"
-#include "hal_client.h"
+
+#include "nsm_vlan_database.h"
+#include "hal_mac.h"
 
 #define ETH_MAC_CACHE_MAX	4096
 

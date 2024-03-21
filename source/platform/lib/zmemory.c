@@ -21,11 +21,10 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
 #include "zmemory.h"
 #include "log.h"
-#include "command.h"
 #ifdef ZPL_OS_JSON
 #include "cJSON.h"
 #endif

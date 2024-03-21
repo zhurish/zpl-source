@@ -6,11 +6,8 @@ extern "C"
 {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-#include "zmemory.h"
-#include "host.h"
+
+#include "stream.h"
 #include "ipcstandby.h"
 
     /* Structure for the ipcstandby client. */

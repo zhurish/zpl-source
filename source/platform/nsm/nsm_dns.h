@@ -12,7 +12,11 @@
 extern "C" {
 #endif
 
-
+#include "os_list.h"
+#include "prefix.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #define IP_DNS_NAME_MAX	64
 #define IP_DNS_METRIC_STATIC_DEFAULT 1
 

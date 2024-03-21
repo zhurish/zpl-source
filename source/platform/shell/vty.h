@@ -25,14 +25,11 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "os_sem.h"
 #include "log.h"
 #include "sockunion.h"
-#include "thread.h"
-#include "eloop.h"
 #include "vector.h"
+#include "buffer.h"
 #include "tty_com.h"
 #include "os_message.h"
 

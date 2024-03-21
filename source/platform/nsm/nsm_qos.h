@@ -11,7 +11,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "os_list.h"
+#include "os_sem.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+#include "if.h"
 #define NSM_QOS_PORT_QUEUE_NUM_4	4
 #define NSM_QOS_PORT_QUEUE_NUM_8	8
 #define NSM_QOS_PORT_QUEUE_NUM	NSM_QOS_PORT_QUEUE_NUM_4

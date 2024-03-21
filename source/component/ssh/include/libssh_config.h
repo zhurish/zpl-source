@@ -2,14 +2,9 @@
 #define __LIBSSH_CONFIG_H__
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-/*
-#include "vector.h"
-#include "host.h"
-#include "vty.h"
-#include "vty_user.h"
-*/
+#include "zpl_type.h"
+#include "zmemory.h"
+
 
 /* Name of package */
 #define PACKAGE "libssh"

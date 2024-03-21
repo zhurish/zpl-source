@@ -4,9 +4,13 @@
  *  Created on: Aug 25, 2018
  *      Author: zhurish
  */
-
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_util.h"
+#include "os_ipstack.h"
+#include "os_socket.h"
+#include "os_time.h"
 
 int os_sock_create(zpl_bool tcp)
 {
@@ -173,12 +177,12 @@ int os_sock_connect_check(int sock)
 		ret = os_select_wait(sock + 1, NULL, &writefds, 1);
 		if (ret == OS_TIMEOUT)
 		{
-			_OS_WARN("connect(%d) timeout:%s\n", sock, ipaddress);
+			//_OS_WARN("connect(%d) timeout:%s\n", sock, ipaddress);
 			return OS_TIMEOUT;
 		}
 		if (ret < 0)
 		{
-			_OS_ERROR("connect(%d) %s error %s\n", sock, ipaddress, strerror(ipstack_errno));
+			//_OS_ERROR("connect(%d) %s error %s\n", sock, ipaddress, strerror(ipstack_errno));
 			return ERROR;
 		}
 		if (!FD_ISSET(sock, &writefds))
@@ -722,12 +726,12 @@ int ipstack_sock_connect_check(zpl_socket_t sock)
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
 			{
-				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",ipstack_fd(sock), ipaddress);
+				//_OS_WARN("ipstack sock(%d) connect timeout:%s\n",ipstack_fd(sock), ipaddress);
 				return OS_TIMEOUT;
 			}
 			if (ret == ERROR)
 			{
-				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",ipstack_fd(sock), ipaddress, strerror(ipstack_errno));
+				//_OS_ERROR("ipstack sock(%d) connect %s error %s\n",ipstack_fd(sock), ipaddress, strerror(ipstack_errno));
 				return ERROR;
 			}
 			if (!FD_ISSET(ipstack_fd(sock), &writefds))
@@ -746,12 +750,12 @@ int ipstack_sock_connect_check(zpl_socket_t sock)
 			// connect is complete successfully!
 			if (ret == OS_TIMEOUT)
 			{
-				_OS_WARN("ipstack sock(%d) connect timeout:%s\n",ipstack_fd(sock), ipaddress);
+				//_OS_WARN("ipstack sock(%d) connect timeout:%s\n",ipstack_fd(sock), ipaddress);
 				return OS_TIMEOUT;
 			}
 			if (ret == ERROR)
 			{
-				_OS_ERROR("ipstack sock(%d) connect %s error %s\n",ipstack_fd(sock), ipaddress, strerror(ipstack_errno));
+				//_OS_ERROR("ipstack sock(%d) connect %s error %s\n",ipstack_fd(sock), ipaddress, strerror(ipstack_errno));
 				return ERROR;
 			}
 			if (!IPSTACK_FD_ISSET(ipstack_fd(sock), &writefds))

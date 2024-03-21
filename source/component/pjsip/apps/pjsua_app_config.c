@@ -19,6 +19,7 @@
 #include "pjsua_app_common.h"
 #include "pjsua_app_config.h"
 #include "auto_include.h"
+#include "zplos_include.h"
 #include "lib_include.h"
 
 

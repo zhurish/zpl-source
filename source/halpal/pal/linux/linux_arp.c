@@ -6,17 +6,15 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
 #include "module.h"
 #include "zmemory.h"
-#include "thread.h"
+#include "log.h"
 #include "if.h"
-#include "vty.h"
 
 #include "command.h"
 #include "prefix.h"
 #include "nsm_arp.h"
-#include "nsm_firewalld.h"
 #include "pal_include.h"
 #include "linux_driver.h"
 

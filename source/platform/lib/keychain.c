@@ -21,15 +21,13 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-
+#include "zpl_type.h"
 #include "zmemory.h"
-#include "keychain.h"
 #include "linklist.h"
-#include "vty.h"
-#include "command.h"
-
+#include "keychain.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 /* Master list of key chain. */
 struct list *keychain_list;
 

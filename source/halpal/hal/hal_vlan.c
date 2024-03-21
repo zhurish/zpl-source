@@ -5,12 +5,12 @@
  *      Author: zhurish
  */
 
-
-#include "zplos_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "if.h"
+#include "nsm_vlan.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
-
 #include "hal_vlan.h"
 
 

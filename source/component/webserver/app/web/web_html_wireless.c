@@ -9,24 +9,11 @@
  * 
  */
 #define HAS_BOOL 1
-#include "zplos_include.h"
+#include "goahead.h"
+#include "os_job.h"
 #include "vty.h"
-#include "if.h"
-
-#include "buffer.h"
-#include "command.h"
-#include "if_name.h"
-#include "linklist.h"
-#include "log.h"
-#include "zmemory.h"
-#include "prefix.h"
-#include "sockunion.h"
-#include "str.h"
-#include "table.h"
-#include "vector.h"
 #include "nsm_ipvrf.h"
 #include "nsm_interface.h"
-//#include "nsm_client.h"
 
 #ifdef ZPL_WIFI_MODULE
 

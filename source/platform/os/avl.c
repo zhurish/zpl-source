@@ -64,7 +64,8 @@
  *	  pointer) is set to indicate if that the new node has a value greater
  *	  than the value of the indicated "avl_node_t *".
  */
-
+#include "auto_include.h"
+#include <zpl_type.h>
 #include <sys/types.h>
 #include "assert.h"
 #include "avl.h"

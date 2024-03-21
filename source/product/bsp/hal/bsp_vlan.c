@@ -6,8 +6,15 @@
  */
 
 
-#include "bsp_types.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "log.h"
 #include "hal_client.h"
+#include "hal_driver.h"
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
+#include "bsp_driver.h"
+#endif
+#include "hal_vlan.h"
 #include "bsp_vlan.h"
 
 

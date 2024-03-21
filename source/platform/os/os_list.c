@@ -6,7 +6,9 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+
 /* lstLib.c - doubly linked list subroutine library */
 
 /* Copyright 1984-2001 Wind River Systems, Inc. */

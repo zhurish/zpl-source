@@ -5,9 +5,6 @@
  *      Author: zhurish
  */
 
-#include "auto_include.h"
-#include <zplos_include.h>
-
 #include "dhcp_def.h"
 #include "dhcpd.h"
 #include "dhcp_lease.h"

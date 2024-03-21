@@ -21,22 +21,9 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "DynamicRTSPServer.hh"
 #include <liveMedia.hh>
 #include <string.h>
-
-#if 0
-// Special code for handling Matroska files:
-struct MatroskaDemuxCreationState
-{
-  MatroskaFileServerDemux *demux;
-  char watchVariable;
-};
-
-// Special code for handling Ogg files:
-struct OggDemuxCreationState
-{
-  OggFileServerDemux *demux;
-  char watchVariable;
-};
-#endif
+#include "LiveVideoServerMediaSubssion.h"
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
 
 DynamicRTSPServer *
 DynamicRTSPServer::createNew(UsageEnvironment &env, Port ourPort,
@@ -57,24 +44,24 @@ DynamicRTSPServer::DynamicRTSPServer(UsageEnvironment &env, int ourSocketIPv4, i
                                      UserAuthenticationDatabase *authDatabase, unsigned reclamationTestSeconds)
     : RTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort, authDatabase, reclamationTestSeconds)
 {
-  channel = -1;
-  level = -1;
-  multcast = 0;
-  tls = 0;
-  overtcp = 0;
-  media_filename = NULL;  
+  _url_channel = -1;
+  _url_level = -1;
+  _url_multcast = 0;
+  _url_tls = 0;
+  _url_overtcp = 0;
+  _url_filename = NULL; 
 }
 
 DynamicRTSPServer::~DynamicRTSPServer()
 {
-  channel = -1;
-  level = -1;
-  multcast = 0;
-  tls = 0;
-  overtcp = 0;
-  if(media_filename)
-    free(media_filename);
-  media_filename = NULL;
+  _url_channel = -1;
+  _url_level = -1;
+  _url_multcast = 0;
+  _url_tls = 0;
+  _url_overtcp = 0;
+  if(_url_filename)
+    free(_url_filename);
+  _url_filename = NULL;
 }
 int DynamicRTSPServer::DynamicRTSPServerBaseDir(char *dir)
 {
@@ -96,14 +83,14 @@ void DynamicRTSPServer::DynamicRTSPServerParaURL(const char *url)
 {
    char *p, *brk;
    char filename[512];
-   channel = -1;
-   level = -1;
-   multcast = 0;
-   tls = 0;
-   overtcp = 0;
-   if(media_filename)
-    free(media_filename);
-   media_filename = NULL;
+   _url_channel = -1;
+   _url_level = -1;
+   _url_multcast = 0;
+   _url_tls = 0;
+   _url_overtcp = 0;
+   if(_url_filename)
+    free(_url_filename);
+   _url_filename = NULL;
    p = strstr((char*)url, "media");
    if(p)
        p+=6; 
@@ -112,18 +99,18 @@ void DynamicRTSPServer::DynamicRTSPServerParaURL(const char *url)
        brk = strstr(p, "channel");
        if(brk && strstr(p, "level"))
        {
-           sscanf(brk, "channel=%d", &channel);
+           sscanf(brk, "channel=%d", &_url_channel);
            p = brk + 8;
            brk = strstr(p, "level");
            if(brk)
            {
-               sscanf(brk, "level=%d", &level);
+               sscanf(brk, "level=%d", &_url_level);
                p = brk + 6;
            }
        }
        else if(!strstr(p, "channel") && !strstr(p, "level"))
        {
-           channel = level = -1;
+           _url_channel = _url_level = -1;
            memset(filename, 0, sizeof(filename));
            if(strstr(p, "&"))
            {
@@ -132,19 +119,19 @@ void DynamicRTSPServer::DynamicRTSPServerParaURL(const char *url)
            else
                strcpy(filename, p);
            if(strlen(filename))
-               media_filename = strdup(filename);   
+               _url_filename = strdup(filename);   
        }
        if(strstr(p, "&rtsp")||strstr(p, "&tcp"))
        {
-           overtcp = True;
+           _url_overtcp = True;
        }
        else if(strstr(p, "&multcast"))
        {
-           multcast = True;
+           _url_multcast = True;
        }
        else if(strstr(p, "&tls"))
        {
-           tls = True;
+           _url_tls = True;
        }
        else
        {
@@ -154,191 +141,46 @@ void DynamicRTSPServer::DynamicRTSPServerParaURL(const char *url)
   return ;
 }
 
-#if 0
-// Special code for handling Matroska files:
 
-static void onMatroskaDemuxCreation(MatroskaFileServerDemux *newDemux, void *clientData)
+
+int DynamicRTSPServer::DynamicRTSPServerMediaAdd(const int channel, int level, const char *streamName)
 {
-  MatroskaDemuxCreationState *creationState = (MatroskaDemuxCreationState *)clientData;
-  creationState->demux = newDemux;
-  creationState->watchVariable = 1;
-}
-// END Special code for handling Matroska files:
-
-// Special code for handling Ogg files:
-static void onOggDemuxCreation(OggFileServerDemux *newDemux, void *clientData)
-{
-  OggDemuxCreationState *creationState = (OggDemuxCreationState *)clientData;
-  creationState->demux = newDemux;
-  creationState->watchVariable = 1;
-}
-// END Special code for handling Ogg files:
-
-#define NEW_SMS(description)                                               \
-  do                                                                       \
-  {                                                                        \
-    char const *descStr = description                                      \
-        ", streamed by the LIVE555 Media Server";                          \
-    sms = ServerMediaSession::createNew(env, fileName, fileName, descStr); \
-  } while (0)
-
-static ServerMediaSession *createNewSMS(UsageEnvironment &env,
-                                        char const *fileName, FILE * fid)
-{
-  // Use the file name extension to determine the type of "ServerMediaSession":
-  char const *extension = strrchr(fileName, '.');
-  if (extension == NULL)
-    return NULL;
-
-  ServerMediaSession *sms = NULL;
-  Boolean const reuseSource = False;
-  if (strcasecmp(extension, ".aac") == 0)
-  {
-    // Assumed to be an AAC Audio (ADTS format) file:
-    NEW_SMS("AAC Audio");
-    sms->addSubsession(ADTSAudioFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".amr") == 0)
-  {
-    // Assumed to be an AMR Audio file:
-    NEW_SMS("AMR Audio");
-    sms->addSubsession(AMRAudioFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".ac3") == 0)
-  {
-    // Assumed to be an AC-3 Audio file:
-    NEW_SMS("AC-3 Audio");
-    sms->addSubsession(AC3AudioFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".m4e") == 0)
-  {
-    // Assumed to be a MPEG-4 Video Elementary Stream file:
-    NEW_SMS("MPEG-4 Video");
-    sms->addSubsession(MPEG4VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".264") == 0 || strcasecmp(extension, ".h264") == 0)
-  {
-    env << "Assumed to be a H.264 Video Elementary Stream file:" << fileName << "\n";
-    // Assumed to be a H.264 Video Elementary Stream file:
-    NEW_SMS("H.264 Video");
-    OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.264 frames
-    sms->addSubsession(H264VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".265") == 0 || strcasecmp(extension, ".h265") == 0)
-  {
-    // Assumed to be a H.265 Video Elementary Stream file:
-    NEW_SMS("H.265 Video");
-    OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.265 frames
-    sms->addSubsession(H265VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".mp3") == 0)
-  {
-    // Assumed to be a MPEG-1 or 2 Audio file:
-    NEW_SMS("MPEG-1 or 2 Audio");
-    // To stream using 'ADUs' rather than raw MP3 frames, uncomment the following:
-    // #define STREAM_USING_ADUS 1
-    //  To also reorder ADUs before streaming, uncomment the following:
-    // #define INTERLEAVE_ADUS 1
-    //  (For more information about ADUs and interleaving,
-    //   see <http://www.live555.com/rtp-mp3/>)
-    Boolean useADUs = False;
-    Interleaving *interleaving = NULL;
-#ifdef STREAM_USING_ADUS
-    useADUs = True;
-#ifdef INTERLEAVE_ADUS
-    unsigned char interleaveCycle[] = {0, 2, 1, 3}; // or choose your own...
-    unsigned const interleaveCycleSize = (sizeof interleaveCycle) / (sizeof(unsigned char));
-    interleaving = new Interleaving(interleaveCycleSize, interleaveCycle);
-#endif
-#endif
-    sms->addSubsession(MP3AudioFileServerMediaSubsession::createNew(env, fileName, reuseSource, useADUs, interleaving));
-  }
-  else if (strcasecmp(extension, ".mpg") == 0)
-  {
-    // Assumed to be a MPEG-1 or 2 Program Stream (audio+video) file:
-    NEW_SMS("MPEG-1 or 2 Program Stream");
-    MPEG1or2FileServerDemux *demux = MPEG1or2FileServerDemux::createNew(env, fileName, reuseSource);
-    sms->addSubsession(demux->newVideoServerMediaSubsession());
-    sms->addSubsession(demux->newAudioServerMediaSubsession());
-  }
-  else if (strcasecmp(extension, ".vob") == 0)
-  {
-    // Assumed to be a VOB (MPEG-2 Program Stream, with AC-3 audio) file:
-    NEW_SMS("VOB (MPEG-2 video with AC-3 audio)");
-    MPEG1or2FileServerDemux *demux = MPEG1or2FileServerDemux::createNew(env, fileName, reuseSource);
-    sms->addSubsession(demux->newVideoServerMediaSubsession());
-    sms->addSubsession(demux->newAC3AudioServerMediaSubsession());
-  }
-  else if (strcasecmp(extension, ".ts") == 0)
-  {
-    // Assumed to be a MPEG Transport Stream file:
-    // Use an index file name that's the same as the TS file name, except with ".tsx":
-    unsigned indexFileNameLen = strlen(fileName) + 2; // allow for trailing "x\0"
-    char *indexFileName = new char[indexFileNameLen];
-    sprintf(indexFileName, "%sx", fileName);
-    NEW_SMS("MPEG Transport Stream");
-    sms->addSubsession(MPEG2TransportFileServerMediaSubsession::createNew(env, fileName, indexFileName, reuseSource));
-    delete[] indexFileName;
-  }
-  else if (strcasecmp(extension, ".wav") == 0)
-  {
-    // Assumed to be a WAV Audio file:
-    NEW_SMS("WAV Audio Stream");
-    // To convert 16-bit PCM data to 8-bit u-law, prior to streaming,
-    // change the following to True:
-    Boolean convertToULaw = False;
-    sms->addSubsession(WAVAudioFileServerMediaSubsession::createNew(env, fileName, reuseSource, convertToULaw));
-  }
-  else if (strcasecmp(extension, ".dv") == 0)
-  {
-    // Assumed to be a DV Video file
-    // First, make sure that the RTPSinks' buffers will be large enough to handle the huge size of DV frames (as big as 288000).
-    OutPacketBuffer::maxSize = 300000;
-
-    NEW_SMS("DV Video");
-    sms->addSubsession(DVVideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
-  }
-  else if (strcasecmp(extension, ".mkv") == 0 || strcasecmp(extension, ".webm") == 0)
-  {
-    // Assumed to be a Matroska file (note that WebM ('.webm') files are also Matroska files)
-    OutPacketBuffer::maxSize = 300000; // allow for some possibly large VP8 or VP9 frames
-    NEW_SMS("Matroska video+audio+(optional)subtitles");
-
-    // Create a Matroska file server demultiplexor for the specified file.
-    // (We enter the event loop to wait for this to complete.)
-    MatroskaDemuxCreationState creationState;
-    creationState.watchVariable = 0;
-    MatroskaFileServerDemux::createNew(env, fileName, onMatroskaDemuxCreation, &creationState);
-    env.taskScheduler().doEventLoop(&creationState.watchVariable);
-
-    ServerMediaSubsession *smss;
-    while ((smss = creationState.demux->newServerMediaSubsession()) != NULL)
+    char const *descriptionString = "Session streamed by \"Live555 RTSPServer\"";
+    // To make the second and subsequent client for each stream reuse the same
+    // input stream as the first client (rather than playing the file from the
+    // start for each client), change the following "False" to "True":
+    // 同一个文件每一个客户端使用同时视频（而不是每一个客户端都是重头开始）
+    Boolean reuseFirstSource = True;
+    // To stream *only* MPEG-1 or 2 video "I" frames
+    // (e.g., to reduce network bandwidth),
+    // change the following "False" to "True":
+    //Boolean iFramesOnly = False;
+    zpl_media_channel_t *chninfo = zpl_media_channel_lookup(channel, level);
+    if(chninfo && zpl_media_channel_isvideo(channel, level) == OK)
     {
-      sms->addSubsession(smss);
+      zpl_video_codec_t vcodec;
+      if(zpl_media_channel_video_codec_get(channel, level, &vcodec) == OK)
+      {
+        OutPacketBuffer::maxSize = 100000;
+        ServerMediaSession *sms = ServerMediaSession::createNew(envir(), streamName, streamName, descriptionString);
+        sms->addSubsession(LiveVideoServerMediaSubssion::createNew(envir(), reuseFirstSource, vcodec.codectype, chninfo->rtsp_param.param));
+        addServerMediaSession(sms);
+      }
     }
-  }
-  else if (strcasecmp(extension, ".ogg") == 0 || strcasecmp(extension, ".ogv") == 0 || strcasecmp(extension, ".opus") == 0)
-  {
-    // Assumed to be an Ogg file
-    NEW_SMS("Ogg video and/or audio");
-
-    // Create a Ogg file server demultiplexor for the specified file.
-    // (We enter the event loop to wait for this to complete.)
-    OggDemuxCreationState creationState;
-    creationState.watchVariable = 0;
-    OggFileServerDemux::createNew(env, fileName, onOggDemuxCreation, &creationState);
-    env.taskScheduler().doEventLoop(&creationState.watchVariable);
-
-    ServerMediaSubsession *smss;
-    while ((smss = creationState.demux->newServerMediaSubsession()) != NULL)
+    else if(chninfo && zpl_media_channel_isaudio(channel, level) == OK)
     {
-      sms->addSubsession(smss);
+      zpl_audio_codec_t acodec;
+      if(zpl_media_channel_audio_codec_get(channel, level, &acodec) == OK)
+      {
+        ServerMediaSession *sms = ServerMediaSession::createNew(envir(), streamName, streamName, descriptionString);
+        sms->addSubsession(LiveVideoServerMediaSubssion::createNew(envir(), reuseFirstSource, acodec.codectype, chninfo->rtsp_param.param));
+        addServerMediaSession(sms);
+      }
     }
-  }
-  return sms;
+    return 0;
 }
 
-void DynamicRTSPServer ::lookupServerMediaSession(char const *streamName,
+void DynamicRTSPServer::lookupServerMediaSession(char const *streamName,
                                                   lookupServerMediaSessionCompletionFunc *completionFunc,
                                                   void *completionClientData,
                                                   Boolean isFirstLookupInSession)
@@ -349,84 +191,14 @@ void DynamicRTSPServer ::lookupServerMediaSession(char const *streamName,
   Boolean fileExists = False;
   Boolean smsExists = False;
 
-  envir() << "streamName:" << streamName << "\n";
   DynamicRTSPServerParaURL(streamName);
-  if(channel >= 0 && level >= 0)
-  {
-    fileExists = True;
-  }
-  if (strstr(streamName, "media"))
-  {
-    if(streamName[0] == '/')
-      filename = (char*)(streamName + 7);
-    else
-      filename = (char*)(streamName + 6);  
 
-    std::string stfilename = streamName;
-    std::string baseDirName = envir().baseDir;
-    std::string baseFileName = envir().baseDir?(baseDirName + "/" + stfilename):("./" + stfilename);
-    envir() << "baseFileName:" << baseFileName.c_str() << "\n";
+  envir() << "streamName:" << streamName << " urlfile:" << _url_filename <<"\n";
 
-    fid = fopen(baseFileName.c_str(), "rb");
-    fileExists = fid != NULL;
-  }
-  envir() << "fileExists:" << fileExists << "\n";
-  // Next, check whether we already have a "ServerMediaSession" for this file:
-  ServerMediaSession *sms = getServerMediaSession(streamName);
-  smsExists = sms != NULL;
-  envir() << "smsExists:" << smsExists << "\n";
-
-  // Handle the four possibilities for "fileExists" and "smsExists":
-  if (!fileExists)
+  if(_url_channel >= 0 && _url_level >= 0)
   {
-    if (smsExists)
-    {
-      // "sms" was created for a file that no longer exists. Remove it:
-      removeServerMediaSession(sms);
-    }
-    sms = NULL;
-  }
-  else
-  {
-    if (smsExists && isFirstLookupInSession)
-    {
-      // Remove the existing "ServerMediaSession" and create a new one, in case the underlying
-      // file has changed in some way:
-      removeServerMediaSession(sms);
-      sms = NULL;
-    }
-
-    if (sms == NULL)
-    {
-      sms = createNewSMS(envir(), streamName, fid);
-      addServerMediaSession(sms);
-    }
-    if(fid)
-      fclose(fid);
-  }
-
-  if (completionFunc != NULL)
-  {
-    (*completionFunc)(completionClientData, sms);
-  }
-}
-#else
-void DynamicRTSPServer ::lookupServerMediaSession(char const *streamName,
-                                                  lookupServerMediaSessionCompletionFunc *completionFunc,
-                                                  void *completionClientData,
-                                                  Boolean isFirstLookupInSession)
-{
-  // First, check whether the specified "streamName" exists as a local file:
-  char *filename = (char*)streamName;
-  FILE *fid = NULL;
-  Boolean fileExists = False;
-  Boolean smsExists = False;
-
-  envir() << "streamName:" << streamName << "\n";
-  DynamicRTSPServerParaURL(streamName);
-  if(channel >= 0 && level >= 0)
-  {
-    fileExists = True;
+    if(zpl_media_channel_lookup(_url_channel, _url_level))
+      fileExists = True;
   }
   if (strstr(streamName, "media"))
   {
@@ -463,6 +235,11 @@ void DynamicRTSPServer ::lookupServerMediaSession(char const *streamName,
   {
     if (smsExists && isFirstLookupInSession)
     {
+      if(_url_channel >= 0 && _url_level >= 0)
+      {
+        removeServerMediaSession(sms);
+        DynamicRTSPServerMediaAdd(_url_channel, _url_level, streamName);
+      }
     }
     if(fid)
       fclose(fid);
@@ -473,4 +250,3 @@ void DynamicRTSPServer ::lookupServerMediaSession(char const *streamName,
     (*completionFunc)(completionClientData, sms);
   }
 }
-#endif

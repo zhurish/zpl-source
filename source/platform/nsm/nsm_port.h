@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include "os_sem.h"
+#include "if.h"
 #define NSM_PORT_JUMBO_DEFAULT		zpl_false
 #define NSM_PORT_LOOPBACK_DEFAULT	zpl_false
 #define NSM_PORT_PUASE_TX_DEFAULT	zpl_false
@@ -30,6 +32,8 @@ typedef enum stp_state_s
 	STP_FORWARDING,
 	STP_BLOCKING,
 }stp_state_t;
+
+
 
 typedef struct nsm_port_s
 {

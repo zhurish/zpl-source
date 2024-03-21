@@ -27,9 +27,11 @@
 extern "C" {
 #endif
 
+#include "linklist.h"
 #include "prefix.h"
-#include "vty.h"
-
+#include "table.h"
+#include "nsm_rib.h"
+#include "nsm_zserv.h"
 /* Nexthop structure. */
 struct rnh
 {

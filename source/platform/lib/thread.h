@@ -27,9 +27,10 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_time.h"
+#include "pqueue.h"
 
 #define OS_THREAD_MANE_MAX	32
 
@@ -43,7 +44,6 @@ struct thread_list
   zpl_uint32 count;
 };
 
-struct pqueue;
 
 /*
  * Abstract it so we can use different methodologies to

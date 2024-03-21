@@ -20,6 +20,7 @@
 #include "pjsua_app_common.h"
 #include "pjsua_app_cfgapi.h"
 #include "auto_include.h"
+#include "zplos_include.h"
 #include "lib_include.h"
 
 #define THIS_FILE "pjsua_app_cfgapi.c"

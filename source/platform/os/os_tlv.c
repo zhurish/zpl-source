@@ -5,10 +5,7 @@
  *      Author: DELL
  */
 #include "auto_include.h"
-#include "zplos_include.h"
-#include <string.h>
-#include <malloc.h>
-
+#include "zpl_type.h"
 #include "os_tlv.h"
 
 

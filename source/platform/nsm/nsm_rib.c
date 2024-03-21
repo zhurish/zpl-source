@@ -20,29 +20,24 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
+#include "os_util.h"
 #include "module.h"
-#include "linklist.h"
-#include "prefix.h"
-
-#include "str.h"
-#include "command.h"
-#include "if.h"
-#include "log.h"
-#include "sockunion.h"
-#include "if.h"
-
-#include "host.h"
-#include "vty.h"
+#include "route_types.h"
 #include "zmemory.h"
-#include "thread.h"
-#include "eloop.h"
-#include "command.h"
-#include "queue.h"
-#include "workqueue.h"
-#include "nexthop.h"
+#include "prefix.h"
+#include "log.h"
+#include "template.h"
 #include "routemap.h"
-#include "table.h"
+#include "zclient.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+
 #include "router-id.h"
 #ifdef ZPL_NSM_MODULE
 #include "nsm_rib.h"
@@ -52,7 +47,7 @@
 #include "nsm_halpal.h"
 #include "nsm_debug.h"
 #if defined (ZPL_NSM_RTADV)
-#include "nsm_rtadv.h"
+#include "nsm_irdp.h"
 #endif
 #ifdef ZPL_NSM_FPM
 #include "fpm.h"
@@ -3734,7 +3729,7 @@ struct nsm_ipvrf * nsm_vrf_create(const char *name, vrf_id_t vrf_id)
 	{
     	router_id_init(info);
 #if defined(ZPL_NSM_RTADV)
-		nsm_rtadv_init(info);
+		nsm_rtadv_init(&info->rtadv, vrf_id);
 #endif
 		return info;
 	}
@@ -3747,7 +3742,7 @@ int nsm_vrf_destroy(struct nsm_ipvrf *ipvrf)
   	if (ipvrf)
   	{
 #if defined (ZPL_NSM_RTADV)
-  		nsm_rtadv_terminate (ipvrf);
+  		nsm_rtadv_terminate (&ipvrf->rtadv);
 #endif
 		nsm_vrf_free(ipvrf);
 		if(ipvrf->rid_all_sorted_list)

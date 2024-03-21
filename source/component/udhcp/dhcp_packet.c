@@ -12,6 +12,7 @@
 #include "checksum.h"
 #include "dhcp_packet.h"
 #include "dhcp_util.h"
+#include "sockopt.h"
 /*
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

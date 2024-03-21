@@ -9,17 +9,9 @@
  *
  */
 #define HAS_BOOL 1
-#include "zplos_include.h"
-
-#include "module.h"
-#include "zmemory.h"
-#include "zassert.h"
-#include "command.h"
+#include "goahead.h"
+#include "webutil.h"
 #include "prefix.h"
-#include "host.h"
-#include "log.h"
-#include "vty.h"
-#include "vty_user.h"
 #include "web_api.h"
 #include "web_app.h"
 #include "service.h"
@@ -141,8 +133,8 @@ static int web_dhcppool_form(Webs *wp, char *path, char *query)
 			char *dns2 = cJSON_GetStringValue(root, "dns2");
 			char *tftp = cJSON_GetStringValue(root, "tftp");
 			int maxleases = cJSON_GetIntValue(root, "maxleases");
-			int minleases = cJSON_GetIntValue(root, "minleases");
-			cJSON *options = cJSON_GetObjectItem(root, "options");
+			//int minleases = cJSON_GetIntValue(root, "minleases");
+			//cJSON *options = cJSON_GetObjectItem(root, "options");
 
 			if (!enable)
 			{
@@ -321,8 +313,8 @@ static int web_dhcppool_button(Webs *wp, void *pVoid)
 		char *dns2 = cJSON_GetStringValue(root, "dns2");
 		char *tftp = cJSON_GetStringValue(root, "tftp");
 		int maxleases = cJSON_GetIntValue(root, "maxleases");
-		int minleases = cJSON_GetIntValue(root, "minleases");
-		cJSON *options = cJSON_GetObjectItem(root, "options");
+		//int minleases = cJSON_GetIntValue(root, "minleases");
+		//cJSON *options = cJSON_GetObjectItem(root, "options");
 
 		if (!enable)
 		{
@@ -486,7 +478,7 @@ static int web_dhcppool_button(Webs *wp, void *pVoid)
 static int web_dhcplease_button(Webs *wp, void *pVoid)
 {
 #if ME_GOAHEAD_JSON
-	int ret = ERROR;
+	//int ret = ERROR;
 	cJSON *root = websGetJsonVar(wp);
 	if (root)
 		{

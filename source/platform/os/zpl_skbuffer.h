@@ -11,9 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
-#include "os_list.h"
 
+#include "os_list.h"
 
 #define ZPL_SKB_START_OFFSET    64
 #define ZPL_SKBUF_ALIGN(n)      (((((n)+3)/4)*4))
@@ -211,7 +210,7 @@ typedef struct zpl_skbuffer_s
     zpl_uint32	skb_len;         //当前缓存帧的长度
     zpl_uint32	skb_maxsize;     //buffer 的长度
     zpl_char	*skb_data;       //buffer
-    zpl_uint32	skb_start;
+    zpl_int32	skb_start;
     volatile zpl_uint8   reference;       //引用计数
 
     union 

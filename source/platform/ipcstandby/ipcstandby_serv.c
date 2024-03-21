@@ -20,20 +20,18 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "zpl_ipcmsg.h"
+#include "os_ipstack.h"
 #include "module.h"
 #include "zmemory.h"
-
 #include "thread.h"
 #include "eloop.h"
 #include "stream.h"
-#include "network.h"
-#include "sockunion.h"
-#include "host.h"
+
 #include "log.h"
 #include "linklist.h"
-#include "sockopt.h"
-#include "buffer.h"
+
 #include "vty_include.h"
 #include "ipcstandby_serv.h"
 

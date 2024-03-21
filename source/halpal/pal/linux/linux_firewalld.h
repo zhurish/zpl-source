@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+//#include "nsm_firewall.h"
 #ifdef ZPL_NSM_FIREWALLD
 /*
  * 端口映射

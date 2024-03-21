@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-#include "prefix.h"
+
 
 union g_addr {
   struct ipstack_in_addr ipv4;

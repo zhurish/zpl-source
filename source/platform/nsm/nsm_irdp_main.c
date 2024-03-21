@@ -35,36 +35,26 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
-
-
-#ifdef ZPL_NSM_IRDP
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
+#include "route_types.h"
 #include "zmemory.h"
-#include "stream.h"
-#include "connected.h"
+#include "prefix.h"
 #include "log.h"
-#include "zclient.h"
-#include "thread.h"
-#include "eloop.h"
-#include "checksum.h"
-#include "log.h"
-#include "sockopt.h"
-
-#include "nsm_include.h"
+#include "template.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#ifdef ZPL_NSM_IRDP
 #include "nsm_rtadv.h"
 #include "nsm_irdp.h"
-
+#include "nsm_rib.h"
 /* GLOBAL VARS */
 
 
-
+struct nsm_irdp_t _nsm_irdp;
 
 
 /* Timer interval of irdp. */
@@ -102,7 +92,7 @@ nsm_irdp_sock_init (void)
     return sock;
   };
 
-  nsm_rtadv.t_irdp_raw = eloop_add_read (nsm_rtadv.master, nsm_irdp_read_raw, NULL, sock); 
+  _nsm_irdp.t_irdp_raw = eloop_add_read (_nsm_irdp.master, nsm_irdp_read_raw, NULL, sock); 
 
   return sock;
 }
@@ -232,7 +222,7 @@ int nsm_irdp_send_thread(struct eloop *t_advert)
   if(irdp->flags & IF_DEBUG_MISC)
     zlog_debug(MODULE_NSM, "IRDP: New timer for %s set to %u\n", ifp->name, timer);
 
-  irdp->t_advertise = eloop_add_timer(nsm_rtadv.master, nsm_irdp_send_thread, ifp, timer);
+  irdp->t_advertise = eloop_add_timer(_nsm_irdp.master, nsm_irdp_send_thread, ifp, timer);
   return 0;
 }
 
@@ -284,7 +274,7 @@ void nsm_process_solicit (struct interface *ifp)
 
   timer =  (random () % MAX_RESPONSE_DELAY) + 1;
 
-  irdp->t_advertise = eloop_add_timer(nsm_rtadv.master, 
+  irdp->t_advertise = eloop_add_timer(_nsm_irdp.master, 
 				       nsm_irdp_send_thread, 
 				       ifp, 
 				       timer);

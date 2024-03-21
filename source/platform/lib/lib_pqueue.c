@@ -5,7 +5,8 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_sem.h"
 #include "module.h"
 #include "zmemory.h"
 #include "stream.h"

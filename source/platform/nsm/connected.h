@@ -26,12 +26,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
-#include "auto_include.h"
+
 #include "if.h"
-#include "prefix.h"
-
-
 
 extern int if_up(struct interface *ifp);
 extern int if_down(struct interface *ifp);

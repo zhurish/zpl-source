@@ -9,17 +9,8 @@
  * 
  */
 #define HAS_BOOL 1
-#include "zplos_include.h"
-
-#include "module.h"
-#include "zmemory.h"
-#include "zassert.h"
-#include "command.h"
-#include "prefix.h"
+#include "goahead.h"
 #include "host.h"
-#include "log.h"
-#include "vty.h"
-#include "vty_user.h"
 
 #include "syslogcLib.h"
 

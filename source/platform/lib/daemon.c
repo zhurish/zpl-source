@@ -21,8 +21,10 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include <log.h>
+#include "zpl_type.h"
+#include "module.h"
+#include "log.h"
+#include "daemon.h"
 
 #ifndef HAVE_DAEMON
 

@@ -1,36 +1,75 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-    
-
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) 启动",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/source/SWP-V0.0.0.27.bin",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/local/bin/sudo-gdb",
+      "setupCommands": [
         {
-            "name": "(gdb) 启动",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/source/SWP-V0.0.0.27.bin",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${fileDirname}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "miDebuggerPath": "/usr/local/bin/sudo-gdb",
-            "setupCommands": [
-                {
-                    "description": "为 gdb 启用整齐打印",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "为 gdb 过滤",
-                    "text": "handle SIGUSR2 nostop noprint",
-                    "ignoreFailures": true
-                }
-                
-            ]
+          "description": "为 gdb 启用整齐打印",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "为 gdb 过滤",
+          "text": "handle SIGUSR2 nostop noprint",
+          "ignoreFailures": true
         }
-    ]
+      ]
+    },
+    {
+      "name": "(gdb)-hisi 启动",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/nfsroot/SWP-V0.0.0.27.bin",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/home/zhurish/Downloads/tftpboot/gdb",
+      "miDebuggerServerAddress": "192.168.10.1:9999",
+      "setupCommands": [
+        {
+          "description": "为 gdb 启用整齐打印",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "为 gdb 过滤",
+          "text": "handle SIGUSR2 nostop noprint",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "cwd": "/home/zhurish/workspace/working/zpl-source/source/component/webserver/app/web",
+      "program": "/home/zhurish/workspace/working/zpl-source/source/component/webserver/app/web/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
 }

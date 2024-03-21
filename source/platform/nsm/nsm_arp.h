@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+#include "os_list.h"
 
 #define NSM_ARP_TTL_DEFAULT 30
 

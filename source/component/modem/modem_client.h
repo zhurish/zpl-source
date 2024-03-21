@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-#include "zplos_include.h"
-#include "prefix.h"
 #include "os_list.h"
+#include "tty_com.h"
+#include "prefix.h"
 #include "modem.h"
 #include "modem_bitmap.h"
 #include "modem_driver.h"

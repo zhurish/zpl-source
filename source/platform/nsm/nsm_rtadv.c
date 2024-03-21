@@ -19,33 +19,30 @@
  * Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.  
  */
-
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+#include "os_netservice.h"
+#include "route_types.h"
 #include "module.h"
-
 #include "zmemory.h"
-#include "sockopt.h"
+#include "buffer.h"
+#include "prefix.h"
 #include "thread.h"
+#include "stream.h"
+#include "ipvrf.h"
 #include "if.h"
 #include "log.h"
-#include "prefix.h"
-#include "linklist.h"
-#include "command.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#include "nsm_rib.h"
+#include "nsm_irdp.h"
+#include "nsm_debug.h"
 
 
-#include "nsm_include.h"
-#include "nsm_rtadv.h"
-
-
-#if defined (ZPL_BUILD_IPV6) && defined (ZPL_NSM_RTADV)
-
-
-
-struct nsm_rtadv_t nsm_rtadv;
-
-
-
+#if defined (ZPL_NSM_RTADV)
 
 /* If RFC2133 definition is used. */
 #ifndef IPV6_JOIN_GROUP
@@ -1619,9 +1616,9 @@ nsm_rtadv_event (struct nsm_ipvrf *zvrf, enum nsm_rtadv_event_t event, zpl_socke
     {
     case RTADV_EVENT_START:
       if (! rtadv->ra_read)
-	rtadv->ra_read = eloop_add_read (nsm_rtadv.master, nsm_rtadv_read, zvrf, sock);
+	rtadv->ra_read = eloop_add_read (_nsm_irdp.master, nsm_rtadv_read, zvrf, sock);
       if (! rtadv->ra_timer)
-	rtadv->ra_timer = eloop_add_event (nsm_rtadv.master, nsm_rtadv_timer,
+	rtadv->ra_timer = eloop_add_event (_nsm_irdp.master, nsm_rtadv_timer,
 	                                    zvrf, 0);
       break;
     case RTADV_EVENT_STOP:
@@ -1638,17 +1635,17 @@ nsm_rtadv_event (struct nsm_ipvrf *zvrf, enum nsm_rtadv_event_t event, zpl_socke
       break;
     case RTADV_EVENT_TIMER:
       if (! rtadv->ra_timer)
-	rtadv->ra_timer = eloop_add_timer (nsm_rtadv.master, nsm_rtadv_timer, zvrf,
+	rtadv->ra_timer = eloop_add_timer (_nsm_irdp.master, nsm_rtadv_timer, zvrf,
 	                                    val);
       break;
     case RTADV_EVENT_TIMER_MSEC:
       if (! rtadv->ra_timer)
-	rtadv->ra_timer = eloop_add_timer_msec (nsm_rtadv.master, nsm_rtadv_timer, 
+	rtadv->ra_timer = eloop_add_timer_msec (_nsm_irdp.master, nsm_rtadv_timer, 
 					    zvrf, val);
       break;
     case RTADV_EVENT_READ:
       if (! rtadv->ra_read)
-	rtadv->ra_read = eloop_add_read (nsm_rtadv.master, nsm_rtadv_read, zvrf, sock);
+	rtadv->ra_read = eloop_add_read (_nsm_irdp.master, nsm_rtadv_read, zvrf, sock);
       break;
     default:
       break;
@@ -1657,23 +1654,24 @@ nsm_rtadv_event (struct nsm_ipvrf *zvrf, enum nsm_rtadv_event_t event, zpl_socke
 }
 
 void
-nsm_rtadv_init (struct nsm_ipvrf *zvrf)
+nsm_rtadv_init (struct rtadv *rtadv, vrf_id_t vrf_id)
 {
-  zvrf->rtadv.sock = nsm_rtadv_make_socket (zvrf->vrf_id);
+  rtadv->sock = nsm_rtadv_make_socket (vrf_id);
+  rtadv->ipvrf = ip_vrf_info_lookup (vrf_id);
 }
 
 void
-nsm_rtadv_terminate (struct nsm_ipvrf *zvrf)
+nsm_rtadv_terminate (struct rtadv *rtadv)
 {
-  nsm_rtadv_event (zvrf, RTADV_EVENT_STOP, zvrf->rtadv.sock, 0);
+  nsm_rtadv_event (rtadv->ipvrf, RTADV_EVENT_STOP, rtadv->sock, 0);
 
-  if (!ipstack_invalid(zvrf->rtadv.sock))
+  if (!ipstack_invalid(rtadv->sock))
     {
-      ipstack_close (zvrf->rtadv.sock);
+      ipstack_close (rtadv->sock);
     }
-
-  zvrf->rtadv.adv_if_count = 0;
-  zvrf->rtadv.adv_msec_if_count = 0;
+ rtadv->ipvrf = NULL;
+  rtadv->adv_if_count = 0;
+  rtadv->adv_msec_if_count = 0;
 }
 
 void
@@ -1773,12 +1771,12 @@ nsm_rtadv_leave_all_router (zpl_socket_t sock, struct interface *ifp)
 
 #else
 void
-nsm_rtadv_init (struct nsm_ipvrf *zvrf)
+nsm_rtadv_init (struct rtadv *rtadv, vrf_id_t vrf_id)
 {
   /* Empty.*/;
 }
 void
-nsm_rtadv_terminate (struct nsm_ipvrf *zvrf)
+nsm_rtadv_terminate (struct rtadv *rtadv)
 {
   /* Empty.*/;
 }

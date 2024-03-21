@@ -21,33 +21,17 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-#include "linklist.h"
-#include "zmemory.h"
-
-
-#ifdef ZPL_SHELL_MODULE
-#include "cli_node.h"
+#include "zpl_type.h"
 #include "buffer.h"
 #include "vector.h"
+#include "vty.h"
 #include "command.h"
-#endif
 #include "log.h"
 #include "str.h"
-#include "prefix.h"
-#include "host.h"
-#include "network.h"
-#include "sockunion.h"
-#include "sockopt.h"
-
 #include "eloop.h"
 #include "thread.h"
-#ifdef ZPL_IP_FILTER
-#include "filter.h"	
-#endif
-#include "vty.h"
-#include "vty_user.h"
+#include "host.h"
+#include "sockopt.h"
 
 #include <arpa/telnet.h>
 #include <termios.h>

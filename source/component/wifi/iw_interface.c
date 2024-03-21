@@ -7,8 +7,13 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
 #include "module.h"
+#include "zmemory.h"
+#include "thread.h"
+#include "os_task.h"
+#include "host.h"
+#include "nsm_interface.h"
 #include "iw_config.h"
 #include "iw_ap.h"
 #include "iw_client.h"

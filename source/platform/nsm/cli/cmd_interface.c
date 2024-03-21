@@ -6,16 +6,13 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
-#include "prefix.h"
-#include "zmemory.h"
-#include "nsm_interface.h"
-#include "vty.h"
-#include "if_name.h"
+#include "zplos_include.h"
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 
-#include "template.h"
+#include "nsm_interface.h"
 #ifdef ZPL_DHCP_MODULE
 #include "nsm_dhcp.h"
 #endif

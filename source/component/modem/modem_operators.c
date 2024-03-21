@@ -6,14 +6,8 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "nsm_interface.h"
-
+#include "zpl_type.h"
+#include "log.h"
 #include "modem_operators.h"
 
 static md_operators_t operators_table[] =

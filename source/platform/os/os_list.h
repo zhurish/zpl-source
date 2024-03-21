@@ -12,7 +12,6 @@
 extern "C"
 {
 #endif
-#include "zpl_type.h"
 
     /* type definitions */
 

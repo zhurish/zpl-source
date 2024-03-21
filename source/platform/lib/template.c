@@ -6,13 +6,14 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
 #include "linklist.h"
 #include "zmemory.h"
 #include "log.h"
-#include "command.h"
-#include "vty.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 #include "template.h"
 
 static struct list *template_list = NULL;

@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+#include "if.h"
 #define NSM_VLAN_SUB
 /* vlan 接口 或者是 vlan 子接口*/
 #define SKB_QOS_MAX	8

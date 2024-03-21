@@ -27,6 +27,11 @@
 extern "C" {
 #endif
 
+enum prefix_list_type 
+{
+  PREFIX_DENY,
+  PREFIX_PERMIT,
+};
 enum prefix_name_type
 {
   PREFIX_TYPE_STRING,

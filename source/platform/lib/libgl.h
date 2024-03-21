@@ -6,26 +6,6 @@
 extern "C" {
 #endif
 
-#include "zpl_type.h"
-#include "module.h"
-#include "zmemory.h"
-#include "linklist.h"
-#include "prefix.h"
-#include "table.h"
-#include "hash.h"
-#include "jhash.h"
-#include "str.h"
-#include "log.h"
-#include "vector.h"
-#include "algorithm.h"
-#include "checksum.h"
-#include "vector.h"
-
-#ifdef ZPL_VRF_MODULE
-
-#endif
-#include "zassert.h"
-
 
 struct lib_global
 {

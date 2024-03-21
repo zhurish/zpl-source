@@ -1,5 +1,6 @@
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_util.h"
 #include "libnetpro.h"
 
 struct net_proto_key

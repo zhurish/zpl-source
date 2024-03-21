@@ -12,6 +12,9 @@
 extern "C"
 {
 #endif
+#include "os_list.h"
+#include "os_sem.h"
+#include "stream.h"
 
 #define ZPL_IPCSTANBY_TIMEOUT 2
 

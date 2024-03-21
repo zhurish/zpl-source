@@ -35,7 +35,7 @@ OBJS	+= stream.o
 OBJS	+= lib_event.o
 OBJS	+= lib_pqueue.o
 OBJS	+= lib_netlink.o
-
+OBJS	+= zclient_event.o
 ifeq ($(strip $(ZPL_IP_FILTER)),true)
 OBJS	+= filter.o		
 endif

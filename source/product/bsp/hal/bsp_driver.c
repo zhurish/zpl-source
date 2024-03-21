@@ -6,20 +6,18 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
+#include "os_task.h"
 #include "zmemory.h"
-#include "if.h"
-
-#include "vty.h"
-#include "nsm_include.h"
-#include "hal_include.h"
-
+#include "log.h"
 #include "hal_client.h"
-
+#include "hal_driver.h"
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
 #include "bsp_driver.h"
+#endif
 
 #ifndef ZPL_SDK_KERNEL
+#include "hal_include.h"
 #include "bsp_include.h"
 #endif
 #ifdef ZPL_SDK_USER

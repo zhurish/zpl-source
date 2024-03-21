@@ -36,9 +36,9 @@ extern void lib_template_init (void);
 extern void lib_template_exit (void);
 
 extern template_t * lib_template_new (zpl_bool service);
-extern void lib_template_free (template_t *template);
-extern void lib_template_install (template_t *template, zpl_uint32 module);
-extern void lib_template_config_list_install (template_t *template, zpl_uint32 module);
+extern void lib_template_free (template_t *);
+extern void lib_template_install (template_t *, zpl_uint32 module);
+extern void lib_template_config_list_install (template_t *, zpl_uint32 module);
 extern template_t* lib_template_lookup (zpl_bool service, zpl_uint32 module);
 extern template_t* lib_template_lookup_name (zpl_bool service, zpl_char * name);
 

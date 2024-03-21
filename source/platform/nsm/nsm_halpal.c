@@ -22,13 +22,14 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "if.h"
-
-#include "prefix.h"
-#include "zclient.h"
-#include "host.h"
-#include "nsm_include.h"
-
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#include "nsm_qos.h"
+#include "nsm_rib.h"
+#include "nsm_halpal.h"
 #ifdef ZPL_HAL_MODULE
 #include "hal_include.h"
 #endif

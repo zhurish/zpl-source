@@ -21,18 +21,10 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "module.h"
-#include "zmemory.h"
-#include "if.h"
-
-#include "host.h"
-#include "prefix.h"
-#include "vty.h"
-#include "plist.h"
-#include "filter.h"
-#include "keychain.h"
-#include "template.h"
-#include "lib_event.h"
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 
 #include "nsm_main.h"
 #include "nsm_zserv.h"
@@ -72,10 +64,10 @@ int nsm_module_init(void)
 
 	lib_event_init();
 #if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)
-	memset(&nsm_rtadv, 0, sizeof(struct nsm_rtadv_t));
-		nsm_rtadv.master = eloop_master_name_create("Nsm");
-	if(nsm_rtadv.master)
-		nsm_rtadv.initialise = 1;	
+	memset(&_nsm_irdp, 0, sizeof(struct nsm_irdp_t));
+		_nsm_irdp.master = eloop_master_name_create("Nsm");
+	if(_nsm_irdp.master)
+		_nsm_irdp.initialise = 1;	
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
 
 #ifdef ZPL_VRF_MODULE
@@ -150,7 +142,7 @@ int nsm_module_init(void)
 	nsm_vlaneth_init();
 #endif
 #ifdef ZPL_NSM_FPM
-  zfpm_init (nsm_rtadv.master, 1, 0, "FPM");
+  zfpm_init (_nsm_irdp.master, 1, 0, "FPM");
 #endif
 #ifdef ZPL_NSM_SNMP
   nsm_snmp_init ();
@@ -165,7 +157,7 @@ int nsm_module_init(void)
 int nsm_module_exit(void)
 {
 #if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)
-	//extern struct nsm_rtadv_t nsm_rtadv;
+	//extern struct nsm_rtadv_t _nsm_idrp;
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */	
 
 #ifdef ZPL_NSM_MAC
@@ -339,7 +331,7 @@ static int nsm_main_task(void *argv)
 static int nsm_rtadv_task(void *argv)
 {
 	host_waitting_loadconfig();
-	eloop_mainloop(nsm_rtadv.master);
+	eloop_mainloop(_nsm_irdp.master);
 	return 0;
 }
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
@@ -347,14 +339,14 @@ static int nsm_rtadv_task(void *argv)
 int nsm_task_init(void)
 {
 #if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)
-	if(nsm_rtadv.initialise)
+	if(_nsm_irdp.initialise)
 	{
-		if(nsm_rtadv.irdp_task_id == 0)
-			nsm_rtadv.irdp_task_id = os_task_create("rtadvTask", OS_TASK_DEFAULT_PRIORITY,
+		if(_nsm_irdp.irdp_task_id == 0)
+			_nsm_irdp.irdp_task_id = os_task_create("rtadvTask", OS_TASK_DEFAULT_PRIORITY,
 									0, nsm_rtadv_task, NULL, OS_TASK_DEFAULT_STACK);
-		if (nsm_rtadv.irdp_task_id)
+		if (_nsm_irdp.irdp_task_id)
 		{
-			//module_setup_task(MODULE_NSM, nsm_rtadv.irdp_task_id);
+			//module_setup_task(MODULE_NSM, _nsm_irdp.irdp_task_id);
 		}
 	}
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */	
@@ -375,9 +367,9 @@ int nsm_task_exit (void)
 		os_task_destroy(nsm_srv->nsm_task_id);
 	nsm_srv->nsm_task_id = 0;
 #if defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP)
-	if(nsm_rtadv.irdp_task_id)
-		os_task_destroy(nsm_rtadv.irdp_task_id);
-	nsm_rtadv.irdp_task_id = 0;
+	if(_nsm_irdp.irdp_task_id)
+		os_task_destroy(_nsm_irdp.irdp_task_id);
+	_nsm_irdp.irdp_task_id = 0;
 #endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
 	return OK;
 }

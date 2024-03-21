@@ -36,39 +36,26 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
-
-
-#ifdef ZPL_NSM_IRDP
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
+#include "route_types.h"
 #include "zmemory.h"
-#include "stream.h"
-#include "connected.h"
-#include "log.h"
-#include "zclient.h"
-#include "thread.h"
-#include "eloop.h"
+#include "prefix.h"
+#include "sockopt.h"
 #include "checksum.h"
 #include "log.h"
-#include "sockopt.h"
-
-#include "nsm_include.h"
+#include "template.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#ifdef ZPL_NSM_IRDP
 #include "nsm_rtadv.h"
 #include "nsm_irdp.h"
+#include "nsm_rib.h"
 
 
-
-
-/* GLOBAL VARS */
-#ifndef ZPL_NSM_RTADV
-struct nsm_rtadv_t nsm_rtadv;
-#endif /* defined (ZPL_NSM_RTADV) || defined(ZPL_NSM_IRDP) */
 
 
 static void
@@ -231,7 +218,7 @@ int nsm_irdp_read_raw(struct eloop *r)
   int ret, ifindex = 0;
   
   zpl_socket_t sock = ELOOP_FD (r);
-  nsm_rtadv.t_irdp_raw = eloop_add_read (nsm_rtadv.master, nsm_irdp_read_raw, NULL, sock);
+  _nsm_irdp.t_irdp_raw = eloop_add_read (_nsm_irdp.master, nsm_irdp_read_raw, NULL, sock);
   
   ret = nsm_irdp_recvmsg (sock, (u_char *) buf, IRDP_RX_BUF,  &ifindex);
  
@@ -310,21 +297,21 @@ nsm_send_packet(struct interface *ifp,
   ip->ip_len  = sizeof(struct ipstack_ip) + stream_get_endp(s);
 
   on = 1;
-  if (ipstack_setsockopt(nsm_rtadv.irdp_sock, IPPROTO_IP, IP_HDRINCL,
+  if (ipstack_setsockopt(_nsm_irdp.irdp_sock, IPPROTO_IP, IP_HDRINCL,
 		 (char *) &on, sizeof(on)) < 0)
     zlog_warn(MODULE_NSM, "sendto %s", zpl_strerror (errno));
 
 
   if(dst == INADDR_BROADCAST ) {
     on = 1;
-    if (ipstack_setsockopt(nsm_rtadv.irdp_sock, SOL_SOCKET, SO_BROADCAST,
+    if (ipstack_setsockopt(_nsm_irdp.irdp_sock, SOL_SOCKET, SO_BROADCAST,
 		   (char *) &on, sizeof(on)) < 0)
       zlog_warn(MODULE_NSM, "sendto %s", zpl_strerror (errno));
   }
 
   if(dst !=  INADDR_BROADCAST) {
       on = 0; 
-      if( ipstack_setsockopt(nsm_rtadv.irdp_sock,IPPROTO_IP, IP_MULTICAST_LOOP, 
+      if( ipstack_setsockopt(_nsm_irdp.irdp_sock,IPPROTO_IP, IP_MULTICAST_LOOP, 
 		     (char *)&on,sizeof(on)) < 0)
 	zlog_warn(MODULE_NSM, "sendto %s", zpl_strerror (errno));
   }
@@ -354,7 +341,7 @@ nsm_send_packet(struct interface *ifp,
  
   sockopt_iphdrincl_swab_htosys (ip);
   
-  if (ipstack_sendmsg(nsm_rtadv.irdp_sock, msg, 0) < 0) {
+  if (ipstack_sendmsg(_nsm_irdp.irdp_sock, msg, 0) < 0) {
     zlog_warn(MODULE_NSM, "sendto %s", zpl_strerror (errno));
   }
   /*   printf("TX on %s idx %d\n", ifp->name, ifp->ifindex); */

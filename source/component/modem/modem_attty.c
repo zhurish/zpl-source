@@ -5,14 +5,11 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "nsm_interface.h"
-
+#include "zpl_type.h"
+#include "os_util.h"
+#include "os_list.h"
+#include "os_time.h"
+#include "log.h"
 #include "modem.h"
 #include "modem_attty.h"
 #include "modem_client.h"

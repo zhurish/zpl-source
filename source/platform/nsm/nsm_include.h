@@ -11,16 +11,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "route_types.h"
-#include "nexthop.h"
-#include "table.h"
-#include "queue.h"
+#include "auto_include.h"
+#include "zplos_include.h"
+#include "lib_include.h"
+
 #ifdef ZPL_NSM_MODULE
 #include "nsm_rib.h"
 #include "nsm_ipvrf.h"
-#include "nsm_event.h"
-#include "router-id.h"
-#include "routemap.h"
 #endif
 #include "nsm_redistribute.h"
 #include "nsm_ipforward.h"
@@ -97,7 +94,7 @@ extern "C" {
 #endif
 
 #include "nsm_halpal.h"
-//#include "nsm_main.h"
+
 
 #ifdef __cplusplus
 }

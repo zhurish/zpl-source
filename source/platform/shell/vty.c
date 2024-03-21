@@ -25,24 +25,23 @@
 #include "module.h"
 #include "linklist.h"
 #include "zmemory.h"
-
-
-#ifdef ZPL_SHELL_MODULE
-#include "cli_node.h"
-#include "buffer.h"
-#include "vector.h"
-#include "command.h"
-#endif
-#include "log.h"
 #include "str.h"
+
+#include "thread.h"
+#include "eloop.h"
+#include "vector.h"
+#include "tty_com.h"
+#include "os_message.h"
+#include "command.h"
+#include "buffer.h"
+#include "sockunion.h"
+#include "log.h"
+
 #include "prefix.h"
 #include "host.h"
-#include "network.h"
-#include "sockunion.h"
+//#include "network.h"
 #include "sockopt.h"
 
-#include "eloop.h"
-#include "thread.h"
 #ifdef ZPL_IP_FILTER
 #include "filter.h"	
 #endif

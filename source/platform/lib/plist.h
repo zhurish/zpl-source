@@ -27,13 +27,9 @@
 extern "C" {
 #endif
 
-enum prefix_list_type 
-{
-  PREFIX_DENY,
-  PREFIX_PERMIT,
-};
 
-struct prefix_list;
+#include "plist_int.h"
+#include "prefix.h"
 
 struct orf_prefix
 {
@@ -60,7 +56,7 @@ extern struct stream * prefix_bgp_orf_entry (struct stream *,
 extern int prefix_bgp_orf_set (zpl_char *, afi_t, struct orf_prefix *, int, int);
 extern void prefix_bgp_orf_remove_all (afi_t, zpl_char *);
 #ifdef ZPL_SHELL_MODULE
-extern int prefix_bgp_show_prefix_list (struct vty *, afi_t, zpl_char *);
+extern int prefix_bgp_show_prefix_list (struct vty *, afi_t, char *);
  #endif
 #ifdef __cplusplus
 }

@@ -26,13 +26,14 @@
 extern "C" {
 #endif
 
-#include "nsm_rib.h"
+#include "linklist.h"
+#include "buffer.h"
+#include "thread.h"
+#include "stream.h"
+#include "prefix.h"
+#include "ipvrf.h"
 #include "if.h"
-#include "workqueue.h"
-#ifdef ZPL_VRF_MODULE
-
-#endif
-#include "route_types.h"
+#include "nsm_rib.h"
 /* Default port information. */
 
 

@@ -6,8 +6,8 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-
+#include "zpl_type.h"
+#include "os_file.h"
 
 int os_file_access(zpl_char *filename)
 {

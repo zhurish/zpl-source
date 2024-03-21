@@ -2,7 +2,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
+
 
 extern zpl_uint16 in_cksum(void *, zpl_uint32);
 #define FLETCHER_CHECKSUM_VALIDATE 0xffff

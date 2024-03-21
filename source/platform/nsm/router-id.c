@@ -24,10 +24,20 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
+#include "route_types.h"
+#include "zmemory.h"
+#include "prefix.h"
+#include "log.h"
+#include "template.h"
+#include "zclient.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+
 #include "router-id.h"
-#include "if.h"
 #ifdef ZPL_NSM_MODULE
 #include "nsm_zserv.h"
 #endif

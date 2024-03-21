@@ -19,10 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "hash.h"
-
 #include "zmemory.h"
 
 /* Allocate a new hash.  */

@@ -1,6 +1,5 @@
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "cli_node.h"
 #include "vty.h"
 

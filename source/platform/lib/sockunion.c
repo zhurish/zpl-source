@@ -20,16 +20,16 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
-
-#include "prefix.h"
-#include "vty.h"
-#include "sockunion.h"
 #include "zmemory.h"
+#include "jhash.h"
+#include "sockunion.h"
+
 #include "str.h"
 #include "log.h"
-#include "jhash.h"
+
 
 
 #ifndef HAVE_INET_ATON

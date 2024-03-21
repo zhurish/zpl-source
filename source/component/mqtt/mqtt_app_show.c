@@ -7,8 +7,8 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
-
+#include "zpl_type.h"
+#include "vty.h"
 #include "mqtt-config.h"
 #include <mqtt_protocol.h>
 #include <mosquitto.h>

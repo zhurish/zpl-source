@@ -12,7 +12,10 @@
 extern "C" {
 #endif
 
-#include "nsm_vlan.h"
+#include "os_list.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 
 
 

@@ -33,10 +33,12 @@
  *==========================================================================
  */
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "xyz_modem.h"
 #include "tty_com.h"
 #include "checksum.h"
+#include "os_socket.h"
+#include "str.h"
 
 int xyz_modem_build_hdr(xyz_modem_t*xyz, xyz_modem_hdr_t *hdr, zpl_char *filename, zpl_uint32 filesize)
 {

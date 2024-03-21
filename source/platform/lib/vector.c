@@ -20,12 +20,10 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-
+#include "zpl_type.h"
 #include "vector.h"
 #include "zmemory.h"
-#include "log.h"
+
 /* Initialize vector : allocate memory and return vector. */
 vector
 vector_init (zpl_uint32  size)

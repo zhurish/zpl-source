@@ -5,8 +5,15 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "sys/epoll.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
+#include "os_util.h"
+#include "os_time.h"
+#include "os_backtrace.h"
+#include "os_ansync.h"
+
 
 
 #ifdef OS_ANSYNC_GLOBAL_LIST

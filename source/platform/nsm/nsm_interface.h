@@ -27,9 +27,13 @@ extern "C" {
 #endif
 
 
-#include "vty.h"
-#include "if_def.h"
+#include "linklist.h"
 #include "prefix.h"
+#include "if.h"
+
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
 #ifdef ZPL_NSM_IRDP
 #include "nsm_irdp.h"
 #endif

@@ -6,13 +6,15 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
+#include "if.h"
+#include "vty_include.h"
+
 #include "nsm_mirror.h"
 #include "nsm_vlan.h"
-#include "vty.h"
+
 
 
 /*

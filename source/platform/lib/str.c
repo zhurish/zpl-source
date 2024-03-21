@@ -36,10 +36,8 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
 #include "str.h"
-#include "log.h"
 
 #ifndef HAVE_SNPRINTF
 /*
@@ -203,7 +201,7 @@ const char *strrmtrim(zpl_char* src)
 
 zpl_uint32 str_to_hex(zpl_char * room)
 {
-	zassert(room != NULL);
+	//zassert(room != NULL);
 	return strtol(room, NULL, 16);
 }
 

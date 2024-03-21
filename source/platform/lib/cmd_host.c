@@ -7,16 +7,23 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_time.h"
+#include "os_ipstack.h"
+#include "os_socket.h"
+#include "os_util.h"
+#include "os_file.h"
 #include "module.h"
-#include "cli_node.h"
 #include "zmemory.h"
 #include "vector.h"
-#include "command.h"
-#include "vty.h"
-#include "vty_user.h"
-#include "host.h"
+#ifdef ZPL_ACTIVE_STANDBY
+#include "ipcstandby.h"
+#endif	
 #include "workqueue.h"
+#include "vty_include.h"
+#include "host.h"
 
 #define CMD_HOST_DEBUG
 

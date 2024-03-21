@@ -7,12 +7,22 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "if.h"
-
-#include "prefix.h"
-#include "vty.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_job.h"
+#include "os_util.h"
+#include "os_time.h"
+#include "module.h"
+#include "route_types.h"
 #include "zmemory.h"
+#include "prefix.h"
+#include "log.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+
+#include "nsm_interface.h"
 #include "nsm_dns.h"
 
 typedef struct ip_dns_job_s

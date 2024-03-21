@@ -6,23 +6,12 @@
  */
 
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
-
 #include "libssh_autoconfig.h"
-
-#include "libssh/priv.h"
-#include "libssh/libssh.h"
-#include "libssh/poll.h"
-#include "libssh/socket.h"
-#include "libssh/session.h"
-#include "libssh/misc.h"
-#include "libssh/pki.h"
-#ifdef WITH_SERVER
-#include "libssh/server.h"
-#endif
-
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
+#include "vty_include.h"
+#include "ssh_def.h"
 
 #include "ssh_api.h"
 #include "ssh_util.h"

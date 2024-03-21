@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "if.h"
 #ifdef ZPL_NSM_TUNNEL
 extern int linux_ioctl_tunnel_create(struct interface *ifp);
 extern int linux_ioctl_tunnel_delete(struct interface *ifp);

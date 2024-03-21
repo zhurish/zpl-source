@@ -1,13 +1,5 @@
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <float.h>
-#include <limits.h>
-#include <ctype.h>
 #include "auto_include.h"
-#include "zplos_include.h"
-
+#include "zpl_type.h"
 #include "cJSON.h"
 #include "os_netservice.h"
 

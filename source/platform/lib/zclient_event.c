@@ -1,12 +1,9 @@
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-#include "zmemory.h"
 #include "log.h"
-#include "host.h"
-#include "route_types.h"
-#include "nsm_event.h"
-#include "vty.h"
+#include "zclient_event.h"
+
 #ifndef SUNOS_5
 #include <sys/un.h>
 #endif

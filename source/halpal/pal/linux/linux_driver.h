@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "nsm_include.h"
 
 #include "linux_ioctl.h"
 #include "linux_bond.h"

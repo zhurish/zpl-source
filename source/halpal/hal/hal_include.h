@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 #include <auto_include.h>
-#include <zplos_include.h>
+#include <zpl_type.h>
 
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"

@@ -27,18 +27,13 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
+
 #include "module.h"
 
 
 #define ZLOG_TASK_ENABLE
 #define ZLOG_TESTING_ENABLE
 
-//#define ZPL_SERVICE_SYSLOG
-#ifdef ZPL_SERVICE_SYSLOG
-#include "syslogcLib.h"
-#endif
 /* Here is some guidance on logging levels to use:
  *
  * ZLOG_LEVEL_DEBUG	- For all messages that are enabled by optional debugging

@@ -6,14 +6,10 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_sem.h"
 #include "zmemory.h"
-#include "vty.h"
-#include "command.h"
-#include "if.h"
-
-#include "nsm_interface.h"
-
+#include "log.h"
 #include "modem.h"
 #include "modem_client.h"
 

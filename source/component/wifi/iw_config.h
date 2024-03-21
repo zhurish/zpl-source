@@ -13,21 +13,7 @@ extern "C" {
 #endif
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
-#include "prefix.h"
-#include "module.h"
-#include "zmemory.h"
-#include "vty.h"
-#include "if_name.h"
-
-#include "template.h"
-#include "host.h"
-#include "nsm_interface.h"
-#ifdef ZPL_DHCP_MODULE
-#include "nsm_dhcp.h"
-#endif
+#include "zpl_type.h"
 
 /*
 #define IW_MAX_FREQUENCIES	32

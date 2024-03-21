@@ -13,8 +13,6 @@ extern "C" {
 #endif
 
 
-#include <endian.h>
-#include "zpl_type.h"
 
 typedef zpl_uint8 val_t;
 typedef zpl_uint32 tag_t;

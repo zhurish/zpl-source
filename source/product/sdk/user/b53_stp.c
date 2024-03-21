@@ -56,19 +56,19 @@ static int b53125_set_mstp_state(sdk_driver_t *dev, zpl_index_t index, zpl_phypo
 	u8 reg;
 
 	switch (state) {
-	case STP_DISABLE:
+	case HAL_PORT_STP_DISABLE:
 		hw_state = 1;
 		break;
-	case STP_LISTENING:
+	case HAL_PORT_STP_LISTEN:
 		hw_state = 3;
 		break;
-	case STP_LEARNING:
+	case HAL_PORT_STP_LEARN:
 		hw_state = 4;
 		break;
-	case STP_FORWARDING:
+	case HAL_PORT_STP_FORWARD:
 		hw_state = 5;
 		break;
-	case STP_BLOCKING:
+	case HAL_PORT_STP_BLOCK:
 		hw_state = 2;
 		break;
 	default:

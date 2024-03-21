@@ -8,10 +8,14 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "module.h"
-#include "vty.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
+#include "os_ansync.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif // ZPL_SHELL_MODULE
 
 DEFUN (show_process,
 		show_process_cmd,

@@ -27,9 +27,6 @@ extern "C" {
 #endif
 
 
-#include "auto_include.h"
-#include "zplos_include.h"
-
 #ifndef ZPL_IPCOM_MODULE
 #include "thread.h"
 #define eloop_list thread_list
@@ -79,6 +76,11 @@ extern "C" {
 #define eloop_consumed_time  thread_consumed_time
 
 #else
+
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_time.h"
+
 #define OS_ELOOP_MANE_MAX	32
 /* Linked list of eloop. */
 struct eloop_list
@@ -88,7 +90,7 @@ struct eloop_list
   zpl_uint32 count;
 };
 
-struct pqueue;
+//struct pqueue;
 
 /*
  * Abstract it so we can use different methodologies to

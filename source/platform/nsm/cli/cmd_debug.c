@@ -9,12 +9,8 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
-#include "prefix.h"
-#include "template.h"
-#include "vty.h"
+#include "zpl_type.h"
+#include "vty_include.h"
 #include "nsm_debug.h"
 
 /* Debug node. */

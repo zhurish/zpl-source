@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: LGPL-2.1+
  */
 #include "auto_include.h"
-#include <zplos_include.h>
-
+#include "zpl_type.h"
 #if defined(_WIN32)
 # define OS_WIN32
 /* ws2_32.dll has ipstack_getaddrinfo and ipstack_freeaddrinfo on Windows XP and later.

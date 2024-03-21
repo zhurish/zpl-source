@@ -27,7 +27,9 @@
 extern "C" {
 #endif
 
-#include "table.h"
+#include "prefix.h"
+#include "if.h"
+#include "nsm_rib.h"
 #include "nsm_zserv.h"
 
 extern void nsm_redistribute_add (zpl_uint16, struct zserv *, zpl_size_t, vrf_id_t);
@@ -40,7 +42,7 @@ extern void nsm_redistribute_default_delete (zpl_uint16, struct zserv *, zpl_siz
 
 
 
-extern void nsm_redistribute_route_add (struct prefix *, struct rib *new, struct rib *old);
+extern void nsm_redistribute_route_add (struct prefix *, struct rib *, struct rib *old);
 extern void nsm_redistribute_route_delete (struct prefix *, struct rib *);
 
 extern void nsm_redistribute_interface_updown (struct interface *, zpl_bool updown);

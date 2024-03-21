@@ -3,10 +3,8 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+
+#include "auto_include.h"
 #include "zpl_type.h"
 #include "os_base64.h"
 

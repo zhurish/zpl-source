@@ -6,16 +6,13 @@
  */
 
 
-
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "route_types.h"
-#include "nsm_event.h"
-#include "zmemory.h"
-#include "if.h"
+#include "zplos_include.h"
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 
-#include "prefix.h"
-#include "command.h"
 #include "nsm_zserv.h"
 #include "router-id.h"
 

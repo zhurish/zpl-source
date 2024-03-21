@@ -20,19 +20,18 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-#include "vector.h"
-#include "vty.h"
-#include "command.h"
+#include "route_types.h"
+#include "zmemory.h"
 #include "prefix.h"
-#include "table.h"
-#include "stream.h"
-#include "zclient.h"
-#include "linklist.h"
 #include "log.h"
-
-#include "if.h"
+#include "template.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "zclient.h"
+#include "nsm_interface.h"
 #include "connected.h"
 #include "nsm_rib.h"
 #include "nsm_zserv.h"

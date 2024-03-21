@@ -28,11 +28,12 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "nsm_rib.h"
+#include "prefix.h"
+#ifdef ZPL_SHELL_MODULE
 #include "vty.h"
+#endif
 #include "if.h"
+#include "nsm_ipvrf.h"
 
 extern void router_id_add_address(struct connected *);
 extern void router_id_del_address(struct connected *);

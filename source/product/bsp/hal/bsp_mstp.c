@@ -5,8 +5,15 @@
  *      Author: zhurish
  */
 
-#include "bsp_types.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "log.h"
 #include "hal_client.h"
+#include "hal_driver.h"
+#include "hal_mstp.h"
+#if defined(ZPL_SDK_USER) || defined(ZPL_SDK_NONE)
+#include "bsp_driver.h"
+#endif
 #include "bsp_mstp.h"
 
 

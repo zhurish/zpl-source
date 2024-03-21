@@ -43,6 +43,23 @@ extern "C" {
 #define ETHER_ADDR_LEN  ETHERADDRL
 #endif
 
+
+/* Address family numbers from RFC1700. */
+typedef enum {
+  AFI_IP  = 1,
+  AFI_IP6 = 2,
+  AFI_ETHER = 3,                /* RFC 1700 has "6" for 802.* */
+#define AFI_MAX 4
+} afi_t;
+
+/* Subsequent Address Family Identifier. */
+#define SAFI_UNICAST              1
+#define SAFI_MULTICAST            2
+#define SAFI_RESERVED_3           3
+#define SAFI_MPLS_VPN             4
+#define SAFI_ENCAP		  7 /* per IANA */
+#define SAFI_MAX                  8
+
 /*
  * there isn't a portable ethernet address type. We define our
  * own to simplify internal handling

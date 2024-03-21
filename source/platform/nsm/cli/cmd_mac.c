@@ -7,13 +7,14 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
+#include "if.h"
+#include "vty_include.h"
+
 #include "nsm_arp.h"
 #include "nsm_vlan.h"
-#include "vty.h"
 #ifdef ZPL_HAL_MODULE
 #include "hal_ipcmsg.h"
 #include "hal_mac.h"

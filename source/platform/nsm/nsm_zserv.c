@@ -19,35 +19,33 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <auto_include.h>
-#include <zplos_include.h>
-#include "nsm_event.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+#include "os_netservice.h"
+#include "route_types.h"
+#include "module.h"
+#include "zmemory.h"
+#include "buffer.h"
 #include "prefix.h"
-#include "command.h"
-#include "if.h"
 #include "thread.h"
 #include "stream.h"
-#include "zmemory.h"
-#include "table.h"
-#include "nsm_rib.h"
-#include "network.h"
-#include "sockunion.h"
+#include "ipvrf.h"
+#include "if.h"
 #include "log.h"
-#include "network.h"
-#include "buffer.h"
-#ifdef ZPL_VRF_MODULE
-
+#include "zclient.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
 #endif
-#include "nexthop.h"
+#include "nsm_interface.h"
 #include "router-id.h"
 
-#include "zclient.h"
-#include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
-
 #include "nsm_rnh.h"
 #include "nsm_ipforward.h"
+#include "nsm_rib.h"
+#include "nsm_zserv.h"
 
 /* Event list of zebra. */
 enum event

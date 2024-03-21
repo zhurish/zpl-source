@@ -22,12 +22,22 @@
 /* #define DEBUG */
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "log.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_time.h"
+#include "os_task.h"
+#include "os_ipstack.h"
+#include "os_socket.h"
+#include "module.h"
+#include "str.h"
 #include "zmemory.h"
-#include "command.h"
 #include "pqueue.h"
 #include "eloop.h"
+#include "log.h"
+
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 
 
 #ifdef ZPL_IPCOM_MODULE

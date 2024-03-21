@@ -21,16 +21,12 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
 #include "zmemory.h"
-#include "thread.h"
+#include "log.h"
 #include "if.h"
-#include "vty.h"
-#include "command.h"
-#include "prefix.h"
-#include "nsm_include.h"
-#include "hal_include.h"
 #include "linux_driver.h"
 #include "pal_include.h"
 

@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
 
 /* Osmsg buffer. */
 struct zpl_osmsg

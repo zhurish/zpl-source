@@ -6,7 +6,8 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "zpl_errno.h"
 
 
 struct zpl_errno_msg

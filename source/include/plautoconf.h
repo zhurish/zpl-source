@@ -2,7 +2,7 @@
  * Automatically generated C config: don't edit
  * ZPLSource version: 
  */
-#define MAKECONF_TIMESTAMP "2024-03-18 14:41:44 CST"
+#define MAKECONF_TIMESTAMP "2024-03-21 22:14:24 CST"
 
 #define CONFIG_HAVE_DOT_CONFIG 1
 
@@ -120,7 +120,7 @@
 #define ZPL_NSM_MSTP 1
 #define ZPL_NSM_PORT 1
 #define ZPL_NSM_VLANETH 1
-#undef ZPL_NSM_WIRELESS
+#define ZPL_NSM_WIRELESS 1
 #define ZPL_NSM_BRIDGE 1
 #define ZPL_NSM_SECURITY 1
 #define ZPL_NSM_RTADV 1
@@ -144,8 +144,8 @@
 #undef ZPL_PJSIP_PORTAUDIO
 #undef ZPL_PJSIP_HISIAUDIO
 #define ZPL_PJSIP_PJSUA2 1
-#undef ZPL_SQLITE_MODULE
-#undef ZPL_SQLITE_EXE_MODULE
+#define ZPL_SQLITE_MODULE 1
+#define ZPL_SQLITE_EXE_MODULE 1
 #define ZPL_LIBSSH_MODULE 1
 #undef ZPL_LIBSSH_NACL
 #define ZPL_LIBSSH_ZLIB 1
@@ -167,7 +167,7 @@
 #undef ZPL_WEBSERVER_MBEDTLS
 #undef ZPL_WEBSERVER_NANOSSL
 #define ZPL_WEBAPP_MODULE 1
-#undef ZPL_WIFI_MODULE
+#define ZPL_WIFI_MODULE 1
 #define ZPL_MODBUS_MODULE 1
 #undef ZPL_ONVIF_MODULE
 #undef ZPL_ONVIF_SSL
@@ -224,10 +224,10 @@
  */
 #define ZPL_BSP_MODULE 1
 #define ZPL_SDK_MODULE 1
-#define ZPL_SDK_NONE 1
-#undef ZPL_SDK_USER
+#undef ZPL_SDK_NONE
+#define ZPL_SDK_USER 1
 #undef ZPL_SDK_KERNEL
-#undef ZPL_SDK_BCM53125
+#define ZPL_SDK_BCM53125 1
 
 /*
  * Externsions Module Config
@@ -255,10 +255,10 @@
 /*
  * Tools Module Config
  */
-#undef ZPL_TOOLS_MODULE
-#undef ZPL_TOOLS_PROCESS
-#undef ZPL_TOOLS_QUECTEL_CM
-#undef ZPL_TOOLS_SYSTEM
+#define ZPL_TOOLS_MODULE 1
+#define ZPL_TOOLS_PROCESS 1
+#define ZPL_TOOLS_QUECTEL_CM 1
+#define ZPL_TOOLS_SYSTEM 1
 #undef ZPL_VTYSH_MODULE
-#undef ZPL_WATCHDOG_MODULE
+#define ZPL_WATCHDOG_MODULE 1
 #undef ZPL_SWCONFIG_MODULE

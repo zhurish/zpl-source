@@ -11,9 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "auto_include.h"
-#include "zplos_include.h"
+#include "os_list.h"
 
 #ifdef PRODUCT_PORT_MAX
 #ifndef PHY_PORT_MAX

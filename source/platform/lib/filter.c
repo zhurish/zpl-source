@@ -20,16 +20,15 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
-#include "prefix.h"
-#include "command.h"
-#include "filter.h"
 #include "zmemory.h"
-#include "sockunion.h"
-#include "buffer.h"
+#include "prefix.h"
+#include "filter.h"
 #include "log.h"
-#include "if.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
 /* Static structure for IPv4 access_list's master. */
 static struct access_master access_master_ipv4 =
     {

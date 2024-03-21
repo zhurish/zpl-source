@@ -34,32 +34,22 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
 #include "module.h"
-
-
-#ifdef ZPL_NSM_IRDP
-
-#include "if.h"
-#include "vty.h"
-#include "sockunion.h"
-#include "prefix.h"
-#include "command.h"
+#include "route_types.h"
 #include "zmemory.h"
-#include "stream.h"
-#include "connected.h"
+#include "prefix.h"
 #include "log.h"
-#include "zclient.h"
-#include "thread.h"
-#include "eloop.h"
-#include "checksum.h"
-#include "log.h"
-#include "sockopt.h"
-
-#include "nsm_include.h"
+#include "template.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
+#ifdef ZPL_NSM_IRDP
 #include "nsm_rtadv.h"
 #include "nsm_irdp.h"
-
+#include "nsm_rib.h"
 
 /* Master of threads. */
 
@@ -131,7 +121,7 @@ nsm_if_add_group (struct interface *ifp)
   int ret;
   char b1[INET_ADDRSTRLEN];
 
-  ret = nsm_if_group (ifp, nsm_rtadv.irdp_sock, INADDR_ALLRTRS_GROUP, IPSTACK_IP_ADD_MEMBERSHIP);
+  ret = nsm_if_group (ifp, _nsm_irdp.irdp_sock, INADDR_ALLRTRS_GROUP, IPSTACK_IP_ADD_MEMBERSHIP);
   if (ret < 0) {
     return ret;
   }
@@ -151,7 +141,7 @@ nsm_if_drop_group (struct interface *ifp)
   int ret;
   char b1[INET_ADDRSTRLEN];
 
-  ret = nsm_if_group (ifp, nsm_rtadv.irdp_sock, INADDR_ALLRTRS_GROUP, IPSTACK_IP_DROP_MEMBERSHIP);
+  ret = nsm_if_group (ifp, _nsm_irdp.irdp_sock, INADDR_ALLRTRS_GROUP, IPSTACK_IP_DROP_MEMBERSHIP);
   if (ret < 0)
     return ret;
 
@@ -199,8 +189,8 @@ nsm_irdp_if_start(struct interface *ifp, int multicast, int set_defaults)
     zlog_warn(MODULE_NSM, "IRDP: Interface is already active %s", ifp->name);
     return;
   }
-  nsm_rtadv.irdp_sock = nsm_irdp_sock_init();
-  if ( !ipstack_invalid(nsm_rtadv.irdp_sock) ) {
+  _nsm_irdp.irdp_sock = nsm_irdp_sock_init();
+  if ( !ipstack_invalid(_nsm_irdp.irdp_sock) ) {
     zlog_warn(MODULE_NSM, "IRDP: Cannot activate interface %s (cannot create "
 	      "IRDP socket)", ifp->name);
     return;
@@ -260,7 +250,7 @@ nsm_irdp_if_start(struct interface *ifp, int multicast, int set_defaults)
 	       ifp->name, 
 	       timer);
 
-  irdp->t_advertise = eloop_add_timer(nsm_rtadv.master, 
+  irdp->t_advertise = eloop_add_timer(_nsm_irdp.master, 
 				       nsm_irdp_send_thread, 
 				       ifp, 
 				       timer);

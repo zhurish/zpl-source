@@ -1,10 +1,9 @@
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
+#include "os_task.h"
 #include "zmemory.h"
-#include "if.h"
+#include "log.h"
 
-#include "nsm_include.h"
 #include "hal_txrx.h"
 #include "hal_netpkt.h"
 

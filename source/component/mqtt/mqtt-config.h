@@ -4,9 +4,10 @@
  * Platform options
  * ============================================================ */
 #include "auto_include.h"
-#include "zplos_include.h"
-
-#include "vty_include.h"
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "log.h"
 #ifdef __APPLE__
 #  define __DARWIN_C_SOURCE
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__SYMBIAN32__) || defined(__QNX__)

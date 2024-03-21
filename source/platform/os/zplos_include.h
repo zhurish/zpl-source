@@ -13,12 +13,19 @@ extern "C" {
 #endif
 
 #include "zpl_type.h"
-
+#include "zpl_errno.h"
 #include "os_memory.h"
 #include "os_list.h"
-#include "os_task.h"
 #include "os_sem.h"
+#include "os_task.h"
+#include "os_bitmap.h"
 #include "os_time.h"
+#include "os_base64.h"
+#include "os_util.h"
+
+#include "os_backtrace.h"
+#include "libnetpro.h"
+
 #include "os_ipstack.h"
 #include "os_log.h"
 #include "os_job.h"
@@ -28,12 +35,8 @@ extern "C" {
 #include "os_file.h"
 #include "os_url.h"
 #include "os_netservice.h"
-#include "os_base64.h"
-#include "os_util.h"
-#include "os_backtrace.h"
-#include "os_bitmap.h"
+
 #include "os_process.h"
-#include "libnetpro.h"
 
 #include "zpl_ipcmsg.h"
 #include "zpl_skbuffer.h"
@@ -75,6 +78,7 @@ extern "C" {
 #ifdef ZPL_IPCOM_MODULE
 #define ELOOP_THREAD    1
 #endif
+
 
 
 #ifdef __cplusplus

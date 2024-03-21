@@ -13,8 +13,6 @@
 extern "C" {
 #endif
 
-
-
 /* We just coyp this value of payload type from RTP/RTSP definition */
 typedef enum {
 
@@ -41,11 +39,11 @@ typedef enum {
     ZPL_AUDIO_CODEC_DVI4_3        = 16,
     ZPL_AUDIO_CODEC_DVI4_4        = 17,
     ZPL_AUDIO_CODEC_G729          = 18,
-    ZPL_AUDIO_CODEC_G711A         = 19,
-    ZPL_AUDIO_CODEC_G711U         = 20,
-    ZPL_AUDIO_CODEC_G726          = 21,
+    ZPL_AUDIO_CODEC_G711A         = 19,     //HISI DV300
+    ZPL_AUDIO_CODEC_G711U         = 20,     //HISI DV300
+    ZPL_AUDIO_CODEC_G726          = 21,     //HISI DV300
     ZPL_AUDIO_CODEC_G729A         = 22,
-    ZPL_AUDIO_CODEC_LPCM          = 23,
+    ZPL_AUDIO_CODEC_LPCM          = 23,     //HISI DV300
     ZPL_AUDIO_CODEC_CelB          = 25,
     ZPL_AUDIO_CODEC_JPEG          = 26,
     ZPL_AUDIO_CODEC_CUSM          = 27,
@@ -53,14 +51,10 @@ typedef enum {
     ZPL_AUDIO_CODEC_PICW          = 29,
     ZPL_AUDIO_CODEC_CPV           = 30,
 
-    ZPL_AUDIO_CODEC_AMR           = 1000,
-    ZPL_AUDIO_CODEC_AMRWB         ,
-    ZPL_AUDIO_CODEC_PRORES        ,
-    ZPL_AUDIO_CODEC_OPUS          ,
-    ZPL_AUDIO_CODEC_D_GSM_HR      ,
-    ZPL_AUDIO_CODEC_D_GSM_EFR     ,
-    ZPL_AUDIO_CODEC_D_L8          ,
-    ZPL_AUDIO_CODEC_D_RED         ,
+    ZPL_AUDIO_CODEC_D_GSM_HR      = 200,
+    ZPL_AUDIO_CODEC_D_GSM_EFR     = 201,
+    ZPL_AUDIO_CODEC_D_L8          = 202,
+    ZPL_AUDIO_CODEC_D_RED         = 203,
 
     /* RTP AUDIO PAYLOAD */
     RTP_MEDIA_PAYLOAD_PCMU        = ZPL_AUDIO_CODEC_PCMU,
@@ -94,10 +88,6 @@ typedef enum {
     RTP_MEDIA_PAYLOAD_PICW          = ZPL_AUDIO_CODEC_PICW,
     RTP_MEDIA_PAYLOAD_CPV           = ZPL_AUDIO_CODEC_CPV,
 
-    RTP_MEDIA_PAYLOAD_AMR          = ZPL_AUDIO_CODEC_AMR,
-    RTP_MEDIA_PAYLOAD_AMRWB        = ZPL_AUDIO_CODEC_AMRWB,
-    RTP_MEDIA_PAYLOAD_PRORES       = ZPL_AUDIO_CODEC_PRORES,
-    RTP_MEDIA_PAYLOAD_OPUS         = ZPL_AUDIO_CODEC_OPUS,
     RTP_MEDIA_PAYLOAD_D_GSM_HR     = ZPL_AUDIO_CODEC_D_GSM_HR,
     RTP_MEDIA_PAYLOAD_D_GSM_EFR    = ZPL_AUDIO_CODEC_D_GSM_EFR,
     RTP_MEDIA_PAYLOAD_D_L8         = ZPL_AUDIO_CODEC_D_L8,
@@ -117,39 +107,49 @@ typedef enum {
     ZPL_VIDEO_CODEC_PCM_VOICE     = 40,
     ZPL_VIDEO_CODEC_PCM_AUDIO     = 41,
     ZPL_VIDEO_CODEC_MP3           = 43,
-    ZPL_VIDEO_CODEC_ADPCMA        = 49,
+    ZPL_VIDEO_CODEC_ADPCMA        = 49,     //HISI DV300
     ZPL_VIDEO_CODEC_AEC           = 50,
     ZPL_VIDEO_CODEC_X_LD          = 95,
-    ZPL_VIDEO_CODEC_H264          = 96,
-    ZPL_VIDEO_CODEC_JPEG          = 97,
+    ZPL_VIDEO_CODEC_H264          = 96,     //HISI DV300
+    ZPL_VIDEO_CODEC_JPEG          = 97,     //HISI DV300
     
-    ZPL_VIDEO_CODEC_D_VDVI        = 3000,
-    ZPL_VIDEO_CODEC_D_BT656       ,
-    ZPL_VIDEO_CODEC_D_H263_1998   ,
-    ZPL_VIDEO_CODEC_D_MP1S        ,
-    ZPL_VIDEO_CODEC_D_MP2P        ,
-    ZPL_VIDEO_CODEC_D_BMPEG       ,
+    ZPL_VIDEO_CODEC_D_VDVI        = 204,
+    ZPL_VIDEO_CODEC_D_BT656       = 220,
+    ZPL_VIDEO_CODEC_D_H263_1998   = 221,
+    ZPL_VIDEO_CODEC_D_MP1S        = 222,
+    ZPL_VIDEO_CODEC_D_MP2P        = 223,
+    ZPL_VIDEO_CODEC_D_BMPEG       = 224,
 
-    ZPL_VIDEO_CODEC_MJPEG         = 4000,
-    ZPL_VIDEO_CODEC_MP4VIDEO      ,
-    ZPL_VIDEO_CODEC_MP4AUDIO      ,
-    ZPL_VIDEO_CODEC_VC1           ,
-    ZPL_VIDEO_CODEC_JVC_ASF       ,
-    ZPL_VIDEO_CODEC_D_AVI         ,
-    ZPL_VIDEO_CODEC_DIVX3         ,
-    ZPL_VIDEO_CODEC_AVS           ,
-    ZPL_VIDEO_CODEC_REAL8         ,
-    ZPL_VIDEO_CODEC_REAL9         ,
-    ZPL_VIDEO_CODEC_VP6           ,
+    ZPL_VIDEO_CODEC_MP4VIDEO      = 230,
+    ZPL_VIDEO_CODEC_MP4AUDIO      = 237,
+    ZPL_VIDEO_CODEC_VC1           = 238,
+    ZPL_VIDEO_CODEC_JVC_ASF       = 255,
+    ZPL_VIDEO_CODEC_D_AVI         = 256,
+    ZPL_VIDEO_CODEC_DIVX3         = 257,
+    ZPL_VIDEO_CODEC_AVS           = 258,
+    ZPL_VIDEO_CODEC_REAL8         = 259,
+    ZPL_VIDEO_CODEC_REAL9         = 260,
+    ZPL_VIDEO_CODEC_VP6           = 261,
+    ZPL_VIDEO_CODEC_VP6F          = 262,
+    ZPL_VIDEO_CODEC_VP6A          = 263,
+    ZPL_VIDEO_CODEC_SORENSON      = 264,
+    ZPL_VIDEO_CODEC_H265          = 265,        //HISI DV300
+    ZPL_VIDEO_CODEC_VP8           = 266,
+    ZPL_VIDEO_CODEC_MVC           = 267,
+    ZPL_VIDEO_CODEC_PNG           = 268,
 
-    ZPL_VIDEO_CODEC_VP6F          ,
-    ZPL_VIDEO_CODEC_VP6A          ,
-    ZPL_VIDEO_CODEC_SORENSON      ,
-    ZPL_VIDEO_CODEC_H265          ,
-    ZPL_VIDEO_CODEC_VP8           ,
-    ZPL_VIDEO_CODEC_VP9           ,
-    ZPL_VIDEO_CODEC_MVC           ,
-    ZPL_VIDEO_CODEC_PNG           ,
+     /* add by hisilicon */
+    ZPL_AUDIO_CODEC_AMR           = 1001,
+    ZPL_VIDEO_CODEC_MJPEG         = 1002,       //HISI DV300
+    ZPL_AUDIO_CODEC_AMRWB         = 1003,
+    ZPL_AUDIO_CODEC_PRORES        = 1006,
+    ZPL_AUDIO_CODEC_OPUS          = 1007,
+
+    ZPL_VIDEO_CODEC_VP9           = 1008,
+    RTP_MEDIA_PAYLOAD_AMR          = ZPL_AUDIO_CODEC_AMR,
+    RTP_MEDIA_PAYLOAD_AMRWB        = ZPL_AUDIO_CODEC_AMRWB,
+    RTP_MEDIA_PAYLOAD_PRORES       = ZPL_AUDIO_CODEC_PRORES,
+    RTP_MEDIA_PAYLOAD_OPUS         = ZPL_AUDIO_CODEC_OPUS,
 
     /* RTP VIDEO PAYLOAD */
     RTP_MEDIA_PAYLOAD_H261          = ZPL_VIDEO_CODEC_H261,

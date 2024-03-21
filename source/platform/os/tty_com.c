@@ -4,10 +4,9 @@
  *  Created on: Jul 22, 2018
  *      Author: zhurish
  */
-
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+#include "zpl_type.h"
+#include "os_util.h"
 #include <termios.h>
 #include "tty_com.h"
 

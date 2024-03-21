@@ -21,17 +21,19 @@
  */
 
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
+#include "os_sem.h"
 #include "module.h"
-
-#include "if.h"
-#include "ipvrf.h"
+#include "zmemory.h"
+#include "linklist.h"
 #include "prefix.h"
 #include "table.h"
+
 #include "log.h"
-#include "zmemory.h"
-#include "command.h"
-#include "vty.h"
+#ifdef ZPL_VRF_MODULE
+#include "ipvrf.h"
+#endif
+
 
 struct ip_vrf_master _ip_vrf_master;
 /*

@@ -6,17 +6,13 @@
  */
 
 
-
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "route_types.h"
-#include "nsm_event.h"
-#include "zmemory.h"
-#include "if.h"
-
+#include "zpl_type.h"
+#include "os_list.h"
 #include "prefix.h"
-#include "command.h"
-#include "table.h"
+#include "ipvrf.h"
+
+#include "vty_include.h"
 
 
 #ifdef ZPL_VRF_MODULE

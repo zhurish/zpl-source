@@ -6,11 +6,12 @@
  */
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
-#include "vty.h"
+#include "if.h"
+#include "vty_include.h"
+
 #include "nsm_include.h"
 #include "hal_include.h"
 

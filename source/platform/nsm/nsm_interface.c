@@ -20,25 +20,23 @@
  * 02111-1307, USA.
  */
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-#include "linklist.h"
-#include "zmemory.h"
 
-#include "if.h"
-#include "str.h"
-#include "vty.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "module.h"
+#include "route_types.h"
+#include "zmemory.h"
 #include "prefix.h"
-#include "table.h"
-#include "lib_event.h"
-#include "connected.h"
 #include "log.h"
-#include "nsm_interface.h"
-#ifdef ZPL_DHCP_MODULE
-#include "nsm_dhcp.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
 #endif
+#include "template.h"
+#include "lib_event.h"
+#include "nsm_interface.h"
 #include "nsm_include.h"
+
+
 
 static zpl_bool _nsm_intf_init = 0;
 static struct nsm_interface_cb nsm_intf_cb[NSM_INTF_MAX + 1];

@@ -6,8 +6,10 @@
  */
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "nexthop.h"
+#include "if.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 #include "hal_global.h"

@@ -19,32 +19,25 @@
  * 02111-1307, USA.
  */
 
-#include <auto_include.h>
-#include <zplos_include.h>
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "route_types.h"
-#include "nsm_event.h"
-#include "prefix.h"
-#include "table.h"
 #include "zmemory.h"
-#include "str.h"
-#include "command.h"
-#include "if.h"
-#include "log.h"
-#include "sockunion.h"
-#include "linklist.h"
-#include "thread.h"
-#include "workqueue.h"
 #include "prefix.h"
-#include "stream.h"
-#include "nexthop.h"
-
+#include "log.h"
+#include "template.h"
+#include "zclient.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
 #include "nsm_rib.h"
-#include "nsm_event.h"
 #include "nsm_zserv.h"
 #include "nsm_redistribute.h"
 #include "nsm_debug.h"
 #include "nsm_rnh.h"
-#include "routemap.h"
+
 
 #define lookup_rnh_table(v, f)		         \
 ({						 \

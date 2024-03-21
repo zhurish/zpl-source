@@ -6,6 +6,9 @@
 extern "C" {
 #endif
 
+#include "if.h"
+#include "nsm_bridge.h"
+
 #ifdef ZPL_NSM_BRIDGE
 extern int linux_ioctl_bridge_create(struct interface *ifp);
 extern int linux_ioctl_bridge_delete(struct interface *ifp);

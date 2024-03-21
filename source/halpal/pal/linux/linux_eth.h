@@ -5,6 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "if.h"
 
 #ifdef ZPL_NSM_VLANETH
 extern int linux_ioctl_eth_create (struct interface *ifp);

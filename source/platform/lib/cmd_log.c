@@ -7,18 +7,18 @@
 
 
 #include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
-#include "cli_node.h"
+#include "zpl_type.h"
 #include "zmemory.h"
 #include "vector.h"
-#include "command.h"
-#include "vty.h"
-#include "host.h"
-#include "log.h"
 #include "prefix.h"
 
+#include "host.h"
+#include "log.h"
 
+#ifdef ZPL_SERVICE_SYSLOG
+#include "syslogcLib.h"
+#endif
+#include "vty_include.h"
 
 struct logfilter
 {

@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
 
 
 #define OSLOG_COLOR_BLACK		"\033[01;30m"     /* black color */

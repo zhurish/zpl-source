@@ -179,7 +179,7 @@ struct filter_list
       struct filter_zebos_ext zextfilter;
       #endif
       #ifdef ZPL_FILTER_MAC
-      struct filter_l2    mac_filter
+      struct filter_l2    mac_filter;
       #endif
     }u;
 };
@@ -231,13 +231,13 @@ extern void access_list_add_hook (zpl_uint32, void (*func)(struct access_list *)
 extern void access_list_delete_hook (zpl_uint32, void (*func)(struct access_list *));
 extern const char * filter_type_str(enum filter_type type);
 
-extern int filter_compare_cisco(struct filter_cisco *filter, struct filter_cisco *new);
-extern int filter_compare_zebra(struct filter_zebra *filter, struct filter_zebra *new);
+extern int filter_compare_cisco(struct filter_cisco *filter, struct filter_cisco *);
+extern int filter_compare_zebra(struct filter_zebra *filter, struct filter_zebra *);
 #ifdef ZPL_FILTER_NORMAL_EXT
-extern int filter_compare_zebos_extended(struct filter_zebos_ext *filter, struct filter_zebos_ext *new);
+extern int filter_compare_zebos_extended(struct filter_zebos_ext *filter, struct filter_zebos_ext *);
 #endif
 #ifdef ZPL_FILTER_MAC
-extern int filter_compare_l2mac(struct filter_l2 *filter, struct filter_l2 *new);
+extern int filter_compare_l2mac(struct filter_l2 *filter, struct filter_l2 *);
 #endif
 extern int filter_cisco_format(struct vty *vty, const char *addr_str, const char *addr_mask_str,
                  const char *mask_str, const char *mask_mask_str,

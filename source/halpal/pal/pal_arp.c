@@ -6,8 +6,13 @@
  */
 
 
-#include "zplos_include.h"
-#include "nsm_include.h"
+#include "auto_include.h"
+#include "zpl_type.h"
+#include "os_ipstack.h"
+#include "if.h"
+#include "log.h"
+#include "eloop.h"
+#include "nsm_arp.h"
 #include "hal_ipccmd.h"
 #include "hal_ipcmsg.h"
 #include "pal_arp.h"

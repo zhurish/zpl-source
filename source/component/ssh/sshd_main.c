@@ -1,11 +1,20 @@
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "lib_include.h"
+#include "libssh_autoconfig.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "os_task.h"
+#include "os_ipstack.h"
+#include "host.h"
+#include "sockunion.h"
 
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "ssh_def.h"
 #include "ssh_api.h"
 #include "sshd_main.h"
 #include "ssh_util.h"
+
 
 
 static int sshd_shell_output(socket_t fd, zpl_uint32 revents, void *userdata)

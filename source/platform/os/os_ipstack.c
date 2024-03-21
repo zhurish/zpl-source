@@ -4,11 +4,11 @@
  *  Created on: Aug 25, 2018
  *      Author: zhurish
  */
-
 #include "auto_include.h"
-#include "zplos_include.h"
-#include <log.h>
-#include <sys/un.h>
+#include "zpl_type.h"
+#include "os_log.h"
+#include "os_ipstack.h"
+
 
 #ifdef ZPL_SOCKET_T_POINT
 #define IPSTACK_CHECK(n, v)	if(n == ZPL_SOCKET_INVALID) {return v;}

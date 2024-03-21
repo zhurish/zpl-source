@@ -11,7 +11,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "prefix.h"
+#include "if.h"
+#include "nsm_rib.h"
 #ifdef ZPL_NSM_FIREWALLD
 #include "nsm_firewalld.h"
 #endif

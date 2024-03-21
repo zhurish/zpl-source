@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 
-
+#include "nsm_interface.h"
 
 
 

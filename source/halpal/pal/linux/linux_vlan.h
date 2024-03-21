@@ -5,7 +5,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "if.h"
+#include "nsm_vlan.h"
 #ifdef ZPL_NSM_VLANETH
 extern int linux_ioctl_vlan_create (struct interface *ifp);
 extern int linux_ioctl_vlan_destroy (struct interface *ifp);

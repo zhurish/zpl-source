@@ -11,7 +11,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "os_sem.h"
+#include "prefix.h"
+#include "if.h"
 #define NSM_TUNNEL_MTU_DEFAULT 1500
 #define NSM_TUNNEL_TTL_DEFAULT 250
 #define NSM_TUNNEL_TOS_DEFAULT 1

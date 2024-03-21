@@ -12,7 +12,11 @@
 extern "C" {
 #endif
 
-#include "nsm_vlan.h"
+#include "os_sem.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty.h"
+#endif
+#include "if.h"
 
 typedef enum
 {

@@ -22,19 +22,25 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "LiveVideoServerMediaSubssion.h"
 #include "FramedLiveSource.h"
 #include "H264VideoStreamDiscreteFramer.hh"
+#include "H265VideoStreamDiscreteFramer.hh"
 #include "H264VideoRTPSink.hh"
- 
+#include "H265VideoRTPSink.hh"
+#include <liveMedia.hh>
 #include "auto_include.h"
 #include "zplos_include.h"
+#include "zpl_media.h"
+#include "zpl_media_internal.h"
 
-LiveVideoServerMediaSubssion* LiveVideoServerMediaSubssion::createNew(UsageEnvironment& env, Boolean reuseFirstSource, void *queue)
+
+LiveVideoServerMediaSubssion* LiveVideoServerMediaSubssion::createNew(UsageEnvironment& env, Boolean reuseFirstSource, int codec, void *queue)
 {
-	return new LiveVideoServerMediaSubssion(env, reuseFirstSource, queue);
+	return new LiveVideoServerMediaSubssion(env, reuseFirstSource, codec, queue);
 }
  
-LiveVideoServerMediaSubssion::LiveVideoServerMediaSubssion(UsageEnvironment& env,Boolean reuseFirstSource, void *queue)
+LiveVideoServerMediaSubssion::LiveVideoServerMediaSubssion(UsageEnvironment& env,Boolean reuseFirstSource, int codec, void *queue)
 : OnDemandServerMediaSubsession(env,reuseFirstSource)
 {
+	m_codec = codec;
 	frame_queue = queue;
 }
  
@@ -59,14 +65,38 @@ FramedSource* LiveVideoServerMediaSubssion::createNewStreamSource(unsigned clien
 	//return H264VideoStreamFramer::createNew(envir(), liveSource);
 #else 
 	//不需要parse, 直接就是完整的一帧
-	return H264VideoStreamDiscreteFramer::createNew(envir(), liveSource);
+	if(m_codec == ZPL_VIDEO_CODEC_H264)
+		return H264VideoStreamDiscreteFramer::createNew(envir(), liveSource);
+	else if(m_codec == ZPL_VIDEO_CODEC_H265)
+		return H265VideoStreamDiscreteFramer::createNew(envir(), liveSource);
+	/*	
+	else if(m_codec == ZPL_VIDEO_CODEC_AAC)
+		return ADTSAudioFileServerMediaSubsession::createNew(envir(), liveSource, True);
+	else if(m_codec == ZPL_AUDIO_CODEC_AMR)
+		return AMRAudioFileServerMediaSubsession::createNew(envir(), liveSource, True);
+	else if(m_codec == ZPL_AUDIO_CODEC_G711A)
+		return uLawFromPCMAudioSource::createNew(envir(), liveSource, True);
+
+	else if(m_codec == ZPL_AUDIO_CODEC_G711A)
+		return H265VideoStreamDiscreteFramer::createNew(envir(), liveSource);
+	else if(m_codec == ZPL_AUDIO_CODEC_G711U)
+		return uLawFromPCMAudioSource::createNew(envir(), liveSource);
+	else if(m_codec == ZPL_AUDIO_CODEC_G726)
+		return H265VideoStreamDiscreteFramer::createNew(envir(), liveSource);
+	else if(m_codec == ZPL_AUDIO_CODEC_LPCM)
+		return H265VideoStreamDiscreteFramer::createNew(envir(), liveSource);*/
 #endif  
+	return NULL;
 }
  
 RTPSink* LiveVideoServerMediaSubssion
 ::createNewRTPSink(Groupsock* rtpGroupsock,
 		   unsigned char rtpPayloadTypeIfDynamic,
 		   FramedSource* /*inputSource*/) {
-  return H264VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic);
+	if(m_codec == ZPL_VIDEO_CODEC_H264)			
+  		return H264VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic);
+	else if(m_codec == ZPL_VIDEO_CODEC_H265)			
+  		return H265VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic);
+	return NULL;
 }
  

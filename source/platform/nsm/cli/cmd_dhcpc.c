@@ -9,12 +9,14 @@
 
 
 #include "auto_include.h"
-#include <zplos_include.h>
-#include "if.h"
-#include "command.h"
+#include "zpl_type.h"
+#include "module.h"
 #include "prefix.h"
+#include "if.h"
+#include "vty_include.h"
+#include "nsm_interface.h"
 #include "nsm_dhcp.h"
-#include "vty.h"
+
 
 #ifdef ZPL_DHCPC_MODULE
 //#include "nsm_dhcp.h"

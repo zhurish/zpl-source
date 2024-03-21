@@ -4,23 +4,13 @@
  *  Created on: Jul 14, 2018
  *      Author: zhurish
  */
-
 #include "auto_include.h"
-#include "zplos_include.h"
+#include "zpl_type.h"
 #include "module.h"
 #include "zmemory.h"
-#include "thread.h"
+#include "log.h"
 #include "if.h"
-#include "vty.h"
-#include "command.h"
-#include "prefix.h"
-
-#include "nsm_debug.h"
-#include "nsm_include.h"
-#include "nsm_arp.h"
-#include "nsm_bridge.h"
-#include "nsm_firewalld.h"
-#include "nsm_vlaneth.h"
+#include "nsm_tunnel.h"
 #include "linux_driver.h"
 #define _LINUX_IP_H
 

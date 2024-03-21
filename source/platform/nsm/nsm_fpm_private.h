@@ -26,6 +26,7 @@
 #define _NSM_FPM_PRIVATE_H
 
 #ifdef ZPL_NSM_FPM 
+#include "nsm_rib.h"
 
 int zfpm_debug;
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L

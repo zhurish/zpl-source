@@ -16,6 +16,7 @@ typedef enum {
   MODULE_HAL, 
   MODULE_PAL, 
   MODULE_MODEM, 
+  MODULE_WIFI, 
   MODULE_MQTT, 
   MODULE_WEB, 
   MODULE_MODBUS, 

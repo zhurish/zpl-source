@@ -7,13 +7,11 @@
 
 #include "auto_include.h"
 #include "zplos_include.h"
-#include "if.h"
-
-#include "prefix.h"
-#include "vty.h"
-#include "zmemory.h"
-#include "template.h"
-#include "str.h"
+#include "lib_include.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+#include "nsm_interface.h"
 #include "nsm_include.h"
 #include "hal_include.h"
 

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
+
 
 #define BMGT_DEBUG_EVENT  0x10
 #define BMGT_DEBUG_DETAIL 0x08

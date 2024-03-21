@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "if.h"
 #ifdef ZPL_LIBNL_MODULE
 int rtnl_ipvrf_create(int id, char *name);
 int rtnl_ipvrf_add_dev(char *dev, char *name);

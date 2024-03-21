@@ -26,15 +26,13 @@
 extern "C" {
 #endif
 
-#include "auto_include.h"
-#include "zplos_include.h"
-#include "module.h"
+
 #include "hash.h"
-#include "prefix.h"
+#include "filter.h"
 #ifdef ZPL_SHELL_MODULE
 #include "vty.h"
 #endif
-#include "filter.h"
+
 
 /* Disctirubte list types. */
 enum distribute_type

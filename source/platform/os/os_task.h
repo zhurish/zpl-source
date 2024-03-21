@@ -11,9 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "zpl_type.h"
-#include "os_list.h"
 
+#include "os_list.h"
 //#define OS_SIGNAL_SIGWAIT
 
 

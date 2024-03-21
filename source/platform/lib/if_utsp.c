@@ -5,13 +5,20 @@
  *      Author: zhurish
  */
 #include "auto_include.h"
-#include <zplos_include.h>
+#include "zpl_type.h"
+#include "os_list.h"
+#include "os_sem.h"
+#include "module.h"
 #include "zmemory.h"
+#include "str.h"
+#include "linklist.h"
+#include "prefix.h"
 #include "if.h"
 #include "if_utsp.h"
-#include "vty.h"
-#include "host.h"
-#include "linklist.h"
+#ifdef ZPL_SHELL_MODULE
+#include "vty_include.h"
+#endif
+
 
 
 struct utsp_manage
